@@ -47,7 +47,7 @@ namespace DCL.Landscape
         private readonly TerrainFactory factory;
         private readonly TerrainChunkDataGenerator chunkDataGenerator;
         private readonly TerrainBoundariesGenerator boundariesGenerator;
-        private NativeArray<int2> emptyParcels;
+        private NativeList<int2> emptyParcels;
 
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
@@ -68,7 +68,7 @@ namespace DCL.Landscape
         public List<Transform> Cliffs { get; } = new ();
         public Transform Wind { get; private set; }
 
-        public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
+        public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
         {
             parcelSize = terrainGenData.parcelSize;
 
@@ -213,7 +213,7 @@ namespace DCL.Landscape
             {
                 JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
                     ref emptyParcelsData, ref emptyParcelsNeighborData,
-                    in emptyParcels, ref ownedParcels,
+                    emptyParcels.AsArray(), ref ownedParcels,
                     terrainModel.MinParcel, terrainModel.MaxParcel,
                     terrainGenData.heightScaleNerf);
 

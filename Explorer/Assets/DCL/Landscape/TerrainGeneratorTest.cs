@@ -12,7 +12,6 @@ namespace DCL.Landscape
         public bool clearCache;
         public uint worldSeed = 1;
         public bool digHoles;
-        public bool centerTerrain;
         public bool hideTrees;
         public bool hideDetails;
         public bool clearNoiseCacheForWorlds = true;
@@ -21,7 +20,7 @@ namespace DCL.Landscape
         public ParcelData parcelData;
 
         private NativeParallelHashSet<int2> ownedParcels;
-        private NativeArray<int2> emptyParcels;
+        private NativeList<int2> emptyParcels;
         private TerrainGenerator gen;
         private WorldTerrainGenerator wGen;
 

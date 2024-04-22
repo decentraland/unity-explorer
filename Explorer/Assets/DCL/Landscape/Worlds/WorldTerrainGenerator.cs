@@ -35,7 +35,7 @@ namespace DCL.Landscape
 
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
-        private NativeArray<int2> emptyParcels;
+        private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
         public WorldTerrainGenerator(TerrainGenerationData terrainGenData, bool measureTime = false)
@@ -116,7 +116,7 @@ namespace DCL.Landscape
         {
             JobHandle handle = TerrainGenerationUtils.SetupEmptyParcelsJobs(
                 ref emptyParcelsData, ref emptyParcelsNeighborData,
-                in emptyParcels, ref ownedParcels,
+                emptyParcels.AsArray(), ref ownedParcels,
                 terrainModel.MinParcel, terrainModel.MaxParcel,
                 terrainGenData.heightScaleNerf);
 

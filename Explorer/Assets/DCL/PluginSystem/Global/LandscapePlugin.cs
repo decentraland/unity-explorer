@@ -29,7 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly bool enableLandscape;
         public ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
-        private NativeArray<int2> emptyParcels;
+        private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
         public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer, bool enableLandscape)

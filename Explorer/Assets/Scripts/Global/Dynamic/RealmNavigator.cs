@@ -115,22 +115,22 @@ namespace Global.Dynamic
 
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, CancellationToken ct)
         {
-            FixedScenePointers scenePointers = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity);
-            await UniTask.WaitUntil(() => scenePointers.AllPromisesResolved, cancellationToken: ct);
+            await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
 
-            var decodedParcels = new List<int2>();
+            AssetPromise<SceneEntityDefinition,GetSceneDefinition>[] promises = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).Promises;
 
-            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in scenePointers.Promises)
-            foreach (Vector2Int parcel in promise.Result.Value.Asset.metadata.scene.DecodedParcels)
-                decodedParcels.Add(parcel.ToInt2());
+            var decodedParcelsAmount = 0;
+            foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+                decodedParcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
 
-            var ownedParcels = new NativeParallelHashSet<int2>(decodedParcels.Count, AllocatorManager.Persistent);
+            using (var ownedParcels = new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
+            {
+                foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+                foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
+                    ownedParcels.Add(parcel.ToInt2());
 
-            foreach (int2 parcel in decodedParcels)
-                ownedParcels.Add(parcel);
-
-            await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
-            ownedParcels.Dispose();
+                await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
+            }
         }
 
         private void SwitchMiscVisibility(bool isVisible)
@@ -139,7 +139,7 @@ namespace Global.Dynamic
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
             landscapePlugin.TerrainGenerator.SwitchVisibility(isVisible);
             landscapePlugin.landscapeData.Value.showSatelliteView = isVisible;
-            roadsPlugin.RoadAssetPool.SwitchVisibility(isVisible);
+            roadsPlugin.RoadAssetPool!.SwitchVisibility(isVisible);
 
             // is NOT visible
             landscapePlugin.WorldTerrainGenerator.SwitchVisibility(!isVisible);
