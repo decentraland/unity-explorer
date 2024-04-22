@@ -340,7 +340,7 @@ MonoBehaviour:
     <CameraOffset>k__BackingField: {fileID: 8869747115766645440}
     <OffsetBottom>k__BackingField: {x: 0, y: 0, z: 0}
     <OffsetMid>k__BackingField: {x: 0, y: 0, z: 0}
-    <OffsetTop>k__BackingField: {x: 0, y: 0, z: 0}
+    <OffsetTop>k__BackingField: {x: 0, y: 2, z: 0}
   freeCameraData:
     <Camera>k__BackingField: {fileID: 4997933640858091397}
     <Speed>k__BackingField: 10
@@ -1509,7 +1509,7 @@ MonoBehaviour:
   - m_Height: 4
     m_Radius: 12
   - m_Height: 0.5
-    m_Radius: 10
+    m_Radius: 7
   m_LegacyHeadingBias: 3.4028235e+38
   m_Rigs:
   - {fileID: 3057316026834219345}

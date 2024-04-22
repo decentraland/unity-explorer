@@ -129,7 +129,7 @@ MonoBehaviour:
   <PlatformRaycastLength>k__BackingField: 0.3
   <CameraFOVWhileRunning>k__BackingField: 15
   <FOVIncreaseSpeed>k__BackingField: 15
-  <FOVDecreaseSpeed>k__BackingField: 60
+  <FOVDecreaseSpeed>k__BackingField: 20
   <FeetIKHipsPullMaxDistance>k__BackingField: 0.6
   <FeetIKSphereSize>k__BackingField: 0.1
   <IKWeightSpeed>k__BackingField: 10
