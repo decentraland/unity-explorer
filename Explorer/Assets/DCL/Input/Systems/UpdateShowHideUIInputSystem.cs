@@ -46,7 +46,7 @@ namespace DCL.Input.Systems
             mvcManager.SetAllViewsCanvasActive(nextUIVisibilityState);
 
             // Debug Panel UI
-            debugContainerBuilder.IsVisible = nextUIVisibilityState;
+            debugContainerBuilder.Container.parent.style.display = nextUIVisibilityState ? DisplayStyle.Flex : DisplayStyle.None;
 
             // Scenes UIs
             rootUIDocument.rootVisualElement.parent.style.display = nextUIVisibilityState ? DisplayStyle.Flex : DisplayStyle.None;
