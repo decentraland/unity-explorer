@@ -74,6 +74,9 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public Animator FinalizeAnimator { get; private set; } = null!;
 
+        [field: SerializeField]
+        public TMP_Text VersionText { get; private set; } = null!;
+
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
             do

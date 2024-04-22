@@ -90,6 +90,10 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.UseAnotherAccountButton.onClick.AddListener(ChangeAccount);
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
+            viewInstance.VersionText.text = Application.version;
+#if UNITY_EDITOR
+            viewInstance.VersionText.text = "editor-version";
+#endif
 
             web3Authenticator.AddVerificationListener((code, expiration) =>
             {

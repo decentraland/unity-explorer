@@ -3865,6 +3865,7 @@ MonoBehaviour:
   <LoginAnimator>k__BackingField: {fileID: 512411117488763017}
   <VerificationAnimator>k__BackingField: {fileID: 7608642574103559770}
   <FinalizeAnimator>k__BackingField: {fileID: 5416563332575766553}
+  <VersionText>k__BackingField: {fileID: 4613417570274952093}
 --- !u!1 &5399791853786771784
 GameObject:
   m_ObjectHideFlags: 0
