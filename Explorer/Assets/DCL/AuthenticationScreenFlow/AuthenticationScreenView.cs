@@ -6,13 +6,14 @@ using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class AuthenticationScreenView : ViewBase, IView
+    public class AuthenticationScreenView : ViewBase, IView, IPointerClickHandler
     {
         [SerializeField] private LocalizeStringEvent countdownLabel;
 
@@ -87,6 +88,11 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(1000, cancellationToken: ct);
             }
             while (expiration > DateTime.UtcNow);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            VerificationCodeHintContainer.SetActive(false);
         }
     }
 }
