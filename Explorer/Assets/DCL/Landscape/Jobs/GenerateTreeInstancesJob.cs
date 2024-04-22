@@ -88,7 +88,7 @@ namespace DCL.Landscape.Jobs
             int2 parcel = new int2(chunkMinParcel.x + (x / parcelSize), chunkMinParcel.y + (y / parcelSize));
             float3 parcelWorldPos = new float3(parcel.x, 0, parcel.y) * parcelSize;
 
-            if (!(value > 0)) return;
+            if (value <= 0) return;
 
             Vector2 randomScale = treeRandomization.randomScale;
             float scale = Mathf.Lerp(randomScale.x, randomScale.y, random.NextInt(0, 100) / 100f);
