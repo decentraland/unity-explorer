@@ -26,8 +26,6 @@ namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour
     {
-        private static readonly int OUT = Animator.StringToHash("Out");
-
         [Header("Startup Config")]
         [SerializeField] private InitialRealm initialRealm;
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
@@ -167,6 +165,7 @@ namespace Global.Dynamic
                         DynamicSettings = dynamicSettings,
                         Web3Authenticator = web3Authenticator,
                         Web3IdentityCache = identityCache,
+                        SplashAnimator = splashScreenAnimation
                     },
                     new DynamicWorldParams
                     {
@@ -223,7 +222,6 @@ namespace Global.Dynamic
                     await WaitUntilSplashAnimationEndsAsync(ct);
 
                 splashScreenAnimation.transform.SetSiblingIndex(1);
-                splashScreenAnimation.SetTrigger(OUT);
 
                 await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                     globalWorld.EcsWorld, playerEntity, ct);

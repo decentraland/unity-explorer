@@ -40,6 +40,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly Animator splashScreenAnimator;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -56,7 +57,8 @@ namespace DCL.AuthenticationScreenFlow
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
-            ICharacterPreviewFactory characterPreviewFactory)
+            ICharacterPreviewFactory characterPreviewFactory,
+            Animator splashScreenAnimator)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -64,6 +66,7 @@ namespace DCL.AuthenticationScreenFlow
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
+            this.splashScreenAnimator = splashScreenAnimator;
         }
 
         public override void Dispose()
@@ -128,7 +131,6 @@ namespace DCL.AuthenticationScreenFlow
 
             if (storedIdentity is { IsExpired: false })
             {
-                //SwitchState(ViewState.Loading);
                 CancelLoginProcess();
                 loginCancellationToken = new CancellationTokenSource();
                 await FetchProfileAsync(loginCancellationToken.Token);
@@ -137,6 +139,8 @@ namespace DCL.AuthenticationScreenFlow
             }
             else
                 SwitchState(ViewState.Login);
+
+            splashScreenAnimator.SetTrigger(OUT);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

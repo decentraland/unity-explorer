@@ -19,6 +19,7 @@ namespace Global.Dynamic
         public DynamicSettings DynamicSettings;
         public IWeb3VerifiedAuthenticator Web3Authenticator;
         public IWeb3IdentityCache Web3IdentityCache;
+        public Animator SplashAnimator;
     }
 
     public struct DynamicWorldParams
