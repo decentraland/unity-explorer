@@ -1,4 +1,5 @@
 import { Logger } from "../loggers/logger"
+import { RegisteredEntities } from "./entities/registeredEntities"
 
 export interface RegistrationWrap {
     register(
@@ -17,7 +18,7 @@ export type RegistrationWrapMethod = (
 
 export function newRegistrationWrap(
     registrationWrapMethod: RegistrationWrapMethod,
-    alreadyRegisteredEntities: Set<string>
+    alreadyRegisteredEntities: RegisteredEntities
 ): RegistrationWrap {
     return {
         register: (mutableBundle: any, logger: Logger) => {

@@ -1,4 +1,5 @@
 import { Logger } from "../loggers/logger";
+import { newFakeRegisteredEntities } from "./entities/registeredEntities";
 import { newRegistrationWrap, RegistrationWrap, RegistrationWrapMethod } from "./registrationWrap";
 
 export function newTestsRegistrationWrap(): RegistrationWrap {
@@ -20,9 +21,8 @@ export function newTestsRegistrationWrap(): RegistrationWrap {
         }
     }
 
-
     return newRegistrationWrap(
         registrationWrapMethod,
-        new Set<string>()
+        newFakeRegisteredEntities()
     )
 }
