@@ -158,7 +158,7 @@ namespace DCL.Landscape
                     chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData);
                     foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                     {
-                        await GenerateTerrainData(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
+                        await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
                         await UniTask.Yield(cancellationToken);
                     }
 
@@ -296,7 +296,7 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask GenerateTerrainData(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken, AsyncLoadProcessReport processReport)
+        private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken, AsyncLoadProcessReport processReport)
         {
             timeProfiler.StartMeasure();
             cancellationToken.ThrowIfCancellationRequested();
