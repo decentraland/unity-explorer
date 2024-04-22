@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Chat_Input_Selected
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: ea30ebbec1fa4e449af92faaa5abaa64, type: 3}
+  - {fileID: 8300000, guid: c90cc3b7ea5736d45b3e685f87a57809, type: 3}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0.05
