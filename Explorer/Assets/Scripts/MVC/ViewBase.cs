@@ -42,5 +42,8 @@ namespace MVC
 
         protected virtual UniTask PlayHideAnimation(CancellationToken ct) =>
             UniTask.CompletedTask;
+
+        public virtual void SetCanvasActive(bool isActive) =>
+            canvas.enabled = isActive;
     }
 }
