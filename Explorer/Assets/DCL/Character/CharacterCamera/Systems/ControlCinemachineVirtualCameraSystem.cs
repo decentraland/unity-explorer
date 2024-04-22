@@ -208,9 +208,8 @@ namespace DCL.CharacterCamera.Systems
             if (input.ChangeShoulder)
                 cameraComponent.Shoulder = cameraComponent.Shoulder switch
                                            {
-                                               ThirdPersonCameraShoulder.Center => ThirdPersonCameraShoulder.Right,
                                                ThirdPersonCameraShoulder.Right => ThirdPersonCameraShoulder.Left,
-                                               ThirdPersonCameraShoulder.Left => ThirdPersonCameraShoulder.Center,
+                                               ThirdPersonCameraShoulder.Left => ThirdPersonCameraShoulder.Right,
                                            };
 
             ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
@@ -234,7 +233,7 @@ namespace DCL.CharacterCamera.Systems
                             ThirdPersonCameraShoulder.Center => 0,
                         };
 
-            cameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cameraData.CameraOffset.m_Offset, offset, 10 * dt);
+            cameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cameraData.CameraOffset.m_Offset, offset, cinemachinePreset.ShoulderChangeSpeed * dt);
         }
 
         private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)
