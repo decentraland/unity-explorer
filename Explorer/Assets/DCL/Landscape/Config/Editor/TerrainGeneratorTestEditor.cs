@@ -15,7 +15,7 @@ namespace DCL.Landscape.Config.Editor
             if (generatorTest != null)
             {
                 var generator = generatorTest.GetGenerator();
-                shouldDisable = generator != null && !generator.IsTerrainGenerated();
+                shouldDisable = generator is { IsTerrainGenerated: false };
             }
 
             GUI.enabled = !shouldDisable;
