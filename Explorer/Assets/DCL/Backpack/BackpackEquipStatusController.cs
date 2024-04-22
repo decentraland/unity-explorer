@@ -3,7 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -28,6 +27,7 @@ namespace DCL.Backpack
         private World? world;
         private Entity? playerEntity;
         private CancellationTokenSource? publishProfileCts;
+        private CancellationTokenSource? unequipUncompatibleWearablesCts;
 
         public BackpackEquipStatusController(
             IBackpackEventBus backpackEventBus,
@@ -64,6 +64,7 @@ namespace DCL.Backpack
             backpackEventBus.UnEquipEmoteEvent -= equippedEmotes.UnEquipEmote;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             publishProfileCts?.SafeCancelAndDispose();
+            unequipUncompatibleWearablesCts?.SafeCancelAndDispose();
         }
 
         private void SetForceRender(IReadOnlyCollection<string> categories)
@@ -112,13 +113,24 @@ namespace DCL.Backpack
         {
             equippedWearables.Equip(wearable);
 
-            if (wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
-                UnEquipIncompatibleWearables(wearable);
+            async UniTaskVoid DisengageUnEquipIncompatibleWearablesAsync(IWearable bodyShape, CancellationToken ct)
+            {
+                // We need to wait to un-equip the rest of the wearables, otherwise the avatar and the UI is not updated correctly
+                await UniTask.NextFrame(ct);
+
+                UnEquipIncompatibleWearables(bodyShape);
+            }
+
+            if (wearable.Type == WearableType.BodyShape)
+            {
+                unequipUncompatibleWearablesCts = unequipUncompatibleWearablesCts.SafeRestart();
+                DisengageUnEquipIncompatibleWearablesAsync(wearable, unequipUncompatibleWearablesCts.Token).Forget();
+            }
         }
 
         private void UnEquipIncompatibleWearables(IWearable bodyShape)
         {
-            foreach ((string? key, IWearable? wearable) in equippedWearables.Items())
+            foreach ((string? _, IWearable? wearable) in equippedWearables.Items())
             {
                 if (wearable == null) continue;
                 if (wearable == bodyShape) continue;
