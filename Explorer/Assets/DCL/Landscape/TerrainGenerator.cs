@@ -154,6 +154,7 @@ namespace DCL.Landscape
                     // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
                     /////////////////////////
                     chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData);
+
                     foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                     {
                         await GenerateTerrainDataAsync(chunkModel, terrainModel, worldSeed, cancellationToken, processReport);
@@ -192,8 +193,6 @@ namespace DCL.Landscape
                 isTerrainGenerated = true;
             }
         }
-
-
 
         private async Task BugWorkaroundAsync()
         {
@@ -246,31 +245,33 @@ namespace DCL.Landscape
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken, AsyncLoadProcessReport processReport)
         {
-            timeProfiler.StartMeasure();
-            cancellationToken.ThrowIfCancellationRequested();
-
-            chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, maxHeightIndex);
-
-            var tasks = new List<UniTask>
+            using (timeProfiler.Measure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})")))
             {
-                chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken),
-                chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken),
-                !hideDetails ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels): UniTask.CompletedTask,
-                !hideTrees ?chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken): UniTask.CompletedTask,
-            };
+                cancellationToken.ThrowIfCancellationRequested();
 
-            if (withHoles)
-            {
-                using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
-                    chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize);
-                // await DigHolesAsync(terrainDataDictionary, cancellationToken);
+                chunkModel.TerrainData = factory.CreateTerrainData(terrainModel.ChunkSizeInUnits, maxHeightIndex);
+
+                var tasks = new List<UniTask>
+                {
+                    chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken),
+                    chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken),
+                    !hideDetails ? chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels) : UniTask.CompletedTask,
+                    !hideTrees ? chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken) : UniTask.CompletedTask,
+                };
+
+                if (withHoles)
+                {
+                    using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
+                        chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize);
+
+                    // await DigHolesAsync(terrainDataDictionary, cancellationToken);
+                }
+
+                await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
+
+                processedTerrainDataCount++;
+                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
             }
-
-            await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
-
-            processedTerrainDataCount++;
-            if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
-            timeProfiler.EndMeasure(t => ReportHub.Log(LogType.Log, reportData, $"[{t}ms] Terrain Data ({processedTerrainDataCount}/{terrainDataCount})"));
         }
 
         /// <summary>

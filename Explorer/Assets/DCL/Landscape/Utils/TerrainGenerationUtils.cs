@@ -9,7 +9,6 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
-
         public static void ExtractEmptyParcels(TerrainModel terrainModel, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             var tempEmptyParcels = new List<int2>();
