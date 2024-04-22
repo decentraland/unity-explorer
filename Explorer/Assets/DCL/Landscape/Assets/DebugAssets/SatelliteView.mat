@@ -50,7 +50,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Grass_Distance: 200
-    - _Grass_Max_Distance: 110
+    - _Grass_Max_Distance: 500
     - _Grass_Min_Distance: 100
     - _QueueControl: 0
     - _QueueOffset: 0
