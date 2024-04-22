@@ -123,7 +123,7 @@ namespace DCL.Backpack
                 if (wearable == null) continue;
                 if (wearable == bodyShape) continue;
                 if (wearable.IsCompatibleWithBodyShape(bodyShape.GetUrn())) continue;
-                backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(key));
+                backpackCommandBus.SendCommand(new BackpackUnEquipWearableCommand(wearable.GetUrn()));
             }
         }
     }

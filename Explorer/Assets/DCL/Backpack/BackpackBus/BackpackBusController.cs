@@ -135,8 +135,11 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
         {
-            if (!wearableCatalog.TryGetWearable(command.Id, out IWearable wearable))
-                wearableCatalog.TryGetWearable(new URN(command.Id).Shorten(), out wearable);
+            if (!wearableCatalog.TryGetWearable(command.Id, out IWearable? wearable))
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.WEARABLE), $"Cannot un-equip wearable, not found: {command.Id}");
+                return;
+            }
 
             backpackEventBus.SendUnEquipWearable(wearable);
         }
