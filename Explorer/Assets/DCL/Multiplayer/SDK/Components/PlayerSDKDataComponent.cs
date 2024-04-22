@@ -22,10 +22,10 @@ namespace DCL.Multiplayer.SDK.Components
 
         public IReadOnlyList<URN> EmoteUrns;
         public IReadOnlyCollection<URN> WearableUrns;
+        public URN PreviousEmote;
+        public URN PlayingEmote;
+        public bool LoopingEmote;
         public Entity SceneWorldEntity;
         public bool IsDirty { get; set; }
-
-        // repeated string wearable_urns = 1;
-        // repeated string emotes_urns = 2;
     }
 }

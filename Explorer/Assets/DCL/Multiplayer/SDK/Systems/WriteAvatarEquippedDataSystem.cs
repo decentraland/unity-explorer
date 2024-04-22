@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
@@ -10,11 +11,11 @@ using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Groups;
 
 namespace DCL.Multiplayer.SDK.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(PlayerComponentsHandlerSystem))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EQUIPPED)]
     public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem
     {
@@ -38,17 +39,6 @@ namespace DCL.Multiplayer.SDK.Systems
         [None(typeof(PBAvatarEquippedData), typeof(DeleteEntityIntention))]
         private void CreateAvatarEquippedData(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
-            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, PlayerSDKDataComponent>(static (pbAvatarEquippedData, playerSDKDataComponent) =>
-            {
-                pbAvatarEquippedData.WearableUrns.Clear();
-
-                foreach (URN urn in playerSDKDataComponent.WearableUrns) { pbAvatarEquippedData.WearableUrns.Add(urn); }
-
-                pbAvatarEquippedData.EmoteUrns.Clear();
-
-                foreach (URN urn in playerSDKDataComponent.EmoteUrns) { pbAvatarEquippedData.EmoteUrns.Add(urn); }
-            }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
-
             PBAvatarEquippedData pbComponent = componentPool.Get();
             pbComponent.WearableUrns.Clear();
 
@@ -57,6 +47,17 @@ namespace DCL.Multiplayer.SDK.Systems
             pbComponent.EmoteUrns.Clear();
 
             foreach (URN urn in playerSDKDataComponent.EmoteUrns) { pbComponent.EmoteUrns.Add(urn); }
+
+            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, PBAvatarEquippedData>(static (dispatchedPBComponent, pbComponent) =>
+            {
+                dispatchedPBComponent.WearableUrns.Clear();
+
+                foreach (URN urn in pbComponent.WearableUrns) { dispatchedPBComponent.WearableUrns.Add(urn); }
+
+                dispatchedPBComponent.EmoteUrns.Clear();
+
+                foreach (URN urn in pbComponent.EmoteUrns) { dispatchedPBComponent.EmoteUrns.Add(urn); }
+            }, playerSDKDataComponent.CRDTEntity, pbComponent);
 
             World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
         }
@@ -67,17 +68,6 @@ namespace DCL.Multiplayer.SDK.Systems
         {
             if (!playerSDKDataComponent.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, PlayerSDKDataComponent>(static (pbAvatarEquippedData, playerSDKDataComponent) =>
-            {
-                pbAvatarEquippedData.WearableUrns.Clear();
-
-                foreach (URN urn in playerSDKDataComponent.WearableUrns) { pbAvatarEquippedData.WearableUrns.Add(urn); }
-
-                pbAvatarEquippedData.EmoteUrns.Clear();
-
-                foreach (URN urn in playerSDKDataComponent.EmoteUrns) { pbAvatarEquippedData.EmoteUrns.Add(urn); }
-            }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
-
             pbComponent.WearableUrns.Clear();
 
             foreach (URN urn in playerSDKDataComponent.WearableUrns) { pbComponent.WearableUrns.Add(urn); }
@@ -85,6 +75,17 @@ namespace DCL.Multiplayer.SDK.Systems
             pbComponent.EmoteUrns.Clear();
 
             foreach (URN urn in playerSDKDataComponent.EmoteUrns) { pbComponent.EmoteUrns.Add(urn); }
+
+            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, PBAvatarEquippedData>(static (dispatchedPBComponent, pbComponent) =>
+            {
+                dispatchedPBComponent.WearableUrns.Clear();
+
+                foreach (URN urn in pbComponent.WearableUrns) { dispatchedPBComponent.WearableUrns.Add(urn); }
+
+                dispatchedPBComponent.EmoteUrns.Clear();
+
+                foreach (URN urn in pbComponent.EmoteUrns) { dispatchedPBComponent.EmoteUrns.Add(urn); }
+            }, playerSDKDataComponent.CRDTEntity, pbComponent);
 
             World.Set(entity, pbComponent);
         }

@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
@@ -43,6 +44,7 @@ namespace DCL.Multiplayer.SDK.Systems
             HandlePlayerDisconnectQuery(World);
 
             UpdatePlayerSDKDataQuery(World);
+            UpdateEmoteCommandDataQuery(World);
 
             AddPlayerSDKDataQuery(World);
         }
@@ -119,6 +121,27 @@ namespace DCL.Multiplayer.SDK.Systems
 
                 sceneEcsExecutor.World.Set(playerSDKDataComponent.SceneWorldEntity, playerSDKDataComponent);
                 World.Set(entity, playerSDKDataComponent);
+            }
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateEmoteCommandData(in Entity entity, ref PlayerSDKDataComponent playerSDKData, ref CharacterEmoteComponent emoteComponent)
+        {
+            if (emoteComponent.EmoteUrn == playerSDKData.PreviousEmote && playerSDKData.PreviousEmote != null) return;
+
+            SceneEcsExecutor sceneEcsExecutor = playerSDKData.SceneFacade.EcsExecutor;
+
+            // External world access should be always synchronized (Global World calls into Scene World)
+            using (sceneEcsExecutor.Sync.GetScope())
+            {
+                playerSDKData.IsDirty = true;
+                playerSDKData.PreviousEmote = playerSDKData.PlayingEmote;
+                playerSDKData.PlayingEmote = emoteComponent.EmoteUrn;
+                playerSDKData.LoopingEmote = emoteComponent.EmoteLoop;
+
+                sceneEcsExecutor.World.Set(playerSDKData.SceneWorldEntity, playerSDKData);
+                World.Set(entity, playerSDKData);
             }
         }
 

@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
@@ -10,11 +11,11 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.ColorComponent;
-using ECS.Unity.Groups;
 
 namespace DCL.Multiplayer.SDK.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(PlayerComponentsHandlerSystem))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
     public partial class WriteSDKAvatarBaseSystem : BaseUnityLoopSystem
     {
@@ -38,22 +39,22 @@ namespace DCL.Multiplayer.SDK.Systems
         [None(typeof(PBAvatarBase), typeof(DeleteEntityIntention))]
         private void CreateAvatarBase(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
-            ecsToCRDTWriter.PutMessage<PBAvatarBase, PlayerSDKDataComponent>(static (pbAvatarBase, playerSDKDataComponent) =>
-            {
-                pbAvatarBase.Name = playerSDKDataComponent.Name;
-                pbAvatarBase.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
-                pbAvatarBase.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
-                pbAvatarBase.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
-                pbAvatarBase.HairColor = playerSDKDataComponent.HairColor.ToColor3();
-            }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
-
             PBAvatarBase pbComponent = componentPool.Get();
             pbComponent.Name = playerSDKDataComponent.Name;
             pbComponent.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
-
             pbComponent.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
             pbComponent.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
             pbComponent.HairColor = playerSDKDataComponent.HairColor.ToColor3();
+
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, PBAvatarBase>(static (dispatchedPBComponent, pbComponent) =>
+            {
+                dispatchedPBComponent.Name = pbComponent.Name;
+                dispatchedPBComponent.BodyShapeUrn = pbComponent.BodyShapeUrn;
+                dispatchedPBComponent.SkinColor = pbComponent.SkinColor;
+                dispatchedPBComponent.EyesColor = pbComponent.EyesColor;
+                dispatchedPBComponent.HairColor = pbComponent.HairColor;
+            }, playerSDKDataComponent.CRDTEntity, pbComponent);
+
             World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
         }
 
@@ -63,20 +64,21 @@ namespace DCL.Multiplayer.SDK.Systems
         {
             if (!playerSDKDataComponent.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarBase, PlayerSDKDataComponent>(static (pbAvatarBase, playerSDKDataComponent) =>
-            {
-                pbAvatarBase.Name = playerSDKDataComponent.Name;
-                pbAvatarBase.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
-                pbAvatarBase.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
-                pbAvatarBase.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
-                pbAvatarBase.HairColor = playerSDKDataComponent.HairColor.ToColor3();
-            }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
-
             pbComponent.Name = playerSDKDataComponent.Name;
             pbComponent.BodyShapeUrn = playerSDKDataComponent.BodyShapeURN;
             pbComponent.SkinColor = playerSDKDataComponent.SkinColor.ToColor3();
             pbComponent.EyesColor = playerSDKDataComponent.EyesColor.ToColor3();
             pbComponent.HairColor = playerSDKDataComponent.HairColor.ToColor3();
+
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, PBAvatarBase>(static (dispatchedPBComponent, pbComponent) =>
+            {
+                dispatchedPBComponent.Name = pbComponent.Name;
+                dispatchedPBComponent.BodyShapeUrn = pbComponent.BodyShapeUrn;
+                dispatchedPBComponent.SkinColor = pbComponent.SkinColor;
+                dispatchedPBComponent.EyesColor = pbComponent.EyesColor;
+                dispatchedPBComponent.HairColor = pbComponent.HairColor;
+            }, playerSDKDataComponent.CRDTEntity, pbComponent);
+
             World.Set(entity, pbComponent);
         }
 

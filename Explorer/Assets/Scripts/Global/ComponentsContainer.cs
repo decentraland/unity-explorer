@@ -91,7 +91,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarModifierArea>.Create(ComponentID.AVATAR_MODIFIER_AREA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBPlayerIdentityData>.Create(ComponentID.PLAYER_IDENTITY_DATA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarBase>.Create(ComponentID.AVATAR_BASE).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBAvatarBase>.Create(ComponentID.AVATAR_EQUIPPED_DATA).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBAvatarEquippedData>.Create(ComponentID.AVATAR_EQUIPPED_DATA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBAvatarEmoteCommand>.Create(ComponentID.AVATAR_EMOTE_COMMAND).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

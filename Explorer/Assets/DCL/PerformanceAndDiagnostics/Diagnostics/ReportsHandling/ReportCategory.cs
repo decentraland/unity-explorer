@@ -222,6 +222,11 @@
         public const string PLAYER_AVATAR_EQUIPPED = nameof(PLAYER_AVATAR_EQUIPPED);
 
         /// <summary>
+        ///     PBAvatarEmoteCommand component writer
+        /// </summary>
+        public const string PLAYER_AVATAR_EMOTE_COMMAND = nameof(PLAYER_AVATAR_EMOTE_COMMAND);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);

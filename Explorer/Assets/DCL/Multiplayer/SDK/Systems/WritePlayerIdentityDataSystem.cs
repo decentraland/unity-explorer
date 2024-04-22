@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
@@ -9,11 +10,11 @@ using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Groups;
 
 namespace DCL.Multiplayer.SDK.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(PlayerComponentsHandlerSystem))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
     {
@@ -36,15 +37,16 @@ namespace DCL.Multiplayer.SDK.Systems
         [None(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
         private void CreatePlayerIdentityData(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
-            ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PlayerSDKDataComponent>(static (pbPlayerIdentityData, playerSDKDataComponent) =>
-            {
-                pbPlayerIdentityData.Address = playerSDKDataComponent.Address;
-                pbPlayerIdentityData.IsGuest = playerSDKDataComponent.IsGuest;
-            }, playerSDKDataComponent.CRDTEntity, playerSDKDataComponent);
-
             PBPlayerIdentityData? pbComponent = componentPool.Get();
             pbComponent.Address = playerSDKDataComponent.Address;
             pbComponent.IsGuest = playerSDKDataComponent.IsGuest;
+
+            ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PBPlayerIdentityData>(static (dispatchedPBComponent, pbComponent) =>
+            {
+                dispatchedPBComponent.Address = pbComponent.Address;
+                dispatchedPBComponent.IsGuest = pbComponent.IsGuest;
+            }, playerSDKDataComponent.CRDTEntity, pbComponent);
+
             World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
         }
 
