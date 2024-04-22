@@ -11,6 +11,7 @@ export interface RegistrationWrap {
 export type ExecutionMethod = (message: any) => Promise<any>
 
 export type RegistrationWrapMethod = (
+    methodsBundle: any,
     methodKey: string,
     originMethod: ExecutionMethod,
     logger: Logger
@@ -29,7 +30,7 @@ export function newRegistrationWrap(
 
                 logger.warning(`Registering ${k}`)
                 const originMethod = mutableBundle[k] as ExecutionMethod
-                const wrappedMethod = registrationWrapMethod(k, originMethod, logger)
+                const wrappedMethod = registrationWrapMethod(mutableBundle, k, originMethod, logger)
                 if (wrappedMethod !== null) {
                     mutableBundle[k] = wrappedMethod
                 }

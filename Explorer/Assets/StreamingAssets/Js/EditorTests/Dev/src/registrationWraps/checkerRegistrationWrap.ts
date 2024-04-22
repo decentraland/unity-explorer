@@ -79,6 +79,7 @@ export function newCheckerRegistrationWrap(): RegistrationWrap {
     const nameTable = table()
 
     const wrapMethod: RegistrationWrapMethod = (
+        methodsBundle: any,
         methodKey: string,
         originMethod: (message: any) => Promise<any>,
         logger: Logger

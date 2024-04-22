@@ -1,3 +1,5 @@
-export function getActiveVideoStreamsTest(result: Promise<any>): void {
+import { IntegrationTestContext } from "./source/integrationTestsSource";
 
+export async function getActiveVideoStreamsTest(result: IntegrationTestContext): Promise<void> {
+    //TODO
 }
