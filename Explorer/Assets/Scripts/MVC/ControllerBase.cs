@@ -103,6 +103,12 @@ namespace MVC
             await viewInstance.HideAsync(ct);
         }
 
+        public void SetViewCanvasActive(bool isActive)
+        {
+            if (viewInstance != null)
+                viewInstance.SetCanvasActive(isActive);
+        }
+
         /// <summary>
         ///     Called once when the view is instantiated
         /// </summary>
