@@ -1,4 +1,5 @@
 ﻿using DCL.Settings.ModuleViews;
+using DCL.Settings.Utils;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace DCL.Settings.ModuleControllers
                 for (var index = 0; index < possibleResolutions.Count; index++)
                 {
                     Resolution resolution = possibleResolutions[index];
-                    if (!IsDefaultResolution(resolution))
+                    if (!ResolutionUtils.IsDefaultResolution(resolution))
                         continue;
 
                     view.DropdownView.Dropdown.value = index;
@@ -47,8 +48,8 @@ namespace DCL.Settings.ModuleControllers
                 Resolution resolution = Screen.resolutions[index];
 
                 // Exclude all resolutions that are not 16:9 or 16:10
-                float aspectRatio = (float)resolution.width / resolution.height;
-                if (aspectRatio - (16.0f / 9.0f) != 0f && aspectRatio - (16.0f / 10.0f) != 0f)
+                if (!ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 9) &&
+                    !ResolutionUtils.IsResolutionCompatibleWithAspectRatio(resolution.width, resolution.height, 16, 10))
                     continue;
 
                 // Exclude all resolutions width less than 1024
@@ -60,33 +61,8 @@ namespace DCL.Settings.ModuleControllers
                     continue;
 
                 possibleResolutions.Add(resolution);
-                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = $"{resolution.width}x{resolution.height} ({GetAspectRatio(resolution.width, resolution.height)}) {resolution.refreshRate} Hz" });
+                view.DropdownView.Dropdown.options.Add(new TMP_Dropdown.OptionData { text = ResolutionUtils.FormatResolutionDropdownOption(resolution) });
             }
-        }
-
-        private static string GetAspectRatio(int width, int height)
-        {
-            int tempWidth = width;
-            int tempHeight = height;
-
-            while (height != 0)
-            {
-                int rest = width % height;
-                width = height;
-                height = rest;
-            }
-
-            return $"{tempWidth / width}:{tempHeight / width}";
-        }
-
-        // By design, the default resolution should be a 1080p resolution with a 16:9 aspect ratio
-        private static bool IsDefaultResolution(Resolution resolution)
-        {
-            if (resolution.height != 1080)
-                return false;
-
-            float aspectRatio = (float)resolution.width / resolution.height;
-            return Mathf.Abs(aspectRatio - (16.0f / 9.0f)) == 0f;
         }
 
         private void SetResolutionSettings(int index)
