@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cinemachine;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
+using DCL.CharacterCamera.Settings;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Component;
@@ -24,10 +25,7 @@ namespace DCL.CharacterCamera.Systems
         private SingleInstanceEntity inputMap;
         private int hotkeySwitchStateDirection = 1;
 
-        internal ControlCinemachineVirtualCameraSystem(World world) : base(world)
-        {
-
-        }
+        internal ControlCinemachineVirtualCameraSystem(World world) : base(world) { }
 
         public override void Initialize()
         {
@@ -192,6 +190,7 @@ namespace DCL.CharacterCamera.Systems
 
                             return false;
                     }
+
                     break;
             }
 
@@ -201,36 +200,38 @@ namespace DCL.CharacterCamera.Systems
         [Query]
         private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input)
         {
-            if (cameraComponent.Mode == CameraMode.ThirdPerson)
-            {
-                if (input.ChangeShoulder)
-                    cameraComponent.Shoulder = cameraComponent.Shoulder switch
-                                               {
-                                                   ThirdPersonCameraShoulder.Center => ThirdPersonCameraShoulder.Right,
-                                                   ThirdPersonCameraShoulder.Right => ThirdPersonCameraShoulder.Left,
-                                                   ThirdPersonCameraShoulder.Left => ThirdPersonCameraShoulder.Center,
-                                               };
+            if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
+                return;
 
-                ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
+            ICinemachineThirdPersonCameraData cameraData = cameraComponent.Mode == CameraMode.ThirdPerson ? cinemachinePreset.ThirdPersonCameraData : cinemachinePreset.DroneViewCameraData;
 
-                float value = cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value;
+            if (input.ChangeShoulder)
+                cameraComponent.Shoulder = cameraComponent.Shoulder switch
+                                           {
+                                               ThirdPersonCameraShoulder.Center => ThirdPersonCameraShoulder.Right,
+                                               ThirdPersonCameraShoulder.Right => ThirdPersonCameraShoulder.Left,
+                                               ThirdPersonCameraShoulder.Left => ThirdPersonCameraShoulder.Center,
+                                           };
 
-                Vector3 offset;
+            ThirdPersonCameraShoulder thirdPersonCameraShoulder = cameraComponent.Shoulder;
 
-                if (value < 0.5f)
-                    offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetBottom, cinemachinePreset.ThirdPersonCameraData.OffsetMid, value * 2);
-                else
-                    offset = Vector3.Lerp(cinemachinePreset.ThirdPersonCameraData.OffsetMid, cinemachinePreset.ThirdPersonCameraData.OffsetTop, (value - 0.5f) * 2);
+            float value = cameraData.Camera.m_YAxis.Value;
 
-                offset.x *= thirdPersonCameraShoulder switch
-                            {
-                                ThirdPersonCameraShoulder.Right => 1,
-                                ThirdPersonCameraShoulder.Left => -1,
-                                ThirdPersonCameraShoulder.Center => 0,
-                            };
+            Vector3 offset;
 
-                cinemachinePreset.ThirdPersonCameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cinemachinePreset.ThirdPersonCameraData.CameraOffset.m_Offset, offset, 10 * dt);
-            }
+            if (value < 0.5f)
+                offset = Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, value * 2);
+            else
+                offset = Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (value - 0.5f) * 2);
+
+            offset.x *= thirdPersonCameraShoulder switch
+                        {
+                            ThirdPersonCameraShoulder.Right => 1,
+                            ThirdPersonCameraShoulder.Left => -1,
+                            ThirdPersonCameraShoulder.Center => 0,
+                        };
+
+            cameraData.CameraOffset.m_Offset = Vector3.MoveTowards(cameraData.CameraOffset.m_Offset, offset, 10 * dt);
         }
 
         private static void SetDefaultFreeCameraPosition(in ICinemachinePreset preset)
