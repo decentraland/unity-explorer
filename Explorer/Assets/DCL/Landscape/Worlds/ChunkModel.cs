@@ -39,10 +39,11 @@ namespace DCL.Landscape
 
             for (var i = 0; i < amount; i++)
             {
-                int xPosition = fromRight? MaxParcel.x - i : MinParcel.x + i;
+                int x = fromRight? MaxParcel.x - i : MinParcel.x + i;
+                int xParcel = Mathf.Clamp(x, MinParcel.x, MaxParcel.x);
 
                 for (int y = MinParcel.y; y <= MaxParcel.y; y++)
-                    OutOfTerrainParcels.Add(new int2(xPosition, y));
+                    OutOfTerrainParcels.Add(new int2(xParcel, y));
             }
         }
 
@@ -53,10 +54,11 @@ namespace DCL.Landscape
 
             for (var i = 0; i < amount; i++)
             {
-                int yPosition = fromTop? MaxParcel.y - i : MinParcel.y + i;
+                int y = fromTop? MaxParcel.y - i : MinParcel.y + i;
+                int yParcel = Mathf.Clamp(y, MinParcel.y, MaxParcel.y);
 
                 for (int x = MinParcel.x; x <= MaxParcel.x; x++)
-                    OutOfTerrainParcels.Add(new int2(x, yPosition));
+                    OutOfTerrainParcels.Add(new int2(x, yParcel));
             }
         }
     }
