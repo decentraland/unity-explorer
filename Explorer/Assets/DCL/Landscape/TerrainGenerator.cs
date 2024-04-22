@@ -277,9 +277,8 @@ namespace DCL.Landscape
                             chunkModel.TerrainData.SetHoles(0, 0, holes);
                             localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
                         }
+                        // await DigHolesAsync(terrainDataDictionary, cancellationToken);
                     }
-
-                    // await DigHolesAsync(terrainDataDictionary, cancellationToken);
                 }
 
                 await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);

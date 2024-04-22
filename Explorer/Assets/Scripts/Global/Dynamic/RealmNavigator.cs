@@ -144,27 +144,5 @@ namespace Global.Dynamic
             // is NOT visible
             landscapePlugin.WorldTerrainGenerator.SwitchVisibility(!isVisible);
         }
-
-        // private async UniTask ShowLoadingScreenAndExecuteTaskAsync(CancellationToken ct, params Func<AsyncLoadProcessReport, UniTask>[] operations)
-        // {
-        //     ct.ThrowIfCancellationRequested();
-        //
-        //     var timeout = TimeSpan.FromSeconds(30);
-        //     var loadReport = AsyncLoadProcessReport.Create();
-        //
-        //     UniTask showLoadingScreenTask = mvcManager.ShowAsync(
-        //                                                    SceneLoadingScreenController.IssueCommand(
-        //                                                        new SceneLoadingScreenController.Params(loadReport, timeout)), ct)
-        //                                               .AttachExternalCancellation(ct);
-        //
-        //     var operationTasks = new UniTask[operations.Length + 1];
-        //
-        //     for (var index = 0; index < operations.Length; index++)
-        //         operationTasks[index] = operations[index](loadReport);
-        //
-        //     operationTasks[operations.Length] = showLoadingScreenTask;
-        //
-        //     await UniTask.WhenAll(operationTasks);
-        // }
     }
 }
