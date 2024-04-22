@@ -41,9 +41,8 @@ namespace DCL.CharacterCamera.Systems
             cinemachinePreset.FirstPersonCameraData.Camera.enabled = false;
             cinemachinePreset.ThirdPersonCameraData.Camera.enabled = false;
             cinemachinePreset.DroneViewCameraData.Camera.enabled = false;
-
-            camera.Mode = cinemachinePreset.DefaultCameraMode;
-            SetActiveCamera(cinemachinePreset, in camera, ref cameraState);
+            cameraState.CurrentCamera = cinemachinePreset.ThirdPersonCameraData.Camera;
+            SetActiveCamera(cinemachinePreset.DefaultCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
         protected override void Update(float t)
@@ -107,10 +106,7 @@ namespace DCL.CharacterCamera.Systems
             if (IsCorrectCameraEnabled(camera.Mode, cinemachinePreset))
                 return;
 
-            cameraState.CurrentCamera.enabled = false;
-            camera.Mode = targetCameraMode;
-
-            SetActiveCamera(cinemachinePreset, in camera, ref cameraState);
+            SetActiveCamera(targetCameraMode, cinemachinePreset, ref camera, ref cameraState);
         }
 
         private static void SetActiveCamera(ref CinemachineCameraState cameraState, CinemachineVirtualCameraBase camera)
@@ -119,7 +115,7 @@ namespace DCL.CharacterCamera.Systems
             camera.enabled = true;
         }
 
-        private void SetActiveCamera(ICinemachinePreset cinemachinePreset, in CameraComponent camera, ref CinemachineCameraState cameraState)
+        private void SetActiveCamera(CameraMode targetCameraMode, ICinemachinePreset cinemachinePreset, ref CameraComponent camera, ref CinemachineCameraState cameraState)
         {
             ref InputMapComponent inputMapComponent = ref inputMap.GetInputMapComponent(World);
 
@@ -136,15 +132,37 @@ namespace DCL.CharacterCamera.Systems
                 inputMapComponent.Active &= ~InputMapComponent.Kind.FreeCamera;
             }
 
+            CameraMode currentCameraMode = GetCurrentCameraMode(cameraState.CurrentCamera, cinemachinePreset);
+
+            cameraState.CurrentCamera.enabled = false;
+            camera.Mode = targetCameraMode;
+
             switch (camera.Mode)
             {
                 case CameraMode.FirstPerson:
+                    if (currentCameraMode == CameraMode.ThirdPerson)
+                        cinemachinePreset.FirstPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
+
                     SetActiveCamera(ref cameraState, cinemachinePreset.FirstPersonCameraData.Camera);
                     break;
                 case CameraMode.ThirdPerson:
+                    switch (currentCameraMode)
+                    {
+                        case CameraMode.FirstPerson:
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = false;
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = Mathf.Lerp(0, 1, (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f);
+                            break;
+                        case CameraMode.DroneView:
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
+                            break;
+                    }
                     SetActiveCamera(ref cameraState, cinemachinePreset.ThirdPersonCameraData.Camera);
                     break;
                 case CameraMode.DroneView:
+                    if (currentCameraMode == CameraMode.ThirdPerson)
+                        cinemachinePreset.DroneViewCameraData.Camera.m_Transitions.m_InheritPosition = true;
+
                     SetActiveCamera(ref cameraState, cinemachinePreset.DroneViewCameraData.Camera);
                     break;
                 case CameraMode.Free:
@@ -260,6 +278,17 @@ namespace DCL.CharacterCamera.Systems
                 default:
                     return cinemachinePreset.FreeCameraData.Camera.enabled;
             }
+        }
+
+        private CameraMode GetCurrentCameraMode(CinemachineVirtualCameraBase currentCamera, ICinemachinePreset cinemachinePreset)
+        {
+            if (currentCamera == cinemachinePreset.FirstPersonCameraData.Camera) return CameraMode.FirstPerson;
+            if (currentCamera == cinemachinePreset.ThirdPersonCameraData.Camera) return CameraMode.ThirdPerson;
+            if (currentCamera == cinemachinePreset.DroneViewCameraData.Camera) return CameraMode.DroneView;
+            if (currentCamera == cinemachinePreset.FreeCameraData.Camera) return CameraMode.Free;
+
+            // Want to enlarge this if chain? Nope, refactor this.
+            return CameraMode.ThirdPerson;
         }
     }
 }
