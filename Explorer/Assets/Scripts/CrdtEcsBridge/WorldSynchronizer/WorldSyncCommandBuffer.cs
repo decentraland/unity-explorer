@@ -117,11 +117,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
                 case CRDTReconciliationEffect.ComponentDeleted:
                 case CRDTReconciliationEffect.ComponentModified:
 
-                    if (deletedEntities.Contains(message.EntityId))
-                    {
-                        {}
-                    }
-
                     if (!sdkComponentsRegistry.TryGet(message.ComponentId, out SDKComponentBridge sdkComponentBridge))
                     {
                         // ReportHub.LogWarning(ReportCategory.CRDT_ECS_BRIDGE, $"SDK Component {message.ComponentId} is not registered");
