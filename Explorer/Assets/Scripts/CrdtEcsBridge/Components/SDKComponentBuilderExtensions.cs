@@ -34,7 +34,7 @@ namespace CrdtEcsBridge.Components
         /// </summary>
         public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
         {
-            sdkComponentBuilder.pool = new ComponentPool<T>(onGet: onGet, onRelease: onRelease);
+            sdkComponentBuilder.pool = new ComponentPool.WithDefaultCtor<T>(onGet: onGet, onRelease: onRelease);
             return sdkComponentBuilder;
         }
 
@@ -51,14 +51,12 @@ namespace CrdtEcsBridge.Components
         ///     A shortcut to create a standard suite for Protobuf components
         /// </summary>
         /// <returns></returns>
-        public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder, bool clearComponent = false)
+        public static SDKComponentBridge AsProtobufComponent<T>(this SDKComponentBuilder<T> sdkComponentBuilder)
             where T: class, IMessage<T>, IDirtyMarker, new()
         {
             // We clear "on get" because it's called from the background thread unlike "on release"
             Action<T> onGet = SetAsDirty;
-
-            if (clearComponent)
-                onGet += ClearProtobufComponent;
+            onGet += ClearProtobufComponent;
 
             return sdkComponentBuilder.WithProtobufSerializer()
                                       .WithPool(onGet)
@@ -77,7 +75,7 @@ namespace CrdtEcsBridge.Components
         public static void SetAsDirty(IDirtyMarker dirtyMarker) =>
             dirtyMarker.IsDirty = true;
 
-        public static void ClearProtobufComponent<T>(T component) where T: class, IMessage<T>, new()
+        private static void ClearProtobufComponent<T>(T component) where T: class, IMessage<T>, new()
         {
             IList<FieldDescriptor> fields = component.Descriptor.Fields.InDeclarationOrder();
 

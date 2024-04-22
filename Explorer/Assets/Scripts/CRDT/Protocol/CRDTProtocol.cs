@@ -88,9 +88,9 @@ namespace CRDT.Protocol
                 // Effectively it is the same logic that updates the LWW set, the only difference is in Data presence
                 // For DELETE_COMPONENT it is "Empty"
                 case CRDTMessageType.PUT_COMPONENT:
-                    return UpdateLWWState(in message, CRDTReconciliationEffect.ComponentAdded);
                 case CRDTMessageType.DELETE_COMPONENT:
-                    return UpdateLWWState(in message, CRDTReconciliationEffect.NoChanges); // if there was no component before, "delete" has no effect
+                    GetReconciliationResultFromLWWMessage(in message, out CRDTReconciliationEffect overrideEffect, out CRDTReconciliationEffect newComponentEffect);
+                    return UpdateLWWState(in message, overrideEffect, newComponentEffect);
             }
 
             throw new NotSupportedException($"Message type {message.Type} is not supported");
@@ -123,21 +123,44 @@ namespace CRDT.Protocol
 
         public void EnforceLWWState(in CRDTMessage message)
         {
-            UpdateLWWState(in message, CRDTReconciliationEffect.NoChanges); // the second argument is irrelevant
+            GetReconciliationResultFromLWWMessage(in message, out CRDTReconciliationEffect overrideEffect, out CRDTReconciliationEffect newComponentEffect);
+            UpdateLWWState(in message, overrideEffect, newComponentEffect);
         }
 
-        private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message, CRDTReconciliationEffect newComponentEffect)
+        private static void GetReconciliationResultFromLWWMessage(in CRDTMessage message, out CRDTReconciliationEffect overrideEffect, out CRDTReconciliationEffect newComponentEffect)
+        {
+            switch (message.Type)
+            {
+                case CRDTMessageType.PUT_COMPONENT:
+                    overrideEffect = CRDTReconciliationEffect.ComponentModified;
+                    newComponentEffect = CRDTReconciliationEffect.ComponentAdded;
+                    break;
+                case CRDTMessageType.DELETE_COMPONENT:
+                    overrideEffect = CRDTReconciliationEffect.ComponentDeleted;
+                    newComponentEffect = CRDTReconciliationEffect.NoChanges;
+                    break;
+                default:
+                    throw new ArgumentException($"Message type {message.Type} is not LWW");
+            }
+        }
+
+        private CRDTReconciliationResult UpdateLWWState(in CRDTMessage message, CRDTReconciliationEffect overrideEffect, CRDTReconciliationEffect newComponentEffect)
         {
             bool innerSetExists = crdtState.TryGetLWWComponentState(message, out PooledDictionary<CRDTEntity, EntityComponentData> inner,
                 out bool componentExists, out EntityComponentData storedData);
+
+            bool componentWasDeleted = componentExists && storedData.isDeleted;
 
             // The received message is > than our current value, update our state
             if (!componentExists || storedData.Timestamp < message.Timestamp)
             {
                 UpdateLWWState(innerSetExists, componentExists, inner, in message, ref storedData);
 
-                return new CRDTReconciliationResult(CRDTStateReconciliationResult.StateUpdatedTimestamp,
-                    componentExists ? CRDTReconciliationEffect.ComponentModified : newComponentEffect);
+                CRDTReconciliationEffect componentEffect = componentExists && !componentWasDeleted
+                    ? overrideEffect
+                    : newComponentEffect;
+
+                return new CRDTReconciliationResult(CRDTStateReconciliationResult.StateUpdatedTimestamp, componentEffect);
             }
 
             // Outdated Message. The client state will be resent
@@ -161,7 +184,7 @@ namespace CRDT.Protocol
                     UpdateLWWState(true, true, inner, in message, ref storedData);
 
                     // The local state is updated
-                    return new CRDTReconciliationResult(CRDTStateReconciliationResult.StateUpdatedData, CRDTReconciliationEffect.ComponentModified);
+                    return new CRDTReconciliationResult(CRDTStateReconciliationResult.StateUpdatedData, componentWasDeleted ? newComponentEffect : overrideEffect);
             }
         }
 
@@ -177,17 +200,18 @@ namespace CRDT.Protocol
             else
                 componentData.Data.Dispose();
 
-            UpdateLWWState(crdtMessage.Timestamp, crdtMessage.Data, ref componentData);
+            UpdateLWWState(in crdtMessage, ref componentData);
 
             // We don't have a ref-wise API for Dictionary Values so we have to assign the data back
             inner[crdtMessage.EntityId] = componentData;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void UpdateLWWState(int timestamp, IMemoryOwner<byte> data, ref EntityComponentData componentData)
+        private static void UpdateLWWState(in CRDTMessage crdtMessage, ref EntityComponentData componentData)
         {
-            componentData.Timestamp = timestamp;
-            componentData.Data = data;
+            componentData.Timestamp = crdtMessage.Timestamp;
+            componentData.Data = crdtMessage.Data;
+            componentData.Type = crdtMessage.Type;
         }
 
         private void DeleteEntity(CRDTEntity entityId, int entityNumber, int entityVersion, bool entityWasDeleted)
@@ -227,7 +251,7 @@ namespace CRDT.Protocol
         /// </summary>
         private bool TryAppendComponent(in CRDTMessage message)
         {
-            var newData = new EntityComponentData(message.Timestamp, message.Data);
+            var newData = new EntityComponentData(message.Timestamp, message.Data, message.Type);
             bool outerCollectionExists;
 
             if ((outerCollectionExists = crdtState.appendComponents.TryGetValue(message.ComponentId, out PooledDictionary<CRDTEntity, PooledList<EntityComponentData>> outer))
@@ -286,17 +310,19 @@ namespace CRDT.Protocol
         {
             internal int Timestamp;
             internal IMemoryOwner<byte> Data;
+            internal CRDTMessageType Type;
 
-            internal EntityComponentData(int timestamp, IMemoryOwner<byte> data)
+            internal EntityComponentData(int timestamp, IMemoryOwner<byte> data, CRDTMessageType type)
             {
                 Timestamp = timestamp;
                 Data = data;
+                Type = type;
             }
 
             /// <summary>
-            ///     To save memory instead of storing a separate flag checks if Data is empty
+            /// Data can be empty but component was "PUT" if its data is default
             /// </summary>
-            internal bool isDeleted => Data.Memory.IsEmpty;
+            internal bool isDeleted => Type == CRDTMessageType.DELETE_COMPONENT;
         }
 
         /// <summary>

@@ -29,6 +29,12 @@ namespace ECS.Groups
         public SyncedPostRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
     }
 
+    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    public partial class SyncedPostPhysicsSystemGroup : SyncedGroup
+    {
+        public SyncedPostPhysicsSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
+    }
+
     /// <summary>
     ///     <para>Group is:</para>
     ///     <para>Synchronized by mutex so no changes to the ECS World can be made from Systems and CRDT Bridge simultaneously;</para>
