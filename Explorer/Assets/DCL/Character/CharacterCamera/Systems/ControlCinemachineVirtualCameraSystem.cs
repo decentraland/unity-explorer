@@ -3,17 +3,16 @@ using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
 using DCL.Character.CharacterCamera.Components;
+using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
 using DCL.CharacterMotion.Components;
 using DCL.Input;
 using DCL.Input.Component;
 using ECS.Abstract;
-using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-namespace DCL.CharacterCamera.Systems
+namespace DCL.Character.CharacterCamera.Systems
 {
     /// <summary>
     ///     Controls switching between First Person and Third Person camera modes.
@@ -151,7 +150,9 @@ namespace DCL.CharacterCamera.Systems
                         case CameraMode.FirstPerson:
                             cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = false;
                             cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.Value = cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.Value;
-                            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = Mathf.Lerp(0, 1, (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f);
+
+                            // m_VerticalAxis goes from -90 to 90, so we convert that to a 0 to 1 value
+                            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.Value = (90 + cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.Value) / 180f;
                             break;
                         case CameraMode.DroneView:
                             cinemachinePreset.ThirdPersonCameraData.Camera.m_Transitions.m_InheritPosition = true;
@@ -236,6 +237,7 @@ namespace DCL.CharacterCamera.Systems
 
             Vector3 offset;
 
+            // in order to lerp the offset correctly, the value from the YAxis goes from 0 to 1, being 0.5 the middle rig
             if (value < 0.5f)
                 offset = Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, value * 2);
             else

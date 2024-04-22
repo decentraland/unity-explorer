@@ -9,7 +9,8 @@ namespace DCL.Character.CharacterMotion.Velocity
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(ref CharacterRigidTransform rigidTransform, in MovementInputComponent input)
         {
-            if (!(Mathf.Abs(input.Axes.x) > 0) && !(Mathf.Abs(input.Axes.y) > 0))
+            if (Mathf.Abs(input.Axes.x) < Mathf.Epsilon
+                && Mathf.Abs(input.Axes.y) < Mathf.Epsilon)
                 return;
 
             Vector3 flatVelocity = rigidTransform.MoveVelocity.Velocity;

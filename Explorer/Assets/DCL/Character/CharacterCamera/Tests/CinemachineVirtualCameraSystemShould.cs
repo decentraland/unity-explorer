@@ -11,6 +11,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using ControlCinemachineVirtualCameraSystem = DCL.Character.CharacterCamera.Systems.ControlCinemachineVirtualCameraSystem;
 
 namespace DCL.CharacterCamera.Tests
 {

@@ -15,6 +15,7 @@ using ECS.Prioritization.Components;
 using System.Threading;
 using UnityEngine;
 using ApplyCinemachineSettingsSystem = DCL.Character.CharacterCamera.Systems.ApplyCinemachineSettingsSystem;
+using ControlCinemachineVirtualCameraSystem = DCL.Character.CharacterCamera.Systems.ControlCinemachineVirtualCameraSystem;
 
 namespace DCL.PluginSystem.Global
 {

@@ -55,14 +55,16 @@ namespace DCL.Character.CharacterCamera.Systems
         [Query]
         private void UpdateCameraSettings(ref ICinemachinePreset cinemachinePreset)
         {
-            float mMaxSpeed = currentSens / 100f;
+            float mMaxSpeed = currentSens / 100f; // for UX reasons we left the sensitivity value to be shown as 0 to 100 so we divide back
+            float tpsVerticalMaxSpeed = mMaxSpeed / 100; // third person camera Y values go from 0 to 1, so we approximately divide by 100 again
+
             cinemachinePreset.FirstPersonCameraData.POV.m_HorizontalAxis.m_MaxSpeed = mMaxSpeed;
             cinemachinePreset.FirstPersonCameraData.POV.m_VerticalAxis.m_MaxSpeed = mMaxSpeed;
             cinemachinePreset.FirstPersonCameraData.Noise.m_AmplitudeGain = cameraNoise ? noiseSlider.Value : 0;
             cinemachinePreset.DroneViewCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed;
-            cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.m_MaxSpeed = mMaxSpeed / 100f;
+            cinemachinePreset.DroneViewCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed;
             cinemachinePreset.ThirdPersonCameraData.Camera.m_XAxis.m_MaxSpeed = mMaxSpeed;
-            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.m_MaxSpeed = mMaxSpeed / 100f;
+            cinemachinePreset.ThirdPersonCameraData.Camera.m_YAxis.m_MaxSpeed = tpsVerticalMaxSpeed;
         }
     }
 }
