@@ -195,7 +195,7 @@ jobs:
 
       - name: Download and Extract Zip File for LODS
         run: |
-          Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "build/Decentraland/Decentraland_Data/StreamingAssets/AssetBundles/lods/lods.zip"
+          Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "build/${{ matrix.targetPlatform }}/Decentraland_Data/StreamingAssets/AssetBundles/lods/lods.zip"
         shell: pwsh
 
       # Upload artifact
