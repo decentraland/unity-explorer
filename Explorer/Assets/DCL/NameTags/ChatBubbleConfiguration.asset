@@ -16,7 +16,8 @@ MonoBehaviour:
   nametagMarginOffsetHeight: 0.15
   bubbleMarginOffsetWidth: 0.4
   bubbleMarginOffsetHeight: 0.6
-  animationDuration: 0.7
+  animationInDuration: 0.5
+  animationOutDuration: 0.35
   fullOpacityMaxDistance: 20
   bubbleIdleTime: 5000
   maxDistance: 40
