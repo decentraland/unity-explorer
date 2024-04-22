@@ -187,6 +187,7 @@ jobs:
           projectPath: Explorer
           buildTimeout: 120
           targetPlatform: ${{ matrix.targetPlatform }}
+          buildName: Decentraland
           versioning: Semantic
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
@@ -201,7 +202,7 @@ jobs:
       - name: Upload windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Build-${{ matrix.targetPlatform }}
+          name: Decentraland
           path: |
             build
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
