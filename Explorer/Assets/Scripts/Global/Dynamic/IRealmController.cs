@@ -11,7 +11,7 @@ namespace Global.Dynamic
     public interface IRealmController
     {
         GlobalWorld GlobalWorld { get; set; }
-        public Entity RealmEntity { get; }
+        Entity RealmEntity { get; }
 
         /// <summary>
         ///     Unload the current realm and load the new one

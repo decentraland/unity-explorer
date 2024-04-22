@@ -31,8 +31,6 @@ namespace DCL.Landscape
         private Transform rootGo;
         private Transform ocean;
 
-        private int maxHeightIndex;
-
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeList<int2> emptyParcels;
@@ -101,7 +99,7 @@ namespace DCL.Landscape
 
             var tasks = new List<UniTask>
             {
-                chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, maxHeightIndex, parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, useCache: false),
+                chunkDataGenerator.SetHeightsAsync(chunkModel.MinParcel, GetMaxHeightIndex(emptyParcelsData), parcelSize, chunkModel.TerrainData, worldSeed, cancellationToken, useCache: false),
                 chunkDataGenerator.SetTexturesAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, false),
                 chunkDataGenerator.SetDetailsAsync(chunkModel.MinParcel.x * parcelSize, chunkModel.MinParcel.y * parcelSize, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, true, chunkModel.MinParcel, chunkModel.OccupiedParcels, false),
                 chunkDataGenerator.SetTreesAsync(chunkModel.MinParcel, terrainModel.ChunkSizeInUnits, chunkModel.TerrainData, worldSeed, cancellationToken, useCache: false),
@@ -121,11 +119,17 @@ namespace DCL.Landscape
                 terrainGenData.heightScaleNerf);
 
             await handle.ToUniTask(PlayerLoopTiming.Update).AttachExternalCancellation(cancellationToken);
+        }
 
-            // Calculate this outside the jobs since they Items = {List<Pair<int2, int>>} Count = 32 are Parallel
+        // Calculate this outside the empty parcels Height jobs since they are Parallel
+        private static int GetMaxHeightIndex(in NativeParallelHashMap<int2, int> emptyParcelsData)
+        {
+            int maxHeight = int.MinValue;
             foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
-                if (emptyParcelHeight.Value > maxHeightIndex)
-                    maxHeightIndex = emptyParcelHeight.Value;
+                if (emptyParcelHeight.Value > maxHeight)
+                    maxHeight = emptyParcelHeight.Value;
+
+            return maxHeight;
         }
     }
 }

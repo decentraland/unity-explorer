@@ -45,10 +45,33 @@ namespace DCL.Landscape
             MinInUnits = MinParcel * parcelSize;
             MaxInUnits = MinInUnits + SizeInUnits;
 
-            ChunkModels = new List<ChunkModel>();
-
             CalculateChunkSizeAndCount();
-            GenerateChunkModels(world.OwnedParcels);
+
+            // Generate chunk models
+            {
+                ChunkModels = new List<ChunkModel>(sizeInChunks * sizeInChunks);
+
+                for (var x = 0; x < sizeInChunks; x++)
+                for (var y = 0; y < sizeInChunks; y++)
+                {
+                    int2 minChunkParcel = MinParcel + new int2(x * chunkSizeInParcels, y * chunkSizeInParcels);
+                    int2 maxParcelPosition = minChunkParcel + new int2(chunkSizeInParcels, chunkSizeInParcels) - new int2(1, 1);
+                    var model = new ChunkModel(minChunkParcel, maxParcelPosition);
+
+                    if (TryOverlap(model, out int2 overlap))
+                        model.ProcessOverlap(overlap);
+
+                    ChunkModels.Add(model);
+                }
+
+                foreach (int2 parcel in world.OwnedParcels)
+                foreach (ChunkModel chunk in ChunkModels)
+                    if (ChunkContains(chunk, parcel))
+                    {
+                        chunk.AddOccupiedParcel(parcel);
+                        break;
+                    }
+            }
         }
 
         private void CalculateChunkSizeAndCount()
@@ -64,32 +87,6 @@ namespace DCL.Landscape
 
             if (maxSideLengthInUnits > ChunkSizeInUnits * sizeInChunks)
                 sizeInChunks = Mathf.CeilToInt((float)maxSideLengthInUnits / ChunkSizeInUnits);
-        }
-
-        private void GenerateChunkModels(NativeParallelHashSet<int2> worldOwnedParcels)
-        {
-            ChunkModels = new List<ChunkModel>(sizeInChunks * sizeInChunks);
-
-            for (var x = 0; x < sizeInChunks; x++)
-            for (var y = 0; y < sizeInChunks; y++)
-            {
-                int2 minChunkParcel = MinParcel + new int2(x * chunkSizeInParcels, y * chunkSizeInParcels);
-                int2 maxParcelPosition = minChunkParcel + new int2(chunkSizeInParcels, chunkSizeInParcels) - new int2(1, 1);
-                var model = new ChunkModel(minChunkParcel, maxParcelPosition);
-
-                if (TryOverlap(model, out int2 overlap))
-                    model.ProcessOverlap(overlap);
-
-                ChunkModels.Add(model);
-            }
-
-            foreach (int2 parcel in worldOwnedParcels)
-            foreach (ChunkModel chunk in ChunkModels)
-                if (ChunkContains(chunk, parcel))
-                {
-                    chunk.OccupiedParcels.Add(parcel);
-                    break;
-                }
         }
 
         private bool ChunkContains(ChunkModel chunk, int2 parcel) =>

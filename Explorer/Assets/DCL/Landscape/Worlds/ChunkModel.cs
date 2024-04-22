@@ -9,18 +9,26 @@ namespace DCL.Landscape
         public readonly int2 MinParcel;
         public readonly int2 MaxParcel;
 
-        public readonly List<int2> OccupiedParcels;
-        public readonly List<int2> OutOfTerrainParcels;
+        private readonly List<int2> occupiedParcels;
+        private readonly List<int2> outOfTerrainParcels;
 
-        public TerrainData TerrainData;
+        public IReadOnlyList<int2> OutOfTerrainParcels => outOfTerrainParcels;
+        public IReadOnlyList<int2> OccupiedParcels => occupiedParcels;
+
+        public TerrainData TerrainData { get; set; }
 
         public ChunkModel(int2 minParcel, int2 maxParcel)
         {
             MinParcel = minParcel;
             MaxParcel = maxParcel;
-            OccupiedParcels = new List<int2>();
-            OutOfTerrainParcels = new List<int2>();
+            occupiedParcels = new List<int2>();
+            outOfTerrainParcels = new List<int2>();
             TerrainData = null;
+        }
+
+        public void AddOccupiedParcel(int2 parcel)
+        {
+            occupiedParcels.Add(parcel);
         }
 
         public void ProcessOverlap(in int2 overlap)
@@ -39,11 +47,11 @@ namespace DCL.Landscape
 
             for (var i = 0; i < amount; i++)
             {
-                int x = fromRight? MaxParcel.x - i : MinParcel.x + i;
+                int x = fromRight ? MaxParcel.x - i : MinParcel.x + i;
                 int xParcel = Mathf.Clamp(x, MinParcel.x, MaxParcel.x);
 
                 for (int y = MinParcel.y; y <= MaxParcel.y; y++)
-                    OutOfTerrainParcels.Add(new int2(xParcel, y));
+                    outOfTerrainParcels.Add(new int2(xParcel, y));
             }
         }
 
@@ -54,11 +62,11 @@ namespace DCL.Landscape
 
             for (var i = 0; i < amount; i++)
             {
-                int y = fromTop? MaxParcel.y - i : MinParcel.y + i;
+                int y = fromTop ? MaxParcel.y - i : MinParcel.y + i;
                 int yParcel = Mathf.Clamp(y, MinParcel.y, MaxParcel.y);
 
                 for (int x = MinParcel.x; x <= MaxParcel.x; x++)
-                    OutOfTerrainParcels.Add(new int2(x, yParcel));
+                    outOfTerrainParcels.Add(new int2(x, yParcel));
             }
         }
     }
