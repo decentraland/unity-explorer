@@ -62,7 +62,8 @@ namespace DCL.Multiplayer.SDK.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateAvatarEmoteCommand(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent, ref PBAvatarEmoteCommand pbComponent)
         {
-            if (!playerSDKDataComponent.IsDirty || playerSDKDataComponent.PlayingEmote == null) return;
+            if (!playerSDKDataComponent.IsDirty || playerSDKDataComponent.PlayingEmote == null || playerSDKDataComponent.PlayingEmote.Equals(pbComponent.EmoteUrn))
+                return;
 
             pbComponent.IsDirty = true;
             pbComponent.EmoteUrn = playerSDKDataComponent.PlayingEmote;

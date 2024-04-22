@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 IsDirty = true,
                 CRDTEntity = 3,
                 Name = "CthulhuFhtaghn",
-                PlayingEmote = "emote-1",
+                PlayingEmote = "thunder-kiss-65",
                 LoopingEmote = true,
             };
 
@@ -94,7 +94,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity, out playerSDKData));
 
             playerSDKData.IsDirty = true;
-            playerSDKData.PlayingEmote = "thunder-kiss-65";
+            playerSDKData.PlayingEmote = "thunder-kiss-66";
             playerSDKData.LoopingEmote = false;
 
             world.Set(entity, playerSDKData);
@@ -104,6 +104,43 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity, out playerSDKData));
 
             AssertPBComponentMatchesPlayerSDKData();
+        }
+
+        [Test]
+        public void AvoidPropagationIfEmoteDoesntChange()
+        {
+            Assert.IsFalse(world.Has<PBAvatarEmoteCommand>(entity));
+            Assert.IsFalse(world.Has<CRDTEntity>(entity));
+
+            world.Add(entity, playerSDKData);
+
+            system.Update(0);
+
+            ecsToCRDTWriter.Received(1)
+                           .AppendMessage(
+                                Arg.Any<Action<PBAvatarEmoteCommand, PBAvatarEmoteCommand>>(),
+                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
+                                Arg.Any<int>(),
+                                Arg.Is<PBAvatarEmoteCommand>(comp =>
+                                    comp.EmoteUrn == playerSDKData.PlayingEmote
+                                    && comp.Loop == playerSDKData.LoopingEmote));
+
+            ecsToCRDTWriter.ClearReceivedCalls();
+
+            AssertPBComponentMatchesPlayerSDKData();
+
+            // Flag as dirty without actually updating the emotes or anything
+            playerSDKData.IsDirty = true;
+            world.Set(entity, playerSDKData);
+
+            system.Update(0);
+
+            ecsToCRDTWriter.DidNotReceive()
+                           .AppendMessage(
+                                Arg.Any<Action<PBAvatarEmoteCommand, PBAvatarEmoteCommand>>(),
+                                Arg.Any<CRDTEntity>(),
+                                Arg.Any<int>(),
+                                Arg.Any<PBAvatarEmoteCommand>());
         }
 
         [Test]
