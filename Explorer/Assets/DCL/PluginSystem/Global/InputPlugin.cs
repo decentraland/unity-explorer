@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
+using DCL.DebugUtilities;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Crosshair;
@@ -14,6 +15,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using DCL.Multiplayer.Emotes;
+using MVC;
 using UnityEngine.EventSystems;
 using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
@@ -38,6 +40,10 @@ namespace DCL.PluginSystem.Global
         private readonly UnityEventSystem unityEventSystem;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly UIDocument canvas;
+        private readonly MVCManager mvcManager;
+        private readonly DebugContainerBuilder debugContainerBuilder;
+        private readonly UIDocument rootUIDocument;
+        private readonly UIDocument cursorUIDocument;
         private CrosshairCanvas crosshairCanvas;
 
         public InputPlugin(
@@ -46,7 +52,11 @@ namespace DCL.PluginSystem.Global
             UnityEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
             UIDocument canvas,
-            MultiplayerEmotesMessageBus messageBus)
+            MultiplayerEmotesMessageBus messageBus,
+            MVCManager mvcManager,
+            DebugContainerBuilder debugContainerBuilder,
+            UIDocument rootUIDocument,
+            UIDocument cursorUIDocument)
         {
             this.dclInput = dclInput;
             this.cursor = cursor;
@@ -54,6 +64,10 @@ namespace DCL.PluginSystem.Global
             this.assetsProvisioner = assetsProvisioner;
             this.canvas = canvas;
             this.messageBus = messageBus;
+            this.mvcManager = mvcManager;
+            this.debugContainerBuilder = debugContainerBuilder;
+            this.rootUIDocument = rootUIDocument;
+            this.cursorUIDocument = cursorUIDocument;
 
             dclInput.Enable();
         }
@@ -84,6 +98,7 @@ namespace DCL.PluginSystem.Global
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, messageBus);
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas);
+            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, cursorUIDocument);
         }
 
         public void Dispose()
