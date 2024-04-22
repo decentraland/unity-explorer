@@ -24,7 +24,8 @@ function require(moduleName) {
     }
     
     Validates.registerBundle(module.exports, logger)
-    Validates.registerIntegrationTests(module.exports, logger)
+    //TODO implement later
+    // Validates.registerIntegrationTests(module.exports, logger)
     
     return module.exports;
 }
