@@ -6,7 +6,6 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
 using DCL.Optimization.Pools;
-using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -68,12 +67,12 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarEquippedData, PlayerSDKDataComponent>>(),
+                                Arg.Any<Action<PBAvatarEquippedData, PBAvatarEquippedData>>(),
                                 Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
-                                Arg.Is<PlayerSDKDataComponent>(comp =>
-                                    comp.Name == playerSDKData.Name
-                                    && comp.WearableUrns == playerSDKData.WearableUrns
-                                    && comp.EmoteUrns == playerSDKData.EmoteUrns));
+                                Arg.Is<PBAvatarEquippedData>(comp =>
+                                    comp.WearableUrns.Count == playerSDKData.WearableUrns.Count
+                                    && comp.WearableUrns[0] == playerSDKData.WearableUrns.First()
+                                    && comp.EmoteUrns[0] == playerSDKData.EmoteUrns.First()));
 
             AssertPBComponentMatchesPlayerSDKData();
         }
@@ -88,12 +87,12 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarEquippedData, PlayerSDKDataComponent>>(),
+                                Arg.Any<Action<PBAvatarEquippedData, PBAvatarEquippedData>>(),
                                 Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
-                                Arg.Is<PlayerSDKDataComponent>(comp =>
-                                    comp.Name == playerSDKData.Name
-                                    && comp.WearableUrns == playerSDKData.WearableUrns
-                                    && comp.EmoteUrns == playerSDKData.EmoteUrns));
+                                Arg.Is<PBAvatarEquippedData>(comp =>
+                                    comp.WearableUrns.Count == playerSDKData.WearableUrns.Count
+                                    && comp.WearableUrns[0] == playerSDKData.WearableUrns.First()
+                                    && comp.EmoteUrns[0] == playerSDKData.EmoteUrns.First()));
 
             AssertPBComponentMatchesPlayerSDKData();
 
@@ -138,7 +137,6 @@ namespace DCL.Multiplayer.SDK.Tests
             ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarEquippedData>(playerSDKData.CRDTEntity.Id);
             Assert.IsFalse(world.Has<PBAvatarEquippedData>(entity));
             Assert.IsFalse(world.Has<CRDTEntity>(entity));
-            Assert.IsTrue(world.Has<DeleteEntityIntention>(entity));
         }
 
         private void AssertPBComponentMatchesPlayerSDKData()

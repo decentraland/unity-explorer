@@ -5,7 +5,6 @@ using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
 using DCL.Optimization.Pools;
-using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using ECS.Unity.ColorComponent;
 using NSubstitute;
@@ -60,14 +59,15 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarBase, PlayerSDKDataComponent>>(),
+                                Arg.Any<Action<PBAvatarBase, PBAvatarBase>>(),
                                 Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
-                                Arg.Is<PlayerSDKDataComponent>(comp =>
+                                Arg.Is<PBAvatarBase>(comp =>
                                     comp.Name == playerSDKData.Name
-                                    && comp.BodyShapeURN == playerSDKData.BodyShapeURN
-                                    && comp.EyesColor == playerSDKData.EyesColor
-                                    && comp.HairColor == playerSDKData.HairColor
-                                    && comp.SkinColor == playerSDKData.SkinColor));
+                                    && comp.BodyShapeUrn == playerSDKData.BodyShapeURN
+                                    && comp.EyesColor.ToUnityColor() == playerSDKData.EyesColor
+                                    && comp.HairColor.ToUnityColor() == playerSDKData.HairColor
+                                    && comp.SkinColor.ToUnityColor() == playerSDKData.SkinColor
+                                ));
 
             AssertPBComponentMatchesPlayerSDKData();
         }
@@ -82,14 +82,15 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarBase, PlayerSDKDataComponent>>(),
+                                Arg.Any<Action<PBAvatarBase, PBAvatarBase>>(),
                                 Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
-                                Arg.Is<PlayerSDKDataComponent>(comp =>
+                                Arg.Is<PBAvatarBase>(comp =>
                                     comp.Name == playerSDKData.Name
-                                    && comp.BodyShapeURN == playerSDKData.BodyShapeURN
-                                    && comp.EyesColor == playerSDKData.EyesColor
-                                    && comp.HairColor == playerSDKData.HairColor
-                                    && comp.SkinColor == playerSDKData.SkinColor));
+                                    && comp.BodyShapeUrn == playerSDKData.BodyShapeURN
+                                    && comp.EyesColor.ToUnityColor() == playerSDKData.EyesColor
+                                    && comp.HairColor.ToUnityColor() == playerSDKData.HairColor
+                                    && comp.SkinColor.ToUnityColor() == playerSDKData.SkinColor
+                                ));
 
             AssertPBComponentMatchesPlayerSDKData();
 
@@ -127,7 +128,6 @@ namespace DCL.Multiplayer.SDK.Tests
             ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarBase>(playerSDKData.CRDTEntity.Id);
             Assert.IsFalse(world.Has<PBAvatarBase>(entity));
             Assert.IsFalse(world.Has<CRDTEntity>(entity));
-            Assert.IsTrue(world.Has<DeleteEntityIntention>(entity));
         }
 
         private void AssertPBComponentMatchesPlayerSDKData()

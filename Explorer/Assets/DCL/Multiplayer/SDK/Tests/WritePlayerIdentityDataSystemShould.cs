@@ -55,9 +55,9 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBPlayerIdentityData, PlayerSDKDataComponent>>(),
+                                Arg.Any<Action<PBPlayerIdentityData, PBPlayerIdentityData>>(),
                                 Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
-                                Arg.Is<PlayerSDKDataComponent>(comp =>
+                                Arg.Is<PBPlayerIdentityData>(comp =>
                                     comp.Address == playerSDKData.Address
                                     && comp.IsGuest == playerSDKData.IsGuest));
 

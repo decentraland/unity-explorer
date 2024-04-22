@@ -96,7 +96,6 @@ namespace DCL.Multiplayer.SDK.Systems
         private void HandleComponentRemoval(Entity entity, ref CRDTEntity crdtEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(crdtEntity);
-            World.Add(entity, new DeleteEntityIntention());
             World.Remove<PBAvatarEquippedData, CRDTEntity>(entity);
         }
     }
