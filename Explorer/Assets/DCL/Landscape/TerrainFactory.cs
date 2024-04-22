@@ -23,14 +23,10 @@ namespace DCL.Landscape
 
         public Transform InstantiateSingletonTerrainRoot(string terrainObjectName)
         {
-            var rootGo = GameObject.Find(terrainObjectName);
+            if (Root != null)
+                UnityObjectUtils.SafeDestroy(Root.gameObject);
 
-            if (rootGo != null)
-                UnityObjectUtils.SafeDestroy(Root);
-
-            rootGo = new GameObject(terrainObjectName);
-
-            Root = rootGo.transform;
+            Root = new GameObject(terrainObjectName).transform;
             return Root;
         }
 

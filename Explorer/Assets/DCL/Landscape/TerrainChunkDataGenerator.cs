@@ -348,5 +348,38 @@ namespace DCL.Landscape
                 }
             }
         }
+
+        public void DigHoles(TerrainModel terrainModel, ChunkModel chunkModel, int parcelSize, bool withOwned = true)
+        {
+            var holes = new bool[terrainModel.ChunkSizeInUnits, terrainModel.ChunkSizeInUnits];
+
+            for (var x = 0; x < terrainModel.ChunkSizeInUnits; x++)
+            for (var y = 0; y < terrainModel.ChunkSizeInUnits; y++)
+                holes[x, y] = true;
+
+            if (withOwned && chunkModel.OccupiedParcels.Count > 0)
+                foreach (int2 parcel in chunkModel.OccupiedParcels)
+                {
+                    int x = (parcel.x - chunkModel.MinParcel.x) * parcelSize;
+                    int y = (parcel.y - chunkModel.MinParcel.y) * parcelSize;
+
+                    for (int i = x; i < x + parcelSize; i++)
+                    for (int j = y; j < y + parcelSize; j++)
+                        holes[j, i] = false;
+                }
+
+            if (chunkModel.OutOfTerrainParcels.Count > 0)
+                foreach (int2 parcel in chunkModel.OutOfTerrainParcels)
+                {
+                    int x = (parcel.x - chunkModel.MinParcel.x) * parcelSize;
+                    int y = (parcel.y - chunkModel.MinParcel.y) * parcelSize;
+
+                    for (int i = x; i < x + parcelSize; i++)
+                    for (int j = y; j < y + parcelSize; j++)
+                        holes[j, i] = false;
+                }
+
+            chunkModel.TerrainData.SetHoles(0, 0, holes);
+        }
     }
 }

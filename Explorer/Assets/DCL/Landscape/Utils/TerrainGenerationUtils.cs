@@ -1,4 +1,5 @@
 ﻿using DCL.Landscape.Jobs;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -8,6 +9,26 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
+
+        public static void ExtractEmptyParcels(TerrainModel terrainModel, ref NativeArray<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        {
+            var tempEmptyParcels = new List<int2>();
+
+            for (int x = terrainModel.MinParcel.x; x <= terrainModel.MaxParcel.x; x++)
+            for (int y = terrainModel.MinParcel.y; y <= terrainModel.MaxParcel.y; y++)
+            {
+                var currentParcel = new int2(x, y);
+
+                if (!ownedParcels.Contains(currentParcel))
+                    tempEmptyParcels.Add(currentParcel);
+            }
+
+            emptyParcels = new NativeArray<int2>(tempEmptyParcels.Count, Allocator.Persistent);
+
+            for (var i = 0; i < tempEmptyParcels.Count; i++)
+                emptyParcels[i] = tempEmptyParcels[i];
+        }
+
         public static JobHandle SetupEmptyParcelsJobs(
             ref NativeParallelHashMap<int2, int> emptyParcelsData,
             ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData,

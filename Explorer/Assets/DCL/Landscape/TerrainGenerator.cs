@@ -140,9 +140,7 @@ namespace DCL.Landscape
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Empty Parcel Setup")))
                     {
-                        if (emptyParcels.Length == 0)
-                            ExtractEmptyParcels(terrainModel);
-
+                        TerrainGenerationUtils.ExtractEmptyParcels(terrainModel, ref emptyParcels, ref ownedParcels);
                         await SetupEmptyParcelDataAsync(terrainModel, cancellationToken);
                     }
 
@@ -195,57 +193,7 @@ namespace DCL.Landscape
             }
         }
 
-        private void ExtractEmptyParcels(TerrainModel terrainModel)
-        {
-            var tempEmptyParcels = new List<int2>();
 
-            for (int x = terrainModel.MinParcel.x; x <= terrainModel.MaxParcel.x; x++)
-            for (int y = terrainModel.MinParcel.y; y <= terrainModel.MaxParcel.y; y++)
-            {
-                var currentParcel = new int2(x, y);
-
-                if (!ownedParcels.Contains(currentParcel))
-                    tempEmptyParcels.Add(currentParcel);
-            }
-
-            emptyParcels = new NativeArray<int2>(tempEmptyParcels.Count, Allocator.Persistent);
-
-            for (var i = 0; i < tempEmptyParcels.Count; i++)
-                emptyParcels[i] = tempEmptyParcels[i];
-        }
-
-        private static void DigHoles(TerrainModel terrainModel, ChunkModel chunkModel, int parcelSize)
-        {
-            var holes = new bool[terrainModel.ChunkSizeInUnits, terrainModel.ChunkSizeInUnits];
-
-            for (var x = 0; x < terrainModel.ChunkSizeInUnits; x++)
-            for (var y = 0; y < terrainModel.ChunkSizeInUnits; y++)
-                holes[x, y] = true;
-
-            if (chunkModel.OccupiedParcels.Count > 0)
-                foreach (int2 parcel in chunkModel.OccupiedParcels)
-                {
-                    int x = (parcel.x - chunkModel.MinParcel.x) * parcelSize;
-                    int y = (parcel.y - chunkModel.MinParcel.y) * parcelSize;
-
-                    for (int i = x; i < x + parcelSize; i++)
-                    for (int j = y; j < y + parcelSize; j++)
-                        holes[j, i] = false;
-                }
-
-            if (chunkModel.OutOfTerrainParcels.Count > 0)
-                foreach (int2 parcel in chunkModel.OutOfTerrainParcels)
-                {
-                    int x = (parcel.x - chunkModel.MinParcel.x) * parcelSize;
-                    int y = (parcel.y - chunkModel.MinParcel.y) * parcelSize;
-
-                    for (int i = x; i < x + parcelSize; i++)
-                    for (int j = y; j < y + parcelSize; j++)
-                        holes[j, i] = false;
-                }
-
-            chunkModel.TerrainData.SetHoles(0, 0, holes);
-        }
 
         private async Task BugWorkaroundAsync()
         {
@@ -314,7 +262,7 @@ namespace DCL.Landscape
             if (withHoles)
             {
                 using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
-                    DigHoles(terrainModel, chunkModel, parcelSize);
+                    chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize);
                 // await DigHolesAsync(terrainDataDictionary, cancellationToken);
             }
 
