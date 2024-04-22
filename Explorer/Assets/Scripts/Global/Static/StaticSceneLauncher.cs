@@ -13,6 +13,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using UnityEngine;
 
 namespace Global.Static
@@ -52,6 +53,10 @@ namespace Global.Static
         {
             try
             {
+                // Initialize .NET logging ASAP since it might be used by another systems
+                // Otherwise we might get exceptions in different platforms
+                DotNetLoggingPlugin.Initialize();
+                
                 if (useStoredCredentials
 
                     // avoid storing invalid credentials
