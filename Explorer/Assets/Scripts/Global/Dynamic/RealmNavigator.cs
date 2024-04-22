@@ -130,6 +130,7 @@ namespace Global.Dynamic
                 ownedParcels.Add(parcel);
 
             await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
+            ownedParcels.Dispose();
         }
 
         private void SwitchMiscVisibility(bool isVisible)
