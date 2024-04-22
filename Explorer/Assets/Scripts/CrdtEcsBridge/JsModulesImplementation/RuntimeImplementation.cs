@@ -16,6 +16,7 @@ using System.Threading;
 using Unity.Collections;
 using UnityEngine.Networking;
 using Utility;
+using Utility.Multithreading;
 
 namespace CrdtEcsBridge.JsModulesImplementation
 {
@@ -79,6 +80,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
         {
+            await using var _ = await ExecuteOnMainThreadScope.NewScopeWithReturnOnThreadPoolAsync();
             float seconds = await timeProvider.GetWorldTimeAsync(ct);
 
             return new IRuntime.GetWorldTimeResponse
