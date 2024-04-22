@@ -109,7 +109,7 @@ namespace DCL.Landscape
 
             await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
-            chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
+            chunkModel.TerrainData.SetHoles(0, 0, chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false));
         }
 
         private async UniTask SetupEmptyParcelDataAsync(CancellationToken cancellationToken, TerrainModel terrainModel)

@@ -262,7 +262,22 @@ namespace DCL.Landscape
                 if (withHoles)
                 {
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Holes")))
-                        chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize);
+                    {
+                        if (localCache.IsValid())
+                        {
+                            using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"- [Cache] DigHoles from Cache {t}ms")))
+                            {
+                                chunkModel.TerrainData.SetHoles(0, 0, localCache.GetHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y));
+                                await UniTask.Yield(cancellationToken);
+                            }
+                        }
+                        else
+                        {
+                            bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize);
+                            chunkModel.TerrainData.SetHoles(0, 0, holes);
+                            localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
+                        }
+                    }
 
                     // await DigHolesAsync(terrainDataDictionary, cancellationToken);
                 }

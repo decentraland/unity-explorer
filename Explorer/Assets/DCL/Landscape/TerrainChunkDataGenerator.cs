@@ -349,7 +349,7 @@ namespace DCL.Landscape
             }
         }
 
-        public void DigHoles(TerrainModel terrainModel, ChunkModel chunkModel, int parcelSize, bool withOwned = true)
+        public bool[,] DigHoles(TerrainModel terrainModel, ChunkModel chunkModel, int parcelSize, bool withOwned = true)
         {
             var holes = new bool[terrainModel.ChunkSizeInUnits, terrainModel.ChunkSizeInUnits];
 
@@ -379,7 +379,7 @@ namespace DCL.Landscape
                         holes[j, i] = false;
                 }
 
-            chunkModel.TerrainData.SetHoles(0, 0, holes);
+            return holes;
         }
     }
 }
