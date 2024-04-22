@@ -3,8 +3,11 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.Backpack;
 using DCL.DebugUtilities;
+using DCL.EmotesWheel;
 using DCL.Multiplayer.Emotes.Interfaces;
+using DCL.Profiles.Self;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
@@ -18,7 +21,7 @@ using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
 
 namespace DCL.PluginSystem.Global
 {
-    public class EmotePlugin : IDCLGlobalPlugin<EmotePlugin.EmoteSettings>
+    public class EmotePlugin : DCLGlobalPluginBase<EmotePlugin.EmoteSettings>
     {
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
@@ -26,26 +29,35 @@ namespace DCL.PluginSystem.Global
         private readonly IEmotesMessageBus messageBus;
         private readonly DebugContainerBuilder debugBuilder;
         private readonly IAssetsProvisioner assetsProvisioner;
+        private readonly ISelfProfile selfProfile;
         private AudioSource? audioSourceReference;
+        private EmotesWheelController? emotesWheelController;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteCache emoteCache,
             IRealmData realmData,
             IEmotesMessageBus messageBus,
             DebugContainerBuilder debugBuilder,
-            IAssetsProvisioner assetsProvisioner)
+            IAssetsProvisioner assetsProvisioner,
+            ISelfProfile selfProfile)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
             this.assetsProvisioner = assetsProvisioner;
+            this.selfProfile = selfProfile;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
         }
 
-        public void Dispose() { }
+        public override void Dispose()
+        {
+            base.Dispose();
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+            emotesWheelController?.Dispose();
+        }
+
+        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var mutexSync = new MutexSync();
 
@@ -62,15 +74,28 @@ namespace DCL.PluginSystem.Global
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
         }
 
-        public async UniTask InitializeAsync(EmoteSettings settings, CancellationToken ct)
+        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)
         {
             EmbeddedEmotesData embeddedEmotesData = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmbeddedEmotes, ct)).Value;
+
+            // TODO: convert into an async operation so we dont increment the loading times at app's startup
             IEnumerable<IEmote> embeddedEmotes = embeddedEmotesData.GenerateEmotes();
 
             audioSourceReference = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteAudioSource, ct)).Value.GetComponent<AudioSource>();
 
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
+
+            EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
+                                               .Value.GetComponent<EmotesWheelView>();
+
+            NftTypeIconSO emoteWheelRarityBackgrounds = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmoteWheelRarityBackgrounds, ct)).Value;
+
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            {
+                emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
+                    selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity);
+            };
         }
 
         [Serializable]
@@ -78,6 +103,9 @@ namespace DCL.PluginSystem.Global
         {
             [field: SerializeField] public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
+
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>

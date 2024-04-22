@@ -101,16 +101,6 @@ MonoBehaviour:
           - InputAction: 13
             Key: 4
             Icon: {fileID: 0}
-        <hoverMaterial>k__BackingField:
-          m_AssetGUID: 31f3cd961c052c84baf27b3938e5b0f4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <hoverOutOfRangeMaterial>k__BackingField:
-          m_AssetGUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 1501337502808539138
       type: {class: ExplorePanelPlugin/ExplorePanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -292,12 +282,6 @@ MonoBehaviour:
           m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
           m_EditorAssetChanged: 1
-        <CrossHairCameraPan>k__BackingField:
-          m_AssetGUID: 25a27c814a51d4a67a7ebd0b3b672284
-          m_SubObjectName: CursorDragCamera
-          m_SubObjectType: UnityEngine.Sprite, UnityEngine.CoreModule, Version=0.0.0.0,
-            Culture=neutral, PublicKeyToken=null
-          m_EditorAssetChanged: 1
     - rid: 4340256219339423747
       type: {class: CharacterPreviewPlugin/CharacterPreviewSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -428,6 +412,16 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EmoteAudioSource>k__BackingField:
           m_AssetGUID: 62f68ba25f6c905428b36a081b072566
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmotesWheelPrefab>k__BackingField:
+          m_AssetGUID: 58c436690cb47644492bc0d655dbcce8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmoteWheelRarityBackgrounds>k__BackingField:
+          m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
