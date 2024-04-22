@@ -1,3 +1,4 @@
+import { GetRealmRequest, GetRealmResponse } from "../../gen/apis";
 import { IntegrationTestContext } from "./source/integrationTestsSource";
 
 export async function getRealmTest(result: IntegrationTestContext): Promise<void> {
