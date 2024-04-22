@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
+using DCL.DebugUtilities;
 using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Crosshair;
@@ -40,6 +41,9 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly UIDocument canvas;
         private readonly MVCManager mvcManager;
+        private readonly DebugContainerBuilder debugContainerBuilder;
+        private readonly UIDocument rootUIDocument;
+        private readonly UIDocument cursorUIDocument;
         private CrosshairCanvas crosshairCanvas;
 
         public InputPlugin(
@@ -49,7 +53,10 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             UIDocument canvas,
             MultiplayerEmotesMessageBus messageBus,
-            MVCManager mvcManager)
+            MVCManager mvcManager,
+            DebugContainerBuilder debugContainerBuilder,
+            UIDocument rootUIDocument,
+            UIDocument cursorUIDocument)
         {
             this.dclInput = dclInput;
             this.cursor = cursor;
@@ -58,6 +65,9 @@ namespace DCL.PluginSystem.Global
             this.canvas = canvas;
             this.messageBus = messageBus;
             this.mvcManager = mvcManager;
+            this.debugContainerBuilder = debugContainerBuilder;
+            this.rootUIDocument = rootUIDocument;
+            this.cursorUIDocument = cursorUIDocument;
 
             dclInput.Enable();
         }
@@ -88,7 +98,7 @@ namespace DCL.PluginSystem.Global
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
             UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, messageBus);
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas);
-            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager);
+            UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, cursorUIDocument);
         }
 
         public void Dispose()
