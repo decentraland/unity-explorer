@@ -198,7 +198,7 @@ namespace DCL.CharacterCamera.Systems
         }
 
         [Query]
-        private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input)
+        private void HandleOffset([Data] float dt, ref CameraComponent cameraComponent, ref ICinemachinePreset cinemachinePreset, in CameraInput input, in CursorComponent cursorComponent)
         {
             if (cameraComponent.Mode is not (CameraMode.DroneView or CameraMode.ThirdPerson))
                 return;
@@ -223,6 +223,9 @@ namespace DCL.CharacterCamera.Systems
                 offset = Vector3.Lerp(cameraData.OffsetBottom, cameraData.OffsetMid, value * 2);
             else
                 offset = Vector3.Lerp(cameraData.OffsetMid, cameraData.OffsetTop, (value - 0.5f) * 2);
+
+            if (cursorComponent.CursorState != CursorState.Locked)
+                thirdPersonCameraShoulder = ThirdPersonCameraShoulder.Center;
 
             offset.x *= thirdPersonCameraShoulder switch
                         {
