@@ -119,9 +119,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             worldSyncBufferSampler.End();
 
-            instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
-
             ApplySyncCommandBuffer(worldSyncBuffer);
+            instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
             return returnData ? SerializeOutgoingCRDTMessages() : PoolableByteArray.EMPTY;
         }
@@ -217,7 +216,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 // We are interested in LWW messages only,
                 switch (m.message.Type)
                 {
-                    case CRDTMessageType.DELETE_ENTITY:
+                    case CRDTMessageType.DELETE_COMPONENT:
                     case CRDTMessageType.PUT_COMPONENT:
                         // instead of processing via CRDTProtocol.ProcessMessage
                         // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)

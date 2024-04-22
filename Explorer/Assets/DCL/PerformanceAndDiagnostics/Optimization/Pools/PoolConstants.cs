@@ -2,6 +2,13 @@ namespace DCL.Optimization.Pools
 {
     public static class PoolConstants
     {
+        public const bool CHECK_COLLECTIONS =
+            #if DEBUG_POOLS
+true;
+            #else
+false;
+            #endif
+
         /// <summary>
         ///     Initial capacity of pools that should exist per scene context
         /// </summary>

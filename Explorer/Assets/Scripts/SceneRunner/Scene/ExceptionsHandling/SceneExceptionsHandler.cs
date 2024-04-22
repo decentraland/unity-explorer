@@ -1,4 +1,5 @@
 using Arch.SystemGroups;
+using CRDT.Protocol;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
@@ -20,8 +21,9 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         private readonly ExceptionEntry?[] ecsExceptionsBag = new ExceptionEntry?[ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE];
 
-        private ISceneStateProvider sceneState;
+        private ISceneStateProvider? sceneState;
         private SceneShortInfo sceneShortInfo;
+        private CRDTProtocol? crdtProtocol;
 
         private SceneExceptionsHandler() { }
 
@@ -84,10 +86,10 @@ namespace SceneRunner.Scene.ExceptionsHandling
             if (validRangeEndIndex == ecsExceptionsBag.Length - 1 && validRangeStartIndex == 0)
             {
                 // log an aggregated exception
-                ReportHub.LogException(new SceneExecutionException(ecsExceptionsBag.Select(e => e.Value.Exception).Append(exception), new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo)));
+                ReportHub.LogException(new SceneExecutionException(ecsExceptionsBag.Select(e => e!.Value.Exception).Append(exception), new ReportData(ReportCategory.ECS, sceneShortInfo: sceneShortInfo)));
 
                 // Put the scene into the error state
-                sceneState.State = SceneState.EcsError;
+                sceneState!.State = SceneState.EcsError;
                 return ISystemGroupExceptionHandler.Action.Suspend;
             }
 
@@ -107,7 +109,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         public void OnEngineException(Exception exception, string category)
         {
-            sceneState.State = SceneState.EngineError;
+            sceneState!.State = SceneState.EngineError;
             ReportHub.LogException(exception, new ReportData(category, sceneShortInfo: sceneShortInfo));
         }
 
@@ -117,17 +119,18 @@ namespace SceneRunner.Scene.ExceptionsHandling
             if (sceneState == null) return;
 
             // For javascript no tolerance
-            sceneState.State = SceneState.JavaScriptError;
+            //sceneState.State = SceneState.JavaScriptError;
 
             ReportHub.LogException(exception,
-                new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo));
+                new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber));
         }
 
-        public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)
+        public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo, CRDTProtocol crdtProtocol)
         {
             SceneExceptionsHandler handler = POOL.Get();
             handler.sceneState = sceneState;
             handler.sceneShortInfo = sceneShortInfo;
+            handler.crdtProtocol = crdtProtocol;
             return handler;
         }
 
