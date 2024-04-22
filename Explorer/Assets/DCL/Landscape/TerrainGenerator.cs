@@ -59,14 +59,16 @@ namespace DCL.Landscape
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
-        private bool isTerrainGenerated;
         private bool showTerrainByDefault;
 
         private Transform rootGo;
-
         public Transform Ocean { get; private set; }
-        public List<Transform> Cliffs { get; } = new ();
         public Transform Wind { get; private set; }
+        public IReadOnlyList<Transform> Cliffs { get; private set; }
+
+        public IReadOnlyList<Terrain> Terrains => terrains;
+
+        public bool IsTerrainGenerated { get; private set; }
 
         public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -91,12 +93,6 @@ namespace DCL.Landscape
         {
             UnityObjectUtils.SafeDestroy(rootGo);
         }
-
-        public IReadOnlyList<Terrain> GetTerrains() =>
-            terrains;
-
-        public bool IsTerrainGenerated() =>
-            isTerrainGenerated;
 
         public void SwitchVisibility(bool isVisible)
         {
@@ -131,7 +127,7 @@ namespace DCL.Landscape
                         Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
 
-                        boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
+                        Cliffs = boundariesGenerator.SpawnCliffs(terrainModel.MinInUnits, terrainModel.MaxInUnits);
                         boundariesGenerator.SpawnBorderColliders(terrainModel.MinInUnits, terrainModel.MaxInUnits, terrainModel.SizeInUnits);
                     }
 
@@ -190,7 +186,7 @@ namespace DCL.Landscape
                 if (!localCache.IsValid())
                     localCache.Save();
 
-                isTerrainGenerated = true;
+                IsTerrainGenerated = true;
             }
         }
 
@@ -277,6 +273,7 @@ namespace DCL.Landscape
                             chunkModel.TerrainData.SetHoles(0, 0, holes);
                             localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
                         }
+
                         // await DigHolesAsync(terrainDataDictionary, cancellationToken);
                     }
                 }

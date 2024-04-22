@@ -1,4 +1,5 @@
-﻿using Unity.Mathematics;
+﻿using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace DCL.Landscape
@@ -14,32 +15,34 @@ namespace DCL.Landscape
             this.parcelSize = parcelSize;
         }
 
-        public Transform SpawnCliffs(int2 minInUnits, int2 maxInUnits)
+        public IReadOnlyList<Transform> SpawnCliffs(int2 minInUnits, int2 maxInUnits)
         {
+            var cliffs = new List<Transform>();
+
             Transform cliffsRoot = factory.CreateCliffsRoot(factory.Root);
 
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, minInUnits.y), Quaternion.Euler(0, 180, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, maxInUnits.y), Quaternion.Euler(0, 270, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(maxInUnits.x, 0, minInUnits.y), Quaternion.Euler(0, 90, 0));
-            factory.CreateCliffCorner(cliffsRoot, new Vector3(maxInUnits.x, 0, maxInUnits.y), Quaternion.identity);
+            cliffs.Add(factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, minInUnits.y), Quaternion.Euler(0, 180, 0)));
+            cliffs.Add(factory.CreateCliffCorner(cliffsRoot, new Vector3(minInUnits.x, 0, maxInUnits.y), Quaternion.Euler(0, 270, 0)));
+            cliffs.Add(factory.CreateCliffCorner(cliffsRoot, new Vector3(maxInUnits.x, 0, minInUnits.y), Quaternion.Euler(0, 90, 0)));
+            cliffs.Add(factory.CreateCliffCorner(cliffsRoot, new Vector3(maxInUnits.x, 0, maxInUnits.y), Quaternion.identity));
 
             // Horizontal layers
             for (int i = minInUnits.x; i < maxInUnits.x; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(i, 0, maxInUnits.y), Quaternion.identity);
+                cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(i, 0, maxInUnits.y), Quaternion.identity));
 
             for (int i = minInUnits.x; i < maxInUnits.x; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(i + parcelSize, 0, minInUnits.y), Quaternion.Euler(0, 180, 0));
+                cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(i + parcelSize, 0, minInUnits.y), Quaternion.Euler(0, 180, 0)));
 
             // Vertical layers
             for (int i = minInUnits.y; i < maxInUnits.y; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(minInUnits.x, 0, i), Quaternion.Euler(0, 270, 0));
+                cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(minInUnits.x, 0, i), Quaternion.Euler(0, 270, 0)));
 
             for (int i = minInUnits.y; i < maxInUnits.y; i += parcelSize)
-                factory.CreateCliffSide(cliffsRoot, new Vector3(maxInUnits.x, 0, i + parcelSize), Quaternion.Euler(0, 90, 0));
+                cliffs.Add(factory.CreateCliffSide(cliffsRoot, new Vector3(maxInUnits.x, 0, i + parcelSize), Quaternion.Euler(0, 90, 0)));
 
             cliffsRoot.localPosition = Vector3.zero;
 
-            return cliffsRoot;
+            return cliffs;
         }
 
         public Transform SpawnBorderColliders(int2 minInUnits, int2 maxInUnits, int2 sidesLength)

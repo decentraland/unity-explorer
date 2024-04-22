@@ -44,10 +44,12 @@ namespace DCL.Landscape
             return cliffsRoot;
         }
 
-        public void CreateCliffCorner(Transform parent, Vector3 at, Quaternion rotation)
+        public Transform CreateCliffCorner(Transform parent, Vector3 at, Quaternion rotation)
         {
             Transform neCorner = Object.Instantiate(terrainGenData.cliffCorner, at, rotation).transform;
             neCorner.SetParent(parent, true);
+
+            return neCorner;
         }
 
         public Transform CreateCliffSide(Transform parent, Vector3 at, Quaternion rotation)
