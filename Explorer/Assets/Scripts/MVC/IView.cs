@@ -13,5 +13,7 @@ namespace MVC
         UniTask ShowAsync(CancellationToken ct);
 
         UniTask HideAsync(CancellationToken ct, bool isInstant = false);
+
+        void SetCanvasActive(bool isActive);
     }
 }
