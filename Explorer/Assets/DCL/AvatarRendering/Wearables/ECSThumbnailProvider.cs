@@ -32,10 +32,8 @@ namespace DCL.AvatarRendering.Wearables
             var alreadyRunningPromise = false;
 
             world.Query(in new QueryDescription().WithAll<IAvatarAttachment, ThumbnailPromise, IPartitionComponent>(),
-                entity =>
+                (ref IAvatarAttachment a) =>
                 {
-                    ref IAvatarAttachment a = ref world.Get<IAvatarAttachment>(entity);
-
                     if (a.GetThumbnail().Equals(avatarAttachment.GetThumbnail()))
                         alreadyRunningPromise = true;
                 });
