@@ -1111,7 +1111,7 @@ MonoBehaviour:
   m_BindingMode: 4
   m_SplineCurvature: 1
   m_Orbits:
-  - m_Height: 4
+  - m_Height: 4.5
     m_Radius: 1.2
   - m_Height: 1
     m_Radius: 4.5
