@@ -90,7 +90,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            string sourceCode = await webJsSources.SceneSourceCode(path, ct);
+            string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
             return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
@@ -102,12 +102,12 @@ namespace SceneRuntime.Factory
 
         private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)
         {
-            string validateCode = await webJsSources.SceneSourceCode(
+            string validateCode = await webJsSources.SceneSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
                 ct
             );
 
-            string initCode = await webJsSources.SceneSourceCode(
+            string initCode = await webJsSources.SceneSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
                 ct
             );
@@ -116,7 +116,7 @@ namespace SceneRuntime.Factory
         }
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
-            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCode(
+            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
 
         private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
