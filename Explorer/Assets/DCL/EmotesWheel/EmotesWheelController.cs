@@ -2,13 +2,16 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using MVC;
 using System.Threading;
+using UnityEngine;
 using Utility;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.EmotesWheel
 {
@@ -19,6 +22,7 @@ namespace DCL.EmotesWheel
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly IThumbnailProvider thumbnailProvider;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -31,7 +35,8 @@ namespace DCL.EmotesWheel
             IEmoteCache emoteCache,
             NftTypeIconSO rarityBackgrounds,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            IThumbnailProvider thumbnailProvider)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -39,6 +44,7 @@ namespace DCL.EmotesWheel
             this.rarityBackgrounds = rarityBackgrounds;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.thumbnailProvider = thumbnailProvider;
         }
 
         protected override void OnViewInstantiated()
@@ -136,11 +142,9 @@ namespace DCL.EmotesWheel
             view.Thumbnail.gameObject.SetActive(false);
             view.LoadingSpinner.SetActive(true);
 
-            // TODO: make this through IThumbnailProvider when merged
-            do await UniTask.Delay(250, cancellationToken: ct);
-            while (emote.ThumbnailAssetResult == null);
+            Sprite? sprite = await thumbnailProvider.GetAsync(emote, ct);
 
-            view.Thumbnail.sprite = emote.ThumbnailAssetResult.Value.Asset;
+            view.Thumbnail.sprite = sprite;
             view.Thumbnail.gameObject.SetActive(true);
             view.LoadingSpinner.SetActive(false);
         }

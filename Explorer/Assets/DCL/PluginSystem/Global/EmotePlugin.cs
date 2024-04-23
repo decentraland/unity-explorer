@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
@@ -97,8 +98,10 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
+                IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World);
+
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
-                    selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity);
+                    selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider);
 
                 mvcManager.RegisterController(emotesWheelController);
             };
