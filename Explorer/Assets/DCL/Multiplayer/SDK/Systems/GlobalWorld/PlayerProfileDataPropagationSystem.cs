@@ -41,18 +41,18 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         protected override void Update(float t)
         {
-            RemovePlayerSDKDataOnOutsideCurrentSceneQuery(World);
+            RemoveComponentOnOutsideCurrentSceneQuery(World);
 
             HandlePlayerDisconnectQuery(World);
 
-            UpdatePlayerSDKDataQuery(World);
+            UpdatePlayerProfileDataComponentQuery(World);
 
-            AddPlayerSDKDataQuery(World);
+            AddPlayerProfileDataComponentQuery(World);
         }
 
         [Query]
         [None(typeof(PlayerProfileDataComponent), typeof(DeleteEntityIntention))]
-        private void AddPlayerSDKData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
+        private void AddPlayerProfileDataComponent(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
@@ -98,7 +98,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdatePlayerSDKData(ref Profile profile, ref PlayerProfileDataComponent playerProfileDataComponent)
+        private void UpdatePlayerProfileDataComponent(ref Profile profile, ref PlayerProfileDataComponent playerProfileDataComponent)
         {
             if (!profile.IsDirty) return;
 
@@ -122,7 +122,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
 
         [Query]
-        private void RemovePlayerSDKDataOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerProfileDataComponent playerProfileDataComponent)
+        private void RemoveComponentOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerProfileDataComponent playerProfileDataComponent)
         {
             // Only target entities outside the current scene
             if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
@@ -133,13 +133,13 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
-                World.Remove<PlayerProfileDataComponent>(entity);
-
                 // Remove from whichever scene it was added
                 sceneEcsExecutor.World.Remove<PlayerProfileDataComponent>(playerProfileDataComponent.SceneWorldEntity);
             }
 
             FreeReservedEntity(playerProfileDataComponent.CRDTEntity.Id);
+
+            World.Remove<PlayerProfileDataComponent>(entity);
         }
 
         [Query]
@@ -155,13 +155,13 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
-                World.Remove<PlayerProfileDataComponent>(entity);
-
                 // Remove from whichever scene it was added
                 sceneEcsExecutor.World.Remove<PlayerProfileDataComponent>(playerProfileDataComponent.SceneWorldEntity);
             }
 
             FreeReservedEntity(playerProfileDataComponent.CRDTEntity.Id);
+
+            World.Remove<PlayerProfileDataComponent>(entity);
         }
 
         private int ReserveNextFreeEntity()

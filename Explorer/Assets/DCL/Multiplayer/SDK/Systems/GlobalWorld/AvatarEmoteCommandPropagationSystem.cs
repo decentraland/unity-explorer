@@ -26,15 +26,15 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         protected override void Update(float t)
         {
-            World.Remove<AvatarEmoteCommandComponent>(REMOVAL_QUERY);
-
             UpdateEmoteCommandDataComponentQuery(World);
             CreateEmoteCommandDataComponentQuery(World);
+
+            HandlePlayerDisconnectQuery(World);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(AvatarEmoteCommandComponent))]
-        private void CreateEmoteCommandDataComponent(in Entity entity, PlayerProfileDataComponent playerProfileData, CharacterEmoteIntent emoteIntent)
+        private void CreateEmoteCommandDataComponent(in Entity entity, ref PlayerProfileDataComponent playerProfileData, ref CharacterEmoteIntent emoteIntent)
         {
             ISceneFacade sceneFacade = playerProfileData.SceneFacade;
 
@@ -62,7 +62,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateEmoteCommandDataComponent(PlayerProfileDataComponent playerProfileData, CharacterEmoteIntent emoteIntent, ref AvatarEmoteCommandComponent emoteCommandComponent)
+        private void UpdateEmoteCommandDataComponent(ref PlayerProfileDataComponent playerProfileData, ref CharacterEmoteIntent emoteIntent, ref AvatarEmoteCommandComponent emoteCommandComponent)
         {
             ISceneFacade sceneFacade = playerProfileData.SceneFacade;
 
@@ -82,6 +82,17 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 using (sceneEcsExecutor.Sync.GetScope())
                     sceneEcsExecutor.World.Set(playerProfileData.SceneWorldEntity, emoteCommandComponent);
             }
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandlePlayerDisconnect(PlayerProfileDataComponent playerProfileDataComponent, ref AvatarEmoteCommandComponent emoteCommandComponent)
+        {
+            SceneEcsExecutor sceneEcsExecutor = playerProfileDataComponent.SceneFacade.EcsExecutor;
+
+            // External world access should be always synchronized (Global World calls into Scene World)
+            using (sceneEcsExecutor.Sync.GetScope())
+                sceneEcsExecutor.World.Set(playerProfileDataComponent.SceneWorldEntity, emoteCommandComponent);
         }
     }
 }

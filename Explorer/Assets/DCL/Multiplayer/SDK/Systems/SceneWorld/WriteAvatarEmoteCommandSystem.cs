@@ -39,10 +39,10 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         }
 
         [Query]
-        [None(typeof(PBAvatarEmoteCommand), typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PBAvatarEmoteCommand))]
         private void CreateAvatarEmoteCommand(in Entity entity, ref PlayerProfileDataComponent playerProfileDataComponent, ref AvatarEmoteCommandComponent emoteCommand)
         {
-            if (emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
+            if (!emoteCommand.IsDirty || emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
 
             var tickNumber = (int)sceneStateProvider.TickNumber;
 
