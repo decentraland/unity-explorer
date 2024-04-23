@@ -34,7 +34,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
-
             UpdateAvatarEmoteCommandQuery(World);
             CreateAvatarEmoteCommandQuery(World);
         }

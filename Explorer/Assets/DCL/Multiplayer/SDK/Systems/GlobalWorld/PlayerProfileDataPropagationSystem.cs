@@ -22,7 +22,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     // Currently implemented to track reserved entities only on the CURRENT SCENE
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
-    [UpdateBefore(typeof(AvatarEmoteCommandPropagationSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
