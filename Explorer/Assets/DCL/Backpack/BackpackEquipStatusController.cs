@@ -1,9 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes.Equipped;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -43,22 +41,22 @@ namespace DCL.Backpack
             this.ecsContextProvider = ecsContextProvider;
             this.selfProfile = selfProfile;
             this.forceRender = forceRender;
+
             backpackEventBus.EquipWearableEvent += equippedWearables.Equip;
             backpackEventBus.UnEquipWearableEvent += equippedWearables.UnEquip;
             backpackEventBus.PublishProfileEvent += PublishProfile;
             backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
-
             backpackEventBus.ForceRenderEvent += SetForceRender;
         }
 
         public void Dispose()
         {
-            backpackEventBus.EquipWearableEvent += equippedWearables.Equip;
-            backpackEventBus.UnEquipWearableEvent += equippedWearables.UnEquip;
-            backpackEventBus.PublishProfileEvent += PublishProfile;
-            backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
-            backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
+            backpackEventBus.EquipWearableEvent -= equippedWearables.Equip;
+            backpackEventBus.UnEquipWearableEvent -= equippedWearables.UnEquip;
+            backpackEventBus.PublishProfileEvent -= PublishProfile;
+            backpackEventBus.EquipEmoteEvent -= equippedEmotes.EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent -= equippedEmotes.UnEquipEmote;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             publishProfileCts?.SafeCancelAndDispose();
         }
@@ -75,7 +73,6 @@ namespace DCL.Backpack
         {
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
-                //TODO forceRender
                 await selfProfile.PublishAsync(ct);
                 var profile = await selfProfile.ProfileAsync(ct);
 
@@ -85,27 +82,6 @@ namespace DCL.Backpack
 
             publishProfileCts = publishProfileCts.SafeRestart();
             PublishProfileAsync(publishProfileCts.Token).Forget();
-        }
-
-        //This will retrieve the list of default hides for the current equipped wearables
-
-        //Manual hide override will be a separate task
-
-        //TODO retrieve logic from old renderer
-
-        public List<string> GetCurrentWearableHides()
-        {
-            List<string> hides = new List<string>();
-
-            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
-            {
-                IWearable? wearable = equippedWearables.Wearable(category);
-
-                if (wearable == null)
-                    continue;
-            }
-
-            return hides;
         }
 
         private void UpdateAvatarInWorld(Profile profile)

@@ -33,7 +33,7 @@ namespace ECS.Unity.Visibility.Systems
             if (!meshRendererComponent.IsDirty && !visibilityComponent.IsDirty)
                 return;
 
-            primitiveMeshRendererComponent.MeshRenderer.enabled = visibilityComponent.Visible;
+            primitiveMeshRendererComponent.MeshRenderer.enabled = visibilityComponent.GetVisible();
         }
 
         [Query]

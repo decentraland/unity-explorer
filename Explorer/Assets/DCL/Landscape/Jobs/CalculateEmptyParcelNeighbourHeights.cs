@@ -16,6 +16,8 @@ namespace DCL.Landscape.Jobs
         private NativeParallelHashMap<int2, EmptyParcelNeighborData>.ParallelWriter result;
 
         [ReadOnly] private readonly NativeParallelHashMap<int2, int>.ReadOnly emptyParcelHeight;
+        [ReadOnly] private readonly int2 minBoundsInParcels;
+        [ReadOnly] private readonly int2 maxBoundsInParcels;
         [ReadOnly] private readonly NativeArray<int2> emptyParcels;
         [ReadOnly] private NativeParallelHashSet<int2> ownedParcels;
 
@@ -28,11 +30,15 @@ namespace DCL.Landscape.Jobs
             in NativeArray<int2> emptyParcels,
             in NativeParallelHashSet<int2> ownedParcels,
             NativeParallelHashMap<int2, EmptyParcelNeighborData>.ParallelWriter result,
-            in NativeParallelHashMap<int2, int>.ReadOnly emptyParcelHeight)
+            in NativeParallelHashMap<int2, int>.ReadOnly emptyParcelHeight,
+            in int2 minBoundsInParcels,
+            in int2 maxBoundsInParcels)
         {
             this.emptyParcels = emptyParcels;
             this.ownedParcels = ownedParcels;
             this.emptyParcelHeight = emptyParcelHeight;
+            this.minBoundsInParcels = minBoundsInParcels;
+            this.maxBoundsInParcels = maxBoundsInParcels;
             this.result = result;
             up = new int2(0, 1);
             right = new int2(1, 0);
@@ -43,16 +49,17 @@ namespace DCL.Landscape.Jobs
         public void Execute(int index)
         {
             int2 position = emptyParcels[index];
-            var neighborData = new EmptyParcelNeighborData();
-
-            neighborData.LeftHeight = SafeGet(position + left);
-            neighborData.RightHeight = SafeGet(position + right);
-            neighborData.UpHeight = SafeGet(position + up);
-            neighborData.DownHeight = SafeGet(position + down);
-            neighborData.UpLeftHeight = SafeGet(position + up + left);
-            neighborData.UpRightHeight = SafeGet(position + up + right);
-            neighborData.DownLeftHeight = SafeGet(position + down + left);
-            neighborData.DownRightHeight = SafeGet(position + down + right);
+            var neighborData = new EmptyParcelNeighborData
+            {
+                LeftHeight = SafeGet(position + left),
+                RightHeight = SafeGet(position + right),
+                UpHeight = SafeGet(position + up),
+                DownHeight = SafeGet(position + down),
+                UpLeftHeight = SafeGet(position + up + left),
+                UpRightHeight = SafeGet(position + up + right),
+                DownLeftHeight = SafeGet(position + down + left),
+                DownRightHeight = SafeGet(position + down + right),
+            };
 
             result.TryAdd(position, neighborData);
         }
@@ -60,7 +67,7 @@ namespace DCL.Landscape.Jobs
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int SafeGet(int2 pos)
         {
-            if (IsOutOfBounds(pos.x) || IsOutOfBounds(pos.y) || ownedParcels.Contains(pos))
+            if (IsOutOfBounds(pos) || ownedParcels.Contains(pos))
                 return -1;
 
             if (emptyParcelHeight.TryGetValue(pos, out int item))
@@ -70,7 +77,8 @@ namespace DCL.Landscape.Jobs
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsOutOfBounds(int value) =>
-            value is > 150 or < -150;
+        private bool IsOutOfBounds(int2 parcel) =>
+            parcel.x < minBoundsInParcels.x || parcel.x > maxBoundsInParcels.x ||
+            parcel.y < minBoundsInParcels.y || parcel.y > maxBoundsInParcels.y;
     }
 }

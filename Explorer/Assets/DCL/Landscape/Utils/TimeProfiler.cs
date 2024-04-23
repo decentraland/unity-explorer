@@ -33,5 +33,26 @@ namespace DCL.Landscape.Utils
             stopwatch.Stop();
             action(stopwatch.ElapsedMilliseconds);
         }
+
+        public MeasureScope Measure(Action<float> action) =>
+            new (this, action);
+    }
+
+    public readonly struct MeasureScope : IDisposable
+    {
+        private readonly TimeProfiler timeProfiler;
+        private readonly Action<float> action;
+
+        public MeasureScope(TimeProfiler timeProfiler, Action<float> action)
+        {
+            this.timeProfiler = timeProfiler;
+            this.action = action;
+            this.timeProfiler.StartMeasure();
+        }
+
+        public void Dispose()
+        {
+            timeProfiler.EndMeasure(action);
+        }
     }
 }

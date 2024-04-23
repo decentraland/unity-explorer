@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(Label), new ComponentPool<Label>() },
+                    { typeof(Label), new ComponentPool.WithDefaultCtor<Label>() },
                 }, null);
 
             system = new UITextInstantiationSystem(world, poolsRegistry);

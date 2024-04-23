@@ -172,6 +172,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <GeneralAudioMixer>k__BackingField:
+          m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <RealmPartitionSettings>k__BackingField:
           m_AssetGUID: 7899019423f09d049a8463a0751037a5
           m_SubObjectName: 
@@ -179,6 +184,11 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <LandscapeData>k__BackingField:
           m_AssetGUID: 32f2b877400526d4cbf648ba5c5064b4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <QualitySettingsAsset>k__BackingField:
+          m_AssetGUID: 58ab8549017bacb42b310dbb452a2f6e
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
