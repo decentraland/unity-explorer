@@ -127,6 +127,7 @@ namespace DCL.AuthenticationScreenFlow
 
             CancelLoginProcess();
             CancelVerificationCountdown();
+            viewInstance.FinalizeContainer.SetActive(false);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
@@ -226,7 +227,6 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(IN);
                     viewInstance.ProgressContainer.SetActive(false);
-                    //viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = true;
