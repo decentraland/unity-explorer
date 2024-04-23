@@ -155,8 +155,11 @@ namespace DCL.Landscape.Utils
         public int[,] GetDetailLayer(int offsetX, int offsetZ, int layer) =>
             UnFlatten(localCache.detail[new int3(offsetX, offsetZ, layer)], localCache.detailX, localCache.detailY);
 
-        public bool[,] GetHoles(int offsetX, int offsetZ) =>
-            UnFlatten(localCache.holes[new int2(offsetX, offsetZ)], localCache.holesX, localCache.holesY);
+        public bool[,] GetHoles(int offsetX, int offsetZ)
+        {
+            try { return UnFlatten(localCache.holes[new int2(offsetX, offsetZ)], localCache.holesX, localCache.holesY); }
+            catch (KeyNotFoundException e) { throw new Exception("Cannot get holes from cache. Try to regenerate cache at InfiniteTerrain.scene", e); }
+        }
 
         public void SaveHoles(int offsetX, int offsetZ, bool[,] valuePairValue)
         {
