@@ -44,6 +44,7 @@ namespace DCL.Landscape.Utils
     {
         private bool isValid;
         private const string FILE_NAME = "/terrain_cache";
+        private static readonly BinaryFormatter FORMATTER = new ();
 
         public Dictionary<int2, float[]> heights = new ();
         public int heightX;
@@ -75,10 +76,8 @@ namespace DCL.Landscape.Utils
             if (File.Exists(path))
                 File.Delete(path);
 
-            var formatter = new BinaryFormatter();
-
             using FileStream fileStream = File.Create(path);
-            formatter.Serialize(fileStream, this);
+            FORMATTER.Serialize(fileStream, this);
         }
 
         private static string GetPath(int seed, int chunkSize, int version) =>
@@ -97,11 +96,7 @@ namespace DCL.Landscape.Utils
                 return localCache;
 
             await using (var fileStream = new FileStream(path, FileMode.Open))
-                localCache = await UniTask.RunOnThreadPool(() =>
-                {
-                    var formatter = new BinaryFormatter();
-                    return (TerrainLocalCache)formatter.Deserialize(fileStream);
-                });
+                localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
 
             localCache.isValid = true;
 
@@ -114,8 +109,7 @@ namespace DCL.Landscape.Utils
 
     public class TerrainGeneratorLocalCache
     {
-        private TerrainLocalCache localCache;
-        private readonly bool isValid;
+        private TerrainLocalCache localCache = null!;
         private readonly int seed;
         private readonly int chunkSize;
         private readonly int version;
