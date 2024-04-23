@@ -32,15 +32,7 @@ namespace SceneRuntime.Factory
 
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
-            jsSourcesCache = new IJsSourcesCache.Null();
-
-#if UNITY_EDITOR
-            const string DIR = "Assets/DCL/ScenesDebug/ScenesConsistency/JsCodes";
-            if (Directory.Exists(DIR))
-                jsSourcesCache = new FileJsSourcesCache(DIR);
-            else
-                ReportHub.Log(ReportCategory.SCENE_FACTORY, $"You can use {DIR} to persist loaded scenes");
-#endif
+            jsSourcesCache = EnabledJsScenesFileCachingOrIgnore();
 
             webJsSources = new CachedWebJsSources(
                 new WebJsSources(
@@ -49,6 +41,28 @@ namespace SceneRuntime.Factory
                 new MemoryJsSourcesCache()
             );
 
+        }
+
+        /// <summary>
+        /// How to use it
+        /// 1. Ensure that the directory exists at the path DIR
+        /// 2. Launch the Unity Editor and play scenes normally
+        /// 3. Check the directory DIR for the cached files
+        ///     3.1 Some of them can be minified, use https://www.unminify2.com/ to explore them comfortably
+        /// </summary>
+        /// <returns>Cache for scenes</returns>
+        private static IJsSourcesCache EnabledJsScenesFileCachingOrIgnore()
+        {
+            IJsSourcesCache cache = new IJsSourcesCache.Null();
+
+#if UNITY_EDITOR
+            const string DIR = "Assets/DCL/ScenesDebug/ScenesConsistency/JsCodes";
+            if (Directory.Exists(DIR))
+                cache = new FileJsSourcesCache(DIR);
+            else
+                ReportHub.Log(ReportCategory.SCENE_FACTORY, $"You can use {DIR} to persist loaded scenes");
+#endif
+            return cache;
         }
 
         /// <summary>
