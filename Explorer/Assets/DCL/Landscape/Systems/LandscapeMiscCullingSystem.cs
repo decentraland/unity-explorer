@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
@@ -35,8 +34,6 @@ namespace DCL.Landscape.Systems
         private NativeArray<float4> nativeFrustumPlanes;
         private NativeArray<VisibleBounds> cliffsBoundaries;
         private NativeArray<VisibleBounds> waterBoundaries;
-        private NativeArray<TerrainAudioState> cliffsAudioStates;
-        private NativeArray<TerrainAudioState> waterAudioStates;
         private Plane[] frustumPlanes;
         private JobHandle cliffsJobHandle;
         private JobHandle waterJobHandle;
@@ -71,8 +68,6 @@ namespace DCL.Landscape.Systems
             nativeFrustumPlanes.Dispose();
             cliffsBoundaries.Dispose();
             waterBoundaries.Dispose();
-            waterAudioStates.Dispose();
-            cliffsAudioStates.Dispose();
         }
 
         protected override void Update(float t)
@@ -99,7 +94,7 @@ namespace DCL.Landscape.Systems
             if (cliffsJobHandle.IsCompleted && cliffsUpdated)
             {
                 Profiler.BeginSample("UpdateCliffsVisibility.Schedule");
-                var job = new UpdateBoundariesCullingJob(cliffsBoundaries, cliffsAudioStates, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(cliffsBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
                 cliffsJobHandle = job.Schedule(cliffsBoundaries.Length, 32, cliffsJobHandle);
                 cliffsUpdated = false;
                 Profiler.EndSample();
@@ -108,7 +103,7 @@ namespace DCL.Landscape.Systems
             if (waterJobHandle.IsCompleted && waterUpdated)
             {
                 Profiler.BeginSample("UpdateWaterVisibility.Schedule");
-                var job = new UpdateBoundariesCullingJob(waterBoundaries, waterAudioStates, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(waterBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
                 waterJobHandle = job.Schedule(waterBoundaries.Length, 32, waterJobHandle);
                 waterUpdated = false;
                 Profiler.EndSample();
@@ -119,11 +114,9 @@ namespace DCL.Landscape.Systems
         {
             IReadOnlyList<Transform> cliffs = terrainGenerator.GetCliffs();
             cliffsBoundaries = new NativeArray<VisibleBounds>(cliffs.Count * 3, Allocator.Persistent);
-            cliffsAudioStates = new NativeArray<TerrainAudioState>(cliffsBoundaries.Length, Allocator.Persistent);
 
             for (var i = 0; i < cliffs.Count; i++)
             {
-                cliffsAudioStates[i] = new TerrainAudioState();
                 Transform cliff = cliffs[i];
                 MeshRenderer[] meshRenderers = cliff.GetComponentsInChildren<MeshRenderer>();
 
@@ -155,11 +148,9 @@ namespace DCL.Landscape.Systems
             waterRenderers = renderers.Where(meshRenderer => meshRenderer.enabled).ToList();
 
             waterBoundaries = new NativeArray<VisibleBounds>(waterRenderers.Count, Allocator.Persistent);
-            waterAudioStates = new NativeArray<TerrainAudioState>(waterRenderers.Count, Allocator.Persistent);
 
             for (var i = 0; i < waterRenderers.Count; i++)
             {
-                waterAudioStates[i] = new TerrainAudioState();
                 MeshRenderer waterChunk = waterRenderers[i];
                 Bounds bounds = waterChunk.bounds;
 
@@ -180,8 +171,9 @@ namespace DCL.Landscape.Systems
             Camera camera = cameraComponent.Camera;
             cameraPosition = camera.transform.position;
 
-            var wind = terrainGenerator.GetWind();
-            if(wind.parent == null)
+            Transform wind = terrainGenerator.GetWind();
+
+            if (wind.parent == null)
                 wind.parent = camera.transform;
 
             GeometryUtility.CalculateFrustumPlanes(camera.cullingMatrix, frustumPlanes);
@@ -204,23 +196,6 @@ namespace DCL.Landscape.Systems
                 for (var i = 0; i < cliffRenderers.Count; i++)
                 {
                     VisibleBounds visibility = cliffsBoundaries[i];
-
-                    //All this should be pretty similar to how its handled on Terrain Culling
-                    /*if (visibility is { ShouldBeHeard: true, IsHeard: false })
-                    {
-                        visibility.IsHeard = true;
-                        cliffsBoundaries[i] = visibility;
-                        //Similar to what's done for landscape, not implemented yet until idea is validated
-                        //WorldAudioEventsBus.Instance.SendPlayLandscapeAudioEvent(i, terrainAudioSourcesPositions[i]);
-                    }
-                    else if (visibility is { ShouldBeSilent: true, IsSilent: false })
-                    {
-                        visibility.IsSilent = true;
-                        cliffsBoundaries[i] = visibility;
-                        //Similar to what's done for landscape
-                        //WorldAudioEventsBus.Instance.SendStopLandscapeAudioEvent(i);
-                    }*/
-
 
                     if (!visibility.IsDirty) continue;
 

@@ -14,7 +14,6 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
-using DCL.Audio;
 using Random = UnityEngine.Random;
 
 namespace DCL.Landscape.Systems
@@ -33,8 +32,6 @@ namespace DCL.Landscape.Systems
 
         private NativeArray<float4> nativeFrustumPlanes;
         private NativeArray<VisibleBounds> terrainVisibilities;
-        private NativeArray<TerrainAudioState> terrainAudioStates;
-        private NativeArray<NativeArray<int2>> terrainAudioSourcesPositions;
         private Plane[] frustumPlanes;
         private JobHandle jobHandle;
 
@@ -67,8 +64,6 @@ namespace DCL.Landscape.Systems
             jobHandle.Complete();
             nativeFrustumPlanes.Dispose();
             terrainVisibilities.Dispose();
-            terrainAudioStates.Dispose();
-            terrainAudioSourcesPositions.Dispose();
         }
 
         protected override void Update(float t)
@@ -89,15 +84,12 @@ namespace DCL.Landscape.Systems
         {
             IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
             terrainVisibilities = new NativeArray<VisibleBounds>(terrains.Count, Allocator.Persistent);
-            terrainAudioStates = new NativeArray<TerrainAudioState>(terrains.Count, Allocator.Persistent);
-            terrainAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrains.Count, Allocator.Persistent);
 
             for (var i = 0; i < terrains.Count; i++)
             {
                 Terrain terrain = terrains[i];
                 Bounds bounds = GetTerrainBoundsInWorldSpace(terrain);
-                terrainAudioSourcesPositions[i] = GetAudioSourcesPositions(terrain.terrainData, bounds);
-                terrainAudioStates[i] = new TerrainAudioState();
+
                 terrainVisibilities[i] = new VisibleBounds
                 {
                     Bounds = new AABB
@@ -129,7 +121,7 @@ namespace DCL.Landscape.Systems
                         (row * cellLength) + (cellLength / 2)
                     );
 
-                    for (int retry = 0; retry < retryAttempts; retry++)
+                    for (var retry = 0; retry < retryAttempts; retry++)
                     {
                         var randomOffset = new int2(Random.Range(-cellWidth / 2, cellWidth / 2), Random.Range(-cellLength / 2, cellLength / 2));
                         int2 randomPosition = localCellCenter + randomOffset;
@@ -163,21 +155,6 @@ namespace DCL.Landscape.Systems
 
                 for (var i = 0; i < terrainVisibilities.Length; i++)
                 {
-                    var audioState = terrainAudioStates[i];
-
-                    if (audioState is { ShouldBeHeard: true, IsHeard: false })
-                    {
-                        audioState.IsHeard = true;
-                        terrainAudioStates[i] = audioState;
-                        WorldAudioEventsBus.Instance.SendPlayLandscapeAudioEvent(i, terrainAudioSourcesPositions[i], WorldAudioClipType.Glade);
-                    }
-                    else if (audioState is { ShouldBeSilent: true, IsSilent: false })
-                    {
-                        audioState.IsSilent = true;
-                        terrainAudioStates[i] = audioState;
-                        WorldAudioEventsBus.Instance.SendStopLandscapeAudioEvent(i, WorldAudioClipType.Glade);
-                    }
-
                     VisibleBounds visibility = terrainVisibilities[i];
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 
@@ -206,7 +183,7 @@ namespace DCL.Landscape.Systems
                     nativeFrustumPlanes[i] = new float4(plane.normal.x, plane.normal.y, plane.normal.z, plane.distance);
                 }
 
-                var job = new UpdateBoundariesCullingJob(terrainVisibilities, terrainAudioStates, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(terrainVisibilities, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
                 jobHandle = job.Schedule(terrainVisibilities.Length, 32, jobHandle);
                 Profiler.EndSample();
             }

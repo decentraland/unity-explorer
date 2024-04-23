@@ -7,17 +7,17 @@ namespace DCL.Audio
     [CreateAssetMenu(fileName = "WorldAudioSettings", menuName = "SO/Audio/WorldAudioSettings")]
     public class WorldAudioSettings : AudioCategorySettings, ISerializationCallbackReceiver
     {
-        [SerializeField] private float distanceThreshold = 10000f;
-        [SerializeField] private float minVolume = 0.01f;
-
-
         [SerializeField] private List<AudioClipTypeAndConfigKeyValuePair> audioClipConfigsList = new ();
-
         private readonly Dictionary<WorldAudioClipType, AudioClipDayNightVariants> audioClipConfigs = new ();
 
-        public float DistanceThreshold => distanceThreshold;
+        public void OnBeforeSerialize() { }
 
-        public float MinVolume => minVolume;
+        public void OnAfterDeserialize()
+        {
+            audioClipConfigs.Clear();
+
+            foreach (AudioClipTypeAndConfigKeyValuePair clipConfig in audioClipConfigsList) { audioClipConfigs.Add(clipConfig.Key, clipConfig.Value); }
+        }
 
         public AudioClipDayNightVariants GetAudioClipConfigForType(WorldAudioClipType type)
         {
@@ -25,23 +25,11 @@ namespace DCL.Audio
             return clipConfig;
         }
 
-        public void OnBeforeSerialize() { }
-
-        public void OnAfterDeserialize()
-        {
-            audioClipConfigs.Clear();
-            foreach (var clipConfig in audioClipConfigsList)
-            {
-                audioClipConfigs.Add(clipConfig.Key, clipConfig.Value);
-            }
-        }
-
         [Serializable]
         public struct AudioClipDayNightVariants
         {
             public AudioClipConfig DayClip;
             public AudioClipConfig NightClip;
-
         }
 
         [Serializable]
@@ -58,5 +46,4 @@ namespace DCL.Audio
         Ocean,
         Hills,
     }
-
 }

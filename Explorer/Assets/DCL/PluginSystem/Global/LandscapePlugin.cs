@@ -2,6 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
+using DCL.Audio.System;
+using DCL.Audio.Systems;
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.Landscape.Config;
@@ -19,16 +21,17 @@ namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>, ILandscapeInitialization
     {
-        private TerrainGenerator terrainGenerator;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
+        private TerrainGenerator terrainGenerator;
+        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
         private NativeArray<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
+        private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettingsReference;
 
         public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer, bool enableLandscape)
         {
@@ -39,12 +42,18 @@ namespace DCL.PluginSystem.Global
             terrainGenerator = null!;
         }
 
+        public void Dispose()
+        {
+            if (!enableLandscape) return;
+            terrainGenerator.Dispose();
+        }
+
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
 
             if (!enableLandscape) return;
-
+            landscapeAudioSettingsReference = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeAudioSettingsReference, ct: ct);
             parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
@@ -64,12 +73,7 @@ namespace DCL.PluginSystem.Global
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-        }
-
-        public void Dispose()
-        {
-            if (!enableLandscape) return;
-            terrainGenerator.Dispose();
+            LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettingsReference.Value);
         }
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)

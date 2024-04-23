@@ -40,6 +40,13 @@ namespace DCL.Landscape
         private const int UNITY_MAX_INSTANCE_COUNT = 16;
 
         private readonly TerrainGenerationData terrainGenData;
+        private readonly NoiseGeneratorCache noiseGenCache;
+        private readonly ReportData reportData;
+        private readonly TimeProfiler timeProfiler;
+        private readonly TerrainGeneratorLocalCache localCache;
+        private readonly bool forceCacheRegen;
+        private readonly List<Terrain> terrains;
+        private readonly List<Transform> cliffs = new ();
         private GameObject rootGo;
         private TreePrototype[] treePrototypes;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelNeighborData;
@@ -48,20 +55,13 @@ namespace DCL.Landscape
         private NativeParallelHashSet<int2> ownedParcels;
         private int maxHeightIndex;
         private Random random;
-        private readonly NoiseGeneratorCache noiseGenCache;
         private bool hideTrees;
         private bool hideDetails;
-        private readonly ReportData reportData;
         private Transform windZone;
 
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
-        private readonly TimeProfiler timeProfiler;
-        private readonly TerrainGeneratorLocalCache localCache;
-        private readonly bool forceCacheRegen;
-        private readonly List<Terrain> terrains;
-        private readonly List<Transform> cliffs = new ();
         private Transform ocean;
         private bool isTerrainGenerated;
         private bool showTerrainByDefault;
@@ -79,6 +79,14 @@ namespace DCL.Landscape
             localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION);
             terrains = new List<Terrain>();
         }
+
+        public void Dispose()
+        {
+            UnityObjectUtils.SafeDestroy(rootGo);
+        }
+
+        public int GetChunkSize() =>
+            terrainGenData.chunkSize;
 
         public IReadOnlyList<Terrain> GetTerrains() =>
             terrains;
@@ -109,6 +117,7 @@ namespace DCL.Landscape
             this.hideDetails = hideDetails;
             this.hideTrees = hideTrees;
             this.showTerrainByDefault = showTerrainByDefault;
+
             try
             {
                 timeProfiler.StartMeasure();
@@ -762,6 +771,7 @@ namespace DCL.Landscape
                         JobHandle randomizerHandle = randomizer.Schedule(generatorHandle);
 
                         NativeArray<float> resultReference = generator.GetResult(noiseDataPointer);
+
                         var treeInstancesJob = new GenerateTreeInstancesJob(
                             resultReference.AsReadOnly(),
                             treeInstances.AsParallelWriter(),
@@ -847,7 +857,7 @@ namespace DCL.Landscape
         }
 
         /// <summary>
-        /// Here we convert the result of the noise generation of the terrain texture layers
+        ///     Here we convert the result of the noise generation of the terrain texture layers
         /// </summary>
         private float[,,] GenerateAlphaMaps(NativeArray<float>[] textureResults, int width, int height)
         {
@@ -895,11 +905,6 @@ namespace DCL.Landscape
             }
 
             noiseGenCache.Dispose();
-        }
-
-        public void Dispose()
-        {
-            UnityObjectUtils.SafeDestroy(rootGo);
         }
     }
 

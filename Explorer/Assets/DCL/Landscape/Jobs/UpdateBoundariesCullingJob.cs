@@ -2,7 +2,6 @@
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace DCL.Landscape.Jobs
 {
@@ -14,32 +13,21 @@ namespace DCL.Landscape.Jobs
         public bool IsDirty;
     }
 
-    public struct TerrainAudioState
-    {
-        public bool IsSilent;
-        public bool IsHeard;
-        public bool ShouldBeSilent;
-        public bool ShouldBeHeard;
-    }
-
     [BurstCompile]
     public struct UpdateBoundariesCullingJob : IJobParallelFor
     {
         private NativeArray<VisibleBounds> terrainVisibilities;
-        private NativeArray<TerrainAudioState> terrainAudioStates;
         private readonly float3 cameraPosition;
         private readonly float detailDistanceSqr;
         [ReadOnly] private NativeArray<float4> cameraPlanes;
 
         public UpdateBoundariesCullingJob(
             NativeArray<VisibleBounds> terrainVisibilities,
-            NativeArray<TerrainAudioState> terrainAudioStates,
             NativeArray<float4> cameraPlanes,
             float3 cameraPosition,
             float detailDistance)
         {
             this.terrainVisibilities = terrainVisibilities;
-            this.terrainAudioStates = terrainAudioStates;
             this.cameraPlanes = cameraPlanes;
             this.cameraPosition = cameraPosition;
             detailDistanceSqr = detailDistance * detailDistance;
@@ -48,33 +36,13 @@ namespace DCL.Landscape.Jobs
         public void Execute(int i)
         {
             VisibleBounds terrain = terrainVisibilities[i];
-            TerrainAudioState audioState = terrainAudioStates[i];
             bool isVisible = TestPlanesAABB(terrain.Bounds);
             var isAtDistance = true;
 
-            float sqrDistance = terrain.Bounds.DistanceSq(cameraPosition);
-
-            if (isVisible) { isAtDistance = sqrDistance < detailDistanceSqr; }
-
-            if (sqrDistance < 22500) //This value should come from settings 150^2
+            if (isVisible)
             {
-                if (!audioState.IsHeard)
-                {
-                    audioState.ShouldBeHeard = true;
-                    audioState.IsSilent = false;
-                    audioState.ShouldBeSilent = false;
-                }
-            }
-            else if (sqrDistance > 28900) //This value should come from settings 170^2
-                                          //We do this so we are not removing AudioSources immediately after a player is out of range,
-                                          //otherwise it might sound weird if player returns to a zone they just left
-            {
-                if (!audioState.IsSilent)
-                {
-                    audioState.IsHeard = false;
-                    audioState.ShouldBeHeard = false;
-                    audioState.ShouldBeSilent = true;
-                }
+                float sqrDist = terrain.Bounds.DistanceSq(cameraPosition);
+                isAtDistance = sqrDist < detailDistanceSqr;
             }
 
             terrain.IsDirty = terrain.IsVisible != isVisible || terrain.IsAtDistance != isAtDistance;
@@ -82,7 +50,6 @@ namespace DCL.Landscape.Jobs
             terrain.IsAtDistance = isAtDistance;
 
             terrainVisibilities[i] = terrain;
-            terrainAudioStates[i] = audioState;
         }
 
         // got this one from https://forum.unity.com/threads/managed-version-of-geometryutility-testplanesaabb.473575/
