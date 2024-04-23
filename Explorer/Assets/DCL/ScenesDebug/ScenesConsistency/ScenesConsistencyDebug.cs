@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -41,7 +40,9 @@ namespace DCL.ScenesDebug.ScenesConsistency
 
         private void Stop()
         {
-            EditorApplication.isPlaying = false;
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
         }
 
         private async UniTaskVoid LaunchAsync()
