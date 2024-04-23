@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
+  m_Name: Tree03_W
+  m_EditorClassIdentifier: 
+  asset: {fileID: 757561452486300604, guid: f03a5d1da28bc6e4098274181dec6ed6, type: 3}
+  noiseData: {fileID: 11400000, guid: 9cea1a01bc0f18d46b9b04544f3bb63e, type: 2}
+  randomization:
+    randomRotationX: {x: -5, y: 5}
+    randomRotationY: {x: 0, y: 360}
+    randomRotationZ: {x: -5, y: 5}
+    proportionalScale: 1
+    randomScale: {x: 1, y: 1}
+    randomScaleX: {x: 0, y: 0}
+    randomScaleY: {x: 0, y: 0}
+    randomScaleZ: {x: 0, y: 0}
+    positionOffsetX: {x: 0, y: 0}
+    positionOffsetY: {x: -0.1, y: -0.2}
+    positionOffsetZ: {x: 0, y: 0}
+  radius: 35
+  TerrainDetailSettings:
+    alignToGround: 100
+    positionJitter: 50
+    minWidth: 1
+    maxWidth: 1
+    minHeight: 1
+    maxHeight: 1
+    noiseSeed: 1
+    noiseSpread: 100
+    holeEdgePadding: 75
+    detailDensity: 1
+    affectedByGlobalDensityScale: 1

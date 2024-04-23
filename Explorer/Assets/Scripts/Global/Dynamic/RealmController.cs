@@ -45,9 +45,11 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
 
         private GlobalWorld? globalWorld;
+        public Entity RealmEntity { get; private set; }
 
         public GlobalWorld GlobalWorld
         {
+            get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
             set
             {
                 globalWorld = value;
@@ -118,10 +120,10 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            Entity realmEntity = world.Create(realmComp, ProcessesScenePointers.Create());
+            RealmEntity = world.Create(realmComp, ProcessesScenePointers.Create());
 
-            if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
-                ComplimentWithVolatilePointers(world, realmEntity);
+            if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
+                ComplimentWithVolatilePointers(world, RealmEntity);
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;

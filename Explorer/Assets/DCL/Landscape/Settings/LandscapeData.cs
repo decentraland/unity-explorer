@@ -12,9 +12,9 @@ namespace DCL.Landscape.Settings
         public bool drawTerrainDetails;
         public Transform mapChunk;
         public TerrainGenerationData terrainData;
+        public TerrainGenerationData worldsTerrainData;
 
         [SerializeField] private float detailDistanceValue = 200;
-
         public float DetailDistance
         {
             get => detailDistanceValue;
