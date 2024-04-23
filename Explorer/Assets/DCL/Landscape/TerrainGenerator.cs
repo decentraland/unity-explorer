@@ -169,7 +169,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
 
-                    await TerrainGenerationUtils.AddColorMapRenderer(rootGo, terrains, factory);
+                    await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
                     if (processReport != null) processReport.ProgressCounter.Value = 1f;
                 }
