@@ -9,13 +9,13 @@ namespace DCL.Audio.Jobs
     [BurstCompile]
     public struct CalculateOceanAudioStatesJob : IJobParallelFor
     {
-        private NativeArray<OceanAudioState> oceanAudioStates;
-        private readonly float3 cameraPosition;
+        private NativeArray<LandscapeAudioState> oceanAudioStates;
+        private readonly float2 cameraPosition;
         private readonly float oceanListeningDistanceThreshold;
 
         public CalculateOceanAudioStatesJob(
-            NativeArray<OceanAudioState> oceanAudioStates,
-            float3 cameraPosition,
+            NativeArray<LandscapeAudioState> oceanAudioStates,
+            float2 cameraPosition,
             float oceanListeningDistanceThreshold
         )
         {
@@ -26,16 +26,13 @@ namespace DCL.Audio.Jobs
 
         public void Execute(int i)
         {
-            OceanAudioState oceanAudioState = oceanAudioStates[i];
+            LandscapeAudioState oceanAudioState = oceanAudioStates[i];
             TerrainAudioState terrainAudioState = oceanAudioState.AudioState;
 
-            float sqrDistance = oceanAudioState.Bounds.SqrDistance(cameraPosition);
+            float sqrDistance = math.distancesq(oceanAudioState.CenterOfTerrain, cameraPosition);
 
             if (sqrDistance < oceanListeningDistanceThreshold)
             {
-                float3 closestPoint = oceanAudioState.Bounds.ClosestPoint(cameraPosition);
-                oceanAudioState.ClosestPoint = new int2((int)closestPoint.x, (int)closestPoint.z);
-
                 if (!terrainAudioState.IsHeard)
                 {
                     terrainAudioState.ShouldBeHeard = true;

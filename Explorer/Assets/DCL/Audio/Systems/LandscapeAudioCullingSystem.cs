@@ -36,7 +36,7 @@ namespace DCL.Audio.Systems
 
         private NativeArray<LandscapeAudioState> landscapeAudioStates;
         private NativeArray<NativeArray<int2>> landscapeAudioSourcesPositions;
-        private NativeArray<OceanAudioState> oceanAudioStates;
+        private NativeArray<LandscapeAudioState> oceanAudioStates;
         private JobHandle landscapeJobHandle;
         private JobHandle oceanJobHandle;
         private float audioListeningDistanceThreshold;
@@ -118,26 +118,20 @@ namespace DCL.Audio.Systems
 
         private void InitializeOceanAudioStates()
         {
-            Transform ocean = terrainGenerator.Ocean;
-            MeshRenderer[] renderers = ocean.GetComponentsInChildren<MeshRenderer>();
+            //To calculate the ocean audio, we will use the cliffs positions as the ocean grid does not match correctly with the world grid.
+            IReadOnlyList<Transform> cliffs = terrainGenerator.Cliffs;
 
-            // some water chunks are disabled on purpose, we dont want to re-enable them
-            var waterRenderers = renderers.Where(meshRenderer => meshRenderer.enabled).ToList();
+            oceanAudioStates = new NativeArray<LandscapeAudioState>(cliffs.Count, Allocator.Persistent);
 
-            oceanAudioStates = new NativeArray<OceanAudioState>(waterRenderers.Count, Allocator.Persistent);
-
-            for (var i = 0; i < waterRenderers.Count; i++)
+            for (var i = 0; i < cliffs.Count; i++)
             {
-                MeshRenderer waterChunk = waterRenderers[i];
-                Bounds bounds = waterChunk.bounds;
+                Transform cliff = cliffs[i];
 
-                oceanAudioStates[i] = new OceanAudioState
+                var position = cliff.transform.position;
+
+                oceanAudioStates[i] = new LandscapeAudioState()
                 {
-                    Bounds = new Bounds
-                    {
-                        center = bounds.center,
-                        extents = bounds.extents + Vector3.one,
-                    },
+                    CenterOfTerrain = new float2(position.x, position.z)
                 };
             }
 
@@ -238,7 +232,7 @@ namespace DCL.Audio.Systems
 
                 for (var i = 0; i < oceanAudioStates.Length; i++)
                 {
-                    OceanAudioState oceanAudioState = oceanAudioStates[i];
+                    LandscapeAudioState oceanAudioState = oceanAudioStates[i];
                     TerrainAudioState audioState = oceanAudioState.AudioState;
 
                     if (audioState is { ShouldBeHeard: true, IsHeard: false })
@@ -247,13 +241,7 @@ namespace DCL.Audio.Systems
                         oceanAudioState.AudioState = audioState;
                         oceanAudioStates[i] = oceanAudioState;
                         var closestPointArray = new NativeArray<int2>(1, Allocator.Temp);
-                        closestPointArray[0] = oceanAudioState.ClosestPoint;
-                        WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, closestPointArray, WorldAudioClipType.Ocean);
-                    }
-                    else if (audioState.IsHeard)
-                    {
-                        var closestPointArray = new NativeArray<int2>(1, Allocator.Temp);
-                        closestPointArray[0] = oceanAudioState.ClosestPoint;
+                        closestPointArray[0] = (int2) oceanAudioState.CenterOfTerrain;
                         WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, closestPointArray, WorldAudioClipType.Ocean);
                     }
                     else if (audioState is { ShouldBeSilent: true, IsSilent: false })
@@ -274,9 +262,10 @@ namespace DCL.Audio.Systems
                 Profiler.BeginSample("CalculateOceanAudioStatesJob.Schedule");
                 oceanJobHandle.Complete();
 
-                float3 position = cameraComponent.Camera.transform.position;
+                Vector3 position = cameraComponent.Camera.transform.position;
+                var cameraPosition = new float2(position.x, position.z);
 
-                var job = new CalculateOceanAudioStatesJob(oceanAudioStates, position, oceanListeningDistanceThreshold);
+                var job = new CalculateOceanAudioStatesJob(oceanAudioStates, cameraPosition, oceanListeningDistanceThreshold);
                 oceanJobHandle = job.Schedule(oceanAudioStates.Length, 32, oceanJobHandle);
                 Profiler.EndSample();
             }
@@ -303,12 +292,5 @@ namespace DCL.Audio.Systems
     {
         public TerrainAudioState AudioState;
         public float2 CenterOfTerrain;
-    }
-
-    public struct OceanAudioState
-    {
-        public TerrainAudioState AudioState;
-        public Bounds Bounds;
-        public int2 ClosestPoint;
     }
 }
