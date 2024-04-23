@@ -20,24 +20,24 @@ namespace DCL.Landscape.Systems
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class LandscapeSatelliteSystem : BaseUnityLoopSystem
     {
-        private readonly SatelliteView view;
+        private readonly SatelliteFloor floor;
         private readonly MapRendererTextureContainer textureContainer;
 
         private bool isViewRendered;
 
         private LandscapeSatelliteSystem(World world,
             MapRendererTextureContainer textureContainer,
-            SatelliteView view) : base(world)
+            SatelliteFloor floor) : base(world)
         {
             this.textureContainer = textureContainer;
-            this.view = view;
+            this.floor = floor;
         }
 
         protected override void Update(float t)
         {
             if (textureContainer.IsComplete() && !isViewRendered)
             {
-                view.Create(textureContainer);
+                floor.Create(textureContainer);
                 isViewRendered = true;
             }
         }

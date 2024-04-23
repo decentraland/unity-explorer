@@ -192,7 +192,7 @@ namespace Global.Dynamic
 
             var genesisTerrain = new TerrainGenerator();
             var worldsTerrain = new WorldTerrainGenerator();
-            var satelliteView = new SatelliteView();
+            var satelliteView = new SatelliteFloor();
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();

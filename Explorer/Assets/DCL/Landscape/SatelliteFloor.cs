@@ -6,7 +6,7 @@ using Utility;
 
 namespace DCL.Landscape
 {
-    public class SatelliteView
+    public class SatelliteFloor
     {
         private const int PARCEL_SIZE = (int)ParcelMathHelper.PARCEL_SIZE;
 

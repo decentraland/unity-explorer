@@ -22,7 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly TerrainGenerator terrainGenerator;
         private readonly WorldTerrainGenerator worldTerrainGenerator;
 
-        private readonly SatelliteView view;
+        private readonly SatelliteFloor floor;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MapRendererTextureContainer textureContainer;
@@ -34,10 +34,10 @@ namespace DCL.PluginSystem.Global
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
-        public LandscapePlugin(SatelliteView view, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
+        public LandscapePlugin(SatelliteFloor floor, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
             MapRendererTextureContainer textureContainer, bool enableLandscape)
         {
-            this.view = view;
+            this.floor = floor;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
@@ -71,16 +71,16 @@ namespace DCL.PluginSystem.Global
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
-            view.Initialize(landscapeData.Value);
+            floor.Initialize(landscapeData.Value);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LandscapeSatelliteSystem.InjectToWorld(ref builder, textureContainer, view);
+            LandscapeSatelliteSystem.InjectToWorld(ref builder, textureContainer, floor);
 
             if (!enableLandscape) return;
 
-            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, view, realmPartitionSettings.Value, landscapeData.Value);
+            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
         }

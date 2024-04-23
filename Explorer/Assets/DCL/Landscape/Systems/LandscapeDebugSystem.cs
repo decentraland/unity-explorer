@@ -18,7 +18,7 @@ namespace DCL.Landscape.Systems
     public partial class LandscapeDebugSystem : BaseUnityLoopSystem
     {
         private const float UNITY_DEFAULT_LOD_BIAS = 0.8f;
-        private readonly SatelliteView view;
+        private readonly SatelliteFloor floor;
         private readonly RealmPartitionSettingsAsset realmPartitionSettings;
         private readonly LandscapeData landscapeData;
         private readonly ElementBinding<int> lodBias;
@@ -28,9 +28,9 @@ namespace DCL.Landscape.Systems
 
         private int lastCullDistanceApplied;
 
-        public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, SatelliteView view, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
+        public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, SatelliteFloor floor, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
         {
-            this.view = view;
+            this.floor = floor;
             this.realmPartitionSettings = realmPartitionSettings;
             this.landscapeData = landscapeData;
 
@@ -62,7 +62,7 @@ namespace DCL.Landscape.Systems
 
         private void OnSatelliteToggle(ChangeEvent<bool> evt)
         {
-            view.SwitchVisibility(evt.newValue);
+            floor.SwitchVisibility(evt.newValue);
         }
 
         private void OnLoadRadiusConfirm(int value)
