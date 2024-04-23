@@ -37,7 +37,7 @@ namespace DCL.EmotesWheel
         private CancellationTokenSource? fetchProfileCts;
         private CancellationTokenSource? slotSetUpCts;
 
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
         public EmotesWheelController(ViewFactoryMethod viewFactory,
             ISelfProfile selfProfile,
@@ -205,6 +205,7 @@ namespace DCL.EmotesWheel
         private void OpenBackpack(InputAction.CallbackContext context)
         {
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
+            closeViewTask?.TrySetResult();
         }
 
         private void EnableInputActions()
