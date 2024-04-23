@@ -59,7 +59,8 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] [field: Header("Platforms")] public float PlatformRaycastLength { get; private set; } = 0.3f;
 
         [field: SerializeField] [field: Header("Camera")] public float CameraFOVWhileRunning { get; set; } = 15;
-        [field: SerializeField] public float FOVChangeSpeed { get; set; } = 15;
+        [field: SerializeField] public float FOVIncreaseSpeed { get; set; } = 15;
+        [field: SerializeField] public float FOVDecreaseSpeed { get; set; } = 15;
 
         [field: SerializeField] [field: Header("Feet IK")] public float FeetIKHipsPullMaxDistance { get; set; } = 0.5f;
         [field: SerializeField] public float FeetIKSphereSize { get; set; } = 0.15f;
