@@ -9,6 +9,7 @@ namespace DCL.CharacterCamera
     public struct CameraComponent
     {
         public CameraMode Mode;
+        public ThirdPersonCameraShoulder Shoulder;
         public readonly Camera Camera;
 
         public CameraComponent(Camera camera) : this()

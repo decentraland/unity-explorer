@@ -4,6 +4,7 @@
     {
         FirstPerson,
         ThirdPerson,
+        DroneView,
 
         /// <summary>
         ///     Free-fly, does not follow character, intercepts controls designated for character movement
