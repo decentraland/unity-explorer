@@ -15,7 +15,10 @@ reviewGroups:
     - Kinerius
     - pravusjif
     - dalkia
+    - fcolarich
   qa:
+    - Ludmilafantaniella
+    - LucasLioyQA
     - anicalbano
 
 filterLabels:

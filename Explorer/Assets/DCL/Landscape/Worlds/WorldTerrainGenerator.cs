@@ -105,7 +105,7 @@ namespace DCL.Landscape
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                 terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true));
 
-            await TerrainGenerationUtils.AddColorMapRenderer(rootGo, terrains, factory);
+            await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
