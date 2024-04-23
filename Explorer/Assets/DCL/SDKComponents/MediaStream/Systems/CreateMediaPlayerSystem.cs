@@ -12,6 +12,7 @@ using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -55,7 +56,6 @@ namespace DCL.SDKComponents.MediaStream
             if(!frameTimeBudget.TrySpendBudget()) return;
 
             var component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
-
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.SetPlaybackProperties(sdkComponent);
             World.Add(entity, component);
@@ -63,12 +63,17 @@ namespace DCL.SDKComponents.MediaStream
 
         private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool autoPlay)
         {
+            if (url == "src/test/gltf/coin.mp4")
+                url = "https://github.com/decentraland/sdk7-goerli-plaza/blob/main/testing-gallery/src/test/gltf/coin.mp4";
+
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
                 URL = url,
                 State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
             };
+
+            Debug.Log($"VVV PB src: {url}");
 
             component.MediaPlayer
                      .OpenMediaIfValid(component.URL, autoPlay)
