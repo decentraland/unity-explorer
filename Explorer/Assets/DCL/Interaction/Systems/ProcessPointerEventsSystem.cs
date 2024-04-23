@@ -107,13 +107,14 @@ namespace DCL.Interaction.Systems
                         }
                         else
                         {
-                            world.Create(new HighlightComponent
-                            {
-                                NextEntity = entityRef,
-                                CurrentEntity = entityRef,
-                                IsEnabled = true,
-                                IsAtDistance = isAtDistance,
-                            });
+                            world.Create(
+                                new HighlightComponent(
+                                    true,
+                                    isAtDistance,
+                                    entityRef,
+                                    entityRef
+                                )
+                            );
                         }
                     }
                 }
@@ -135,17 +136,13 @@ namespace DCL.Interaction.Systems
         [Query]
         private void SetupHighlightComponent([Data] bool isAtDistance, [Data] EntityReference nextEntity, ref HighlightComponent highlightComponent)
         {
-            highlightComponent.IsEnabled = true;
-            highlightComponent.IsAtDistance = isAtDistance;
-            highlightComponent.NextEntity = nextEntity;
+            highlightComponent.Setup(isAtDistance, nextEntity);
         }
 
         [Query]
         private void ResetHighlightComponent(ref HighlightComponent highlightComponent)
         {
-            highlightComponent.IsEnabled = false;
-            highlightComponent.IsAtDistance = false;
-            highlightComponent.NextEntity = EntityReference.Null;
+            highlightComponent.Reset();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
