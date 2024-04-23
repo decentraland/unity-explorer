@@ -16,6 +16,7 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using Utility;
+using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Multiplayer.SDK.Systems
 {
@@ -27,12 +28,14 @@ namespace DCL.Multiplayer.SDK.Systems
     {
         private readonly IScenesCache scenesCache;
         private readonly ICharacterObject mainPlayerCharacterObject;
+        private readonly IEmoteCache emoteCache;
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
-        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
+        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject, IEmoteCache emoteCache) : base(world)
         {
             this.scenesCache = scenesCache;
+            this.emoteCache = emoteCache;
             mainPlayerCharacterObject = characterObject;
             ClearReservedEntities();
         }
@@ -98,7 +101,7 @@ namespace DCL.Multiplayer.SDK.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdatePlayerSDKData(in Entity entity, ref Profile profile, ref PlayerSDKDataComponent playerSDKDataComponent)
+        private void UpdatePlayerSDKData(ref Profile profile, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
             if (!profile.IsDirty) return;
 
@@ -120,28 +123,27 @@ namespace DCL.Multiplayer.SDK.Systems
                 playerSDKDataComponent.EmoteUrns = profile.Avatar.Emotes;
 
                 sceneEcsExecutor.World.Set(playerSDKDataComponent.SceneWorldEntity, playerSDKDataComponent);
-                World.Set(entity, playerSDKDataComponent);
             }
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateEmoteCommandData(in Entity entity, ref PlayerSDKDataComponent playerSDKData, ref CharacterEmoteComponent emoteComponent)
+        private void UpdateEmoteCommandData(ref PlayerSDKDataComponent playerSDKData, ref CharacterEmoteIntent emoteIntent)
         {
-            if (emoteComponent.EmoteUrn == playerSDKData.PreviousEmote && playerSDKData.PreviousEmote != null) return;
-
             SceneEcsExecutor sceneEcsExecutor = playerSDKData.SceneFacade.EcsExecutor;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
-                playerSDKData.IsDirty = true;
-                playerSDKData.PreviousEmote = playerSDKData.PlayingEmote;
-                playerSDKData.PlayingEmote = emoteComponent.EmoteUrn;
-                playerSDKData.LoopingEmote = emoteComponent.EmoteLoop;
+                if (emoteCache.TryGetEmote(emoteIntent.EmoteId.Shorten(), out IEmote emote))
+                {
+                    playerSDKData.IsPlayingEmoteDirty = true;
+                    playerSDKData.PreviousEmote = playerSDKData.PlayingEmote;
+                    playerSDKData.PlayingEmote = emoteIntent.EmoteId;
+                    playerSDKData.LoopingEmote = emote.IsLooping();
 
-                sceneEcsExecutor.World.Set(playerSDKData.SceneWorldEntity, playerSDKData);
-                World.Set(entity, playerSDKData);
+                    sceneEcsExecutor.World.Set(playerSDKData.SceneWorldEntity, playerSDKData);
+                }
             }
         }
 

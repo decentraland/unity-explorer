@@ -18,6 +18,7 @@ namespace DCL.Multiplayer.SDK.Tests
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
         private PlayerSDKDataComponent playerSDKData;
+        private ISceneStateProvider sceneStateProvider;
 
         [SetUp]
         public void Setup()
@@ -27,7 +28,8 @@ namespace DCL.Multiplayer.SDK.Tests
             IComponentPool<PBAvatarEmoteCommand> componentPoolRegistry = Substitute.For<IComponentPool<PBAvatarEmoteCommand>>();
             var instantiatedPbComponent = new PBAvatarEmoteCommand();
             componentPoolRegistry.Get().Returns(instantiatedPbComponent);
-            system = new WriteAvatarEmoteCommandSystem(world, ecsToCRDTWriter, componentPoolRegistry, Substitute.For<ISceneStateProvider>());
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            system = new WriteAvatarEmoteCommandSystem(world, ecsToCRDTWriter, componentPoolRegistry, sceneStateProvider);
 
             playerSDKData = new PlayerSDKDataComponent
             {
@@ -69,6 +71,8 @@ namespace DCL.Multiplayer.SDK.Tests
 
             AssertPBComponentMatchesPlayerSDKData();
         }
+
+        // TODO: Add timestamp test
 
         [Test]
         public void PropagateComponentUpdateCorrectly()

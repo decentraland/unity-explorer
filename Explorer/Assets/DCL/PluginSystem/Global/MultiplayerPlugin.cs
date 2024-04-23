@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
+        private readonly IEmoteCache emoteCache;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
         private readonly IMessagePipesHub messagePipesHub;
@@ -59,7 +61,8 @@ namespace DCL.PluginSystem.Global
             ICharacterObject characterObject,
             IRealmData realmData,
             IRemoteEntities remoteEntities,
-            IScenesCache scenesCache
+            IScenesCache scenesCache,
+            IEmoteCache emoteCache
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -76,6 +79,7 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
+            this.emoteCache = emoteCache;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -107,7 +111,7 @@ namespace DCL.PluginSystem.Global
             );
 
             ResetDirtyFlagSystem<PlayerSDKDataComponent>.InjectToWorld(ref builder);
-            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
+            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject, emoteCache);
 #endif
         }
     }

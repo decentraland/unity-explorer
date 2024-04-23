@@ -22,6 +22,7 @@ namespace DCL.Multiplayer.SDK.Components
 
         public IReadOnlyList<URN> EmoteUrns;
         public IReadOnlyCollection<URN> WearableUrns;
+        public bool IsPlayingEmoteDirty;
         public URN PreviousEmote;
         public URN PlayingEmote;
         public bool LoopingEmote;

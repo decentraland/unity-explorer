@@ -41,42 +41,49 @@ namespace DCL.Multiplayer.SDK.Systems
         [None(typeof(PBAvatarEmoteCommand), typeof(DeleteEntityIntention))]
         private void CreateAvatarEmoteCommand(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent)
         {
-            if (playerSDKDataComponent.PlayingEmote == null) return;
+            if (!playerSDKDataComponent.IsPlayingEmoteDirty) return;
 
             PBAvatarEmoteCommand pbComponent = componentPool.Get();
+            var tickNumber = (int)sceneStateProvider.TickNumber;
             pbComponent.IsDirty = true;
             pbComponent.EmoteUrn = playerSDKDataComponent.PlayingEmote;
             pbComponent.Loop = playerSDKDataComponent.LoopingEmote;
+            pbComponent.Timestamp = (uint)tickNumber;
 
             ecsToCRDTWriter.AppendMessage<PBAvatarEmoteCommand, PBAvatarEmoteCommand>(static (dispatchedPBComponent, pbComponent) =>
             {
                 dispatchedPBComponent.IsDirty = true;
                 dispatchedPBComponent.EmoteUrn = pbComponent.EmoteUrn;
                 dispatchedPBComponent.Loop = pbComponent.Loop;
+                dispatchedPBComponent.Timestamp = pbComponent.Timestamp;
             }, playerSDKDataComponent.CRDTEntity, (int)sceneStateProvider.TickNumber, pbComponent);
 
             World.Add(entity, pbComponent, playerSDKDataComponent.CRDTEntity);
+
+            playerSDKDataComponent.IsPlayingEmoteDirty = false;
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEmoteCommand(in Entity entity, ref PlayerSDKDataComponent playerSDKDataComponent, ref PBAvatarEmoteCommand pbComponent)
+        private void UpdateAvatarEmoteCommand(ref PlayerSDKDataComponent playerSDKDataComponent, ref PBAvatarEmoteCommand pbComponent)
         {
-            if (!playerSDKDataComponent.IsDirty || playerSDKDataComponent.PlayingEmote == null || playerSDKDataComponent.PlayingEmote.Equals(pbComponent.EmoteUrn))
-                return;
+            if (!playerSDKDataComponent.IsPlayingEmoteDirty) return;
 
+            var tickNumber = (int)sceneStateProvider.TickNumber;
             pbComponent.IsDirty = true;
             pbComponent.EmoteUrn = playerSDKDataComponent.PlayingEmote;
             pbComponent.Loop = playerSDKDataComponent.LoopingEmote;
+            pbComponent.Timestamp = (uint)tickNumber;
 
             ecsToCRDTWriter.AppendMessage<PBAvatarEmoteCommand, PBAvatarEmoteCommand>(static (dispatchedPBComponent, pbComponent) =>
             {
                 dispatchedPBComponent.IsDirty = true;
                 dispatchedPBComponent.EmoteUrn = pbComponent.EmoteUrn;
                 dispatchedPBComponent.Loop = pbComponent.Loop;
-            }, playerSDKDataComponent.CRDTEntity, (int)sceneStateProvider.TickNumber, pbComponent);
+                dispatchedPBComponent.Timestamp = pbComponent.Timestamp;
+            }, playerSDKDataComponent.CRDTEntity, tickNumber, pbComponent);
 
-            World.Set(entity, pbComponent);
+            playerSDKDataComponent.IsPlayingEmoteDirty = false;
         }
 
         [Query]
