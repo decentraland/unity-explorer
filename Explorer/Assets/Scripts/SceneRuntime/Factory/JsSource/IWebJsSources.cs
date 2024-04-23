@@ -6,6 +6,6 @@ namespace SceneRuntime.Factory.WebSceneSource
 {
     public interface IWebJsSources
     {
-        UniTask<string> SceneSourceCode(URLAddress path, CancellationToken ct);
+        UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct);
     }
 }

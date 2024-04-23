@@ -16,12 +16,12 @@ namespace SceneRuntime.Factory.WebSceneSource
             this.cache = cache;
         }
 
-        public async UniTask<string> SceneSourceCode(URLAddress path, CancellationToken ct)
+        public async UniTask<string> SceneSourceCodeAsync(URLAddress path, CancellationToken ct)
         {
             if (cache.TryGet(path, out string? result))
                 return result!;
 
-            string sourceCode = await origin.SceneSourceCode(path, ct);
+            string sourceCode = await origin.SceneSourceCodeAsync(path, ct);
             cache.Cache(path, sourceCode);
             return sourceCode;
         }
