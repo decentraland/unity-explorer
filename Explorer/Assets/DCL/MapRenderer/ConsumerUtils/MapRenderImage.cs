@@ -29,6 +29,7 @@ namespace DCL.MapRenderer.ConsumerUtils
         /// Notifies with the world position
         /// </summary>
         public event Action<Vector2> Hovered;
+        public event Action<Vector2> HoveredParcel;
 
         public event Action DragStarted;
 
@@ -125,6 +126,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                     interactivityController.HighlightParcel(parcel);
 
                 Hovered?.Invoke(worldPosition);
+                HoveredParcel?.Invoke(parcel);
             }
             else if (highlightEnabled)
                 interactivityController.RemoveHighlight();
