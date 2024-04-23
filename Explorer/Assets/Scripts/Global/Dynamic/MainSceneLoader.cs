@@ -10,6 +10,7 @@ using DCL.Minimap;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
@@ -17,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
@@ -61,9 +63,15 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+            EnsureNotNull();
             SetupInitialConfig();
 
             InitializeFlowAsync(destroyCancellationToken).Forget();
+        }
+
+        private void EnsureNotNull()
+        {
+            cursorRoot.EnsureNotNull();
         }
 
         private void OnDestroy()
@@ -92,7 +100,7 @@ namespace Global.Dynamic
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
-        {
+        {                
 #if !UNITY_EDITOR
 #if !DEVELOPMENT_BUILD
 
@@ -105,9 +113,16 @@ namespace Global.Dynamic
             //enableLandscape = true;
 #endif
 
+            // Hides the debug UI during the initial flow
+            debugUiRoot.rootVisualElement.style.display = DisplayStyle.None;
+
             try
             {
                 splashRoot.SetActive(showSplash);
+                
+                // Initialize .NET logging ASAP since it might be used by another systems
+                // Otherwise we might get exceptions in different platforms
+                DotNetLoggingPlugin.Initialize();
 
                 identityCache = new LogWeb3IdentityCache(
                     new ProxyIdentityCache(
@@ -211,6 +226,7 @@ namespace Global.Dynamic
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory);
 
+                debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 

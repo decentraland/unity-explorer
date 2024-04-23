@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
 
@@ -44,16 +45,17 @@ namespace DCL.Chat
         private readonly IEventSystem eventSystem;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly Mouse device;
+        private readonly DCLInput dclInput;
+        private readonly ChatCommandsHandler commandsHandler;
 
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
         private SingleInstanceEntity cameraEntity;
-        private readonly DCLInput dclInput;
-
-        private readonly ChatCommandsHandler commandsHandler;
         private (IChatCommand command, Match param) chatCommand;
         private CancellationTokenSource commandCts = new ();
         private bool isChatClosed = false;
+        private IReadOnlyList<RaycastResult> raycastResults;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
@@ -92,6 +94,7 @@ namespace DCL.Chat
             // Adding two elements to count as top and bottom padding
             chatMessages.Add(new ChatMessage(true));
             chatMessages.Add(new ChatMessage(true));
+            device = InputSystem.GetDevice<Mouse>();
         }
 
         protected override void OnViewInstantiated()
@@ -121,13 +124,41 @@ namespace DCL.Chat
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
         }
 
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+            dclInput.UI.Click.performed += OnClick;
+        }
+
+        protected override void OnViewClose()
+        {
+            base.OnViewClose();
+            dclInput.UI.Click.performed -= OnClick;
+        }
+
+        private void OnClick(InputAction.CallbackContext obj)
+        {
+            raycastResults = eventSystem.RaycastAll(device.position.value);
+            var clickedOnPanel = false;
+            foreach (RaycastResult raycasted in raycastResults)
+                if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.gameObject)
+                    clickedOnPanel = true;
+
+            if (!clickedOnPanel)
+            {
+                viewInstance.EmojiPanelButton.SetState(false);
+                viewInstance.EmojiPanel.gameObject.SetActive(false);
+                emojiSuggestionPanelController!.SetPanelVisibility(false);
+            }
+        }
+
         private void OnChatViewPointerExit() =>
             world.Remove<CameraBlockerComponent>(cameraEntity);
 
         private void OnChatViewPointerEnter() =>
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());
 
-        private void AddEmojiFromSuggestion(string emojiCode)
+        private void AddEmojiFromSuggestion(string emojiCode, bool shouldClose)
         {
             if (viewInstance.InputField.text.Length >= MAX_MESSAGE_LENGTH)
                 return;
@@ -136,6 +167,8 @@ namespace DCL.Chat
             viewInstance.InputField.SetTextWithoutNotify(viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode));
             viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
+            if(shouldClose)
+                emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
@@ -254,6 +287,7 @@ namespace DCL.Chat
                     if(profile.ProfilePicture != null)
                         itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
                 }
+
                 //temporary approach to extract the username without the walledId, will be refactored
                 //once we have the proper integration of the profile retrieval
                 Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
@@ -358,6 +392,10 @@ namespace DCL.Chat
                 Entity entity = entityParticipantTable.Entity(chatMessage.WalletAddress);
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatReceiveMessageAudio);
+            }
+            else
+            {
+                world.AddOrGet(playerEntity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             }
 
             viewInstance.ResetChatEntriesFadeout();

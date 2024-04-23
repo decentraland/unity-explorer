@@ -15,7 +15,7 @@ namespace DCL.Optimization.Pools.Tests
         {
             onRelease = Substitute.For<Action<TestClass>>();
             onGet = Substitute.For<Action<TestClass>>();
-            componentPool = new ComponentPool<TestClass>(onGet, onRelease);
+            componentPool = new ComponentPool.WithDefaultCtor<TestClass>(onGet, onRelease);
         }
 
         [TearDown]
@@ -29,7 +29,7 @@ namespace DCL.Optimization.Pools.Tests
             public int Value;
         }
 
-        private ComponentPool<TestClass> componentPool;
+        private IComponentPool<TestClass> componentPool;
         private Action<TestClass> onRelease;
         private Action<TestClass> onGet;
 

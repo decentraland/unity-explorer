@@ -15,9 +15,9 @@ namespace DCL.SDKComponents.NFTShape.Renderer.Factory
 
         public PoolNFTShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool) : this(new NFTShapeRendererFactory(framesPool), componentPoolsRegistry) { }
 
-        public PoolNFTShapeRendererFactory(INFTShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
+        private PoolNFTShapeRendererFactory(INFTShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
         {
-            componentPool = new ThreadSafeComponentPool<INftShapeRenderer>(() => origin.New(tempTransform));
+            componentPool = new ComponentPool.WithFactory<INftShapeRenderer>(() => origin.New(tempTransform));
             componentPoolsRegistry.AddComponentPool(componentPool);
         }
 

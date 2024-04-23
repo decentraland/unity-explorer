@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.AudioSources.Tests
 
             void CreateComponent()
             {
-                component = new AudioSourceComponent(CreatePBAudioSource(), AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY));
+                component = new AudioSourceComponent(AssetPromise<AudioClip, GetAudioClipIntention>.Create(world, new GetAudioClipIntention(), PartitionComponent.TOP_PRIORITY), CreatePBAudioSource().AudioClipUrl);
             }
 
             void CreateEntity()

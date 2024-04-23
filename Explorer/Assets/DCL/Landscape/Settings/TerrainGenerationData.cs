@@ -9,6 +9,7 @@ namespace DCL.Landscape.Settings
     public class TerrainGenerationData : ScriptableObject
     {
         [Header("Terrain Settings")]
+        public int parcelSize = 16;
         public int terrainSize = 4800;
         public int chunkSize = 512;
         public float heightScaleNerf = 1;
@@ -16,6 +17,10 @@ namespace DCL.Landscape.Settings
         public float terrainHoleEdgeSize;
         public float minHeight = 1f;
         public float pondDepth = 5;
+
+        [Min(0)]
+        public int borderPadding = 2;
+
         public NoiseDataBase terrainHeightNoise;
 
         [Header("Textures")]

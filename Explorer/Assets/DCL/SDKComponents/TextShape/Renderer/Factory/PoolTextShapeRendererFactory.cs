@@ -17,7 +17,7 @@ namespace DCL.SDKComponents.TextShape.Renderer.Factory
 
         public PoolTextShapeRendererFactory(ITextShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
         {
-            componentPool = new ThreadSafeComponentPool<ITextShapeRenderer>(() => origin.New(tempTransform));
+            componentPool = new ComponentPool.WithFactory<ITextShapeRenderer>(() => origin.New(tempTransform));
             componentPoolsRegistry.AddComponentPool(componentPool);
         }
 

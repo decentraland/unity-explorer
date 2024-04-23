@@ -14,7 +14,7 @@ namespace DCL.Quality
         // Draw quality tab from the settings
 
         // Custom
-        [SerializeField] internal List<QualityCustomLevel> customSettings;
+        [SerializeField] public List<QualityCustomLevel> customSettings;
 
         /// <summary>
         ///     This list is needed to avoid reflection to get all possible renderer features
@@ -37,7 +37,7 @@ namespace DCL.Quality
 
             [SerializeField] internal LensFlareComponentSRP lensFlareComponent;
 
-            [SerializeField] internal EnvironmentSettings environmentSettings;
+            [SerializeField] public EnvironmentSettings environmentSettings;
         }
     }
 }

@@ -22,6 +22,8 @@ namespace MVC
 
         UniTask HideViewAsync(CancellationToken ct);
 
+        void SetViewCanvasActive(bool isActive);
+
         void Dispose();
     }
 

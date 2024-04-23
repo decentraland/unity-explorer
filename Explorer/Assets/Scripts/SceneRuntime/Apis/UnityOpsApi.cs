@@ -44,11 +44,18 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public object LoadAndEvaluateCode(string moduleName) // "~system/EngineApi"
         {
+            const char PATH_CHAR = '~';
+
             // Load just Scene Code
             if (moduleName == "~scene.js")
                 return engine.Evaluate(sceneScript);
 
-            string dirname = moduleName.Substring(0, 1);
+            if (moduleName.Length == 0 || moduleName[0] != PATH_CHAR)
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), $"{moduleName} is not a module and won't be evaluated");
+                return null;
+            }
+
             string filename = moduleName.Substring(1);
 
             // Load JavaScript wrapper in the Runtime
