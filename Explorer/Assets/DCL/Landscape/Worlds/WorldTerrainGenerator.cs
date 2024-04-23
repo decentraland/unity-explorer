@@ -11,6 +11,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Landscape
 {
@@ -39,6 +40,11 @@ namespace DCL.Landscape
         public WorldTerrainGenerator(bool measureTime = false)
         {
             timeProfiler = new TimeProfiler(measureTime);
+        }
+
+        public void Dispose()
+        {
+            UnityObjectUtils.SafeDestroy(rootGo);
         }
 
         public void Initialize(TerrainGenerationData terrainGenData)

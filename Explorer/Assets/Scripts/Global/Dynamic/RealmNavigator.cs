@@ -41,6 +41,7 @@ namespace Global.Dynamic
         private readonly RoadPlugin roadsPlugin;
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
+        private readonly SatelliteView satelliteView;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -52,7 +53,8 @@ namespace Global.Dynamic
             ObjectProxy<World> globalWorldProxy,
             RoadPlugin roadsPlugin,
             TerrainGenerator genesisTerrain,
-            WorldTerrainGenerator worldsTerrain
+            WorldTerrainGenerator worldsTerrain,
+            SatelliteView satelliteView
         )
         {
             this.loadingScreen = loadingScreen;
@@ -62,6 +64,7 @@ namespace Global.Dynamic
             this.roadsPlugin = roadsPlugin;
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
+            this.satelliteView = satelliteView;
             this.roomHub = roomHub;
             this.remoteEntities = remoteEntities;
             this.globalWorldProxy = globalWorldProxy;
@@ -141,7 +144,7 @@ namespace Global.Dynamic
             // isVisible
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
             genesisTerrain.SwitchVisibility(isVisible);
-            // landscapePlugin.landscapeData.Value.showSatelliteView = isVisible;
+            satelliteView.SwitchVisibility(isVisible);
             roadsPlugin.RoadAssetPool!.SwitchVisibility(isVisible);
 
             // is NOT visible

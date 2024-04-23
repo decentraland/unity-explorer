@@ -192,7 +192,8 @@ namespace Global.Dynamic
 
             var genesisTerrain = new TerrainGenerator();
             var worldsTerrain = new WorldTerrainGenerator();
-            var landscapePlugin = new LandscapePlugin(genesisTerrain, worldsTerrain, staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
+            var satelliteView = new SatelliteView();
+            var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
@@ -270,7 +271,8 @@ namespace Global.Dynamic
                 staticContainer.GlobalWorldProxy,
                 container.LODContainer.RoadPlugin,
                 genesisTerrain,
-                worldsTerrain
+                worldsTerrain,
+                satelliteView
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
