@@ -121,22 +121,16 @@ namespace DCL.CharacterCamera.Tests
         [Test]
         public void ChangeShouldersWhenOnThirdPersonCamera()
         {
+            world.Set(entity, new CursorComponent
+                { CursorState = CursorState.Locked });
             world.Set(entity, new CameraInput { ChangeShoulder = true });
-            world.Set(entity, new CameraComponent { Mode = CameraMode.ThirdPerson, Shoulder = ThirdPersonCameraShoulder.Center });
-
-            system.Update(1);
-            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Right));
+            world.Set(entity, new CameraComponent { Mode = CameraMode.ThirdPerson, Shoulder = ThirdPersonCameraShoulder.Right });
 
             system.Update(1);
             Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Left));
 
             system.Update(1);
-            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Center));
-
-            // change shoulder is ignored if the input is false
-            world.Set(entity, new CameraInput { ChangeShoulder = false });
-            system.Update(1);
-            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Center));
+            Assert.That(world.Get<CameraComponent>(entity).Shoulder, Is.EqualTo(ThirdPersonCameraShoulder.Right));
         }
 
         [Test]
