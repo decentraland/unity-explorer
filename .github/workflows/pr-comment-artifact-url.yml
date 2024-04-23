@@ -39,7 +39,7 @@ jobs:
             --jq ".artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name==\"Build-StandaloneWindows64\") |
+            select(.name==\"Decentraland\") |
             .id")
           
           echo "Artifact ID: $ARTIFACT_ID"
