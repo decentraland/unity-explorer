@@ -141,8 +141,10 @@ MonoBehaviour:
   <HandsIKWallHitDistance>k__BackingField: 0.5
   <HandsIKWeightSpeed>k__BackingField: 5
   <HandsIKElbowOffset>k__BackingField: {x: 25.6, y: 38.8, z: -53.5}
+  <HeadIKIsEnabled>k__BackingField: 1
   <HeadIKVerticalAngleLimit>k__BackingField: 60
-  <HeadIKHorizontalAngleLimit>k__BackingField: 90
+  <HeadIKHorizontalAngleLimit>k__BackingField: 50
+  <HeadIKHorizontalAngleReset>k__BackingField: 120
   <HeadIKRotationSpeed>k__BackingField: 360
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1
