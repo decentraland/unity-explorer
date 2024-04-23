@@ -40,6 +40,7 @@ namespace DCL.Audio.Systems
         private ILandscapeAudioSystemSettings landscapeAudioSystemSettings;
         private float audioListeningDistanceThreshold;
         private float audioMutingDistanceThreshold;
+        private float oceanListeningDistanceThreshold;
 
         private int updateFramesCounter;
 
@@ -116,6 +117,7 @@ namespace DCL.Audio.Systems
 
             // some water chunks are disabled on purpose, we dont want to re-enable them
             var waterRenderers = renderers.Where(meshRenderer => meshRenderer.enabled).ToList();
+            oceanListeningDistanceThreshold = math.pow(landscapeAudioSystemSettings.OceanDistanceThreshold, 2);
 
             oceanAudioStates = new NativeArray<OceanAudioState>(waterRenderers.Count, Allocator.Persistent);
 
@@ -190,14 +192,14 @@ namespace DCL.Audio.Systems
                         audioState.IsHeard = true;
                         landscapeAudioState.AudioState = audioState;
                         landscapeAudioStates[i] = landscapeAudioState;
-                        WorldAudioEventsBus.Instance.SendPlayLandscapeAudioEvent(i, landscapeAudioSourcesPositions[i], WorldAudioClipType.Glade);
+                        WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, landscapeAudioSourcesPositions[i], WorldAudioClipType.Landscape);
                     }
                     else if (audioState is { ShouldBeSilent: true, IsSilent: false })
                     {
                         audioState.IsSilent = true;
                         landscapeAudioState.AudioState = audioState;
                         landscapeAudioStates[i] = landscapeAudioState;
-                        WorldAudioEventsBus.Instance.SendStopLandscapeAudioEvent(i, WorldAudioClipType.Glade);
+                        WorldAudioEventsBus.Instance.SendStopTerrainAudioEvent(i, WorldAudioClipType.Landscape);
                     }
                 }
 
@@ -219,6 +221,60 @@ namespace DCL.Audio.Systems
             }
         }
 
+        [Query]
+        private void UpdateOceanAudioEvents(in Entity _, in CameraComponent cameraComponent)
+        {
+            if (jobHandle.IsCompleted && !jobHandle.Equals(default(JobHandle)))
+            {
+                Profiler.BeginSample("UpdateOceanAudioEvents.Update");
+                jobHandle.Complete();
+
+                for (var i = 0; i < oceanAudioStates.Length; i++)
+                {
+                    OceanAudioState oceanAudioState = oceanAudioStates[i];
+                    TerrainAudioState audioState = oceanAudioState.AudioState;
+
+                    if (audioState is { ShouldBeHeard: true, IsHeard: false })
+                    {
+                        audioState.IsHeard = true;
+                        oceanAudioState.AudioState = audioState;
+                        oceanAudioStates[i] = oceanAudioState;
+                        NativeArray<int2> closestPointArray = new NativeArray<int2>(1, Allocator.Temp);
+                        closestPointArray[0] = oceanAudioState.ClosestPoint;
+                        WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, closestPointArray, WorldAudioClipType.Ocean);
+                    }
+                    else if (audioState.IsHeard)
+                    {
+                        NativeArray<int2> closestPointArray = new NativeArray<int2>(1, Allocator.Temp);
+                        closestPointArray[0] = oceanAudioState.ClosestPoint;
+                        WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, closestPointArray, WorldAudioClipType.Ocean);
+                    }
+                    else if (audioState is { ShouldBeSilent: true, IsSilent: false })
+                    {
+                        audioState.IsSilent = true;
+                        oceanAudioState.AudioState = audioState;
+                        oceanAudioStates[i] = oceanAudioState;
+                        WorldAudioEventsBus.Instance.SendStopTerrainAudioEvent(i, WorldAudioClipType.Ocean);
+                    }
+                }
+
+                Profiler.EndSample();
+            }
+
+            // Schedule
+            if (jobHandle.IsCompleted)
+            {
+                Profiler.BeginSample("CalculateOceanAudioStatesJob.Schedule");
+                jobHandle.Complete();
+
+                Vector3 position = cameraComponent.Camera.transform.position;
+
+                var job = new CalculateOceanAudioStatesJob(oceanAudioStates, position, oceanListeningDistanceThreshold);
+                jobHandle = job.Schedule(landscapeAudioStates.Length, 32, jobHandle);
+                Profiler.EndSample();
+            }
+        }
+
         private Bounds GetTerrainBoundsInWorldSpace(Terrain terrain)
         {
             Bounds localBounds = terrain.terrainData.bounds;
@@ -226,5 +282,26 @@ namespace DCL.Audio.Systems
             var worldBounds = new Bounds(localBounds.center + terrainPosition, localBounds.size);
             return worldBounds;
         }
+    }
+
+    public struct TerrainAudioState
+    {
+        public bool IsSilent;
+        public bool IsHeard;
+        public bool ShouldBeSilent;
+        public bool ShouldBeHeard;
+    }
+
+    public struct LandscapeAudioState
+    {
+        public TerrainAudioState AudioState;
+        public float2 CenterOfTerrain;
+    }
+
+    public struct OceanAudioState
+    {
+        public TerrainAudioState AudioState;
+        public Bounds Bounds;
+        public int2 ClosestPoint;
     }
 }

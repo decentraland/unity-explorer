@@ -1,32 +1,11 @@
-﻿using DCL.Audio.System;
+﻿using DCL.Audio.Systems;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace DCL.Audio.Jobs
 {
-    public struct TerrainAudioState
-    {
-        public bool IsSilent;
-        public bool IsHeard;
-        public bool ShouldBeSilent;
-        public bool ShouldBeHeard;
-    }
-
-    public struct LandscapeAudioState
-    {
-        public TerrainAudioState AudioState;
-        public float2 CenterOfTerrain;
-    }
-
-    public struct OceanAudioState
-    {
-        public TerrainAudioState AudioState;
-        public Bounds Bounds;
-    }
-
     [BurstCompile]
     public struct CalculateLandscapeAudioStatesJob : IJobParallelFor
     {

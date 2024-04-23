@@ -1,0 +1,61 @@
+﻿using DCL.Audio.Systems;
+using System.Numerics;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Mathematics;
+
+namespace DCL.Audio.Jobs
+{
+    [BurstCompile]
+    public struct CalculateOceanAudioStatesJob : IJobParallelFor
+    {
+        private NativeArray<OceanAudioState> oceanAudioStates;
+        private readonly UnityEngine.Vector3 cameraPosition;
+        private readonly float oceanListeningDistanceThreshold;
+
+        public CalculateOceanAudioStatesJob(
+            NativeArray<OceanAudioState> oceanAudioStates,
+            UnityEngine.Vector3 cameraPosition,
+            float oceanListeningDistanceThreshold
+            )
+        {
+            this.oceanAudioStates = oceanAudioStates;
+            this.cameraPosition = cameraPosition;
+            this.oceanListeningDistanceThreshold = oceanListeningDistanceThreshold;
+        }
+
+        public void Execute(int i)
+        {
+            OceanAudioState oceanAudioState = oceanAudioStates[i];
+            TerrainAudioState terrainAudioState = oceanAudioState.AudioState;
+
+            float sqrDistance = oceanAudioState.Bounds.SqrDistance(cameraPosition);
+
+            if (sqrDistance < oceanListeningDistanceThreshold)
+            {
+                var closestPoint = oceanAudioState.Bounds.ClosestPoint(cameraPosition);
+                oceanAudioState.ClosestPoint = new int2((int)closestPoint.x, (int)closestPoint.z);
+                if (!terrainAudioState.IsHeard)
+                {
+                    terrainAudioState.ShouldBeHeard = true;
+                    terrainAudioState.IsSilent = false;
+                    terrainAudioState.ShouldBeSilent = false;
+                }
+            }
+            //We do this so we are not removing AudioSources immediately after a player is out of range,
+            //otherwise it might sound weird if player returns to a zone they just left
+            else if (!terrainAudioState.IsSilent)
+                {
+                    terrainAudioState.IsHeard = false;
+                    terrainAudioState.ShouldBeHeard = false;
+                    terrainAudioState.ShouldBeSilent = true;
+                }
+
+
+            oceanAudioState.AudioState = terrainAudioState;
+
+            oceanAudioStates[i] = oceanAudioState;
+        }
+    }
+}

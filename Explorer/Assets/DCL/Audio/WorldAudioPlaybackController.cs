@@ -18,20 +18,19 @@ namespace DCL.Audio
         private AudioSource audioSourcePrefab;
 
         private readonly Dictionary<int, List<AudioSource>> landscapeAudioSourcesPerIndex = new ();
-        private readonly Dictionary<int, List<AudioSource>> hillsAudioSourcesPerIndex = new ();
         private readonly Dictionary<int, List<AudioSource>> oceanAudioSourcesPerIndex = new ();
         private GameObjectPool<AudioSource> audioSourcePool;
 
         public void Dispose()
         {
-            WorldAudioEventsBus.Instance.PlayWorldAudioEvent -= OnPlayLandscapeAudioEvent;
+            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent -= OnPlayLandscapeAudioEvent;
             WorldAudioEventsBus.Instance.StopWorldAudioEvent -= StopAndReleaseAudioSources;
             audioSourcePool.Dispose();
         }
 
         public void Initialize()
         {
-            WorldAudioEventsBus.Instance.PlayWorldAudioEvent += OnPlayLandscapeAudioEvent;
+            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent += OnPlayLandscapeAudioEvent;
             WorldAudioEventsBus.Instance.StopWorldAudioEvent += StopAndReleaseAudioSources;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
         }
@@ -45,9 +44,31 @@ namespace DCL.Audio
             return audioSource;
         }
 
-        private void OnPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType )
+
+        private AudioSource GetAudioSource(int2 position)
         {
-            AudioClipConfig audioClipConfig = audioSettings.GetAudioClipConfigForType(clipType).DayClip; //We can switch this depending on the time of day for example
+            AudioSource audioSource = audioSourcePool.Get();
+            Transform audioSourceTransform = audioSource.transform;
+            audioSourceTransform.parent = transform;
+            audioSourceTransform.position = new Vector3(position.x, 1, position.y);
+            return audioSource;
+        }
+
+        private void SetupAudioClip(AudioSource audioSource, AudioClipConfig audioClipConfig)
+        {
+            int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+            var clip = audioClipConfig.AudioClips[clipIndex];
+            audioSource.clip = clip;
+            audioSource.time = Random.Range(0, clip.length);
+            audioSource.volume = audioClipConfig.RelativeVolume;
+            audioSource.Play();
+        }
+
+
+
+        private void OnPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType)
+        {
+            AudioClipConfig audioClipConfig = audioSettings.GetAudioClipConfigForType(WorldAudioClipType.Landscape).DayClip; //We can switch this depending on the time of day for example
 
             if (!CheckAudioClips(audioClipConfig)) return;
 
@@ -56,13 +77,12 @@ namespace DCL.Audio
             switch (clipType)
             {
                 default:
-                case WorldAudioClipType.Glade: break;
+                case WorldAudioClipType.Landscape:
+                    break;
                 case WorldAudioClipType.Ocean:
                     audioSourcesPerIndex = oceanAudioSourcesPerIndex;
                     break;
-                case WorldAudioClipType.Hills:
-                    audioSourcesPerIndex = hillsAudioSourcesPerIndex;
-                    break;
+
             }
 
             if (!audioSourcesPerIndex.TryGetValue(index, out List<AudioSource> audioSourceList))
@@ -71,24 +91,24 @@ namespace DCL.Audio
 
                 foreach (int2 position in audioSourcesPositions)
                 {
-                    AudioSource audioSource = audioSourcePool.Get();
-                    Transform audioSourceTransform = audioSource.transform;
-                    audioSourceTransform.parent = transform;
-                    audioSourceTransform.position = new Vector3(position.x, 1, position.y);
+                    AudioSource audioSource = GetAudioSource(position);
                     audioSourceList.Add(audioSource);
                 }
 
                 audioSourcesPerIndex.Add(index, audioSourceList);
             }
+            else
+            {
+                for (var i = 0; i < Math.Min(audioSourcesPositions.Length, audioSourcesPositions.Length); i++)
+                {
+                    int2 position = audioSourcesPositions[i];
+                    audioSourceList[i].transform.position = new Vector3(position.x, 1, position.y);;
+                }
+            }
 
             foreach (AudioSource audioSource in audioSourceList)
             {
-                int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
-                var clip = audioClipConfig.AudioClips[clipIndex];
-                audioSource.clip = clip;
-                audioSource.time = Random.Range(0, clip.length);
-                audioSource.volume = audioClipConfig.RelativeVolume;
-                audioSource.Play();
+                if (!audioSource.isPlaying) { SetupAudioClip(audioSource, audioClipConfig); }
             }
         }
 
@@ -99,12 +119,9 @@ namespace DCL.Audio
             switch (clipType)
             {
                 default:
-                case WorldAudioClipType.Glade: break;
+                case WorldAudioClipType.Landscape: break;
                 case WorldAudioClipType.Ocean:
                     audioSourcesPerIndex = oceanAudioSourcesPerIndex;
-                    break;
-                case WorldAudioClipType.Hills:
-                    audioSourcesPerIndex = hillsAudioSourcesPerIndex;
                     break;
             }
 

@@ -42,8 +42,7 @@ namespace DCL.Audio
 
     public enum WorldAudioClipType
     {
-        Glade,
+        Landscape,
         Ocean,
-        Hills,
     }
 }
