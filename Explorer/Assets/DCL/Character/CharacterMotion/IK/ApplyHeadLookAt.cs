@@ -35,19 +35,9 @@ namespace DCL.CharacterMotion.IK
             //otherwise, calculate rotation within constraints
             else
             {
-
                 //clamp horizontal angle and apply rotation
                 horizontalAngle = Mathf.Clamp(horizontalAngle, -settings.HeadIKHorizontalAngleLimit, settings.HeadIKHorizontalAngleLimit);
                 horizontalTargetRotation = Quaternion.AngleAxis(horizontalAngle, Vector3.up);
-
-                // To avoid breaking the avatar's spine when going from left to right, we slowly move towards the correct angle instead of directly rotating towards the target rotation
-                /*
-                float currentHorizontalAngle = Mathf.DeltaAngle(referenceAngle.y, avatarBase.HeadLookAtTargetHorizontal.eulerAngles.y);
-                if (horizontalAngle >= 0 && currentHorizontalAngle < 0)
-                    horizontalTargetRotation = Quaternion.AngleAxis(dt * rotationSpeed, Vector3.up);
-                else if (horizontalAngle < 0 && currentHorizontalAngle >= 0)
-                    horizontalTargetRotation = Quaternion.AngleAxis(-(dt * rotationSpeed), Vector3.up);
-                */
 
                 //calculate vertical angle difference between reference and target, clamped to maximum angle
                 float verticalAngle = Mathf.DeltaAngle(referenceAngle.x, targetAngle.x);
