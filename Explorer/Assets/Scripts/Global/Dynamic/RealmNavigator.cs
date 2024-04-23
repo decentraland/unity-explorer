@@ -38,9 +38,9 @@ namespace Global.Dynamic
         private readonly IRoomHub roomHub;
         private readonly IRemoteEntities remoteEntities;
         private readonly ObjectProxy<World> globalWorldProxy;
-        private readonly LandscapePlugin landscapePlugin;
         private readonly RoadPlugin roadsPlugin;
-        private readonly WorldTerrainGenerator worldsTerrainGenerator;
+        private readonly TerrainGenerator genesisTerrain;
+        private readonly WorldTerrainGenerator worldsTerrain;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -50,15 +50,18 @@ namespace Global.Dynamic
             IRoomHub roomHub,
             IRemoteEntities remoteEntities,
             ObjectProxy<World> globalWorldProxy,
-            LandscapePlugin landscapePlugin, RoadPlugin roadsPlugin
+            RoadPlugin roadsPlugin,
+            TerrainGenerator genesisTerrain,
+            WorldTerrainGenerator worldsTerrain
         )
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
             this.realmController = realmController;
             this.teleportController = teleportController;
-            this.landscapePlugin = landscapePlugin;
             this.roadsPlugin = roadsPlugin;
+            this.genesisTerrain = genesisTerrain;
+            this.worldsTerrain = worldsTerrain;
             this.roomHub = roomHub;
             this.remoteEntities = remoteEntities;
             this.globalWorldProxy = globalWorldProxy;
@@ -129,7 +132,7 @@ namespace Global.Dynamic
                 foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
                     ownedParcels.Add(parcel.ToInt2());
 
-                await landscapePlugin.WorldTerrainGenerator.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
+                await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
             }
         }
 
@@ -137,12 +140,12 @@ namespace Global.Dynamic
         {
             // isVisible
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
-            landscapePlugin.TerrainGenerator.SwitchVisibility(isVisible);
-            landscapePlugin.landscapeData.Value.showSatelliteView = isVisible;
+            genesisTerrain.SwitchVisibility(isVisible);
+            // landscapePlugin.landscapeData.Value.showSatelliteView = isVisible;
             roadsPlugin.RoadAssetPool!.SwitchVisibility(isVisible);
 
             // is NOT visible
-            landscapePlugin.WorldTerrainGenerator.SwitchVisibility(!isVisible);
+            worldsTerrain.SwitchVisibility(!isVisible);
         }
     }
 }

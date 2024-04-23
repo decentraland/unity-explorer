@@ -31,7 +31,8 @@ namespace DCL.Landscape
 
         private void OnValidate()
         {
-            wGen = new WorldTerrainGenerator(genData);
+            wGen = new WorldTerrainGenerator();
+            wGen.Initialize(genData);
         }
 
         public TerrainGenerator GetGenerator() =>
@@ -46,13 +47,17 @@ namespace DCL.Landscape
             if (genData.terrainSize == 1)
             {
                 if (clearNoiseCacheForWorlds)
-                    wGen = new WorldTerrainGenerator(genData);
+                {
+                    wGen = new WorldTerrainGenerator();
+                    wGen.Initialize(genData);
+                }
 
                 await wGen.GenerateTerrainAsync(ownedParcels, worldSeed);
             }
             else
             {
-                gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
+                gen = new TerrainGenerator( true, clearCache);
+                gen.Initialize(genData, ref emptyParcels, ref ownedParcels);
                 await gen.GenerateTerrainAsync(worldSeed, digHoles, hideTrees, hideDetails, true);
             }
 

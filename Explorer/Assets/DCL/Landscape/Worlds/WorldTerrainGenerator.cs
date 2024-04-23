@@ -18,15 +18,15 @@ namespace DCL.Landscape
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
-
-        private readonly int parcelSize;
-
-        private readonly TerrainGenerationData terrainGenData;
         private readonly NoiseGeneratorCache noiseGenCache = new ();
+        private readonly TimeProfiler timeProfiler;
 
-        private readonly TerrainFactory factory;
-        private readonly TerrainChunkDataGenerator chunkDataGenerator;
-        private readonly TerrainBoundariesGenerator boundariesGenerator;
+        private int parcelSize;
+        private TerrainGenerationData terrainGenData;
+
+        private TerrainFactory factory;
+        private TerrainChunkDataGenerator chunkDataGenerator;
+        private TerrainBoundariesGenerator boundariesGenerator;
 
         private Transform rootGo;
         private Transform ocean;
@@ -36,15 +36,19 @@ namespace DCL.Landscape
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
-        public WorldTerrainGenerator(TerrainGenerationData terrainGenData, bool measureTime = false)
+        public WorldTerrainGenerator(bool measureTime = false)
+        {
+            timeProfiler = new TimeProfiler(measureTime);
+        }
+
+        public void Initialize(TerrainGenerationData terrainGenData)
         {
             this.terrainGenData = terrainGenData;
+
             parcelSize = terrainGenData.parcelSize;
-
             factory = new TerrainFactory(terrainGenData);
-
-            chunkDataGenerator = new TerrainChunkDataGenerator(null, new TimeProfiler(measureTime), terrainGenData, ReportCategory.LANDSCAPE, noiseGenCache);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+            chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE, noiseGenCache);
         }
 
         public void SwitchVisibility(bool isVisible)
@@ -125,6 +129,7 @@ namespace DCL.Landscape
         private static int GetMaxHeightIndex(in NativeParallelHashMap<int2, int> emptyParcelsData)
         {
             int maxHeight = int.MinValue;
+
             foreach (KeyValue<int2, int> emptyParcelHeight in emptyParcelsData)
                 if (emptyParcelHeight.Value > maxHeight)
                     maxHeight = emptyParcelHeight.Value;

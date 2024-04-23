@@ -33,22 +33,20 @@ namespace DCL.Landscape
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.6f;
         private const float PROGRESS_COUNTER_DIG_HOLES = 0.75f;
         private const float PROGRESS_SPAWN_TERRAIN = 0.25f;
-
-        private readonly int parcelSize;
-
-        private readonly TerrainGenerationData terrainGenData;
         private readonly NoiseGeneratorCache noiseGenCache;
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
-        private readonly TerrainGeneratorLocalCache localCache;
         private readonly bool forceCacheRegen;
         private readonly List<Terrain> terrains;
 
-        private readonly TerrainFactory factory;
-        private readonly TerrainChunkDataGenerator chunkDataGenerator;
-        private readonly TerrainBoundariesGenerator boundariesGenerator;
-        private NativeList<int2> emptyParcels;
+        private int parcelSize;
+        private TerrainGenerationData terrainGenData;
+        private TerrainGeneratorLocalCache localCache;
+        private TerrainChunkDataGenerator chunkDataGenerator;
+        private TerrainBoundariesGenerator boundariesGenerator;
+        private TerrainFactory factory;
 
+        private NativeList<int2> emptyParcels;
         private NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData;
         private NativeParallelHashMap<int2, int> emptyParcelsData;
         private NativeParallelHashSet<int2> ownedParcels;
@@ -70,21 +68,27 @@ namespace DCL.Landscape
 
         public bool IsTerrainGenerated { get; private set; }
 
-        public TerrainGenerator(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, bool measureTime = false, bool forceCacheRegen = false)
+        public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
         {
-            parcelSize = terrainGenData.parcelSize;
-
             this.forceCacheRegen = forceCacheRegen;
-            this.ownedParcels = ownedParcels;
-            this.emptyParcels = emptyParcels;
-            this.terrainGenData = terrainGenData;
+
             noiseGenCache = new NoiseGeneratorCache();
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION);
-            terrains = new List<Terrain>();
 
+            terrains = new List<Terrain>();
+        }
+
+        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        {
+            this.ownedParcels = ownedParcels;
+            this.emptyParcels = emptyParcels;
+            this.terrainGenData = terrainGenData;
+
+            parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
+            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION);
+
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData, noiseGenCache);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
         }
