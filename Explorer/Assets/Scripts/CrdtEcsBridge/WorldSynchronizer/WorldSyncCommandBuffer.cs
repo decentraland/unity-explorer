@@ -1,4 +1,4 @@
-using Arch.CommandBuffer;
+using Arch.Buffer;
 using Arch.Core;
 using CRDT;
 using CRDT.Protocol;
@@ -177,7 +177,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     // just override with the final state
                     batchState.reconciliationState = new ReconciliationState(finalState, finalState);
 
-                    if (finalState != CRDTReconciliationEffect.ComponentDeleted)
+                    if (finalState is not CRDTReconciliationEffect.ComponentDeleted and not CRDTReconciliationEffect.NoChanges)
                     {
                         SDKComponentBridge bridge = batchState.sdkComponentBridge;
                         object deserializationTarget = batchState.sdkComponentBridge.Pool.Rent();
@@ -251,7 +251,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             finally
             {
                 // it is a must to Playback to clear internals
-                commandBuffer.Playback();
+                commandBuffer.Playback(world);
                 Dispose();
             }
         }
