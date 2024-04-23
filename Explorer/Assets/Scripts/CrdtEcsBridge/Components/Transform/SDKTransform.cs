@@ -33,5 +33,14 @@ namespace CrdtEcsBridge.Components.Transform
 
         public int CalculateSize() =>
             (Marshal.SizeOf<Vector3>() * 2) + Marshal.SizeOf<Quaternion>() + Marshal.SizeOf<CRDTEntity>();
+
+        public void Clear()
+        {
+            ParentId = 0;
+            Position = Vector3.zero;
+            Rotation = Quaternion.identity;
+            Scale = Vector3.one;
+            IsDirty = false;
+        }
     }
 }

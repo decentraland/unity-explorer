@@ -30,7 +30,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(UIDropdownComponent), new ComponentPool<UIDropdownComponent>() },
+                    { typeof(UIDropdownComponent), new ComponentPool.WithDefaultCtor<UIDropdownComponent>() },
                 }, null);
 
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();

@@ -18,3 +18,4 @@ MonoBehaviour:
   detailDistance: 1200
   mapChunk: {fileID: 1448041327893328029, guid: 63b41593f2fa6c04d8772db2b2b61589, type: 3}
   terrainData: {fileID: 11400000, guid: 409e3f2e0a395134cb4def3ba3747c39, type: 2}
+  worldsTerrainData: {fileID: 11400000, guid: 073a968567df25b4988ecaf238256181, type: 2}
