@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEquippedData(in Entity entity, ref PlayerProfileDataComponent playerProfileDataComponent, ref PBAvatarEquippedData pbComponent)
+        private void UpdateAvatarEquippedData(ref PlayerProfileDataComponent playerProfileDataComponent, ref PBAvatarEquippedData pbComponent)
         {
             if (!playerProfileDataComponent.IsDirty) return;
 
@@ -87,8 +87,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
                 foreach (URN urn in pbComponent.EmoteUrns) { dispatchedPBComponent.EmoteUrns.Add(urn); }
             }, playerProfileDataComponent.CRDTEntity, pbComponent);
-
-            World.Set(entity, pbComponent);
         }
 
         [Query]

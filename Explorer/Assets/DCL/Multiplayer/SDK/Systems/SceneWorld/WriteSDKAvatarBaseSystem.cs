@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBase(in Entity entity, ref PlayerProfileDataComponent playerProfileDataComponent, ref PBAvatarBase pbComponent)
+        private void UpdateAvatarBase(ref PlayerProfileDataComponent playerProfileDataComponent, ref PBAvatarBase pbComponent)
         {
             if (!playerProfileDataComponent.IsDirty) return;
 
@@ -79,8 +79,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 dispatchedPBComponent.EyesColor = pbComponent.EyesColor;
                 dispatchedPBComponent.HairColor = pbComponent.HairColor;
             }, playerProfileDataComponent.CRDTEntity, pbComponent);
-
-            World.Set(entity, pbComponent);
         }
 
         [Query]
