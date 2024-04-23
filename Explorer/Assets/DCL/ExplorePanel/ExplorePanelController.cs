@@ -202,12 +202,14 @@ namespace DCL.ExplorePanel
         {
             world.Add<CameraBlockerComponent>(playerEntity);
             world.Add<MovementBlockerComponent>(playerEntity);
+            dclInput.Camera.Disable();
         }
 
         private void UnblockUnwantedActions()
         {
             world.Remove<CameraBlockerComponent>(playerEntity);
             world.Remove<MovementBlockerComponent>(playerEntity);
+            dclInput.Camera.Enable();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)

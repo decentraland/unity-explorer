@@ -1,22 +1,15 @@
-﻿using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace DCL.CharacterMotion
+namespace DCL.Character.CharacterMotion.Velocity
 {
-    public static class ApplyLookDirection
+    public static class ApplyConditionalRotation
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(CharacterRigidTransform rigidTransform, in MovementInputComponent input, in ICharacterControllerSettings settings)
+        public static void Execute(ref CharacterRigidTransform rigidTransform, in ICharacterControllerSettings settings)
         {
-            if (Mathf.Abs(input.Axes.x) > 0 || Mathf.Abs(input.Axes.y) > 0)
-            {
-                Vector3 flatVelocity = rigidTransform.MoveVelocity.Velocity;
-                flatVelocity.y = 0;
-                rigidTransform.LookDirection = flatVelocity.normalized;
-            }
-
             if (rigidTransform.IsStuck)
                 return;
 
