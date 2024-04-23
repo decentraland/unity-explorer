@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CommunicationData.URLHelpers;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Character;
@@ -14,6 +15,7 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -85,8 +87,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                     SkinColor = avatarData.SkinColor,
                     EyesColor = avatarData.EyesColor,
                     HairColor = avatarData.HairColor,
-                    WearableUrns = profile.Avatar.Wearables,
-                    EmoteUrns = profile.Avatar.Emotes,
+                    WearableUrns = new List<URN>(profile.Avatar.Wearables),
+                    EmoteUrns = new List<URN>(profile.Avatar.Emotes),
                 };
 
                 sceneEcsExecutor.World.Add(sceneWorldEntity, playerSDKDataComponent);
@@ -102,23 +104,21 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             SceneEcsExecutor sceneEcsExecutor = playerProfileDataComponent.SceneFacade.EcsExecutor;
 
+            Avatar avatarData = profile.Avatar;
+            playerProfileDataComponent.IsDirty = true;
+            playerProfileDataComponent.Address = profile.UserId;
+            playerProfileDataComponent.IsGuest = !profile.HasConnectedWeb3;
+            playerProfileDataComponent.Name = profile.Name;
+            playerProfileDataComponent.BodyShapeURN = avatarData.BodyShape;
+            playerProfileDataComponent.SkinColor = avatarData.SkinColor;
+            playerProfileDataComponent.EyesColor = avatarData.EyesColor;
+            playerProfileDataComponent.HairColor = avatarData.HairColor;
+            playerProfileDataComponent.WearableUrns = new List<URN>(profile.Avatar.Wearables);
+            playerProfileDataComponent.EmoteUrns = new List<URN>(profile.Avatar.Emotes);
+
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
-            {
-                Avatar avatarData = profile.Avatar;
-                playerProfileDataComponent.IsDirty = true;
-                playerProfileDataComponent.Address = profile.UserId;
-                playerProfileDataComponent.IsGuest = !profile.HasConnectedWeb3;
-                playerProfileDataComponent.Name = profile.Name;
-                playerProfileDataComponent.BodyShapeURN = avatarData.BodyShape;
-                playerProfileDataComponent.SkinColor = avatarData.SkinColor;
-                playerProfileDataComponent.EyesColor = avatarData.EyesColor;
-                playerProfileDataComponent.HairColor = avatarData.HairColor;
-                playerProfileDataComponent.WearableUrns = profile.Avatar.Wearables;
-                playerProfileDataComponent.EmoteUrns = profile.Avatar.Emotes;
-
                 sceneEcsExecutor.World.Set(playerProfileDataComponent.SceneWorldEntity, playerProfileDataComponent);
-            }
         }
 
         [Query]
