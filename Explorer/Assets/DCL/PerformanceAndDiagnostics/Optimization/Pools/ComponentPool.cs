@@ -4,39 +4,53 @@ using UnityEngine.Pool;
 
 namespace DCL.Optimization.Pools
 {
-    public class ComponentPool<T> : IComponentPool<T> where T: class, new()
+    /// <summary>
+    /// Entry point for Thread-safe pools dedicated to SDK/ECS components
+    /// </summary>
+    public static class ComponentPool
     {
-        /// <summary>
-        ///     It is not thread-safe
-        /// </summary>
-        private readonly ThreadSafeObjectPool<T> objectPool;
-
-        public int CountInactive => objectPool.CountInactive;
-
-        public ComponentPool(Action<T> onGet = null, Action<T> onRelease = null, int defaultCapacity = 10, int maxSize = 10000)
+        public class WithDefaultCtor<T> : WithFactory<T> where T : class, new()
         {
-            objectPool = new ThreadSafeObjectPool<T>(() => new T(), actionOnGet: onGet, actionOnRelease: onRelease, collectionCheck: false,
-                defaultCapacity: defaultCapacity, maxSize: maxSize);
+            public WithDefaultCtor(Action<T> onGet = null, Action<T> onRelease = null, Action<T> actionOnDestroy = null, int defaultCapacity = 10, int maxSize = 10000) :
+                base(static () => new T(), onGet, onRelease, actionOnDestroy, defaultCapacity, maxSize)
+            {
+            }
         }
 
-        public void Dispose()
+        public class WithFactory<T> : IComponentPool<T> where T : class
         {
-            objectPool.Clear();
+            /// <summary>
+            ///     It is not thread-safe
+            /// </summary>
+            private readonly ThreadSafeObjectPool<T> objectPool;
+
+            public int CountInactive => objectPool.CountInactive;
+
+            public WithFactory(Func<T> createFunc, Action<T> onGet = null, Action<T> onRelease = null, Action<T> actionOnDestroy = null, int defaultCapacity = 10, int maxSize = 10000)
+            {
+                objectPool = new ThreadSafeObjectPool<T>(createFunc, actionOnGet: onGet, actionOnRelease: onRelease, actionOnDestroy: actionOnDestroy, collectionCheck: PoolConstants.CHECK_COLLECTIONS,
+                    defaultCapacity: defaultCapacity, maxSize: maxSize);
+            }
+
+            public void Dispose()
+            {
+                objectPool.Clear();
+            }
+
+            public T Get() =>
+                objectPool.Get();
+
+            public PooledObject<T> Get(out T v) =>
+                objectPool.Get(out v);
+
+            public void Release(T component) =>
+                objectPool.Release(component);
+
+            public void Clear() =>
+                objectPool.Clear();
+
+            public void ClearThrottled(int maxUnloadAmount) =>
+                objectPool.ClearThrottled(maxUnloadAmount);
         }
-
-        public T Get() =>
-            objectPool.Get();
-
-        public PooledObject<T> Get(out T v) =>
-            objectPool.Get(out v);
-
-        public void Release(T component) =>
-            objectPool.Release(component);
-
-        public void Clear() =>
-            objectPool.Clear();
-
-        public void ClearThrottled(int maxUnloadAmount) =>
-            objectPool.ClearThrottled(maxUnloadAmount);
     }
 }

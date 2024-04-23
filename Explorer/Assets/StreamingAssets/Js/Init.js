@@ -3,6 +3,8 @@
 function require(moduleName) {
     const wrapped = UnityOpsApi.LoadAndEvaluateCode(moduleName);
 
+    if (!wrapped) return { };
+
     // create minimal context for the execution
     var module = {
         exports: {}
@@ -17,7 +19,7 @@ function require(moduleName) {
         moduleName.substring(1),    // __filename
         moduleName.substring(0, 1)   // __dirname
     );
-
+	
     const logger = {
         error: (m) => console.error(m),
         warning: (m) => console.warning(m),

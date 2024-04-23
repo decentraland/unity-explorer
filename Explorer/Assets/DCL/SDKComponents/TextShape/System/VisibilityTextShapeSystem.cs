@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using ECS.Abstract;
 using ECS.Unity.Groups;
+using ECS.Unity.Visibility;
 
 namespace DCL.SDKComponents.TextShape.System
 {
@@ -27,7 +28,7 @@ namespace DCL.SDKComponents.TextShape.System
         {
             if (visibility.IsDirty)
             {
-                textShapeRenderer.ApplyVisibility(visibility.Visible);
+                textShapeRenderer.ApplyVisibility(visibility.GetVisible());
                 visibility.IsDirty = false;
             }
         }
