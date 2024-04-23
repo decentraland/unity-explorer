@@ -17,7 +17,7 @@ namespace DCL.Optimization.Pools
             Action<T> actionOnGet = null,
             Action<T> actionOnRelease = null,
             Action<T> actionOnDestroy = null,
-            bool collectionCheck = true,
+            bool collectionCheck = PoolConstants.CHECK_COLLECTIONS,
             int defaultCapacity = 10,
             int maxSize = 10000)
             : base(createFunc, actionOnGet, actionOnRelease, actionOnDestroy, collectionCheck, defaultCapacity, maxSize)

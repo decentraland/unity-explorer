@@ -10,13 +10,14 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.CameraModeArea.Components;
 using DCL.Utilities;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostPhysicsSystemGroup))]
     [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
