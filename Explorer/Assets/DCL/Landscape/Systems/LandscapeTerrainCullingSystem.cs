@@ -146,7 +146,7 @@ namespace DCL.Landscape.Systems
                     nativeFrustumPlanes[i] = new float4(plane.normal.x, plane.normal.y, plane.normal.z, plane.distance);
                 }
 
-                var job = new UpdateBoundariesCullingJob(terrainVisibilities, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(terrainVisibilities, nativeFrustumPlanes, cameraPosition, landscapeData.DetailDistance);
                 jobHandle = job.Schedule(terrainVisibilities.Length, 32, jobHandle);
                 Profiler.EndSample();
             }
