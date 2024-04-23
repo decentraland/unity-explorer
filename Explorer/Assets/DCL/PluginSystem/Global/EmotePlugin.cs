@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
+using DCL.Input;
 using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Profiles.Self;
 using DCL.WebRequests;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
+        private readonly DCLInput dclInput;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
 
@@ -43,13 +45,15 @@ namespace DCL.PluginSystem.Global
             DebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner,
             ISelfProfile selfProfile,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            DCLInput dclInput)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
             this.assetsProvisioner = assetsProvisioner;
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
+            this.dclInput = dclInput;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
@@ -101,7 +105,8 @@ namespace DCL.PluginSystem.Global
                 IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World);
 
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
-                    selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider);
+                    selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider,
+                    builder.World.CacheInputMap(), dclInput.EmoteWheel, mvcManager);
 
                 mvcManager.RegisterController(emotesWheelController);
             };
@@ -114,7 +119,6 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
-
 
             [Serializable]
             public class EmbeddedEmotesReference : AssetReferenceT<EmbeddedEmotesData>

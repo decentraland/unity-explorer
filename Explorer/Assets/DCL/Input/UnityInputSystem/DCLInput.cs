@@ -2339,6 +2339,34 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": true
                 }
             ]
+        },
+        {
+            ""name"": ""EmoteWheel"",
+            ""id"": ""54f8ed5e-e413-42e3-b26b-7c1aee2acd62"",
+            ""actions"": [
+                {
+                    ""name"": ""Customize"",
+                    ""type"": ""Button"",
+                    ""id"": ""309cfaf7-2700-4db1-8e05-41175ff3ad09"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""1e570a6a-d091-4a2c-b853-8eeb067b5428"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Customize"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -2420,6 +2448,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Emotes_Slot8 = m_Emotes.FindAction("Slot 8", throwIfNotFound: true);
         m_Emotes_Slot9 = m_Emotes.FindAction("Slot 9", throwIfNotFound: true);
         m_Emotes_Slot0 = m_Emotes.FindAction("Slot 0", throwIfNotFound: true);
+        // EmoteWheel
+        m_EmoteWheel = asset.FindActionMap("EmoteWheel", throwIfNotFound: true);
+        m_EmoteWheel_Customize = m_EmoteWheel.FindAction("Customize", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -3177,6 +3208,52 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         }
     }
     public EmotesActions @Emotes => new EmotesActions(this);
+
+    // EmoteWheel
+    private readonly InputActionMap m_EmoteWheel;
+    private List<IEmoteWheelActions> m_EmoteWheelActionsCallbackInterfaces = new List<IEmoteWheelActions>();
+    private readonly InputAction m_EmoteWheel_Customize;
+    public struct EmoteWheelActions
+    {
+        private @DCLInput m_Wrapper;
+        public EmoteWheelActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
+        public InputAction @Customize => m_Wrapper.m_EmoteWheel_Customize;
+        public InputActionMap Get() { return m_Wrapper.m_EmoteWheel; }
+        public void Enable() { Get().Enable(); }
+        public void Disable() { Get().Disable(); }
+        public bool enabled => Get().enabled;
+        public static implicit operator InputActionMap(EmoteWheelActions set) { return set.Get(); }
+        public void AddCallbacks(IEmoteWheelActions instance)
+        {
+            if (instance == null || m_Wrapper.m_EmoteWheelActionsCallbackInterfaces.Contains(instance)) return;
+            m_Wrapper.m_EmoteWheelActionsCallbackInterfaces.Add(instance);
+            @Customize.started += instance.OnCustomize;
+            @Customize.performed += instance.OnCustomize;
+            @Customize.canceled += instance.OnCustomize;
+        }
+
+        private void UnregisterCallbacks(IEmoteWheelActions instance)
+        {
+            @Customize.started -= instance.OnCustomize;
+            @Customize.performed -= instance.OnCustomize;
+            @Customize.canceled -= instance.OnCustomize;
+        }
+
+        public void RemoveCallbacks(IEmoteWheelActions instance)
+        {
+            if (m_Wrapper.m_EmoteWheelActionsCallbackInterfaces.Remove(instance))
+                UnregisterCallbacks(instance);
+        }
+
+        public void SetCallbacks(IEmoteWheelActions instance)
+        {
+            foreach (var item in m_Wrapper.m_EmoteWheelActionsCallbackInterfaces)
+                UnregisterCallbacks(item);
+            m_Wrapper.m_EmoteWheelActionsCallbackInterfaces.Clear();
+            AddCallbacks(instance);
+        }
+    }
+    public EmoteWheelActions @EmoteWheel => new EmoteWheelActions(this);
     private int m_DesktopSchemeIndex = -1;
     public InputControlScheme DesktopScheme
     {
@@ -3262,5 +3339,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnSlot8(InputAction.CallbackContext context);
         void OnSlot9(InputAction.CallbackContext context);
         void OnSlot0(InputAction.CallbackContext context);
+    }
+    public interface IEmoteWheelActions
+    {
+        void OnCustomize(InputAction.CallbackContext context);
     }
 }

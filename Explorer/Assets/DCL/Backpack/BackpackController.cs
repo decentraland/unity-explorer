@@ -35,6 +35,7 @@ namespace DCL.Backpack
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private BackpackSections currentSection = BackpackSections.Avatar;
+        private BackpackSections? scheduledSection;
         private bool isAvatarLoaded;
 
         public BackpackController(
@@ -160,6 +161,12 @@ namespace DCL.Backpack
 
         public void Activate()
         {
+            if (scheduledSection != null)
+            {
+                currentSection = scheduledSection.Value;
+                scheduledSection = null;
+            }
+
             profileLoadingCts = new CancellationTokenSource();
             AwaitForProfileAsync(profileLoadingCts).Forget();
 
@@ -185,5 +192,8 @@ namespace DCL.Backpack
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void ScheduleSectionForNextActivation(BackpackSections section) =>
+            scheduledSection = section;
     }
 }

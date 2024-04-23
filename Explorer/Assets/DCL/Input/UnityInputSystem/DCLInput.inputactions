@@ -2317,6 +2317,34 @@
                     "isPartOfComposite": true
                 }
             ]
+        },
+        {
+            "name": "EmoteWheel",
+            "id": "54f8ed5e-e413-42e3-b26b-7c1aee2acd62",
+            "actions": [
+                {
+                    "name": "Customize",
+                    "type": "Button",
+                    "id": "309cfaf7-2700-4db1-8e05-41175ff3ad09",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "1e570a6a-d091-4a2c-b853-8eeb067b5428",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Customize",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
         }
     ],
     "controlSchemes": [

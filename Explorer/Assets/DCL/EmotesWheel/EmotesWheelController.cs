@@ -5,11 +5,17 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.Diagnostics;
+using DCL.ExplorePanel;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
+using ECS.Abstract;
 using MVC;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -23,6 +29,9 @@ namespace DCL.EmotesWheel
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly SingleInstanceEntity currentInputMapsEntity;
+        private readonly DCLInput.EmoteWheelActions dclInput;
+        private readonly IMVCManager mvcManager;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
@@ -36,7 +45,10 @@ namespace DCL.EmotesWheel
             NftTypeIconSO rarityBackgrounds,
             World world,
             Entity playerEntity,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            SingleInstanceEntity currentInputMapsEntity,
+            DCLInput.EmoteWheelActions dclInput,
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             this.selfProfile = selfProfile;
@@ -45,6 +57,18 @@ namespace DCL.EmotesWheel
             this.world = world;
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
+            this.currentInputMapsEntity = currentInputMapsEntity;
+            this.dclInput = dclInput;
+            this.mvcManager = mvcManager;
+
+            dclInput.Customize.performed += OpenBackpack;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            dclInput.Customize.performed -= OpenBackpack;
         }
 
         protected override void OnViewInstantiated()
@@ -81,9 +105,18 @@ namespace DCL.EmotesWheel
             InitializeEverythingAsync(fetchProfileCts.Token).Forget();
         }
 
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+
+            EnableInputActions();
+        }
+
         protected override void OnViewClose()
         {
             base.OnViewClose();
+
+            DisableInputActions();
 
             fetchProfileCts.SafeCancelAndDispose();
             slotSetUpCts.SafeCancelAndDispose();
@@ -165,6 +198,23 @@ namespace DCL.EmotesWheel
             world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
 
             closeViewTask?.TrySetResult();
+        }
+
+        private void OpenBackpack(InputAction.CallbackContext context)
+        {
+            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
+        }
+
+        private void EnableInputActions()
+        {
+            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
+            inputMapComponent.Active |= InputMapComponent.Kind.EmoteWheel;
+        }
+
+        private void DisableInputActions()
+        {
+            ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
+            inputMapComponent.Active &= ~InputMapComponent.Kind.EmoteWheel;
         }
     }
 }
