@@ -47,6 +47,12 @@ namespace MVC
             controllers.Add(typeof(IController<TView, TInputData>), controller);
         }
 
+        public void SetAllViewsCanvasActive(bool isActive)
+        {
+            foreach (IController controllersValue in controllers.Values)
+                controllersValue.SetViewCanvasActive(isActive);
+        }
+
         public async UniTask ShowAsync<TView, TInputData>(ShowCommand<TView, TInputData> command, CancellationToken ct = default) where TView: IView
         {
             // Find the controller

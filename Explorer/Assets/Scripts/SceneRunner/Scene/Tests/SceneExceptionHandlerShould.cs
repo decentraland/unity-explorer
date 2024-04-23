@@ -1,6 +1,7 @@
 ﻿using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using CRDT.Protocol;
 using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
@@ -15,7 +16,7 @@ namespace SceneRunner.Scene.Tests
         [SetUp]
         public void SetUp()
         {
-            sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo());
+            sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo(), Substitute.For<CRDTProtocol>());
 
             reportHandler = new MockedReportScope();
         }
