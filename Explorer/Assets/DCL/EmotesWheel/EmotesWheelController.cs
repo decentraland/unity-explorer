@@ -184,8 +184,10 @@ namespace DCL.EmotesWheel
 
         private void UpdateCurrentEmote(int slot)
         {
-            if (!emoteCache.TryGetEmote(currentEmotes[slot], out IEmote emote)) return;
-            viewInstance.CurrentEmoteName.text = emote.GetName();
+            if (!emoteCache.TryGetEmote(currentEmotes[slot], out IEmote emote))
+                ClearCurrentEmote(slot);
+            else
+                viewInstance.CurrentEmoteName.text = emote.GetName();
         }
 
         private void ClearCurrentEmote(int slot)
