@@ -1,9 +1,12 @@
 ﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
@@ -20,6 +23,7 @@ namespace DCL.CharacterPreview
         protected CharacterPreviewAvatarModel previewAvatarModel;
         private CharacterPreviewController? previewController;
         private bool initialized;
+        private CancellationTokenSource cancellationTokenSource;
 
         protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
         {
@@ -147,7 +151,17 @@ namespace DCL.CharacterPreview
 
         protected void OnModelUpdated()
         {
-            previewController?.UpdateAvatar(previewAvatarModel);
+            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource = new CancellationTokenSource();
+            WrapInSpinner(cancellationTokenSource.Token).Forget();
+        }
+
+        private async UniTaskVoid WrapInSpinner(CancellationToken ct)
+        {
+            var spinner = view.Spinner;
+            spinner.SetActive(true);
+            await (previewController?.UpdateAvatar(previewAvatarModel, ct) ?? UniTask.CompletedTask);
+            spinner.SetActive(false);
         }
 
         protected void PlayEmote(string emoteId) =>

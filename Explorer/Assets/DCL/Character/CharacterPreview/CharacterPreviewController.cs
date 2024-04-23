@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
@@ -14,6 +15,7 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
@@ -57,9 +59,9 @@ namespace DCL.CharacterPreview
             cameraController.Dispose();
         }
 
-        public void UpdateAvatar(CharacterPreviewAvatarModel avatarModel)
+        public UniTask UpdateAvatar(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {
-            if (avatarModel.Wearables == null || avatarModel.Wearables.Count <= 0) return;
+            if (avatarModel.Wearables == null || avatarModel.Wearables.Count <= 0) return UniTask.CompletedTask;
 
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
@@ -81,6 +83,19 @@ namespace DCL.CharacterPreview
                 PartitionComponent.TOP_PRIORITY);
 
             avatarShape.IsDirty = true;
+
+            return WaitForAvatarInstantiated(ct);
+        }
+
+        private async UniTask WaitForAvatarInstantiated(CancellationToken ct)
+        {
+            while (globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
+            {
+                if (ct.IsCancellationRequested)
+                    return;
+
+                await UniTask.Yield(ct);
+            }
         }
 
         public void PlayEmote(string emoteId)
