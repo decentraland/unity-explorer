@@ -226,7 +226,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(true);
                     viewInstance.LoginAnimator.SetTrigger(IN);
                     viewInstance.ProgressContainer.SetActive(false);
-                    viewInstance.FinalizeContainer.SetActive(false);
+                    //viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = true;
@@ -271,6 +271,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             animator.Rebind();
             animator.Update(0f);
+            animator.gameObject.SetActive(false);
         }
 
         private void CancelLoginProcess()

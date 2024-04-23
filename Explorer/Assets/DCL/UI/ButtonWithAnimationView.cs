@@ -25,6 +25,8 @@ namespace DCL.UI
         {
             Button.onClick.AddListener(OnClick);
             ButtonAnimator.enabled = true;
+            ButtonAnimator.Rebind();
+            ButtonAnimator.Update(0);
         }
 
         private void OnDisable()
