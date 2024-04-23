@@ -1,4 +1,4 @@
-﻿using Arch.CommandBuffer;
+﻿using Arch.Buffer;
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components;
@@ -39,7 +39,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             this.entitiesMap = entitiesMap;
             collectionsPool = WorldSyncCommandBufferCollectionsPool.Create();
 
-            reusableCommandBuffer = new PersistentCommandBuffer(world, BUFFER_POOLS_CAPACITY);
+            reusableCommandBuffer = new PersistentCommandBuffer(BUFFER_POOLS_CAPACITY);
             this.sdkComponentsRegistry = sdkComponentsRegistry;
             this.entityFactory = entityFactory;
         }

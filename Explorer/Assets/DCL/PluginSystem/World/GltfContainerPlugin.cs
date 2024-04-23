@@ -8,6 +8,7 @@ using ECS.LifeCycle.Systems;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using ECS.Unity.GLTFContainer.Systems;
+using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
 
 namespace DCL.PluginSystem.World
@@ -44,6 +45,7 @@ namespace DCL.PluginSystem.World
 
             ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
             WriteGltfContainerLoadingStateSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
+            GltfContainerVisibilitySystem.InjectToWorld(ref builder);
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 

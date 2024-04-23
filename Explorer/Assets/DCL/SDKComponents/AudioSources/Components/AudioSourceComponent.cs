@@ -9,7 +9,6 @@ namespace DCL.SDKComponents.AudioSources
 {
     public struct AudioSourceComponent : IDisposable
     {
-        public readonly PBAudioSource PBAudioSource;
         public string AudioClipUrl;
         public Promise ClipPromise;
 
@@ -19,11 +18,10 @@ namespace DCL.SDKComponents.AudioSources
         public AudioSource AudioSource { get; private set; }
         public bool AudioSourceAssigned { get; private set;}
 
-        public AudioSourceComponent(PBAudioSource pbAudioSource, Promise promise)
+        public AudioSourceComponent(Promise promise, string audioClipUrl)
         {
             ClipPromise = promise;
-            PBAudioSource = pbAudioSource;
-            AudioClipUrl = pbAudioSource.AudioClipUrl;
+            AudioClipUrl = audioClipUrl;
 
             AudioSource = null;
             AudioSourceAssigned = false;

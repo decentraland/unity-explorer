@@ -106,6 +106,9 @@ namespace Global.Dynamic
             //enableLandscape = true;
 #endif
 
+            // Hides the debug UI during the initial flow
+            debugUiRoot.rootVisualElement.style.display = DisplayStyle.None;
+
             try
             {
                 splashRoot.SetActive(showSplash);
@@ -216,6 +219,7 @@ namespace Global.Dynamic
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
                     dynamicWorldContainer.EmptyScenesWorldFactory);
 
+                debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
