@@ -95,12 +95,14 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-            UnityObjectUtils.SafeDestroy(rootGo);
+            if (rootGo != null)
+                UnityObjectUtils.SafeDestroy(rootGo);
         }
 
         public void SwitchVisibility(bool isVisible)
         {
-            rootGo.gameObject.SetActive(isVisible);
+            if (rootGo != null)
+                rootGo.gameObject.SetActive(isVisible);
         }
 
         public async UniTask GenerateTerrainAsync(

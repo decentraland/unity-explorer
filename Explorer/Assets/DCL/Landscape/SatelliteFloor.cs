@@ -25,6 +25,8 @@ namespace DCL.Landscape
 
         private bool satelliteRenderersEnabled;
 
+        private bool isInitialized;
+
         public void Initialize(LandscapeData config)
         {
             landscapeData = config;
@@ -33,10 +35,14 @@ namespace DCL.Landscape
             materialPropertyBlock = new MaterialPropertyBlock();
 
             satelliteRenderers = new Renderer[SATELLITE_MAP_RESOLUTION * SATELLITE_MAP_RESOLUTION];
+
+            isInitialized = true;
         }
 
         public void Create(MapRendererTextureContainer textureContainer)
         {
+            if (!isInitialized) return;
+
             int textureSize = CHUNK_SIZE * PARCEL_SIZE;
             var genesisCityOffset = new Vector3(GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE, 0, GENESIS_HALF_PARCEL_WIDTH * PARCEL_SIZE);
 
@@ -71,7 +77,7 @@ namespace DCL.Landscape
 
         public void SwitchVisibility(bool isVisible)
         {
-            if (satelliteRenderersEnabled == isVisible) return;
+            if (satelliteRenderersEnabled == isVisible || !isInitialized) return;
 
             satelliteRenderersEnabled = isVisible;
 

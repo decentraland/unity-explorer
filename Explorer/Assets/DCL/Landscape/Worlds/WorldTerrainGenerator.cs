@@ -44,7 +44,8 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-            UnityObjectUtils.SafeDestroy(rootGo);
+            if (rootGo != null)
+                UnityObjectUtils.SafeDestroy(rootGo);
         }
 
         public void Initialize(TerrainGenerationData terrainGenData)
