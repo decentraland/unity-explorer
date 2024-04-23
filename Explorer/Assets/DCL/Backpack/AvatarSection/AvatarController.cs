@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
 using System;
@@ -18,12 +19,13 @@ namespace DCL.Backpack
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
             BackpackGridController backpackGridController,
-            BackpackInfoPanelController backpackInfoPanelController)
+            BackpackInfoPanelController backpackInfoPanelController,
+            IThumbnailProvider thumbnailProvider)
         {
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
-            slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds);
+            slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds, thumbnailProvider);
 
             rectTransform = view.GetComponent<RectTransform>();
         }
