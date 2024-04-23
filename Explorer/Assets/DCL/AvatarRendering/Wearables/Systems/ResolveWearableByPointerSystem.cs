@@ -5,8 +5,8 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Components.Intentions;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using ECS;
 using ECS.Abstract;
@@ -14,7 +14,6 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
-using Google.Protobuf;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -297,7 +296,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 StreamableLoadingResult<WearableAssetBase> failedResult = new StreamableLoadingResult<AssetBundleData>(new Exception("Default wearable failed to load"))
                    .ToWearableAsset(wearable);
 
-                if (wearable.IsUnisex())
+                if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
                 {
                     SetFailure(BodyShape.MALE);
                     SetFailure(BodyShape.FEMALE);
@@ -319,7 +318,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ReportHub.Log(GetReportCategory(), $"Request for wearable with hash {wearable.GetHash()} and urn {wearable.GetUrn()} failed, loading default wearable");
 
-            if (wearable.IsUnisex())
+            if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {
                 CopyDefaultResults(BodyShape.MALE);
                 CopyDefaultResults(BodyShape.FEMALE);
@@ -359,7 +358,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     assets.Results[index] = null;
             }
 
-            if (wearable.IsUnisex())
+            if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {
                 ResetBodyShape(BodyShape.MALE);
                 ResetBodyShape(BodyShape.FEMALE);
@@ -372,7 +371,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         {
             StreamableLoadingResult<WearableAssetBase> wearableResult = result.ToWearableAsset(wearable);
 
-            if (wearable.IsUnisex())
+            if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {
                 SetByRef(BodyShape.MALE);
                 SetByRef(BodyShape.FEMALE);
