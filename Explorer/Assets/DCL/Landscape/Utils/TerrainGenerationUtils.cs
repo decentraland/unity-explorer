@@ -11,7 +11,7 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
-        public static async UniTask AddColorMapRenderer(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
+        public static async UniTask AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
         {
             // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
             await UniTask.Yield();
