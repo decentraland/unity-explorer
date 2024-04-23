@@ -1,4 +1,4 @@
-﻿using Arch.Core;
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DG.Tweening;
@@ -14,7 +14,7 @@ namespace DCL.CharacterPreview
 {
     public abstract class CharacterPreviewControllerBase : IDisposable
     {
-        private static readonly float AVATAR_FADE_ANIMATION = 1f;
+        private static readonly float AVATAR_FADE_ANIMATION = 0.5f;
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;

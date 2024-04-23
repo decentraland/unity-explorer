@@ -293,6 +293,9 @@ MonoBehaviour:
   <CharacterPreviewInputDetector>k__BackingField: {fileID: 2460058156442629763}
   <CharacterPreviewCursorContainer>k__BackingField: {fileID: 8921462143626868842}
   <CharacterPreviewSettingsSo>k__BackingField: {fileID: 0}
+  EnableZooming: 1
+  EnablePanning: 1
+  EnableRotating: 1
   <HoverAudio>k__BackingField: {fileID: 11400000, guid: 86bba087b6ea4dc4db473c0fe6e8a144, type: 2}
   <RotateAudio>k__BackingField: {fileID: 11400000, guid: 326fadd6b97b91c40b8135ebbba9bab6, type: 2}
   <VerticalPanAudio>k__BackingField: {fileID: 11400000, guid: 40da7a723b547234ab2e0ad00d831cc9, type: 2}
@@ -407,11 +410,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 100
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 100
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_LocalPosition.x
@@ -443,7 +446,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 42
       objectReference: {fileID: 0}
     - target: {fileID: 1166888513132788191, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_AnchoredPosition.y
