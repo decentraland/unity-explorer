@@ -22,7 +22,6 @@ namespace ECS.Unity.Transforms.Systems
         }
 
         [Query]
-        [All(typeof(SDKTransform), typeof(TransformComponent))]
         private void UpdateTransform(ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
             if (sdkTransform.IsDirty)

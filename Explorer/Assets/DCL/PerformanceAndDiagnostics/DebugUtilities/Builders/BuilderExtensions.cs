@@ -13,15 +13,13 @@ namespace DCL.DebugUtilities
         public static DebugWidgetBuilder AddSingleButton(this DebugWidgetBuilder builder, string buttonName, Action onClick) =>
             builder.AddControl(new DebugButtonDef(buttonName, onClick), null);
 
-
-        public static DebugWidgetBuilder AddToggleField(this DebugWidgetBuilder builder,  string toggleName, EventCallback<ChangeEvent<bool>> onToggle, bool initialState)
+        public static DebugWidgetBuilder AddToggleField(this DebugWidgetBuilder builder, string toggleName, EventCallback<ChangeEvent<bool>> onToggle, bool initialState)
         {
             var label = new DebugConstLabelDef(toggleName);
             var field = new DebugToggleDef(onToggle, initialState);
             builder.AddControl(label, field);
             return builder;
         }
-
 
         public static DebugWidgetBuilder AddIntFieldWithConfirmation(this DebugWidgetBuilder builder, int defaultValue, string buttonName, Action<int> onClick)
         {
@@ -55,14 +53,11 @@ namespace DCL.DebugUtilities
                 builder.AddControl(null, textFieldDef);
             }
 
-            var buttonDef = new DebugButtonDef(buttonName, () =>
-            {
-                onClick?.Invoke(Array.ConvertAll(bindings, x => x.Value));
-            });
+            var buttonDef = new DebugButtonDef(buttonName, () => { onClick?.Invoke(Array.ConvertAll(bindings, x => x.Value)); });
             builder.AddControl(null, buttonDef);
             return builder;
         }
-        
+
         public static DebugWidgetBuilder AddFloatField(this DebugWidgetBuilder builder, string labelName, ElementBinding<float> elementBinding)
         {
             var label = new DebugConstLabelDef(labelName);
@@ -73,9 +68,15 @@ namespace DCL.DebugUtilities
 
         public static DebugWidgetBuilder AddIntSliderField(this DebugWidgetBuilder builder, string labelName, ElementBinding<int> elementBinding, int min, int max)
         {
-            var label = new DebugConstLabelDef(labelName);
-            var field = new DebugIntSliderDef(elementBinding, min, max);
-            builder.AddControl(label, field);
+            var field = new DebugIntSliderDef(labelName, elementBinding, min, max);
+            builder.AddControl(field, null);
+            return builder;
+        }
+
+        public static DebugWidgetBuilder AddFloatSliderField(this DebugWidgetBuilder builder, string labelName, ElementBinding<float> elementBinding, float min, float max)
+        {
+            var field = new DebugFloatSliderDef(labelName, elementBinding, min, max);
+            builder.AddControl(field, null);
             return builder;
         }
 

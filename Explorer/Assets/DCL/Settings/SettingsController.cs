@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using DCL.Landscape.Settings;
+using DCL.Quality;
 using DCL.Settings.Configuration;
 using DCL.Settings.ModuleControllers;
 using DCL.UI;
@@ -7,6 +8,7 @@ using ECS.Prioritization;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 using Object = UnityEngine.Object;
 
 namespace DCL.Settings
@@ -15,21 +17,27 @@ namespace DCL.Settings
     {
         private readonly SettingsView view;
         private readonly SettingsMenuConfiguration settingsMenuConfiguration;
+        private readonly AudioMixer generalAudioMixer;
         private readonly RealmPartitionSettingsAsset realmPartitionSettingsAsset;
         private readonly LandscapeData landscapeData;
+        private readonly QualitySettingsAsset qualitySettingsAsset;
         private readonly RectTransform rectTransform;
         private readonly List<SettingsFeatureController> controllers = new ();
 
         public SettingsController(
             SettingsView view,
             SettingsMenuConfiguration settingsMenuConfiguration,
+            AudioMixer generalAudioMixer,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            LandscapeData landscapeData)
+            LandscapeData landscapeData,
+            QualitySettingsAsset qualitySettingsAsset)
         {
             this.view = view;
             this.settingsMenuConfiguration = settingsMenuConfiguration;
+            this.generalAudioMixer = generalAudioMixer;
             this.realmPartitionSettingsAsset = realmPartitionSettingsAsset;
             this.landscapeData = landscapeData;
+            this.qualitySettingsAsset = qualitySettingsAsset;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -83,7 +91,7 @@ namespace DCL.Settings
                 generalGroupView.GroupTitle.text = group.GroupTitle;
 
                 foreach (SettingsModuleBindingBase module in group.Modules)
-                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData));
+                    controllers.Add(module?.CreateModule(generalGroupView.ModulesContainer, realmPartitionSettingsAsset, landscapeData, generalAudioMixer, qualitySettingsAsset));
             }
         }
 
