@@ -12,8 +12,6 @@ namespace DCL.Landscape
         private const int MAX_CHUNK_SIZE = 512; // Maximum size of a chunk in Unity [units]
         private const int MIN_CHUNKS_PER_SIDE = 2; // Minimum number of chunks along one side of terrain, ensuring at least a 2x2 grid
 
-        private readonly int parcelSize; // Size of a [parcel] in Unity [units]
-
         public readonly int2 MinParcel;
         public readonly int2 MaxParcel;
 
@@ -21,9 +19,11 @@ namespace DCL.Landscape
         public readonly int2 MinInUnits;
         public readonly int2 MaxInUnits;
 
-        public int ChunkSizeInUnits; //  in [units]
+        public readonly ChunkModel[] ChunkModels;
 
-        public List<ChunkModel> ChunkModels;
+        private readonly int parcelSize; // Size of a [parcel] in Unity [units]
+
+        public int ChunkSizeInUnits; //  in [units]
 
         private int chunkSizeInParcels; //  in [parcels]
         private int sizeInChunks; // Number of chunks along one side of the square terrain
@@ -49,7 +49,7 @@ namespace DCL.Landscape
 
             // Generate chunk models
             {
-                ChunkModels = new List<ChunkModel>(sizeInChunks * sizeInChunks);
+                ChunkModels = new ChunkModel[sizeInChunks * sizeInChunks];
 
                 for (var x = 0; x < sizeInChunks; x++)
                 for (var y = 0; y < sizeInChunks; y++)
@@ -61,7 +61,7 @@ namespace DCL.Landscape
                     if (TryOverlap(model, out int2 overlap))
                         model.ProcessOverlap(overlap);
 
-                    ChunkModels.Add(model);
+                    ChunkModels[x + (y * sizeInChunks)] = model;
                 }
 
                 foreach (int2 parcel in world.OwnedParcels)

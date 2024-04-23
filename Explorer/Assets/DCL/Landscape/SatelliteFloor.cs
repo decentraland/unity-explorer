@@ -17,7 +17,7 @@ namespace DCL.Landscape
 
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
 
-        private readonly List<Renderer> satelliteRenderers = new ();
+        private Renderer[] satelliteRenderers;
 
         private Transform landscapeParentObject;
         private MaterialPropertyBlock materialPropertyBlock;
@@ -31,6 +31,8 @@ namespace DCL.Landscape
 
             landscapeParentObject = new GameObject("Satellite View").transform;
             materialPropertyBlock = new MaterialPropertyBlock();
+
+            satelliteRenderers = new Renderer[SATELLITE_MAP_RESOLUTION * SATELLITE_MAP_RESOLUTION];
         }
 
         public void Create(MapRendererTextureContainer textureContainer)
@@ -53,14 +55,15 @@ namespace DCL.Landscape
                 Vector3 coord = new Vector3(posX, 0, posZ) - genesisCityOffset + quadCenter + mapTextureMargins + zFightPrevention;
 
                 Transform groundTile = Object.Instantiate(landscapeData.mapChunk, landscapeParentObject, true);
-                groundTile.position = coord;
-                groundTile.eulerAngles = new Vector3(90, 0, 0);
+                groundTile.name = $"SatelliteView {x},{y}";
+                groundTile.SetPositionAndRotation(coord, Quaternion.Euler(90, 0, 0));
 
                 materialPropertyBlock.SetTexture(BASE_MAP, textureContainer.GetChunk(new Vector2Int(x, SATELLITE_MAP_RESOLUTION - 1 - y)));
+
                 Renderer satelliteRenderer = groundTile.GetComponent<Renderer>();
                 satelliteRenderer.SetPropertyBlock(materialPropertyBlock);
-                groundTile.name = $"SatelliteView {x},{y}";
-                satelliteRenderers.Add(satelliteRenderer);
+
+                satelliteRenderers[x + (y * SATELLITE_MAP_RESOLUTION)] = satelliteRenderer;
             }
 
             SwitchVisibility(landscapeData.showSatelliteView);
