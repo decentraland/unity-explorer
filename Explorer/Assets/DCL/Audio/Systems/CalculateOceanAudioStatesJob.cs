@@ -1,10 +1,8 @@
 ﻿using DCL.Audio.Systems;
-using System.Numerics;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
-using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.Audio.Jobs
 {
@@ -35,7 +33,7 @@ namespace DCL.Audio.Jobs
 
             if (sqrDistance < oceanListeningDistanceThreshold)
             {
-                Vector3 closestPoint = oceanAudioState.Bounds.ClosestPoint(cameraPosition);
+                float3 closestPoint = oceanAudioState.Bounds.ClosestPoint(cameraPosition);
                 oceanAudioState.ClosestPoint = new int2((int)closestPoint.x, (int)closestPoint.z);
 
                 if (!terrainAudioState.IsHeard)
