@@ -151,7 +151,9 @@ namespace DCL.EmotesWheel
 
         private void PlayEmote(int slot)
         {
-            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = currentEmotes[slot] });
+            world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
+
+            closeViewTask?.TrySetResult();
         }
     }
 }

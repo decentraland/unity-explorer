@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
@@ -8,15 +9,14 @@ using DCL.Input;
 using DCL.Input.Component;
 using DCL.Input.Crosshair;
 using DCL.Input.Systems;
+using DCL.Multiplayer.Emotes;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
-using DCL.Multiplayer.Emotes;
-using MVC;
-using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -95,7 +95,7 @@ namespace DCL.PluginSystem.Global
             UpdateInputMovementSystem.InjectToWorld(ref builder, dclInput);
             UpdateCameraInputSystem.InjectToWorld(ref builder, dclInput);
             DropPlayerFromFreeCameraSystem.InjectToWorld(ref builder, dclInput.FreeCamera.DropPlayer);
-            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput.Emotes, messageBus);
+            UpdateEmoteInputSystem.InjectToWorld(ref builder, dclInput, messageBus, mvcManager);
             UpdateCursorInputSystem.InjectToWorld(ref builder, dclInput, eventSystem, cursor, crosshairCanvas);
             UpdateShowHideUIInputSystem.InjectToWorld(ref builder, dclInput, mvcManager, debugContainerBuilder, rootUIDocument, cursorUIDocument);
         }
