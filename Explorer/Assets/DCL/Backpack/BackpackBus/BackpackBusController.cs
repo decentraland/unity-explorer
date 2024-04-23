@@ -1,4 +1,3 @@
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
@@ -7,6 +6,8 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using System;
+using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -111,6 +112,29 @@ namespace DCL.Backpack.BackpackBus
                 backpackEventBus.SendUnEquipWearable(wearableToUnequip);
 
             backpackEventBus.SendEquipWearable(wearable);
+
+            if (wearable.Type == WearableType.BodyShape)
+                UnEquipIncompatibleWearables(wearable);
+        }
+
+        private void UnEquipIncompatibleWearables(IWearable bodyShape)
+        {
+            List<IWearable> incompatibleWearables = ListPool<IWearable>.Get();
+
+            foreach ((string? _, IWearable? wearable) in equippedWearables.Items())
+            {
+                if (wearable == null) continue;
+                if (wearable == bodyShape) continue;
+                if (wearable.IsCompatibleWithBodyShape(bodyShape.GetUrn())) continue;
+
+                // If we send un-equip event here, the equippedWearables list gets modified during this loop throwing an exception in the process
+                incompatibleWearables.Add(wearable);
+            }
+
+            foreach (IWearable wearable in incompatibleWearables)
+                backpackEventBus.SendUnEquipWearable(wearable);
+
+            ListPool<IWearable>.Release(incompatibleWearables);
         }
 
         private void HandleEmoteEquipCommand(BackpackEquipEmoteCommand command)

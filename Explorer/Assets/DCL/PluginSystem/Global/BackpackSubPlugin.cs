@@ -74,8 +74,7 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 selfProfile,
                 forceRender,
-                ProvideEcsContext,
-                backpackCommandBus
+                ProvideEcsContext
             );
         }
 
