@@ -41,7 +41,7 @@ namespace DCL.PluginSystem.Global
         private Arch.Core.World? world;
         private Entity? playerEntity;
 
-        internal BackpackController? backpackController { get; private set; }
+        internal BackpackControler? backpackController { get; private set; }
 
         public BackpackSubPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -150,7 +150,7 @@ namespace DCL.PluginSystem.Global
                 var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
                     characterPreviewFactory, backpackEventBus, world, equippedEmotes);
 
-                backpackController = new BackpackController(
+                backpackController = new BackpackControler(
                     view,
                     avatarView,
                     rarityInfoPanelBackgroundsMapping,

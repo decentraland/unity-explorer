@@ -17,7 +17,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Backpack
 {
-    public class BackpackController : ISection, IDisposable
+    public class BackpackControler : ISection, IDisposable
     {
         private readonly BackpackView view;
         private readonly BackpackCommandBus backpackCommandBus;
@@ -36,7 +36,7 @@ namespace DCL.Backpack
         private BackpackSections currentSection = BackpackSections.Avatar;
         private bool isAvatarLoaded;
 
-        public BackpackController(
+        public BackpackControler(
             BackpackView view,
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
@@ -92,7 +92,7 @@ namespace DCL.Backpack
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token, false).Forget();
 
                         if (isOn)
                             currentSection = section;
@@ -178,6 +178,12 @@ namespace DCL.Backpack
 
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
+        }
+
+        public void Animate(int triggerId)
+        {
+            view.PanelAnimator.SetTrigger(triggerId);
+            view.HeaderAnimator.SetTrigger(triggerId);
         }
 
         public RectTransform GetRectTransform() =>

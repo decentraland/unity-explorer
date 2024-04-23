@@ -19,7 +19,7 @@ namespace DCL.ExplorePanel
     {
         private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
-        private readonly BackpackController backpackController;
+        private readonly BackpackControler backpackControler;
         private readonly Entity playerEntity;
         private readonly World world;
         private readonly ProfileWidgetController profileWidgetController;
@@ -42,7 +42,7 @@ namespace DCL.ExplorePanel
         public ExplorePanelController(ViewFactoryMethod viewFactory,
             NavmapController navmapController,
             SettingsController settingsController,
-            BackpackController backpackController,
+            BackpackControler backpackControler,
             Entity playerEntity,
             World world,
             ProfileWidgetController profileWidgetController,
@@ -52,7 +52,7 @@ namespace DCL.ExplorePanel
         {
             this.navmapController = navmapController;
             this.settingsController = settingsController;
-            this.backpackController = backpackController;
+            this.backpackControler = backpackControler;
             this.playerEntity = playerEntity;
             this.world = world;
             this.profileWidgetController = profileWidgetController;
@@ -74,7 +74,7 @@ namespace DCL.ExplorePanel
             {
                 { ExploreSections.Navmap, navmapController },
                 { ExploreSections.Settings, settingsController },
-                { ExploreSections.Backpack, backpackController },
+                { ExploreSections.Backpack, backpackControler },
             };
 
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);

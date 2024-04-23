@@ -4,6 +4,7 @@ using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.UI;
+using System;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -61,6 +62,11 @@ namespace DCL.Navmap
             view.SatellitePixelPerfectMapRendererTextureProvider.Deactivate();
             view.SatelliteRenderImage.Deactivate();
             view.gameObject.SetActive(false);
+        }
+
+        public void Animate(int triggerId)
+        {
+
         }
 
         public RectTransform GetRectTransform() =>

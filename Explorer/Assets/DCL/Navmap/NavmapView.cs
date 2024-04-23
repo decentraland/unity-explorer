@@ -43,6 +43,12 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public MapCameraDragBehavior.MapCameraDragBehaviorData MapCameraDragBehaviorData { get; private set; }
+
+        [field: SerializeField]
+        public Animator PanelAnimator { get; private set; }
+
+        [field: SerializeField]
+        public Animator HeaderAnimator { get; private set; }
     }
 
     [Serializable]

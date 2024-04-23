@@ -402,6 +402,7 @@ GameObject:
   - component: {fileID: 2659656041712249840}
   - component: {fileID: 6991005957592599481}
   - component: {fileID: 978839392564545026}
+  - component: {fileID: 7985395571931769699}
   m_Layer: 5
   m_Name: Header
   m_TagString: Untagged
@@ -491,6 +492,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!225 &7985395571931769699
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2938943016236382281}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &3890750623153639021
 GameObject:
   m_ObjectHideFlags: 0
@@ -1034,6 +1047,8 @@ MonoBehaviour:
   <MapCameraDragBehaviorData>k__BackingField:
     inertia: 1
     decelerationRate: 0.00001
+  <PanelAnimator>k__BackingField: {fileID: 2726765163011453291}
+  <HeaderAnimator>k__BackingField: {fileID: 978839392564545026}
 --- !u!95 &2726765163011453291
 Animator:
   serializedVersion: 5

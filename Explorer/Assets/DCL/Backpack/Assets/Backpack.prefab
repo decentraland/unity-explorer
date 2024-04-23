@@ -5337,6 +5337,8 @@ MonoBehaviour:
   <TipsButton>k__BackingField: {fileID: 8027559671807818544}
   <TipsPanelDeselectable>k__BackingField: {fileID: 8484032604503467888}
   <CharacterPreviewView>k__BackingField: {fileID: 4359593439648312558}
+  <PanelAnimator>k__BackingField: {fileID: 358424403103859707}
+  <HeaderAnimator>k__BackingField: {fileID: 3841930929175590041}
 --- !u!225 &4737286497905025240
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -5382,6 +5384,7 @@ GameObject:
   - component: {fileID: 9103444484228231322}
   - component: {fileID: 2425052588001099843}
   - component: {fileID: 3841930929175590041}
+  - component: {fileID: 4972353130326339842}
   m_Layer: 5
   m_Name: Header
   m_TagString: Untagged
@@ -5471,6 +5474,18 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!225 &4972353130326339842
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8581277015346495855}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8657566580296489532
 GameObject:
   m_ObjectHideFlags: 0

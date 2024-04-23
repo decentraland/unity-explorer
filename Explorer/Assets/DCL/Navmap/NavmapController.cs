@@ -136,6 +136,12 @@ namespace DCL.Navmap
             cameraController?.Release(this);
         }
 
+        public void Animate(int triggerId)
+        {
+            navmapView.PanelAnimator.SetTrigger(triggerId);
+            navmapView.HeaderAnimator.SetTrigger(triggerId);
+        }
+
         public RectTransform GetRectTransform() =>
             rectTransform;
 

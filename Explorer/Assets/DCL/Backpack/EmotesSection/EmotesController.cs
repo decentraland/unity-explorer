@@ -35,6 +35,11 @@ namespace DCL.Backpack
             view.gameObject.SetActive(false);
         }
 
+        public void Animate(int triggerId)
+        {
+
+        }
+
         public RectTransform GetRectTransform() =>
             rectTransform;
     }

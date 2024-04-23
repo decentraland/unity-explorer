@@ -43,6 +43,11 @@ namespace DCL.Backpack
 
         public void Deactivate() { }
 
+        public void Animate(int triggerId)
+        {
+
+        }
+
         public RectTransform GetRectTransform() =>
             rectTransform;
     }
