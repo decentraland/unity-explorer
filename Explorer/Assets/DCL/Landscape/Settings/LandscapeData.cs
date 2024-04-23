@@ -10,5 +10,6 @@ namespace DCL.Landscape.Settings
         public float detailDistance = 200;
         public Transform mapChunk;
         public TerrainGenerationData terrainData;
+        public TerrainGenerationData worldsTerrainData;
     }
 }
