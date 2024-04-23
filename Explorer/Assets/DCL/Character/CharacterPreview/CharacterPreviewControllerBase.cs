@@ -153,10 +153,10 @@ namespace DCL.CharacterPreview
         {
             cancellationTokenSource.SafeCancelAndDispose();
             cancellationTokenSource = new CancellationTokenSource();
-            WrapInSpinner(cancellationTokenSource.Token).Forget();
+            WrapInSpinnerAsync(cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTaskVoid WrapInSpinner(CancellationToken ct)
+        private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
         {
             var spinner = view.Spinner;
             spinner.SetActive(true);

@@ -84,10 +84,10 @@ namespace DCL.CharacterPreview
 
             avatarShape.IsDirty = true;
 
-            return WaitForAvatarInstantiated(ct);
+            return WaitForAvatarInstantiatedAsync(ct);
         }
 
-        private async UniTask WaitForAvatarInstantiated(CancellationToken ct)
+        private async UniTask WaitForAvatarInstantiatedAsync(CancellationToken ct)
         {
             while (globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
             {
