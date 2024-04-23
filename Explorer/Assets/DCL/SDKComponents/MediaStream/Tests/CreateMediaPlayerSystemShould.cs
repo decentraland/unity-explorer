@@ -41,7 +41,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 IPerformanceBudget budgetProvider = Substitute.For<IPerformanceBudget>();
                 budgetProvider.TrySpendBudget().Returns(true);
 
-                return new CreateMediaPlayerSystem(world, mediaPlayersPool, sceneStateProvider, budgetProvider);
+                return new CreateMediaPlayerSystem(world, null, mediaPlayersPool, sceneStateProvider, budgetProvider);
             }
         }
 

@@ -24,9 +24,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly ISceneData sceneData;
 
-        public CreateMediaPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
+        public CreateMediaPlayerSystem(World world, ISceneData sceneData, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
+            this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
             this.mediaPlayerPool = mediaPlayerPool;
@@ -63,17 +65,16 @@ namespace DCL.SDKComponents.MediaStream
 
         private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool autoPlay)
         {
-            if (url == "src/test/gltf/coin.mp4")
-                url = "https://github.com/decentraland/sdk7-goerli-plaza/blob/main/testing-gallery/src/test/gltf/coin.mp4";
+            sceneData.TryGetMediaUrl(url, out var mediaUrl);
+            // Debug.Log($"VVV PB src: {mediaUrl}");
 
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
-                URL = url,
-                State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
+                URL = mediaUrl,
+                State = true ? VideoState.VsNone : VideoState.VsError,
             };
 
-            Debug.Log($"VVV PB src: {url}");
 
             component.MediaPlayer
                      .OpenMediaIfValid(component.URL, autoPlay)

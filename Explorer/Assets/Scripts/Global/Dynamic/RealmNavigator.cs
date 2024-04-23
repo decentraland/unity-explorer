@@ -106,13 +106,13 @@ namespace Global.Dynamic
 
             await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
             {
-                if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
-                {
-                    await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
-                    SwitchMiscVisibility(true);
-
-                    ct.ThrowIfCancellationRequested();
-                }
+                // if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
+                // {
+                //     await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
+                //     SwitchMiscVisibility(true);
+                //
+                //     ct.ThrowIfCancellationRequested();
+                // }
 
                 WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
