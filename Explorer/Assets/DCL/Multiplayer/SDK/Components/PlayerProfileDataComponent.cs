@@ -19,13 +19,8 @@ namespace DCL.Multiplayer.SDK.Components
         public Color SkinColor;
         public Color EyesColor;
         public Color HairColor;
-
         public IReadOnlyList<URN> EmoteUrns;
         public IReadOnlyCollection<URN> WearableUrns;
-        public bool IsPlayingEmoteDirty;
-        public URN PreviousEmote;
-        public URN PlayingEmote;
-        public bool LoopingEmote;
         public Entity SceneWorldEntity;
         public bool IsDirty { get; set; }
     }

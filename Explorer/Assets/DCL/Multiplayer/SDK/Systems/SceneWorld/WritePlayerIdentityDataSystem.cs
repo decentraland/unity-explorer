@@ -6,7 +6,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -15,7 +14,6 @@ using ECS.LifeCycle.Components;
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
-    [UpdateAfter(typeof(PlayerComponentsHandlerSystem))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
     {

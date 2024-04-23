@@ -9,6 +9,7 @@ using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
@@ -20,11 +21,10 @@ using UnityEngine;
 using Utility.Multithreading;
 using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
-using PlayerComponentsHandlerSystem = DCL.Multiplayer.SDK.Systems.GlobalWorld.PlayerComponentsHandlerSystem;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
-    public class PlayerComponentsHandlerSystemShould : UnitySystemTestBase<PlayerComponentsHandlerSystem>
+    public class PlayerComponentsHandlerSystemShould : UnitySystemTestBase<PlayerProfileDataPropagationSystem>
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
         private readonly IEmoteCache emoteCache;
@@ -66,7 +66,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             IEmoteCache emoteCache = Substitute.For<IEmoteCache>();
 
-            system = new PlayerComponentsHandlerSystem(world, scenesCache, characterObject, emoteCache);
+            system = new PlayerProfileDataPropagationSystem(world, scenesCache, characterObject);
             entity = world.Create();
         }
 

@@ -3,7 +3,7 @@ using DCL.ECSComponents;
 
 namespace DCL.Multiplayer.SDK.Components
 {
-    public class AvatarEmoteCommandComponent : IDirtyMarker
+    public struct AvatarEmoteCommandComponent : IDirtyMarker
     {
         public URN PreviousEmote;
         public URN PlayingEmote;

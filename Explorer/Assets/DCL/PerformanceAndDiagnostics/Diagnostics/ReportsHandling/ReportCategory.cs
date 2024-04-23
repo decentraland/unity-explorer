@@ -202,9 +202,14 @@
         public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
 
         /// <summary>
-        ///     Multiplayer SDK components update handler
+        ///     Multiplayer SDK Profile component propagator
         /// </summary>
-        public const string MULTIPLAYER_SDK_COMPONENTS_HANDLER = nameof(MULTIPLAYER_SDK_COMPONENTS_HANDLER);
+        public const string MULTIPLAYER_SDK_PLAYER_PROFILE_DATA = nameof(MULTIPLAYER_SDK_PLAYER_PROFILE_DATA);
+
+        /// <summary>
+        ///     Multiplayer SDK Emote Command component propagator
+        /// </summary>
+        public const string MULTIPLAYER_SDK_EMOTE_COMMAND_DATA = nameof(MULTIPLAYER_SDK_EMOTE_COMMAND_DATA);
 
         /// <summary>
         ///     PBPlayerIdentityData component writer

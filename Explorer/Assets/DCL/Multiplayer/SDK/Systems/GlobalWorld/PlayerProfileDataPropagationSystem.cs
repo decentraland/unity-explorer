@@ -1,9 +1,9 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
-using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
@@ -11,7 +11,6 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
-using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
@@ -21,21 +20,20 @@ using Avatar = DCL.Profiles.Avatar;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     // Currently implemented to track reserved entities only on the CURRENT SCENE
-    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
-    [LogCategory(ReportCategory.MULTIPLAYER_SDK_COMPONENTS_HANDLER)]
-    public partial class PlayerComponentsHandlerSystem : BaseUnityLoopSystem
+    [UpdateBefore(typeof(AvatarEmoteCommandPropagationSystem))]
+    [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
+    public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
         private readonly IScenesCache scenesCache;
         private readonly ICharacterObject mainPlayerCharacterObject;
-        private readonly IEmoteCache emoteCache;
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
-        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject, IEmoteCache emoteCache) : base(world)
+        public PlayerProfileDataPropagationSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
         {
             this.scenesCache = scenesCache;
-            this.emoteCache = emoteCache;
             mainPlayerCharacterObject = characterObject;
             ClearReservedEntities();
         }
@@ -47,7 +45,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             HandlePlayerDisconnectQuery(World);
 
             UpdatePlayerSDKDataQuery(World);
-            UpdateEmoteCommandDataQuery(World);
 
             AddPlayerSDKDataQuery(World);
         }
@@ -76,7 +73,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 var crdtEntityComponent = new CRDTEntity(crdtEntityId);
                 Avatar avatarData = profile.Avatar;
 
-                // TODO: Optimize with a 'PlayerProfileDataComponent' pool??
                 var playerSDKDataComponent = new PlayerProfileDataComponent
                 {
                     IsDirty = true,
@@ -123,27 +119,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 playerProfileDataComponent.EmoteUrns = profile.Avatar.Emotes;
 
                 sceneEcsExecutor.World.Set(playerProfileDataComponent.SceneWorldEntity, playerProfileDataComponent);
-            }
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateEmoteCommandData(ref PlayerProfileDataComponent playerProfileData, ref CharacterEmoteIntent emoteIntent)
-        {
-            SceneEcsExecutor sceneEcsExecutor = playerProfileData.SceneFacade.EcsExecutor;
-
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-            {
-                if (emoteCache.TryGetEmote(emoteIntent.EmoteId.Shorten(), out IEmote emote))
-                {
-                    playerProfileData.IsPlayingEmoteDirty = true;
-                    playerProfileData.PreviousEmote = playerProfileData.PlayingEmote;
-                    playerProfileData.PlayingEmote = emoteIntent.EmoteId;
-                    playerProfileData.LoopingEmote = emote.IsLooping();
-
-                    sceneEcsExecutor.World.Set(playerProfileData.SceneWorldEntity, playerProfileData);
-                }
             }
         }
 

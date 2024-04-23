@@ -6,7 +6,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
@@ -16,7 +15,6 @@ using SceneRunner.Scene;
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
-    [UpdateAfter(typeof(PlayerComponentsHandlerSystem))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EMOTE_COMMAND)]
     public partial class WriteAvatarEmoteCommandSystem : BaseUnityLoopSystem
     {
@@ -34,62 +32,58 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
+
             UpdateAvatarEmoteCommandQuery(World);
             CreateAvatarEmoteCommandQuery(World);
         }
 
         [Query]
         [None(typeof(PBAvatarEmoteCommand), typeof(DeleteEntityIntention))]
-        private void CreateAvatarEmoteCommand(in Entity entity, ref PlayerProfileDataComponent playerProfileDataComponent)
+        private void CreateAvatarEmoteCommand(in Entity entity, ref PlayerProfileDataComponent playerProfileDataComponent, ref AvatarEmoteCommandComponent emoteCommand)
         {
-            if (!playerProfileDataComponent.IsPlayingEmoteDirty) return;
+            if (emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
 
+            // TODO: Check, can we NOT USE THE PBComponent AT ALL?? Does the 'Update' query recognize the PB component automatically after the Append() ??
             PBAvatarEmoteCommand pbComponent = componentPool.Get();
-            var tickNumber = (int)sceneStateProvider.TickNumber;
-            pbComponent.IsDirty = true;
-            pbComponent.EmoteUrn = playerProfileDataComponent.PlayingEmote;
-            pbComponent.Loop = playerProfileDataComponent.LoopingEmote;
-            pbComponent.Timestamp = (uint)tickNumber;
 
-            ecsToCRDTWriter.AppendMessage<PBAvatarEmoteCommand, PBAvatarEmoteCommand>(static (dispatchedPBComponent, pbComponent) =>
+            var tickNumber = (int)sceneStateProvider.TickNumber;
+
+            ecsToCRDTWriter.AppendMessage<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent emoteCommand, uint timestamp)>(static (pbComponent, data) =>
             {
-                dispatchedPBComponent.IsDirty = true;
-                dispatchedPBComponent.EmoteUrn = pbComponent.EmoteUrn;
-                dispatchedPBComponent.Loop = pbComponent.Loop;
-                dispatchedPBComponent.Timestamp = pbComponent.Timestamp;
-            }, playerProfileDataComponent.CRDTEntity, (int)sceneStateProvider.TickNumber, pbComponent);
+                pbComponent.IsDirty = true;
+                pbComponent.EmoteUrn = data.emoteCommand.PlayingEmote;
+                pbComponent.Loop = data.emoteCommand.LoopingEmote;
+                pbComponent.Timestamp = data.timestamp;
+            }, playerProfileDataComponent.CRDTEntity, tickNumber, (emoteCommand, (uint)tickNumber));
 
             World.Add(entity, pbComponent, playerProfileDataComponent.CRDTEntity);
 
-            playerProfileDataComponent.IsPlayingEmoteDirty = false;
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEmoteCommand(ref PlayerProfileDataComponent playerProfileDataComponent, ref PBAvatarEmoteCommand pbComponent)
-        {
-            if (!playerProfileDataComponent.IsPlayingEmoteDirty) return;
-
-            var tickNumber = (int)sceneStateProvider.TickNumber;
-            pbComponent.IsDirty = true;
-            pbComponent.EmoteUrn = playerProfileDataComponent.PlayingEmote;
-            pbComponent.Loop = playerProfileDataComponent.LoopingEmote;
-            pbComponent.Timestamp = (uint)tickNumber;
-
-            ecsToCRDTWriter.AppendMessage<PBAvatarEmoteCommand, PBAvatarEmoteCommand>(static (dispatchedPBComponent, pbComponent) =>
-            {
-                dispatchedPBComponent.IsDirty = true;
-                dispatchedPBComponent.EmoteUrn = pbComponent.EmoteUrn;
-                dispatchedPBComponent.Loop = pbComponent.Loop;
-                dispatchedPBComponent.Timestamp = pbComponent.Timestamp;
-            }, playerProfileDataComponent.CRDTEntity, tickNumber, pbComponent);
-
-            playerProfileDataComponent.IsPlayingEmoteDirty = false;
+            emoteCommand.IsDirty = false;
         }
 
         [Query]
         [All(typeof(PBAvatarEmoteCommand))]
-        [None(typeof(PlayerProfileDataComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention))]
+        private void UpdateAvatarEmoteCommand(ref PlayerProfileDataComponent playerProfileDataComponent, ref AvatarEmoteCommandComponent emoteCommand)
+        {
+            if (!emoteCommand.IsDirty || emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
+
+            var tickNumber = (int)sceneStateProvider.TickNumber;
+
+            ecsToCRDTWriter.AppendMessage<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent emoteCommand, uint timestamp)>(static (pbComponent, data) =>
+            {
+                pbComponent.IsDirty = true;
+                pbComponent.EmoteUrn = data.emoteCommand.PlayingEmote;
+                pbComponent.Loop = data.emoteCommand.LoopingEmote;
+                pbComponent.Timestamp = data.timestamp;
+            }, playerProfileDataComponent.CRDTEntity, tickNumber, (emoteCommand, (uint)tickNumber));
+
+            emoteCommand.IsDirty = false;
+        }
+
+        [Query]
+        [All(typeof(PBAvatarEmoteCommand))]
+        [None(typeof(AvatarEmoteCommandComponent), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(Entity entity, ref CRDTEntity crdtEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEmoteCommand>(crdtEntity);

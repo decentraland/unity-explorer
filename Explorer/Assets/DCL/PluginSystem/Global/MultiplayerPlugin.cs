@@ -19,6 +19,7 @@ using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using ECS;
@@ -26,7 +27,6 @@ using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
-using PlayerComponentsHandlerSystem = DCL.Multiplayer.SDK.Systems.GlobalWorld.PlayerComponentsHandlerSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -112,7 +112,9 @@ namespace DCL.PluginSystem.Global
             );
 
             ResetDirtyFlagSystem<PlayerProfileDataComponent>.InjectToWorld(ref builder);
-            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject, emoteCache);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, scenesCache, characterObject);
+            ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
+            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
 #endif
         }
     }
