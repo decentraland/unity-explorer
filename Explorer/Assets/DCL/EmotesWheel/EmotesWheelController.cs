@@ -44,6 +44,7 @@ namespace DCL.EmotesWheel
         protected override void OnViewInstantiated()
         {
             viewInstance.OnClose += () => closeViewTask?.TrySetResult();
+            viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
             {
@@ -51,6 +52,7 @@ namespace DCL.EmotesWheel
                 slot.Slot = i;
                 slot.OnPlay += PlayEmote;
                 slot.OnHover += UpdateCurrentEmote;
+                slot.OnFocusLeave += ClearCurrentEmote;
             }
         }
 
@@ -147,6 +149,11 @@ namespace DCL.EmotesWheel
         {
             if (!emoteCache.TryGetEmote(currentEmotes[slot], out IEmote emote)) return;
             viewInstance.CurrentEmoteName.text = emote.GetName();
+        }
+
+        private void ClearCurrentEmote(int slot)
+        {
+            viewInstance.CurrentEmoteName.text = "";
         }
 
         private void PlayEmote(int slot)
