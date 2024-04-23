@@ -45,9 +45,6 @@ namespace DCL.Audio.Jobs
                     terrainAudioState.ShouldBeSilent = false;
                 }
             }
-
-            //We do this so we are not removing AudioSources immediately after a player is out of range,
-            //otherwise it might sound weird if player returns to a zone they just left
             else if (!terrainAudioState.IsSilent)
             {
                 terrainAudioState.IsHeard = false;

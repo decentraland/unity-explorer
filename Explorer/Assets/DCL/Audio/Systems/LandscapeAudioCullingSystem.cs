@@ -81,7 +81,10 @@ namespace DCL.Audio.Systems
                 }
 
                 if (isTerrainViewInitialized)
+                {
                     UpdateTerrainAudioEventsQuery(World);
+                    UpdateOceanAudioEventsQuery(World);
+                }
 
                 updateFramesCounter = landscapeAudioSystemSettings.SystemUpdateFrequency;
             }
