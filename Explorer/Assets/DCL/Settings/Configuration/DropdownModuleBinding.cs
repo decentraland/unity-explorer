@@ -1,9 +1,11 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace DCL.Settings.Configuration
 {
@@ -14,14 +16,19 @@ namespace DCL.Settings.Configuration
         {
             GRAPHICS_QUALITY_FEATURE,
             CAMERA_LOCK_FEATURE,
-            CAMERA_SHOULDER_FEATURE
+            CAMERA_SHOULDER_FEATURE,
+            RESOLUTION_FEATURE,
+            WINDOW_MODE_FEATURE,
+            FPS_LIMIT_FEATURE,
             // add other features...
         }
 
         public override SettingsFeatureController CreateModule(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            LandscapeData landscapeData)
+            LandscapeData landscapeData,
+            AudioMixer generalAudioMixer,
+            QualitySettingsAsset qualitySettingsAsset)
         {
             var viewInstance = UnityEngine.Object.Instantiate(View, parent);
             viewInstance.Configure(Config);
@@ -29,11 +36,17 @@ namespace DCL.Settings.Configuration
             switch (Feature)
             {
                 case DropdownFeatures.GRAPHICS_QUALITY_FEATURE:
-                    return new GraphicsQualitySettingsController(viewInstance);
+                    return new GraphicsQualitySettingsController(viewInstance, realmPartitionSettingsAsset, landscapeData, qualitySettingsAsset);
                 case DropdownFeatures.CAMERA_LOCK_FEATURE:
                     return new CameraLockSettingsController(viewInstance);
                 case DropdownFeatures.CAMERA_SHOULDER_FEATURE:
                     return new CameraShoulderSettingsController(viewInstance);
+                case DropdownFeatures.RESOLUTION_FEATURE:
+                    return new ResolutionSettingsController(viewInstance);
+                case DropdownFeatures.WINDOW_MODE_FEATURE:
+                    return new WindowModeSettingsController(viewInstance);
+                case DropdownFeatures.FPS_LIMIT_FEATURE:
+                    return new FpsLimitSettingsController(viewInstance);
                 // add other cases...
             }
 

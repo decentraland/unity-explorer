@@ -11,6 +11,7 @@ using DCL.Profiles.Self;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.Cache;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.Global
         private readonly DebugContainerBuilder debugBuilder;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ISelfProfile selfProfile;
+        private readonly IMVCManager mvcManager;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
 
@@ -39,12 +41,14 @@ namespace DCL.PluginSystem.Global
             IEmotesMessageBus messageBus,
             DebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IMVCManager mvcManager)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
             this.assetsProvisioner = assetsProvisioner;
             this.selfProfile = selfProfile;
+            this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
@@ -95,6 +99,8 @@ namespace DCL.PluginSystem.Global
             {
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                     selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity);
+
+                mvcManager.RegisterController(emotesWheelController);
             };
         }
 

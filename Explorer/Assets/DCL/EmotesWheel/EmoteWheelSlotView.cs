@@ -10,6 +10,7 @@ namespace DCL.EmotesWheel
     {
         public event Action<int>? OnPlay;
         public event Action<int>? OnHover;
+        public event Action<int>? OnFocusLeave;
 
         [SerializeField]
         private Button playButton;
@@ -53,6 +54,7 @@ namespace DCL.EmotesWheel
         public void OnPointerExit(PointerEventData eventData)
         {
             hoverBackground.SetActive(false);
+            OnFocusLeave?.Invoke(Slot);
         }
     }
 }

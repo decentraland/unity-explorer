@@ -45,10 +45,10 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
                 new Dictionary<Type, IComponentPool>
                 {
                     { typeof(MeshRenderer), new GameObjectPool<MeshRenderer>(null, MeshRendererPoolUtils.CreateMeshRendererComponent, MeshRendererPoolUtils.ReleaseMeshRendererComponent) },
-                    { typeof(BoxPrimitive), new ComponentPool<BoxPrimitive>() },
-                    { typeof(SpherePrimitive), new ComponentPool<SpherePrimitive>() },
-                    { typeof(CylinderPrimitive), new ComponentPool<CylinderPrimitive>() },
-                    { typeof(PlanePrimitive), new ComponentPool<PlanePrimitive>() },
+                    { typeof(BoxPrimitive), new ComponentPool.WithDefaultCtor<BoxPrimitive>() },
+                    { typeof(SpherePrimitive), new ComponentPool.WithDefaultCtor<SpherePrimitive>() },
+                    { typeof(CylinderPrimitive), new ComponentPool.WithDefaultCtor<CylinderPrimitive>() },
+                    { typeof(PlanePrimitive), new ComponentPool.WithDefaultCtor<PlanePrimitive>() },
                 }, new GameObject().transform);
 
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();

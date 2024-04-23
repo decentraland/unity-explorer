@@ -83,7 +83,9 @@ namespace CrdtEcsBridge.OutgoingMessages
 
                     // for delete messages IMessage is not created
                     if (previousMessage.MessageType == CRDTMessageType.PUT_COMPONENT)
+                    {
                         previousMessage.Bridge.Pool.Release(previousMessage.Message);
+                    }
 
                     messages[lwwIndex] = newMessage;
                 }
@@ -137,11 +139,13 @@ namespace CrdtEcsBridge.OutgoingMessages
                         case CRDTMessageType.PUT_COMPONENT:
                             memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
                             pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
+                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
                             processedMessages.Add(crdtProtocol.CreatePutMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, memory));
                             break;
                         case CRDTMessageType.APPEND_COMPONENT:
                             memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
                             pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
+                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
                             processedMessages.Add(crdtProtocol.CreateAppendMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, pendingMessage.Timestamp, memory));
                             break;
                         case CRDTMessageType.DELETE_COMPONENT:
@@ -164,6 +168,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             public readonly CRDTEntity Entity;
             public readonly SDKComponentBridge Bridge;
             public readonly CRDTMessageType MessageType;
+
             /// <summary>
             ///     Needed for append messages
             /// </summary>
