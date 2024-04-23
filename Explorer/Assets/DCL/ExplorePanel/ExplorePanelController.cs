@@ -107,10 +107,10 @@ namespace DCL.ExplorePanel
 
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
-                if (inputData.BackpackSection != null)
-                    backpackController.ScheduleSectionForNextActivation(inputData.BackpackSection.Value);
-
                 ToggleSection(section == inputData.Section, tab, section, false);
+
+                if (inputData.BackpackSection != null)
+                    backpackController.Toggle(inputData.BackpackSection.Value);
             }
 
             profileWidgetCts = profileWidgetCts.SafeRestart();

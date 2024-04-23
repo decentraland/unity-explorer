@@ -35,8 +35,8 @@ namespace DCL.Backpack
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
         private BackpackSections currentSection = BackpackSections.Avatar;
-        private BackpackSections? scheduledSection;
         private bool isAvatarLoaded;
+        private bool instantSectionToggle;
 
         public BackpackController(
             BackpackView view,
@@ -96,7 +96,7 @@ namespace DCL.Backpack
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token, !instantSectionToggle).Forget();
 
                         if (isOn)
                             currentSection = section;
@@ -161,12 +161,6 @@ namespace DCL.Backpack
 
         public void Activate()
         {
-            if (scheduledSection != null)
-            {
-                currentSection = scheduledSection.Value;
-                scheduledSection = null;
-            }
-
             profileLoadingCts = new CancellationTokenSource();
             AwaitForProfileAsync(profileLoadingCts).Forget();
 
@@ -193,7 +187,18 @@ namespace DCL.Backpack
         public RectTransform GetRectTransform() =>
             rectTransform;
 
-        public void ScheduleSectionForNextActivation(BackpackSections section) =>
-            scheduledSection = section;
+        public void Toggle(BackpackSections section)
+        {
+            bool tmp = instantSectionToggle;
+            instantSectionToggle = true;
+
+            foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
+            {
+                if (tabSelector.Section != section) continue;
+                tabSelector.TabSelectorViews.TabSelectorToggle.isOn = true;
+            }
+
+            instantSectionToggle = tmp;
+        }
     }
 }
