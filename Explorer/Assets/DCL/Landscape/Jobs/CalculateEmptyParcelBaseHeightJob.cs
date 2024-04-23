@@ -6,28 +6,34 @@ using Unity.Mathematics;
 
 namespace DCL.Landscape.Jobs
 {
-    /// <summary>CalculateEmptyParcelBaseHeightJob
-    /// This job iterates every empty parcel and checks its neighbouring owned parcels to determine the base height
+    /// <summary>
+    ///     CalculateEmptyParcelBaseHeightJob
+    ///     This job iterates every empty parcel and checks its neighbouring owned parcels to determine the base height
     /// </summary>
     [BurstCompile]
     public struct CalculateEmptyParcelBaseHeightJob : IJobParallelFor
     {
-        private NativeParallelHashMap<int2, int>.ParallelWriter result;
-
         [ReadOnly] private readonly NativeArray<int2> emptyParcels;
         [ReadOnly] private readonly NativeParallelHashSet<int2>.ReadOnly ownedParcels;
         [ReadOnly] private readonly float heightNerf;
+        [ReadOnly] private readonly int2 minBoundsInParcels;
+        [ReadOnly] private readonly int2 maxBoundsInParcels;
+        private NativeParallelHashMap<int2, int>.ParallelWriter result;
 
         public CalculateEmptyParcelBaseHeightJob(
             in NativeArray<int2> emptyParcels,
             in NativeParallelHashSet<int2>.ReadOnly ownedParcels,
             NativeParallelHashMap<int2, int>.ParallelWriter result,
-            float heightScaleNerf)
+            float heightScaleNerf,
+            in int2 minBoundsInParcels,
+            in int2 maxBoundsInParcels)
         {
             this.emptyParcels = emptyParcels;
             this.ownedParcels = ownedParcels;
             this.result = result;
             heightNerf = heightScaleNerf;
+            this.minBoundsInParcels = minBoundsInParcels;
+            this.maxBoundsInParcels = maxBoundsInParcels;
         }
 
         public void Execute(int index)
@@ -41,25 +47,21 @@ namespace DCL.Landscape.Jobs
         private int GetNearestParcelDistance(int2 emptyParcelCoords, int radius)
         {
             for (int x = -radius; x <= radius; x++)
+            for (int y = -radius; y <= radius; y++)
             {
-                for (int y = -radius; y <= radius; y++)
-                {
-                    var direction = new int2(x, y);
-                    int2 nextPos = emptyParcelCoords + direction;
+                var direction = new int2(x, y);
+                int2 nextPos = emptyParcelCoords + direction;
 
-                    if (IsOutOfBounds(nextPos.x) || IsOutOfBounds(nextPos.y))
-                        return radius - 1;
-
-                    if (ownedParcels.Contains(nextPos))
-                        return radius - 1;
-                }
+                if (IsOutOfBounds(nextPos) || ownedParcels.Contains(nextPos))
+                    return radius - 1;
             }
 
             return GetNearestParcelDistance(emptyParcelCoords, radius + 1);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool IsOutOfBounds(int value) =>
-            value is > 150 or < -150;
+        private bool IsOutOfBounds(int2 parcel) =>
+            parcel.x < minBoundsInParcels.x || parcel.x > maxBoundsInParcels.x ||
+            parcel.y < minBoundsInParcels.y || parcel.y > maxBoundsInParcels.y;
     }
 }

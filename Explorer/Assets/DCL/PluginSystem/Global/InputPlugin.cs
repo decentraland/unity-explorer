@@ -16,7 +16,6 @@ using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using DCL.Multiplayer.Emotes;
 using MVC;
-using UnityEngine.EventSystems;
 using UpdateEmoteInputSystem = DCL.AvatarRendering.Emotes.UpdateEmoteInputSystem;
 
 namespace DCL.PluginSystem.Global
@@ -37,19 +36,18 @@ namespace DCL.PluginSystem.Global
         private readonly MultiplayerEmotesMessageBus messageBus;
         private readonly IEventSystem eventSystem;
         private readonly ICursor cursor;
-        private readonly UnityEventSystem unityEventSystem;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly UIDocument canvas;
         private readonly MVCManager mvcManager;
         private readonly DebugContainerBuilder debugContainerBuilder;
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument cursorUIDocument;
-        private CrosshairCanvas crosshairCanvas;
+        private CrosshairCanvas crosshairCanvas = null!;
 
         public InputPlugin(
             DCLInput dclInput,
             ICursor cursor,
-            UnityEventSystem eventSystem,
+            IEventSystem eventSystem,
             IAssetsProvisioner assetsProvisioner,
             UIDocument canvas,
             MultiplayerEmotesMessageBus messageBus,
@@ -84,6 +82,7 @@ namespace DCL.PluginSystem.Global
 
             crosshairCanvas.Initialize(crosshair, crosshairInteractable);
             crosshairCanvas.SetDisplayed(false);
+
             canvas.rootVisualElement.Add(crosshairCanvas);
         }
 

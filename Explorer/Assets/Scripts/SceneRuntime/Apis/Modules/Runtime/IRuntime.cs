@@ -2,7 +2,9 @@ using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using ECS;
 using Microsoft.ClearScript.JavaScript;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace SceneRuntime.Apis.Modules.Runtime
@@ -89,7 +91,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
             /// <summary>
             ///     A list containing the contents of the deployed entities.
             /// </summary>
-            public ContentDefinition[] content;
+            public string contentJson;
 
             /// <summary>
             ///     JSON serialization of the entity.metadata field.
@@ -100,6 +102,14 @@ namespace SceneRuntime.Apis.Modules.Runtime
             ///     The base URL used to resolve all content files.
             /// </summary>
             public string baseUrl;
+
+            public CurrentSceneEntityResponse(string urn, List<ContentDefinition>? content, string metadataJson, string baseUrl)
+            {
+                this.urn = urn;
+                this.contentJson = content is null ? "{}" : JsonConvert.SerializeObject(content);
+                this.metadataJson = metadataJson;
+                this.baseUrl = baseUrl;
+            }
         }
     }
 }
