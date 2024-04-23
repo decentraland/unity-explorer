@@ -30,11 +30,14 @@ namespace DCL.CharacterPreview
             this.view = view;
             this.previewFactory = previewFactory;
             this.world = world;
-            view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
+            if(view.EnableZooming)
+                view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
+
+            view.CharacterPreviewInputDetector.OnPointerMoveEvent += OnPointerMove;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent += OnPointerMove;
+
             inputEventBus = new CharacterPreviewInputEventBus();
             cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
         }
@@ -113,16 +116,18 @@ namespace DCL.CharacterPreview
 
         private void OnDrag(PointerEventData pointerEventData)
         {
-            inputEventBus.OnDrag(pointerEventData);
+            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning) ||
+               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating))
+                inputEventBus.OnDrag(pointerEventData);
 
             if (pointerEventData.button != PointerEventData.InputButton.Middle)
             {
                 switch (pointerEventData.button)
                 {
-                    case PointerEventData.InputButton.Right:
+                    case PointerEventData.InputButton.Right when view.EnablePanning:
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
                         break;
-                    case PointerEventData.InputButton.Left:
+                    case PointerEventData.InputButton.Left when view.EnableRotating:
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
                         break;
                 }

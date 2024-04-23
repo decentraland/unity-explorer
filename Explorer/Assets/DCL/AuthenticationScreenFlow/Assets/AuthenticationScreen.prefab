@@ -6579,6 +6579,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1124832982894223493, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_RaycastTarget
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
+      propertyPath: EnablePanning
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
+      propertyPath: EnableZooming
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
