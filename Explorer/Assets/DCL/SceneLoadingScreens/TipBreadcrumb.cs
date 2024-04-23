@@ -22,7 +22,7 @@ namespace DCL.SceneLoadingScreens
 
         public void Select()
         {
-            scalingTransform.localScale = Vector3.one * 1.7f;
+            scalingTransform.localScale = Vector3.one * 1.4f;
             image.color = selectedColor;
         }
 
