@@ -319,6 +319,8 @@ namespace DCL.AvatarRendering.Emotes
 
                     if (emote.IsUnisex())
                     {
+                        // TODO: can an emote have different files for each gender?
+                        // if that the case, we should not set the same asset result for both body shapes
                         emote.WearableAssetResults[BodyShape.MALE] = asset;
                         emote.WearableAssetResults[BodyShape.FEMALE] = asset;
                     }

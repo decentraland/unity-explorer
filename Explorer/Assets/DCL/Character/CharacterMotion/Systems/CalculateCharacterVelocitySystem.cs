@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.CharacterMotion.Components;
+using DCL.Character.CharacterMotion.Velocity;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
@@ -45,7 +46,6 @@ namespace DCL.CharacterMotion.Systems
         {
             debugBuilder.AddWidget("Locomotion: Base")
                         .AddFloatField("Camera Run FOV", cameraRunFov = new ElementBinding<float>(0))
-                        .AddFloatField("Camera FOV Speed", cameraFovSpeed = new ElementBinding<float>(0))
                         .AddFloatField("Walk Speed", walkSpeed = new ElementBinding<float>(0))
                         .AddFloatField("Jog Speed", jogSpeed = new ElementBinding<float>(0))
                         .AddFloatField("Run Speed", runSpeed = new ElementBinding<float>(0))
@@ -69,7 +69,6 @@ namespace DCL.CharacterMotion.Systems
 
             ICharacterControllerSettings settings = entitySettings.GetCharacterSettings(World);
             cameraRunFov.Value = settings.CameraFOVWhileRunning;
-            cameraFovSpeed.Value = settings.FOVChangeSpeed;
             walkSpeed.Value = settings.WalkSpeed;
             jogSpeed.Value = settings.JogSpeed;
             runSpeed.Value = settings.RunSpeed;
@@ -89,7 +88,6 @@ namespace DCL.CharacterMotion.Systems
             ICharacterControllerSettings settings = entitySettings.GetCharacterSettings(World);
 
             settings.CameraFOVWhileRunning = cameraRunFov.Value;
-            settings.FOVChangeSpeed = cameraFovSpeed.Value;
             settings.WalkSpeed = walkSpeed.Value;
             settings.JogSpeed = jogSpeed.Value;
             settings.RunSpeed = runSpeed.Value;
@@ -131,8 +129,12 @@ namespace DCL.CharacterMotion.Systems
             ApplyGravity.Execute(settings, ref rigidTransform, in jump, physicsTick, dt);
             ApplyAirDrag.Execute(settings, ref rigidTransform, dt);
 
-            // Update look direction based on the final velocity
-            ApplyLookDirection.Execute(rigidTransform, in movementInput, in settings);
+            if (cameraComponent.Mode == CameraMode.FirstPerson)
+                ApplyFirstPersonRotation.Execute(ref rigidTransform, in cameraComponent);
+            else
+                ApplyThirdPersonRotation.Execute(ref rigidTransform, in movementInput);
+
+            ApplyConditionalRotation.Execute(ref rigidTransform, in settings);
         }
     }
 }

@@ -10,5 +10,7 @@ namespace DCL.CharacterCamera.Settings
         ///     POV modules allows input to control camera's rotation
         /// </summary>
         CinemachinePOV POV { get; }
+
+        CinemachineBasicMultiChannelPerlin Noise { get; }
     }
 }

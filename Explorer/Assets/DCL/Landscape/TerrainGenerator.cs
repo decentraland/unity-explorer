@@ -27,7 +27,7 @@ namespace DCL.Landscape
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 1;
+        private const int CACHE_VERSION = 2;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.6f;
@@ -76,8 +76,12 @@ namespace DCL.Landscape
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
 
+            // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
             terrains = new List<Terrain>();
         }
+
+        public int GetChunkSize() =>
+            terrainGenData.chunkSize;
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
@@ -95,12 +99,14 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-            UnityObjectUtils.SafeDestroy(rootGo);
+            if (rootGo != null)
+                UnityObjectUtils.SafeDestroy(rootGo);
         }
 
         public void SwitchVisibility(bool isVisible)
         {
-            rootGo.gameObject.SetActive(isVisible);
+            if (rootGo != null)
+                rootGo.gameObject.SetActive(isVisible);
         }
 
         public async UniTask GenerateTerrainAsync(
@@ -166,13 +172,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
 
-                    // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
-                    await UniTask.Yield();
-
-                    AddColorMapRenderer(rootGo);
-
-                    // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-                    await BugWorkaroundAsync();
+                    await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
                     if (processReport != null) processReport.ProgressCounter.Value = 1f;
                 }
@@ -192,17 +192,6 @@ namespace DCL.Landscape
 
                 IsTerrainGenerated = true;
             }
-        }
-
-        private async Task BugWorkaroundAsync()
-        {
-            foreach (Terrain terrain in terrains)
-                terrain.enabled = false;
-
-            await UniTask.Yield();
-
-            foreach (Terrain terrain in terrains)
-                terrain.enabled = true;
         }
 
         private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
@@ -403,18 +392,6 @@ namespace DCL.Landscape
                 foreach (GCHandle usedHandle in usedHandles)
                     usedHandle.Free();
             }
-        }
-
-        private void AddColorMapRenderer(Transform parent)
-        {
-            (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) = factory.CreateColorMapRenderer(parent);
-
-            colorMapRenderer.terrainObjects.AddRange(terrains.Select(t => t.gameObject));
-            colorMapRenderer.RecalculateBounds();
-
-            grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
-
-            colorMapRenderer.Render();
         }
 
         // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain

@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using UnityEngine;
@@ -43,6 +42,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         AvatarAttachmentDTO GetDTO();
 
         public string ToString() =>
-            $"Emote({GetHash()} | {GetUrn()})";
+            $"AvatarAttachment({GetHash()} | {GetUrn()})";
     }
 }
