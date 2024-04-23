@@ -167,15 +167,26 @@ namespace DCL.CharacterPreview
 
         private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
         {
+            GameObject spinner = EnableSpinner();
+            await (previewController?.UpdateAvatar(previewAvatarModel, ct) ?? UniTask.CompletedTask);
+            DisableSpinner(spinner);
+        }
+
+        private void DisableSpinner(GameObject spinner)
+        {
+            spinner.SetActive(false);
+            profileColor.a = 1;
+            view.RawImage.DOColor(profileColor, AVATAR_FADE_ANIMATION);
+        }
+
+        private GameObject EnableSpinner()
+        {
             profileColor = view.RawImage.color;
             profileColor.a = 0;
             view.RawImage.color = profileColor;
             var spinner = view.Spinner;
             spinner.SetActive(true);
-            await (previewController?.UpdateAvatar(previewAvatarModel, ct) ?? UniTask.CompletedTask);
-            spinner.SetActive(false);
-            profileColor.a = 1;
-            view.RawImage.DOColor(profileColor, AVATAR_FADE_ANIMATION);
+            return spinner;
         }
 
         protected void PlayEmote(string emoteId) =>

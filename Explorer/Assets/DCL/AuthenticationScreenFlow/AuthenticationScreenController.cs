@@ -20,6 +20,9 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
+        private const int STARTING_VIEW_SIBLING_INDEX = 2;
+        private const int ANIMATION_DELAY = 300;
+
         private static readonly int IN = Animator.StringToHash("In");
         private static readonly int OUT = Animator.StringToHash("Out");
         private static readonly int JUMP_IN = Animator.StringToHash("Jump");
@@ -117,7 +120,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            viewInstance.gameObject.transform.SetSiblingIndex(2);
+            viewInstance.gameObject.transform.SetSiblingIndex(STARTING_VIEW_SIBLING_INDEX);
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
         }
 
@@ -192,7 +195,7 @@ namespace DCL.AuthenticationScreenFlow
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
                 viewInstance.FinalizeAnimator.SetTrigger(TO_OTHER);
-                await UniTask.Delay(300, cancellationToken: ct);
+                await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 SwitchState(ViewState.Login);
             }
@@ -208,7 +211,7 @@ namespace DCL.AuthenticationScreenFlow
             async UniTaskVoid AnimateAndAwaitAsync()
             {
                 viewInstance.FinalizeAnimator.SetTrigger(JUMP_IN);
-                await UniTask.Delay(200);
+                await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController!.OnHide();
                 lifeCycleTask!.TrySetResult();
                 lifeCycleTask = null;
