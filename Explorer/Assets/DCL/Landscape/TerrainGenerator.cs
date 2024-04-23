@@ -76,6 +76,7 @@ namespace DCL.Landscape
             reportData = ReportCategory.LANDSCAPE;
             timeProfiler = new TimeProfiler(measureTime);
 
+            // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
             terrains = new List<Terrain>();
         }
 
@@ -168,13 +169,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
 
-                    // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
-                    await UniTask.Yield();
-
-                    AddColorMapRenderer(rootGo);
-
-                    // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-                    await BugWorkaroundAsync();
+                    await TerrainGenerationUtils.AddColorMapRenderer(rootGo, terrains, factory);
 
                     if (processReport != null) processReport.ProgressCounter.Value = 1f;
                 }
@@ -194,17 +189,6 @@ namespace DCL.Landscape
 
                 IsTerrainGenerated = true;
             }
-        }
-
-        private async Task BugWorkaroundAsync()
-        {
-            foreach (Terrain terrain in terrains)
-                terrain.enabled = false;
-
-            await UniTask.Yield();
-
-            foreach (Terrain terrain in terrains)
-                terrain.enabled = true;
         }
 
         private async UniTask SetupEmptyParcelDataAsync(TerrainModel terrainModel, CancellationToken cancellationToken)
@@ -405,18 +389,6 @@ namespace DCL.Landscape
                 foreach (GCHandle usedHandle in usedHandles)
                     usedHandle.Free();
             }
-        }
-
-        private void AddColorMapRenderer(Transform parent)
-        {
-            (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) = factory.CreateColorMapRenderer(parent);
-
-            colorMapRenderer.terrainObjects.AddRange(terrains.Select(t => t.gameObject));
-            colorMapRenderer.RecalculateBounds();
-
-            grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
-
-            colorMapRenderer.Render();
         }
 
         // This should free up all the NativeArrays used for random generation, this wont affect the already generated terrain
