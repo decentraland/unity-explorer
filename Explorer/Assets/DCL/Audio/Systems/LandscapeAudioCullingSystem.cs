@@ -72,7 +72,7 @@ namespace DCL.Audio.Systems
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainGenerated()) return;
+            if (!terrainGenerator.IsTerrainGenerated) return;
 
             if (updateFramesCounter <= 0)
             {
@@ -96,7 +96,7 @@ namespace DCL.Audio.Systems
 
         private void InitializeTerrainAudioStates()
         {
-            IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
+            IReadOnlyList<Terrain> terrains = terrainGenerator.Terrains;
             landscapeAudioStates = new NativeArray<LandscapeAudioState>(terrains.Count, Allocator.Persistent);
             landscapeAudioSourcesPositions = new NativeArray<NativeArray<int2>>(terrains.Count, Allocator.Persistent);
             int halfTerrainChunkSize = terrainGenerator.GetChunkSize() / 2;
@@ -118,7 +118,7 @@ namespace DCL.Audio.Systems
 
         private void InitializeOceanAudioStates()
         {
-            Transform ocean = terrainGenerator.GetOcean();
+            Transform ocean = terrainGenerator.Ocean;
             MeshRenderer[] renderers = ocean.GetComponentsInChildren<MeshRenderer>();
 
             // some water chunks are disabled on purpose, we dont want to re-enable them

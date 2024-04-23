@@ -58,19 +58,15 @@ namespace DCL.PluginSystem.Global
             }
         }
 
-        public void Dispose()
-        {
-            if (!enableLandscape) return;
-            terrainGenerator.Dispose();
-        }
-
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
             floor.Initialize(landscapeData.Value);
 
             if (!enableLandscape) return;
+
             landscapeAudioSettingsReference = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeAudioSettingsReference, ct: ct);
+
             parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);

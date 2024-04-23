@@ -247,6 +247,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        landscapeAudioSettingsReference:
+          m_AssetGUID: 81289e85b8c13dc4b8ea68b7940e76a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
