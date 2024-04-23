@@ -42,7 +42,7 @@ jobs:
     name: Build
     runs-on: bigwin2022
     timeout-minutes: 120
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || ${{ github.event.label.name == 'force-build' }}
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft) || ${{ github.event.label.name == 'force-build' }}
     steps:
       - name: Set SHA env variable
         run: |
