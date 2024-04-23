@@ -25,15 +25,17 @@ namespace DCL.PluginSystem.Global
         private readonly SatelliteView view;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
+
+        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
-        public LandscapePlugin(SatelliteView view, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer, bool enableLandscape)
+        public LandscapePlugin(SatelliteView view, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
+            MapRendererTextureContainer textureContainer, bool enableLandscape)
         {
             this.view = view;
             this.assetsProvisioner = assetsProvisioner;
@@ -43,6 +45,15 @@ namespace DCL.PluginSystem.Global
 
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
+        }
+
+        public void Dispose()
+        {
+            if (enableLandscape)
+            {
+                terrainGenerator.Dispose();
+                worldTerrainGenerator.Dispose();
+            }
         }
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
@@ -72,15 +83,6 @@ namespace DCL.PluginSystem.Global
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, view, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-        }
-
-        public void Dispose()
-        {
-            if (enableLandscape)
-            {
-                terrainGenerator.Dispose();
-                worldTerrainGenerator.Dispose();
-            }
         }
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
