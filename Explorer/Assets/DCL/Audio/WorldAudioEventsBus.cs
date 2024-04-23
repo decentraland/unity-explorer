@@ -1,11 +1,10 @@
 ﻿using System;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace DCL.Audio
 {
-    public class WorldAudioEventsBus : IDisposable
+    public class WorldAudioEventsBus
     {
         private static WorldAudioEventsBus instance;
 
@@ -20,7 +19,6 @@ namespace DCL.Audio
         public event Action<int, NativeArray<int2>, WorldAudioClipType> PlayLandscapeAudioEvent;
         public event Action<int, WorldAudioClipType> StopWorldAudioEvent;
 
-
         public void SendPlayTerrainAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType)
         {
             PlayLandscapeAudioEvent?.Invoke(index, audioSourcesPositions, clipType);
@@ -29,12 +27,6 @@ namespace DCL.Audio
         public void SendStopTerrainAudioEvent(int index, WorldAudioClipType clipType)
         {
             StopWorldAudioEvent?.Invoke(index, clipType);
-        }
-
-
-
-        public void Dispose()
-        {
         }
     }
 }

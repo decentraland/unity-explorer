@@ -101,43 +101,6 @@ namespace DCL.Landscape.Systems
             }
         }
 
-        private NativeArray<int2> GetAudioSourcesPositions(TerrainData terrainData, Bounds worldBounds)
-        {
-            var split = 4; //This value must come from settings
-            var retryAttempts = 3; //This value must come from settings
-            Vector3 terrainSize = terrainData.size;
-            int cellWidth = (int)terrainSize.x / split;
-            int cellLength = (int)terrainSize.z / split;
-
-            var positions = new NativeList<int2>(Allocator.Temp);
-            var worldCellMin = new int2((int)worldBounds.min.x, (int)worldBounds.min.z);
-
-            for (var row = 0; row < split; row++)
-            {
-                for (var col = 0; col < split; col++)
-                {
-                    var localCellCenter = new int2(
-                        (col * cellWidth) + (cellWidth / 2),
-                        (row * cellLength) + (cellLength / 2)
-                    );
-
-                    for (var retry = 0; retry < retryAttempts; retry++)
-                    {
-                        var randomOffset = new int2(Random.Range(-cellWidth / 2, cellWidth / 2), Random.Range(-cellLength / 2, cellLength / 2));
-                        int2 randomPosition = localCellCenter + randomOffset;
-
-                        if (!terrainData.IsHole(randomPosition.x, randomPosition.y))
-                        {
-                            positions.Add(worldCellMin + randomPosition);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return positions.ToArray(Allocator.Persistent);
-        }
-
         [Query]
         private void UpdateTerrainVisibility(in Entity _, in CameraComponent cameraComponent)
         {
