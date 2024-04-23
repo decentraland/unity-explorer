@@ -19,7 +19,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         public ISceneApi.GetSceneResponse GetSceneInfo() =>
             new (
                 cid: sceneData.SceneEntityDefinition.id,
-                contents: sceneData.SceneEntityDefinition.content ?? throw new InvalidOperationException("Scene content is null"),
+                contents: sceneData.SceneEntityDefinition.content,
                 metadata: JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
                 baseUrl: sceneData.SceneContent.ContentBaseUrl.Value
             );

@@ -1,4 +1,5 @@
-﻿using DCL.Ipfs;
+﻿using DCL.Diagnostics;
+using DCL.Ipfs;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -31,10 +32,19 @@ namespace SceneRuntime.Apis.Modules.SceneApi
             /// </summary>
             public string baseUrl;
 
-            public GetSceneResponse(string cid, List<ContentDefinition> contents, string metadata, string baseUrl)
+            private static readonly List<ContentDefinition> EMPTY_LIST = new ();
+
+            public GetSceneResponse(string cid, List<ContentDefinition>? contents, string metadata, string baseUrl)
             {
                 this.cid = cid;
-                this.contents = JsonConvert.SerializeObject(contents);
+
+                if (contents == null)
+                    ReportHub.LogWarning(
+                        ReportCategory.JAVASCRIPT,
+                        "Passing empty contents GetSceneResponse from Unity side"
+                    );
+
+                this.contents = JsonConvert.SerializeObject(contents ?? EMPTY_LIST);
                 this.metadata = metadata;
                 this.baseUrl = baseUrl;
             }
