@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: LandscapeAudioSystemSettings
   m_EditorClassIdentifier: 
   distanceThreshold: 10
-  mutingDistanceThreshold: 10
-  cellsPerChunk: 9
+  mutingDistanceThreshold: 20
+  rowsPerChunk: 9
   systemUpdateFrequency: 10
   audioSourcePositioningRetryAttempts: 3
   oceanDistanceThreshold: 150
