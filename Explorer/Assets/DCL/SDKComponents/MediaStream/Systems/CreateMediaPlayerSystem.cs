@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -44,9 +45,9 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            if(!frameTimeBudget.TrySpendBudget()) return;
+            if (!frameTimeBudget.TrySpendBudget()) return;
 
-            var component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
+            MediaPlayerComponent component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
             World.Add(entity, component);
         }
 
@@ -55,26 +56,31 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureComponent))]
         private void CreateVideoPlayer(in Entity entity, ref PBVideoPlayer sdkComponent)
         {
-            if(!frameTimeBudget.TrySpendBudget()) return;
+            if (!frameTimeBudget.TrySpendBudget()) return;
 
-            var component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
+            MediaPlayerComponent component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
+
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.SetPlaybackProperties(sdkComponent);
+
             World.Add(entity, component);
         }
 
         private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool autoPlay)
         {
-            sceneData.TryGetMediaUrl(url, out var mediaUrl);
-            // Debug.Log($"VVV PB src: {mediaUrl}");
+            // if it is not valid, we try get it as a scene local video
+            if (!url.IsValidUrl())
+            {
+                sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                url = mediaUrl;
+            }
 
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
-                URL = mediaUrl,
-                State = true ? VideoState.VsNone : VideoState.VsError,
+                URL = url,
+                State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
             };
-
 
             component.MediaPlayer
                      .OpenMediaIfValid(component.URL, autoPlay)
