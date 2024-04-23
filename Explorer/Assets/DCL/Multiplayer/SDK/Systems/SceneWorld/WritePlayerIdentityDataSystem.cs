@@ -10,10 +10,12 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.LifeCycle.Systems;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateBefore(typeof(ResetDirtyFlagSystem<PlayerProfileDataComponent>))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
     {

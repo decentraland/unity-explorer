@@ -10,11 +10,13 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.LifeCycle.Systems;
 using ECS.Unity.ColorComponent;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateBefore(typeof(ResetDirtyFlagSystem<PlayerProfileDataComponent>))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
     public partial class WriteSDKAvatarBaseSystem : BaseUnityLoopSystem
     {

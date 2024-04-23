@@ -10,11 +10,13 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    [UpdateInGroup(typeof(SyncedInitializationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateBefore(typeof(ResetDirtyFlagSystem<AvatarEmoteCommandComponent>))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EMOTE_COMMAND)]
     public partial class WriteAvatarEmoteCommandSystem : BaseUnityLoopSystem
     {
@@ -43,9 +45,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         {
             if (emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
 
-            // TODO: Check, can we NOT USE THE PBComponent AT ALL?? Does the 'Update' query recognize the PB component automatically after the Append() ??
-            PBAvatarEmoteCommand pbComponent = componentPool.Get();
-
             var tickNumber = (int)sceneStateProvider.TickNumber;
 
             ecsToCRDTWriter.AppendMessage<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent emoteCommand, uint timestamp)>(static (pbComponent, data) =>
@@ -56,9 +55,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 pbComponent.Timestamp = data.timestamp;
             }, playerProfileDataComponent.CRDTEntity, tickNumber, (emoteCommand, (uint)tickNumber));
 
+            PBAvatarEmoteCommand pbComponent = componentPool.Get(); // The engine doesn't track components added through the CRDTWriter
             World.Add(entity, pbComponent, playerProfileDataComponent.CRDTEntity);
-
-            emoteCommand.IsDirty = false;
         }
 
         [Query]
@@ -77,8 +75,6 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 pbComponent.Loop = data.emoteCommand.LoopingEmote;
                 pbComponent.Timestamp = data.timestamp;
             }, playerProfileDataComponent.CRDTEntity, tickNumber, (emoteCommand, (uint)tickNumber));
-
-            emoteCommand.IsDirty = false;
         }
 
         [Query]
