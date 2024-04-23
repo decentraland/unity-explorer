@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DG.Tweening;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -13,6 +14,7 @@ namespace DCL.CharacterPreview
 {
     public abstract class CharacterPreviewControllerBase : IDisposable
     {
+        private static float AVATAR_FADE_ANIMATION = 1f;
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
@@ -161,12 +163,19 @@ namespace DCL.CharacterPreview
             WrapInSpinnerAsync(cancellationTokenSource.Token).Forget();
         }
 
+        private Color profileColor;
+
         private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
         {
+            profileColor = view.RawImage.color;
+            profileColor.a = 0;
+            view.RawImage.color = profileColor;
             var spinner = view.Spinner;
             spinner.SetActive(true);
             await (previewController?.UpdateAvatar(previewAvatarModel, ct) ?? UniTask.CompletedTask);
             spinner.SetActive(false);
+            profileColor.a = 1;
+            view.RawImage.DOColor(profileColor, AVATAR_FADE_ANIMATION);
         }
 
         protected void PlayEmote(string emoteId) =>
