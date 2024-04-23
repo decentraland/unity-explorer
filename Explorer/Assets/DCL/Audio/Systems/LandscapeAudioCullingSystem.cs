@@ -37,7 +37,8 @@ namespace DCL.Audio.Systems
         private NativeArray<LandscapeAudioState> landscapeAudioStates;
         private NativeArray<NativeArray<int2>> landscapeAudioSourcesPositions;
         private NativeArray<OceanAudioState> oceanAudioStates;
-        private JobHandle jobHandle;
+        private JobHandle landscapeJobHandle;
+        private JobHandle oceanJobHandle;
         private float audioListeningDistanceThreshold;
         private float audioMutingDistanceThreshold;
         private float oceanListeningDistanceThreshold;
@@ -56,13 +57,15 @@ namespace DCL.Audio.Systems
         {
             base.Initialize();
 
-            jobHandle = default(JobHandle);
+            oceanJobHandle = default(JobHandle);
+            landscapeJobHandle = default(JobHandle);
         }
 
         public override void Dispose()
         {
             base.Dispose();
-            jobHandle.Complete();
+            landscapeJobHandle.Complete();
+            oceanJobHandle.Complete();
             landscapeAudioStates.Dispose();
             landscapeAudioSourcesPositions.Dispose();
         }
@@ -181,10 +184,10 @@ namespace DCL.Audio.Systems
         [Query]
         private void UpdateTerrainAudioEvents(in Entity _, in CameraComponent cameraComponent)
         {
-            if (jobHandle.IsCompleted && !jobHandle.Equals(default(JobHandle)))
+            if (landscapeJobHandle.IsCompleted && !landscapeJobHandle.Equals(default(JobHandle)))
             {
                 Profiler.BeginSample("UpdateTerrainAudioEvents.Update");
-                jobHandle.Complete();
+                landscapeJobHandle.Complete();
 
                 for (var i = 0; i < landscapeAudioStates.Length; i++)
                 {
@@ -211,16 +214,16 @@ namespace DCL.Audio.Systems
             }
 
             // Schedule
-            if (jobHandle.IsCompleted)
+            if (landscapeJobHandle.IsCompleted)
             {
                 Profiler.BeginSample("CalculateLandscapeAudioStatesJob.Schedule");
-                jobHandle.Complete();
+                landscapeJobHandle.Complete();
 
                 Vector3 position = cameraComponent.Camera.transform.position;
                 var cameraPosition = new float2(position.x, position.z);
 
                 var job = new CalculateLandscapeAudioStatesJob(landscapeAudioStates, cameraPosition, audioListeningDistanceThreshold, audioMutingDistanceThreshold);
-                jobHandle = job.Schedule(landscapeAudioStates.Length, 32, jobHandle);
+                landscapeJobHandle = job.Schedule(landscapeAudioStates.Length, 32, landscapeJobHandle);
                 Profiler.EndSample();
             }
         }
@@ -228,10 +231,10 @@ namespace DCL.Audio.Systems
         [Query]
         private void UpdateOceanAudioEvents(in Entity _, in CameraComponent cameraComponent)
         {
-            if (jobHandle.IsCompleted && !jobHandle.Equals(default(JobHandle)))
+            if (oceanJobHandle.IsCompleted && !oceanJobHandle.Equals(default(JobHandle)))
             {
                 Profiler.BeginSample("UpdateOceanAudioEvents.Update");
-                jobHandle.Complete();
+                oceanJobHandle.Complete();
 
                 for (var i = 0; i < oceanAudioStates.Length; i++)
                 {
@@ -266,15 +269,15 @@ namespace DCL.Audio.Systems
             }
 
             // Schedule
-            if (jobHandle.IsCompleted)
+            if (oceanJobHandle.IsCompleted)
             {
                 Profiler.BeginSample("CalculateOceanAudioStatesJob.Schedule");
-                jobHandle.Complete();
+                oceanJobHandle.Complete();
 
                 float3 position = cameraComponent.Camera.transform.position;
 
                 var job = new CalculateOceanAudioStatesJob(oceanAudioStates, position, oceanListeningDistanceThreshold);
-                jobHandle = job.Schedule(landscapeAudioStates.Length, 32, jobHandle);
+                oceanJobHandle = job.Schedule(oceanAudioStates.Length, 32, oceanJobHandle);
                 Profiler.EndSample();
             }
         }
