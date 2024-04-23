@@ -83,6 +83,12 @@ namespace DCL.Landscape.Utils
         private static string GetPath(int seed, int chunkSize, int version) =>
             Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}_v{version}.data";
 
+        public static TerrainLocalCache NewEmpty() =>
+            new()
+            {
+                isValid = false
+            };
+
         public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version, bool force)
         {
             var localCache = new TerrainLocalCache();
@@ -109,7 +115,7 @@ namespace DCL.Landscape.Utils
 
     public class TerrainGeneratorLocalCache
     {
-        private TerrainLocalCache localCache = null!;
+        private TerrainLocalCache localCache = TerrainLocalCache.NewEmpty();
         private readonly int seed;
         private readonly int chunkSize;
         private readonly int version;
