@@ -11,7 +11,7 @@ namespace DCL.CharacterCamera
         public static SingleInstanceEntity CacheCamera(this World world) =>
             new (in QUERY, world);
 
-        public static ref readonly CameraComponent GetCameraComponent(this in SingleInstanceEntity instance, World world) =>
+        public static ref CameraComponent GetCameraComponent(this in SingleInstanceEntity instance, World world) =>
             ref world.Get<CameraComponent>(instance);
 
         public static ref CameraFieldOfViewComponent GetCameraFovComponent(this in SingleInstanceEntity instance, World world) =>
