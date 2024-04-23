@@ -12,19 +12,27 @@ namespace DCL.Landscape
         public bool clearCache;
         public uint worldSeed = 1;
         public bool digHoles;
-        public bool centerTerrain;
         public bool hideTrees;
         public bool hideDetails;
+        public bool clearNoiseCacheForWorlds = true;
+
         public TerrainGenerationData genData;
         public ParcelData parcelData;
 
         private NativeParallelHashSet<int2> ownedParcels;
-        private NativeArray<int2> emptyParcels;
+        private NativeList<int2> emptyParcels;
         private TerrainGenerator gen;
+        private WorldTerrainGenerator wGen;
 
         private void Start()
         {
             GenerateAsync().Forget();
+        }
+
+        private void OnValidate()
+        {
+            wGen = new WorldTerrainGenerator();
+            wGen.Initialize(genData);
         }
 
         public TerrainGenerator GetGenerator() =>
@@ -36,12 +44,25 @@ namespace DCL.Landscape
             ownedParcels = parcelData.GetOwnedParcels();
             emptyParcels = parcelData.GetEmptyParcels();
 
-            gen = new TerrainGenerator(genData, ref emptyParcels, ref ownedParcels, true, clearCache);
-            await gen.GenerateTerrainAsync(worldSeed, digHoles, centerTerrain, hideTrees, hideDetails, true);
+            if (genData.terrainSize == 1)
+            {
+                if (clearNoiseCacheForWorlds)
+                {
+                    wGen = new WorldTerrainGenerator();
+                    wGen.Initialize(genData);
+                }
+
+                await wGen.GenerateTerrainAsync(ownedParcels, worldSeed);
+            }
+            else
+            {
+                gen = new TerrainGenerator( true, clearCache);
+                gen.Initialize(genData, ref emptyParcels, ref ownedParcels);
+                await gen.GenerateTerrainAsync(worldSeed, digHoles, hideTrees, hideDetails, true);
+            }
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();
         }
-
     }
 }

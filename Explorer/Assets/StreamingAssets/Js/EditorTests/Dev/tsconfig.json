@@ -15,11 +15,11 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false,
     "downlevelIteration": true,
-    "noUnusedLocals": true,
+    //"noUnusedLocals": true,
     "lib": [
       "ES2020"
     ],
-    "types": [],
+    "types": ["jest", "node"],
     "noImplicitAny": true,
     "module": "es6",
     "target": "es5"

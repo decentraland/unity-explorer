@@ -1,6 +1,7 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
+using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -27,23 +28,30 @@ namespace Global
             var sdkComponentsRegistry = new SDKComponentsRegistry();
 
             // SDK RaycastHit (used only as an element in the list)
-            var raycastHitPool = new ComponentPool<RaycastHit>(defaultCapacity: 100, onGet: c => c.Reset());
+            var raycastHitPool = new ComponentPool.WithDefaultCtor<RaycastHit>(defaultCapacity: 100, onGet: c => c.Reset());
 
             // Add all SDK components here
             sdkComponentsRegistry
-               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM).WithPool(SDKComponentBuilderExtensions.SetAsDirty).WithCustomSerializer(new SDKTransformSerializer()).Build())
+               .Add(SDKComponentBuilder<SDKTransform>.Create(ComponentID.TRANSFORM)
+                                                     .WithPool(sdkTransform =>
+                                                      {
+                                                          sdkTransform.Clear();
+                                                          SDKComponentBuilderExtensions.SetAsDirty(sdkTransform);
+                                                      })
+                                                     .WithCustomSerializer(new SDKTransformSerializer())
+                                                     .Build())
                .Add(SDKComponentBuilder<PBGltfContainer>.Create(ComponentID.GLTF_CONTAINER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshCollider>.Create(ComponentID.MESH_COLLIDER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMeshRenderer>.Create(ComponentID.MESH_RENDERER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTextShape>.Create(ComponentID.TEXT_SHAPE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBMaterial>.Create(ComponentID.MATERIAL).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBRaycast>.Create(ComponentID.RAYCAST).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBUiTransform>.Create(ComponentID.UI_TRANSFORM).AsProtobufComponent(true))
-               .Add(SDKComponentBuilder<PBUiText>.Create(ComponentID.UI_TEXT).AsProtobufComponent(true))
-               .Add(SDKComponentBuilder<PBUiBackground>.Create(ComponentID.UI_BACKGROUND).AsProtobufComponent(true))
-               .Add(SDKComponentBuilder<PBUiInput>.Create(ComponentID.UI_INPUT).AsProtobufComponent(true))
+               .Add(SDKComponentBuilder<PBUiTransform>.Create(ComponentID.UI_TRANSFORM).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBUiText>.Create(ComponentID.UI_TEXT).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBUiBackground>.Create(ComponentID.UI_BACKGROUND).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBUiInput>.Create(ComponentID.UI_INPUT).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBUiInputResult>.Create(ComponentID.UI_INPUT_RESULT).AsProtobufResult())
-               .Add(SDKComponentBuilder<PBUiDropdown>.Create(ComponentID.UI_DROPDOWN).AsProtobufComponent(true))
+               .Add(SDKComponentBuilder<PBUiDropdown>.Create(ComponentID.UI_DROPDOWN).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBUiDropdownResult>.Create(ComponentID.UI_DROPDOWN_RESULT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBUiCanvasInformation>.Create(ComponentID.UI_CANVAS_INFORMATION).AsProtobufResult())
 
@@ -62,8 +70,11 @@ namespace Global
                                                               .WithProtobufSerializer()
                                                               .WithPool(onRelease: pointerEventsResult =>
                                                                {
-                                                                   raycastHitPool.Release(pointerEventsResult.Hit);
-                                                                   pointerEventsResult.Hit = null;
+                                                                   if (pointerEventsResult.Hit != null)
+                                                                   {
+                                                                       raycastHitPool.Release(pointerEventsResult.Hit);
+                                                                       pointerEventsResult.Hit = null;
+                                                                   }
                                                                })
                                                               .Build())
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS)
@@ -88,7 +99,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAnimator>.Create(ComponentID.ANIMATOR).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBCameraModeArea>.Create(ComponentID.CAMERA_MODE_AREA).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBAvatarModifierArea>.Create(ComponentID.AVATAR_MODIFIER_AREA).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBAvatarModifierArea>.Create(ComponentID.AVATAR_MODIFIER_AREA).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBPlayerIdentityData>.Create(ComponentID.PLAYER_IDENTITY_DATA).AsProtobufComponent());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 
@@ -109,7 +121,7 @@ namespace Global
         private static IEnumerable<(Type type, IComponentPool pool)> GetMiscComponents()
         {
             // Partition Component
-            yield return (typeof(PartitionComponent), new ComponentPool<PartitionComponent>(defaultCapacity: 2000, onRelease: p =>
+            yield return (typeof(PartitionComponent), new ComponentPool.WithDefaultCtor<PartitionComponent>(defaultCapacity: 2000, onRelease: p =>
             {
                 p.IsBehind = false;
                 p.Bucket = byte.MaxValue;

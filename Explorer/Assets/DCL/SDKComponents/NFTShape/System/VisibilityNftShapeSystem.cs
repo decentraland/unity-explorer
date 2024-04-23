@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
 using ECS.Abstract;
 using ECS.Unity.Groups;
+using ECS.Unity.Visibility;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
@@ -27,7 +28,7 @@ namespace DCL.SDKComponents.NFTShape.System
         {
             if (visibility.IsDirty)
             {
-                nftShapeRenderer.ApplyVisibility(visibility.Visible);
+                nftShapeRenderer.ApplyVisibility(visibility.GetVisible());
                 visibility.IsDirty = false;
             }
         }

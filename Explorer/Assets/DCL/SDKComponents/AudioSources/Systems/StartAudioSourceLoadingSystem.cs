@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.AudioSources
             if (!frameTimeBudgetProvider.TrySpendBudget()) return;
             if (!AudioUtils.TryCreateAudioClipPromise(World, sceneData, sdkAudioSource.AudioClipUrl, partitionComponent, out Promise? assetPromise)) return;
 
-            var audioSourceComponent = new AudioSourceComponent(sdkAudioSource, assetPromise!.Value);
+            var audioSourceComponent = new AudioSourceComponent(assetPromise!.Value, sdkAudioSource.AudioClipUrl);
             World.Add(entity, audioSourceComponent);
         }
     }

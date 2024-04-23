@@ -117,16 +117,18 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            Inject(ref builder);
+            Inject(ref builder, sharedDependencies.MutexSync);
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) =>
-            Inject(ref builder);
-
-        private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder)
+        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
         {
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, new MutexSync(), webContentSizes);
+
+        }
+
+        private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, MutexSync mutexSync)
+        {
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, mutexSync, webContentSizes);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource());
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider);
             VisibilityNftShapeSystem.InjectToWorld(ref builder);

@@ -19,29 +19,47 @@ namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>, ILandscapeInitialization
     {
-        private TerrainGenerator terrainGenerator;
+        private readonly TerrainGenerator terrainGenerator;
+        private readonly WorldTerrainGenerator worldTerrainGenerator;
+
+        private readonly SatelliteFloor floor;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
+
+        private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
-        private NativeArray<int2> emptyParcels;
+        private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
-        public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer, bool enableLandscape)
+        public LandscapePlugin(SatelliteFloor floor, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
+            MapRendererTextureContainer textureContainer, bool enableLandscape)
         {
+            this.floor = floor;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
-            terrainGenerator = null!;
+
+            this.terrainGenerator = terrainGenerator;
+            this.worldTerrainGenerator = worldTerrainGenerator;
+        }
+
+        public void Dispose()
+        {
+            if (enableLandscape)
+            {
+                terrainGenerator.Dispose();
+                worldTerrainGenerator.Dispose();
+            }
         }
 
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+            floor.Initialize(landscapeData.Value);
 
             if (!enableLandscape) return;
 
@@ -52,24 +70,19 @@ namespace DCL.PluginSystem.Global
             emptyParcels = parcelData.Value.GetEmptyParcels();
             ownedParcels = parcelData.Value.GetOwnedParcels();
 
-            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LandscapeSatelliteSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
+            LandscapeSatelliteSystem.InjectToWorld(ref builder, textureContainer, floor);
 
             if (!enableLandscape) return;
 
-            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
+            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-        }
-
-        public void Dispose()
-        {
-            if (!enableLandscape) return;
-            terrainGenerator.Dispose();
         }
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)

@@ -12,6 +12,7 @@ using DCL.Profiles;
 using DCL.SDKComponents.AvatarModifierArea.Components;
 using DCL.Utilities;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
@@ -20,7 +21,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
 {
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostPhysicsSystemGroup))]
     [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
