@@ -18,7 +18,7 @@ using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Backpack
 {
-    public class BackpackControler : ISection, IDisposable
+    public class BackpackController : ISection, IDisposable
     {
         private readonly BackpackView view;
         private readonly BackpackCommandBus backpackCommandBus;
@@ -37,7 +37,7 @@ namespace DCL.Backpack
         private BackpackSections currentSection = BackpackSections.Avatar;
         private bool isAvatarLoaded;
 
-        public BackpackControler(
+        public BackpackController(
             BackpackView view,
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
