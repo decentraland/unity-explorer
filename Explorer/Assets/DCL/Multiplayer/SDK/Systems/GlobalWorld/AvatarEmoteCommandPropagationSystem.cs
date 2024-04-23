@@ -8,7 +8,6 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
@@ -69,8 +68,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
-
-            Debug.Log("PRAVS - UPDATE EMOTE DATA COMP!");
 
             SceneEcsExecutor sceneEcsExecutor = playerProfileData.SceneFacade.EcsExecutor;
 
