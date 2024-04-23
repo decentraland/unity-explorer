@@ -26,6 +26,7 @@ using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
+using PlayerComponentsHandlerSystem = DCL.Multiplayer.SDK.Systems.GlobalWorld.PlayerComponentsHandlerSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -110,7 +111,7 @@ namespace DCL.PluginSystem.Global
                 realmData
             );
 
-            ResetDirtyFlagSystem<PlayerSDKDataComponent>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PlayerProfileDataComponent>.InjectToWorld(ref builder);
             PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject, emoteCache);
 #endif
         }

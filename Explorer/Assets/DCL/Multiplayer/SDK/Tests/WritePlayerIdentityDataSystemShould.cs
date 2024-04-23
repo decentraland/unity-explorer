@@ -10,6 +10,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using System;
+using WritePlayerIdentityDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WritePlayerIdentityDataSystem;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -17,7 +18,7 @@ namespace DCL.Multiplayer.SDK.Tests
     {
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
-        private PlayerSDKDataComponent playerSDKData;
+        private PlayerProfileDataComponent playerProfileData;
 
         [SetUp]
         public void Setup()
@@ -29,14 +30,14 @@ namespace DCL.Multiplayer.SDK.Tests
             componentPoolRegistry.Get().Returns(instantiatedPbComponent);
             system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter, componentPoolRegistry);
 
-            playerSDKData = new PlayerSDKDataComponent
+            playerProfileData = new PlayerProfileDataComponent
             {
                 Address = "Y065SoThoT",
                 IsGuest = false,
                 CRDTEntity = 3,
             };
 
-            entity = world.Create(playerSDKData);
+            entity = world.Create(playerProfileData);
         }
 
         [TearDown]
@@ -56,14 +57,14 @@ namespace DCL.Multiplayer.SDK.Tests
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
                                 Arg.Any<Action<PBPlayerIdentityData, PBPlayerIdentityData>>(),
-                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
+                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerProfileData.CRDTEntity.Id),
                                 Arg.Is<PBPlayerIdentityData>(comp =>
-                                    comp.Address == playerSDKData.Address
-                                    && comp.IsGuest == playerSDKData.IsGuest));
+                                    comp.Address == playerProfileData.Address
+                                    && comp.IsGuest == playerProfileData.IsGuest));
 
             Assert.IsTrue(world.TryGet(entity, out PBPlayerIdentityData pbPlayerIdentityData));
-            Assert.AreEqual(pbPlayerIdentityData.Address, playerSDKData.Address);
-            Assert.AreEqual(pbPlayerIdentityData.IsGuest, playerSDKData.IsGuest);
+            Assert.AreEqual(pbPlayerIdentityData.Address, playerProfileData.Address);
+            Assert.AreEqual(pbPlayerIdentityData.IsGuest, playerProfileData.IsGuest);
             Assert.IsTrue(world.Has<CRDTEntity>(entity));
         }
 
@@ -76,11 +77,11 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsTrue(world.Has<PBPlayerIdentityData>(entity));
 
-            world.Remove<PlayerSDKDataComponent>(entity);
+            world.Remove<PlayerProfileDataComponent>(entity);
 
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerSDKData.CRDTEntity.Id);
+            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerProfileData.CRDTEntity.Id);
             Assert.IsFalse(world.Has<PBPlayerIdentityData>(entity));
             Assert.IsFalse(world.Has<CRDTEntity>(entity));
             Assert.IsTrue(world.Has<DeleteEntityIntention>(entity));

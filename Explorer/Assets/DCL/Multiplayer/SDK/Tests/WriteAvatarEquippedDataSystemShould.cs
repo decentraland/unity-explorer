@@ -12,6 +12,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WriteAvatarEquippedDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteAvatarEquippedDataSystem;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -19,7 +20,7 @@ namespace DCL.Multiplayer.SDK.Tests
     {
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
-        private PlayerSDKDataComponent playerSDKData;
+        private PlayerProfileDataComponent playerProfileData;
 
         [SetUp]
         public void Setup()
@@ -40,7 +41,7 @@ namespace DCL.Multiplayer.SDK.Tests
             emoteURNs.Add("emote-urn-2");
             emoteURNs.Add("emote-urn-3");
 
-            playerSDKData = new PlayerSDKDataComponent
+            playerProfileData = new PlayerProfileDataComponent
             {
                 CRDTEntity = 3,
                 Name = "CthulhuFhtaghn",
@@ -48,7 +49,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 EmoteUrns = emoteURNs,
             };
 
-            entity = world.Create(playerSDKData);
+            entity = world.Create(playerProfileData);
         }
 
         [TearDown]
@@ -68,11 +69,11 @@ namespace DCL.Multiplayer.SDK.Tests
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
                                 Arg.Any<Action<PBAvatarEquippedData, PBAvatarEquippedData>>(),
-                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
+                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerProfileData.CRDTEntity.Id),
                                 Arg.Is<PBAvatarEquippedData>(comp =>
-                                    comp.WearableUrns.Count == playerSDKData.WearableUrns.Count
-                                    && comp.WearableUrns[0] == playerSDKData.WearableUrns.First()
-                                    && comp.EmoteUrns[0] == playerSDKData.EmoteUrns.First()));
+                                    comp.WearableUrns.Count == playerProfileData.WearableUrns.Count
+                                    && comp.WearableUrns[0] == playerProfileData.WearableUrns.First()
+                                    && comp.EmoteUrns[0] == playerProfileData.EmoteUrns.First()));
 
             AssertPBComponentMatchesPlayerSDKData();
         }
@@ -88,35 +89,35 @@ namespace DCL.Multiplayer.SDK.Tests
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
                                 Arg.Any<Action<PBAvatarEquippedData, PBAvatarEquippedData>>(),
-                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerSDKData.CRDTEntity.Id),
+                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerProfileData.CRDTEntity.Id),
                                 Arg.Is<PBAvatarEquippedData>(comp =>
-                                    comp.WearableUrns.Count == playerSDKData.WearableUrns.Count
-                                    && comp.WearableUrns[0] == playerSDKData.WearableUrns.First()
-                                    && comp.EmoteUrns[0] == playerSDKData.EmoteUrns.First()));
+                                    comp.WearableUrns.Count == playerProfileData.WearableUrns.Count
+                                    && comp.WearableUrns[0] == playerProfileData.WearableUrns.First()
+                                    && comp.EmoteUrns[0] == playerProfileData.EmoteUrns.First()));
 
             AssertPBComponentMatchesPlayerSDKData();
 
-            Assert.IsTrue(world.TryGet(entity, out playerSDKData));
+            Assert.IsTrue(world.TryGet(entity, out playerProfileData));
 
-            playerSDKData.IsDirty = true;
-            playerSDKData.Name = "D460N";
-            playerSDKData.BodyShapeURN = "old:ones:02";
+            playerProfileData.IsDirty = true;
+            playerProfileData.Name = "D460N";
+            playerProfileData.BodyShapeURN = "old:ones:02";
             var newWearableURNs = new List<URN>();
             newWearableURNs.Add("wearable-urn-4");
             newWearableURNs.Add("wearable-urn-5");
             newWearableURNs.Add("wearable-urn-6");
-            playerSDKData.WearableUrns = newWearableURNs;
+            playerProfileData.WearableUrns = newWearableURNs;
             var newEmoteURNs = new List<URN>();
             newEmoteURNs.Add("emote-urn-4");
             newEmoteURNs.Add("emote-urn-5");
             newEmoteURNs.Add("emote-urn-6");
-            playerSDKData.EmoteUrns = newEmoteURNs;
+            playerProfileData.EmoteUrns = newEmoteURNs;
 
-            world.Set(entity, playerSDKData);
+            world.Set(entity, playerProfileData);
 
             system.Update(0);
 
-            Assert.IsTrue(world.TryGet(entity, out playerSDKData));
+            Assert.IsTrue(world.TryGet(entity, out playerProfileData));
 
             AssertPBComponentMatchesPlayerSDKData();
         }
@@ -130,11 +131,11 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsTrue(world.Has<PBAvatarEquippedData>(entity));
 
-            world.Remove<PlayerSDKDataComponent>(entity);
+            world.Remove<PlayerProfileDataComponent>(entity);
 
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarEquippedData>(playerSDKData.CRDTEntity.Id);
+            ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarEquippedData>(playerProfileData.CRDTEntity.Id);
             Assert.IsFalse(world.Has<PBAvatarEquippedData>(entity));
             Assert.IsFalse(world.Has<CRDTEntity>(entity));
         }
@@ -143,13 +144,13 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             Assert.IsTrue(world.TryGet(entity, out PBAvatarEquippedData pbComponent));
 
-            Assert.AreEqual(playerSDKData.WearableUrns.Count, pbComponent.WearableUrns.Count);
+            Assert.AreEqual(playerProfileData.WearableUrns.Count, pbComponent.WearableUrns.Count);
 
-            foreach (string urn in pbComponent.WearableUrns) { Assert.IsTrue(playerSDKData.WearableUrns.Contains(urn)); }
+            foreach (string urn in pbComponent.WearableUrns) { Assert.IsTrue(playerProfileData.WearableUrns.Contains(urn)); }
 
-            Assert.AreEqual(playerSDKData.EmoteUrns.Count, pbComponent.EmoteUrns.Count);
+            Assert.AreEqual(playerProfileData.EmoteUrns.Count, pbComponent.EmoteUrns.Count);
 
-            foreach (string urn in pbComponent.EmoteUrns) { Assert.IsTrue(playerSDKData.EmoteUrns.Contains(urn)); }
+            foreach (string urn in pbComponent.EmoteUrns) { Assert.IsTrue(playerProfileData.EmoteUrns.Contains(urn)); }
 
             Assert.IsTrue(world.Has<CRDTEntity>(entity));
         }

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DCL.Multiplayer.SDK.Components
 {
-    public struct PlayerSDKDataComponent : IDirtyMarker
+    public struct PlayerProfileDataComponent : IDirtyMarker
     {
         public ISceneFacade SceneFacade;
         public CRDTEntity CRDTEntity;
