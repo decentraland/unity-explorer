@@ -12,6 +12,7 @@ using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -23,9 +24,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly ISceneData sceneData;
 
-        public CreateMediaPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
+        public CreateMediaPlayerSystem(World world, ISceneData sceneData, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
+            this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
             this.mediaPlayerPool = mediaPlayerPool;
@@ -55,7 +58,6 @@ namespace DCL.SDKComponents.MediaStream
             if(!frameTimeBudget.TrySpendBudget()) return;
 
             var component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
-
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.SetPlaybackProperties(sdkComponent);
             World.Add(entity, component);
@@ -63,12 +65,16 @@ namespace DCL.SDKComponents.MediaStream
 
         private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool autoPlay)
         {
+            sceneData.TryGetMediaUrl(url, out var mediaUrl);
+            // Debug.Log($"VVV PB src: {mediaUrl}");
+
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
-                URL = url,
-                State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
+                URL = mediaUrl,
+                State = true ? VideoState.VsNone : VideoState.VsError,
             };
+
 
             component.MediaPlayer
                      .OpenMediaIfValid(component.URL, autoPlay)
