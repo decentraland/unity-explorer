@@ -38,7 +38,6 @@ namespace Global
             var ecsWorldFactory = new ECSWorldFactory(sharedDependencies,
                 staticContainer.PartitionSettings,
                 exposedGlobalDataContainer.CameraSamplingData,
-                exposedGlobalDataContainer.ExposedCameraData,
                 staticContainer.SceneReadinessReportQueue,
                 staticContainer.ECSWorldPlugins);
 

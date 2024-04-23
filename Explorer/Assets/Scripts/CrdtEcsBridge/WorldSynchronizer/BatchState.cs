@@ -1,5 +1,6 @@
 using CRDT.Protocol;
 using CrdtEcsBridge.Components;
+using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 
 namespace CrdtEcsBridge.WorldSynchronizer
@@ -11,7 +12,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             actionOnRelease: state => state.deserializationTarget = null,
 
             // Omit checking collections, it is a hot path on the main thread
-            collectionCheck: false);
+            collectionCheck: PoolConstants.CHECK_COLLECTIONS);
 
         internal CRDTMessage crdtMessage;
         internal ReconciliationState reconciliationState;

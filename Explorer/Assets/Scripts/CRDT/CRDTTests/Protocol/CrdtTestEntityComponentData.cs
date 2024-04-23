@@ -24,6 +24,6 @@ namespace CRDT.CRDTTests.Protocol
             Encoding.UTF8.GetBytes(data);
 
         internal CRDTProtocol.EntityComponentData ToEntityComponentData() =>
-            new (timestamp, crdtPooledMemoryAllocator.GetMemoryBuffer(GetBytes()));
+            new (timestamp, crdtPooledMemoryAllocator.GetMemoryBuffer(GetBytes()), CRDTMessageType.PUT_COMPONENT);
     }
 }

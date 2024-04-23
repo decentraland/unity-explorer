@@ -14,6 +14,7 @@ using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Quality;
 using DCL.Settings;
 using DCL.Settings.Configuration;
 using DCL.UserInAppInitializationFlow;
@@ -28,6 +29,8 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Audio;
+using UnityEngine.InputSystem;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.PluginSystem.Global
@@ -130,9 +133,11 @@ namespace DCL.PluginSystem.Global
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
             var settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
+            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
             var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, realmPartitionSettings.Value, landscapeData.Value);
+            var qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
             exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
@@ -186,10 +191,16 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<SettingsMenuConfiguration> SettingsMenuConfiguration { get; private set; }
 
             [field: SerializeField]
+            public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
+
+            [field: SerializeField]
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
 
             [field: SerializeField]
             public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<QualitySettingsAsset> QualitySettingsAsset { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

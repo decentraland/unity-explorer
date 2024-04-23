@@ -13,6 +13,7 @@ using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
+using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -187,7 +188,10 @@ namespace Global.Dynamic
                 new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache)
             );
 
-            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
+            var genesisTerrain = new TerrainGenerator();
+            var worldsTerrain = new WorldTerrainGenerator();
+            var satelliteView = new SatelliteFloor();
+            var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
@@ -262,7 +266,11 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 container.RoomHub,
                 remoteEntities,
-                staticContainer.GlobalWorldProxy
+                staticContainer.GlobalWorldProxy,
+                container.LODContainer.RoadPlugin,
+                genesisTerrain,
+                worldsTerrain,
+                satelliteView
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
