@@ -80,6 +80,9 @@ namespace DCL.Landscape
             terrains = new List<Terrain>();
         }
 
+        public int GetChunkSize() =>
+            terrainGenData.chunkSize;
+
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
