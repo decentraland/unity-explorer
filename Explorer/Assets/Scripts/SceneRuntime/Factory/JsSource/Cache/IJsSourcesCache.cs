@@ -8,7 +8,7 @@ namespace SceneRuntime.Factory.WebSceneSource.Cache
 
         bool TryGet(string path, out string? sourceCode);
 
-        class Fake : IJsSourcesCache
+        class Null : IJsSourcesCache
         {
             public void Cache(string path, string sourceCode)
             {

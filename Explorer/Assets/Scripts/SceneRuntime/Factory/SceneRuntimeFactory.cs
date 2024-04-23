@@ -32,12 +32,14 @@ namespace SceneRuntime.Factory
 
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
-            jsSourcesCache = new IJsSourcesCache.Fake();
-#if UNITY_EDITOR
+            jsSourcesCache = new IJsSourcesCache.Null();
 
+#if UNITY_EDITOR
             const string DIR = "Assets/DCL/ScenesDebug/ScenesConsistency/JsCodes";
             if (Directory.Exists(DIR))
                 jsSourcesCache = new FileJsSourcesCache(DIR);
+            else
+                ReportHub.Log(ReportCategory.SCENE_FACTORY, $"You can use {DIR} to persist loaded scenes");
 #endif
 
             webJsSources = new CachedWebJsSources(
