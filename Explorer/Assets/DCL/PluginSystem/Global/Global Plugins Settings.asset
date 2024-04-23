@@ -459,6 +459,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <cinemachineCameraAudioSettingsReference>k__BackingField:
+          m_AssetGUID: 86a5a8acd91f6994788c37e301d06c56
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895265412481027
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
