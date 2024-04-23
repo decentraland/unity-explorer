@@ -20,6 +20,9 @@ MonoBehaviour:
     - <GroupTitle>k__BackingField: Graphics Quality
       <Modules>k__BackingField:
       - rid: 5242998342527483906
+      - rid: 5242998500334764034
+      - rid: 5242998503086751746
+      - rid: 5242998503086751747
     - <GroupTitle>k__BackingField: Environment
       <Modules>k__BackingField:
       - rid: 5242998342527483909
@@ -37,14 +40,7 @@ MonoBehaviour:
       <Modules>k__BackingField:
       - rid: 5242998342527483922
   <ControlsSectionConfig>k__BackingField:
-    <SettingsGroups>k__BackingField:
-    - <GroupTitle>k__BackingField: Mouse
-      <Modules>k__BackingField:
-      - rid: 5242998342527483914
-    - <GroupTitle>k__BackingField: Camera
-      <Modules>k__BackingField:
-      - rid: 5242998342527483915
-      - rid: 5242998342527483916
+    <SettingsGroups>k__BackingField: []
   references:
     version: 2
     RefIds:
@@ -69,8 +65,8 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 0
-          minValue: 10
-          maxValue: 80
+          minValue: 20
+          maxValue: 150
           wholeNumbers: 1
           defaultValue: 40
         <Feature>k__BackingField: 0
@@ -83,53 +79,11 @@ MonoBehaviour:
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 0
-          minValue: 160
-          maxValue: 5000
+          minValue: 1000
+          maxValue: 7000
           wholeNumbers: 1
           defaultValue: 4000
         <Feature>k__BackingField: 1
-    - rid: 5242998342527483914
-      type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Mouse Sensitivity
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 1
-          sliderType: 1
-          minValue: 1
-          maxValue: 100
-          wholeNumbers: 1
-          defaultValue: 60
-        <Feature>k__BackingField: 2
-    - rid: 5242998342527483915
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Camera Lock
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 1
-          isMultiselect: 0
-          options:
-          - Left Click
-          - Right Click
-          defaultOptionIndex: 1
-        <Feature>k__BackingField: 1
-    - rid: 5242998342527483916
-      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
-      data:
-        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
-        <Config>k__BackingField:
-          <ModuleName>k__BackingField: Shoulder
-          <Description>k__BackingField: 
-          <IsEnabled>k__BackingField: 1
-          isMultiselect: 0
-          options:
-          - Left
-          - Right
-          defaultOptionIndex: 1
-        <Feature>k__BackingField: 2
     - rid: 5242998342527483917
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -171,7 +125,7 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 7
     - rid: 5242998342527483920
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -185,13 +139,13 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 5
+        <Feature>k__BackingField: 6
     - rid: 5242998342527483921
       type: {class: SliderModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
         <View>k__BackingField: {fileID: 4706452128062998708, guid: 27c8bedb89b5739458399a3bd3d255ac, type: 3}
         <Config>k__BackingField:
-          <ModuleName>k__BackingField: UI SFX
+          <ModuleName>k__BackingField: Music
           <Description>k__BackingField: 
           <IsEnabled>k__BackingField: 1
           sliderType: 1
@@ -199,7 +153,7 @@ MonoBehaviour:
           maxValue: 100
           wholeNumbers: 1
           defaultValue: 100
-        <Feature>k__BackingField: 6
+        <Feature>k__BackingField: 5
     - rid: 5242998342527483922
       type: {class: ToggleModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
       data:
@@ -210,3 +164,47 @@ MonoBehaviour:
           <IsEnabled>k__BackingField: 1
           defaultIsOn: 1
         <Feature>k__BackingField: 0
+    - rid: 5242998500334764034
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Resolution
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options: []
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 3
+    - rid: 5242998503086751746
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: Window Mode
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Windowed
+          - Fullscreen Borderless
+          - Fullscreen
+          defaultOptionIndex: 1
+        <Feature>k__BackingField: 4
+    - rid: 5242998503086751747
+      type: {class: DropdownModuleBinding, ns: DCL.Settings.Configuration, asm: Settings}
+      data:
+        <View>k__BackingField: {fileID: 743815267364520677, guid: f999deca82ccdc14ebae40250c8eb0c9, type: 3}
+        <Config>k__BackingField:
+          <ModuleName>k__BackingField: FPS Limit
+          <Description>k__BackingField: 
+          <IsEnabled>k__BackingField: 1
+          isMultiselect: 0
+          options:
+          - Max
+          - 30
+          - 60
+          - 120
+          - 144
+          defaultOptionIndex: 0
+        <Feature>k__BackingField: 5

@@ -44,6 +44,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
             {
                 try
                 {
+                    await UniTask.SwitchToMainThread();
                     IWeb3Identity identity = identityCache.Identity!;
                     Profile? profile = await profileRepository.GetAsync(identity.Address, 0, ct);
 

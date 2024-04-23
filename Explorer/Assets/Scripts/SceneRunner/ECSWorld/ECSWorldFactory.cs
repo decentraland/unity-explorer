@@ -3,10 +3,10 @@ using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
-using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.Utilities.Extensions;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -28,21 +28,21 @@ namespace SceneRunner.ECSWorld
         private readonly ECSWorldSingletonSharedDependencies singletonDependencies;
         private readonly IPartitionSettings partitionSettings;
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
-        private readonly IExposedCameraData exposedCameraData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
-        public ECSWorldFactory(ECSWorldSingletonSharedDependencies sharedDependencies,
-            IPartitionSettings partitionSettings, IReadOnlyCameraSamplingData cameraSamplingData,
-            IExposedCameraData exposedCameraData,
+        public ECSWorldFactory(
+            ECSWorldSingletonSharedDependencies sharedDependencies,
+            IPartitionSettings partitionSettings,
+            IReadOnlyCameraSamplingData cameraSamplingData,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
-            IReadOnlyList<IDCLWorldPlugin> plugins)
+            IReadOnlyList<IDCLWorldPlugin> plugins
+        )
         {
             this.plugins = plugins;
             singletonDependencies = sharedDependencies;
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
-            this.exposedCameraData = exposedCameraData;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
@@ -80,7 +80,7 @@ namespace SceneRunner.ECSWorld
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
 
             // Prioritization
-            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>(), sceneRootEntity);
+            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), sceneRootEntity);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
@@ -91,9 +91,9 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
             // Add other systems here
-            SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition);
+            SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 
-            SystemGroupSnapshot.Instance.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
+            SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems, isCurrentListeners);
         }

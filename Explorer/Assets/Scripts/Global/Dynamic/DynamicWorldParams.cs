@@ -2,7 +2,6 @@
 using DCL.PluginSystem.Global;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;

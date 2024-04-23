@@ -37,7 +37,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
             public class Data
             {
                 public string displayName;
-                public string? publicKey;
+                public string publicKey;
                 public bool hasConnectedWeb3;
                 public string userId;
                 public int version;
@@ -45,7 +45,9 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
 
                 public Data(Profile profile, IWeb3Identity identity, List<string> wearablesCache) : this(
                     profile.DisplayName,
-                    identity.Address,
+                    string.IsNullOrWhiteSpace(identity.Address)
+                        ? string.Empty
+                        : identity.Address,
                     profile.HasConnectedWeb3,
                     profile.UserId,
                     profile.Version,

@@ -1,4 +1,7 @@
-﻿using DCL.Landscape.Jobs;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Landscape.Jobs;
+using StylizedGrass;
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -8,6 +11,38 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
+        public static async UniTask AddColorMapRenderer(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
+        {
+            // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
+            await UniTask.Yield();
+
+            (GrassColorMapRenderer colorMapRenderer, GrassColorMap grassColorMap) = factory.CreateColorMapRenderer(parent);
+
+            foreach (Terrain terrain in terrains)
+                colorMapRenderer.terrainObjects.Add(terrain.gameObject);
+
+            colorMapRenderer.RecalculateBounds();
+
+            grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
+
+            colorMapRenderer.Render();
+
+            // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+            await BugWorkaroundAsync();
+            return;
+
+            async UniTask BugWorkaroundAsync()
+            {
+                foreach (Terrain terrain in terrains)
+                    terrain.enabled = false;
+
+                await UniTask.Yield();
+
+                foreach (Terrain terrain in terrains)
+                    terrain.enabled = true;
+            }
+        }
+
         public static void ExtractEmptyParcels(TerrainModel terrainModel, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             if (!emptyParcels.IsCreated)

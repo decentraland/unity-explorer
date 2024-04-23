@@ -14,6 +14,7 @@ using DCL.Navmap;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Quality;
 using DCL.Settings;
 using DCL.Settings.Configuration;
 using DCL.UI;
@@ -21,6 +22,7 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
@@ -30,6 +32,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Audio;
 using UnityEngine.InputSystem;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
@@ -63,6 +66,7 @@ namespace DCL.PluginSystem.Global
         private PersistentExploreOpenerView? exploreOpener;
         private PersistentExplorePanelOpenerController explorePanelOpener;
         private ExplorePanelInputHandler inputHandler;
+        private readonly IRealmData realmData;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -82,7 +86,8 @@ namespace DCL.PluginSystem.Global
             IEmoteCache emoteCache,
             IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
-            DCLInput dclInput
+            DCLInput dclInput,
+            IRealmData realmData
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -102,6 +107,7 @@ namespace DCL.PluginSystem.Global
             this.webBrowser = webBrowser;
             this.realmNavigator = realmNavigator;
             this.forceRender = forceRender;
+            this.realmData = realmData;
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
         }
@@ -126,16 +132,19 @@ namespace DCL.PluginSystem.Global
                 equippedEmotes,
                 emoteCache,
                 settings.EmbeddedEmotesAsURN(),
-                forceRender
+                forceRender,
+                realmData
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
             var settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
+            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
             var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, realmPartitionSettings.Value, landscapeData.Value);
+            var qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
             exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
 
@@ -189,10 +198,16 @@ namespace DCL.PluginSystem.Global
             public AssetReferenceT<SettingsMenuConfiguration> SettingsMenuConfiguration { get; private set; }
 
             [field: SerializeField]
+            public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
+
+            [field: SerializeField]
             public StaticSettings.RealmPartitionSettingsRef RealmPartitionSettings { get; private set; }
 
             [field: SerializeField]
             public LandscapeSettings.LandscapeDataRef LandscapeData { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<QualitySettingsAsset> QualitySettingsAsset { get; private set; }
 
             public IReadOnlyCollection<URN> EmbeddedEmotesAsURN() =>
                 EmbeddedEmotes.Select(s => new URN(s)).ToArray();

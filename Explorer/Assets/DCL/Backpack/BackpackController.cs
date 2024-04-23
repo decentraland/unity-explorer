@@ -2,6 +2,7 @@ using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
@@ -49,7 +50,8 @@ namespace DCL.Backpack
             BackpackEmoteGridController backpackEmoteGridController,
             AvatarSlotView[] avatarSlotViews,
             EmotesController emotesController,
-            BackpackCharacterPreviewController backpackCharacterPreviewController)
+            BackpackCharacterPreviewController backpackCharacterPreviewController,
+            IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -68,7 +70,8 @@ namespace DCL.Backpack
                 backpackCommandBus,
                 backpackEventBus,
                 gridController,
-                wearableInfoPanelController);
+                wearableInfoPanelController,
+                thumbnailProvider);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {

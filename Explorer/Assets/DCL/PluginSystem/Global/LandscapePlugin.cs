@@ -59,6 +59,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+            floor.Initialize(landscapeData.Value);
 
             if (!enableLandscape) return;
 
@@ -71,7 +72,6 @@ namespace DCL.PluginSystem.Global
 
             terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
-            floor.Initialize(landscapeData.Value);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

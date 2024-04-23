@@ -37,6 +37,8 @@ namespace DCL.Landscape
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
 
+        private readonly List<Terrain> terrains = new ();
+
         public WorldTerrainGenerator(bool measureTime = false)
         {
             timeProfiler = new TimeProfiler(measureTime);
@@ -44,7 +46,8 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
-            UnityObjectUtils.SafeDestroy(rootGo);
+            if (rootGo != null)
+                UnityObjectUtils.SafeDestroy(rootGo);
         }
 
         public void Initialize(TerrainGenerationData terrainGenData)
@@ -100,7 +103,9 @@ namespace DCL.Landscape
 
             // Generate Terrain GameObjects
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-                factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true);
+                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true));
+
+            await TerrainGenerationUtils.AddColorMapRenderer(rootGo, terrains, factory);
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)

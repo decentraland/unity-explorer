@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using System;
@@ -13,11 +14,11 @@ namespace DCL.Backpack
     public class BackpackSlotsController : IDisposable
     {
         private const int MAX_HIDES = 15;
-        private const int MIN_WAIT_TIME = 500;
 
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly IThumbnailProvider thumbnailProvider;
         private readonly Dictionary<string, (AvatarSlotView, CancellationTokenSource)> avatarSlots = new ();
         private readonly List<IWearable> equippedWearables = new (MAX_HIDES);
         private readonly HashSet<string> forceRender = new (MAX_HIDES);
@@ -29,11 +30,13 @@ namespace DCL.Backpack
             AvatarSlotView[] avatarSlotViews,
             BackpackCommandBus backpackCommandBus,
             BackpackEventBus backpackEventBus,
-            NftTypeIconSO rarityBackgrounds)
+            NftTypeIconSO rarityBackgrounds,
+            IThumbnailProvider thumbnailProvider)
         {
             this.backpackCommandBus = backpackCommandBus;
             this.backpackEventBus = backpackEventBus;
             this.rarityBackgrounds = rarityBackgrounds;
+            this.thumbnailProvider = thumbnailProvider;
 
             this.backpackEventBus.EquipWearableEvent += EquipInSlot;
             this.backpackEventBus.UnEquipWearableEvent += UnEquipInSlot;
@@ -146,13 +149,10 @@ namespace DCL.Backpack
         private async UniTaskVoid WaitForThumbnailAsync(IWearable equippedWearable, AvatarSlotView avatarSlotView, CancellationToken ct)
         {
             avatarSlotView.LoadingView.StartLoadingAnimation(avatarSlotView.NftContainer);
-            do
-            {
-                await UniTask.Delay(MIN_WAIT_TIME, cancellationToken: ct);
-            }
-            while (equippedWearable.ThumbnailAssetResult == null);
 
-            avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.sprite = equippedWearable.ThumbnailAssetResult.Value.Asset;
+            Sprite? thumbnail = await thumbnailProvider.GetAsync(equippedWearable, ct);
+
+            avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.sprite = thumbnail;
             avatarSlots[equippedWearable.GetCategory()].Item1.SlotWearableThumbnail.gameObject.SetActive(true);
             avatarSlotView.LoadingView.FinishLoadingAnimation(avatarSlotView.NftContainer);
         }

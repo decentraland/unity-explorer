@@ -1,9 +1,11 @@
 ﻿using DCL.Landscape.Settings;
+using DCL.Quality;
 using DCL.Settings.ModuleControllers;
 using DCL.Settings.ModuleViews;
 using ECS.Prioritization;
 using System;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace DCL.Settings.Configuration
 {
@@ -16,7 +18,9 @@ namespace DCL.Settings.Configuration
         public abstract SettingsFeatureController CreateModule(
             Transform parent,
             RealmPartitionSettingsAsset realmPartitionSettingsAsset,
-            LandscapeData landscapeData);
+            LandscapeData landscapeData,
+            AudioMixer generalAudioMixer,
+            QualitySettingsAsset qualitySettingsAsset);
     }
 
     [Serializable]

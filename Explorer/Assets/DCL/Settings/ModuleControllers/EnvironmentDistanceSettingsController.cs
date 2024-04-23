@@ -1,11 +1,12 @@
 ﻿using DCL.Landscape.Settings;
 using DCL.Settings.ModuleViews;
+using System;
 
 namespace DCL.Settings.ModuleControllers
 {
     public class EnvironmentDistanceSettingsController : SettingsFeatureController
     {
-        private const string ENVIRONMENT_DISTANCE_DATA_STORE_KEY = "EnvironmentDistance";
+        private const string ENVIRONMENT_DISTANCE_DATA_STORE_KEY = "Settings_EnvironmentDistance";
 
         private readonly SettingsSliderModuleView view;
         private readonly LandscapeData landscapeData;
@@ -20,17 +21,23 @@ namespace DCL.Settings.ModuleControllers
 
             view.SliderView.Slider.onValueChanged.AddListener(SetEnvironmentDistanceSettings);
             SetEnvironmentDistanceSettings(view.SliderView.Slider.value);
+
+            landscapeData.OnDetailDistanceChanged += OnEnvironmentDistanceSettingsChangedFromOutside;
         }
 
-        private void SetEnvironmentDistanceSettings(float distance)
+        private void SetEnvironmentDistanceSettings(float distance) =>
+            landscapeData.DetailDistance = distance;
+
+        private void OnEnvironmentDistanceSettingsChangedFromOutside(float newDistance)
         {
-            landscapeData.detailDistance = distance;
-            settingsDataStore.SetSliderValue(ENVIRONMENT_DISTANCE_DATA_STORE_KEY, distance, save: true);
+            view.SliderView.Slider.value = newDistance;
+            settingsDataStore.SetSliderValue(ENVIRONMENT_DISTANCE_DATA_STORE_KEY, newDistance, save: true);
         }
 
         public override void Dispose()
         {
             view.SliderView.Slider.onValueChanged.RemoveListener(SetEnvironmentDistanceSettings);
+            landscapeData.OnDetailDistanceChanged -= OnEnvironmentDistanceSettingsChangedFromOutside;
         }
     }
 }

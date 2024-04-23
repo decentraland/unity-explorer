@@ -20,17 +20,23 @@ namespace DCL.Settings.ModuleControllers
 
             view.SliderView.Slider.onValueChanged.AddListener(SetSceneDistanceSettings);
             SetSceneDistanceSettings(view.SliderView.Slider.value);
+
+            realmPartitionSettingsAsset.OnMaxLoadingDistanceInParcelsChanged += OnMaxLoadingDistanceInParcelsChangedChanged;
         }
 
-        private void SetSceneDistanceSettings(float distance)
-        {
+        private void SetSceneDistanceSettings(float distance) =>
             realmPartitionSettingsAsset.MaxLoadingDistanceInParcels = (int)distance;
-            settingsDataStore.SetSliderValue(SCENE_DISTANCE_DATA_STORE_KEY, distance, save: true);
+
+        private void OnMaxLoadingDistanceInParcelsChangedChanged(int newDistance)
+        {
+            view.SliderView.Slider.value = newDistance;
+            settingsDataStore.SetSliderValue(SCENE_DISTANCE_DATA_STORE_KEY, newDistance, save: true);
         }
 
         public override void Dispose()
         {
             view.SliderView.Slider.onValueChanged.RemoveListener(SetSceneDistanceSettings);
+            realmPartitionSettingsAsset.OnMaxLoadingDistanceInParcelsChanged -= OnMaxLoadingDistanceInParcelsChangedChanged;
         }
     }
 }

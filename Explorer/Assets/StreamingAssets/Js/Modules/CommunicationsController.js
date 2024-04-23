@@ -4,3 +4,8 @@ module.exports.sendBinary = async function(message) {
         data: resultData
     };
 }
+
+module.exports.send = async function(message) {
+    console.warning("CommunicationsController.send is not implemented")
+    return {};
+}

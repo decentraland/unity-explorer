@@ -1,9 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
-using DCL.Utilities;
 using JetBrains.Annotations;
 using LiveKit.Rooms.Participants;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +32,7 @@ namespace SceneRuntime.Apis.Modules.Players
             async UniTask<PlayersGetUserDataResponse> ExecuteAsync()
             {
                 var profile = await profileRepository.GetAsync(walletId, 0, cancellationTokenSource.Token);
-                return new PlayersGetUserDataResponse(profile);
+                return new PlayersGetUserDataResponse(profile, walletId);
             }
 
             return ExecuteAsync().ToPromise();
@@ -54,23 +54,20 @@ namespace SceneRuntime.Apis.Modules.Players
         [Serializable]
         public struct PlayerListResponse
         {
-            public List<Player> players;
+            public string playersJson;
 
             public PlayerListResponse(IParticipantsHub participantsHub)
             {
                 var sids = participantsHub.RemoteParticipantSids();
-                players = new List<Player>();
+                var players = new List<Player>();
 
                 foreach (string sid in sids)
                 {
                     var remote = participantsHub.RemoteParticipant(sid)!;
                     players.Add(new Player(remote));
                 }
-            }
 
-            public PlayerListResponse(List<Player> players)
-            {
-                this.players = players;
+                playersJson = JsonConvert.SerializeObject(players);
             }
         }
 
@@ -92,7 +89,7 @@ namespace SceneRuntime.Apis.Modules.Players
         {
             public UserData? data;
 
-            public PlayersGetUserDataResponse(Profile? profile)
+            public PlayersGetUserDataResponse(Profile? profile, string walletId)
             {
                 if (profile is null)
                 {
@@ -103,7 +100,7 @@ namespace SceneRuntime.Apis.Modules.Players
                 data = new UserData(
                     new AvatarData(profile.Avatar),
                     profile.DisplayName,
-                    profile.UserId,
+                    walletId,
                     profile.UserId,
                     profile.Version
                 );

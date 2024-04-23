@@ -145,7 +145,7 @@ namespace Global.Dynamic
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
             genesisTerrain.SwitchVisibility(isVisible);
             satelliteFloor.SwitchVisibility(isVisible);
-            roadsPlugin.RoadAssetPool!.SwitchVisibility(isVisible);
+            roadsPlugin.RoadAssetPool?.SwitchVisibility(isVisible);
 
             // is NOT visible
             worldsTerrain.SwitchVisibility(!isVisible);

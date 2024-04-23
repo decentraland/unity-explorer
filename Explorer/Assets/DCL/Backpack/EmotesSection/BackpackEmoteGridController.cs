@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
@@ -37,6 +38,7 @@ namespace DCL.Backpack.EmotesSection
         private readonly IObjectPool<BackpackEmoteGridItemView> gridItemsPool;
         private readonly IEmoteProvider emoteProvider;
         private readonly IReadOnlyCollection<URN> embeddedEmoteIds;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private CancellationTokenSource? loadElementsCancellationToken;
         private string? currentCategory;
@@ -58,7 +60,8 @@ namespace DCL.Backpack.EmotesSection
             PageButtonView pageButtonView,
             IObjectPool<BackpackEmoteGridItemView> gridItemsPool,
             IEmoteProvider emoteProvider,
-            IReadOnlyCollection<URN> embeddedEmoteIds)
+            IReadOnlyCollection<URN> embeddedEmoteIds,
+            IThumbnailProvider thumbnailProvider)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -70,6 +73,7 @@ namespace DCL.Backpack.EmotesSection
             this.gridItemsPool = gridItemsPool;
             this.emoteProvider = emoteProvider;
             this.embeddedEmoteIds = embeddedEmoteIds;
+            this.thumbnailProvider = thumbnailProvider;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
@@ -270,10 +274,9 @@ namespace DCL.Backpack.EmotesSection
         {
             ct.ThrowIfCancellationRequested();
 
-            do { await UniTask.Delay(250, cancellationToken: ct); }
-            while (emote.ThumbnailAssetResult == null || !emote.ThumbnailAssetResult.HasValue);
+            Sprite? sprite = await thumbnailProvider.GetAsync(emote, ct);
 
-            itemView.WearableThumbnail.sprite = emote.ThumbnailAssetResult.Value.Asset;
+            itemView.WearableThumbnail.sprite = sprite;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
         }
 

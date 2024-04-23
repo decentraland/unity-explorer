@@ -5,7 +5,10 @@ using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;
 using DCL.Diagnostics;
 using SceneRuntime.Factory.JsSceneSourceCode;
+using SceneRuntime.Factory.WebSceneSource;
+using SceneRuntime.Factory.WebSceneSource.Cache;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -21,16 +24,45 @@ namespace SceneRuntime.Factory
             SwitchToThreadPool,
         }
 
-        private readonly JsCodeResolver codeContentResolver;
-        private readonly Dictionary<string, string> sourceCodeCache;
+        private readonly IWebJsSources webJsSources;
+        private readonly IJsSourcesCache jsSourcesCache;
 
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneSourceCode jsSceneSourceCode = new IJsSceneSourceCode.Default();
 
         public SceneRuntimeFactory(IWebRequestController webRequestController)
         {
-            codeContentResolver = new JsCodeResolver(webRequestController);
-            sourceCodeCache = new Dictionary<string, string>();
+            jsSourcesCache = EnabledJsScenesFileCachingOrIgnore();
+
+            webJsSources = new CachedWebJsSources(
+                new WebJsSources(
+                    new JsCodeResolver(webRequestController)
+                ),
+                new MemoryJsSourcesCache()
+            );
+
+        }
+
+        /// <summary>
+        /// How to use it
+        /// 1. Ensure that the directory exists at the path DIR
+        /// 2. Launch the Unity Editor and play scenes normally
+        /// 3. Check the directory DIR for the cached files
+        ///     3.1 Some of them can be minified, use https://www.unminify2.com/ to explore them comfortably
+        /// </summary>
+        /// <returns>Cache for scenes</returns>
+        private static IJsSourcesCache EnabledJsScenesFileCachingOrIgnore()
+        {
+            IJsSourcesCache cache = new IJsSourcesCache.Null();
+
+#if UNITY_EDITOR
+            const string DIR = "Assets/DCL/ScenesDebug/ScenesConsistency/JsCodes";
+            if (Directory.Exists(DIR))
+                cache = new FileJsSourcesCache(DIR);
+            else
+                ReportHub.Log(ReportCategory.SCENE_FACTORY, $"You can use {DIR} to persist loaded scenes");
+#endif
+            return cache;
         }
 
         /// <summary>
@@ -44,6 +76,11 @@ namespace SceneRuntime.Factory
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             AssertCalledOnTheMainThread();
+
+            jsSourcesCache.Cache(
+                $"{sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
+                sourceCode
+            );
 
             (var pair, IReadOnlyDictionary<string, string> moduleDictionary) = await UniTask.WhenAll(GetJsInitSourceCodeAsync(ct), GetJsModuleDictionaryAsync(JS_MODULE_NAMES, ct));
 
@@ -69,7 +106,7 @@ namespace SceneRuntime.Factory
         {
             AssertCalledOnTheMainThread();
 
-            string sourceCode = await LoadJavaScriptSourceCodeAsync(path, ct);
+            string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
             return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
@@ -81,12 +118,12 @@ namespace SceneRuntime.Factory
 
         private async UniTask<(string validateCode, string initCode)> GetJsInitSourceCodeAsync(CancellationToken ct)
         {
-            string validateCode = await LoadJavaScriptSourceCodeAsync(
+            string validateCode = await webJsSources.SceneSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/ValidatesMin.js"),
                 ct
             );
 
-            string initCode = await LoadJavaScriptSourceCodeAsync(
+            string initCode = await webJsSources.SceneSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Init.js"),
                 ct
             );
@@ -95,7 +132,7 @@ namespace SceneRuntime.Factory
         }
 
         private async UniTask AddModuleAsync(string moduleName, IDictionary<string, string> moduleDictionary, CancellationToken ct) =>
-            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await LoadJavaScriptSourceCodeAsync(
+            moduleDictionary.Add(moduleName, WrapInModuleCommonJs(await webJsSources.SceneSourceCodeAsync(
                 URLAddress.FromString($"file://{Application.streamingAssetsPath}/Js/Modules/{moduleName}"), ct)));
 
         private async UniTask<IReadOnlyDictionary<string, string>> GetJsModuleDictionaryAsync(IReadOnlyCollection<string> names, CancellationToken ct)
@@ -103,18 +140,6 @@ namespace SceneRuntime.Factory
             var moduleDictionary = new Dictionary<string, string>();
             foreach (string name in names) await AddModuleAsync(name, moduleDictionary, ct);
             return moduleDictionary;
-        }
-
-        private async UniTask<string> LoadJavaScriptSourceCodeAsync(URLAddress path, CancellationToken ct)
-        {
-            if (sourceCodeCache.TryGetValue(path, out string value)) return value!;
-
-            string sourceCode = await codeContentResolver.GetCodeContent(path, ct);
-
-            // Replace instead of adding to fix the issue with possible loading of the same scene several times in parallel
-            // (it should be a real scenario)
-            sourceCodeCache[path] = sourceCode;
-            return sourceCode;
         }
 
         // Wrapper https://nodejs.org/api/modules.html#the-module-wrapper

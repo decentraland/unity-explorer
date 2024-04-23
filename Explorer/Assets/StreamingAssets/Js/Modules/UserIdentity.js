@@ -4,7 +4,7 @@ module.exports.getUserPublicKey = async function(message) {
 
 module.exports.getUserData = async function(message) {
     const result = await UnityUserIdentityApi.GetOwnUserData();
-    if (result.data === undefined){
+    if (result.data == undefined) {
         return result
     }
     

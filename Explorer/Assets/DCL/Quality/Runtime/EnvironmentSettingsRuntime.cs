@@ -137,7 +137,7 @@ namespace DCL.Quality.Runtime
             if (landscapeData == null)
                 return;
 
-            landscapeData.detailDistance = distance;
+            landscapeData.DetailDistance = distance;
         }
     }
 }
