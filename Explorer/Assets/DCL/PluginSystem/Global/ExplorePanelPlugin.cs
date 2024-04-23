@@ -61,11 +61,11 @@ namespace DCL.PluginSystem.Global
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
-        private BackpackSubPlugin backpackSubPlugin = null!;
+        private BackpackSubPlugin? backpackSubPlugin;
         private readonly ICollection<string> forceRender;
         private PersistentExploreOpenerView? exploreOpener;
-        private PersistentExplorePanelOpenerController explorePanelOpener;
-        private ExplorePanelInputHandler inputHandler;
+        private PersistentExplorePanelOpenerController? explorePanelOpener;
+        private ExplorePanelInputHandler? inputHandler;
         private readonly IRealmData realmData;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -116,8 +116,8 @@ namespace DCL.PluginSystem.Global
         {
             navmapController?.Dispose();
             settingsController?.Dispose();
-            backpackSubPlugin.Dispose();
-            inputHandler.Dispose();
+            backpackSubPlugin?.Dispose();
+            inputHandler?.Dispose();
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(ExplorePanelSettings settings, CancellationToken ct)
