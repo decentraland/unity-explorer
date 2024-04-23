@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0488ab1caa9420ab61e97ee71c3d310, type: 3}
+  m_Name: Bush01Noise_W
+  m_EditorClassIdentifier: 
+  settings:
+    invert: 0
+    normalize: 0
+    scale: 8.78
+    octaves: 5
+    persistance: 1
+    lacunarity: 21.8
+    seed: 21
+    offset: {x: 0, y: 0}
+    cutoff: 0.5
+    noiseType: 2
+    baseValue: 0
+    multiplyValue: 0
+    divideValue: 0
+  operations:
+  - operation: 3
+    noise: {fileID: 11400000, guid: 1301808a1553aea439ad190fa2061ecb, type: 2}
+    disable: 1
+  - operation: 3
+    noise: {fileID: 11400000, guid: 1301808a1553aea439ad190fa2061ecb, type: 2}
+    disable: 1
+  simpleOperations: []
+  finalCutOff: 0

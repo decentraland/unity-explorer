@@ -72,7 +72,7 @@ namespace DCL.Landscape.Systems
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainGenerated()) return;
+            if (!terrainGenerator.IsTerrainGenerated) return;
 
             if (!isSetupDone)
             {
@@ -94,7 +94,7 @@ namespace DCL.Landscape.Systems
             if (cliffsJobHandle.IsCompleted && cliffsUpdated)
             {
                 Profiler.BeginSample("UpdateCliffsVisibility.Schedule");
-                var job = new UpdateBoundariesCullingJob(cliffsBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(cliffsBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.DetailDistance);
                 cliffsJobHandle = job.Schedule(cliffsBoundaries.Length, 32, cliffsJobHandle);
                 cliffsUpdated = false;
                 Profiler.EndSample();
@@ -103,7 +103,7 @@ namespace DCL.Landscape.Systems
             if (waterJobHandle.IsCompleted && waterUpdated)
             {
                 Profiler.BeginSample("UpdateWaterVisibility.Schedule");
-                var job = new UpdateBoundariesCullingJob(waterBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(waterBoundaries, nativeFrustumPlanes, cameraPosition, landscapeData.DetailDistance);
                 waterJobHandle = job.Schedule(waterBoundaries.Length, 32, waterJobHandle);
                 waterUpdated = false;
                 Profiler.EndSample();
@@ -112,7 +112,7 @@ namespace DCL.Landscape.Systems
 
         private void InitializeMiscVisibility()
         {
-            IReadOnlyList<Transform> cliffs = terrainGenerator.GetCliffs();
+            IReadOnlyList<Transform> cliffs = terrainGenerator.Cliffs;
             cliffsBoundaries = new NativeArray<VisibleBounds>(cliffs.Count * 3, Allocator.Persistent);
 
             for (var i = 0; i < cliffs.Count; i++)
@@ -141,7 +141,7 @@ namespace DCL.Landscape.Systems
 
         private void InitializeWaterVisibility()
         {
-            Transform ocean = terrainGenerator.GetOcean();
+            Transform ocean = terrainGenerator.Ocean;
             MeshRenderer[] renderers = ocean.GetComponentsInChildren<MeshRenderer>();
 
             // some water chunks are disabled on purpose, we dont want to re-enable them
@@ -171,9 +171,8 @@ namespace DCL.Landscape.Systems
             Camera camera = cameraComponent.Camera;
             cameraPosition = camera.transform.position;
 
-            Transform wind = terrainGenerator.GetWind();
-
-            if (wind.parent == null)
+            var wind = terrainGenerator.Wind;
+            if(wind.parent == null)
                 wind.parent = camera.transform;
 
             GeometryUtility.CalculateFrustumPlanes(camera.cullingMatrix, frustumPlanes);

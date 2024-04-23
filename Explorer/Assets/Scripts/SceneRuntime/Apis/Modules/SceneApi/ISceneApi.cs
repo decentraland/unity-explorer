@@ -1,4 +1,6 @@
-﻿using DCL.Ipfs;
+﻿using DCL.Diagnostics;
+using DCL.Ipfs;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -18,7 +20,7 @@ namespace SceneRuntime.Apis.Modules.SceneApi
             /// <summary>
             ///     A list containing the contents of the deployed entities.
             /// </summary>
-            public List<ContentDefinition> contents;
+            public string contents;
 
             /// <summary>
             ///     JSON serialization of the entity.metadata field.
@@ -29,6 +31,23 @@ namespace SceneRuntime.Apis.Modules.SceneApi
             ///     The base URL used to resolve all content files.
             /// </summary>
             public string baseUrl;
+
+            private static readonly List<ContentDefinition> EMPTY_LIST = new ();
+
+            public GetSceneResponse(string cid, List<ContentDefinition>? contents, string metadata, string baseUrl)
+            {
+                this.cid = cid;
+
+                if (contents == null)
+                    ReportHub.LogWarning(
+                        ReportCategory.JAVASCRIPT,
+                        "Passing empty contents GetSceneResponse from Unity side"
+                    );
+
+                this.contents = JsonConvert.SerializeObject(contents ?? EMPTY_LIST);
+                this.metadata = metadata;
+                this.baseUrl = baseUrl;
+            }
         }
     }
 }

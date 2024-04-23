@@ -21,25 +21,41 @@ namespace DCL.PluginSystem.Global
 {
     public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>, ILandscapeInitialization
     {
+        private readonly TerrainGenerator terrainGenerator;
+        private readonly WorldTerrainGenerator worldTerrainGenerator;
+
+        private readonly SatelliteFloor floor;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
-        private TerrainGenerator terrainGenerator;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;
-        private NativeArray<int2> emptyParcels;
+        private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
         private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettingsReference;
 
-        public LandscapePlugin(IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder, MapRendererTextureContainer textureContainer, bool enableLandscape)
+        public LandscapePlugin(SatelliteFloor floor, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
+            MapRendererTextureContainer textureContainer, bool enableLandscape)
         {
+            this.floor = floor;
             this.assetsProvisioner = assetsProvisioner;
             this.debugContainerBuilder = debugContainerBuilder;
             this.textureContainer = textureContainer;
             this.enableLandscape = enableLandscape;
-            terrainGenerator = null!;
+
+            this.terrainGenerator = terrainGenerator;
+            this.worldTerrainGenerator = worldTerrainGenerator;
+        }
+
+        public void Dispose()
+        {
+            if (enableLandscape)
+            {
+                terrainGenerator.Dispose();
+                worldTerrainGenerator.Dispose();
+            }
         }
 
         public void Dispose()
@@ -51,6 +67,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(LandscapeSettings settings, CancellationToken ct)
         {
             landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeData, ct);
+            floor.Initialize(landscapeData.Value);
 
             if (!enableLandscape) return;
             landscapeAudioSettingsReference = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeAudioSettingsReference, ct: ct);
@@ -61,16 +78,17 @@ namespace DCL.PluginSystem.Global
             emptyParcels = parcelData.Value.GetEmptyParcels();
             ownedParcels = parcelData.Value.GetOwnedParcels();
 
-            terrainGenerator = new TerrainGenerator(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+            worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LandscapeSatelliteSystem.InjectToWorld(ref builder, landscapeData.Value, textureContainer);
+            LandscapeSatelliteSystem.InjectToWorld(ref builder, textureContainer, floor);
 
             if (!enableLandscape) return;
 
-            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, realmPartitionSettings.Value, landscapeData.Value);
+            LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettingsReference.Value);

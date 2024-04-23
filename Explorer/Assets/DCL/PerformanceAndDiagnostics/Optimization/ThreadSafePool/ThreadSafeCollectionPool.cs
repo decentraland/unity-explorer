@@ -1,3 +1,4 @@
+using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
 
@@ -11,6 +12,6 @@ namespace DCL.Optimization.ThreadSafePool
         public static readonly ThreadSafeObjectPool<TCollection> SHARED = new (() => new TCollection(), actionOnRelease: c => c.Clear());
 
         protected ThreadSafeCollectionPool(int initialCapacity, int poolCapacity, Func<int, TCollection> createFunc)
-            : base(() => createFunc(initialCapacity), actionOnRelease: c => c.Clear(), defaultCapacity: poolCapacity, collectionCheck: false) { }
+            : base(() => createFunc(initialCapacity), actionOnRelease: c => c.Clear(), defaultCapacity: poolCapacity, collectionCheck: PoolConstants.CHECK_COLLECTIONS) { }
     }
 }
