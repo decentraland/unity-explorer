@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9f267cd6d7b406a8338323d4c61fe74, type: 3}
+  m_Name: Stone01_W
+  m_EditorClassIdentifier: 
+  asset: {fileID: 7088211124069903763, guid: a579994199f719143991a656821e99ba, type: 3}
+  noiseData: {fileID: 11400000, guid: c51c61734391dcd4492d34941e3c3216, type: 2}
+  randomization:
+    randomRotationX: {x: 0, y: 360}
+    randomRotationY: {x: 0, y: 360}
+    randomRotationZ: {x: 0, y: 360}
+    proportionalScale: 1
+    randomScale: {x: 1, y: 4}
+    randomScaleX: {x: 0, y: 0}
+    randomScaleY: {x: 0, y: 0}
+    randomScaleZ: {x: 0, y: 0}
+    positionOffsetX: {x: -0.5, y: 0.5}
+    positionOffsetY: {x: 0, y: 0}
+    positionOffsetZ: {x: -0.5, y: 0.5}
+  radius: 1
+  TerrainDetailSettings:
+    alignToGround: 100
+    positionJitter: 50
+    minWidth: 1
+    maxWidth: 1
+    minHeight: 1
+    maxHeight: 1
+    noiseSeed: 1
+    noiseSpread: 100
+    holeEdgePadding: 75
+    detailDensity: 1
+    affectedByGlobalDensityScale: 1

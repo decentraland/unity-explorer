@@ -1,4 +1,4 @@
-﻿using Arch.CommandBuffer;
+﻿using Arch.Buffer;
 using Arch.Core;
 using CRDT;
 using CRDT.Memory;
@@ -197,7 +197,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
         public void ApplyChangesCorrectly(Action<World, Dictionary<CRDTEntity, Entity>> prewarmWorld, (CRDTMessage, CRDTReconciliationEffect)[] messages, Action<World, Dictionary<CRDTEntity, Entity>> assertWorld)
         {
             var world = World.Create();
-            var commandBuffer = new PersistentCommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer();
             var collectionPool = WorldSyncCommandBufferCollectionsPool.Create();
             var localBuffer = new WorldSyncCommandBuffer(sdkComponentsRegistry, entityFactory, collectionPool);
 
@@ -329,7 +329,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             worldSyncCommandBuffer.FinalizeAndDeserialize();
 
             var world = World.Create();
-            var commandBuffer = new PersistentCommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer();
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
@@ -344,7 +344,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.Tests
             worldSyncCommandBuffer.SyncCRDTMessage(CreateTestMessage(), CRDTReconciliationEffect.ComponentAdded);
 
             var world = World.Create();
-            var commandBuffer = new PersistentCommandBuffer(world);
+            var commandBuffer = new PersistentCommandBuffer();
 
             var entitiesMap = new Dictionary<CRDTEntity, Entity>();
 

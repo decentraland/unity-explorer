@@ -1,8 +1,10 @@
 ﻿using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
+using DCL.Utilities.Extensions;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.SceneBoundsChecker;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -76,17 +78,22 @@ namespace ECS.Unity.GLTFContainer.Systems
             asset.VisibleMeshesColliders = GltfContainerAsset.COLLIDERS_POOL.Get();
 
             for (var i = 0; i < asset.VisibleColliderMeshes.Count; i++)
-            {
-                MeshFilter meshFilter = asset.VisibleColliderMeshes[i];
-                MeshCollider newCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
+                try
+                {
+                    MeshFilter meshFilter = asset.VisibleColliderMeshes[i].EnsureNotNull();
+                    MeshCollider newCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
 
-                // TODO Jobify: can be invoked from a worker thread
-                Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
+                    // TODO Jobify: can be invoked from a worker thread
+                    Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
 
-                newCollider.sharedMesh = meshFilter.sharedMesh;
+                    newCollider.sharedMesh = meshFilter.sharedMesh;
 
-                asset.VisibleMeshesColliders.Add(new SDKCollider(newCollider));
-            }
+                    asset.VisibleMeshesColliders.Add(new SDKCollider(newCollider));
+                }
+                catch (Exception e)
+                {
+                    throw new Exception($"Error adding collider to mesh {asset.VisibleColliderMeshes[i]!.name}", e);
+                }
         }
     }
 }

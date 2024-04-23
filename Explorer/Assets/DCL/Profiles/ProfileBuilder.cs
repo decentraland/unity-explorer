@@ -106,6 +106,12 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithBodyShape(BodyShape bodyShape)
+        {
+            this.bodyShape = bodyShape;
+            return this;
+        }
+
         public Profile Build()
         {
             var profile = new Profile();

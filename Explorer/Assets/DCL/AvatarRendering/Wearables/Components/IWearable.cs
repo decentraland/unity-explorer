@@ -1,5 +1,7 @@
 ﻿using DCL.AvatarRendering.Wearables.Helpers;
 using ECS.StreamableLoading.Common.Components;
+using System;
+using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.Wearables.Components
 {
@@ -18,5 +20,13 @@ namespace DCL.AvatarRendering.Wearables.Components
         ///     DTO must be resolved only one
         /// </summary>
         void ResolveDTO(StreamableLoadingResult<WearableDTO> result);
+
+        bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash);
+
+        void GetHidingList(string bodyShapeType, HashSet<string> hideListResult);
+
+        bool IsCompatibleWithBodyShape(string bodyShape);
+
+        bool HasSameModelsForAllGenders();
     }
 }
