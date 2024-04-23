@@ -42,7 +42,7 @@ jobs:
     name: Build
     runs-on: bigwin2022
     timeout-minutes: 120
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || ${{ github.event.label.name == 'force-build' }}
     steps:
       - name: Set SHA env variable
         run: |
@@ -179,6 +179,25 @@ jobs:
               # Display list of files
               ls
 
+      - name: Create Version
+        run: |
+          $latestTag = git describe --tags $(git rev-list --tags --max-count=1)        
+          
+          # Extract version components
+          $semVer = $latestTag -replace '^v(\d+\.\d+\.\d+).*$', '$1'
+          
+          # Increment patch version
+          $semVerArray = $semVer -split '\.'
+          $patch = [int]$semVerArray[2] + 1
+          $semVer = "$($semVerArray[0]).$($semVerArray[1]).$patch"
+          
+          $branchName = $env:GITHUB_REF -replace 'refs/heads/', ''
+          $shortSha = $env:GITHUB_SHA.Substring(0,7)
+          
+          Write-Output "::set-output name=version::$semVer-$branchName-$shortSha"
+        
+        shell: pwsh
+        
       - uses: game-ci/unity-builder@v4.2.3
         id: build
         timeout-minutes: 120
@@ -188,7 +207,8 @@ jobs:
           buildTimeout: 120
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: Decentraland
-          versioning: Semantic
+          versioning: Custom
+          version: ${{ steps.CreateVersion.outputs.version }}
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
