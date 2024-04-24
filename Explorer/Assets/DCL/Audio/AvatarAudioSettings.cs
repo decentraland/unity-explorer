@@ -58,7 +58,16 @@ namespace DCL.Audio
             JumpLandWalk,
             LongFall,
             ShortFall,
-            HardLanding
+            HardLanding,
+            ClothesRustleShort,
+            Clap,
+            FootstepLight,
+            FootstepWalkRight,
+            FootstepWalkLeft,
+            Hohoho,
+            BlowKiss,
+            ThrowMoney,
+            Snowflakes,
         }
     }
 }

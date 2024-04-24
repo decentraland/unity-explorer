@@ -73,22 +73,53 @@ namespace DCL.Audio
         }
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayHardLandingSound()
-        {
+        public void PlayHardLandingSound() =>
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
-        }
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayLongFallSound()
-        {
+        public void PlayLongFallSound() =>
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.LongFall); //This should be a looping sounds that gets interrupted when landing.
-        }
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayShortFallSound()
-        {
+        public void PlayShortFallSound() =>
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.ShortFall);
-        }
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_ClothesRustleShort() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.ClothesRustleShort);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_Clap() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.Clap);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_FootstepLight() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepLight);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_FootstepWalkRight() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepWalkRight);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_FootstepWalkLeft() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepWalkLeft);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_Hohoho() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.Hohoho);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_BlowKiss() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.BlowKiss);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_ThrowMoney() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.ThrowMoney);
+
+        [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_Snowflakes() =>
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.Snowflakes);
+
 
         private void PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType clipType)
         {
