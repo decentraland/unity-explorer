@@ -129,7 +129,7 @@ MonoBehaviour:
       chunkCullDistance: 1000
   - volumeProfile: {fileID: -4880458653563171804}
     fogSettings:
-      m_Fog: 0
+      m_Fog: 1
     lensFlareEnabled: 0
     lensFlareComponent: {fileID: 4642727729545981125, guid: 771c68288bf78564cb5301f95b69811d, type: 3}
     environmentSettings:
