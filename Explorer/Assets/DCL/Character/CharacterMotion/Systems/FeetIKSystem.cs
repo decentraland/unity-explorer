@@ -231,7 +231,7 @@ namespace DCL.CharacterMotion.Systems
 
             MultiPositionConstraintData data = avatarBase.HipsConstraint.data;
             Vector3 offset = data.offset;
-            offset.y = Mathf.MoveTowards(offset.y, -highestDist, settings.IKPositionSpeed * dt);
+            offset.z = Mathf.MoveTowards(offset.z, highestDist, settings.IKPositionSpeed * dt);
             data.offset = offset;
             avatarBase.HipsConstraint.data = data;
             avatarBase.HipsConstraint.weight = weight;
