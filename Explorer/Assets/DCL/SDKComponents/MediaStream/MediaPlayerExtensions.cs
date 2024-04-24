@@ -1,5 +1,4 @@
 using DCL.ECSComponents;
-using DCL.Utilities.Extensions;
 using RenderHeads.Media.AVProVideo;
 using UnityEngine;
 
@@ -7,14 +6,6 @@ namespace DCL.SDKComponents.MediaStream
 {
     public static class MediaPlayerExtensions
     {
-        public static MediaPlayer OpenMediaIfValid(this MediaPlayer mediaPlayer, string url, bool autoPlay)
-        {
-            if (url.IsValidUrl())
-                mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay);
-
-            return mediaPlayer;
-        }
-
         public static void UpdateVolume(this MediaPlayer mediaPlayer, bool isCurrentScene, bool hasVolume, float volume)
         {
             if (!isCurrentScene)

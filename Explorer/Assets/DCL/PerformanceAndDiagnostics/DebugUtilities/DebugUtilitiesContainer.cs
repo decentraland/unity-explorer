@@ -11,7 +11,6 @@ namespace DCL.DebugUtilities
 
         public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog)
         {
-            viewsCatalog.Validate();
             return new DebugUtilitiesContainer
             {
                 Builder = new DebugContainerBuilder(
