@@ -57,6 +57,7 @@ namespace DCL.Multiplayer.Connections.Messaging
             WritePayloadToPacket(packetWrap.value);
             using MemoryWrap memory = memoryPool.Memory(packetWrap.value);
             packetWrap.value.WriteTo(memory);
+            packetWrap.value.ProtocolVersion = 0;
             dataPipe.PublishData(memory.Span(), TOPIC, recipients, dataPacketKind);
             sent = true;
             Dispose();

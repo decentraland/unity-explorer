@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 packet.ClearMessage();
                 return packet;
             }),
-            1
+            100
         ) { }
 
         public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion)
@@ -109,7 +109,13 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         uint version = packet.ProtocolVersion;
 
                         if (version != supportedVersion)
+                        {
+                            ReportHub.LogWarning(
+                                ReportCategory.LIVEKIT,
+                                $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
+                            );
                             return;
+                        }
 
                         var receivedMessage = new ReceivedMessage<T>(
                             Payload<T>(packet),
