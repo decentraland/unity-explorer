@@ -1,7 +1,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
+using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
@@ -15,6 +15,7 @@ using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
+using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -38,6 +39,8 @@ using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
+using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -53,12 +56,10 @@ using MVC.PopupsController.PopupCloser;
 using SceneRunner.EmptyScene;
 using System;
 using System.Buffers;
-using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
-using DCL.Profiles.Self;
-using DCL.SceneLoadingScreens.LoadingScreen;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -78,7 +79,7 @@ namespace Global.Dynamic
 
         public LODContainer LODContainer { get; private set; } = null!;
 
-        public UIAudioPlaybackContainer UIAudioPlaybackContainer { get; private set; } = null!;
+        public AudioPlaybackContainer AudioPlaybackContainer { get; private set; } = null!;
 
         public IRealmController RealmController { get; private set; } = null!;
 
@@ -148,7 +149,7 @@ namespace Global.Dynamic
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, ct).ThrowOnFail();
-                container.UIAudioPlaybackContainer = await UIAudioPlaybackContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
+                container.AudioPlaybackContainer = await AudioPlaybackContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -189,7 +190,10 @@ namespace Global.Dynamic
                 new RealmProfileRepository(staticContainer.WebRequestsContainer.WebRequestController, realmData, profileCache)
             );
 
-            var landscapePlugin = new LandscapePlugin(staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
+            var genesisTerrain = new TerrainGenerator();
+            var worldsTerrain = new WorldTerrainGenerator();
+            var satelliteView = new SatelliteFloor();
+            var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
@@ -264,7 +268,11 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 container.RoomHub,
                 remoteEntities,
-                staticContainer.GlobalWorldProxy
+                staticContainer.GlobalWorldProxy,
+                container.LODContainer.RoadPlugin,
+                genesisTerrain,
+                worldsTerrain,
+                satelliteView
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
@@ -314,7 +322,7 @@ namespace Global.Dynamic
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, container.DebugContainer.Builder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
-                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData),
+                new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dclInput),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData, multiplayerEmotesMessageBus, debugBuilder, staticContainer.AssetsProvisioner),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
@@ -356,7 +364,8 @@ namespace Global.Dynamic
                     emotesCache,
                     realmNavigator,
                     forceRender,
-                    dclInput
+                    dclInput,
+                    realmData
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
