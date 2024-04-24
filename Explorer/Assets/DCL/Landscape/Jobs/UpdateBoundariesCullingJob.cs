@@ -21,7 +21,11 @@ namespace DCL.Landscape.Jobs
         private readonly float detailDistanceSqr;
         [ReadOnly] private NativeArray<float4> cameraPlanes;
 
-        public UpdateBoundariesCullingJob(NativeArray<VisibleBounds> terrainVisibilities, NativeArray<float4> cameraPlanes, float3 cameraPosition, float detailDistance)
+        public UpdateBoundariesCullingJob(
+            NativeArray<VisibleBounds> terrainVisibilities,
+            NativeArray<float4> cameraPlanes,
+            float3 cameraPosition,
+            float detailDistance)
         {
             this.terrainVisibilities = terrainVisibilities;
             this.cameraPlanes = cameraPlanes;

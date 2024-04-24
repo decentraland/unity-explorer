@@ -12,6 +12,9 @@ namespace DCL.CharacterCamera.Components
     {
         public bool ZoomIn;
         public bool ZoomOut;
+        public bool SwitchState;
+        public bool SetFreeFly;
+        public bool ChangeShoulder;
 
         /// <summary>
         ///     Camera's movement based on input

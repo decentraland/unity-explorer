@@ -45,23 +45,7 @@ namespace DCL.Landscape
         [ContextMenu(nameof(ClearAppCache))]
         public void ClearAppCache()
         {
-            Log("Clearing app cache");
-
-            var deletedFiles = new List<string>();
-            var files = Directory.EnumerateFiles(Application.persistentDataPath, "*", SearchOption.TopDirectoryOnly);
-
-            foreach (string file in files)
-            {
-                string fileName = Path.GetFileName(file);
-                if (fileName.StartsWith("terrain_cache", StringComparison.Ordinal)
-                    && fileName.EndsWith(".data", StringComparison.Ordinal))
-                {
-                    File.Delete(file);
-                    deletedFiles.Add(fileName);
-                }
-            }
-
-            Log($"Clearing app cache finished {deletedFiles.Count}: {string.Join(", ", deletedFiles)}");
+            CleanTerrainsCache();
         }
 
         [ContextMenu("Generate")]
@@ -91,6 +75,27 @@ namespace DCL.Landscape
             emptyParcels.Dispose();
             ownedParcels.Dispose();
             Log("Generate finished");
+        }
+
+        public static void CleanTerrainsCache()
+        {
+            Log("Clearing app cache");
+
+            var deletedFiles = new List<string>();
+            var files = Directory.EnumerateFiles(Application.persistentDataPath, "*", SearchOption.TopDirectoryOnly);
+
+            foreach (string file in files)
+            {
+                string fileName = Path.GetFileName(file);
+                if (fileName.StartsWith("terrain_cache", StringComparison.Ordinal)
+                    && fileName.EndsWith(".data", StringComparison.Ordinal))
+                {
+                    File.Delete(file);
+                    deletedFiles.Add(fileName);
+                }
+            }
+
+            Log($"Clearing app cache finished {deletedFiles.Count}: {string.Join(", ", deletedFiles)}");
         }
 
         private static void Log(string message)

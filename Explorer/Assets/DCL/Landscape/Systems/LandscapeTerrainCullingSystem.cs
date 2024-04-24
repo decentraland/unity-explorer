@@ -14,6 +14,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
+using Random = UnityEngine.Random;
 
 namespace DCL.Landscape.Systems
 {
@@ -71,8 +72,8 @@ namespace DCL.Landscape.Systems
 
             if (!isTerrainViewInitialized)
             {
-                isTerrainViewInitialized = true;
                 InitializeTerrainVisibility();
+                isTerrainViewInitialized = true;
             }
 
             if (isTerrainViewInitialized)
@@ -118,7 +119,6 @@ namespace DCL.Landscape.Systems
                 for (var i = 0; i < terrainVisibilities.Length; i++)
                 {
                     VisibleBounds visibility = terrainVisibilities[i];
-
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 
                     Terrain terrain = terrains[i];

@@ -39,7 +39,8 @@ namespace DCL.CharacterMotion.Settings
         float AnimationSpeed { get; }
         public AnimationCurve AccelerationCurve { get; }
         float CameraFOVWhileRunning { get; set; }
-        float FOVChangeSpeed { get; set; }
+        float FOVIncreaseSpeed { get; set; }
+        float FOVDecreaseSpeed { get; set; }
         float FeetIKHipsPullMaxDistance { get; set; }
         float FeetIKSphereSize { get; set; }
         float FeetHeightCorrection { get; set; }
@@ -57,8 +58,10 @@ namespace DCL.CharacterMotion.Settings
         float PlatformRaycastLength { get; }
         float DownwardsSlopeJogRaycastDistance { get; }
         float DownwardsSlopeRunRaycastDistance { get; }
+        bool HeadIKIsEnabled { get; set; }
         float HeadIKVerticalAngleLimit { get; set; }
         float HeadIKHorizontalAngleLimit { get; set; }
+        float HeadIKHorizontalAngleReset { get; set; }
         float HeadIKRotationSpeed { get; set; }
         AnimationCurve SlopeVelocityModifier { get; }
         float SlideAnimationBlendSpeed { get; }

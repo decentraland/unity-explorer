@@ -59,7 +59,8 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] [field: Header("Platforms")] public float PlatformRaycastLength { get; private set; } = 0.3f;
 
         [field: SerializeField] [field: Header("Camera")] public float CameraFOVWhileRunning { get; set; } = 15;
-        [field: SerializeField] public float FOVChangeSpeed { get; set; } = 15;
+        [field: SerializeField] public float FOVIncreaseSpeed { get; set; } = 15;
+        [field: SerializeField] public float FOVDecreaseSpeed { get; set; } = 15;
 
         [field: SerializeField] [field: Header("Feet IK")] public float FeetIKHipsPullMaxDistance { get; set; } = 0.5f;
         [field: SerializeField] public float FeetIKSphereSize { get; set; } = 0.15f;
@@ -74,8 +75,10 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] [field: Header("Hands IK")] public float HandsIKWallHitDistance { get; set; } = 0.5f;
         [field: SerializeField] public float HandsIKWeightSpeed { get; set; } = 0.5f;
         [field: SerializeField] public Vector3 HandsIKElbowOffset { get; set; } = Vector3.zero;
-        [field: SerializeField] [field: Header("Head IK")] public float HeadIKVerticalAngleLimit { get; set; } = 75;
-        [field: SerializeField] public float HeadIKHorizontalAngleLimit { get; set; } = 120;
+        [field: SerializeField] [field: Header("Head IK")] public bool HeadIKIsEnabled { get; set; } = true;
+        [field: SerializeField] public float HeadIKVerticalAngleLimit { get; set; } = 75;
+        [field: SerializeField] public float HeadIKHorizontalAngleLimit { get; set; } = 60;
+        [field: SerializeField] public float HeadIKHorizontalAngleReset { get; set; } = 70;
         [field: SerializeField] public float HeadIKRotationSpeed { get; set; } = 45;
 
         [field: SerializeField, Header("Cheat/Debug/Misc")] public float JumpPadForce { get; private set; } = 50f;
