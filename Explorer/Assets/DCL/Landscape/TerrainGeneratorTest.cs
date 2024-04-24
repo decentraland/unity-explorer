@@ -1,6 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -38,9 +42,16 @@ namespace DCL.Landscape
         public TerrainGenerator GetGenerator() =>
             gen;
 
+        [ContextMenu(nameof(ClearAppCache))]
+        public void ClearAppCache()
+        {
+            CleanTerrainsCache();
+        }
+
         [ContextMenu("Generate")]
         public async UniTask GenerateAsync()
         {
+            Log("Generate started");
             ownedParcels = parcelData.GetOwnedParcels();
             emptyParcels = parcelData.GetEmptyParcels();
 
@@ -56,13 +67,40 @@ namespace DCL.Landscape
             }
             else
             {
-                gen = new TerrainGenerator( true, clearCache);
+                gen = new TerrainGenerator(true, clearCache);
                 gen.Initialize(genData, ref emptyParcels, ref ownedParcels);
                 await gen.GenerateTerrainAsync(worldSeed, digHoles, hideTrees, hideDetails, true);
             }
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();
+            Log("Generate finished");
+        }
+
+        public static void CleanTerrainsCache()
+        {
+            Log("Clearing app cache");
+
+            var deletedFiles = new List<string>();
+            var files = Directory.EnumerateFiles(Application.persistentDataPath, "*", SearchOption.TopDirectoryOnly);
+
+            foreach (string file in files)
+            {
+                string fileName = Path.GetFileName(file);
+                if (fileName.StartsWith("terrain_cache", StringComparison.Ordinal)
+                    && fileName.EndsWith(".data", StringComparison.Ordinal))
+                {
+                    File.Delete(file);
+                    deletedFiles.Add(fileName);
+                }
+            }
+
+            Log($"Clearing app cache finished {deletedFiles.Count}: {string.Join(", ", deletedFiles)}");
+        }
+
+        private static void Log(string message)
+        {
+            ReportHub.Log(ReportData.UNSPECIFIED, message);
         }
     }
 }
