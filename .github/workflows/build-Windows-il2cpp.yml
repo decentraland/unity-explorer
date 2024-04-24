@@ -195,7 +195,8 @@ jobs:
           
           $branchName = $env:GITHUB_REF -replace 'refs/heads/', ''
           $shortSha = $env:GITHUB_SHA.Substring(0,7)
-          
+
+          Write-Output "$semVer-$branchName-$shortSha"
           Write-Output "::set-output name=version::$semVer-$branchName-$shortSha"
         
         shell: pwsh
