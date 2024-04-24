@@ -134,7 +134,7 @@ MonoBehaviour:
       chunkCullDistance: 1000
   - volumeProfile: {fileID: -4880458653563171804}
     fogSettings:
-      m_Fog: 1
+      m_Fog: 0
       m_FogColor: {r: 0.8773585, g: 0.47592562, b: 0.47592562, a: 0.31764707}
       m_FogMode: 2
       m_FogDensity: 0.4
