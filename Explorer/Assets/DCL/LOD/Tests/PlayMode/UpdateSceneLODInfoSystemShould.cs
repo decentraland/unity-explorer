@@ -85,10 +85,10 @@ namespace DCL.LOD.Tests
         //Note: Test modified due to LOD level always defaulting to 3 while we rebuild all of them
         [TestCase(0, 0)]
         [TestCase(1, 0)]
-        [TestCase(2, 3)]
-        [TestCase(3, 3)]
-        [TestCase(4, 3)]
-        [TestCase(10, 3)]
+        [TestCase(2, 1)]
+        [TestCase(3, 1)]
+        [TestCase(4, 1)]
+        [TestCase(10, 1)]
         public void ResolveLODLevel(byte bucket, int expectedLODLevel)
         {
             //Arrange

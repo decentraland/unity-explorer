@@ -78,31 +78,29 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 // get metrics
 
-                TextAsset metricsFile;
+                string? metricsJSON;
+                string? metadataJSON;
 
                 using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                    metricsFile = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME);
+                {
+                    metricsJSON = assetBundle.LoadAsset<TextAsset>(METRICS_FILENAME)?.text;
+                    metadataJSON = assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME)?.text;
+                }
 
                 // Switch to thread pool to parse JSONs
 
                 await UniTask.SwitchToThreadPool();
                 ct.ThrowIfCancellationRequested();
 
-                AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
-
-                await UniTask.SwitchToMainThread();
-                string? metadata;
-                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                    metadata = GetMetadata(assetBundle)?.text;
-                
+                AssetBundleMetrics? metrics = !string.IsNullOrEmpty(metricsJSON) ? JsonUtility.FromJson<AssetBundleMetrics>(metricsJSON) : null;
                 AssetBundleData[] dependencies;
                 string mainAsset = "";
 
-                if (metadata != null)
+                if (!string.IsNullOrEmpty(metadataJSON))
                 {
                     using PoolExtensions.Scope<AssetBundleMetadata> reusableMetadata = METADATA_POOL.AutoScope();
                     // Parse metadata
-                    JsonUtility.FromJsonOverwrite(metadata, reusableMetadata.Value);
+                    JsonUtility.FromJsonOverwrite(metadataJSON, reusableMetadata.Value);
                     mainAsset = reusableMetadata.Value.mainAsset;
                     dependencies = await LoadDependenciesAsync(intention, partition, reusableMetadata.Value, ct);
                 }
@@ -110,16 +108,17 @@ namespace ECS.StreamableLoading.AssetBundles
                     dependencies = Array.Empty<AssetBundleData>();
                  
 
-                await UniTask.SwitchToMainThread();
                 ct.ThrowIfCancellationRequested();
 
                 // if the type was not specified don't load any assets
                 return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset,loadingMutex, dependencies, GetReportCategory(), ct);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 // If the loading process didn't finish successfully unload the bundle
                 // Otherwise, it gets stuck in Unity's memory but not cached in our cache
+                // Can only be done in main thread                
+                await UniTask.SwitchToMainThread();
                 if (assetBundle)
                     assetBundle.Unload(true);
 
@@ -193,7 +192,5 @@ namespace ECS.StreamableLoading.AssetBundles
             }
         }
 
-        private static TextAsset? GetMetadata(AssetBundle assetBundle) =>
-            assetBundle.LoadAsset<TextAsset>(METADATA_FILENAME);
     }
 }
