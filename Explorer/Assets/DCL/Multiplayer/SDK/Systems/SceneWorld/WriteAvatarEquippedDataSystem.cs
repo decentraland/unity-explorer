@@ -41,11 +41,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
             ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, Profile>(static (pbComponent, profile) =>
             {
-                pbComponent.WearableUrns.Clear();
-
                 foreach (URN urn in profile.Avatar.Wearables) { pbComponent.WearableUrns.Add(urn); }
-
-                pbComponent.EmoteUrns.Clear();
 
                 foreach (URN urn in profile.Avatar.Emotes) { pbComponent.EmoteUrns.Add(urn); }
             }, playerCRDTEntity.CRDTEntity, profile);
