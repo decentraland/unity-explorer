@@ -161,6 +161,10 @@ namespace DCL.Navmap
 
         public void Dispose()
         {
+            this.navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
+            this.navmapView.StreetViewRenderImage.ParcelClicked -= OnParcelClicked;
+            this.navmapView.StreetViewRenderImage.HoveredParcel -= OnParcelHovered;
+            this.navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
             animationCts?.Dispose();
             zoomController?.Dispose();
             floatingPanelController?.Dispose();
