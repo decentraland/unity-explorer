@@ -1018,6 +1018,7 @@ GameObject:
   - component: {fileID: 2803782295748198075}
   - component: {fileID: 4945026361451720656}
   - component: {fileID: 8145662853471220169}
+  - component: {fileID: 3857306504030539470}
   m_Layer: 5
   m_Name: Header
   m_TagString: Untagged
@@ -1084,6 +1085,27 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!95 &3857306504030539470
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7428353098594912840}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 3de288633fa7ea046b21b96aa13579b9, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &7788124040512447405
 GameObject:
   m_ObjectHideFlags: 0
@@ -1440,6 +1462,8 @@ GameObject:
   - component: {fileID: 4392543827313620798}
   - component: {fileID: 8235211841819826033}
   - component: {fileID: 305068261502871089}
+  - component: {fileID: 5907525099274342716}
+  - component: {fileID: 7577837248126847787}
   m_Layer: 5
   m_Name: Settings
   m_TagString: Untagged
@@ -1545,7 +1569,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5978650d54f242aea55d21929d1532fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Configuration>k__BackingField: {fileID: 11400000, guid: b47b66eab8da46b4cbcc30100e4194e0, type: 2}
   <GeneralSectionContainer>k__BackingField: {fileID: 6883088663904178455}
   <GraphicsSectionContainer>k__BackingField: {fileID: 3972623827422762808}
   <SoundSectionContainer>k__BackingField: {fileID: 5613304573292422465}
@@ -1560,6 +1583,39 @@ MonoBehaviour:
   <SoundSectionBackground>k__BackingField: {fileID: 0}
   <ControlsSectionBackground>k__BackingField: {fileID: 0}
   <ContentScrollRect>k__BackingField: {fileID: 8443518669722437240}
+--- !u!225 &5907525099274342716
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8178171541332435676}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!95 &7577837248126847787
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8178171541332435676}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 8e36e97e8f3fa1843ac91578e3779c46, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &318211450818095839
 PrefabInstance:
   m_ObjectHideFlags: 0
