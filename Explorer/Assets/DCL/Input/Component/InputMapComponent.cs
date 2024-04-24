@@ -17,6 +17,7 @@ namespace DCL.Input.Component
             FreeCamera = 1 << 2,
             EmoteWheel = 1 << 3,
             Emotes = 1 << 4,
+            Shortcuts = 1 << 5,
         }
 
         private Kind active;

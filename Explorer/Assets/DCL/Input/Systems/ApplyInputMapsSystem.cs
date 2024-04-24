@@ -58,6 +58,9 @@ namespace DCL.Input.Systems
                         case InputMapComponent.Kind.Emotes:
                             SetActionMapEnabled(isActive, dclInput.Emotes);
                             break;
+                        case InputMapComponent.Kind.Shortcuts:
+                            SetActionMapEnabled(isActive, dclInput.Shortcuts);
+                            break;
                     }
                 }
             }

@@ -64,6 +64,7 @@ namespace DCL.EmotesWheel
             this.mvcManager = mvcManager;
 
             emoteWheelInput.Customize.performed += OpenBackpack;
+            emoteWheelInput.Close.performed += Close;
             dclInput.UI.Close.performed += Close;
 
             ListenToSlotsInput(this.dclInput.EmoteWheel);
@@ -74,6 +75,7 @@ namespace DCL.EmotesWheel
             base.Dispose();
 
             emoteWheelInput.Customize.performed -= OpenBackpack;
+            emoteWheelInput.Close.performed -= Close;
             dclInput.UI.Close.performed -= Close;
             UnregisterSlotsInput(emoteWheelInput);
         }
@@ -234,6 +236,10 @@ namespace DCL.EmotesWheel
             ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
             inputMapComponent.Active |= InputMapComponent.Kind.EmoteWheel;
             inputMapComponent.Active &= ~InputMapComponent.Kind.Emotes;
+
+            // We also disable shortcuts because the wheel can be opened and closed with the same key bind
+            // If we leave it enabled, it will close and then re-open instantly
+            inputMapComponent.Active &= ~InputMapComponent.Kind.Shortcuts;
         }
 
         private void DisableInputActions()
@@ -241,6 +247,7 @@ namespace DCL.EmotesWheel
             ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
             inputMapComponent.Active &= ~InputMapComponent.Kind.EmoteWheel;
             inputMapComponent.Active |= InputMapComponent.Kind.Emotes;
+            inputMapComponent.Active |= InputMapComponent.Kind.Shortcuts;
         }
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
