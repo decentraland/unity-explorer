@@ -204,6 +204,11 @@
         /// <summary>
         ///     Multiplayer SDK Profile component propagator
         /// </summary>
+        public const string MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY = nameof(MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY);
+
+        /// <summary>
+        ///     Multiplayer SDK Profile component propagator
+        /// </summary>
         public const string MULTIPLAYER_SDK_PLAYER_PROFILE_DATA = nameof(MULTIPLAYER_SDK_PLAYER_PROFILE_DATA);
 
         /// <summary>

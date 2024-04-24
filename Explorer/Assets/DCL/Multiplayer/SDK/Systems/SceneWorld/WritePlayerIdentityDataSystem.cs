@@ -1,12 +1,12 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -15,7 +15,7 @@ using ECS.LifeCycle.Systems;
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<PlayerProfileDataComponent>))]
+    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
     {
@@ -36,29 +36,26 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
-        private void CreatePlayerIdentityData(in Entity entity, ref PlayerProfileDataComponent playerProfileDataComponent)
+        private void CreatePlayerIdentityData(in Entity entity, PlayerCRDTEntity playerCRDTEntity, Profile profile)
         {
             PBPlayerIdentityData? pbComponent = componentPool.Get();
-            pbComponent.Address = playerProfileDataComponent.Address;
-            pbComponent.IsGuest = playerProfileDataComponent.IsGuest;
+            pbComponent.Address = profile.UserId;
+            pbComponent.IsGuest = !profile.HasConnectedWeb3;
 
-            ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, PBPlayerIdentityData>(static (dispatchedPBComponent, pbComponent) =>
+            ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, (string address, bool isGuest)>(static (pbComponent, data) =>
             {
-                dispatchedPBComponent.Address = pbComponent.Address;
-                dispatchedPBComponent.IsGuest = pbComponent.IsGuest;
-            }, playerProfileDataComponent.CRDTEntity, pbComponent);
+                pbComponent.Address = data.address;
+                pbComponent.IsGuest = data.isGuest;
+            }, playerCRDTEntity.CRDTEntity, (profile.UserId, !profile.HasConnectedWeb3));
 
-            World.Add(entity, pbComponent, playerProfileDataComponent.CRDTEntity);
+            World.Add(entity, pbComponent);
         }
 
         [Query]
-        [All(typeof(PBPlayerIdentityData))]
-        [None(typeof(PlayerProfileDataComponent), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(Entity entity, ref CRDTEntity crdtEntity)
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleComponentRemoval(ref PlayerCRDTEntity playerCRDTEntity)
         {
-            ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(crdtEntity);
-            World.Add(entity, new DeleteEntityIntention());
-            World.Remove<PBPlayerIdentityData, CRDTEntity>(entity);
+            ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(playerCRDTEntity.CRDTEntity);
         }
     }
 }

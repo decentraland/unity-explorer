@@ -7,7 +7,7 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Optimization.Pools;
+using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -16,86 +16,46 @@ using ECS.LifeCycle.Systems;
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<PlayerProfileDataComponent>))]
+    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EQUIPPED)]
     public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<PBAvatarEquippedData> componentPool;
 
-        public WriteAvatarEquippedDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBAvatarEquippedData> componentPool) : base(world)
+        public WriteAvatarEquippedDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.componentPool = componentPool;
         }
 
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
             UpdateAvatarEquippedDataQuery(World);
-            CreateAvatarEquippedDataQuery(World);
-        }
-
-        [Query]
-        [None(typeof(PBAvatarEquippedData), typeof(DeleteEntityIntention))]
-        private void CreateAvatarEquippedData(in Entity entity, ref PlayerProfileDataComponent playerProfileDataComponent)
-        {
-            PBAvatarEquippedData pbComponent = componentPool.Get();
-            pbComponent.WearableUrns.Clear();
-
-            foreach (URN urn in playerProfileDataComponent.WearableUrns) { pbComponent.WearableUrns.Add(urn); }
-
-            pbComponent.EmoteUrns.Clear();
-
-            foreach (URN urn in playerProfileDataComponent.EmoteUrns) { pbComponent.EmoteUrns.Add(urn); }
-
-            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, PBAvatarEquippedData>(static (dispatchedPBComponent, pbComponent) =>
-            {
-                dispatchedPBComponent.WearableUrns.Clear();
-
-                foreach (URN urn in pbComponent.WearableUrns) { dispatchedPBComponent.WearableUrns.Add(urn); }
-
-                dispatchedPBComponent.EmoteUrns.Clear();
-
-                foreach (URN urn in pbComponent.EmoteUrns) { dispatchedPBComponent.EmoteUrns.Add(urn); }
-            }, playerProfileDataComponent.CRDTEntity, pbComponent);
-
-            World.Add(entity, pbComponent, playerProfileDataComponent.CRDTEntity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEquippedData(ref PlayerProfileDataComponent playerProfileDataComponent, ref PBAvatarEquippedData pbComponent)
+        private void UpdateAvatarEquippedData(ref PlayerCRDTEntity playerCRDTEntity, ref Profile profile)
         {
-            if (!playerProfileDataComponent.IsDirty) return;
+            if (!profile.IsDirty) return;
 
-            pbComponent.WearableUrns.Clear();
-
-            foreach (URN urn in playerProfileDataComponent.WearableUrns) { pbComponent.WearableUrns.Add(urn); }
-
-            pbComponent.EmoteUrns.Clear();
-
-            foreach (URN urn in playerProfileDataComponent.EmoteUrns) { pbComponent.EmoteUrns.Add(urn); }
-
-            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, PBAvatarEquippedData>(static (dispatchedPBComponent, pbComponent) =>
+            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, Profile>(static (pbComponent, profile) =>
             {
-                dispatchedPBComponent.WearableUrns.Clear();
+                pbComponent.WearableUrns.Clear();
 
-                foreach (URN urn in pbComponent.WearableUrns) { dispatchedPBComponent.WearableUrns.Add(urn); }
+                foreach (URN urn in profile.Avatar.Wearables) { pbComponent.WearableUrns.Add(urn); }
 
-                dispatchedPBComponent.EmoteUrns.Clear();
+                pbComponent.EmoteUrns.Clear();
 
-                foreach (URN urn in pbComponent.EmoteUrns) { dispatchedPBComponent.EmoteUrns.Add(urn); }
-            }, playerProfileDataComponent.CRDTEntity, pbComponent);
+                foreach (URN urn in profile.Avatar.Emotes) { pbComponent.EmoteUrns.Add(urn); }
+            }, playerCRDTEntity.CRDTEntity, profile);
         }
 
         [Query]
-        [All(typeof(PBAvatarEquippedData))]
-        [None(typeof(PlayerProfileDataComponent), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(Entity entity, ref CRDTEntity crdtEntity)
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleComponentRemoval(ref PlayerCRDTEntity playerCRDTEntity)
         {
-            ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(crdtEntity);
-            World.Remove<PBAvatarEquippedData, CRDTEntity>(entity);
+            ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(playerCRDTEntity.CRDTEntity);
         }
     }
 }

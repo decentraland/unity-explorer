@@ -111,8 +111,9 @@ namespace DCL.PluginSystem.Global
                 realmData
             );
 
-            ResetDirtyFlagSystem<PlayerProfileDataComponent>.InjectToWorld(ref builder);
-            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, scenesCache, characterObject);
+            ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
+            PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
 #endif
