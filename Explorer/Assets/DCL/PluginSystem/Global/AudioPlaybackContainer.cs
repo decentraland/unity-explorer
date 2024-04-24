@@ -1,9 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Optimization.Pools;
 using System;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using UnityEngine;
 
@@ -52,20 +50,18 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public WorldAudioPlaybackControllerReference WorldAudioPlaybackControllerReference { get; private set; }
-
         }
-
 
         [Serializable]
         public class UIAudioPlaybackControllerReference : ComponentReference<UIAudioPlaybackController>
         {
             public UIAudioPlaybackControllerReference(string guid) : base(guid) { }
         }
+
         [Serializable]
         public class WorldAudioPlaybackControllerReference : ComponentReference<WorldAudioPlaybackController>
         {
             public WorldAudioPlaybackControllerReference(string guid) : base(guid) { }
         }
-
     }
 }
