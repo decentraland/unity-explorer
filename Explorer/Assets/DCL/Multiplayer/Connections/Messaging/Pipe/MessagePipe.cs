@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         Packet packet = tuple.Item1!;
                         Participant participant = tuple.Item2!;
 
-                        uint version = 1;//TODO packet.Version;
+                        uint version = packet.ProtocolVersion;
 
                         if (version != supportedVersion)
                             return;

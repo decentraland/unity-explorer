@@ -53,7 +53,7 @@ namespace DCL.Multiplayer.Connections.Messaging
 
             using var packetWrap = multiPool.TempResource<Packet>();
             packetWrap.value.ClearMessage();
-            packetWrap.value.Version = supportedVersion;
+            packetWrap.value.ProtocolVersion = supportedVersion;
             WritePayloadToPacket(packetWrap.value);
             using MemoryWrap memory = memoryPool.Memory(packetWrap.value);
             packetWrap.value.WriteTo(memory);
