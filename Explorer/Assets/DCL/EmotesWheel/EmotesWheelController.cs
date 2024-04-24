@@ -62,6 +62,7 @@ namespace DCL.EmotesWheel
             this.mvcManager = mvcManager;
 
             dclInput.Customize.performed += OpenBackpack;
+            ListenToSlotsInput(dclInput);
         }
 
         public override void Dispose()
@@ -69,6 +70,7 @@ namespace DCL.EmotesWheel
             base.Dispose();
 
             dclInput.Customize.performed -= OpenBackpack;
+            UnregisterSlotsInput(dclInput);
         }
 
         protected override void OnViewInstantiated()
@@ -202,6 +204,13 @@ namespace DCL.EmotesWheel
             closeViewTask?.TrySetResult();
         }
 
+        private void PlayEmote(InputAction.CallbackContext context)
+        {
+            string actionName = context.action.name;
+            int slot = GetSlotFromInputName(actionName);
+            PlayEmote(slot);
+        }
+
         private void OpenBackpack(InputAction.CallbackContext context)
         {
             mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
@@ -212,12 +221,40 @@ namespace DCL.EmotesWheel
         {
             ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
             inputMapComponent.Active |= InputMapComponent.Kind.EmoteWheel;
+            inputMapComponent.Active &= ~InputMapComponent.Kind.Emotes;
         }
 
         private void DisableInputActions()
         {
             ref InputMapComponent inputMapComponent = ref currentInputMapsEntity.GetInputMapComponent(world);
             inputMapComponent.Active &= ~InputMapComponent.Kind.EmoteWheel;
+            inputMapComponent.Active |= InputMapComponent.Kind.Emotes;
         }
+
+        private void ListenToSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i <= 9; i++)
+            {
+                string actionName = GetSlotInputName(i);
+                InputAction inputAction = inputActionMap.FindAction(actionName);
+                inputAction.started += PlayEmote;
+            }
+        }
+
+        private void UnregisterSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i <= 9; i++)
+            {
+                string actionName = GetSlotInputName(i + 1);
+                InputAction inputAction = inputActionMap.FindAction(actionName);
+                inputAction.started -= PlayEmote;
+            }
+        }
+
+        private static string GetSlotInputName(int slot) =>
+            $"Slot {slot}";
+
+        private static int GetSlotFromInputName(string name) =>
+            int.Parse(name[^1].ToString());
     }
 }

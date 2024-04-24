@@ -2423,6 +2423,96 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 0"",
+                    ""type"": ""Button"",
+                    ""id"": ""c39365ce-e2ee-4317-9676-b824b564a3c9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 1"",
+                    ""type"": ""Button"",
+                    ""id"": ""f7caf758-a4db-4f29-a564-6de1b91bb27e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 2"",
+                    ""type"": ""Button"",
+                    ""id"": ""fcd47b29-19b9-4e80-b10d-9975edc40b69"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 3"",
+                    ""type"": ""Button"",
+                    ""id"": ""76708bb0-c5ea-41a5-a3c5-56f5068a084f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 4"",
+                    ""type"": ""Button"",
+                    ""id"": ""a19a48f2-44da-46af-85d0-55fa6f0b09e9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 5"",
+                    ""type"": ""Button"",
+                    ""id"": ""dd608223-6c72-42f2-a9ac-cc54d151e3de"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 6"",
+                    ""type"": ""Button"",
+                    ""id"": ""8d9020f4-ade5-489b-b1b0-f305fb7e51b6"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 7"",
+                    ""type"": ""Button"",
+                    ""id"": ""3b934828-48d6-4f7e-941e-ff876f7fe521"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 8"",
+                    ""type"": ""Button"",
+                    ""id"": ""ece7b30b-9798-4d1e-bd59-f4e6cf118b3b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Slot 9"",
+                    ""type"": ""Button"",
+                    ""id"": ""fe480926-c73e-4c5e-b41b-bb04bfac343c"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -2434,6 +2524,116 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Customize"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3e7a2e83-4f20-46ee-87a8-2e82a3fdc402"",
+                    ""path"": ""<Keyboard>/0"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 0"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7c5a5453-1ffb-4ff4-86ef-fa253eb0a68f"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 1"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""cba94296-ccf7-41d4-b59f-e79c05541c9e"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 2"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""b8fd5ca5-02bd-4b38-a4d0-406927d1b403"",
+                    ""path"": ""<Keyboard>/3"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 3"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""04451c4a-c211-4ff9-adc4-82fb3a6c3018"",
+                    ""path"": ""<Keyboard>/4"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 4"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7691d3ef-46ae-4787-9cc9-0ed614ed598f"",
+                    ""path"": ""<Keyboard>/5"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 5"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""58bfa9db-cf22-43c9-bd86-b7082b8a824b"",
+                    ""path"": ""<Keyboard>/6"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 6"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""47620d73-42e8-4b11-81ec-df49249ac654"",
+                    ""path"": ""<Keyboard>/7"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 7"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""673ca570-1ae1-494a-ba72-4ada33e915c7"",
+                    ""path"": ""<Keyboard>/8"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 8"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ccab16d6-e57c-4ec0-a7bb-c694d9e92c6a"",
+                    ""path"": ""<Keyboard>/9"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slot 9"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2525,6 +2725,16 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         // EmoteWheel
         m_EmoteWheel = asset.FindActionMap("EmoteWheel", throwIfNotFound: true);
         m_EmoteWheel_Customize = m_EmoteWheel.FindAction("Customize", throwIfNotFound: true);
+        m_EmoteWheel_Slot0 = m_EmoteWheel.FindAction("Slot 0", throwIfNotFound: true);
+        m_EmoteWheel_Slot1 = m_EmoteWheel.FindAction("Slot 1", throwIfNotFound: true);
+        m_EmoteWheel_Slot2 = m_EmoteWheel.FindAction("Slot 2", throwIfNotFound: true);
+        m_EmoteWheel_Slot3 = m_EmoteWheel.FindAction("Slot 3", throwIfNotFound: true);
+        m_EmoteWheel_Slot4 = m_EmoteWheel.FindAction("Slot 4", throwIfNotFound: true);
+        m_EmoteWheel_Slot5 = m_EmoteWheel.FindAction("Slot 5", throwIfNotFound: true);
+        m_EmoteWheel_Slot6 = m_EmoteWheel.FindAction("Slot 6", throwIfNotFound: true);
+        m_EmoteWheel_Slot7 = m_EmoteWheel.FindAction("Slot 7", throwIfNotFound: true);
+        m_EmoteWheel_Slot8 = m_EmoteWheel.FindAction("Slot 8", throwIfNotFound: true);
+        m_EmoteWheel_Slot9 = m_EmoteWheel.FindAction("Slot 9", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -3311,11 +3521,31 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_EmoteWheel;
     private List<IEmoteWheelActions> m_EmoteWheelActionsCallbackInterfaces = new List<IEmoteWheelActions>();
     private readonly InputAction m_EmoteWheel_Customize;
+    private readonly InputAction m_EmoteWheel_Slot0;
+    private readonly InputAction m_EmoteWheel_Slot1;
+    private readonly InputAction m_EmoteWheel_Slot2;
+    private readonly InputAction m_EmoteWheel_Slot3;
+    private readonly InputAction m_EmoteWheel_Slot4;
+    private readonly InputAction m_EmoteWheel_Slot5;
+    private readonly InputAction m_EmoteWheel_Slot6;
+    private readonly InputAction m_EmoteWheel_Slot7;
+    private readonly InputAction m_EmoteWheel_Slot8;
+    private readonly InputAction m_EmoteWheel_Slot9;
     public struct EmoteWheelActions
     {
         private @DCLInput m_Wrapper;
         public EmoteWheelActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Customize => m_Wrapper.m_EmoteWheel_Customize;
+        public InputAction @Slot0 => m_Wrapper.m_EmoteWheel_Slot0;
+        public InputAction @Slot1 => m_Wrapper.m_EmoteWheel_Slot1;
+        public InputAction @Slot2 => m_Wrapper.m_EmoteWheel_Slot2;
+        public InputAction @Slot3 => m_Wrapper.m_EmoteWheel_Slot3;
+        public InputAction @Slot4 => m_Wrapper.m_EmoteWheel_Slot4;
+        public InputAction @Slot5 => m_Wrapper.m_EmoteWheel_Slot5;
+        public InputAction @Slot6 => m_Wrapper.m_EmoteWheel_Slot6;
+        public InputAction @Slot7 => m_Wrapper.m_EmoteWheel_Slot7;
+        public InputAction @Slot8 => m_Wrapper.m_EmoteWheel_Slot8;
+        public InputAction @Slot9 => m_Wrapper.m_EmoteWheel_Slot9;
         public InputActionMap Get() { return m_Wrapper.m_EmoteWheel; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3328,6 +3558,36 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Customize.started += instance.OnCustomize;
             @Customize.performed += instance.OnCustomize;
             @Customize.canceled += instance.OnCustomize;
+            @Slot0.started += instance.OnSlot0;
+            @Slot0.performed += instance.OnSlot0;
+            @Slot0.canceled += instance.OnSlot0;
+            @Slot1.started += instance.OnSlot1;
+            @Slot1.performed += instance.OnSlot1;
+            @Slot1.canceled += instance.OnSlot1;
+            @Slot2.started += instance.OnSlot2;
+            @Slot2.performed += instance.OnSlot2;
+            @Slot2.canceled += instance.OnSlot2;
+            @Slot3.started += instance.OnSlot3;
+            @Slot3.performed += instance.OnSlot3;
+            @Slot3.canceled += instance.OnSlot3;
+            @Slot4.started += instance.OnSlot4;
+            @Slot4.performed += instance.OnSlot4;
+            @Slot4.canceled += instance.OnSlot4;
+            @Slot5.started += instance.OnSlot5;
+            @Slot5.performed += instance.OnSlot5;
+            @Slot5.canceled += instance.OnSlot5;
+            @Slot6.started += instance.OnSlot6;
+            @Slot6.performed += instance.OnSlot6;
+            @Slot6.canceled += instance.OnSlot6;
+            @Slot7.started += instance.OnSlot7;
+            @Slot7.performed += instance.OnSlot7;
+            @Slot7.canceled += instance.OnSlot7;
+            @Slot8.started += instance.OnSlot8;
+            @Slot8.performed += instance.OnSlot8;
+            @Slot8.canceled += instance.OnSlot8;
+            @Slot9.started += instance.OnSlot9;
+            @Slot9.performed += instance.OnSlot9;
+            @Slot9.canceled += instance.OnSlot9;
         }
 
         private void UnregisterCallbacks(IEmoteWheelActions instance)
@@ -3335,6 +3595,36 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Customize.started -= instance.OnCustomize;
             @Customize.performed -= instance.OnCustomize;
             @Customize.canceled -= instance.OnCustomize;
+            @Slot0.started -= instance.OnSlot0;
+            @Slot0.performed -= instance.OnSlot0;
+            @Slot0.canceled -= instance.OnSlot0;
+            @Slot1.started -= instance.OnSlot1;
+            @Slot1.performed -= instance.OnSlot1;
+            @Slot1.canceled -= instance.OnSlot1;
+            @Slot2.started -= instance.OnSlot2;
+            @Slot2.performed -= instance.OnSlot2;
+            @Slot2.canceled -= instance.OnSlot2;
+            @Slot3.started -= instance.OnSlot3;
+            @Slot3.performed -= instance.OnSlot3;
+            @Slot3.canceled -= instance.OnSlot3;
+            @Slot4.started -= instance.OnSlot4;
+            @Slot4.performed -= instance.OnSlot4;
+            @Slot4.canceled -= instance.OnSlot4;
+            @Slot5.started -= instance.OnSlot5;
+            @Slot5.performed -= instance.OnSlot5;
+            @Slot5.canceled -= instance.OnSlot5;
+            @Slot6.started -= instance.OnSlot6;
+            @Slot6.performed -= instance.OnSlot6;
+            @Slot6.canceled -= instance.OnSlot6;
+            @Slot7.started -= instance.OnSlot7;
+            @Slot7.performed -= instance.OnSlot7;
+            @Slot7.canceled -= instance.OnSlot7;
+            @Slot8.started -= instance.OnSlot8;
+            @Slot8.performed -= instance.OnSlot8;
+            @Slot8.canceled -= instance.OnSlot8;
+            @Slot9.started -= instance.OnSlot9;
+            @Slot9.performed -= instance.OnSlot9;
+            @Slot9.canceled -= instance.OnSlot9;
         }
 
         public void RemoveCallbacks(IEmoteWheelActions instance)
@@ -3444,5 +3734,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     public interface IEmoteWheelActions
     {
         void OnCustomize(InputAction.CallbackContext context);
+        void OnSlot0(InputAction.CallbackContext context);
+        void OnSlot1(InputAction.CallbackContext context);
+        void OnSlot2(InputAction.CallbackContext context);
+        void OnSlot3(InputAction.CallbackContext context);
+        void OnSlot4(InputAction.CallbackContext context);
+        void OnSlot5(InputAction.CallbackContext context);
+        void OnSlot6(InputAction.CallbackContext context);
+        void OnSlot7(InputAction.CallbackContext context);
+        void OnSlot8(InputAction.CallbackContext context);
+        void OnSlot9(InputAction.CallbackContext context);
     }
 }

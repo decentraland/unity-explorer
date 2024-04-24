@@ -90,7 +90,8 @@ namespace DCL.PluginSystem.Global
         {
             builder.World.Create(new InputMapComponent(InputMapComponent.Kind.FreeCamera
                                                        | InputMapComponent.Kind.Camera
-                                                       | InputMapComponent.Kind.Player));
+                                                       | InputMapComponent.Kind.Player
+                                                       | InputMapComponent.Kind.Emotes));
 
             ApplyInputMapsSystem.InjectToWorld(ref builder, dclInput);
             UpdateInputJumpSystem.InjectToWorld(ref builder, dclInput.Player.Jump);

@@ -26,8 +26,8 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IEmotesMessageBus messageBus;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput.ShortcutsActions shortcuts;
+        private readonly DCLInput.EmotesActions emotesActions;
 
-        private DCLInput.EmotesActions emotesActions;
         private int triggeredEmote = -1;
         private bool isWheelBlocked;
 
@@ -38,36 +38,17 @@ namespace DCL.AvatarRendering.Emotes
             emotesActions = dclInput.Emotes;
             this.messageBus = messageBus;
             this.mvcManager = mvcManager;
+
             GetReportCategory();
-            InputActionMap inputActionMap = emotesActions.Get();
 
-            for (var i = 0; i < 10; i++)
-            {
-                string actionName = GetActionName(i);
-
-                try
-                {
-                    InputAction inputAction = inputActionMap.FindAction(actionName);
-                    inputAction.started += OnSlotPerformed;
-                    actionNameById.Add(actionName, i);
-                }
-                catch (Exception) { ReportHub.LogError(GetReportCategory(), "Input action " + actionName + " does not exist"); }
-            }
+            ListenToSlotsInput(emotesActions.Get());
         }
-
-        private static string GetActionName(int i) =>
-            $"Slot {i}";
 
         public override void Dispose()
         {
             base.Dispose();
-            InputActionMap inputActionMap = emotesActions.Get();
-            for (int i = 0; i < 8; i++)
-            {
-                var actionName = GetActionName(i+1);
-                InputAction inputAction = inputActionMap.FindAction(actionName);
-                inputAction.started -= OnSlotPerformed;
-            }
+
+            UnregisterSlotsInput(emotesActions.Get());
         }
 
         private void OnSlotPerformed(InputAction.CallbackContext obj)
@@ -122,5 +103,34 @@ namespace DCL.AvatarRendering.Emotes
 
             messageBus.Send(emoteId, false, true);
         }
+
+        private void ListenToSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i < 10; i++)
+            {
+                string actionName = GetActionName(i);
+
+                try
+                {
+                    InputAction inputAction = inputActionMap.FindAction(actionName);
+                    inputAction.started += OnSlotPerformed;
+                    actionNameById[actionName] = i;
+                }
+                catch (Exception e) { ReportHub.LogException(e, new ReportData(GetReportCategory())); }
+            }
+        }
+
+        private void UnregisterSlotsInput(InputActionMap inputActionMap)
+        {
+            for (var i = 0; i <= 9; i++)
+            {
+                string actionName = GetActionName(i);
+                InputAction inputAction = inputActionMap.FindAction(actionName);
+                inputAction.started -= OnSlotPerformed;
+            }
+        }
+
+        private static string GetActionName(int i) =>
+            $"Slot {i}";
     }
 }
