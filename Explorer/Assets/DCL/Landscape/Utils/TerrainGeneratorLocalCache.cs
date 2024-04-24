@@ -44,6 +44,7 @@ namespace DCL.Landscape.Utils
     {
         private bool isValid;
         private const string FILE_NAME = "/terrain_cache";
+        private static readonly BinaryFormatter FORMATTER = new ();
 
         public Dictionary<int2, float[]> heights = new ();
         public int heightX;
@@ -75,14 +76,18 @@ namespace DCL.Landscape.Utils
             if (File.Exists(path))
                 File.Delete(path);
 
-            var formatter = new BinaryFormatter();
-
             using FileStream fileStream = File.Create(path);
-            formatter.Serialize(fileStream, this);
+            FORMATTER.Serialize(fileStream, this);
         }
 
         private static string GetPath(int seed, int chunkSize, int version) =>
             Application.persistentDataPath + FILE_NAME + $"_{seed}_{chunkSize}_v{version}.data";
+
+        public static TerrainLocalCache NewEmpty() =>
+            new()
+            {
+                isValid = false
+            };
 
         public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version, bool force)
         {
@@ -97,11 +102,7 @@ namespace DCL.Landscape.Utils
                 return localCache;
 
             await using (var fileStream = new FileStream(path, FileMode.Open))
-                localCache = await UniTask.RunOnThreadPool(() =>
-                {
-                    var formatter = new BinaryFormatter();
-                    return (TerrainLocalCache)formatter.Deserialize(fileStream);
-                });
+                localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
 
             localCache.isValid = true;
 
@@ -114,8 +115,7 @@ namespace DCL.Landscape.Utils
 
     public class TerrainGeneratorLocalCache
     {
-        private TerrainLocalCache localCache;
-        private readonly bool isValid;
+        private TerrainLocalCache localCache = TerrainLocalCache.NewEmpty();
         private readonly int seed;
         private readonly int chunkSize;
         private readonly int version;
@@ -155,8 +155,11 @@ namespace DCL.Landscape.Utils
         public int[,] GetDetailLayer(int offsetX, int offsetZ, int layer) =>
             UnFlatten(localCache.detail[new int3(offsetX, offsetZ, layer)], localCache.detailX, localCache.detailY);
 
-        public bool[,] GetHoles(int offsetX, int offsetZ) =>
-            UnFlatten(localCache.holes[new int2(offsetX, offsetZ)], localCache.holesX, localCache.holesY);
+        public bool[,] GetHoles(int offsetX, int offsetZ)
+        {
+            try { return UnFlatten(localCache.holes[new int2(offsetX, offsetZ)], localCache.holesX, localCache.holesY); }
+            catch (KeyNotFoundException e) { throw new Exception("Cannot get holes from cache. Try to regenerate cache at InfiniteTerrain.scene", e); }
+        }
 
         public void SaveHoles(int offsetX, int offsetZ, bool[,] valuePairValue)
         {
