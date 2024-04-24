@@ -37,7 +37,7 @@ namespace DCL.LOD.Tests
             var lodSettings = Substitute.For<ILODSettingsAsset>();
             int[] bucketThresholds =
             {
-                2, 4
+                2
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
