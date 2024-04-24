@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
@@ -22,14 +23,17 @@ namespace DCL.Character.CharacterCamera.Systems
     public partial class ControlCinemachineVirtualCameraSystem : BaseUnityLoopSystem
     {
         private SingleInstanceEntity inputMap;
+        private ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
         private int hotkeySwitchStateDirection = 1;
 
-        internal ControlCinemachineVirtualCameraSystem(World world) : base(world) { }
+        internal ControlCinemachineVirtualCameraSystem(World world, ICinemachineCameraAudioSettings cinemachineCameraAudioSettings) : base(world)
+        {
+            this.cinemachineCameraAudioSettings = cinemachineCameraAudioSettings;
+        }
 
         public override void Initialize()
         {
             inputMap = World.CacheInputMap();
-
             ApplyDefaultCameraModeQuery(World);
         }
 
@@ -182,30 +186,41 @@ namespace DCL.Character.CharacterCamera.Systems
                     {
                         case CameraMode.DroneView:
                             if (pingPong)
+                            {
+                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
                                 cameraComponent.Mode = CameraMode.ThirdPerson;
+                            }
 
                             return false;
                         case CameraMode.ThirdPerson:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
                             cameraComponent.Mode = CameraMode.DroneView;
                             return true;
                         case CameraMode.FirstPerson:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
                             cameraComponent.Mode = CameraMode.ThirdPerson;
                             return true;
                     }
+
 
                     break;
                 case < 0:
                     switch (cameraComponent.Mode)
                     {
                         case CameraMode.DroneView:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
                             cameraComponent.Mode = CameraMode.ThirdPerson;
                             return true;
                         case CameraMode.ThirdPerson:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomInAudio);
                             cameraComponent.Mode = CameraMode.FirstPerson;
                             return true;
                         case CameraMode.FirstPerson:
                             if (pingPong)
+                            {
+                                UIAudioEventsBus.Instance.SendPlayAudioEvent(cinemachineCameraAudioSettings.ZoomOutAudio);
                                 cameraComponent.Mode = CameraMode.ThirdPerson;
+                            }
 
                             return false;
                     }

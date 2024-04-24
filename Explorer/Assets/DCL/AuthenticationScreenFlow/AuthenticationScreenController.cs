@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;

@@ -352,6 +352,7 @@ namespace DCL.Chat
                 viewInstance.ToggleChat(true);
                 viewInstance.LoopList.MovePanelToItemIndex(0, 0);
             }
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.EnterInputAudio);
 
             viewInstance.EmojiPanelButton.SetColor(true);
             viewInstance.CharacterCounter.gameObject.SetActive(true);
