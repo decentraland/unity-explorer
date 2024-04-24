@@ -182,6 +182,7 @@ jobs:
 
       - name: Create Version
         run: |
+          git fetch --tags
           $latestTag = git describe --tags $(git rev-list --tags --max-count=1)        
           
           # Extract version components
