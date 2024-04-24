@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -80,7 +81,8 @@ namespace DCL.CharacterMotion.Systems
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings,
-            in StunComponent stunComponent
+            in StunComponent stunComponent,
+            in CharacterEmoteComponent emoteComponent
         )
         {
             // Debug stuff and enable/disable mechanic
@@ -95,7 +97,8 @@ namespace DCL.CharacterMotion.Systems
             // Enable flags: when disabled we lerp the IK weight towards 0
             bool isEnabled = rigidTransform.IsGrounded
                              && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck)
-                             && !stunComponent.IsStunned;
+                             && !stunComponent.IsStunned
+                             && emoteComponent.CurrentEmoteReference == null;
 
             // && !emotes?
 
