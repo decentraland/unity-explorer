@@ -55,8 +55,10 @@ namespace DCL.SDKComponents.MediaStream
             MediaPlayerComponent component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
 
             if (component.State != VideoState.VsError)
-                component.MediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing, component.Cts.Token)
-                         .Forget();
+            {
+                MediaPlayer mediaPlayer = component.MediaPlayer;
+                mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing, component.Cts.Token, onComplete: null).Forget();
+            }
 
             World.Add(entity, component);
         }
@@ -73,10 +75,8 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
             {
                 MediaPlayer mediaPlayer = component.MediaPlayer;
-
-                mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing, component.Cts.Token,
-                                onComplete: () => mediaPlayer.SetPlaybackProperties(sdkComponent))
-                           .Forget();
+                mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing, component.Cts.Token, onComplete: OnComplete).Forget();
+                void OnComplete() => mediaPlayer.SetPlaybackProperties(sdkComponent);
             }
 
             World.Add(entity, component);
