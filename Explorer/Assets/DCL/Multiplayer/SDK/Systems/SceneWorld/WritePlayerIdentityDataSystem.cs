@@ -5,7 +5,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Optimization.Pools;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
@@ -20,12 +19,10 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IComponentPool<PBPlayerIdentityData> componentPool;
 
-        public WritePlayerIdentityDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IComponentPool<PBPlayerIdentityData> componentPool) : base(world)
+        public WritePlayerIdentityDataSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.componentPool = componentPool;
         }
 
         protected override void Update(float t)
@@ -35,20 +32,16 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         }
 
         [Query]
-        [None(typeof(PBPlayerIdentityData), typeof(DeleteEntityIntention))]
-        private void CreatePlayerIdentityData(in Entity entity, PlayerCRDTEntity playerCRDTEntity, Profile profile)
+        [None(typeof(DeleteEntityIntention))]
+        private void CreatePlayerIdentityData(PlayerCRDTEntity playerCRDTEntity, Profile profile)
         {
-            PBPlayerIdentityData? pbComponent = componentPool.Get();
-            pbComponent.Address = profile.UserId;
-            pbComponent.IsGuest = !profile.HasConnectedWeb3;
+            if (!playerCRDTEntity.IsDirty) return;
 
             ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, (string address, bool isGuest)>(static (pbComponent, data) =>
             {
                 pbComponent.Address = data.address;
                 pbComponent.IsGuest = data.isGuest;
             }, playerCRDTEntity.CRDTEntity, (profile.UserId, !profile.HasConnectedWeb3));
-
-            World.Add(entity, pbComponent);
         }
 
         [Query]
