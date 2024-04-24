@@ -29,6 +29,7 @@ namespace DCL.AvatarRendering.Emotes
 
         private DCLInput.EmotesActions emotesActions;
         private int triggeredEmote = -1;
+        private bool isWheelBlocked;
 
         public UpdateEmoteInputSystem(World world, DCLInput dclInput, IEmotesMessageBus messageBus,
             IMVCManager mvcManager) : base(world)
@@ -73,19 +74,25 @@ namespace DCL.AvatarRendering.Emotes
         {
             int emoteIndex = actionNameById[obj.action.name];
             triggeredEmote = emoteIndex;
+            isWheelBlocked = true;
         }
 
         protected override void Update(float t)
         {
-            if (shortcuts.EmoteWheel.WasReleasedThisFrame())
-                mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
-
             TriggerEmoteBySlotIntentQuery(World);
 
             if (triggeredEmote >= 0)
             {
                 TriggerEmoteQuery(World, triggeredEmote);
                 triggeredEmote = -1;
+            }
+
+            if (shortcuts.EmoteWheel.WasReleasedThisFrame())
+            {
+                if (!isWheelBlocked)
+                    mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
+
+                isWheelBlocked = false;
             }
         }
 
