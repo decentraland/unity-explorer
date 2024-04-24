@@ -80,7 +80,7 @@ namespace DCL.EmotesWheel
 
         protected override void OnViewInstantiated()
         {
-            viewInstance.OnClose += () => closeViewTask?.TrySetResult();
+            viewInstance.OnClose += Close;
             viewInstance.EditButton.onClick.AddListener(OpenBackpack);
             viewInstance.CurrentEmoteName.text = "";
 
@@ -207,7 +207,7 @@ namespace DCL.EmotesWheel
         {
             world.AddOrGet(playerEntity, new TriggerEmoteBySlotIntent { Slot = slot });
 
-            closeViewTask?.TrySetResult();
+            Close();
         }
 
         private void PlayEmote(InputAction.CallbackContext context)
@@ -225,7 +225,8 @@ namespace DCL.EmotesWheel
             mvcManager.ShowAsync(
                 ExplorePanelController.IssueCommand(
                     new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
-            closeViewTask?.TrySetResult();
+
+            Close();
         }
 
         private void EnableInputActions()
@@ -263,6 +264,9 @@ namespace DCL.EmotesWheel
         }
 
         private void Close(InputAction.CallbackContext context) =>
+            Close();
+
+        private void Close() =>
             closeViewTask?.TrySetResult();
 
         private static string GetSlotInputName(int slot) =>
