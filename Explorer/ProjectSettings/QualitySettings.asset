@@ -4,7 +4,7 @@
 QualitySettings:
   m_ObjectHideFlags: 0
   serializedVersion: 5
-  m_CurrentQuality: 2
+  m_CurrentQuality: 1
   m_QualitySettings:
   - serializedVersion: 3
     name: Low
@@ -30,7 +30,7 @@ QualitySettings:
     useLegacyDetailDistribution: 0
     vSyncCount: 0
     realtimeGICPUUsage: 25
-    lodBias: 0.8
+    lodBias: 0.4
     maximumLODLevel: 0
     enableLODCrossFade: 1
     streamingMipmapsActive: 1
@@ -47,9 +47,9 @@ QualitySettings:
     customRenderPipeline: {fileID: 11400000, guid: 362b7d6d8bc7d8a4caba9aa7515a5f6d, type: 2}
     terrainQualityOverrides: 12
     terrainPixelError: 1
-    terrainDetailDensityScale: 1
+    terrainDetailDensityScale: 0.3
     terrainBasemapDistance: 1000
-    terrainDetailDistance: 80
+    terrainDetailDistance: 75
     terrainTreeDistance: 5000
     terrainBillboardStart: 50
     terrainFadeLength: 5
@@ -79,7 +79,7 @@ QualitySettings:
     useLegacyDetailDistribution: 1
     vSyncCount: 0
     realtimeGICPUUsage: 25
-    lodBias: 0.3
+    lodBias: 1.2
     maximumLODLevel: 0
     enableLODCrossFade: 1
     streamingMipmapsActive: 1
@@ -96,9 +96,9 @@ QualitySettings:
     customRenderPipeline: {fileID: 11400000, guid: c7655666771b41447aa2994cf82e2fc7, type: 2}
     terrainQualityOverrides: 0
     terrainPixelError: 1
-    terrainDetailDensityScale: 1
+    terrainDetailDensityScale: 0.7
     terrainBasemapDistance: 1000
-    terrainDetailDistance: 80
+    terrainDetailDistance: 150
     terrainTreeDistance: 5000
     terrainBillboardStart: 50
     terrainFadeLength: 5
@@ -128,7 +128,7 @@ QualitySettings:
     useLegacyDetailDistribution: 1
     vSyncCount: 0
     realtimeGICPUUsage: 25
-    lodBias: 0.3
+    lodBias: 2
     maximumLODLevel: 0
     enableLODCrossFade: 1
     streamingMipmapsActive: 1
@@ -147,7 +147,7 @@ QualitySettings:
     terrainPixelError: 1
     terrainDetailDensityScale: 1
     terrainBasemapDistance: 1000
-    terrainDetailDistance: 80
+    terrainDetailDistance: 300
     terrainTreeDistance: 5000
     terrainBillboardStart: 50
     terrainFadeLength: 5
