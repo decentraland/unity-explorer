@@ -9,12 +9,14 @@ namespace DCL.Audio
     public class AvatarAudioPlaybackController : MonoBehaviour
     {
         [SerializeField] private AudioSource AvatarAudioSource;
+        [SerializeField] private AudioSource LoopAvatarAudioSource;
         [SerializeField] private Animator AvatarAnimator;
         [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
 
         private void Start()
         {
             AvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
+            LoopAvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -24,13 +26,13 @@ namespace DCL.Audio
             {
                 case MovementKind.None:
                 case MovementKind.Walk:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
                     break;
                 case MovementKind.Jog:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartJog);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartJog);
                     break;
                 case MovementKind.Run:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartRun);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartRun);
                     break;
             }
         }
@@ -43,13 +45,13 @@ namespace DCL.Audio
             switch (GetMovementState())
             {
                 case MovementKind.Walk:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
                     break;
                 case MovementKind.Jog:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
                     break;
                 case MovementKind.Run:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
                     break;
             }
         }
@@ -57,72 +59,94 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayLandSound()
         {
+            //We stop the looping sounds of the audioSource in case there was any.
             switch (GetMovementState())
             {
                 case MovementKind.None:
                 case MovementKind.Walk:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
                     break;
                 case MovementKind.Jog:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandJog);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandJog);
                     break;
                 case MovementKind.Run:
-                    PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
+                    PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
                     break;
+            }
+        }
+
+
+        [PublicAPI("Used by Animation Events")]
+        public void PlayLongFallSound()
+        {
+            if (!AvatarAudioSettings.AudioEnabled) return;
+
+            if (!LoopAvatarAudioSource.isPlaying)
+            {
+                AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(AvatarAudioSettings.AvatarAudioClipType.LongFall);
+                int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
+                LoopAvatarAudioSource.loop = true;
+                LoopAvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
+                LoopAvatarAudioSource.volume = clipConfig.RelativeVolume;
+                LoopAvatarAudioSource.clip = clipConfig.AudioClips[clipIndex];
+                LoopAvatarAudioSource.Play();
             }
         }
 
         [PublicAPI("Used by Animation Events")]
         public void PlayHardLandingSound() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
-
-        [PublicAPI("Used by Animation Events")]
-        public void PlayLongFallSound() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.LongFall); //This should be a looping sounds that gets interrupted when landing.
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
 
         [PublicAPI("Used by Animation Events")]
         public void PlayShortFallSound() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.ShortFall);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.ShortFall);
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_ClothesRustleShort() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.ClothesRustleShort);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.ClothesRustleShort);
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Clap() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.Clap);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.Clap);
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_FootstepLight() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepLight);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepLight);
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_FootstepWalkRight() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepWalkRight);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepWalkRight);
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_FootstepWalkLeft() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepWalkLeft);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepWalkLeft);
 
         [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_Hohoho() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.Hohoho);
+        public void AnimEvent_Hohoho()
+        {
+            //In old renderer we would play some sticker animations here
+        }
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_BlowKiss() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.BlowKiss);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.BlowKiss);
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_ThrowMoney() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.ThrowMoney);
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.ThrowMoney);
 
         [PublicAPI("Used by Animation Events")]
-        public void AnimEvent_Snowflakes() =>
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.Snowflakes);
-
-
-        private void PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType clipType)
+        public void AnimEvent_Snowflakes()
         {
+            //In old renderer we would play some sticker animations here
+        }
+
+
+        private void PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType clipType)
+        {
+            if (LoopAvatarAudioSource.isPlaying)
+                LoopAvatarAudioSource.Stop();
+
             if (!AvatarAudioSettings.AudioEnabled) return;
 
             AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);

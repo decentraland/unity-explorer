@@ -64,10 +64,8 @@ namespace DCL.Audio
             FootstepLight,
             FootstepWalkRight,
             FootstepWalkLeft,
-            Hohoho,
             BlowKiss,
             ThrowMoney,
-            Snowflakes,
         }
     }
 }
