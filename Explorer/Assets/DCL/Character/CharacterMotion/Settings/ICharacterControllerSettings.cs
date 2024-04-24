@@ -58,8 +58,10 @@ namespace DCL.CharacterMotion.Settings
         float PlatformRaycastLength { get; }
         float DownwardsSlopeJogRaycastDistance { get; }
         float DownwardsSlopeRunRaycastDistance { get; }
+        bool HeadIKIsEnabled { get; set; }
         float HeadIKVerticalAngleLimit { get; set; }
         float HeadIKHorizontalAngleLimit { get; set; }
+        float HeadIKHorizontalAngleReset { get; set; }
         float HeadIKRotationSpeed { get; set; }
         AnimationCurve SlopeVelocityModifier { get; }
         float SlideAnimationBlendSpeed { get; }
