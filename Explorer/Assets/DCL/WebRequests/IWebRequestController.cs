@@ -142,6 +142,22 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) =>
             controller.SendAsync(HEAD_GENERIC, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo);
 
+        public static async UniTask<bool> IsReachableAsync(this IWebRequestController controller, URLAddress url, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            try
+            {
+                await controller.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         ///     Make a request that is optimized for texture creation
         /// </summary>
