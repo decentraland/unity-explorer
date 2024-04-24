@@ -162,9 +162,7 @@ namespace DCL.LOD.Systems
             byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
-            
-            //TODO (Juani) : Remove this hardcoded number once we have only two lod levels
-            sceneLODInfo.CurrentLODLevel = (byte)(sceneLODCandidate > 0 ? 3 : 0);
+            sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new

@@ -40,33 +40,17 @@ namespace ECS.StreamableLoading.AssetBundles
             this.loadingMutex = loadingMutex;
         }
 
-        private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundle assetBundle, CancellationToken ct)
+        private async UniTask<AssetBundleData[]> LoadDependenciesAsync(GetAssetBundleIntention parentIntent, IPartitionComponent partition, AssetBundleMetadata assetBundleMetadata, CancellationToken ct)
         {
+            // Construct dependency promises and wait for them
+            // Switch to main thread to create dependency promises
             await UniTask.SwitchToMainThread();
-            string? metadata;
 
-            using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                metadata = GetMetadata(assetBundle)?.text;
+            var manifest = parentIntent.Manifest;
+            var customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
 
-            if (metadata != null)
-            {
-                using PoolExtensions.Scope<AssetBundleMetadata> reusableMetadata = METADATA_POOL.AutoScope();
-
-                // Parse metadata
-                JsonUtility.FromJsonOverwrite(metadata, reusableMetadata.Value);
-
-                // Construct dependency promises and wait for them
-                // Switch to main thread to create dependency promises
-                await UniTask.SwitchToMainThread();
-
-                var manifest = parentIntent.Manifest;
-                var customEmbeddedSubdirectory = parentIntent.CommonArguments.CustomEmbeddedSubDirectory;
-
-                return await UniTask.WhenAll(reusableMetadata.Value.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
-            }
-
-            return Array.Empty<AssetBundleData>();
-        }
+            return await UniTask.WhenAll(assetBundleMetadata.dependencies.Select(hash => WaitForDependencyAsync(manifest, hash, customEmbeddedSubdirectory, partition, ct)));
+    }
 
         protected override async UniTask<StreamableLoadingResult<AssetBundleData>> FlowInternalAsync(GetAssetBundleIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
@@ -106,13 +90,31 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 AssetBundleMetrics? metrics = metricsFile != null ? JsonUtility.FromJson<AssetBundleMetrics>(metricsFile.text) : null;
 
-                AssetBundleData[] dependencies = await LoadDependenciesAsync(intention, partition, assetBundle, ct);
+                await UniTask.SwitchToMainThread();
+                string? metadata;
+                using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
+                    metadata = GetMetadata(assetBundle)?.text;
+                
+                AssetBundleData[] dependencies;
+                string mainAsset = "";
+
+                if (metadata != null)
+                {
+                    using PoolExtensions.Scope<AssetBundleMetadata> reusableMetadata = METADATA_POOL.AutoScope();
+                    // Parse metadata
+                    JsonUtility.FromJsonOverwrite(metadata, reusableMetadata.Value);
+                    mainAsset = reusableMetadata.Value.mainAsset;
+                    dependencies = await LoadDependenciesAsync(intention, partition, reusableMetadata.Value, ct);
+                }
+                else
+                    dependencies = Array.Empty<AssetBundleData>();
+                 
 
                 await UniTask.SwitchToMainThread();
                 ct.ThrowIfCancellationRequested();
 
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, loadingMutex, dependencies, GetReportCategory(), ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset,loadingMutex, dependencies, GetReportCategory(), ct);
             }
             catch (Exception)
             {
@@ -126,7 +128,7 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         public static async UniTask<StreamableLoadingResult<AssetBundleData>> CreateAssetBundleDataAsync(
-            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType,
+            AssetBundle assetBundle, AssetBundleMetrics? metrics, Type? expectedObjType, string? mainAsset,
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
             string reportCategory,
@@ -136,18 +138,17 @@ namespace ECS.StreamableLoading.AssetBundles
             if (expectedObjType == null)
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
 
-            var asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, loadingMutex, reportCategory, ct);
+            var asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies));
         }
 
         protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>
             asset.AddReference();
 
-        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, AssetBundleLoadingMutex loadingMutex, string reportCategory, CancellationToken ct) {
+        private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, string reportCategory, CancellationToken ct) {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
-            // we are only interested in game objects
-            AssetBundleRequest asyncOp = assetBundle.LoadAllAssetsAsync(objectType);
+            AssetBundleRequest asyncOp = !string.IsNullOrEmpty(mainAsset) ? assetBundle.LoadAssetAsync(mainAsset, objectType) : assetBundle.LoadAllAssetsAsync(objectType);
             await asyncOp.WithCancellation(ct);
 
             var assets = asyncOp.allAssets;
