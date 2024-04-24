@@ -38,9 +38,28 @@ MonoBehaviour:
   - rid: 3836309668583964676
   - rid: 6697045322133929986
   - rid: 4132209997426458630
+  - rid: 758312836191223810
   references:
     version: 2
     RefIds:
+    - rid: 758312836191223810
+      type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <UIAudioPlaybackControllerReference>k__BackingField:
+          m_AssetGUID: df3decac75a242f4689cb445dc93eb06
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <WorldAudioPlaybackControllerReference>k__BackingField:
+          m_AssetGUID: d9a7adc162dc338449107a4654a26d50
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        LandscapeAudioSettingsReference:
+          m_AssetGUID: 81289e85b8c13dc4b8ea68b7940e76a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
