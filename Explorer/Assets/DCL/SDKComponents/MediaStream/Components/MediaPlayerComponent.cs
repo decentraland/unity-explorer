@@ -1,6 +1,7 @@
 ﻿using DCL.ECSComponents;
 using RenderHeads.Media.AVProVideo;
 using System;
+using System.Threading;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -12,6 +13,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaPlayer MediaPlayer;
         public string URL;
+        public CancellationTokenSource Cts;
         public VideoState State;
 
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
@@ -21,6 +23,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Dispose()
         {
             MediaPlayer = null;
+            Cts.Dispose();
         }
     }
 }

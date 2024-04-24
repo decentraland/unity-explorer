@@ -57,8 +57,10 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (TryUpdateStreamUrl(ref component, sdkComponent.Url))
                 {
+                    component.Cts.Cancel();
+
                     if (component.State != VideoState.VsError)
-                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, default(CancellationToken),
+                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token,
                                         onComplete: () => mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing))
                                    .Forget();
                 }
@@ -81,8 +83,10 @@ namespace DCL.SDKComponents.MediaStream
 
                 if (TryUpdateStreamUrl(ref component, sdkComponent.Src))
                 {
+                    component.Cts.Cancel();
+
                     if (component.State != VideoState.VsError)
-                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, default(CancellationToken),
+                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token,
                                         onComplete: () => mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing)
                                                                      .UpdatePlaybackProperties(sdkComponent))
                                    .Forget();
