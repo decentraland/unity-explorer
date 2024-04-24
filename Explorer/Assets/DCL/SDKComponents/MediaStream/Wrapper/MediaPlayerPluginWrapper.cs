@@ -34,7 +34,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 #endif
         }
 
-        public void InjectToWorld(ISceneData sceneData, ref ArchSystemsWorldBuilder<World> builder, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
