@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.UI;
 using System;
 using TMPro;
@@ -67,5 +68,9 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Animator panelAnimator;
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig OnShowAudio { get; private set; }
     }
 }

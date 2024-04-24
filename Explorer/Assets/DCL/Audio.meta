@@ -1,6 +1,10 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/Audio.meta
 guid: 49af9a86f3d0bba4a894bbb3a4e1403c
 folderAsset: yes
+========
+guid: 10fe1221722fa9e4dabe50d0a581fd7d
+>>>>>>>> main:Explorer/Assets/AddressableAssetsData/Windows/addressables_content_state.bin.meta
 DefaultImporter:
   externalObjects: {}
   userData: 

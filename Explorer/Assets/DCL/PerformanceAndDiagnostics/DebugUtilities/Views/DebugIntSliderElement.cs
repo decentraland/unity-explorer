@@ -12,6 +12,7 @@ namespace DCL.DebugUtilities.Views
 
             sliderInt.lowValue = definition.Min;
             sliderInt.highValue = definition.Max;
+            sliderInt.label = definition.LabelName;
 
             definition.Binding.Connect(sliderInt);
         }

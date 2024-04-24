@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/DCL/PerformanceAndDiagnostics/DebugUtilities/Views/Assets/BetterSliders.uss?fileID=7433441132597879392&amp;guid=98f287e0ba7684141893f47032a07846&amp;type=3#BetterSliders" />
     <DCL.DebugUtilities.Views.DebugIntSliderElement style="align-self: stretch;">
-        <ui:SliderInt picking-mode="Ignore" value="38" high-value="100" inverted="false" show-input-field="true" />
+        <ui:SliderInt picking-mode="Ignore" value="38" high-value="100" inverted="false" show-input-field="true" label="slider" />
     </DCL.DebugUtilities.Views.DebugIntSliderElement>
 </ui:UXML>
