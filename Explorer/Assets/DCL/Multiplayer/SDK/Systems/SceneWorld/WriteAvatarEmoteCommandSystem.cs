@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention))]
+        [All(typeof(DeleteEntityIntention), typeof(AvatarEmoteCommandComponent))]
         private void HandleComponentRemoval(in Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEmoteCommand>(playerCRDTEntity.CRDTEntity);

@@ -42,6 +42,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             RemoveComponentOnPlayerDisconnectQuery(World);
 
+            RemoveComponentQuery(World);
+
             AddPlayerCRDTEntityQuery(World);
         }
 
@@ -114,11 +116,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
-                // Remove from whichever scene it was added
-                // sceneEcsExecutor.World.Remove<PlayerCRDTEntity>(playerCRDTEntity.SceneWorldEntity);
+                // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
+                // as the scene-level Writer systems need it to know which CRDT Entity to affect
                 sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
-
-                // sceneEcsExecutor.World.Remove<PlayerCRDTEntity, CRDTEntity>(playerCRDTEntity.SceneWorldEntity);
             }
 
             FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
