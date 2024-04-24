@@ -89,7 +89,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         }
 
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
-            new (dataPipe, multiPool, memoryPool);
+            new (dataPipe, multiPool, memoryPool, supportedVersion);
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {

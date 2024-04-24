@@ -21,21 +21,23 @@ namespace DCL.Multiplayer.Connections.Messaging
         private readonly List<string> recipients;
         private readonly IMultiPool multiPool;
         private readonly IMemoryPool memoryPool;
+        private readonly uint supportedVersion;
         private bool sent;
 
         private const string TOPIC = "";
 
-        public MessageWrap(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool) : this(
-            multiPool.Get<T>(), dataPipe, multiPool.Get<List<string>>(), multiPool, memoryPool
+        public MessageWrap(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, uint supportedVersion) : this(
+            multiPool.Get<T>(), dataPipe, multiPool.Get<List<string>>(), multiPool, memoryPool, supportedVersion
         ) { }
 
-        public MessageWrap(T payload, IDataPipe dataPipe, List<string> recipients, IMultiPool multiPool, IMemoryPool memoryPool)
+        public MessageWrap(T payload, IDataPipe dataPipe, List<string> recipients, IMultiPool multiPool, IMemoryPool memoryPool, uint supportedVersion)
         {
             Payload = payload;
             this.dataPipe = dataPipe;
             this.recipients = recipients;
             this.multiPool = multiPool;
             this.memoryPool = memoryPool;
+            this.supportedVersion = supportedVersion;
             sent = false;
         }
 
@@ -51,6 +53,7 @@ namespace DCL.Multiplayer.Connections.Messaging
 
             using var packetWrap = multiPool.TempResource<Packet>();
             packetWrap.value.ClearMessage();
+            packetWrap.value.Version = supportedVersion;
             WritePayloadToPacket(packetWrap.value);
             using MemoryWrap memory = memoryPool.Memory(packetWrap.value);
             packetWrap.value.WriteTo(memory);
