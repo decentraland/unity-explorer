@@ -1,3 +1,4 @@
+using DCL.Audio;
 using MVC;
 using System;
 using TMPro;
@@ -19,10 +20,17 @@ namespace DCL.EmotesWheel
         [field: SerializeField]
         public TMP_Text CurrentEmoteName { get; set; } = null!;
 
+        [field: SerializeField]
+        public AudioClipConfig CloseAudio { get; private set; }
+
         private void Awake()
         {
             foreach (Button button in closeButtons)
-                button.onClick.AddListener(() => OnClose?.Invoke());
+                button.onClick.AddListener(() =>
+                {
+                    UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
+                    OnClose?.Invoke();
+                });
         }
     }
 }

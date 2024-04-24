@@ -32,9 +32,7 @@ namespace DCL.EmotesWheel
 
         [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig EquipAudio { get; private set; }
-        [field: SerializeField]
-        public AudioClipConfig UnEquipAudio { get; private set; }
+        public AudioClipConfig ClickAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig HoverAudio { get; private set; }
 
@@ -42,11 +40,16 @@ namespace DCL.EmotesWheel
 
         private void Awake()
         {
-            playButton.onClick.AddListener(() => OnPlay?.Invoke(Slot));
+            playButton.onClick.AddListener(() =>
+            {
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(ClickAudio);
+                OnPlay?.Invoke(Slot);
+            });
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             hoverBackground.SetActive(true);
             OnHover?.Invoke(Slot);
         }
