@@ -15,6 +15,7 @@ using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 
 namespace DCL.SDKComponents.MediaStream
@@ -24,6 +25,9 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class CreateMediaPlayerSystem : BaseUnityLoopSystem
     {
+        private static readonly Action<MediaPlayer, PBVideoPlayer> SET_PLAYBACK_PROPERTIES_ACTION =
+            (mediaPlayer, sdkComponent) => mediaPlayer.SetPlaybackProperties(sdkComponent);
+
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
@@ -50,17 +54,13 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            if (!frameTimeBudget.TrySpendBudget()) return;
-
-            MediaPlayerComponent component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
-
-            if (component.State != VideoState.VsError)
-            {
-                MediaPlayer mediaPlayer = component.MediaPlayer;
-                mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing, component.Cts.Token, onComplete: null).Forget();
-            }
-
-            World.Add(entity, component);
+            CreateMediaPlayer(
+                entity,
+                sdkComponent.Url,
+                sdkComponent.HasVolume,
+                sdkComponent.Volume,
+                sdkComponent.HasPlaying && sdkComponent.Playing
+            );
         }
 
         [Query]
@@ -68,15 +68,33 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureComponent))]
         private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
         {
+            CreateMediaPlayer(
+                entity,
+                sdkComponent.Src,
+                sdkComponent.HasVolume,
+                sdkComponent.Volume,
+                sdkComponent.HasPlaying && sdkComponent.Playing,
+                mediaPlayer => SET_PLAYBACK_PROPERTIES_ACTION(mediaPlayer, sdkComponent)
+            );
+        }
+
+        private void CreateMediaPlayer(in Entity entity, string url, bool hasVolume, float volume, bool autoPlay, Action<MediaPlayer> onComplete = null)
+        {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            MediaPlayerComponent component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
+            MediaPlayerComponent component = CreateMediaPlayerComponent(url, hasVolume, volume);
 
             if (component.State != VideoState.VsError)
             {
                 MediaPlayer mediaPlayer = component.MediaPlayer;
-                mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing, component.Cts.Token, onComplete: OnComplete).Forget();
-                void OnComplete() => mediaPlayer.SetPlaybackProperties(sdkComponent);
+
+                mediaPlayer.OpenMediaIfReachableAsync(
+                                webRequestController,
+                                component.URL,
+                                autoPlay,
+                                component.Cts.Token,
+                                onComplete: () => onComplete?.Invoke(mediaPlayer))
+                           .Forget();
             }
 
             World.Add(entity, component);
@@ -93,7 +111,7 @@ namespace DCL.SDKComponents.MediaStream
                 MediaPlayer = mediaPlayerPool.Get(),
                 URL = url,
                 State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
-                Cts = new CancellationTokenSource()
+                Cts = new CancellationTokenSource(),
             };
 
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
