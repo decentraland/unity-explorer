@@ -87,6 +87,7 @@ jobs:
         if: always()
         run: |
           mkdir -p ${{ steps.testRunner.outputs.artifactsPath }}-junit
+          sudo rm /etc/apt/sources.list.d/microsoft-prod.list
           sudo apt-get update
           sudo apt-get install -y xsltproc
           sudo xsltproc \

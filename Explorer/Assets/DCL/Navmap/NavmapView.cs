@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
@@ -43,6 +44,13 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public MapCameraDragBehavior.MapCameraDragBehaviorData MapCameraDragBehaviorData { get; private set; }
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig ClickAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig HoverAudio { get; private set; }
+
     }
 
     [Serializable]

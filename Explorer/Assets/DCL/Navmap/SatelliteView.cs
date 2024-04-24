@@ -1,3 +1,4 @@
+using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using System;
 using TMPro;
@@ -22,10 +23,9 @@ namespace DCL.Navmap
         public void OnPointerClick(PointerEventData eventData)
         {
             int linkIndex = TMP_TextUtilities.FindIntersectingLink(SatelliteCreditsText, eventData.position, null);
+
             if (linkIndex != -1)
-            {
                 OnClickedGenesisCityLink?.Invoke();
-            }
         }
     }
 }

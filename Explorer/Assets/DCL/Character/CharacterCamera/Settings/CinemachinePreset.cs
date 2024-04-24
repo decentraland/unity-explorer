@@ -12,6 +12,7 @@ namespace DCL.CharacterCamera.Settings
         [SerializeField] private CinemachineFreeCameraData freeCameraData;
         [SerializeField] private int shoulderChangeSpeed;
 
+
         [field: SerializeField]
         public CameraMode DefaultCameraMode { get; private set; }
 
