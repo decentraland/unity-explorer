@@ -76,6 +76,7 @@ namespace DCL.EmotesWheel
         protected override void OnViewInstantiated()
         {
             viewInstance.OnClose += () => closeViewTask?.TrySetResult();
+            viewInstance.EditButton.onClick.AddListener(() => OpenBackpack());
             viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
@@ -211,9 +212,14 @@ namespace DCL.EmotesWheel
             PlayEmote(slot);
         }
 
-        private void OpenBackpack(InputAction.CallbackContext context)
+        private void OpenBackpack(InputAction.CallbackContext context) =>
+            OpenBackpack();
+
+        private void OpenBackpack()
         {
-            mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
+            mvcManager.ShowAsync(
+                ExplorePanelController.IssueCommand(
+                    new ExplorePanelParameter(ExploreSections.Backpack, BackpackSections.Emotes)));
             closeViewTask?.TrySetResult();
         }
 

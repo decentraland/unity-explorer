@@ -15,10 +15,17 @@ namespace DCL.EmotesWheel
         private Button[] closeButtons = null!;
 
         [field: SerializeField]
+        public Button EditButton { get; set; } = null!;
+
+        [field: SerializeField]
         public EmoteWheelSlotView[] Slots { get; set; } = null!;
 
         [field: SerializeField]
         public TMP_Text CurrentEmoteName { get; set; } = null!;
+
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig OpenAudio { get; private set; }
 
         [field: SerializeField]
         public AudioClipConfig CloseAudio { get; private set; }
@@ -31,6 +38,11 @@ namespace DCL.EmotesWheel
                     UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
                     OnClose?.Invoke();
                 });
+        }
+
+        private void OnEnable()
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenAudio);
         }
     }
 }
