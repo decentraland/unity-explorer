@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9662d456f7c841d486cf576051884da2, type: 3}
+  m_Name: InteractionsAudioConfigs
+  m_EditorClassIdentifier: 
+  primaryAudio: {fileID: 11400000, guid: 5cb261d1bea3aef49b924b30ccde2da8, type: 2}
+  pointerAudio: {fileID: 11400000, guid: 4dbb923c9eeae7b4aa889d022aedfa73, type: 2}
+  secondaryAudio: {fileID: 11400000, guid: 4fd033c4e4fb85c40a39fa3ed62eeb32, type: 2}

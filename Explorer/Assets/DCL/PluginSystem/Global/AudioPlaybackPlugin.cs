@@ -2,7 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Audio.System;
 using DCL.Audio.Systems;
 using DCL.Landscape;
 using System;
@@ -20,7 +19,7 @@ namespace DCL.PluginSystem.Global
 
         private ProvidedInstance<UIAudioPlaybackController> uiAudioPlaybackController;
         private ProvidedInstance<WorldAudioPlaybackController> worldAudioPlaybackController;
-        private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettingsReference;
+        private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettings;
 
         public AudioPlaybackPlugin(TerrainGenerator terrainGenerator, IAssetsProvisioner assetsProvisioner, bool enableLandscape)
         {
@@ -34,14 +33,14 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             if (enableLandscape)
-                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettingsReference.Value);
+                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettings.Value);
         }
 
         public async UniTask InitializeAsync(PluginSettings settings, CancellationToken ct)
         {
             uiAudioPlaybackController = await assetsProvisioner.ProvideInstanceAsync(settings.UIAudioPlaybackControllerReference, ct: ct);
             worldAudioPlaybackController = await assetsProvisioner.ProvideInstanceAsync(settings.WorldAudioPlaybackControllerReference, ct: ct);
-            landscapeAudioSettingsReference = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeAudioSettingsReference, ct: ct);
+            landscapeAudioSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeAudioSettingsReference, ct: ct);
 
             uiAudioPlaybackController.Value.Initialize();
             worldAudioPlaybackController.Value.Initialize();

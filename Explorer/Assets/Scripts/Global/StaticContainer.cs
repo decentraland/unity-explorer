@@ -206,6 +206,7 @@ namespace Global
                 new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
                 new MultiplayerPlugin(componentsContainer.ComponentPoolsRegistry),
+                new InteractionsAudioPlugin(addressablesProvisioner),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
