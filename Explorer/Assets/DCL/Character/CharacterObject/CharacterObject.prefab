@@ -42,7 +42,6 @@ GameObject:
   - component: {fileID: 6301405780681657970}
   - component: {fileID: 4218185613420667989}
   - component: {fileID: 3347068169948242622}
-  - component: {fileID: 8941740631281696217}
   m_Layer: 16
   m_Name: CharacterObject
   m_TagString: Untagged
@@ -107,14 +106,6 @@ CharacterController:
   m_SkinWidth: 0.001
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 1, z: 0}
---- !u!81 &8941740631281696217
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5855055849125013327}
-  m_Enabled: 1
 --- !u!1 &7086654594198520405
 GameObject:
   m_ObjectHideFlags: 0

@@ -24,6 +24,11 @@ namespace DCL.Landscape.Config.Editor
                 this.generatorTest = (TerrainGeneratorTest)target;
                 this.generatorTest.GenerateAsync().Forget();
             }
+            if (GUILayout.Button("Clear App Cache"))
+            {
+                this.generatorTest = (TerrainGeneratorTest)target;
+                this.generatorTest.ClearAppCache();
+            }
             GUI.enabled = true;
 
             base.OnInspectorGUI();

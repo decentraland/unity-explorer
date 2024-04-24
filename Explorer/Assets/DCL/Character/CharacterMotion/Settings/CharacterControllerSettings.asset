@@ -127,8 +127,9 @@ MonoBehaviour:
   <AnimationFallSpeed>k__BackingField: -3
   <AnimationLongFallSpeed>k__BackingField: -8
   <PlatformRaycastLength>k__BackingField: 0.3
-  <CameraFOVWhileRunning>k__BackingField: 20
-  <FOVChangeSpeed>k__BackingField: 30
+  <CameraFOVWhileRunning>k__BackingField: 15
+  <FOVIncreaseSpeed>k__BackingField: 15
+  <FOVDecreaseSpeed>k__BackingField: 20
   <FeetIKHipsPullMaxDistance>k__BackingField: 0.6
   <FeetIKSphereSize>k__BackingField: 0.1
   <IKWeightSpeed>k__BackingField: 10
@@ -141,8 +142,10 @@ MonoBehaviour:
   <HandsIKWallHitDistance>k__BackingField: 0.5
   <HandsIKWeightSpeed>k__BackingField: 5
   <HandsIKElbowOffset>k__BackingField: {x: 25.6, y: 38.8, z: -53.5}
+  <HeadIKIsEnabled>k__BackingField: 1
   <HeadIKVerticalAngleLimit>k__BackingField: 60
-  <HeadIKHorizontalAngleLimit>k__BackingField: 90
+  <HeadIKHorizontalAngleLimit>k__BackingField: 50
+  <HeadIKHorizontalAngleReset>k__BackingField: 120
   <HeadIKRotationSpeed>k__BackingField: 360
   <JumpPadForce>k__BackingField: 50
   <AnimationSpeed>k__BackingField: 1
