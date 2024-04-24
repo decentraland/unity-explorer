@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Cinemachine;
+using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
 using DCL.CharacterCamera.Components;
 using DCL.CharacterCamera.Settings;
@@ -22,6 +23,7 @@ namespace DCL.CharacterCamera.Tests
         private Camera camera;
         private GameObject cinemachineObj;
         private ICinemachinePreset cinemachinePreset;
+        private ICinemachineCameraAudioSettings cinemachineCameraAudioSettings;
         private Entity entity;
         private ICinemachineFirstPersonCameraData firstPersonCameraData;
         private ICinemachineFreeCameraData freeCameraData;
@@ -71,8 +73,8 @@ namespace DCL.CharacterCamera.Tests
             cinemachinePreset.ThirdPersonCameraData.Returns(thirdPersonCameraData);
             cinemachinePreset.DroneViewCameraData.Returns(droneViewData);
             cinemachinePreset.DefaultCameraMode.Returns(CameraMode.ThirdPerson);
-
-            system = new ControlCinemachineVirtualCameraSystem(world);
+            cinemachineCameraAudioSettings = Substitute.For<ICinemachineCameraAudioSettings>();
+            system = new ControlCinemachineVirtualCameraSystem(world, cinemachineCameraAudioSettings);
             world.Create(new InputMapComponent());
 
             entity = world.Create(cinemachinePreset, new CameraComponent(camera), new CinemachineCameraState(), new CameraInput(), new CursorComponent());

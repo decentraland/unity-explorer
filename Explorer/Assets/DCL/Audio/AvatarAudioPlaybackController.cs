@@ -3,7 +3,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.Audio
 {
@@ -12,7 +11,6 @@ namespace DCL.Audio
         [SerializeField] private AudioSource AvatarAudioSource;
         [SerializeField] private Animator AvatarAnimator;
         [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
-
 
         private void Start()
         {
@@ -24,6 +22,7 @@ namespace DCL.Audio
         {
             switch (GetMovementState())
             {
+                case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
                     break;
@@ -60,6 +59,7 @@ namespace DCL.Audio
         {
             switch (GetMovementState())
             {
+                case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
                     break;
@@ -76,13 +76,12 @@ namespace DCL.Audio
         public void PlayHardLandingSound()
         {
             PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
-
         }
 
         [PublicAPI("Used by Animation Events")]
         public void PlayLongFallSound()
         {
-            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.LongFall);
+            PlayAvatarAudioForType(AvatarAudioSettings.AvatarAudioClipType.LongFall); //This should be a looping sounds that gets interrupted when landing.
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -99,17 +98,18 @@ namespace DCL.Audio
 
             if (clipConfig == null)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio for {clipType} as it has no AudioClipConfig Assigned");
+                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no AudioClipConfig Assigned");
                 return;
             }
 
             if (clipConfig.AudioClips.Length == 0)
             {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no Audio Clips Assigned");
+                ReportHub.LogWarning(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no Audio Clips Assigned");
                 return;
             }
 
-            if (clipConfig.RelativeVolume == 0) {return;}
+            if (clipConfig.RelativeVolume == 0)
+                return;
 
             AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
@@ -119,22 +119,15 @@ namespace DCL.Audio
         private MovementKind GetMovementState()
         {
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Jog)
-            {
                 return MovementKind.Run;
-            }
 
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)(MovementKind.Walk))
-            {
+            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Walk)
                 return MovementKind.Jog;
-            }
 
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > AvatarAudioSettings.MovementBlendThreshold)
-            {
                 return MovementKind.Walk;
-            }
 
             return MovementKind.None;
         }
-
     }
 }
