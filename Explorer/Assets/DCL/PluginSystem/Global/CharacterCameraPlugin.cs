@@ -4,6 +4,7 @@ using CRDT;
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Character.CharacterCamera.Components;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
@@ -12,6 +13,7 @@ using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using DCL.DebugUtilities;
 using ECS.Prioritization.Components;
+using System;
 using System.Threading;
 using UnityEngine;
 using ApplyCinemachineSettingsSystem = DCL.Character.CharacterCamera.Systems.ApplyCinemachineSettingsSystem;
@@ -30,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput input;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
+        private ProvidedInstance<CinemachineCameraAudioSettings> cinemachineCameraAudioSettings;
 
         public CharacterCameraPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -53,6 +56,7 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(CharacterCameraSettings settings, CancellationToken ct)
         {
             providedCinemachinePreset = await assetsProvisioner.ProvideInstanceAsync(settings.cinemachinePreset, Vector3.zero, Quaternion.identity, ct: ct);
+            cinemachineCameraAudioSettings = await assetsProvisioner.ProvideInstanceAsync(settings.cinemachineCameraAudioSettingsReference, Vector3.zero, Quaternion.identity, ct: ct);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -92,7 +96,7 @@ namespace DCL.PluginSystem.Global
             exposedCameraData.CameraEntityProxy.SetObject(cameraEntity);
 
             // Register systems
-            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder);
+            ControlCinemachineVirtualCameraSystem.InjectToWorld(ref builder, cinemachineCameraAudioSettings.Value);
             ApplyCinemachineCameraInputSystem.InjectToWorld(ref builder, input);
             PrepareExposedCameraDataSystem.InjectToWorld(ref builder);
             ChinemachineFieldOfViewSystem.InjectToWorld(ref builder);

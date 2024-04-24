@@ -1,6 +1,7 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using DCL.DebugUtilities.Views;
 using DCL.Optimization.Pools;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -90,11 +91,10 @@ namespace DCL.DebugUtilities
         private DebugControl CreateControl(
             Func<DebugControl> controlFactoryMethod,
             IReadOnlyDictionary<Type, IDebugElementFactory> factories,
-            IDebugElementDef? left,
-            IDebugElementDef? right
-        )
+            IDebugElementDef left,
+            IDebugElementDef right)
         {
-            DebugControl debugControl = controlFactoryMethod()!;
+            DebugControl debugControl = controlFactoryMethod();
 
             VisualElement CreateElement(IDebugElementDef def)
             {

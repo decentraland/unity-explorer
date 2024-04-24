@@ -1010,6 +1010,8 @@ MonoBehaviour:
   <MapCameraDragBehaviorData>k__BackingField:
     inertia: 1
     decelerationRate: 0.00001
+  <ClickAudio>k__BackingField: {fileID: 11400000, guid: 7b6fe3a7507b38b4cb27bf406f7d6d23, type: 2}
+  <HoverAudio>k__BackingField: {fileID: 11400000, guid: 60845438e94f40140920775f272f9ca3, type: 2}
 --- !u!1001 &351487765774893139
 PrefabInstance:
   m_ObjectHideFlags: 0
