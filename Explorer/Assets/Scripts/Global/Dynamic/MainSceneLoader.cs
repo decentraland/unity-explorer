@@ -48,6 +48,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSceneLoaderSettings settings = null!;
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
+        [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private VideoPlayer splashAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic;
 
@@ -179,6 +180,7 @@ namespace Global.Dynamic
                         DynamicSettings = dynamicSettings,
                         Web3Authenticator = web3Authenticator,
                         Web3IdentityCache = identityCache,
+                        SplashAnimator = splashScreenAnimation
                     },
                     new DynamicWorldParams
                     {
@@ -235,10 +237,12 @@ namespace Global.Dynamic
                 if (showSplash)
                     await WaitUntilSplashAnimationEndsAsync(ct);
 
-                splashRoot.SetActive(false);
+                splashScreenAnimation.transform.SetSiblingIndex(1);
 
                 await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                     globalWorld.EcsWorld, playerEntity, ct);
+
+                splashRoot.SetActive(false);
 
                 UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);

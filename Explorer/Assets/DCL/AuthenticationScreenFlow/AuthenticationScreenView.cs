@@ -6,13 +6,14 @@ using System;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 
 namespace DCL.AuthenticationScreenFlow
 {
-    public class AuthenticationScreenView : ViewBase, IView
+    public class AuthenticationScreenView : ViewBase, IView, IPointerClickHandler
     {
         [SerializeField] private LocalizeStringEvent countdownLabel;
 
@@ -25,6 +26,9 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public GameObject ConnectingToServerContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject Slides { get; private set; } = null!;
 
         [field: SerializeField]
         public GameObject PendingAuthentication { get; private set; } = null!;
@@ -62,6 +66,18 @@ namespace DCL.AuthenticationScreenFlow
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; } = null!;
 
+        [field: SerializeField]
+        public Animator LoginAnimator { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Animator VerificationAnimator { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Animator FinalizeAnimator { get; private set; } = null!;
+
+        [field: SerializeField]
+        public TMP_Text VersionText { get; private set; } = null!;
+
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
             do
@@ -72,6 +88,11 @@ namespace DCL.AuthenticationScreenFlow
                 await UniTask.Delay(1000, cancellationToken: ct);
             }
             while (expiration > DateTime.UtcNow);
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            VerificationCodeHintContainer.SetActive(false);
         }
     }
 }
