@@ -13,7 +13,6 @@ using ECS.Unity.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -82,9 +81,10 @@ namespace DCL.SDKComponents.MediaStream
                 State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
             };
 
-            component.MediaPlayer
-                     .OpenMediaIfValid(component.URL, autoPlay)
-                     .UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
+            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
+
+            if (component.State != VideoState.VsError)
+                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay);
 
             return component;
         }
