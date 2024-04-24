@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -70,7 +71,10 @@ namespace DCL.Profiles.Self
             var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
             ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
+            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
+
             profile = profileBuilder.From(profile)
+                                    .WithBodyShape(bodyShape)
                                     .WithWearables(uniqueWearables)
                                     .WithEmotes(uniqueEmotes)
                                     .WithForceRender(forceRender)

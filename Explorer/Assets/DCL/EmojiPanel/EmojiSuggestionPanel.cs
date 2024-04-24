@@ -11,7 +11,7 @@ namespace DCL.Emoji
 {
     public class EmojiSuggestionPanel
     {
-        public event Action<string> OnEmojiSelected;
+        public event Action<string, bool> OnEmojiSelected;
 
         public bool IsActive { get; private set; }
 
@@ -45,7 +45,7 @@ namespace DCL.Emoji
         private void OnSubmit(InputAction.CallbackContext obj)
         {
             if (previouslySelected != null && IsActive)
-                OnEmojiSelected?.Invoke(previouslySelected.Emoji.text);
+                OnEmojiSelected?.Invoke(previouslySelected.Emoji.text, false);
         }
 
         private void OnArrowUp(InputAction.CallbackContext obj)
@@ -67,7 +67,7 @@ namespace DCL.Emoji
         private EmojiSuggestionView CreatePoolElement(EmojiSuggestionPanelView view, EmojiSuggestionView emojiSuggestion)
         {
             EmojiSuggestionView emojiSuggestionView = Object.Instantiate(emojiSuggestion, view.EmojiSuggestionContainer);
-            emojiSuggestionView.OnEmojiSelected += (emojiData) => OnEmojiSelected?.Invoke(emojiData);
+            emojiSuggestionView.OnEmojiSelected += (emojiData) => OnEmojiSelected?.Invoke(emojiData, true);
             return emojiSuggestionView;
         }
 
@@ -126,6 +126,9 @@ namespace DCL.Emoji
 
         private void SetSelectedEmoji(int index)
         {
+            if (!view.gameObject.activeInHierarchy)
+                return;
+
             if (previouslySelected != null)
                 previouslySelected.SelectedBackground.SetActive(false);
 

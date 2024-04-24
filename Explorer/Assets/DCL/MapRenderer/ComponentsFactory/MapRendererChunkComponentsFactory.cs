@@ -22,11 +22,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
-        /// <summary>
-        /// If we wait indefinitely for the chunks to load, this can prevent the game from starting.
-        /// </summary>
-        private static readonly TimeSpan CHUNKS_MAX_WAIT_TIME = TimeSpan.FromSeconds(15);
-
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
@@ -107,7 +102,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var chunkAtlas = new SatelliteChunkAtlasController(configuration.SatelliteAtlasRoot, GRID_SIZE, PARCELS_INSIDE_CHUNK, coordsUtils, cullingController, chunkBuilder: CreateSatelliteChunkAsync);
 
-            await chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow();
+            chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.SatelliteAtlas, chunkAtlas);
             return;
@@ -141,9 +136,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
 
                 // If it takes more than CHUNKS_MAX_WAIT_TIME to load the chunk, it will be finished asynchronously
-                await UniTask.WhenAny(
-                    UniTask.Delay(CHUNKS_MAX_WAIT_TIME, cancellationToken: ct),
-                    chunk.LoadImageAsync(MapRendererSettings.ATLAS_CHUNK_SIZE, MapRendererSettings.PARCEL_SIZE, coordsCenter, ct));
+                await chunk.LoadImageAsync(MapRendererSettings.ATLAS_CHUNK_SIZE, MapRendererSettings.PARCEL_SIZE, coordsCenter, ct);
 
                 return chunk;
             }

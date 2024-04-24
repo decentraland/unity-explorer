@@ -1,9 +1,10 @@
-using Arch.CommandBuffer;
+using Arch.Buffer;
 using Arch.Core;
 using CRDT.Protocol;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
 {
@@ -34,14 +35,18 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
             {
                 case CRDTReconciliationEffect.ComponentModified:
                     // if component is modified then return to the pool the existing one
-                    componentPool.Release(world.Get<T>(entity));
-                    commandBuffer.Set(entity, c);
+                    // No need to add it to the command buffer as we already get the component by ref and can "override" it directly without overhead
+                    ref T pointerToPrevObj = ref world.Get<T>(entity);
+                    componentPool.Release(pointerToPrevObj);
+                    pointerToPrevObj = c;
                     break;
                 case CRDTReconciliationEffect.ComponentAdded:
+                    Debug.Assert(!world.Has<T>(entity)); // Trace Assert from Arch will not work with Unity
                     commandBuffer.Add(entity, c);
                     break;
                 case CRDTReconciliationEffect.ComponentDeleted:
                     // if component is deleted return to the pool the existing one
+                    Debug.Assert(world.Has<T>(entity));
                     componentPool.Release(world.Get<T>(entity));
                     commandBuffer.Remove<T>(entity);
                     world.Get<RemovedComponents>(entity).Set.Add(typeof(T));

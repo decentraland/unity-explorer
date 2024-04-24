@@ -61,7 +61,9 @@ namespace ECS.ComponentsPooling.Systems
                         Type type = component.GetType();
 
                         if (componentPoolsRegistry.TryGetPool(type, out IComponentPool pool))
+                        {
                             pool.Release(component);
+                        }
                     }
                 }
             }

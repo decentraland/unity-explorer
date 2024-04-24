@@ -690,6 +690,33 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ChangeShoulder"",
+                    ""type"": ""Button"",
+                    ""id"": ""2bd33339-099a-414d-8b06-d5032ddb0f56"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""SwitchState"",
+                    ""type"": ""Button"",
+                    ""id"": ""35e9217b-165d-43f7-b6e5-ac78cea73300"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleFreeFly"",
+                    ""type"": ""Button"",
+                    ""id"": ""f0d9c33e-e2ee-4902-98ff-5f81a8ee1dd9"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -921,6 +948,50 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""TemporalLock"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d8c1e2df-a407-4c51-b671-e22c363784e5"",
+                    ""path"": ""<Keyboard>/v"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchState"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""236c63c2-73a8-4f9a-a955-051e35f959a4"",
+                    ""path"": ""<XInputController>/rightStick/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""SwitchState"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0412c0a4-8235-4599-b09d-0352f3cb4ee9"",
+                    ""path"": ""<Keyboard>/period"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ChangeShoulder"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4463f967-7c19-47a9-9eec-d5411cd773d4"",
+                    ""path"": ""<Keyboard>/f11"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleFreeFly"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1810,6 +1881,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ShowHideUI"",
+                    ""type"": ""Button"",
+                    ""id"": ""3b6f2b65-94c5-44ac-9e21-5c3ad3429220"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1887,6 +1967,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ToggleAvatarBubbles"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""a9d64da9-27ec-4ee4-bb71-6a68cd4ee3b3"",
+                    ""path"": ""<Keyboard>/u"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ShowHideUI"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2357,6 +2448,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Camera_Unlock = m_Camera.FindAction("Unlock", throwIfNotFound: true);
         m_Camera_Delta = m_Camera.FindAction("Delta", throwIfNotFound: true);
         m_Camera_TemporalLock = m_Camera.FindAction("TemporalLock", throwIfNotFound: true);
+        m_Camera_ChangeShoulder = m_Camera.FindAction("ChangeShoulder", throwIfNotFound: true);
+        m_Camera_SwitchState = m_Camera.FindAction("SwitchState", throwIfNotFound: true);
+        m_Camera_ToggleFreeFly = m_Camera.FindAction("ToggleFreeFly", throwIfNotFound: true);
         // FreeCamera
         m_FreeCamera = asset.FindActionMap("FreeCamera", throwIfNotFound: true);
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
@@ -2387,6 +2481,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_ToggleUI = m_Shortcuts.FindAction("ToggleUI", throwIfNotFound: true);
         m_Shortcuts_EmoteWheel = m_Shortcuts.FindAction("EmoteWheel", throwIfNotFound: true);
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
+        m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -2634,6 +2729,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_Unlock;
     private readonly InputAction m_Camera_Delta;
     private readonly InputAction m_Camera_TemporalLock;
+    private readonly InputAction m_Camera_ChangeShoulder;
+    private readonly InputAction m_Camera_SwitchState;
+    private readonly InputAction m_Camera_ToggleFreeFly;
     public struct CameraActions
     {
         private @DCLInput m_Wrapper;
@@ -2646,6 +2744,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Unlock => m_Wrapper.m_Camera_Unlock;
         public InputAction @Delta => m_Wrapper.m_Camera_Delta;
         public InputAction @TemporalLock => m_Wrapper.m_Camera_TemporalLock;
+        public InputAction @ChangeShoulder => m_Wrapper.m_Camera_ChangeShoulder;
+        public InputAction @SwitchState => m_Wrapper.m_Camera_SwitchState;
+        public InputAction @ToggleFreeFly => m_Wrapper.m_Camera_ToggleFreeFly;
         public InputActionMap Get() { return m_Wrapper.m_Camera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2679,6 +2780,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @TemporalLock.started += instance.OnTemporalLock;
             @TemporalLock.performed += instance.OnTemporalLock;
             @TemporalLock.canceled += instance.OnTemporalLock;
+            @ChangeShoulder.started += instance.OnChangeShoulder;
+            @ChangeShoulder.performed += instance.OnChangeShoulder;
+            @ChangeShoulder.canceled += instance.OnChangeShoulder;
+            @SwitchState.started += instance.OnSwitchState;
+            @SwitchState.performed += instance.OnSwitchState;
+            @SwitchState.canceled += instance.OnSwitchState;
+            @ToggleFreeFly.started += instance.OnToggleFreeFly;
+            @ToggleFreeFly.performed += instance.OnToggleFreeFly;
+            @ToggleFreeFly.canceled += instance.OnToggleFreeFly;
         }
 
         private void UnregisterCallbacks(ICameraActions instance)
@@ -2707,6 +2817,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @TemporalLock.started -= instance.OnTemporalLock;
             @TemporalLock.performed -= instance.OnTemporalLock;
             @TemporalLock.canceled -= instance.OnTemporalLock;
+            @ChangeShoulder.started -= instance.OnChangeShoulder;
+            @ChangeShoulder.performed -= instance.OnChangeShoulder;
+            @ChangeShoulder.canceled -= instance.OnChangeShoulder;
+            @SwitchState.started -= instance.OnSwitchState;
+            @SwitchState.performed -= instance.OnSwitchState;
+            @SwitchState.canceled -= instance.OnSwitchState;
+            @ToggleFreeFly.started -= instance.OnToggleFreeFly;
+            @ToggleFreeFly.performed -= instance.OnToggleFreeFly;
+            @ToggleFreeFly.canceled -= instance.OnToggleFreeFly;
         }
 
         public void RemoveCallbacks(ICameraActions instance)
@@ -2947,6 +3066,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_ToggleUI;
     private readonly InputAction m_Shortcuts_EmoteWheel;
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
+    private readonly InputAction m_Shortcuts_ShowHideUI;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -2958,6 +3078,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @ToggleUI => m_Wrapper.m_Shortcuts_ToggleUI;
         public InputAction @EmoteWheel => m_Wrapper.m_Shortcuts_EmoteWheel;
         public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
+        public InputAction @ShowHideUI => m_Wrapper.m_Shortcuts_ShowHideUI;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -2988,6 +3109,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleAvatarBubbles.started += instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.performed += instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.canceled += instance.OnToggleAvatarBubbles;
+            @ShowHideUI.started += instance.OnShowHideUI;
+            @ShowHideUI.performed += instance.OnShowHideUI;
+            @ShowHideUI.canceled += instance.OnShowHideUI;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -3013,6 +3137,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ToggleAvatarBubbles.started -= instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.performed -= instance.OnToggleAvatarBubbles;
             @ToggleAvatarBubbles.canceled -= instance.OnToggleAvatarBubbles;
+            @ShowHideUI.started -= instance.OnShowHideUI;
+            @ShowHideUI.performed -= instance.OnShowHideUI;
+            @ShowHideUI.canceled -= instance.OnShowHideUI;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -3186,6 +3313,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnUnlock(InputAction.CallbackContext context);
         void OnDelta(InputAction.CallbackContext context);
         void OnTemporalLock(InputAction.CallbackContext context);
+        void OnChangeShoulder(InputAction.CallbackContext context);
+        void OnSwitchState(InputAction.CallbackContext context);
+        void OnToggleFreeFly(InputAction.CallbackContext context);
     }
     public interface IFreeCameraActions
     {
@@ -3219,6 +3349,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnToggleUI(InputAction.CallbackContext context);
         void OnEmoteWheel(InputAction.CallbackContext context);
         void OnToggleAvatarBubbles(InputAction.CallbackContext context);
+        void OnShowHideUI(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {

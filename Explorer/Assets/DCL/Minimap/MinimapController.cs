@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -160,6 +161,11 @@ namespace DCL.Minimap
                 {
                     PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
                     viewInstance.placeNameText.text = placeInfo.title;
+                }
+                catch (NotAPlaceException notAPlaceException)
+                {
+                    viewInstance.placeNameText.text = "Unknown place";
+                    ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
                 finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }

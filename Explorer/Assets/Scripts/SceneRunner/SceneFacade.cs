@@ -22,22 +22,17 @@ namespace SceneRunner
 {
     public class SceneFacade : ISceneFacade
     {
-        internal readonly ISceneRuntime runtimeInstance;
-        internal readonly ECSWorldFacade ecsWorldFacade;
-        internal readonly ICRDTProtocol crdtProtocol;
-        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        internal readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
-        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        internal readonly ICRDTProtocol crdtProtocol;
+        internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
+        internal readonly ECSWorldFacade ecsWorldFacade;
         internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-        internal readonly ISceneStateProvider sceneStateProvider;
+        internal readonly IInstancePoolsProvider instancePoolsProvider;
+        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
+        internal readonly ISceneRuntime runtimeInstance;
+        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
         private int intervalMS;
-
-        public ISceneData SceneData { get; }
-
-        public SceneShortInfo Info => SceneData.SceneShortInfo;
 
         public SceneFacade(
             ISceneRuntime runtimeInstance,
@@ -50,7 +45,8 @@ namespace SceneRunner
             ISceneExceptionsHandler sceneExceptionsHandler,
             ISceneStateProvider sceneStateProvider,
             IEntityCollidersSceneCache entityCollidersSceneCache,
-            ISceneData sceneData)
+            ISceneData sceneData,
+            SceneEcsExecutor ecsExecutor)
         {
             this.runtimeInstance = runtimeInstance;
             this.ecsWorldFacade = ecsWorldFacade;
@@ -60,21 +56,29 @@ namespace SceneRunner
             this.instancePoolsProvider = instancePoolsProvider;
             this.crdtMemoryAllocator = crdtMemoryAllocator;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
-            this.sceneStateProvider = sceneStateProvider;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             SceneData = sceneData;
+            EcsExecutor = ecsExecutor;
+            SceneStateProvider = sceneStateProvider;
         }
+
+        public ISceneData SceneData { get; }
+        public ISceneStateProvider SceneStateProvider { get; }
+        public SceneEcsExecutor EcsExecutor { get; }
+
+        public SceneShortInfo Info => SceneData.SceneShortInfo;
+        public bool IsEmpty { get; } = false;
 
         public void Dispose()
         {
             AssertMainThread(nameof(Dispose), true);
 
-            sceneStateProvider.State = SceneState.Disposing;
+            SceneStateProvider.State = SceneState.Disposing;
             runtimeInstance.SetIsDisposing();
 
             DisposeInternal();
 
-            sceneStateProvider.State = SceneState.Disposed;
+            SceneStateProvider.State = SceneState.Disposed;
         }
 
         public void SetTargetFPS(int fps)
@@ -103,14 +107,14 @@ namespace SceneRunner
         {
             AssertMainThread(nameof(StartUpdateLoopAsync));
 
-            if (sceneStateProvider.State != SceneState.NotStarted)
+            if (SceneStateProvider.State != SceneState.NotStarted)
                 throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
 
             // Process "main.crdt" first
             if (SceneData.StaticSceneMessages.Data.Length > 0)
                 runtimeInstance.ApplyStaticMessages(SceneData.StaticSceneMessages.Data);
 
-            sceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
+            SceneStateProvider.SetRunning(new SceneEngineStartInfo(DateTime.Now, (int)MultithreadingUtility.FrameCount));
 
             SetTargetFPS(targetFPS);
 
@@ -136,7 +140,7 @@ namespace SceneRunner
                 {
                     // 1. 'ct' is an external cancellation token
                     // 2. don't try to run the update loop if DisposeAsync was already called
-                    if (ct.IsCancellationRequested || sceneStateProvider.State is SceneState.Disposing or SceneState.Disposed)
+                    if (ct.IsCancellationRequested || SceneStateProvider.State is SceneState.Disposing or SceneState.Disposed)
                         break;
 
                     stopWatch.Restart();
@@ -152,7 +156,7 @@ namespace SceneRunner
                         break;
                     }
 
-                    sceneStateProvider.TickNumber++;
+                    SceneStateProvider.TickNumber++;
 
                     AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 
@@ -178,7 +182,7 @@ namespace SceneRunner
         {
             bool TryComplete()
             {
-                if (sceneStateProvider.State != SceneState.Running)
+                if (SceneStateProvider.State != SceneState.Running)
                     return true;
 
                 return false;
@@ -213,7 +217,7 @@ namespace SceneRunner
 
         public void SetIsCurrent(bool isCurrent)
         {
-            sceneStateProvider.IsCurrent = isCurrent;
+            SceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
             ecsWorldFacade.OnSceneIsCurrentChanged(isCurrent);
         }
@@ -222,7 +226,7 @@ namespace SceneRunner
         {
             // Because of multithreading Disposing is not synced with the update loop
             // so just mark it as disposed and let the update loop handle the disposal
-            sceneStateProvider.State = SceneState.Disposing;
+            SceneStateProvider.State = SceneState.Disposing;
 
             // TODO do it better
             runtimeInstance.SetIsDisposing();
@@ -231,9 +235,8 @@ namespace SceneRunner
 
             DisposeInternal();
 
-            sceneStateProvider.State = SceneState.Disposed;
+            SceneStateProvider.State = SceneState.Disposed;
         }
-
         private void DisposeInternal()
         {
             runtimeInstance.Dispose();

@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(DCLImage), new ComponentPool<DCLImage>() },
+                    { typeof(DCLImage), new ComponentPool.WithDefaultCtor<DCLImage>() },
                 }, null);
 
             sceneData = Substitute.For<ISceneData>();

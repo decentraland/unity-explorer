@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.DebugUtilities.Extensions;
+using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -47,6 +48,9 @@ namespace DCL.DebugUtilities
         public VisualTreeAsset FloatField { get; private set; }
 
         [field: SerializeField]
+        public VisualTreeAsset FloatSlider { get; private set; }
+
+        [field: SerializeField]
         public VisualTreeAsset Vector2IntField { get; private set; }
 
         [field: SerializeField]
@@ -54,5 +58,25 @@ namespace DCL.DebugUtilities
 
         [field: SerializeField]
         public VisualTreeAsset DropdownField { get; private set; }
+
+        public void Validate()
+        {
+            Widget.EnsureNotNull(nameof(Widget));
+            ControlContainer.EnsureNotNull(nameof(ControlContainer));
+            Button.EnsureNotNull(nameof(Button));
+            Toggle.EnsureNotNull(nameof(Toggle));
+            ConstLabel.EnsureNotNull(nameof(ConstLabel));
+            SetOnlyLabel.EnsureNotNull(nameof(SetOnlyLabel));
+            Hint.EnsureNotNull(nameof(Hint));
+            TextField.EnsureNotNull(nameof(TextField));
+            LongMarker.EnsureNotNull(nameof(LongMarker));
+            IntField.EnsureNotNull(nameof(IntField));
+            IntSlider.EnsureNotNull(nameof(IntSlider));
+            FloatField.EnsureNotNull(nameof(FloatField));
+            FloatSlider.EnsureNotNull(nameof(FloatSlider));
+            Vector2IntField.EnsureNotNull(nameof(Vector2IntField));
+            Vector3Field.EnsureNotNull(nameof(Vector3Field));
+            DropdownField.EnsureNotNull(nameof(DropdownField));
+        }
     }
 }

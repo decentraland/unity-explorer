@@ -11,6 +11,7 @@ namespace DCL.DebugUtilities
 
         public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog)
         {
+            viewsCatalog.Validate();
             return new DebugUtilitiesContainer
             {
                 Builder = new DebugContainerBuilder(
@@ -24,6 +25,7 @@ namespace DCL.DebugUtilities
                         { typeof(DebugHintDef), new DebugElementBase<DebugHintElement, DebugHintDef>.Factory(viewsCatalog.Hint) },
                         { typeof(DebugIntFieldDef), new DebugElementBase<DebugIntFieldElement, DebugIntFieldDef>.Factory(viewsCatalog.IntField) },
                         { typeof(DebugIntSliderDef), new DebugElementBase<DebugIntSliderElement, DebugIntSliderDef>.Factory(viewsCatalog.IntSlider) },
+                        { typeof(DebugFloatSliderDef), new DebugElementBase<DebugFloatSliderElement, DebugFloatSliderDef>.Factory(viewsCatalog.FloatSlider) },
                         { typeof(DebugVector2IntFieldDef), new DebugElementBase<DebugVector2IntFieldElement, DebugVector2IntFieldDef>.Factory(viewsCatalog.Vector2IntField) },
                         { typeof(DebugLongMarkerDef), new DebugElementBase<DebugLongMarkerElement, DebugLongMarkerDef>.Factory(viewsCatalog.LongMarker) },
                         { typeof(DebugSetOnlyLabelDef), new DebugElementBase<DebugSetOnlyLabelElement, DebugSetOnlyLabelDef>.Factory(viewsCatalog.SetOnlyLabel) },

@@ -65,7 +65,6 @@ namespace SceneRunner
         private readonly IRealmData? realmData;
         private readonly ICommunicationControllerHub messagePipesHub;
 
-
         private IGlobalWorldActions globalWorldActions = null!;
 
         public SceneFactory(
@@ -159,15 +158,15 @@ namespace SceneRunner
             // Per scene instance dependencies
             var ecsMutexSync = new MutexSync();
             var crdtProtocol = new CRDTProtocol();
-            var instancePoolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
-            var crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
+            InstancePoolsProvider instancePoolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
+            CRDTPooledMemoryAllocator crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
             var outgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, crdtProtocol, crdtMemoryAllocator);
             var ecsToCrdtWriter = new ECSToCRDTWriter(outgoingCRDTMessagesProvider);
             var systemGroupThrottler = new SystemGroupsUpdateGate();
             var entityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             var sceneStateProvider = new SceneStateProvider();
-            var exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
+            SceneExceptionsHandler exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo, crdtProtocol).EnsureNotNull();
             var worldTimeProvider = new WorldTimeProvider();
 
             /* Pass dependencies here if they are needed by the systems */
@@ -176,7 +175,8 @@ namespace SceneRunner
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
 
-            entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync));
+            var ecsExecutor = new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync);
+            entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, ecsExecutor);
 
             URLAddress sceneCodeUrl;
 
@@ -261,7 +261,8 @@ namespace SceneRunner
                 exceptionsHandler,
                 sceneStateProvider,
                 entityCollidersCache,
-                sceneData);
+                sceneData,
+                ecsExecutor);
         }
     }
 }

@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             poolsRegistry = new ComponentPoolsRegistry(
                 new Dictionary<Type, IComponentPool>
                 {
-                    { typeof(UITransformComponent), new ComponentPool<UITransformComponent>() },
+                    { typeof(UITransformComponent), new ComponentPool.WithDefaultCtor<UITransformComponent>() },
                 }, null);
 
             entity = world.Create();

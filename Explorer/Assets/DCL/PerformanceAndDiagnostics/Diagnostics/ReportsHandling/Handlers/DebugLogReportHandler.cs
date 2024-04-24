@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -111,10 +112,19 @@ namespace DCL.Diagnostics
         {
             string color = GetCategoryColor(in reportData);
 
-            if (reportData.SceneShortInfo.BaseParcel != Vector2Int.zero)
-                return $"<color=#{color}>[{reportData.Category}] {reportData.SceneShortInfo.BaseParcel}</color>: ";
+            var debugLogBuilder = new StringBuilder();
+            debugLogBuilder.Append($"<color=#{color}>");
+            debugLogBuilder.Append($"[{reportData.Category}]");
 
-            return $"<color=#{color}>[{reportData.Category}]</color>: ";
+            if (reportData.SceneShortInfo.BaseParcel != Vector2Int.zero)
+                debugLogBuilder.Append($" {reportData.SceneShortInfo.BaseParcel}");
+
+            if (reportData.SceneTickNumber != null)
+                debugLogBuilder.Append($" [T: {reportData.SceneTickNumber}]");
+
+            debugLogBuilder.Append("</color>: ");
+
+            return debugLogBuilder.ToString();
         }
     }
 }
