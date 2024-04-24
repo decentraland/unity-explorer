@@ -13,6 +13,9 @@ namespace DCL.Character.CharacterMotion.Velocity
             if (rigidTransform.IsStuck)
                 return;
 
+            if (!settings.EnableCharacterRotationBySlope)
+                return;
+
             bool isTimeToRotate = rigidTransform.SteepSlopeTime >= settings.SlopeCharacterRotationDelay;
             bool angleIsTooSteep = rigidTransform.SteepSlopeAngle >= settings.MaxSlopeAngle;
 

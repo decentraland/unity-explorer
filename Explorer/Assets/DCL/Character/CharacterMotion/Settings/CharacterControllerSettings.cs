@@ -46,6 +46,8 @@ namespace DCL.CharacterMotion.Settings
         [field: SerializeField] public float SlideAnimationBlendSpeed { get; private set; } = 7;
         [field: SerializeField] public float MinSlopeAngle { get; private set; } = 50;
         [field: SerializeField] public float MaxSlopeAngle { get; private set; } = 80;
+
+        [field: SerializeField] public bool EnableCharacterRotationBySlope { get; private set; }
         [field: SerializeField] public float SlopeCharacterRotationDelay { get; private set; } = 0.25f;
         [field: SerializeField] public AnimationCurve SlopeVelocityModifier { get; private set; }
         [field: SerializeField] public float WallSlideDetectionDistance { get; private set; } = 0.5f;
