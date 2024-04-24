@@ -369,7 +369,7 @@ namespace Global.Dynamic
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, realmData, identityCache, characterPreviewFactory),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, realmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator),
                 new StylizedSkyboxPlugin(staticContainer.AssetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, dclCursor),

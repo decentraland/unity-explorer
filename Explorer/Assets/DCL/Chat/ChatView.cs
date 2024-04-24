@@ -69,6 +69,9 @@ namespace DCL.Chat
         public AudioClipConfig ChatReceiveMessageAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig ChatInputTextAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig EnterInputAudio { get; private set; }
+
 
         private CancellationTokenSource cts;
 
