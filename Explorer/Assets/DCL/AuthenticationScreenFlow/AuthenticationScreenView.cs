@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.CharacterPreview;
 using MVC;
 using System;
