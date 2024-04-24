@@ -106,7 +106,7 @@ namespace DCL.PluginSystem.Global
 
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                     selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider,
-                    builder.World.CacheInputMap(), dclInput.EmoteWheel, mvcManager);
+                    builder.World.CacheInputMap(), dclInput, mvcManager);
 
                 mvcManager.RegisterController(emotesWheelController);
             };

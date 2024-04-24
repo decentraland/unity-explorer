@@ -2425,6 +2425,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""Close"",
+                    ""type"": ""Button"",
+                    ""id"": ""70080cdc-5d60-454d-8346-c846b43b7257"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Slot 0"",
                     ""type"": ""Button"",
                     ""id"": ""c39365ce-e2ee-4317-9676-b824b564a3c9"",
@@ -2636,6 +2645,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""action"": ""Slot 9"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5e4186e9-47e0-41ca-975c-99421a98132a"",
+                    ""path"": ""<Keyboard>/b"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Close"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -2725,6 +2745,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         // EmoteWheel
         m_EmoteWheel = asset.FindActionMap("EmoteWheel", throwIfNotFound: true);
         m_EmoteWheel_Customize = m_EmoteWheel.FindAction("Customize", throwIfNotFound: true);
+        m_EmoteWheel_Close = m_EmoteWheel.FindAction("Close", throwIfNotFound: true);
         m_EmoteWheel_Slot0 = m_EmoteWheel.FindAction("Slot 0", throwIfNotFound: true);
         m_EmoteWheel_Slot1 = m_EmoteWheel.FindAction("Slot 1", throwIfNotFound: true);
         m_EmoteWheel_Slot2 = m_EmoteWheel.FindAction("Slot 2", throwIfNotFound: true);
@@ -3521,6 +3542,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputActionMap m_EmoteWheel;
     private List<IEmoteWheelActions> m_EmoteWheelActionsCallbackInterfaces = new List<IEmoteWheelActions>();
     private readonly InputAction m_EmoteWheel_Customize;
+    private readonly InputAction m_EmoteWheel_Close;
     private readonly InputAction m_EmoteWheel_Slot0;
     private readonly InputAction m_EmoteWheel_Slot1;
     private readonly InputAction m_EmoteWheel_Slot2;
@@ -3536,6 +3558,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         private @DCLInput m_Wrapper;
         public EmoteWheelActions(@DCLInput wrapper) { m_Wrapper = wrapper; }
         public InputAction @Customize => m_Wrapper.m_EmoteWheel_Customize;
+        public InputAction @Close => m_Wrapper.m_EmoteWheel_Close;
         public InputAction @Slot0 => m_Wrapper.m_EmoteWheel_Slot0;
         public InputAction @Slot1 => m_Wrapper.m_EmoteWheel_Slot1;
         public InputAction @Slot2 => m_Wrapper.m_EmoteWheel_Slot2;
@@ -3558,6 +3581,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Customize.started += instance.OnCustomize;
             @Customize.performed += instance.OnCustomize;
             @Customize.canceled += instance.OnCustomize;
+            @Close.started += instance.OnClose;
+            @Close.performed += instance.OnClose;
+            @Close.canceled += instance.OnClose;
             @Slot0.started += instance.OnSlot0;
             @Slot0.performed += instance.OnSlot0;
             @Slot0.canceled += instance.OnSlot0;
@@ -3595,6 +3621,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Customize.started -= instance.OnCustomize;
             @Customize.performed -= instance.OnCustomize;
             @Customize.canceled -= instance.OnCustomize;
+            @Close.started -= instance.OnClose;
+            @Close.performed -= instance.OnClose;
+            @Close.canceled -= instance.OnClose;
             @Slot0.started -= instance.OnSlot0;
             @Slot0.performed -= instance.OnSlot0;
             @Slot0.canceled -= instance.OnSlot0;
@@ -3734,6 +3763,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     public interface IEmoteWheelActions
     {
         void OnCustomize(InputAction.CallbackContext context);
+        void OnClose(InputAction.CallbackContext context);
         void OnSlot0(InputAction.CallbackContext context);
         void OnSlot1(InputAction.CallbackContext context);
         void OnSlot2(InputAction.CallbackContext context);

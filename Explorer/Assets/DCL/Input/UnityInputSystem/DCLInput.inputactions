@@ -2403,6 +2403,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "Close",
+                    "type": "Button",
+                    "id": "70080cdc-5d60-454d-8346-c846b43b7257",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Slot 0",
                     "type": "Button",
                     "id": "c39365ce-e2ee-4317-9676-b824b564a3c9",
@@ -2612,6 +2621,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Slot 9",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5e4186e9-47e0-41ca-975c-99421a98132a",
+                    "path": "<Keyboard>/b",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Close",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

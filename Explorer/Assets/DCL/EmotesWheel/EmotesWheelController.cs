@@ -30,12 +30,13 @@ namespace DCL.EmotesWheel
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly SingleInstanceEntity currentInputMapsEntity;
-        private readonly DCLInput.EmoteWheelActions dclInput;
+        private readonly DCLInput.EmoteWheelActions emoteWheelInput;
         private readonly IMVCManager mvcManager;
         private readonly URN[] currentEmotes = new URN[Avatar.MAX_EQUIPPED_EMOTES];
         private UniTaskCompletionSource? closeViewTask;
         private CancellationTokenSource? fetchProfileCts;
         private CancellationTokenSource? slotSetUpCts;
+        private readonly DCLInput dclInput;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -47,7 +48,7 @@ namespace DCL.EmotesWheel
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
             SingleInstanceEntity currentInputMapsEntity,
-            DCLInput.EmoteWheelActions dclInput,
+            DCLInput dclInput,
             IMVCManager mvcManager)
             : base(viewFactory)
         {
@@ -59,24 +60,28 @@ namespace DCL.EmotesWheel
             this.thumbnailProvider = thumbnailProvider;
             this.currentInputMapsEntity = currentInputMapsEntity;
             this.dclInput = dclInput;
+            emoteWheelInput = this.dclInput.EmoteWheel;
             this.mvcManager = mvcManager;
 
-            dclInput.Customize.performed += OpenBackpack;
-            ListenToSlotsInput(dclInput);
+            emoteWheelInput.Customize.performed += OpenBackpack;
+            dclInput.UI.Close.performed += Close;
+
+            ListenToSlotsInput(this.dclInput.EmoteWheel);
         }
 
         public override void Dispose()
         {
             base.Dispose();
 
-            dclInput.Customize.performed -= OpenBackpack;
-            UnregisterSlotsInput(dclInput);
+            emoteWheelInput.Customize.performed -= OpenBackpack;
+            dclInput.UI.Close.performed -= Close;
+            UnregisterSlotsInput(emoteWheelInput);
         }
 
         protected override void OnViewInstantiated()
         {
             viewInstance.OnClose += () => closeViewTask?.TrySetResult();
-            viewInstance.EditButton.onClick.AddListener(() => OpenBackpack());
+            viewInstance.EditButton.onClick.AddListener(OpenBackpack);
             viewInstance.CurrentEmoteName.text = "";
 
             for (var i = 0; i < viewInstance.Slots.Length; i++)
@@ -256,6 +261,9 @@ namespace DCL.EmotesWheel
                 inputAction.started -= PlayEmote;
             }
         }
+
+        private void Close(InputAction.CallbackContext context) =>
+            closeViewTask?.TrySetResult();
 
         private static string GetSlotInputName(int slot) =>
             $"Slot {slot}";
