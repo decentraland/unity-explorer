@@ -20,6 +20,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly IMultiPool multiPool;
         private readonly IMemoryPool memoryPool;
         private readonly MessageParser<Packet> messageParser;
+        private readonly uint supportedVersion;
 
         private readonly Dictionary<string, List<Action<(Packet, Participant)>>> subscribers = new ();
 
@@ -34,15 +35,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var packet = multiPool.Get<Packet>();
                 packet.ClearMessage();
                 return packet;
-            })
+            }),
+            1
         ) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser)
+        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion)
         {
             this.dataPipe = dataPipe;
             this.multiPool = multiPool;
             this.memoryPool = memoryPool;
             this.messageParser = messageParser;
+            this.supportedVersion = supportedVersion;
 
             dataPipe.DataReceived += OnDataReceived;
         }
@@ -102,6 +105,11 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                     {
                         Packet packet = tuple.Item1!;
                         Participant participant = tuple.Item2!;
+
+                        uint version = 1;//TODO packet.Version;
+
+                        if (version != supportedVersion)
+                            return;
 
                         var receivedMessage = new ReceivedMessage<T>(
                             Payload<T>(packet),
