@@ -25,9 +25,6 @@ namespace DCL.SDKComponents.MediaStream
     [ThrottlingEnabled]
     public partial class CreateMediaPlayerSystem : BaseUnityLoopSystem
     {
-        private static readonly Action<MediaPlayer, PBVideoPlayer> SET_PLAYBACK_PROPERTIES_ACTION =
-            (mediaPlayer, sdkComponent) => mediaPlayer.SetPlaybackProperties(sdkComponent);
-
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
@@ -54,13 +51,7 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            CreateMediaPlayer(
-                entity,
-                sdkComponent.Url,
-                sdkComponent.HasVolume,
-                sdkComponent.Volume,
-                sdkComponent.HasPlaying && sdkComponent.Playing
-            );
+            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
         }
 
         [Query]
@@ -68,14 +59,10 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureComponent))]
         private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
         {
-            CreateMediaPlayer(
-                entity,
-                sdkComponent.Src,
-                sdkComponent.HasVolume,
-                sdkComponent.Volume,
-                sdkComponent.HasPlaying && sdkComponent.Playing,
-                mediaPlayer => SET_PLAYBACK_PROPERTIES_ACTION(mediaPlayer, sdkComponent)
-            );
+            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, sdkComponent.HasPlaying && sdkComponent.Playing, OnComplete);
+            return;
+
+            void OnComplete(MediaPlayer mediaPlayer) => mediaPlayer.SetPlaybackProperties(sdkComponent);
         }
 
         private void CreateMediaPlayer(in Entity entity, string url, bool hasVolume, float volume, bool autoPlay, Action<MediaPlayer> onComplete = null)
@@ -87,14 +74,8 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
             {
                 MediaPlayer mediaPlayer = component.MediaPlayer;
-
-                mediaPlayer.OpenMediaIfReachableAsync(
-                                webRequestController,
-                                component.URL,
-                                autoPlay,
-                                component.Cts.Token,
-                                onComplete: () => onComplete?.Invoke(mediaPlayer))
-                           .Forget();
+                mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay, component.Cts.Token, OnComplete).Forget();
+                void OnComplete() => onComplete?.Invoke(mediaPlayer);
             }
 
             World.Add(entity, component);

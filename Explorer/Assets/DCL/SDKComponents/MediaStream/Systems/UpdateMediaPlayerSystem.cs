@@ -14,6 +14,7 @@ using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 using UnityEngine;
 
@@ -48,59 +49,47 @@ namespace DCL.SDKComponents.MediaStream
         [Query]
         private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent)
         {
-            if (component.State != VideoState.VsError)
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            UpdateMediaStream(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, sdkComponent.HasPlaying, sdkComponent.Playing, OnComplete);
+            return;
 
-            if (sdkComponent.IsDirty && frameTimeBudget.TrySpendBudget())
-            {
-                MediaPlayer mediaPlayer = component.MediaPlayer;
-
-                if (TryUpdateStreamUrl(ref component, sdkComponent.Url))
-                {
-                    if (component.State != VideoState.VsError)
-                    {
-                        component.Cts.Cancel();
-                        component.Cts = new CancellationTokenSource();
-
-                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token,
-                                     onComplete: () => mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing))
-                                .Forget();
-
-                    }
-                }
-                else if (component.State != VideoState.VsError)
-                    mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
-
-                sdkComponent.IsDirty = false;
-            }
+            void OnComplete(MediaPlayer mediaPlayer) => mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
         }
 
         [Query]
         private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
         {
-            if (component.State != VideoState.VsError)
-                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            UpdateMediaStream(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, sdkComponent.HasPlaying, sdkComponent.Playing, OnComplete);
+            return;
 
-            if (sdkComponent.IsDirty && frameTimeBudget.TrySpendBudget())
+            void OnComplete(MediaPlayer mediaPlayer) =>
+                mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing)
+                           .UpdatePlaybackProperties(sdkComponent);
+        }
+
+        private void UpdateMediaStream(ref MediaPlayerComponent component, IDirtyMarker marker, string url, bool hasVolume, float volume, bool hasPlaying, bool playing, Action<MediaPlayer> onComplete)
+        {
+            if (component.State != VideoState.VsError)
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
+
+            if (marker.IsDirty && frameTimeBudget.TrySpendBudget())
             {
                 MediaPlayer mediaPlayer = component.MediaPlayer;
 
-                if (TryUpdateStreamUrl(ref component, sdkComponent.Src))
+                if (TryUpdateStreamUrl(ref component, url))
                 {
                     if (component.State != VideoState.VsError)
                     {
                         component.Cts.Cancel();
                         component.Cts = new CancellationTokenSource();
+                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
 
-                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token,
-                                     onComplete: () => mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing)
-                                                                  .UpdatePlaybackProperties(sdkComponent))
-                                .Forget();}
+                        void OnComplete() => onComplete?.Invoke(mediaPlayer);
+                    }
                 }
                 else if (component.State != VideoState.VsError)
-                    mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+                    mediaPlayer.UpdatePlayback(hasPlaying, playing);
 
-                sdkComponent.IsDirty = false;
+                marker.IsDirty = false;
             }
         }
 
