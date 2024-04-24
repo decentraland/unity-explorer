@@ -43,8 +43,8 @@ namespace DCL.Interaction.Systems
         {
             Material materialToUse = highlightComponent.IsAtDistance() ? hoverMaterial : hoverOorMaterial;
 
-            if (highlightComponent.CurrentEntity() != EntityReference.Null
-                && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntity()))
+            if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
+                && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
                 highlightComponent.Disable();
 
             if (highlightComponent.CanUpdate(materialToUse))
@@ -54,7 +54,7 @@ namespace DCL.Interaction.Systems
             {
                 highlightComponent.UpdateMaterial(materialToUse);
 
-                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntity());
+                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntityOrNull());
                 TryAddHoverMaterials(ref highlightComponent, in transformComponent);
             }
             else
@@ -62,7 +62,7 @@ namespace DCL.Interaction.Systems
                 if (highlightComponent.IsEmpty())
                     return;
 
-                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntity());
+                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntityOrNull());
                 TryRemoveHoverMaterialFromComponentSiblings(ref highlightComponent, in transformComponent);
                 highlightComponent.MoveNextAndRemoveMaterial();
             }

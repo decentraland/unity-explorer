@@ -64,12 +64,12 @@ namespace DCL.Interaction.Raycast.Components
             isAtDistance;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly EntityReference CurrentEntity() =>
+        public readonly EntityReference CurrentEntityOrNull() =>
             currentEntity;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool IsEmpty() =>
-            currentEntity == EntityReference.Null && materialOnUse == null;
+            currentEntity == EntityReference.Null || materialOnUse == null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool CanUpdate(Material materialToUse) =>
