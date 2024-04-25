@@ -88,6 +88,8 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
@@ -107,9 +109,7 @@ jobs:
           
       - name: Create Version
         id: create-version
-        run: |
-          git fetch remote
-          git fetch --tags
+        run: | 
           $latestTag = git describe --tags
           $branchName = git rev-parse --abbrev-ref HEAD
           
