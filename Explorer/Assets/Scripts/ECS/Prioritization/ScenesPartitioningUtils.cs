@@ -19,7 +19,7 @@ namespace ECS.Prioritization
             public float RawSqrDistance;
         }
 
-        public static bool CheckCameraTransformChanged(PartitionDiscreteDataBase partitionDiscreteData, in CameraComponent cameraComponent,
+        public static bool TryUpdateCameraTransformOnChanged(PartitionDiscreteDataBase partitionDiscreteData, in CameraComponent cameraComponent,
             float sqrPositionTolerance, float angleTolerance)
         {
             Transform camTransform = cameraComponent.Camera.transform;

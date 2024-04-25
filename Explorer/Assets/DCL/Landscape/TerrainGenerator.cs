@@ -30,9 +30,10 @@ namespace DCL.Landscape
         private const int CACHE_VERSION = 2;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
-        private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.6f;
-        private const float PROGRESS_COUNTER_DIG_HOLES = 0.75f;
+        private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
+        private const float PROGRESS_COUNTER_DIG_HOLES = 0.5f;
         private const float PROGRESS_SPAWN_TERRAIN = 0.25f;
+        private const float PROGRESS_SPAWN_RE_ENABLE_TERRAIN = 0.25f;
         private readonly NoiseGeneratorCache noiseGenCache;
         private readonly ReportData reportData;
         private readonly TimeProfiler timeProfiler;
@@ -67,6 +68,7 @@ namespace DCL.Landscape
         public IReadOnlyList<Terrain> Terrains => terrains;
 
         public bool IsTerrainGenerated { get; private set; }
+        private bool isInitialized;
 
         public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -95,16 +97,22 @@ namespace DCL.Landscape
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData, noiseGenCache);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+
+            isInitialized = true;
         }
 
         public void Dispose()
         {
+            if (!isInitialized) return;
+
             if (rootGo != null)
                 UnityObjectUtils.SafeDestroy(rootGo);
         }
 
         public void SwitchVisibility(bool isVisible)
         {
+            if (!isInitialized) return;
+
             if (rootGo != null)
                 rootGo.gameObject.SetActive(isVisible);
         }
@@ -118,6 +126,8 @@ namespace DCL.Landscape
             AsyncLoadProcessReport processReport = null,
             CancellationToken cancellationToken = default)
         {
+            if (!isInitialized) return;
+
             this.showTerrainByDefault = showTerrainByDefault;
 
             this.hideDetails = hideDetails;
@@ -174,6 +184,9 @@ namespace DCL.Landscape
 
                     await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
+                    // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+                    await ReEnableTerrainAsync(processReport);
+
                     if (processReport != null) processReport.ProgressCounter.Value = 1f;
                 }
             }
@@ -191,6 +204,20 @@ namespace DCL.Landscape
                     localCache.Save();
 
                 IsTerrainGenerated = true;
+            }
+        }
+
+        private async UniTask ReEnableTerrainAsync(AsyncLoadProcessReport processReport)
+        {
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = false;
+
+            // we enable them one by one to avoid a super hiccup
+            for (var i = 0; i < terrains.Count; i++)
+            {
+                terrains[i].enabled = true;
+                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + (i / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
+                await UniTask.Yield();
             }
         }
 
@@ -224,7 +251,7 @@ namespace DCL.Landscape
                 cancellationToken.ThrowIfCancellationRequested();
 
                 terrains.Add(
-                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, showTerrainByDefault));
+                    factory.CreateTerrainObject(chunkModel.TerrainData, rootGo.transform, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
 
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;

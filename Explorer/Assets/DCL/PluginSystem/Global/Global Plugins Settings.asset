@@ -38,11 +38,11 @@ MonoBehaviour:
   - rid: 3836309668583964676
   - rid: 6697045322133929986
   - rid: 4132209997426458630
-  - rid: 758312836191223810
+  - rid: 758312859982102531
   references:
     version: 2
     RefIds:
-    - rid: 758312836191223810
+    - rid: 758312859982102531
       type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <LandscapeAudioSettingsReference>k__BackingField:
@@ -57,11 +57,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <WorldAudioPlaybackControllerReference>k__BackingField:
           m_AssetGUID: d9a7adc162dc338449107a4654a26d50
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <InteractionsAudioConfigsReference>k__BackingField:
-          m_AssetGUID: cbb820cf51b7a714e88a7c873eb5de9c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -185,6 +180,7 @@ MonoBehaviour:
         - dontsee
         - hammer
         - handsair
+        - hands_in_the_air
         - hohoho
         - robot
         - snowfall
@@ -446,6 +442,21 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EmoteAudioSource>k__BackingField:
           m_AssetGUID: 62f68ba25f6c905428b36a081b072566
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmotesWheelPrefab>k__BackingField:
+          m_AssetGUID: 58c436690cb47644492bc0d655dbcce8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <PersistentEmoteWheelOpenerPrefab>k__BackingField:
+          m_AssetGUID: c522d0b7573224f59a5c1fde68c734e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmoteWheelRarityBackgrounds>k__BackingField:
+          m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

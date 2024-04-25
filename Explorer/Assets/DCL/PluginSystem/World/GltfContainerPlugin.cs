@@ -1,6 +1,5 @@
 using Arch.SystemGroups;
 using DCL.ECSComponents;
-using DCL.Interaction.Utility;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
 using ECS.LifeCycle;
@@ -53,24 +52,6 @@ namespace DCL.PluginSystem.World
                 CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
 
             finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
-        }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
-        {
-            // Asset loading
-            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
-            ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
-
-            // GLTF Container
-            LoadGltfContainerSystem.InjectToWorld(ref builder);
-            FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, dependencies.SceneRoot, globalDeps.FrameTimeBudget, NullEntityCollidersSceneCache.INSTANCE, dependencies.SceneData);
-
-            ResetGltfContainerSystem.InjectToWorld(ref builder, assetsCache, NullEntityCollidersSceneCache.INSTANCE);
-
-            ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
-
-            CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, NullEntityCollidersSceneCache.INSTANCE);
         }
     }
 }
