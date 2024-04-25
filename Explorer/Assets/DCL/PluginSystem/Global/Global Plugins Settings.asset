@@ -436,6 +436,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <PersistentEmoteWheelOpenerPrefab>k__BackingField:
+          m_AssetGUID: c522d0b7573224f59a5c1fde68c734e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <EmoteWheelRarityBackgrounds>k__BackingField:
           m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
           m_SubObjectName: 

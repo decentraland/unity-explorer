@@ -71,7 +71,7 @@ namespace DCL.AvatarRendering.Emotes
             if (shortcuts.EmoteWheel.WasReleasedThisFrame())
             {
                 if (!isWheelBlocked)
-                    mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
+                    OpenEmoteWheel();
 
                 isWheelBlocked = false;
             }
@@ -132,5 +132,8 @@ namespace DCL.AvatarRendering.Emotes
 
         private static string GetActionName(int i) =>
             $"Slot {i}";
+
+        private void OpenEmoteWheel() =>
+            mvcManager.ShowAsync(EmotesWheelController.IssueCommand()).Forget();
     }
 }

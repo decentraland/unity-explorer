@@ -95,6 +95,15 @@ namespace DCL.PluginSystem.Global
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
+            PersistentEmoteWheelOpenerView persistentEmoteWheelOpenerView = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentEmoteWheelOpenerPrefab, ct))
+                                                                           .Value.GetComponent<PersistentEmoteWheelOpenerView>();
+
+            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(
+                PersistentEmoteWheelOpenerController.CreateLazily(persistentEmoteWheelOpenerView, null),
+                mvcManager);
+
+            mvcManager.RegisterController(persistentEmoteWheelOpenerController);
+
             EmotesWheelView emotesWheelPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmotesWheelPrefab, ct))
                                                .Value.GetComponent<EmotesWheelView>();
 
@@ -118,6 +127,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField] public AssetReferenceT<EmbeddedEmotesData> EmbeddedEmotes { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmoteAudioSource { get; set; } = null!;
             [field: SerializeField] public AssetReferenceGameObject EmotesWheelPrefab { get; set; } = null!;
+            [field: SerializeField] public AssetReferenceGameObject PersistentEmoteWheelOpenerPrefab { get; set; } = null!;
             [field: SerializeField] public AssetReferenceT<NftTypeIconSO> EmoteWheelRarityBackgrounds { get; set; } = null!;
 
             [Serializable]

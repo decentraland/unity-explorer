@@ -5,6 +5,7 @@ using DCL.Audio;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Diagnostics;
+using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Minimap;
 using DCL.PluginSystem;
@@ -103,7 +104,7 @@ namespace Global.Dynamic
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
-        {                
+        {
 #if !UNITY_EDITOR
 #if !DEVELOPMENT_BUILD
 
@@ -112,7 +113,7 @@ namespace Global.Dynamic
             showAuthentication = true;
             showLoading = true;
             enableLOD = true;
-            
+
 #endif
 
             //enableLandscape = true;
@@ -124,7 +125,7 @@ namespace Global.Dynamic
             try
             {
                 splashRoot.SetActive(showSplash);
-                
+
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
@@ -283,6 +284,7 @@ namespace Global.Dynamic
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
