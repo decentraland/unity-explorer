@@ -121,11 +121,6 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
-        {
-
-        }
-
         private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, MutexSync mutexSync)
         {
             LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, mutexSync, webContentSizes);

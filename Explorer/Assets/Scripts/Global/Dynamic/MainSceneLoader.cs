@@ -103,7 +103,7 @@ namespace Global.Dynamic
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
-        {                
+        {
 #if !UNITY_EDITOR
 #if !DEVELOPMENT_BUILD
 
@@ -124,7 +124,7 @@ namespace Global.Dynamic
             try
             {
                 splashRoot.SetActive(showSplash);
-                
+
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
@@ -229,8 +229,7 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
 
-                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
-                    dynamicWorldContainer.EmptyScenesWorldFactory);
+                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
 
                 debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
