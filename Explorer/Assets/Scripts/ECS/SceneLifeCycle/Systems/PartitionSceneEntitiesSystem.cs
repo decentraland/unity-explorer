@@ -126,6 +126,8 @@ namespace ECS.SceneLifeCycle.Systems
                 PartitionComponent partitionComponent = partitionComponentPool.Get();
                 // some default values to not break other systems
                 partitionComponent.Bucket = 2;
+                World.Add(entity, partitionComponent);
+                return;
             }
 
             if (definition.InternalJobIndex < 0)
