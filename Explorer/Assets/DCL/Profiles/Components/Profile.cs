@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.ECSComponents;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -8,18 +9,18 @@ using UnityEngine;
 
 namespace DCL.Profiles
 {
-    public class Profile
+    public class Profile : IDirtyMarker
     {
-        public StreamableLoadingResult<Sprite>? ProfilePicture { get; set; }
         private static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
-
-        private string userId;
-        private string name;
-        private bool hasClaimedName;
 
         internal HashSet<string>? blocked;
         internal List<string>? interests;
         internal List<string>? links;
+
+        private string userId;
+        private string name;
+        private bool hasClaimedName;
+        public StreamableLoadingResult<Sprite>? ProfilePicture { get; set; }
 
         public string UserId
         {

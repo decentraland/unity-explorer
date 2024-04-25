@@ -10,11 +10,11 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
-using WritePlayerIdentityDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WritePlayerIdentityDataSystem;
+using WriteSDKAvatarBaseSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteSDKAvatarBaseSystem;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
-    public class WritePlayerIdentityDataSystemShould : UnitySystemTestBase<WritePlayerIdentityDataSystem>
+    public class WriteSDKAvatarBaseSystemShould : UnitySystemTestBase<WriteSDKAvatarBaseSystem>
     {
         private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
 
@@ -28,9 +28,10 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
-            system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter);
+            system = new WriteSDKAvatarBaseSystem(world, ecsToCRDTWriter);
 
             profile = Profile.NewRandomProfile(FAKE_USER_ID);
+            profile.IsDirty = true;
 
             playerCRDTEntity = new PlayerCRDTEntity(
                 SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
@@ -48,19 +49,29 @@ namespace DCL.Multiplayer.SDK.Tests
         }
 
         [Test]
-        public void DispatchPlayerIdentityDataUpdateCorrectly()
+        public void DispatchAvatarBaseUpdateCorrectly()
         {
             world.Add(entity, profile);
-
             system.Update(0);
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBPlayerIdentityData, (string address, bool isGuest)>>(),
+                                Arg.Any<Action<PBAvatarBase, Profile>>(),
                                 playerCRDTEntity.CRDTEntity,
-                                Arg.Is<(string address, bool isGuest)>(data =>
-                                    data.address == profile.UserId
-                                    && data.isGuest == !profile.HasConnectedWeb3));
+                                profile);
+
+            ecsToCRDTWriter.ClearReceivedCalls();
+            profile.Name = "newName";
+            profile.IsDirty = true;
+
+            world.Set(entity, profile);
+            system.Update(0);
+
+            ecsToCRDTWriter.Received(1)
+                           .PutMessage(
+                                Arg.Any<Action<PBAvatarBase, Profile>>(),
+                                playerCRDTEntity.CRDTEntity,
+                                profile);
         }
 
         [Test]
@@ -73,7 +84,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerCRDTEntity.CRDTEntity);
+            ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarBase>(playerCRDTEntity.CRDTEntity);
         }
     }
 }
