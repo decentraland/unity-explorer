@@ -3,10 +3,10 @@ using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Utilities;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -14,7 +14,6 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -32,7 +31,7 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             sceneWorld = World.Create();
             Entity sceneWorldEntity = sceneWorld.Create();
-            ISceneFacade sceneFacade = CreateTestSceneFacade(Vector2Int.zero, sceneWorld);
+            ISceneFacade sceneFacade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, sceneWorld);
 
             IEmote emote1 = Substitute.For<IEmote>();
             emote1.IsLooping().Returns(true);
@@ -121,20 +120,6 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.AreNotEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
             Assert.AreNotEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
-        }
-
-        private ISceneFacade CreateTestSceneFacade(Vector2Int baseCoords, World sceneWorld)
-        {
-            ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
-            var sceneShortInfo = new SceneShortInfo(baseCoords, "fake-scene");
-            ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.SceneShortInfo.Returns(sceneShortInfo);
-            sceneFacade.Info.Returns(sceneShortInfo);
-            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
-            sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
-            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
-            sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
-            return sceneFacade;
         }
 
         private class FakeEmoteCache : IEmoteCache

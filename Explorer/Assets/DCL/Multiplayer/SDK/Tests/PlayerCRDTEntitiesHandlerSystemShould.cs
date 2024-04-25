@@ -3,10 +3,10 @@ using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.Character.Components;
-using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
+using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
@@ -14,7 +14,6 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
-using Utility.Multithreading;
 using Object = UnityEngine.Object;
 
 namespace DCL.Multiplayer.SDK.Tests
@@ -37,10 +36,10 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             var scenesCache = new ScenesCache();
             scene1World = World.Create();
-            scene1Facade = CreateTestSceneFacade(Vector2Int.zero, scene1World);
+            scene1Facade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, scene1World);
             scenesCache.Add(scene1Facade, new[] { scene1Facade.Info.BaseParcel });
             scene2World = World.Create();
-            scene2Facade = CreateTestSceneFacade(Vector2Int.one, scene2World);
+            scene2Facade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.one, scene2World);
             scenesCache.Add(scene2Facade, new[] { scene2Facade.Info.BaseParcel });
 
             fakeCharacterUnityTransform = new GameObject("fake-character").transform;
@@ -265,20 +264,6 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsTrue(world.TryGet(entity2, out playerCRDTEntity));
             Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
-        }
-
-        private ISceneFacade CreateTestSceneFacade(Vector2Int baseCoords, World sceneWorld)
-        {
-            ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
-            var sceneShortInfo = new SceneShortInfo(baseCoords, "fake-scene");
-            ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.SceneShortInfo.Returns(sceneShortInfo);
-            sceneFacade.Info.Returns(sceneShortInfo);
-            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
-            sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
-            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
-            sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
-            return sceneFacade;
         }
     }
 }

@@ -1,15 +1,13 @@
 using Arch.Core;
 using CrdtEcsBridge.Components;
-using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
+using DCL.Utilities;
 using ECS.TestSuite;
-using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -26,7 +24,7 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             sceneWorld = World.Create();
             Entity sceneWorldEntity = sceneWorld.Create();
-            ISceneFacade sceneFacade = CreateTestSceneFacade(Vector2Int.zero, sceneWorld);
+            ISceneFacade sceneFacade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, sceneWorld);
 
             system = new PlayerProfileDataPropagationSystem(world);
 
@@ -73,20 +71,6 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEntityProfile));
             Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
             Assert.AreEqual(profile, sceneEntityProfile);
-        }
-
-        private ISceneFacade CreateTestSceneFacade(Vector2Int baseCoords, World sceneWorld)
-        {
-            ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
-            var sceneShortInfo = new SceneShortInfo(baseCoords, "fake-scene");
-            ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.SceneShortInfo.Returns(sceneShortInfo);
-            sceneFacade.Info.Returns(sceneShortInfo);
-            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
-            sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
-            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
-            sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
-            return sceneFacade;
         }
     }
 }
