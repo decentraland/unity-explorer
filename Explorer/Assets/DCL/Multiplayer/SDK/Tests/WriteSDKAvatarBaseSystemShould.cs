@@ -1,146 +1,102 @@
-// using Arch.Core;
-// using CRDT;
-// using CrdtEcsBridge.ECSToCRDTWriter;
-// using DCL.ECSComponents;
-// using DCL.Multiplayer.SDK.Components;
-// using DCL.Multiplayer.SDK.Systems;
-// using DCL.Optimization.Pools;
-// using ECS.TestSuite;
-// using ECS.Unity.ColorComponent;
-// using NSubstitute;
-// using NUnit.Framework;
-// using System;
-// using UnityEngine;
-// using WriteSDKAvatarBaseSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteSDKAvatarBaseSystem;
-//
-// namespace DCL.Multiplayer.SDK.Tests
-// {
-//     public class WriteSDKAvatarBaseSystemShould : UnitySystemTestBase<WriteSDKAvatarBaseSystem>
-//     {
-//         private Entity entity;
-//         private IECSToCRDTWriter ecsToCRDTWriter;
-//         private PlayerProfileDataComponent playerProfileData;
-//
-//         [SetUp]
-//         public void Setup()
-//         {
-//             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
-//
-//             IComponentPool<PBAvatarBase> componentPoolRegistry = Substitute.For<IComponentPool<PBAvatarBase>>();
-//             var instantiatedPbComponent = new PBAvatarBase();
-//             componentPoolRegistry.Get().Returns(instantiatedPbComponent);
-//             system = new WriteSDKAvatarBaseSystem(world, ecsToCRDTWriter, componentPoolRegistry);
-//
-//             playerProfileData = new PlayerProfileDataComponent
-//             {
-//                 CRDTEntity = 3,
-//                 Name = "CthulhuFhtaghn",
-//                 BodyShapeURN = "old:ones:01",
-//                 SkinColor = Color.green,
-//                 EyesColor = Color.red,
-//                 HairColor = Color.gray,
-//             };
-//
-//             entity = world.Create(playerProfileData);
-//         }
-//
-//         [TearDown]
-//         public void TearDown()
-//         {
-//             world.Dispose();
-//         }
-//
-//         [Test]
-//         public void PropagateComponentCreationCorrectly()
-//         {
-//             Assert.IsFalse(world.Has<PBAvatarBase>(entity));
-//             Assert.IsFalse(world.Has<CRDTEntity>(entity));
-//
-//             system.Update(0);
-//
-//             ecsToCRDTWriter.Received(1)
-//                            .PutMessage(
-//                                 Arg.Any<Action<PBAvatarBase, PBAvatarBase>>(),
-//                                 Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerProfileData.CRDTEntity.Id),
-//                                 Arg.Is<PBAvatarBase>(comp =>
-//                                     comp.Name == playerProfileData.Name
-//                                     && comp.BodyShapeUrn == playerProfileData.BodyShapeURN
-//                                     && comp.EyesColor.ToUnityColor() == playerProfileData.EyesColor
-//                                     && comp.HairColor.ToUnityColor() == playerProfileData.HairColor
-//                                     && comp.SkinColor.ToUnityColor() == playerProfileData.SkinColor
-//                                 ));
-//
-//             AssertPBComponentMatchesPlayerSDKData();
-//         }
-//
-//         [Test]
-//         public void PropagateComponentUpdateCorrectly()
-//         {
-//             Assert.IsFalse(world.Has<PBAvatarBase>(entity));
-//             Assert.IsFalse(world.Has<CRDTEntity>(entity));
-//
-//             system.Update(0);
-//
-//             ecsToCRDTWriter.Received(1)
-//                            .PutMessage(
-//                                 Arg.Any<Action<PBAvatarBase, PBAvatarBase>>(),
-//                                 Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerProfileData.CRDTEntity.Id),
-//                                 Arg.Is<PBAvatarBase>(comp =>
-//                                     comp.Name == playerProfileData.Name
-//                                     && comp.BodyShapeUrn == playerProfileData.BodyShapeURN
-//                                     && comp.EyesColor.ToUnityColor() == playerProfileData.EyesColor
-//                                     && comp.HairColor.ToUnityColor() == playerProfileData.HairColor
-//                                     && comp.SkinColor.ToUnityColor() == playerProfileData.SkinColor
-//                                 ));
-//
-//             AssertPBComponentMatchesPlayerSDKData();
-//
-//             Assert.IsTrue(world.TryGet(entity, out playerProfileData));
-//
-//             playerProfileData.IsDirty = true;
-//             playerProfileData.Name = "D460N";
-//             playerProfileData.BodyShapeURN = "old:ones:02";
-//             playerProfileData.SkinColor = Color.gray;
-//             playerProfileData.EyesColor = Color.blue;
-//             playerProfileData.HairColor = Color.white;
-//
-//             world.Set(entity, playerProfileData);
-//
-//             system.Update(0);
-//
-//             Assert.IsTrue(world.TryGet(entity, out playerProfileData));
-//
-//             AssertPBComponentMatchesPlayerSDKData();
-//         }
-//
-//         [Test]
-//         public void HandleComponentRemovalCorrectly()
-//         {
-//             Assert.IsFalse(world.Has<PBAvatarBase>(entity));
-//
-//             system.Update(0);
-//
-//             Assert.IsTrue(world.Has<PBAvatarBase>(entity));
-//
-//             world.Remove<PlayerProfileDataComponent>(entity);
-//
-//             system.Update(0);
-//
-//             ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarBase>(playerProfileData.CRDTEntity.Id);
-//             Assert.IsFalse(world.Has<PBAvatarBase>(entity));
-//             Assert.IsFalse(world.Has<CRDTEntity>(entity));
-//         }
-//
-//         private void AssertPBComponentMatchesPlayerSDKData()
-//         {
-//             Assert.IsTrue(world.TryGet(entity, out PBAvatarBase pbAvatarBase));
-//             Assert.AreEqual(playerProfileData.Name, pbAvatarBase.Name);
-//             Assert.IsTrue(playerProfileData.BodyShapeURN.Equals(pbAvatarBase.BodyShapeUrn));
-//             Assert.AreEqual(playerProfileData.HairColor.ToColor3(), pbAvatarBase.HairColor);
-//             Assert.AreEqual(playerProfileData.EyesColor.ToColor3(), pbAvatarBase.EyesColor);
-//             Assert.AreEqual(playerProfileData.SkinColor.ToColor3(), pbAvatarBase.SkinColor);
-//             Assert.IsTrue(world.Has<CRDTEntity>(entity));
-//         }
-//     }
-// }
+using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.Components;
+using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.ECSComponents;
+using DCL.Multiplayer.SDK.Components;
+using DCL.Profiles;
+using ECS.LifeCycle.Components;
+using ECS.TestSuite;
+using ECS.Unity.ColorComponent;
+using NSubstitute;
+using NUnit.Framework;
+using System;
+using UnityEngine;
+using Avatar = DCL.Profiles.Avatar;
+using WriteSDKAvatarBaseSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteSDKAvatarBaseSystem;
 
+namespace DCL.Multiplayer.SDK.Tests
+{
+    public class WriteSDKAvatarBaseSystemShould : UnitySystemTestBase<WriteSDKAvatarBaseSystem>
+    {
+        private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
+        private Entity entity;
+        private IECSToCRDTWriter ecsToCRDTWriter;
+        private Profile profile;
+        private PlayerCRDTEntity playerCRDTEntity;
+
+        private Avatar CreateTestAvatar() =>
+            new (BodyShape.MALE,
+                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                WearablesConstants.DefaultColors.GetRandomHairColor(),
+                WearablesConstants.DefaultColors.GetRandomSkinColor());
+
+        [SetUp]
+        public void Setup()
+        {
+            ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
+
+            system = new WriteSDKAvatarBaseSystem(world, ecsToCRDTWriter);
+
+            profile = new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar());
+            profile.IsDirty = true;
+
+            playerCRDTEntity = new PlayerCRDTEntity
+            {
+                IsDirty = true,
+                CRDTEntity = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+            };
+
+            entity = world.Create(playerCRDTEntity);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            world.Dispose();
+        }
+
+        [Test]
+        public void DispatchAvatarBaseUpdateCorrectly()
+        {
+            world.Add(entity, profile);
+            system.Update(0);
+
+            ecsToCRDTWriter.Received(1)
+                           .PutMessage(
+                                Arg.Any<Action<PBAvatarBase, Profile>>(),
+                                playerCRDTEntity.CRDTEntity,
+                                profile);
+
+            ecsToCRDTWriter.ClearReceivedCalls();
+            profile.Name = "newName";
+            profile.IsDirty = true;
+
+            world.Set(entity, profile);
+            system.Update(0);
+
+            ecsToCRDTWriter.Received(1)
+                           .PutMessage(
+                                Arg.Any<Action<PBAvatarBase, Profile>>(),
+                                playerCRDTEntity.CRDTEntity,
+                                profile);
+        }
+
+        [Test]
+        public void HandleComponentRemovalCorrectly()
+        {
+            world.Add(entity, profile);
+            system.Update(0);
+
+            world.Add<DeleteEntityIntention>(entity);
+
+            system.Update(0);
+
+            ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarBase>(playerCRDTEntity.CRDTEntity);
+        }
+    }
+}

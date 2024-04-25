@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.SDK.Tests
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
                                 Arg.Any<Action<PBPlayerIdentityData, (string address, bool isGuest)>>(),
-                                playerCRDTEntity.CRDTEntity.Id,
+                                playerCRDTEntity.CRDTEntity,
                                 Arg.Is<(string address, bool isGuest)>(data =>
                                     data.address == profile.UserId
                                     && data.isGuest == !profile.HasConnectedWeb3));
@@ -81,7 +81,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerCRDTEntity.CRDTEntity.Id);
+            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerCRDTEntity.CRDTEntity);
         }
     }
 }
