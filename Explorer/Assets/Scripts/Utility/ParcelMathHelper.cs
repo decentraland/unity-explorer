@@ -8,7 +8,6 @@ namespace Utility
     public static class ParcelMathHelper
     {
         public const float PARCEL_SIZE = 16.0f;
-
         public const float SQR_PARCEL_SIZE = PARCEL_SIZE * PARCEL_SIZE;
 
         public static readonly SceneGeometry UNDEFINED_SCENE_GEOMETRY = new (
@@ -29,8 +28,18 @@ namespace Utility
         public static Vector3 GetSceneRelativePosition(Vector3 position, Vector3 scenePosition) =>
             position - scenePosition;
 
-        public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition) =>
-            new (parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
+        public static Vector3 GetPositionByParcelPosition(Vector2Int parcelPosition, bool adaptYPositionToTerrain = false)
+        {
+            var position = new Vector3(parcelPosition.x * PARCEL_SIZE, 0.0f, parcelPosition.y * PARCEL_SIZE);
+
+            if (adaptYPositionToTerrain)
+            {
+                const float TERRAIN_HEIGHT_ADAPTATION_OFFSET = 2.0f;
+                position.y = Terrain.activeTerrain.SampleHeight(position) + TERRAIN_HEIGHT_ADAPTATION_OFFSET;
+            }
+
+            return position;
+        }
 
         /// <summary>
         ///     Creates scene geometry from multiple occupied parcels
