@@ -38,6 +38,8 @@ namespace Global.Dynamic
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
         [SerializeField] private bool enableLandscape;
+        [SerializeField] private bool enableLOD;
+
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -101,7 +103,7 @@ namespace Global.Dynamic
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
-        {                
+        {
 #if !UNITY_EDITOR
 #if !DEVELOPMENT_BUILD
 
@@ -109,6 +111,8 @@ namespace Global.Dynamic
             showSplash = true;
             showAuthentication = true;
             showLoading = true;
+            enableLOD = true;
+            
 #endif
 
             //enableLandscape = true;
@@ -120,7 +124,7 @@ namespace Global.Dynamic
             try
             {
                 splashRoot.SetActive(showSplash);
-                
+
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
@@ -187,7 +191,7 @@ namespace Global.Dynamic
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
-                        EnableLandscape = shouldEnableLandscape,
+                        EnableLandscape = shouldEnableLandscape, EnableLOD = enableLOD
                     }, ct
                 );
 
@@ -225,8 +229,7 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
 
-                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
-                    dynamicWorldContainer.EmptyScenesWorldFactory);
+                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
 
                 debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);

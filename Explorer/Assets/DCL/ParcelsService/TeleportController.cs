@@ -44,7 +44,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel));
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.ProgressCounter.Value = 1f;
                 loadReport.CompletionSource.TrySetResult();
                 return null;
@@ -91,7 +91,7 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel));
+            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
 
             if (sceneDef == null)
             {
@@ -109,7 +109,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel));
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.ProgressCounter.Value = 1f;
                 loadReport.CompletionSource.TrySetResult();
                 return;
@@ -128,7 +128,7 @@ namespace DCL.ParcelsService
             // Add report to the queue so it will be grabbed by the actual scene
             sceneReadinessReportQueue.Enqueue(parcel, loadReport);
 
-            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel));
+            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel, loadReport));
 
             if (sceneDef == null)
             {

@@ -85,8 +85,6 @@ namespace Global.Dynamic
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
-        public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; } = null!;
-
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
 
         public IProfileRepository ProfileRepository { get; private set; } = null!;
@@ -148,7 +146,7 @@ namespace Global.Dynamic
 
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
-                container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, ct).ThrowOnFail();
+                container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
                 container.AudioPlaybackContainer = await AudioPlaybackContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
             }
 
@@ -404,7 +402,6 @@ namespace Global.Dynamic
                 container.MessagePipesHub);
 
             container.GlobalPlugins = globalPlugins;
-            container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
             BuildTeleportWidget(realmNavigator, debugBuilder, dynamicWorldParams.Realms);
 

@@ -15,7 +15,5 @@ namespace DCL.PluginSystem.World
             PrimitivesVisibilitySystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PBVisibilityComponent>.InjectToWorld(ref builder);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }
