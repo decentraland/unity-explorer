@@ -108,6 +108,7 @@ jobs:
       - name: Create Version
         id: create-version
         run: |
+          git fetch remote
           git fetch --tags
           $latestTag = git describe --tags
           $branchName = git rev-parse --abbrev-ref HEAD
