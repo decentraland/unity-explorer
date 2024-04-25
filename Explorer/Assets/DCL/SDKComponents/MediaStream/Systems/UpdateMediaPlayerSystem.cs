@@ -75,19 +75,19 @@ namespace DCL.SDKComponents.MediaStream
             {
                 MediaPlayer mediaPlayer = component.MediaPlayer;
 
-                if (TryUpdateStreamUrl(ref component, url))
+                if (component.URL == url)
                 {
                     if (component.State != VideoState.VsError)
-                    {
-                        component.Cts.Cancel();
-                        component.Cts = new CancellationTokenSource();
-                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
-
-                        void OnComplete() => onComplete?.Invoke(mediaPlayer);
-                    }
+                        mediaPlayer.UpdatePlayback(hasPlaying, playing);
                 }
-                else if (component.State != VideoState.VsError)
-                    mediaPlayer.UpdatePlayback(hasPlaying, playing);
+                else if (TryUpdateStreamUrl(ref component, url) && component.State != VideoState.VsError)
+                {
+                    component.Cts.Cancel();
+                    component.Cts = new CancellationTokenSource();
+                    mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
+
+                    void OnComplete() => onComplete?.Invoke(mediaPlayer);
+                }
 
                 marker.IsDirty = false;
             }
@@ -112,8 +112,6 @@ namespace DCL.SDKComponents.MediaStream
 
         private bool TryUpdateStreamUrl(ref MediaPlayerComponent component, string url)
         {
-            if (component.URL == url) return false;
-
             component.MediaPlayer.CloseCurrentStream();
 
             if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
