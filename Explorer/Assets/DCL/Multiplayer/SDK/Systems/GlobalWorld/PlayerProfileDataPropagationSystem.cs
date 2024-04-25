@@ -8,6 +8,7 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {

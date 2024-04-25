@@ -2,7 +2,6 @@ using Arch.Core;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
@@ -85,8 +84,6 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
             Assert.AreEqual(profile, sceneEntityProfile);
         }
-
-        // StopPropagationWithoutPlayerCRDTEntity()
 
         private ISceneFacade CreateTestSceneFacade(Vector2Int baseCoords, World sceneWorld)
         {
