@@ -7,9 +7,18 @@ namespace DCL.Multiplayer.SDK.Components
 {
     public struct PlayerCRDTEntity : IDirtyMarker
     {
-        public CRDTEntity CRDTEntity;
-        public ISceneFacade SceneFacade;
-        public Entity SceneWorldEntity;
+        public readonly CRDTEntity CRDTEntity;
+        public readonly ISceneFacade SceneFacade;
+        public readonly Entity SceneWorldEntity;
+
         public bool IsDirty { get; set; }
+
+        public PlayerCRDTEntity(CRDTEntity crdtEntity, ISceneFacade sceneFacade, Entity sceneWorldEntity)
+        {
+            CRDTEntity = crdtEntity;
+            SceneFacade = sceneFacade;
+            SceneWorldEntity = sceneWorldEntity;
+            IsDirty = true;
+        }
     }
 }

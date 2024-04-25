@@ -8,6 +8,7 @@ using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
 using WriteSDKAvatarBaseSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteSDKAvatarBaseSystem;
 
@@ -32,11 +33,11 @@ namespace DCL.Multiplayer.SDK.Tests
             profile = Profile.NewRandomProfile(FAKE_USER_ID);
             profile.IsDirty = true;
 
-            playerCRDTEntity = new PlayerCRDTEntity
-            {
-                IsDirty = true,
-                CRDTEntity = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-            };
+            playerCRDTEntity = new PlayerCRDTEntity(
+                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                Substitute.For<ISceneFacade>(),
+                entity
+            );
 
             entity = world.Create(playerCRDTEntity);
         }

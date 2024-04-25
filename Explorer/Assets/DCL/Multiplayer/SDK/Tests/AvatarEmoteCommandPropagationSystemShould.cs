@@ -43,13 +43,11 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system = new AvatarEmoteCommandPropagationSystem(world, emoteCache);
 
-            playerCRDTEntity = new PlayerCRDTEntity
-            {
-                IsDirty = true,
-                SceneFacade = sceneFacade,
-                CRDTEntity = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                SceneWorldEntity = sceneWorldEntity,
-            };
+            playerCRDTEntity = new PlayerCRDTEntity(
+                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                sceneFacade,
+                sceneWorldEntity
+            );
 
             entity = world.Create(playerCRDTEntity);
         }

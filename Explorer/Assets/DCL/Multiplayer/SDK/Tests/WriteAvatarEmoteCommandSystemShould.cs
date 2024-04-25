@@ -32,11 +32,11 @@ namespace DCL.Multiplayer.SDK.Tests
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             system = new WriteAvatarEmoteCommandSystem(world, ecsToCRDTWriter, sceneStateProvider);
 
-            playerCRDTEntity = new PlayerCRDTEntity
-            {
-                IsDirty = true,
-                CRDTEntity = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-            };
+            playerCRDTEntity = new PlayerCRDTEntity(
+                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                Substitute.For<ISceneFacade>(),
+                entity
+            );
 
             entity = world.Create(playerCRDTEntity);
 
