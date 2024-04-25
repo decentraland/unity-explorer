@@ -12,9 +12,10 @@ namespace Global.Dynamic.ChatCommands
 {
     public class TeleportToChatCommand : IChatCommand
     {
+        private const string COMMAND_GOTO_LOCAL = "goto-local";
         private const string PARAMETER_RANDOM = "random";
 
-        public static readonly Regex REGEX = new ("^/" + COMMAND_GOTO + @"\s+(?:(-?\d+),(-?\d+)|" + PARAMETER_RANDOM + ")$", RegexOptions.Compiled);
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+),(-?\d+)|{PARAMETER_RANDOM})$",RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
 
@@ -28,18 +29,20 @@ namespace Global.Dynamic.ChatCommands
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
-            if (match.Groups[1].Success && match.Groups[2].Success)
+            bool isLocal = match.Groups[1].Value == COMMAND_GOTO_LOCAL;
+
+            if (match.Groups[2].Success && match.Groups[3].Success)
             {
-                x = int.Parse(match.Groups[1].Value);
-                y = int.Parse(match.Groups[2].Value);
+                x = int.Parse(match.Groups[2].Value);
+                y = int.Parse(match.Groups[3].Value);
             }
-            else // means that it was PARAMETER_RANDOM
+            else if (match.Groups[2].Value == PARAMETER_RANDOM)
             {
                 x = Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x);
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
 
-            await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct);
+            await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
 
             return ct.IsCancellationRequested
                 ? "🔴 Error. The operation was canceled!"
