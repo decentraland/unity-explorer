@@ -218,7 +218,11 @@ jobs:
               # Display list of files
               ls
 
-
+      - name: 'Using Version'
+        run: |
+          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
+          
+        shell: pwsh
         
       - uses: game-ci/unity-builder@v4.2.3
         id: build
