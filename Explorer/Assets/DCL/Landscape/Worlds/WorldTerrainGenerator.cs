@@ -38,6 +38,7 @@ namespace DCL.Landscape
         private NativeParallelHashSet<int2> ownedParcels;
 
         private readonly List<Terrain> terrains = new ();
+        public bool IsInitialized { get; private set; }
 
         public WorldTerrainGenerator(bool measureTime = false)
         {
@@ -46,6 +47,8 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
+            if (!IsInitialized) return;
+
             if (rootGo != null)
                 UnityObjectUtils.SafeDestroy(rootGo);
         }
@@ -58,10 +61,14 @@ namespace DCL.Landscape
             factory = new TerrainFactory(terrainGenData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
             chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE, noiseGenCache);
+
+            IsInitialized = true;
         }
 
         public void SwitchVisibility(bool isVisible)
         {
+            if (!IsInitialized) return;
+
             if (rootGo != null)
             {
                 if (!isVisible)
@@ -77,6 +84,8 @@ namespace DCL.Landscape
 
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
         {
+            if (!IsInitialized) return;
+
             this.ownedParcels = ownedParcels;
             var worldModel = new WorldModel(ownedParcels);
             var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
@@ -102,10 +111,20 @@ namespace DCL.Landscape
             }
 
             // Generate Terrain GameObjects
+            terrains.Clear();
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true));
+                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
 
             await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+
+            // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = false;
+
+            await UniTask.Yield();
+
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = true;
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)

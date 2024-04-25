@@ -12,9 +12,20 @@ namespace Global.Dynamic.ChatCommands
     public class ChangeRealmChatCommand : IChatCommand
     {
         private const string COMMAND_WORLD = "world";
-        private const string PARAMETER_GENESIS = "genesis";
+        private const string WORLD_SUFFIX = ".dcl.eth";
 
-        public static readonly Regex REGEX = new ("^/(" + COMMAND_WORLD + "|" + COMMAND_GOTO + @")\s+(\S+\.dcl\.eth|" + PARAMETER_GENESIS + ")$", RegexOptions.Compiled);
+        // Parameters to URL mapping
+        private static readonly Dictionary<string, string> PARAMETER_URLS = new()
+        {
+            {"genesis", IRealmNavigator.GENESIS_URL},
+            {"goerli", IRealmNavigator.GOERLI_URL},
+            {"goerli-old", IRealmNavigator.GOERLI_OLD_URL},
+            {"stream", IRealmNavigator.STREAM_WORLD_URL},
+            {"sdk", IRealmNavigator.SDK_TEST_SCENES_URL},
+            {"test", IRealmNavigator.TEST_SCENES_URL},
+        };
+
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+)$", RegexOptions.Compiled);
 
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
@@ -32,7 +43,14 @@ namespace Global.Dynamic.ChatCommands
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
             worldName = match.Groups[2].Value;
-            realmUrl = worldName == PARAMETER_GENESIS ? IRealmNavigator.GENESIS_URL : GetWorldAddress(worldName);
+
+            if (!PARAMETER_URLS.TryGetValue(worldName, out realmUrl))
+            {
+                if (!worldName.EndsWith(WORLD_SUFFIX))
+                    worldName += WORLD_SUFFIX;
+
+                realmUrl = GetWorldAddress(worldName);
+            }
 
             bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), ct);
 
@@ -41,7 +59,7 @@ namespace Global.Dynamic.ChatCommands
 
             return isSuccess
                 ? $"🟢 Welcome to the {worldName} world!"
-                : $"🔴 Error. The world {worldName} doesn't exist!";
+                : $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
         }
 
         private string GetWorldAddress(string worldPath)
