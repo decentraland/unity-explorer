@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (cameraSamplingData.IsDirty)
                 return;
 
-            ScenesPartitioningUtils.CheckCameraTransformChanged(cameraSamplingData, in cameraComponent, partitionSettings.PositionSqrTolerance, partitionSettings.AngleTolerance);
+            ScenesPartitioningUtils.TryUpdateCameraTransformOnChanged(cameraSamplingData, in cameraComponent, partitionSettings.PositionSqrTolerance, partitionSettings.AngleTolerance);
         }
 
         [Query]
