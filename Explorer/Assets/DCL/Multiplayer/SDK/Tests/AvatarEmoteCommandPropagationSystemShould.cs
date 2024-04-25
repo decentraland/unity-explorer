@@ -1,67 +1,172 @@
+using Arch.Core;
+using CommunicationData.URLHelpers;
+using CrdtEcsBridge.Components;
+using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Wearables.Components;
+using DCL.Diagnostics;
+using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.TestSuite;
+using NSubstitute;
+using NUnit.Framework;
+using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
     public class AvatarEmoteCommandPropagationSystemShould : UnitySystemTestBase<AvatarEmoteCommandPropagationSystem>
     {
-        // [Test]
-        // public void UpdatePlayerSDKDataWithEmoteEvents()
-        // {
-        //     scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
-        //     scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
-        //     fakeCharacterUnityTransform.position = Vector3.one;
-        //
-        //     var profile = new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar());
-        //     world.Add(entity, profile, new CharacterTransform(fakeCharacterUnityTransform));
-        //
-        //     Assert.IsFalse(world.Has<PlayerProfileDataComponent>(entity));
-        //
-        //     system.Update(0);
-        //
-        //     Assert.IsTrue(world.TryGet(entity, out PlayerProfileDataComponent playerSDKDataComponent));
-        //     Assert.AreEqual(FAKE_USER_ID, playerSDKDataComponent.Address);
-        //     Assert.AreEqual(profile.Name, playerSDKDataComponent.Name);
-        //     Assert.IsNotNull(playerSDKDataComponent.CRDTEntity);
-        //     Assert.IsTrue(scene1World.TryGet(playerSDKDataComponent.SceneWorldEntity, out PlayerProfileDataComponent scenePlayerSDKDataComponent));
-        //     Assert.AreEqual(playerSDKDataComponent, scenePlayerSDKDataComponent);
-        //
-        //     var emoteUrn1 = "thunder-kiss-65";
-        //     var emoteUrn2 = "thunder-kiss-66";
-        //
-        //     var emoteIntent = new CharacterEmoteIntent
-        //         { EmoteId = emoteUrn1 };
-        //
-        //     IEmote fakeEmote = Substitute.For<IEmote>();
-        //
-        //     emoteCache.TryGetEmote(Arg.Any<URN>(), out fakeEmote).Returns(true);
-        //
-        //     // var emoteComponent = new CharacterEmoteComponent
-        //     // {
-        //     //     EmoteUrn = emoteUrn1,
-        //     //     EmoteLoop = true,
-        //     // };
-        //
-        //     Assert.AreNotEqual(emoteComponent.EmoteUrn, playerSDKDataComponent.PlayingEmote);
-        //     Assert.AreNotEqual(emoteComponent.EmoteLoop, playerSDKDataComponent.LoopingEmote);
-        //
-        //     world.Add(entity, emoteIntent);
-        //
-        //     system.Update(0);
-        //     Assert.IsTrue(world.TryGet(entity, out playerSDKDataComponent));
-        //     Assert.AreEqual(emoteComponent.EmoteUrn, playerSDKDataComponent.PlayingEmote);
-        //     Assert.AreEqual(emoteComponent.EmoteLoop, playerSDKDataComponent.LoopingEmote);
-        //
-        //     emoteComponent.EmoteUrn = emoteUrn2;
-        //     emoteComponent.EmoteLoop = false;
-        //
-        //     world.Set(entity, emoteComponent);
-        //
-        //     system.Update(0);
-        //     Assert.IsTrue(world.TryGet(entity, out playerSDKDataComponent));
-        //     Assert.IsTrue(playerSDKDataComponent.PreviousEmote.Equals(emoteUrn1));
-        //     Assert.AreEqual(emoteComponent.EmoteUrn, playerSDKDataComponent.PlayingEmote);
-        //     Assert.AreEqual(emoteComponent.EmoteLoop, playerSDKDataComponent.LoopingEmote);
-        // }
+        private readonly URN emoteUrn1 = new ("thunder-kiss-65");
+        private readonly URN emoteUrn2 = new ("more-human-than-human");
+        private readonly FakeEmoteCache emoteCache = new ();
+        private Entity entity;
+        private World sceneWorld;
+        private PlayerCRDTEntity playerCRDTEntity;
+
+        [SetUp]
+        public void Setup()
+        {
+            sceneWorld = World.Create();
+            Entity sceneWorldEntity = sceneWorld.Create();
+            ISceneFacade sceneFacade = CreateTestSceneFacade(Vector2Int.zero, sceneWorld);
+
+            IEmote emote1 = Substitute.For<IEmote>();
+            emote1.IsLooping().Returns(true);
+            IEmote emote2 = Substitute.For<IEmote>();
+            emote2.IsLooping().Returns(false);
+            emoteCache.emotes.Clear();
+            emoteCache.emotes.Add(emoteUrn1, emote1);
+            emoteCache.emotes.Add(emoteUrn2, emote2);
+
+            system = new AvatarEmoteCommandPropagationSystem(world, emoteCache);
+
+            playerCRDTEntity = new PlayerCRDTEntity
+            {
+                IsDirty = true,
+                SceneFacade = sceneFacade,
+                CRDTEntity = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                SceneWorldEntity = sceneWorldEntity,
+            };
+
+            entity = world.Create(playerCRDTEntity);
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            sceneWorld.Dispose();
+            world.Dispose();
+        }
+
+        [Test]
+        public void PropagateEmoteCommandsCorrectly()
+        {
+            Assert.IsFalse(world.Has<AvatarEmoteCommandComponent>(entity));
+            Assert.IsFalse(sceneWorld.Has<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity));
+
+            // Add emote intent
+            var emoteIntent = new CharacterEmoteIntent
+                { EmoteId = emoteUrn1 };
+
+            world.Add(entity, emoteIntent);
+
+            system.Update(0);
+
+            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent sceneEmoteCommand));
+
+            Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
+            Assert.AreEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+
+            // Update emote intent with different emote
+            emoteIntent.EmoteId = emoteUrn2;
+            world.Set(entity, emoteIntent);
+            system.Update(0);
+
+            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEmoteCommand));
+
+            Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
+            Assert.AreEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+        }
+
+        [Test]
+        public void StopPropagationWithoutPlayerCRDTEntity()
+        {
+            Assert.IsFalse(world.Has<AvatarEmoteCommandComponent>(entity));
+            Assert.IsFalse(sceneWorld.Has<AvatarEmoteCommandComponent>(playerCRDTEntity.SceneWorldEntity));
+
+            // Add emote intent
+            var emoteIntent = new CharacterEmoteIntent
+                { EmoteId = emoteUrn1 };
+
+            world.Add(entity, emoteIntent);
+
+            system.Update(0);
+
+            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out AvatarEmoteCommandComponent sceneEmoteCommand));
+
+            Assert.AreEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
+            Assert.AreEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+
+            // Update emote intent with different emote + remove PlayerCRDTEntity
+            emoteIntent.EmoteId = emoteUrn2;
+            world.Set(entity, emoteIntent);
+            world.Remove<PlayerCRDTEntity>(entity);
+            system.Update(0);
+
+            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEmoteCommand));
+
+            Assert.AreNotEqual(emoteIntent.EmoteId, sceneEmoteCommand.PlayingEmote);
+            Assert.AreNotEqual(emoteCache.emotes[emoteIntent.EmoteId].IsLooping(), sceneEmoteCommand.LoopingEmote);
+        }
+
+        private ISceneFacade CreateTestSceneFacade(Vector2Int baseCoords, World sceneWorld)
+        {
+            ISceneFacade sceneFacade = Substitute.For<ISceneFacade>();
+            var sceneShortInfo = new SceneShortInfo(baseCoords, "fake-scene");
+            ISceneData sceneData = Substitute.For<ISceneData>();
+            sceneData.SceneShortInfo.Returns(sceneShortInfo);
+            sceneFacade.Info.Returns(sceneShortInfo);
+            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
+            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
+            sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
+            return sceneFacade;
+        }
+
+        private class FakeEmoteCache : IEmoteCache
+        {
+            internal readonly Dictionary<URN, IEmote> emotes = new ();
+
+            public bool TryGetEmote(URN urn, out IEmote emote)
+            {
+                if (!emotes.TryGetValue(urn, out emote)) return false;
+                return true;
+            }
+
+            public void Set(URN urn, IEmote emote)
+            {
+                throw new NotImplementedException();
+            }
+
+            public IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
+                throw new NotImplementedException();
+
+            public void Unload(IPerformanceBudget frameTimeBudget)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SetOwnedNft(URN urn, NftBlockchainOperationEntry operation)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry) =>
+                throw new NotImplementedException();
+        }
     }
 }

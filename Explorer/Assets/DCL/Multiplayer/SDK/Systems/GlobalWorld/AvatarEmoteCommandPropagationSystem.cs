@@ -32,11 +32,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         [None(typeof(DeleteEntityIntention))]
         private void UpdateEmoteCommandDataComponent(ref PlayerCRDTEntity playerCRDTEntity, ref CharacterEmoteIntent emoteIntent)
         {
-            ISceneFacade sceneFacade = playerCRDTEntity.SceneFacade;
-
-            if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
-                return;
-
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;
 
