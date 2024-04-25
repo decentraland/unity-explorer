@@ -47,6 +47,11 @@ namespace DCL.EmotesWheel
             });
         }
 
+        private void OnDisable()
+        {
+            hoverBackground.SetActive(false);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
