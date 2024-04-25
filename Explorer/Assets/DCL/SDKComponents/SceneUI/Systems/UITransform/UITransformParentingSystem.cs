@@ -57,7 +57,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 parentReference = newParentEntity;
 
                 //We have to remove the child from the old parent
-                if (uiTransformComponent.Parent != parentReference)
+                if (uiTransformComponent.RelationData.parent != parentReference)
                     RemoveFromParent(uiTransformComponent, World.Reference(entity));
 
                 if (parentReference != sceneRoot)
@@ -67,7 +67,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         private void SetNewChild(ref UITransformComponent childComponent, EntityReference childEntityReference, Entity parentEntity)
         {
-            if (childComponent.Parent == parentEntity)
+            if (childComponent.RelationData.parent == parentEntity)
                 return;
 
             if (!World.IsAlive(parentEntity))
@@ -82,14 +82,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return;
 
             parentComponent.Transform.Add(childComponent.Transform);
-            childComponent.Parent = World.Reference(parentEntity);
+            childComponent.RelationData.parent = World.Reference(parentEntity);
             parentComponent.Children.Add(childEntityReference);
         }
 
         private void RemoveFromParent(UITransformComponent childComponent, EntityReference childEntityReference)
         {
-            if (childComponent.Parent.IsAlive(World))
-                World.Get<UITransformComponent>(childComponent.Parent.Entity).Children.Remove(childEntityReference);
+            if (childComponent.RelationData.parent.IsAlive(World))
+                World.Get<UITransformComponent>(childComponent.RelationData.parent.Entity).Children.Remove(childEntityReference);
         }
     }
 }

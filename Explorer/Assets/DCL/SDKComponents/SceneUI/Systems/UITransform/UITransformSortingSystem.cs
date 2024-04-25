@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly Entity sceneRoot;
         private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
-        private UITransformSortingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        internal UITransformSortingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.entitiesMap = entitiesMap;
@@ -40,10 +40,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             SortUITransform(ref uiTransformComponent);
 
-            if (uiTransformComponent.Parent == EntityReference.Null)
+            if (uiTransformComponent.RelationData.parent == EntityReference.Null)
                 return;
 
-            foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.Parent).Children)
+            foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent).Children)
             {
                 if (!brotherEntity.IsAlive(World))
                     continue;
