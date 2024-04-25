@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables
             if (pbAvatarShape.BodyShape == FEMALE.Value)
                 return FEMALE;
 
-            ReportHub.LogError(ReportCategory.AVATAR, $"'{pbAvatarShape.BodyShape}' body shape not supported, using MALE instead.");
+            ReportHub.LogWarning(ReportCategory.AVATAR, $"'{pbAvatarShape.BodyShape}' body shape not supported, using MALE instead.");
 
             return MALE;
         }

@@ -29,6 +29,7 @@ namespace DCL.MapRenderer.ConsumerUtils
         /// Notifies with the world position
         /// </summary>
         public event Action<Vector2> Hovered;
+        public event Action<Vector2> HoveredParcel;
 
         public event Action DragStarted;
 
@@ -48,7 +49,7 @@ namespace DCL.MapRenderer.ConsumerUtils
         public void Activate(Camera hudCamera, RenderTexture renderTexture, IMapCameraController mapCameraController)
         {
             interactivityController = mapCameraController.GetInteractivityController();
-            this.highlightEnabled = interactivityController.HighlightEnabled;
+            highlightEnabled = interactivityController.HighlightEnabled;
             this.hudCamera = hudCamera;
 
             texture = renderTexture;
@@ -99,14 +100,12 @@ namespace DCL.MapRenderer.ConsumerUtils
         {
             Profiler.BeginSample(POINTER_CLICK_SAMPLE_NAME);
 
-            if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out var parcel, out _, out _))
-            {
+            if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _))
                 ParcelClicked?.Invoke(new ParcelClickData
                 {
                     Parcel = parcel,
                     WorldPosition = GetParcelWorldPosition(parcel),
                 });
-            }
 
             Profiler.EndSample();
         }
@@ -115,18 +114,19 @@ namespace DCL.MapRenderer.ConsumerUtils
 
         private Vector2 GetParcelWorldPosition(Vector2Int parcel)
         {
-            var normalizedDiscretePosition = interactivityController.GetNormalizedPosition(parcel);
+            Vector2 normalizedDiscretePosition = interactivityController.GetNormalizedPosition(parcel);
             return rectTransform.TransformPoint(rectTransform.rect.size * (normalizedDiscretePosition - rectTransform.pivot));
         }
 
         private void ProcessHover(PointerEventData eventData)
         {
-            if (TryGetParcelUnderPointer(eventData, out var parcel, out _, out var worldPosition))
+            if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition))
             {
                 if (highlightEnabled)
                     interactivityController.HighlightParcel(parcel);
 
                 Hovered?.Invoke(worldPosition);
+                HoveredParcel?.Invoke(parcel);
             }
             else if (highlightEnabled)
                 interactivityController.RemoveHighlight();
@@ -134,14 +134,16 @@ namespace DCL.MapRenderer.ConsumerUtils
 
         private bool TryGetParcelUnderPointer(PointerEventData eventData, out Vector2Int parcel, out Vector2 localPosition, out Vector3 worldPosition)
         {
-            var screenPoint = eventData.position;
+            Vector2 screenPoint = eventData.position;
+
             if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, screenPoint, hudCamera, out worldPosition))
             {
-                var rectSize = rectTransform.rect.size;
-                localPosition = (Vector2) rectTransform.InverseTransformPoint(worldPosition);
-                var leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
+                Vector2 rectSize = rectTransform.rect.size;
+                localPosition = (Vector2)rectTransform.InverseTransformPoint(worldPosition);
+                Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
                 return interactivityController.TryGetParcel(leftCornerRelativeLocalPosition / rectSize, out parcel);
             }
+
             parcel = Vector2Int.zero;
             localPosition = Vector2.zero;
             return false;

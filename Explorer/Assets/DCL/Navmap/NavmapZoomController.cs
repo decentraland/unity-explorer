@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.MapRenderer.MapCameraController;
 using System;
 using System.Threading;
@@ -152,6 +153,7 @@ namespace DCL.Navmap
             if ((zoomIn && Mathf.Approximately(targetNormalizedZoom, 1f)) || (!zoomIn && Mathf.Approximately(targetNormalizedZoom, 0f)))
                 return;
 
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(zoomIn? view.ZoomInAudio : view.ZoomOutAudio);
             SetZoomLevel(currentZoomLevel + (zoomIn ? 1 : -1));
             ScaleOverTimeAsync(cameraController.Zoom, targetNormalizedZoom, cts.Token).Forget();
 

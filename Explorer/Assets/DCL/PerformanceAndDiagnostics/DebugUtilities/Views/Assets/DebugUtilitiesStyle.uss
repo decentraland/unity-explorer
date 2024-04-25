@@ -276,7 +276,7 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
 }
 
 .unity-slider {
-    width: 12px;
+    width: auto;
     min-width: 12px;
     margin-top: 12px;
     margin-bottom: 12px;
@@ -305,15 +305,13 @@ Vector2IntField > VisualElement > .unity-composite-field__field-spacer {
     width: 12px;
 }
 
-.unity-base-slider__tracker {
-    width: 12px;
-    margin-left: 0;
-    border-width: 0px;
-}
-
 .unity-base-slider__dragger {
     width: 12px;
     border-radius: 4px;
     border-width: 0px;
     left: 0px;
  }
+
+.unity-base-field__label {
+    min-width: 12px;
+}

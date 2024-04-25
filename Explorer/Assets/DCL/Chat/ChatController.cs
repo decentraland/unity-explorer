@@ -222,12 +222,14 @@ namespace DCL.Chat
         {
             world.AddOrGet(playerEntity, new MovementBlockerComponent());
             dclInput.Shortcuts.Disable();
+            dclInput.Camera.Disable();
         }
 
         private void UnblockPlayerMovement()
         {
             world.Remove<MovementBlockerComponent>(playerEntity);
             dclInput.Shortcuts.Enable();
+            dclInput.Camera.Enable();
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)
@@ -237,6 +239,13 @@ namespace DCL.Chat
 
             viewInstance.InputField.ActivateInputField();
             viewInstance.InputField.OnSelect(null);
+            DisableUnwantedActions();
+        }
+
+        private void DisableUnwantedActions()
+        {
+            dclInput.Shortcuts.Disable();
+            dclInput.Camera.Disable();
         }
 
         private void OnSubmit(string _)
@@ -252,6 +261,7 @@ namespace DCL.Chat
             {
                 viewInstance.InputField.DeactivateInputField();
                 viewInstance.InputField.OnDeselect(null);
+                EnableUnwantedActions();
                 return;
             }
 
@@ -263,6 +273,12 @@ namespace DCL.Chat
             emojiSuggestionPanelController.SetPanelVisibility(false);
 
             chatMessagesBus.Send(messageToSend);
+        }
+
+        private void EnableUnwantedActions()
+        {
+            dclInput.Shortcuts.Enable();
+            dclInput.Camera.Enable();
         }
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
@@ -336,6 +352,7 @@ namespace DCL.Chat
                 viewInstance.ToggleChat(true);
                 viewInstance.LoopList.MovePanelToItemIndex(0, 0);
             }
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.EnterInputAudio);
 
             viewInstance.EmojiPanelButton.SetColor(true);
             viewInstance.CharacterCounter.gameObject.SetActive(true);

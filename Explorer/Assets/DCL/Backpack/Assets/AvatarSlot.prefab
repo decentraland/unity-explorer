@@ -432,8 +432,11 @@ MonoBehaviour:
   <LoadingView>k__BackingField: {fileID: 2069050160429817371}
   <NftContainer>k__BackingField: {fileID: 4447904979095019404}
   CategoryEnum: 0
-  <ClickAudio>k__BackingField: {fileID: 11400000, guid: 10a360c99e97f3246bb8cb8d022720a9, type: 2}
-  <HoverAudio>k__BackingField: {fileID: 11400000, guid: 9f05f6f4feb860e40bc2e79e57f7e6bd, type: 2}
+  <ClickAudio>k__BackingField: {fileID: 11400000, guid: 34a2137250badd542944f35e2f80cad2, type: 2}
+  <HoverAudio>k__BackingField: {fileID: 11400000, guid: 8b8a0a6a2ec74774c8d3ccac3b54e0e8, type: 2}
+  <OverrideHideAudio>k__BackingField: {fileID: 11400000, guid: 498fffad9951e8547aae4ffff0ebe0e4, type: 2}
+  <DontOverrideHideAudio>k__BackingField: {fileID: 11400000, guid: 9f490381e8a63e6458909016310b000f, type: 2}
+  <UnequipAudio>k__BackingField: {fileID: 11400000, guid: b78ff33cb1d284d4b8938bf362676581, type: 2}
 --- !u!1 &1315728735672877397
 GameObject:
   m_ObjectHideFlags: 0
