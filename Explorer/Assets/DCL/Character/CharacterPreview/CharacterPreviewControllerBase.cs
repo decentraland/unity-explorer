@@ -35,7 +35,7 @@ namespace DCL.CharacterPreview
             if(view.EnableZooming)
                 view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
 
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent += OnPointerMove;
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent += OnPointerEnter;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
@@ -83,11 +83,11 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent -= OnPointerMove;
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
             cursorController.Dispose();
         }
 
-        private void OnPointerMove(PointerEventData pointerEventData)
+        private void OnPointerEnter(PointerEventData pointerEventData)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.HoverAudio);
         }

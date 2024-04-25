@@ -1,22 +1,34 @@
-﻿using DCL.Character.CharacterMotion.Components;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
+using System.Threading;
 
 namespace DCL.Audio
 {
     public class AvatarAudioPlaybackController : MonoBehaviour
     {
         [SerializeField] private AudioSource AvatarAudioSource;
-        [SerializeField] private AudioSource LoopAvatarAudioSource;
+        [SerializeField] private AudioSource ContinuousAudioAvatarAudioSource;
         [SerializeField] private Animator AvatarAnimator;
         [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
+
+        private CancellationTokenSource? cancellationTokenSource;
+        private bool playingContinuousAudio;
 
         private void Start()
         {
             AvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
-            LoopAvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
+            ContinuousAudioAvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
+            cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        private void OnDestroy()
+        {
+            cancellationTokenSource?.Cancel();
+            cancellationTokenSource?.Dispose();
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -77,21 +89,8 @@ namespace DCL.Audio
 
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayLongFallSound()
-        {
-            if (!AvatarAudioSettings.AudioEnabled) return;
-
-            if (!LoopAvatarAudioSource.isPlaying)
-            {
-                AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(AvatarAudioSettings.AvatarAudioClipType.LongFall);
-                int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
-                LoopAvatarAudioSource.loop = true;
-                LoopAvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
-                LoopAvatarAudioSource.volume = clipConfig.RelativeVolume;
-                LoopAvatarAudioSource.clip = clipConfig.AudioClips[clipIndex];
-                LoopAvatarAudioSource.Play();
-            }
-        }
+        public void PlayLongFallSound() =>
+           PlayContinuousAudio(AvatarAudioSettings.AvatarAudioClipType.LongFall);
 
         [PublicAPI("Used by Animation Events")]
         public void PlayHardLandingSound() =>
@@ -124,7 +123,8 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Hohoho()
         {
-            //In old renderer we would play some sticker animations here
+            //In old renderer we would play some sticker animations here,
+            //we would need to add an animation controller before this that sends either audio events here or shows stickers and whatnot
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -141,11 +141,32 @@ namespace DCL.Audio
             //In old renderer we would play some sticker animations here
         }
 
+        private void PlayContinuousAudio(AvatarAudioSettings.AvatarAudioClipType clipType)
+        {
+            if (!AvatarAudioSettings.AudioEnabled) return;
+
+            if (!playingContinuousAudio && cancellationTokenSource != null)
+            {
+                AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
+                int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
+                ContinuousAudioAvatarAudioSource.volume = clipConfig.RelativeVolume;
+                ContinuousAudioAvatarAudioSource.clip = clipConfig.AudioClips[clipIndex];
+                ContinuousAudioAvatarAudioSource.Play();
+                playingContinuousAudio = true;
+
+                var ct = cancellationTokenSource.Token;
+                AudioPlaybackUtilities.SchedulePlaySound(ct, clipConfig, ContinuousAudioAvatarAudioSource.clip.length, ContinuousAudioAvatarAudioSource).Forget();
+            }
+        }
+
 
         private void PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType clipType)
         {
-            if (LoopAvatarAudioSource.isPlaying)
-                LoopAvatarAudioSource.Stop();
+            if (playingContinuousAudio)
+            {
+                ContinuousAudioAvatarAudioSource.Stop();
+                cancellationTokenSource?.Cancel();
+            }
 
             if (!AvatarAudioSettings.AudioEnabled) return;
 

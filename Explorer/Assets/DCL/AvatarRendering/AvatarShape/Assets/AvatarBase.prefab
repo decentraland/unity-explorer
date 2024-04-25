@@ -1184,7 +1184,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AvatarAudioSource: {fileID: 3644099486969308128}
-  LoopAvatarAudioSource: {fileID: 2728865850287729609}
+  ContinuousAudioAvatarAudioSource: {fileID: 2728865850287729609}
   AvatarAnimator: {fileID: 6654053651110562472}
   AvatarAudioSettings: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
 --- !u!82 &2728865850287729609
