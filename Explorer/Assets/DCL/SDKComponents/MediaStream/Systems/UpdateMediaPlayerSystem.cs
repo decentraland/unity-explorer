@@ -80,7 +80,7 @@ namespace DCL.SDKComponents.MediaStream
                     if (component.State != VideoState.VsError)
                         mediaPlayer.UpdatePlayback(hasPlaying, playing);
                 }
-                else if (TryUpdateStreamUrl(ref component, url) && component.State != VideoState.VsError)
+                else if (UpdateStreamUrl(ref component, url) != VideoState.VsError)
                 {
                     component.Cts.Cancel();
                     component.Cts = new CancellationTokenSource();
@@ -110,7 +110,7 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Texture.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
-        private bool TryUpdateStreamUrl(ref MediaPlayerComponent component, string url)
+        private VideoState UpdateStreamUrl(ref MediaPlayerComponent component, string url)
         {
             component.MediaPlayer.CloseCurrentStream();
 
@@ -120,7 +120,7 @@ namespace DCL.SDKComponents.MediaStream
             component.URL = url;
             component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
 
-            return true;
+            return component.State;
         }
     }
 }
