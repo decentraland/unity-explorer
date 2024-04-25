@@ -138,7 +138,7 @@ jobs:
             $branchName = ($env:GITHUB_REF -split '/')[2]
           }
           
-          $semVer = "$($version).$($minorVersion)-$($build)-$($commit)-$($branchName)}"
+          $semVer = "v$($version).$($minorVersion).$($build)-$($commit)-$($branchName)"
           Write-Output "Version: $semVer"
           Write-Output "version=$($semVer)" >> $GITHUB_OUTPUT
         shell: pwsh
