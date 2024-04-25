@@ -72,7 +72,7 @@ namespace DCL.Interaction.Raycast.Components
             currentEntity == EntityReference.Null || materialOnUse == null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly bool CanUpdate(Material materialToUse) =>
+        public readonly bool CanPassAnUpdate(Material materialToUse) =>
             materialOnUse == materialToUse
             && currentEntity == nextEntity
             && isEnabled;
@@ -82,8 +82,9 @@ namespace DCL.Interaction.Raycast.Components
             materialOnUse == null && isEnabled && nextEntity != EntityReference.Null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateMaterial(Material materialToUse)
+        public void UpdateMaterialAndSwitchEntity(Material materialToUse)
         {
+            currentEntity = nextEntity;
             materialOnUse = materialToUse;
         }
     }
