@@ -85,6 +85,33 @@ jobs:
           }
           Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
           Write-Output $uploadSymbols
+          
+      - name: Create Version
+        id: create-version
+        run: |
+          git fetch --tags
+          $latestTag = git describe --tags
+          $branchName = git rev-parse --abbrev-ref HEAD
+          
+          # Extract version components
+          if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
+          $version = $matches[1]
+          $minorVersion = $matches[2]
+          $build = $matches[3]
+          $commit = $matches[4]
+          
+          Write-Output "Version: $version"
+          Write-Output "Minor Version: $minorVersion"
+          Write-Output "Build: $build"
+          Write-Output "Commit: $commit"
+          Write-Output "Branch: $branchName"
+          } else {
+            Write-Output "String does not match expected pattern. No Version Added!"
+          }
+          
+          $semVer = "$($version).$($minorVersion)-$($build)-$($commit)-$branchName"
+          Write-Output "version=$($semVer)" >> $GITHUB_OUTPUT
+        shell: pwsh
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -180,32 +207,7 @@ jobs:
               # Display list of files
               ls
 
-      - name: Create Version
-        id: create-version
-        run: |
-            git fetch --tags
-            $latestTag = git describe --tags
-            $branchName = git rev-parse --abbrev-ref HEAD
-            
-            # Extract version components
-            if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
-            $version = $matches[1]
-            $minorVersion = $matches[2]
-            $build = $matches[3]
-            $commit = $matches[4]
-          
-            Write-Output "Version: $version"
-            Write-Output "Minor Version: $minorVersion"
-            Write-Output "Build: $build"
-            Write-Output "Commit: $commit"
-            Write-Output "Branch: $branchName"
-            } else {
-              Write-Output "String does not match expected pattern. No Version Added!"
-            }
-            
-            $semVer = "$($version).$($minorVersion)-$($build)-$($commit)-$branchName"
-            Write-Output "version=$($semVer)" >> $GITHUB_OUTPUT
-        shell: pwsh
+
         
       - uses: game-ci/unity-builder@v4.2.3
         id: build
