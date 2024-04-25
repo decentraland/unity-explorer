@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -38,6 +39,9 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void TeleportPlayer(in Entity entity, in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
         {
+            if (teleportIntent.LoadReport != null && teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus() == UniTaskStatus.Pending)
+                return;
+
             playerHasJustTeleported = true;
 
             // Teleport the character
