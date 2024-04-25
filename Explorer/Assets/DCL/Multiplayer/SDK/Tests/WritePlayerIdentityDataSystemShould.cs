@@ -1,8 +1,6 @@
 using Arch.Core;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
@@ -24,13 +22,6 @@ namespace DCL.Multiplayer.SDK.Tests
         private Profile profile;
         private PlayerCRDTEntity playerCRDTEntity;
 
-        private Avatar CreateTestAvatar() =>
-            new (BodyShape.MALE,
-                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor());
-
         [SetUp]
         public void Setup()
         {
@@ -38,7 +29,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter);
 
-            profile = new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar());
+            profile = Profile.NewRandomProfile(FAKE_USER_ID);
 
             playerCRDTEntity = new PlayerCRDTEntity
             {

@@ -1,7 +1,5 @@
 using Arch.Core;
 using CrdtEcsBridge.Components;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
@@ -12,7 +10,6 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Multithreading;
-using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
@@ -23,13 +20,6 @@ namespace DCL.Multiplayer.SDK.Tests
         private Entity entity;
         private World sceneWorld;
         private PlayerCRDTEntity playerCRDTEntity;
-
-        private Avatar CreateTestAvatar() =>
-            new (BodyShape.MALE,
-                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor());
 
         [SetUp]
         public void Setup()
@@ -61,7 +51,7 @@ namespace DCL.Multiplayer.SDK.Tests
         [Test]
         public void PropagateProfileCorrectly()
         {
-            var profile = new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar());
+            var profile = Profile.NewRandomProfile(FAKE_USER_ID);
             profile.IsDirty = false;
             world.Add(entity, profile);
 

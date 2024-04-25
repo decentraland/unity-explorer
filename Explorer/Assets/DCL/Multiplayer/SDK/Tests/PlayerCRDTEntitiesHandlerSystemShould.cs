@@ -1,8 +1,6 @@
 using Arch.Core;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
@@ -17,7 +15,6 @@ using NUnit.Framework;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Multithreading;
-using Avatar = DCL.Profiles.Avatar;
 using Object = UnityEngine.Object;
 
 namespace DCL.Multiplayer.SDK.Tests
@@ -34,13 +31,6 @@ namespace DCL.Multiplayer.SDK.Tests
         private World scene2World;
         private ISceneFacade scene1Facade;
         private ISceneFacade scene2Facade;
-
-        private Avatar CreateTestAvatar() =>
-            new (BodyShape.MALE,
-                WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                WearablesConstants.DefaultColors.GetRandomHairColor(),
-                WearablesConstants.DefaultColors.GetRandomSkinColor());
 
         [SetUp]
         public void Setup()
@@ -83,7 +73,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -104,7 +94,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one * 17;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -122,7 +112,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -149,7 +139,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -177,7 +167,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()),
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -204,7 +194,7 @@ namespace DCL.Multiplayer.SDK.Tests
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake user 1", CreateTestAvatar()),
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -216,7 +206,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
 
             // Add 2 more players
-            Entity entity2 = world.Create(new Profile(FAKE_USER_ID, "fake user 2", CreateTestAvatar()),
+            Entity entity2 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
             system.Update(0);
@@ -224,7 +214,7 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(world.TryGet(entity2, out playerCRDTEntity));
             Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, playerCRDTEntity.CRDTEntity.Id);
 
-            Entity entity3 = world.Create(new Profile(FAKE_USER_ID, "fake user 3", CreateTestAvatar()),
+            Entity entity3 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
             system.Update(0);
@@ -237,7 +227,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             // Add 4th different player and check it's assigned with the disconnected player CRDT id
-            Entity entity4 = world.Create(new Profile(FAKE_USER_ID, "fake user 4", CreateTestAvatar()),
+            Entity entity4 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
             system.Update(0);
@@ -255,14 +245,14 @@ namespace DCL.Multiplayer.SDK.Tests
             // Add main player
             fakeMainCharacterUnityTransform.position = Vector3.one;
 
-            world.Add(entity, new Profile(FAKE_USER_ID, "fake main user", CreateTestAvatar()),
+            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeMainCharacterUnityTransform)
             );
 
             // Add another player
             fakeCharacterUnityTransform.position = Vector3.one;
 
-            Entity entity2 = world.Create(new Profile(FAKE_USER_ID, "fake non-main user", CreateTestAvatar()),
+            Entity entity2 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));

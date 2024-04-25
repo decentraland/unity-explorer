@@ -1,19 +1,12 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
-using CRDT;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
-using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Multiplayer.SDK.Systems.SceneWorld;
-using DCL.Optimization.Pools;
-using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
-using NSubstitute.Exceptions;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
@@ -23,7 +16,6 @@ namespace DCL.Multiplayer.SDK.Tests
 {
     public class WriteAvatarEmoteCommandSystemShould : UnitySystemTestBase<WriteAvatarEmoteCommandSystem>
     {
-        private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
         private readonly URN emoteUrn1 = new ("thunder-kiss-65");
         private readonly URN emoteUrn2 = new ("more-human-than-human");
         private Entity entity;
