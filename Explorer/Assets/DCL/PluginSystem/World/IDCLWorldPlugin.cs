@@ -20,12 +20,5 @@ namespace DCL.PluginSystem.World
             in ECSWorldInstanceSharedDependencies sharedDependencies,
             in PersistentEntities persistentEntities,
             List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners);
-
-        /// <summary>
-        ///     Creates a subset of systems that should run in the empty scenes world that exists in a single instance
-        /// </summary>
-        void InjectToEmptySceneWorld(
-            ref ArchSystemsWorldBuilder<Arch.Core.World> builder,
-            in EmptyScenesWorldSharedDependencies dependencies);
     }
 }

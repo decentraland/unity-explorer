@@ -41,7 +41,5 @@ namespace DCL.PluginSystem.World
             var avatarShapeHandlerSystem = AvatarAttachHandlerSystem.InjectToWorld(ref builder, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider);
             finalizeWorldSystems.Add(avatarShapeHandlerSystem);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }
