@@ -70,7 +70,7 @@ namespace Global.Dynamic
             this.globalWorldProxy = globalWorldProxy;
         }
 
-        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool terrainRegen = true)
+        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             var world = globalWorldProxy.Object.EnsureNotNull();
 
@@ -89,7 +89,7 @@ namespace Global.Dynamic
                     await roomHub.StopAsync();
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
 
-                    if (terrainRegen && realm != genesisDomain)
+                    if (realm != genesisDomain)
                         await GenerateWorldTerrainAsync((uint)realm.GetHashCode(),ct);
 
                     await roomHub.StartAsync();
@@ -121,6 +121,8 @@ namespace Global.Dynamic
 
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, CancellationToken ct)
         {
+            if (!worldsTerrain.IsInitialized) return;
+
             await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
 
             AssetPromise<SceneEntityDefinition,GetSceneDefinition>[] promises = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).Promises;
