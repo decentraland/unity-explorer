@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Hold <b><#fcfcfc>[v+num]</color></b> to run an emote while the wheel is
+  m_text: Hold <b><#fcfcfc>[b+num]</color></b> to run an emote while the wheel is
     closed
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 35aa85d68d15435418848a03a2db81ec, type: 2}
