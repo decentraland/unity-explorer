@@ -70,7 +70,7 @@ namespace Global.Dynamic
             this.globalWorldProxy = globalWorldProxy;
         }
 
-        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
+        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool terrainRegen = true)
         {
             var world = globalWorldProxy.Object.EnsureNotNull();
 
@@ -89,7 +89,7 @@ namespace Global.Dynamic
                     await roomHub.StopAsync();
                     await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
 
-                    if (realm != genesisDomain)
+                    if (terrainRegen && realm != genesisDomain)
                         await GenerateWorldTerrainAsync((uint)realm.GetHashCode(),ct);
 
                     await roomHub.StartAsync();

@@ -12,10 +12,18 @@ namespace Global.Dynamic.ChatCommands
     public class ChangeRealmChatCommand : IChatCommand
     {
         private const string COMMAND_WORLD = "world";
-        private const string PARAMETER_GENESIS = "genesis";
 
-        public static readonly Regex REGEX = new ("^/(" + COMMAND_WORLD + "|" + COMMAND_GOTO + @")\s+(\S+\.dcl\.eth|" + PARAMETER_GENESIS + ")$", RegexOptions.Compiled);
+        // Parameters to URL mapping
+        private static readonly Dictionary<string, string> PARAMETER_URLS = new()
+        {
+            {"genesis", IRealmNavigator.GENESIS_URL},
+            {"goerli", IRealmNavigator.GOERLI_URL},
+            {"stream-world", IRealmNavigator.STREAM_WORLD_URL},
+            {"sdk-scenes", IRealmNavigator.SDK_TEST_SCENES_URL},
+            {"test-scenes", IRealmNavigator.TEST_SCENES_URL},
+        };
 
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+(\S+\.dcl\.eth|{string.Join("|", PARAMETER_URLS.Keys)})$", RegexOptions.Compiled);
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
@@ -32,9 +40,16 @@ namespace Global.Dynamic.ChatCommands
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
             worldName = match.Groups[2].Value;
-            realmUrl = worldName == PARAMETER_GENESIS ? IRealmNavigator.GENESIS_URL : GetWorldAddress(worldName);
 
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), ct);
+            bool isWorldOrGenesis = worldName == "genesis";
+
+            if (!PARAMETER_URLS.TryGetValue(worldName, out realmUrl))
+            {
+                isWorldOrGenesis = true;
+                realmUrl = GetWorldAddress(worldName);
+            }
+
+            bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), ct, isWorldOrGenesis);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
