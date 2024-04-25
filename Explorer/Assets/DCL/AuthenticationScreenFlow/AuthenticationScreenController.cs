@@ -211,8 +211,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 viewInstance.FinalizeAnimator.SetTrigger(JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
-                characterPreviewController!.OnHide();
-                lifeCycleTask!.TrySetResult();
+                characterPreviewController?.OnHide();
+                lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
             AnimateAndAwaitAsync().Forget();
