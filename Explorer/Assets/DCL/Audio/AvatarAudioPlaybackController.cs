@@ -164,6 +164,7 @@ namespace DCL.Audio
         {
             if (playingContinuousAudio)
             {
+                playingContinuousAudio = false;
                 ContinuousAudioAvatarAudioSource.Stop();
                 cancellationTokenSource?.Cancel();
             }
