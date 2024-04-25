@@ -140,9 +140,16 @@ jobs:
           
           $semVer = "v$($version).$($minorVersion).$($build)-$($commit)-$($branchName)"
           Write-Output "Version: $semVer"
-          Write-Output "version=$($semVer)" >> $GITHUB_OUTPUT
+          Write-Output "version=$($semVer)" >> $env:GITHUB_OUTPUT
         shell: pwsh
           
+      - name: 'Using Version'
+        run: |
+          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
+          Write-Output "Version: ($env:SELECTED_COLOR)"
+          
+        shell: pwsh
+      
       - name: Restore Library cache
         uses: actions/cache@v3
         with:
@@ -218,12 +225,6 @@ jobs:
               # Display list of files
               ls
 
-      - name: 'Using Version'
-        run: |
-          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
-          
-        shell: pwsh
-        
       - uses: game-ci/unity-builder@v4.2.3
         id: build
         timeout-minutes: 120
