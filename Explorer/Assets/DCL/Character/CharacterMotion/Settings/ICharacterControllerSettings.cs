@@ -67,6 +67,7 @@ namespace DCL.CharacterMotion.Settings
         float SlideAnimationBlendSpeed { get; }
         float MinSlopeAngle { get; }
         float MaxSlopeAngle { get; }
+        bool EnableCharacterRotationBySlope { get; }
         float SlopeCharacterRotationDelay { get; }
         float WallSlideDetectionDistance { get; }
         float WallSlideMaxMoveSpeedMultiplier { get; }
