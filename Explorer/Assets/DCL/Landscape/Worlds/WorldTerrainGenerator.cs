@@ -121,9 +121,18 @@ namespace DCL.Landscape
             // Generate Terrain GameObjects
             terrains.Clear();
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true));
+                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
 
             grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+
+            // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = false;
+
+            await UniTask.Yield();
+
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = true;
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
