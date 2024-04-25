@@ -77,12 +77,7 @@ namespace DCL.SDKComponents.MediaStream
             {
                 MediaPlayer mediaPlayer = component.MediaPlayer;
 
-                if (component.URL == url)
-                {
-                    if (component.State != VideoState.VsError)
-                        mediaPlayer.UpdatePlayback(hasPlaying, playing);
-                }
-                else
+                if (component.URL != url)
                 {
                     UpdateStreamUrl(ref component, url);
 
@@ -92,9 +87,12 @@ namespace DCL.SDKComponents.MediaStream
                         component.Cts = new CancellationTokenSource();
                         mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
 
-                        void OnComplete() => onComplete?.Invoke(mediaPlayer);
+                        void OnComplete() =>
+                            onComplete?.Invoke(mediaPlayer);
                     }
                 }
+                else if (component.State != VideoState.VsError)
+                    mediaPlayer.UpdatePlayback(hasPlaying, playing);
 
                 marker.IsDirty = false;
             }
