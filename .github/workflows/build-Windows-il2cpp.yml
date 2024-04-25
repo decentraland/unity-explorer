@@ -90,6 +90,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
 
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
@@ -111,7 +116,6 @@ jobs:
         id: create-version
         run: | 
           $latestTag = git describe --tags
-          $branchName = git rev-parse --abbrev-ref HEAD
           
           # Extract version components
           if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
@@ -124,12 +128,18 @@ jobs:
           Write-Output "Minor Version: $minorVersion"
           Write-Output "Build: $build"
           Write-Output "Commit: $commit"
-          Write-Output "Branch: $branchName"
           } else {
             Write-Output "String does not match expected pattern. No Version Added!"
           }
           
-          $semVer = "$($version).$($minorVersion)-$($build)-$($commit)-$branchName"
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            $branchName = $env:GITHUB_HEAD_REF
+          } else {
+            $branchName = ($env:GITHUB_REF -split '/')[2]
+          }
+          
+          $semVer = "$($version).$($minorVersion)-$($build)-$($commit)-$($branchName)}"
+          Write-Output "Version: $semVer"
           Write-Output "version=$($semVer)" >> $GITHUB_OUTPUT
         shell: pwsh
           
