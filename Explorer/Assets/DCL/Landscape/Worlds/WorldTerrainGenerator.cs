@@ -68,25 +68,17 @@ namespace DCL.Landscape
             IsInitialized = true;
         }
 
-        public async UniTask SwitchVisibility(bool isVisible)
+        public void SwitchVisibility(bool isVisible)
         {
             if (!IsInitialized) return;
 
-            if (rootGo != null && rootGo.gameObject.activeSelf != isVisible)
+            if (rootGo != null && !isVisible)
             {
                 rootGo.gameObject.SetActive(isVisible);
 
-                if (!isVisible)
-                {
-                    emptyParcels.Dispose();
-                    emptyParcelsData.Dispose();
-                    emptyParcelsNeighborData.Dispose();
-                }
-                else
-                {
-                    await UniTask.Yield();
-                    grassRenderer.Render();
-                }
+                emptyParcels.Dispose();
+                emptyParcelsData.Dispose();
+                emptyParcelsNeighborData.Dispose();
             }
         }
 

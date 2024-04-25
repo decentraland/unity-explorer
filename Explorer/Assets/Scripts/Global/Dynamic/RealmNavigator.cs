@@ -8,7 +8,6 @@ using DCL.MapRenderer.MapLayers;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
-using DCL.PluginSystem.Global;
 using DCL.Roads.Systems;
 using ECS.SceneLifeCycle.Components;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -18,7 +17,6 @@ using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -143,14 +141,14 @@ namespace Global.Dynamic
 
         private async UniTask SwitchMiscVisibility(bool isVisible)
         {
+            // is NOT visible
+            worldsTerrain.SwitchVisibility(!isVisible);
+
             // isVisible
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
             satelliteFloor.SwitchVisibility(isVisible);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isVisible);
             await genesisTerrain.SwitchVisibility(isVisible);
-
-            // is NOT visible
-            await worldsTerrain.SwitchVisibility(!isVisible);
         }
     }
 }

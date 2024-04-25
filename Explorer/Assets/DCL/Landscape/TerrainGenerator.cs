@@ -116,14 +116,12 @@ namespace DCL.Landscape
             if (!isInitialized) return;
 
             if (rootGo != null && rootGo.gameObject.activeSelf != isVisible)
-            {
                 rootGo.gameObject.SetActive(isVisible);
 
-                if (isVisible)
-                {
-                    await UniTask.Yield();
-                    grassRenderer.Render();
-                }
+            if (isVisible)
+            {
+                await UniTask.Yield();
+                grassRenderer.Render();
             }
         }
 
