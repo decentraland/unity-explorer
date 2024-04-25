@@ -52,7 +52,8 @@ namespace DCL.SDKComponents.MediaStream
             UpdateMediaStream(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, sdkComponent.HasPlaying, sdkComponent.Playing, OnComplete);
             return;
 
-            void OnComplete(MediaPlayer mediaPlayer) => mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
+            void OnComplete(MediaPlayer mediaPlayer) =>
+                mediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
         }
 
         [Query]
@@ -66,7 +67,8 @@ namespace DCL.SDKComponents.MediaStream
                            .UpdatePlaybackProperties(sdkComponent);
         }
 
-        private void UpdateMediaStream(ref MediaPlayerComponent component, IDirtyMarker marker, string url, bool hasVolume, float volume, bool hasPlaying, bool playing, Action<MediaPlayer> onComplete)
+        private void UpdateMediaStream(ref MediaPlayerComponent component, IDirtyMarker marker, string url, bool hasVolume, float volume,
+            bool hasPlaying, bool playing, Action<MediaPlayer> onComplete)
         {
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
@@ -80,13 +82,18 @@ namespace DCL.SDKComponents.MediaStream
                     if (component.State != VideoState.VsError)
                         mediaPlayer.UpdatePlayback(hasPlaying, playing);
                 }
-                else if (UpdateStreamUrl(ref component, url) != VideoState.VsError)
+                else
                 {
-                    component.Cts.Cancel();
-                    component.Cts = new CancellationTokenSource();
-                    mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
+                    UpdateStreamUrl(ref component, url);
 
-                    void OnComplete() => onComplete?.Invoke(mediaPlayer);
+                    if (component.State != VideoState.VsError)
+                    {
+                        component.Cts.Cancel();
+                        component.Cts = new CancellationTokenSource();
+                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
+
+                        void OnComplete() => onComplete?.Invoke(mediaPlayer);
+                    }
                 }
 
                 marker.IsDirty = false;
@@ -110,7 +117,7 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Texture.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
-        private VideoState UpdateStreamUrl(ref MediaPlayerComponent component, string url)
+        private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
         {
             component.MediaPlayer.CloseCurrentStream();
 
@@ -119,8 +126,6 @@ namespace DCL.SDKComponents.MediaStream
 
             component.URL = url;
             component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
-
-            return component.State;
         }
     }
 }
