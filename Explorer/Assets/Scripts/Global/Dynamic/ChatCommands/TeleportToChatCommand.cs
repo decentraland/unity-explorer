@@ -36,7 +36,7 @@ namespace Global.Dynamic.ChatCommands
                 x = int.Parse(match.Groups[2].Value);
                 y = int.Parse(match.Groups[3].Value);
             }
-            else if (match.Groups[2].Value == PARAMETER_RANDOM)
+            else // means it's equal "random"
             {
                 x = Random.Range(GenesisCityData.MIN_PARCEL.x, GenesisCityData.MAX_SQUARE_CITY_PARCEL.x);
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
