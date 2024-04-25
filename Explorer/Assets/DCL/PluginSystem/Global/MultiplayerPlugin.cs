@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
@@ -16,10 +17,13 @@ using DCL.Multiplayer.Profiles.RemoteProfiles;
 using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
 using ECS;
+using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
 using System.Threading;
@@ -29,18 +33,19 @@ namespace DCL.PluginSystem.Global
     public class MultiplayerPlugin : IDCLGlobalPluginWithoutSettings
     {
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
-        private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
-        private readonly IRoomHub roomHub;
-        private readonly IMessagePipesHub messagePipesHub;
-        private readonly IProfileRepository profileRepository;
-        private readonly IProfileBroadcast profileBroadcast;
+        private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IEmoteCache emoteCache;
         private readonly IEntityParticipantTable entityParticipantTable;
+        private readonly IGateKeeperSceneRoom gateKeeperSceneRoom;
+        private readonly IMessagePipesHub messagePipesHub;
+        private readonly IProfileBroadcast profileBroadcast;
+        private readonly IProfileRepository profileRepository;
+        private readonly IReadOnlyRealFlowLoadingStatus realFlowLoadingStatus;
+        private readonly IRealmData realmData;
         private readonly IRemoteEntities remoteEntities;
         private readonly IRemotePoses remotePoses;
-        private readonly ICharacterObject characterObject;
-        private readonly IRealmData realmData;
+        private readonly IRoomHub roomHub;
         private readonly IScenesCache scenesCache;
 
         public MultiplayerPlugin(
@@ -57,7 +62,8 @@ namespace DCL.PluginSystem.Global
             ICharacterObject characterObject,
             IRealmData realmData,
             IRemoteEntities remoteEntities,
-            IScenesCache scenesCache
+            IScenesCache scenesCache,
+            IEmoteCache emoteCache
         )
         {
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -74,6 +80,7 @@ namespace DCL.PluginSystem.Global
             this.remoteEntities = remoteEntities;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
+            this.emoteCache = emoteCache;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -104,7 +111,11 @@ namespace DCL.PluginSystem.Global
                 realmData
             );
 
-            PlayerComponentsHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
+            ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
+            PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
+            AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
 #endif
         }
     }

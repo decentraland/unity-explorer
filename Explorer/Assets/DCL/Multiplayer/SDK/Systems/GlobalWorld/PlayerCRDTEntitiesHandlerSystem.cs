@@ -16,20 +16,20 @@ using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using Utility;
 
-namespace DCL.Multiplayer.SDK.Systems
+namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     // Currently implemented to track reserved entities only on the CURRENT SCENE
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(MultiplayerProfilesSystem))]
-    [LogCategory(ReportCategory.MULTIPLAYER_SDK_COMPONENTS_HANDLER)]
-    public partial class PlayerComponentsHandlerSystem : BaseUnityLoopSystem
+    [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY)]
+    public partial class PlayerCRDTEntitiesHandlerSystem : BaseUnityLoopSystem
     {
         private readonly IScenesCache scenesCache;
         private readonly ICharacterObject mainPlayerCharacterObject;
         private readonly bool[] reservedEntities = new bool[SpecialEntitiesID.OTHER_PLAYER_ENTITIES_TO - SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM];
         private int currentReservedEntitiesCount;
 
-        public PlayerComponentsHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
+        public PlayerCRDTEntitiesHandlerSystem(World world, IScenesCache scenesCache, ICharacterObject characterObject) : base(world)
         {
             this.scenesCache = scenesCache;
             mainPlayerCharacterObject = characterObject;
@@ -38,16 +38,19 @@ namespace DCL.Multiplayer.SDK.Systems
 
         protected override void Update(float t)
         {
-            RemovePlayerIdentityDataOnOutsideCurrentSceneQuery(World);
+            RemoveComponentOnOutsideCurrentSceneQuery(World);
 
-            HandlePlayerDisconnectQuery(World);
+            RemoveComponentOnPlayerDisconnectQuery(World);
 
-            AddPlayerIdentityDataQuery(World);
+            RemoveComponentQuery(World);
+
+            AddPlayerCRDTEntityQuery(World);
         }
 
         [Query]
-        [None(typeof(PlayerIdentityDataComponent), typeof(DeleteEntityIntention))]
-        private void AddPlayerIdentityData(in Entity entity, ref Profile profile, ref CharacterTransform characterTransform)
+        [All(typeof(Profile))]
+        [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention))]
+        private void AddPlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;
@@ -66,63 +69,54 @@ namespace DCL.Multiplayer.SDK.Systems
             using (sceneEcsExecutor.Sync.GetScope())
             {
                 Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
-                var crdtEntityComponent = new CRDTEntity(crdtEntityId);
+                var crdtEntity = new CRDTEntity(crdtEntityId);
 
-                var playerIdentityData = new PlayerIdentityDataComponent
-                {
-                    SceneFacade = sceneFacade,
-                    SceneWorldEntity = sceneWorldEntity,
-                    CRDTEntity = crdtEntityComponent,
-                    Address = profile.UserId,
-                    IsGuest = !profile.HasConnectedWeb3,
-                };
+                var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity);
 
-                sceneEcsExecutor.World.Add(sceneWorldEntity, playerIdentityData);
-                World.Add(entity, playerIdentityData);
+                sceneEcsExecutor.World.Add(sceneWorldEntity, playerCRDTEntity);
+
+                World.Add(entity, playerCRDTEntity);
             }
         }
 
         [Query]
-        private void RemovePlayerIdentityDataOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerIdentityDataComponent playerIdentityDataComponent)
+        private void RemoveComponentOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
             // Only target entities outside the current scene
             if (scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
                 && !sceneFacade.IsEmpty && sceneFacade.SceneStateProvider.IsCurrent) return;
 
-            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
-
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-            {
-                World.Remove<PlayerIdentityDataComponent>(entity);
-
-                // Remove from whichever scene it was added
-                sceneEcsExecutor.World.Remove<PlayerIdentityDataComponent>(playerIdentityDataComponent.SceneWorldEntity);
-            }
-
-            FreeReservedEntity(playerIdentityDataComponent.CRDTEntity.Id);
+            RemoveComponent(entity, ref playerCRDTEntity);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandlePlayerDisconnect(in Entity entity, ref CharacterTransform characterTransform, PlayerIdentityDataComponent playerIdentityDataComponent)
+        private void RemoveComponentOnPlayerDisconnect(in Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade)
                 || sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
                 return;
 
-            SceneEcsExecutor sceneEcsExecutor = playerIdentityDataComponent.SceneFacade.EcsExecutor;
+            RemoveComponent(entity, ref playerCRDTEntity);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(Profile))]
+        private void RemoveComponent(in Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
+        {
+            SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
             {
-                World.Remove<PlayerIdentityDataComponent>(entity);
-
-                // Remove from whichever scene it was added
-                sceneEcsExecutor.World.Remove<PlayerIdentityDataComponent>(playerIdentityDataComponent.SceneWorldEntity);
+                // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
+                // as the scene-level Writer systems need it to know which CRDT Entity to affect
+                sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
             }
 
-            FreeReservedEntity(playerIdentityDataComponent.CRDTEntity.Id);
+            FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
+
+            World.Remove<PlayerCRDTEntity>(entity);
         }
 
         private int ReserveNextFreeEntity()

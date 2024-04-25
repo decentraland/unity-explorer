@@ -50,16 +50,6 @@ namespace DCL.PluginSystem.World
             LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, assetBundleLoadingMutex);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
-        {
-            // Asset Bundles
-            PrepareAssetBundleLoadingParametersSystem.InjectToWorld(ref builder, dependencies.SceneData, STREAMING_ASSETS_URL);
-            ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
-
-            // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, dependencies.Mutex, assetBundleLoadingMutex);
-        }
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             // Asset Bundles
