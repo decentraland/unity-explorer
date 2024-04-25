@@ -7,7 +7,6 @@ using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
-using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
