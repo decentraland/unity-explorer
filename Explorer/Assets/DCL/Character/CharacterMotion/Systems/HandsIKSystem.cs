@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.DebugUtilities;
@@ -60,7 +61,8 @@ namespace DCL.CharacterMotion.Systems
             ref HandsIKComponent handsIKComponent,
             ref AvatarBase avatarBase,
             in CharacterRigidTransform rigidTransform,
-            in ICharacterControllerSettings settings
+            in ICharacterControllerSettings settings,
+            in CharacterEmoteComponent emoteComponent
         )
         {
             handsIKComponent.IsDisabled = !handsIkSystemIsEnabled;
@@ -68,7 +70,8 @@ namespace DCL.CharacterMotion.Systems
             // To avoid using the Hands IK during any special state we update this
             bool isEnabled = !handsIKComponent.IsDisabled
                              && rigidTransform.IsGrounded
-                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck);
+                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck)
+                             && emoteComponent.CurrentEmoteReference == null;
 
             avatarBase.HandsIKRig.weight = Mathf.MoveTowards(avatarBase.HandsIKRig.weight, isEnabled ? 1 : 0, settings.HandsIKWeightSpeed * dt);
 

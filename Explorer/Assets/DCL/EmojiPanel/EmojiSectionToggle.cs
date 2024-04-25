@@ -1,4 +1,4 @@
-using System;
+using DCL.Audio;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -23,12 +23,18 @@ namespace DCL.Emoji
 
         [field: SerializeField]
         public float SectionPosition { get; private set; }
+        [field: Header("Audio")]
+        [field: SerializeField]
+        public AudioClipConfig ToggleAudio { get; private set; }
 
         private void Start() =>
             SectionToggle.onValueChanged.AddListener(OnValueChanged);
 
         private void OnValueChanged(bool isOn)
         {
+            if (isOn)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(ToggleAudio);
+
             SectionImage.color = isOn ? SelectedColor : UnselectedColor;
         }
     }

@@ -20,7 +20,6 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly IMultiPool multiPool;
         private readonly IMemoryPool memoryPool;
         private readonly MessageParser<Packet> messageParser;
-        private readonly uint supportedVersion;
 
         private readonly Dictionary<string, List<Action<(Packet, Participant)>>> subscribers = new ();
 
@@ -35,17 +34,15 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 var packet = multiPool.Get<Packet>();
                 packet.ClearMessage();
                 return packet;
-            }),
-            100
+            })
         ) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion)
+        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser)
         {
             this.dataPipe = dataPipe;
             this.multiPool = multiPool;
             this.memoryPool = memoryPool;
             this.messageParser = messageParser;
-            this.supportedVersion = supportedVersion;
 
             dataPipe.DataReceived += OnDataReceived;
         }
@@ -89,7 +86,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         }
 
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
-            new (dataPipe, multiPool, memoryPool, supportedVersion);
+            new (dataPipe, multiPool, memoryPool);
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
@@ -105,17 +102,6 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                     {
                         Packet packet = tuple.Item1!;
                         Participant participant = tuple.Item2!;
-
-                        uint version = packet.ProtocolVersion;
-
-                        if (version != supportedVersion)
-                        {
-                            ReportHub.LogWarning(
-                                ReportCategory.LIVEKIT,
-                                $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
-                            );
-                            return;
-                        }
 
                         var receivedMessage = new ReceivedMessage<T>(
                             Payload<T>(packet),
