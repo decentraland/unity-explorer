@@ -33,6 +33,8 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly JobScheduler.JobScheduler jobScheduler;
 
+        private readonly byte emptyScenePartition;
+
         // These lists are static because of a compile issue when passing the references to the Query as [Data], code-gen wont find Unity.Collections
         protected static NativeArray<PartitionData> partitions;
         private static UnsafeList<ParcelCornersData> parcelCorners;
@@ -66,6 +68,8 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 SqrDistanceBuckets = sqrDistanceBuckets,
             };
+
+            emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
         }
 
         public override void Dispose()
@@ -125,7 +129,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 PartitionComponent partitionComponent = partitionComponentPool.Get();
                 // some default values to not break other systems
-                partitionComponent.Bucket = 2;
+                partitionComponent.Bucket = emptyScenePartition;
                 World.Add(entity, partitionComponent);
                 return;
             }
