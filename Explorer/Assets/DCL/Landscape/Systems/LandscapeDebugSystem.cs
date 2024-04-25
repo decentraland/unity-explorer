@@ -18,6 +18,7 @@ namespace DCL.Landscape.Systems
     public partial class LandscapeDebugSystem : BaseUnityLoopSystem
     {
         private const float UNITY_DEFAULT_LOD_BIAS = 0.8f;
+        private readonly SatelliteFloor floor;
         private readonly RealmPartitionSettingsAsset realmPartitionSettings;
         private readonly LandscapeData landscapeData;
         private readonly ElementBinding<int> lodBias;
@@ -27,15 +28,17 @@ namespace DCL.Landscape.Systems
 
         private int lastCullDistanceApplied;
 
-        public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
+        public LandscapeDebugSystem(World world, IDebugContainerBuilder debugBuilder, SatelliteFloor floor, RealmPartitionSettingsAsset realmPartitionSettings, LandscapeData landscapeData) : base(world)
         {
+            this.floor = floor;
             this.realmPartitionSettings = realmPartitionSettings;
             this.landscapeData = landscapeData;
 
             lodBias = new ElementBinding<int>(180);
             detailDensity = new ElementBinding<int>(100);
             detailDistance = new ElementBinding<int>(80);
-            cullDistance = new ElementBinding<int>(5000);
+            cullDistance = new ElementBinding<int>((int)landscapeData.DetailDistance);
+            lastCullDistanceApplied = (int)landscapeData.DetailDistance;
 
             debugBuilder.AddWidget("Landscape")
                         .AddIntFieldWithConfirmation(realmPartitionSettings.MaxLoadingDistanceInParcels, "Set Load Radius", OnLoadRadiusConfirm)
@@ -60,7 +63,7 @@ namespace DCL.Landscape.Systems
 
         private void OnSatelliteToggle(ChangeEvent<bool> evt)
         {
-            landscapeData.showSatelliteView = evt.newValue;
+            floor.SwitchVisibility(evt.newValue);
         }
 
         private void OnLoadRadiusConfirm(int value)
@@ -85,7 +88,7 @@ namespace DCL.Landscape.Systems
 
             if (lastCullDistanceApplied != cullDistance.Value)
             {
-                landscapeData.detailDistance = cullDistance.Value;
+                landscapeData.DetailDistance = cullDistance.Value;
                 lastCullDistanceApplied = cullDistance.Value;
             }
         }

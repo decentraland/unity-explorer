@@ -31,10 +31,13 @@ namespace ECS.Unity.Visibility.Systems
             if (sdkComponent.IsDirty || visibilityComponent.IsDirty
                                      || component.State.ChangedThisFrameTo(LoadingState.Finished))
             {
-                List<Renderer> renderers = component.Promise.Result.Value.Asset.Renderers;
+                if (!component.Promise.TryGetResult(World, out var result))
+                    return;
+
+                var renderers = result.Asset!.Renderers;
 
                 for (var i = 0; i < renderers.Count; i++)
-                    renderers[i].enabled = visibilityComponent.Visible;
+                    renderers[i].enabled = visibilityComponent.GetVisible();
             }
         }
 

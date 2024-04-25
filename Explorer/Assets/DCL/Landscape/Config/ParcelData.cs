@@ -22,14 +22,14 @@ namespace DCL.Landscape.Config
             return hashSet;
         }
 
-        public NativeArray<int2> GetEmptyParcels()
+        public NativeList<int2> GetEmptyParcels()
         {
-            var array = new NativeArray<int2>(emptyParcels.Length, Allocator.Persistent);
+            var nativeList = new NativeList<int2>(emptyParcels.Length, Allocator.Persistent);
 
-            for (var i = 0; i < emptyParcels.Length; i++)
-                array[i] = emptyParcels[i];
+            foreach (int2 emptyParcel in emptyParcels)
+                nativeList.Add(emptyParcel);
 
-            return array;
+            return nativeList;
         }
     }
 }

@@ -75,5 +75,10 @@ namespace DCL.LOD
                     break;
             }
         }
+
+        public void SwitchVisibility(bool isVisible)
+        {
+            roadAssetParent.gameObject.SetActive(isVisible);
+        }
     }
 }

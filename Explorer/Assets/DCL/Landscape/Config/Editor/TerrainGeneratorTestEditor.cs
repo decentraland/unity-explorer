@@ -15,7 +15,7 @@ namespace DCL.Landscape.Config.Editor
             if (generatorTest != null)
             {
                 var generator = generatorTest.GetGenerator();
-                shouldDisable = generator != null && !generator.IsTerrainGenerated();
+                shouldDisable = generator is { IsTerrainGenerated: false };
             }
 
             GUI.enabled = !shouldDisable;
@@ -23,6 +23,11 @@ namespace DCL.Landscape.Config.Editor
             {
                 this.generatorTest = (TerrainGeneratorTest)target;
                 this.generatorTest.GenerateAsync().Forget();
+            }
+            if (GUILayout.Button("Clear App Cache"))
+            {
+                this.generatorTest = (TerrainGeneratorTest)target;
+                this.generatorTest.ClearAppCache();
             }
             GUI.enabled = true;
 

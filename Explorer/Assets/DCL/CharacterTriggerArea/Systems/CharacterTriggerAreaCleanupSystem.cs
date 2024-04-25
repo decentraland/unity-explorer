@@ -1,18 +1,18 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 
 namespace DCL.CharacterTriggerArea.Systems
 {
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostPhysicsSystemGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class CharacterTriggerAreaCleanupSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {

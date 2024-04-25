@@ -2419,6 +2419,7 @@ MonoBehaviour:
   <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
+  <EnterInputAudio>k__BackingField: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
 --- !u!1001 &1618022358711868011
 PrefabInstance:
   m_ObjectHideFlags: 0

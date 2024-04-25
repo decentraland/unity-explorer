@@ -41,42 +41,30 @@ namespace DCL.Interaction.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
-            Material materialToUse = highlightComponent.IsAtDistance ? hoverMaterial : hoverOorMaterial;
+            Material materialToUse = highlightComponent.IsAtDistance() ? hoverMaterial : hoverOorMaterial;
 
-            if (highlightComponent.CurrentEntity != EntityReference.Null)
-            {
-                if (World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntity))
-                {
-                    highlightComponent.NextEntity = EntityReference.Null;
-                    highlightComponent.IsEnabled = false;
-                }
-            }
+            if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
+                && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
+                highlightComponent.Disable();
 
-            if (highlightComponent.MaterialOnUse == materialToUse
-                && highlightComponent.CurrentEntity == highlightComponent.NextEntity
-                && highlightComponent.IsEnabled)
+            if (highlightComponent.CanUpdate(materialToUse))
                 return;
 
-            if (highlightComponent.MaterialOnUse == null && highlightComponent.IsEnabled && highlightComponent.NextEntity != EntityReference.Null)
+            if (highlightComponent.ReadyForMaterial())
             {
-                highlightComponent.CurrentEntity = highlightComponent.NextEntity;
-                highlightComponent.MaterialOnUse = materialToUse;
+                highlightComponent.UpdateMaterial(materialToUse);
 
-                TransformComponent transformComponent = World.Get<TransformComponent>(highlightComponent.CurrentEntity);
+                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntityOrNull());
                 TryAddHoverMaterials(ref highlightComponent, in transformComponent);
             }
             else
             {
-                if (highlightComponent.CurrentEntity == EntityReference.Null)
+                if (highlightComponent.IsEmpty())
                     return;
 
-                if (highlightComponent.MaterialOnUse == null)
-                    return;
-
-                TransformComponent transformComponent = World.Get<TransformComponent>(highlightComponent.CurrentEntity);
+                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntityOrNull());
                 TryRemoveHoverMaterialFromComponentSiblings(ref highlightComponent, in transformComponent);
-                highlightComponent.MaterialOnUse = null;
-                highlightComponent.CurrentEntity = highlightComponent.NextEntity;
+                highlightComponent.MoveNextAndRemoveMaterial();
             }
         }
 
@@ -84,47 +72,41 @@ namespace DCL.Interaction.Systems
         {
             if (!World.TryGet(transformComponent.Parent, out TransformComponent parentTransform)) return;
 
-            Dictionary<EntityReference, Material[]> materialDict = highlightComponent.OriginalMaterials ?? new Dictionary<EntityReference, Material[]>();
-
             foreach (EntityReference brother in parentTransform.Children)
             {
                 // TODO: we should support other rendereables like gltf
                 if (!World.TryGet(brother, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
                     continue;
 
-                if (materialDict.ContainsKey(brother))
+                if (highlightComponent.OriginalMaterials.ContainsKey(brother))
                     continue;
 
                 List<Material> materials = ListPool<Material>.Get();
                 MeshRenderer renderer = primitiveMeshRendererComponent.MeshRenderer;
-                materialDict.Add(brother, renderer.sharedMaterials);
+                highlightComponent.OriginalMaterials.Add(brother, renderer.sharedMaterials);
 
                 // override materials
                 renderer.GetMaterials(materials);
-                materials.Add(highlightComponent.MaterialOnUse);
+                materials.Add(highlightComponent.MaterialOnUse());
                 renderer.SetMaterials(materials);
 
                 ListPool<Material>.Release(materials);
             }
-
-            highlightComponent.OriginalMaterials = materialDict;
         }
 
         private void TryRemoveHoverMaterialFromComponentSiblings(ref HighlightComponent highlightComponent, in TransformComponent transformComponent)
         {
             if (!World.TryGet(transformComponent.Parent, out TransformComponent parentTransform)) return;
 
-            Dictionary<EntityReference, Material[]> materialDict = highlightComponent.OriginalMaterials;
-
             foreach (EntityReference brother in parentTransform.Children)
             {
                 if (!World.TryGet(brother, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
                     continue;
 
-                if (!materialDict.ContainsKey(brother)) continue;
+                if (!highlightComponent.OriginalMaterials.ContainsKey(brother)) continue;
 
-                primitiveMeshRendererComponent.MeshRenderer.sharedMaterials = materialDict[brother];
-                materialDict.Remove(brother);
+                primitiveMeshRendererComponent.MeshRenderer.sharedMaterials = highlightComponent.OriginalMaterials[brother];
+                highlightComponent.OriginalMaterials.Remove(brother);
             }
         }
     }

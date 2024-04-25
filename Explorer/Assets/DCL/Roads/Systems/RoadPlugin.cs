@@ -23,7 +23,7 @@ namespace DCL.Roads.Systems
 
         private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDataDictionary;
 
-        private RoadAssetsPool? roadAssetPool;
+        public RoadAssetsPool? RoadAssetPool { get; private set; }
 
         public RoadPlugin(CacheCleaner cacheCleaner,
             IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget,
@@ -38,20 +38,20 @@ namespace DCL.Roads.Systems
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            roadAssetPool = new RoadAssetsPool(roadPrefabs);
-            cacheCleaner.Register(roadAssetPool);
+            RoadAssetPool = new RoadAssetsPool(roadPrefabs);
+            cacheCleaner.Register(RoadAssetPool);
             return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, roadAssetPool);
-            UnloadRoadSystem.InjectToWorld(ref builder, roadAssetPool);
+            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, RoadAssetPool);
+            UnloadRoadSystem.InjectToWorld(ref builder, RoadAssetPool);
         }
 
         public void Dispose()
         {
-            roadAssetPool?.Dispose();
+            RoadAssetPool?.Dispose();
         }
     }
 }

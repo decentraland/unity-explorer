@@ -1,4 +1,4 @@
-﻿using Arch.CommandBuffer;
+﻿using Arch.Buffer;
 using Arch.Core;
 using CRDT.Protocol;
 using CrdtEcsBridge.WorldSynchronizer.CommandBuffer;
@@ -16,7 +16,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         public void SetUp()
         {
             world = World.Create();
-            commandBuffer = new PersistentCommandBuffer(world);
+            commandBuffer = new PersistentCommandBuffer();
             componentPool = Substitute.For<IComponentPool<TestComponent>>();
 
             commandBufferSynchronizer = new SDKComponentCommandBufferSynchronizer<TestComponent>(componentPool);
@@ -47,7 +47,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
             entity = world.Create(new TestComponent { Value = 100 });
 
             commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentModified, new TestComponent { Value = 200 });
-            commandBuffer.Playback();
+            commandBuffer.Playback(world);
 
             componentPool.Received(1).Release(Arg.Is<TestComponent>(t => t.Value == 100));
             Assert.AreEqual(200, world.Get<TestComponent>(entity).Value);
@@ -59,7 +59,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
             entity = world.Create();
 
             commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentAdded, new TestComponent { Value = 300 });
-            commandBuffer.Playback();
+            commandBuffer.Playback(world);
 
             componentPool.DidNotReceive().Release(Arg.Any<TestComponent>());
             Assert.AreEqual(300, world.Get<TestComponent>(entity).Value);
@@ -71,7 +71,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
             entity = world.Create(new TestComponent { Value = 100 }, RemovedComponents.CreateDefault());
 
             commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentDeleted, null);
-            commandBuffer.Playback();
+            commandBuffer.Playback(world);
 
             componentPool.Received(1).Release(Arg.Is<TestComponent>(t => t.Value == 100));
             Assert.IsFalse(world.Has<TestComponent>(entity));

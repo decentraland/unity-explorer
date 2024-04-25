@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Audio
+  m_EditorClassIdentifier: 
+  m_GroupName: Audio
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 6afe569a142146542854ed2edc5deb37
+  m_SerializeEntries:
+  - m_GUID: 81289e85b8c13dc4b8ea68b7940e76a5
+    m_Address: Assets/DCL/Audio/AudioSettings/LandscapeAudioSystemSettings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9a7adc162dc338449107a4654a26d50
+    m_Address: Assets/DCL/Audio/Prefabs/WorldAudioContainer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86a5a8acd91f6994788c37e301d06c56
+    m_Address: Assets/DCL/Audio/Prefabs/CinemachineCameraAudioSettings.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e38b0fb061d7ffa47b54d89ecd483bd2
+    m_Address: Assets/DCL/Audio/Prefabs/GeneralAudioMixer.mixer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df3decac75a242f4689cb445dc93eb06
+    m_Address: Assets/DCL/Audio/Prefabs/UIAudioContainer.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: f83ae1c6b9127a745a7a8cf1966f3493, type: 2}
+    - {fileID: 11400000, guid: 9587ccec83ee9c74d9a3558f81600129, type: 2}

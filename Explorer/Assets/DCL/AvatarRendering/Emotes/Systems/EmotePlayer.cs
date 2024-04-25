@@ -88,6 +88,19 @@ namespace DCL.AvatarRendering.Emotes
 
             Animator? animator = mainGameObject.GetComponent<Animator>();
             EmoteReferences? references = mainGameObject.AddComponent<EmoteReferences>();
+            Renderer[] renderers = mainGameObject.GetComponentsInChildren<Renderer>();
+
+            foreach (Renderer renderer in renderers)
+            {
+                // Some old emotes contain references to the avatar for easier animation, since emotes 2.0 those meshes can be shown, so in order to avoid having to update those emotes,
+                // we hide renderers this specific conditions in order to avoid hiding unintentional stuff
+                bool endsWithReference = renderer.name.EndsWith("_reference", StringComparison.InvariantCultureIgnoreCase);
+                bool endsWithBaseMesh = renderer.name.EndsWith("_basemesh", StringComparison.InvariantCultureIgnoreCase);
+                bool startsWithMask = renderer.name.StartsWith("m_mask_", StringComparison.InvariantCultureIgnoreCase);
+
+                if (endsWithReference || endsWithBaseMesh || startsWithMask)
+                    renderer.forceRenderingOff = true;
+            }
 
             references.animator = animator;
 
