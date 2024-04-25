@@ -47,6 +47,7 @@ namespace DCL.EmotesWheel
         {
             if (controller is not EmotesWheelController) return;
 
+            // TODO: this should not be handled here. Instead it should be handled by a Toggle component in the view
             viewInstance.EmotesDisabledContainer.SetActive(false);
             viewInstance.EmotesEnabledContainer.SetActive(true);
         }
@@ -55,6 +56,7 @@ namespace DCL.EmotesWheel
         {
             if (controller is not EmotesWheelController) return;
 
+            // TODO: this should not be handled here. Instead it should be handled by a Toggle component in the view
             viewInstance.EmotesDisabledContainer.SetActive(true);
             viewInstance.EmotesEnabledContainer.SetActive(false);
         }

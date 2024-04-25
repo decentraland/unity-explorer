@@ -104,7 +104,7 @@ namespace DCL.EmotesWheel
 
                 if (profile == null)
                 {
-                    ReportHub.LogError(new ReportData(), "Could not initialize emote wheel slots, profile is null");
+                    ReportHub.LogError(new ReportData(ReportCategory.EMOTE), "Could not initialize emote wheel slots, profile is null");
                     return;
                 }
 
@@ -252,7 +252,7 @@ namespace DCL.EmotesWheel
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
         {
-            for (var i = 0; i <= 9; i++)
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
             {
                 string actionName = GetSlotInputName(i);
                 InputAction inputAction = inputActionMap.FindAction(actionName);
@@ -262,9 +262,9 @@ namespace DCL.EmotesWheel
 
         private void UnregisterSlotsInput(InputActionMap inputActionMap)
         {
-            for (var i = 0; i <= 9; i++)
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
             {
-                string actionName = GetSlotInputName(i + 1);
+                string actionName = GetSlotInputName(i);
                 InputAction inputAction = inputActionMap.FindAction(actionName);
                 inputAction.started -= PlayEmote;
             }

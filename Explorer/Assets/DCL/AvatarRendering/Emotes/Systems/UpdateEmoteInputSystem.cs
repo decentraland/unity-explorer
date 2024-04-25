@@ -106,7 +106,7 @@ namespace DCL.AvatarRendering.Emotes
 
         private void ListenToSlotsInput(InputActionMap inputActionMap)
         {
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
             {
                 string actionName = GetActionName(i);
 
@@ -122,7 +122,7 @@ namespace DCL.AvatarRendering.Emotes
 
         private void UnregisterSlotsInput(InputActionMap inputActionMap)
         {
-            for (var i = 0; i <= 9; i++)
+            for (var i = 0; i < Avatar.MAX_EQUIPPED_EMOTES; i++)
             {
                 string actionName = GetActionName(i);
                 InputAction inputAction = inputActionMap.FindAction(actionName);
