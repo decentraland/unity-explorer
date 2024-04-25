@@ -32,7 +32,11 @@ export function newRegistrationWrap(
                 const originMethod = mutableBundle[k] as ExecutionMethod
                 const wrappedMethod = registrationWrapMethod(mutableBundle, k, originMethod, logger)
                 if (wrappedMethod !== null) {
-                    mutableBundle[k] = wrappedMethod
+                    try {
+                        mutableBundle[k] = wrappedMethod
+                    } catch (e: unknown) {
+                        logger.error(`Failed to wrap method ${k}: ${messageFromError(e)}`)
+                    }
                 }
                 alreadyRegisteredEntities.add(k)
             }
