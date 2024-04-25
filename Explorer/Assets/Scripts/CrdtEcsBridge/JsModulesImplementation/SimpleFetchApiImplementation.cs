@@ -3,7 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using Microsoft.ClearScript;
-using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.FetchApi;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -33,7 +33,8 @@ namespace CrdtEcsBridge.Engine
 
             RequestMethod parsedRequestMethod = ParseRequestMethod(requestMethod);
 
-            if (parsedRequestMethod == RequestMethod.INVALID) { throw new ArgumentException("Invalid request method."); }
+            if (parsedRequestMethod == RequestMethod.INVALID)
+                throw new ArgumentException("Invalid request method.");
 
             var commonArguments = new CommonArguments(URLAddress.FromString(url), timeout: timeout);
             var webRequestHeaders = new WebRequestHeadersInfo();
