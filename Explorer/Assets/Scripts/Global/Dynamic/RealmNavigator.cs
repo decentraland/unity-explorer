@@ -81,7 +81,7 @@ namespace Global.Dynamic
 
             ct.ThrowIfCancellationRequested();
 
-            SwitchMiscVisibility(realm == genesisDomain);
+            await SwitchMiscVisibility(realm == genesisDomain);
 
             await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
                 {
@@ -109,7 +109,7 @@ namespace Global.Dynamic
                 if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
                     await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
-                    SwitchMiscVisibility(true);
+                    await SwitchMiscVisibility(true);
 
                     ct.ThrowIfCancellationRequested();
                 }
@@ -139,16 +139,16 @@ namespace Global.Dynamic
             }
         }
 
-        private void SwitchMiscVisibility(bool isVisible)
+        private async UniTask SwitchMiscVisibility(bool isVisible)
         {
-            // isVisible
-            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
-            genesisTerrain.SwitchVisibility(isVisible);
-            satelliteFloor.SwitchVisibility(isVisible);
-            roadsPlugin.RoadAssetPool?.SwitchVisibility(isVisible);
-
             // is NOT visible
             worldsTerrain.SwitchVisibility(!isVisible);
+
+            // isVisible
+            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
+            satelliteFloor.SwitchVisibility(isVisible);
+            roadsPlugin.RoadAssetPool?.SwitchVisibility(isVisible);
+            await genesisTerrain.SwitchVisibility(isVisible);
         }
     }
 }

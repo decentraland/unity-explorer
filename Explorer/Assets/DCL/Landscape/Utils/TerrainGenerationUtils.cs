@@ -11,7 +11,7 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
-        public static async UniTask AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
+        public static async UniTask<GrassColorMapRenderer> AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
         {
             // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
             await UniTask.Yield();
@@ -29,7 +29,7 @@ namespace DCL.Landscape
 
             // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
             await BugWorkaroundAsync();
-            return;
+            return colorMapRenderer;
 
             async UniTask BugWorkaroundAsync()
             {

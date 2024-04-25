@@ -60,6 +60,8 @@ namespace DCL.Landscape
         private bool showTerrainByDefault;
 
         private Transform rootGo;
+        private GrassColorMapRenderer grassRenderer;
+
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
@@ -79,9 +81,6 @@ namespace DCL.Landscape
             // TODO (Vit): we can make it an array and init after constructing the TerrainModel, because we will know the size
             terrains = new List<Terrain>();
         }
-
-        public int GetChunkSize() =>
-            terrainGenData.chunkSize;
 
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
@@ -103,10 +102,19 @@ namespace DCL.Landscape
                 UnityObjectUtils.SafeDestroy(rootGo);
         }
 
-        public void SwitchVisibility(bool isVisible)
+        public int GetChunkSize() =>
+            terrainGenData.chunkSize;
+
+        public async UniTask SwitchVisibility(bool isVisible)
         {
             if (rootGo != null)
                 rootGo.gameObject.SetActive(isVisible);
+
+            if (isVisible)
+            {
+                await UniTask.Yield();
+                grassRenderer.Render();
+            }
         }
 
         public async UniTask GenerateTerrainAsync(
@@ -172,7 +180,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
 
-                    await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+                    grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
                     if (processReport != null) processReport.ProgressCounter.Value = 1f;
                 }
