@@ -85,8 +85,6 @@ namespace Global.Dynamic
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
-        public EmptyScenesWorldFactory EmptyScenesWorldFactory { get; private set; } = null!;
-
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
 
         public IProfileRepository ProfileRepository { get; private set; } = null!;
@@ -404,7 +402,6 @@ namespace Global.Dynamic
                 container.MessagePipesHub);
 
             container.GlobalPlugins = globalPlugins;
-            container.EmptyScenesWorldFactory = new EmptyScenesWorldFactory(staticContainer.SingletonSharedDependencies, staticContainer.ECSWorldPlugins);
 
             BuildTeleportWidget(realmNavigator, debugBuilder, dynamicWorldParams.Realms);
 

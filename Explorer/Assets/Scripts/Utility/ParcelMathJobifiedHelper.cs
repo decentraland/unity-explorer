@@ -14,6 +14,11 @@ namespace Utility
     /// </summary>
     public class ParcelMathJobifiedHelper : IDisposable
     {
+        /// <summary>
+        /// Beyond that value calculations will be too slow and too much memory will be required
+        /// </summary>
+        public const int RADIUS_HARD_LIMIT = 100;
+
         private CalculateRingJob calculateRingJob;
         private JobHandle jobHandle;
 
