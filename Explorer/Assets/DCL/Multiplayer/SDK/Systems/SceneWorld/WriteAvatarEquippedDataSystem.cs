@@ -16,6 +16,7 @@ using ECS.LifeCycle.Systems;
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
     [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EQUIPPED)]
     public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem

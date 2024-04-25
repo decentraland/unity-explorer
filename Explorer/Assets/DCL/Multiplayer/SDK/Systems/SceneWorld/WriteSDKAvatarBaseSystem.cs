@@ -15,6 +15,7 @@ using ECS.Unity.ColorComponent;
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
     [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
     public partial class WriteSDKAvatarBaseSystem : BaseUnityLoopSystem

@@ -16,18 +16,19 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public static string Comms => "comms";
     }
 
-    // TODO: make clear in COMMENTS these observables can be removed/flagged to only use observable-replacement components
-    public struct SDKObservableEvent {
+    // In the future we may remove all the SDK ObservableEvent logic and just use the replacement components that are already in place
+    public struct SDKObservableEvent
+    {
+        public Generic generic;
+
         public struct Generic
         {
             public string eventId;
             public string eventData; // stringified JSON
         }
-
-        public Generic generic;
     }
 
-    public struct SceneStartPayload { }
+    public struct SceneReadyPayload { }
 
     public struct CommsPayload
     {
@@ -40,12 +41,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public string userId;
     }
 
-    public struct PlayerExpressionPayload // append
+    public struct PlayerExpressionPayload
     {
         public string expressionId;
     }
 
-    public struct ProfileChangedPayload // AvatarBase + AvatarEquippedData
+    public struct ProfileChangedPayload
     {
         public string ethAddress;
         public int version;
@@ -61,14 +62,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
     public struct PlayerClickedPayload
     {
+        public string userId;
+        public Ray ray;
+
         public struct Ray
         {
             public Vector3 origin;
             public Vector3 direction;
             public float distance;
         }
-
-        public string userId;
-        public Ray ray;
     }
 }
