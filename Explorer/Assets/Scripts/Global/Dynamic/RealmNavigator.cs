@@ -100,13 +100,13 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false)
         {
             ct.ThrowIfCancellationRequested();
 
             await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
             {
-                if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
+                if (!isLocal && realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
                     await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
                     SwitchMiscVisibility(true);

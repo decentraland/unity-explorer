@@ -18,6 +18,6 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool terrainRegen = true);
 
-        UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct);
+        UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
     }
 }
