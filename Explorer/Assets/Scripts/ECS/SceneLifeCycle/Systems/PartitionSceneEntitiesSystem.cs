@@ -27,6 +27,8 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateBefore(typeof(ResolveStaticPointersSystem))]
     public partial class PartitionSceneEntitiesSystem : BaseUnityLoopSystem
     {
+        private const int DEPLOYED_SCENES_LIMIT = 90000; // 300x300 scenes (without empty)
+
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly JobScheduler.JobScheduler jobScheduler;
@@ -50,9 +52,9 @@ namespace ECS.SceneLifeCycle.Systems
             this.partitionComponentPool = partitionComponentPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
 
-            // Genesis city goes from -150 to 150 so the max amount of partitions is always going to be 90000
-            partitions = new NativeArray<PartitionData>(90000, Allocator.Persistent);
-            parcelCorners = new UnsafeList<ParcelCornersData>(90000, Allocator.Persistent);
+            // Hard limit of the real scenes that can exist
+            partitions = new NativeArray<PartitionData>(DEPLOYED_SCENES_LIMIT, Allocator.Persistent);
+            parcelCorners = new UnsafeList<ParcelCornersData>(DEPLOYED_SCENES_LIMIT, Allocator.Persistent);
 
             // TODO: This might change with quality settings, consider updating them
             sqrDistanceBuckets = new NativeArray<int>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
@@ -118,6 +120,14 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(PartitionComponent))]
         private void PartitionNewEntity(in Entity entity, ref SceneDefinitionComponent definition)
         {
+            // If we partition empty scene then their number can grow infinitely as we don't have boundaries
+            if (definition.IsEmpty)
+            {
+                PartitionComponent partitionComponent = partitionComponentPool.Get();
+                // some default values to not break other systems
+                partitionComponent.Bucket = 2;
+            }
+
             if (definition.InternalJobIndex < 0)
             {
                 ScheduleSceneDefinition(ref definition);
@@ -159,7 +169,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void PartitionExistingEntity(in Entity entity, ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
+        private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.InternalJobIndex < 0) return;
             PartitionData partition = partitions[definition.InternalJobIndex];

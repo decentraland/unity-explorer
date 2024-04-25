@@ -1,6 +1,7 @@
 using ECS.Prioritization.Components;
 using System;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Prioritization
 {
@@ -19,10 +20,12 @@ namespace ECS.Prioritization
 
         public int MaxLoadingDistanceInParcels
         {
-            get => maxLoadingDistanceInParcels;
+            get => Mathf.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
 
             set
             {
+                value = Mathf.Min(value, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
+
                 if (maxLoadingDistanceInParcels == value)
                     return;
 

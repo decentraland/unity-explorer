@@ -20,7 +20,5 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBAnimator>.InjectToWorld(ref builder);
             AnimatorHandlerSystem.InjectToWorld(ref builder);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }
