@@ -35,7 +35,7 @@ export function newRegistrationWrap(
                     try {
                         mutableBundle[k] = wrappedMethod
                     } catch (e: unknown) {
-                        logger.error(`Failed to wrap method ${k}: ${messageFromError(e)}`)
+                        logger.warning(`Failed to wrap method ${k}: ${messageFromError(e)}`)
                     }
                 }
                 alreadyRegisteredEntities.add(k)
