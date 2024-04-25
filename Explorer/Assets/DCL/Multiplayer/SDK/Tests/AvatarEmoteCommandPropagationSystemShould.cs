@@ -6,7 +6,6 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Utilities;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;

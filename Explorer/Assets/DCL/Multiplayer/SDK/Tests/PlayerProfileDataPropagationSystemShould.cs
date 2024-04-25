@@ -3,7 +3,6 @@ using CrdtEcsBridge.Components;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
-using DCL.Utilities;
 using ECS.TestSuite;
 using NUnit.Framework;
 using SceneRunner.Scene;

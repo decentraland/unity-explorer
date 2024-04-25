@@ -5,7 +5,7 @@ using SceneRunner.Scene;
 using UnityEngine;
 using Utility.Multithreading;
 
-namespace DCL.Utilities
+namespace DCL.Multiplayer.SDK.Tests
 {
     public class SceneFacadeUtils
     {

@@ -6,7 +6,6 @@ using DCL.Character.Components;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
-using DCL.Utilities;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.TestSuite;
