@@ -36,6 +36,7 @@ namespace DCL.Backpack
         private CancellationTokenSource? profileLoadingCts;
         private BackpackSections currentSection = BackpackSections.Avatar;
         private bool isAvatarLoaded;
+        private bool instantSectionToggle;
 
         public BackpackController(
             BackpackView view,
@@ -95,7 +96,7 @@ namespace DCL.Backpack
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token, !instantSectionToggle).Forget();
 
                         if (isOn)
                             currentSection = section;
@@ -185,5 +186,19 @@ namespace DCL.Backpack
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void Toggle(BackpackSections section)
+        {
+            bool tmp = instantSectionToggle;
+            instantSectionToggle = true;
+
+            foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
+            {
+                if (tabSelector.Section != section) continue;
+                tabSelector.TabSelectorViews.TabSelectorToggle.isOn = true;
+            }
+
+            instantSectionToggle = tmp;
+        }
     }
 }

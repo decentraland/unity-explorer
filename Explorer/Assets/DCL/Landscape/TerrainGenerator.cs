@@ -69,6 +69,7 @@ namespace DCL.Landscape
         public IReadOnlyList<Terrain> Terrains => terrains;
 
         public bool IsTerrainGenerated { get; private set; }
+        private bool isInitialized;
 
         public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -94,10 +95,14 @@ namespace DCL.Landscape
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData, noiseGenCache);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
+
+            isInitialized = true;
         }
 
         public void Dispose()
         {
+            if (!isInitialized) return;
+
             if (rootGo != null)
                 UnityObjectUtils.SafeDestroy(rootGo);
         }
@@ -107,6 +112,8 @@ namespace DCL.Landscape
 
         public async UniTask SwitchVisibility(bool isVisible)
         {
+            if (!isInitialized) return;
+
             if (rootGo != null)
                 rootGo.gameObject.SetActive(isVisible);
 
@@ -126,6 +133,8 @@ namespace DCL.Landscape
             AsyncLoadProcessReport processReport = null,
             CancellationToken cancellationToken = default)
         {
+            if (!isInitialized) return;
+
             this.showTerrainByDefault = showTerrainByDefault;
 
             this.hideDetails = hideDetails;

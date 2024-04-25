@@ -100,13 +100,13 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false)
         {
             ct.ThrowIfCancellationRequested();
 
             await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
             {
-                if (realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
+                if (!isLocal && realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
                     await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
                     await SwitchMiscVisibility(true);
@@ -121,6 +121,8 @@ namespace Global.Dynamic
 
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, CancellationToken ct)
         {
+            if (!worldsTerrain.IsInitialized) return;
+
             await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
 
             AssetPromise<SceneEntityDefinition,GetSceneDefinition>[] promises = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).Promises;

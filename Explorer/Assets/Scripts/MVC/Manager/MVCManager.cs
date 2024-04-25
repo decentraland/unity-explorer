@@ -4,7 +4,6 @@ using MVC.PopupsController.PopupCloser;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 
 namespace MVC
 {
@@ -15,6 +14,9 @@ namespace MVC
         private readonly CancellationTokenSource destructionCancellationTokenSource;
         private readonly IPopupCloserView popupCloser;
         public IReadOnlyDictionary<Type, IController> Controllers => controllers;
+
+        public event Action<IController>? OnViewShowed;
+        public event Action<IController>? OnViewClosed;
 
         public MVCManager(
             IWindowsStackManager windowsStackManager,
@@ -64,6 +66,8 @@ namespace MVC
 
             try
             {
+                OnViewShowed?.Invoke(controller);
+
                 switch (controller.Layer)
                 {
                     case CanvasOrdering.SortingLayer.Popup:
@@ -79,6 +83,8 @@ namespace MVC
                         await ShowTopAsync(command, controller, ct);
                         break;
                 }
+
+                OnViewClosed?.Invoke(controller);
             }
             catch (OperationCanceledException _)
             {
