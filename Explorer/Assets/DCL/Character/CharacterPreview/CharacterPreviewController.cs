@@ -61,8 +61,6 @@ namespace DCL.CharacterPreview
 
         public UniTask UpdateAvatar(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {
-            if (avatarModel.Wearables == null || avatarModel.Wearables.Count <= 0) return UniTask.CompletedTask;
-
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
             avatarShape.SkinColor = avatarModel.SkinColor;
@@ -74,12 +72,14 @@ namespace DCL.CharacterPreview
 
             avatarShape.WearablePromise = AssetPromise<WearablesResolution, GetWearablesByPointersIntention>.Create(
                 globalWorld,
-                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape, avatarModel.Wearables, avatarModel.ForceRenderCategories),
+                WearableComponentsUtils.CreateGetWearablesByPointersIntention(avatarShape.BodyShape,
+                    avatarModel.Wearables ?? (IReadOnlyCollection<URN>)Array.Empty<URN>(), avatarModel.ForceRenderCategories),
                 PartitionComponent.TOP_PRIORITY
             );
 
             avatarShape.EmotePromise = EmotePromise.Create(globalWorld,
-                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape, ((IReadOnlyCollection<URN>) avatarModel.Emotes) ?? Array.Empty<URN>()),
+                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(avatarShape.BodyShape,
+                    avatarModel.Emotes ?? (IReadOnlyCollection<URN>)Array.Empty<URN>()),
                 PartitionComponent.TOP_PRIORITY);
 
             avatarShape.IsDirty = true;
