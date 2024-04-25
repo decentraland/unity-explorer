@@ -43,7 +43,6 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (emoteCache.TryGetEmote(emoteIntent.EmoteId.Shorten(), out IEmote emote))
             {
                 emoteCommandComponent.IsDirty = true;
-                emoteCommandComponent.PreviousEmote = emoteCommandComponent.PlayingEmote;
                 emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;
                 emoteCommandComponent.LoopingEmote = emote.IsLooping();
 

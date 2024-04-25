@@ -1,11 +1,19 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using CRDT;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
+using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.Optimization.Pools;
+using DCL.Profiles;
+using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
+using NSubstitute.Exceptions;
 using NUnit.Framework;
 using SceneRunner.Scene;
 using System;
@@ -15,6 +23,9 @@ namespace DCL.Multiplayer.SDK.Tests
 {
     public class WriteAvatarEmoteCommandSystemShould : UnitySystemTestBase<WriteAvatarEmoteCommandSystem>
     {
+        private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+        private readonly URN emoteUrn1 = new ("thunder-kiss-65");
+        private readonly URN emoteUrn2 = new ("more-human-than-human");
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
         private PlayerCRDTEntity playerCRDTEntity;
@@ -26,16 +37,13 @@ namespace DCL.Multiplayer.SDK.Tests
         {
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
-            IComponentPool<PBAvatarEmoteCommand> componentPoolRegistry = Substitute.For<IComponentPool<PBAvatarEmoteCommand>>();
-            var instantiatedPbComponent = new PBAvatarEmoteCommand();
-            componentPoolRegistry.Get().Returns(instantiatedPbComponent);
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             system = new WriteAvatarEmoteCommandSystem(world, ecsToCRDTWriter, sceneStateProvider);
 
             playerCRDTEntity = new PlayerCRDTEntity
             {
                 IsDirty = true,
-                CRDTEntity = new CRDTEntity(666),
+                CRDTEntity = SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
             };
 
             entity = world.Create(playerCRDTEntity);
@@ -43,8 +51,8 @@ namespace DCL.Multiplayer.SDK.Tests
             emoteCommand = new AvatarEmoteCommandComponent
             {
                 IsDirty = true,
-                PlayingEmote = "thunder-kiss-65",
-                LoopingEmote = true,
+                PlayingEmote = emoteUrn2,
+                LoopingEmote = false,
             };
         }
 
@@ -55,128 +63,58 @@ namespace DCL.Multiplayer.SDK.Tests
         }
 
         [Test]
-        public void PropagateComponentCreationCorrectly()
+        public void DispatchEmoteCommandUpdateCorrectly()
         {
-            Assert.IsFalse(world.Has<PBAvatarEmoteCommand>(entity));
-            Assert.IsFalse(world.Has<CRDTEntity>(entity));
-
             world.Add(entity, emoteCommand);
+
+            var tickNumber = 563;
+            sceneStateProvider.TickNumber.Returns((uint)tickNumber);
 
             system.Update(0);
 
             ecsToCRDTWriter.Received(1)
                            .AppendMessage(
-                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent emoteCommand, uint timestamp)>>(),
-                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerCRDTEntity.CRDTEntity.Id),
-                                Arg.Any<int>(),
-                                Arg.Is<(AvatarEmoteCommandComponent emoteCommand, uint timestamp)>(data =>
-                                    data.emoteCommand.PlayingEmote == emoteCommand.PlayingEmote
-                                    && data.emoteCommand.LoopingEmote == emoteCommand.LoopingEmote));
-
-            AssertPBComponentMatchesPlayerSDKData();
-        }
-
-        // TODO: Add timestamp test
-
-        [Test]
-        public void PropagateComponentUpdateCorrectly()
-        {
-            Assert.IsFalse(world.Has<PBAvatarEmoteCommand>(entity));
-            Assert.IsFalse(world.Has<CRDTEntity>(entity));
-
-            world.Add(entity, emoteCommand);
-
-            system.Update(0);
-
-            ecsToCRDTWriter.Received(1)
-                           .AppendMessage(
-                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent emoteCommand, uint timestamp)>>(),
-                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerCRDTEntity.CRDTEntity.Id),
-                                Arg.Any<int>(),
-                                Arg.Is<(AvatarEmoteCommandComponent emoteCommand, uint timestamp)>(data =>
-                                    data.emoteCommand.PlayingEmote == emoteCommand.PlayingEmote
-                                    && data.emoteCommand.LoopingEmote == emoteCommand.LoopingEmote));
-
-            AssertPBComponentMatchesPlayerSDKData();
-
-            Assert.IsTrue(world.TryGet(entity, out emoteCommand));
-
-            emoteCommand.IsDirty = true;
-            emoteCommand.PlayingEmote = "thunder-kiss-66";
-            emoteCommand.LoopingEmote = false;
-
-            world.Set(entity, emoteCommand);
-
-            system.Update(0);
-
-            Assert.IsTrue(world.TryGet(entity, out emoteCommand));
-
-            AssertPBComponentMatchesPlayerSDKData();
-        }
-
-        [Test]
-        public void AvoidPropagationIfEmoteDoesntChange()
-        {
-            Assert.IsFalse(world.Has<PBAvatarEmoteCommand>(entity));
-            Assert.IsFalse(world.Has<CRDTEntity>(entity));
-
-            world.Add(entity, emoteCommand);
-
-            system.Update(0);
-
-            ecsToCRDTWriter.Received(1)
-                           .AppendMessage(
-                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent emoteCommand, uint timestamp)>>(),
-                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerCRDTEntity.CRDTEntity.Id),
-                                Arg.Any<int>(),
-                                Arg.Is<(AvatarEmoteCommandComponent emoteCommand, uint timestamp)>(data =>
-                                    data.emoteCommand.PlayingEmote == emoteCommand.PlayingEmote
-                                    && data.emoteCommand.LoopingEmote == emoteCommand.LoopingEmote));
+                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent, uint)>>(),
+                                playerCRDTEntity.CRDTEntity,
+                                tickNumber,
+                                (emoteCommand, (uint)tickNumber));
 
             ecsToCRDTWriter.ClearReceivedCalls();
 
-            AssertPBComponentMatchesPlayerSDKData();
-
-            // Flag as dirty without actually updating the emotes or anything
+            emoteCommand.PlayingEmote = emoteUrn1;
+            emoteCommand.LoopingEmote = true;
             emoteCommand.IsDirty = true;
             world.Set(entity, emoteCommand);
 
+            tickNumber = 666;
+            sceneStateProvider.TickNumber.Returns((uint)tickNumber);
+
             system.Update(0);
 
-            ecsToCRDTWriter.DidNotReceive()
+            ecsToCRDTWriter.Received(1)
                            .AppendMessage(
-                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent emoteCommand, uint timestamp)>>(),
-                                Arg.Any<CRDTEntity>(),
-                                Arg.Any<int>(),
-                                Arg.Any<(AvatarEmoteCommandComponent emoteCommand, uint timestamp)>());
+                                Arg.Any<Action<PBAvatarEmoteCommand, (AvatarEmoteCommandComponent, uint)>>(),
+                                playerCRDTEntity.CRDTEntity,
+                                tickNumber,
+                                (emoteCommand, (uint)tickNumber));
         }
 
         [Test]
         public void HandleComponentRemovalCorrectly()
         {
-            Assert.IsFalse(world.Has<PBAvatarEmoteCommand>(entity));
-
             world.Add(entity, emoteCommand);
 
-            system.Update(0);
-
-            Assert.IsTrue(world.Has<PBAvatarEmoteCommand>(entity));
-
-            world.Remove<PlayerCRDTEntity>(entity);
+            var tickNumber = 563;
+            sceneStateProvider.TickNumber.Returns((uint)tickNumber);
 
             system.Update(0);
 
-            ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarEmoteCommand>(playerCRDTEntity.CRDTEntity.Id);
-            Assert.IsFalse(world.Has<PBAvatarEmoteCommand>(entity));
-            Assert.IsFalse(world.Has<CRDTEntity>(entity));
-        }
+            world.Add<DeleteEntityIntention>(entity);
 
-        private void AssertPBComponentMatchesPlayerSDKData()
-        {
-            Assert.IsTrue(world.TryGet(entity, out PBAvatarEmoteCommand pbAvatarEmoteCommand));
-            Assert.IsTrue(emoteCommand.PlayingEmote.Equals(pbAvatarEmoteCommand.EmoteUrn));
-            Assert.AreEqual(emoteCommand.LoopingEmote, pbAvatarEmoteCommand.Loop);
-            Assert.IsTrue(world.Has<CRDTEntity>(entity));
+            system.Update(0);
+
+            Assert.IsFalse(world.Has<AvatarEmoteCommandComponent>(entity));
+            ecsToCRDTWriter.Received(1).DeleteMessage<PBAvatarEmoteCommand>(playerCRDTEntity.CRDTEntity);
         }
     }
 }

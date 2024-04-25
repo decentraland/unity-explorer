@@ -1,5 +1,4 @@
 using Arch.Core;
-using CRDT;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.AvatarRendering.Wearables;
@@ -9,11 +8,9 @@ using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
-using ECS.Unity.ColorComponent;
 using NSubstitute;
 using NUnit.Framework;
 using System;
-using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
 using WriteSDKAvatarBaseSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WriteSDKAvatarBaseSystem;
 
