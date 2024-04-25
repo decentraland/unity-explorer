@@ -4,6 +4,7 @@ using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
+using StylizedGrass;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
@@ -38,6 +39,8 @@ namespace DCL.Landscape
         private NativeParallelHashSet<int2> ownedParcels;
 
         private readonly List<Terrain> terrains = new ();
+        private GrassColorMapRenderer grassRenderer;
+
         public bool IsInitialized { get; private set; }
 
         public WorldTerrainGenerator(bool measureTime = false)
@@ -65,20 +68,25 @@ namespace DCL.Landscape
             IsInitialized = true;
         }
 
-        public void SwitchVisibility(bool isVisible)
+        public async UniTask SwitchVisibility(bool isVisible)
         {
             if (!IsInitialized) return;
 
-            if (rootGo != null)
+            if (rootGo != null && rootGo.gameObject.activeSelf != isVisible)
             {
+                rootGo.gameObject.SetActive(isVisible);
+
                 if (!isVisible)
                 {
                     emptyParcels.Dispose();
                     emptyParcelsData.Dispose();
                     emptyParcelsNeighborData.Dispose();
                 }
-
-                rootGo.gameObject.SetActive(isVisible);
+                else
+                {
+                    await UniTask.Yield();
+                    grassRenderer.Render();
+                }
             }
         }
 
@@ -115,7 +123,7 @@ namespace DCL.Landscape
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                 terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true));
 
-            await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+            grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)

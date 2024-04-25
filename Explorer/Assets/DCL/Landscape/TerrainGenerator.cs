@@ -61,6 +61,7 @@ namespace DCL.Landscape
 
         private Transform rootGo;
         private GrassColorMapRenderer grassRenderer;
+        private bool isInitialized;
 
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
@@ -69,7 +70,6 @@ namespace DCL.Landscape
         public IReadOnlyList<Terrain> Terrains => terrains;
 
         public bool IsTerrainGenerated { get; private set; }
-        private bool isInitialized;
 
         public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -114,13 +114,15 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null)
+            if (rootGo != null && rootGo.gameObject.activeSelf != isVisible)
+            {
                 rootGo.gameObject.SetActive(isVisible);
 
-            if (isVisible)
-            {
-                await UniTask.Yield();
-                grassRenderer.Render();
+                if (isVisible)
+                {
+                    await UniTask.Yield();
+                    grassRenderer.Render();
+                }
             }
         }
 
