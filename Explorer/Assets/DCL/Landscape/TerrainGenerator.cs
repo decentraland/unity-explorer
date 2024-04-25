@@ -198,7 +198,7 @@ namespace DCL.Landscape
             }
         }
 
-        private async Task ReEnableTerrainAsync(AsyncLoadProcessReport processReport)
+        private async UniTask ReEnableTerrainAsync(AsyncLoadProcessReport processReport)
         {
             foreach (Terrain terrain in terrains)
                 terrain.enabled = false;
@@ -206,8 +206,7 @@ namespace DCL.Landscape
             // we enable them one by one to avoid a super hiccup
             for (var i = 0; i < terrains.Count; i++)
             {
-                Terrain terrain = terrains[i];
-                terrain.enabled = true;
+                terrains[i].enabled = true;
                 if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + (i / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
                 await UniTask.Yield();
             }
