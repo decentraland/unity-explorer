@@ -47,12 +47,12 @@ namespace DCL.Interaction.Systems
                 && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
                 highlightComponent.Disable();
 
-            if (highlightComponent.CanUpdate(materialToUse))
+            if (highlightComponent.CanPassAnUpdate(materialToUse))
                 return;
 
             if (highlightComponent.ReadyForMaterial())
             {
-                highlightComponent.UpdateMaterial(materialToUse);
+                highlightComponent.UpdateMaterialAndSwitchEntity(materialToUse);
 
                 TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntityOrNull());
                 TryAddHoverMaterials(ref highlightComponent, in transformComponent);
