@@ -44,7 +44,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel), parcel, loadReport));
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.ProgressCounter.Value = 1f;
                 loadReport.CompletionSource.TrySetResult();
                 return null;
@@ -87,7 +87,7 @@ namespace DCL.ParcelsService
                 }
             }
             else
-                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
+                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel, true);
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
@@ -109,7 +109,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel), parcel, loadReport));
+                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.ProgressCounter.Value = 1f;
                 loadReport.CompletionSource.TrySetResult();
                 return;
