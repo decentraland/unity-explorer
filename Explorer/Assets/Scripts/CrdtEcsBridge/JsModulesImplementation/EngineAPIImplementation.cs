@@ -6,10 +6,12 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
@@ -40,6 +42,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
         private bool isDisposing;
+
+        public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages { get; } = new ();
 
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
@@ -148,8 +152,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
                 // We know exactly how many bytes we need to serialize
-                var serializationBufferPoolable = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
-                var currentStateSpan = serializationBufferPoolable.Span;
+                PoolableByteArray serializationBufferPoolable = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
+                Span<byte> currentStateSpan = serializationBufferPoolable.Span;
 
                 // Serialize the current state
 
@@ -175,7 +179,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             isDisposing = true;
         }
 
-        public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages  { get; } = new HashSet<ProcessedCRDTMessage>();
         private PoolableByteArray SerializeOutgoingCRDTMessages()
         {
             try
@@ -223,6 +226,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
                         crdtProtocol.EnforceLWWState(m.message);
                         break;
+                    case CRDTMessageType.APPEND_COMPONENT:
+                        // SDKObservableEventsEngineApiWrapper needs the APPEND memory before disposing it
+                        DisposeMemoryOnNextFrame(m.message.Data).Forget();
+                        break;
                     default:
                         // as this data is not kept in CRDTProtocol it must be released immediately
                         m.message.Data.Dispose();
@@ -261,6 +268,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 OutgoingCRDTMessages.Add(processedCRDTMessage);
                 crdtSerializer.Serialize(ref span, in processedCRDTMessage);
             }
+        }
+
+        private async UniTaskVoid DisposeMemoryOnNextFrame(IMemoryOwner<byte> memoryOwner)
+        {
+            await UniTask.Yield();
+            memoryOwner.Dispose();
         }
     }
 }

@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
@@ -175,15 +176,16 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                         case CRDTMessageType.APPEND_COMPONENT:
                             if (message.ComponentId == ComponentID.AVATAR_EMOTE_COMMAND)
                             {
-                                // if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerExpression))
-                                // {
-                                //     avatarEmoteCommandSerializer.DeserializeInto(avatarEmoteCommand, message.Data.Memory.Span);
-                                //
-                                //     sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
-                                //     {
-                                //         expressionId = avatarEmoteCommand.EmoteUrn,
-                                //     }));
-                                // }
+                                if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerExpression))
+                                {
+                                    Debug.Log($"PRAVS - DeserializeEmoteCommandSerializer - memoryOwnerID: {message.Data.GetHashCode()}");
+                                    avatarEmoteCommandSerializer.DeserializeInto(avatarEmoteCommand, message.Data.Memory.Span);
+
+                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
+                                    {
+                                        expressionId = avatarEmoteCommand.EmoteUrn,
+                                    }));
+                                }
                             }
 
                             break;
