@@ -27,7 +27,7 @@ namespace DCL.Landscape
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 2;
+        private const int CACHE_VERSION = 3;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -58,7 +58,6 @@ namespace DCL.Landscape
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
-        private bool showTerrainByDefault;
 
         private Transform rootGo;
         public Transform Ocean { get; private set; }
@@ -127,8 +126,6 @@ namespace DCL.Landscape
             CancellationToken cancellationToken = default)
         {
             if (!isInitialized) return;
-
-            this.showTerrainByDefault = showTerrainByDefault;
 
             this.hideDetails = hideDetails;
             this.hideTrees = hideTrees;
