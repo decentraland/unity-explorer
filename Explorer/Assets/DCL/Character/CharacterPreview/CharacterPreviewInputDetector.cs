@@ -5,13 +5,13 @@ using UnityEngine.EventSystems;
 
 namespace DCL.CharacterPreview
 {
-    public class CharacterPreviewInputDetector : MonoBehaviour,IDragHandler, IScrollHandler, IPointerUpHandler, IPointerDownHandler, IPointerMoveHandler
+    public class CharacterPreviewInputDetector : MonoBehaviour,IDragHandler, IScrollHandler, IPointerUpHandler, IPointerDownHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<PointerEventData> OnDraggingEvent;
         public event Action<PointerEventData> OnScrollEvent;
         public event Action<PointerEventData> OnPointerUpEvent;
         public event Action<PointerEventData> OnPointerDownEvent;
-        public event Action<PointerEventData> OnPointerMoveEvent;
+        public event Action<PointerEventData> OnPointerEnterEvent;
 
         public void OnPointerUp(PointerEventData eventData)
         {
@@ -28,10 +28,13 @@ namespace DCL.CharacterPreview
             OnPointerDownEvent?.Invoke(eventData);
         }
 
-        public void OnPointerMove(PointerEventData eventData)
+        public void OnPointerEnter(PointerEventData eventData)
         {
-            OnPointerMoveEvent?.Invoke(eventData);
+            OnPointerEnterEvent?.Invoke(eventData);
         }
 
+        public void OnPointerExit(PointerEventData eventData)
+        {
+        }
     }
 }
