@@ -6,6 +6,8 @@ using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using SceneRunner.Scene;
 using System.Linq;
+using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -24,9 +26,7 @@ namespace DCL.LOD
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         public static string LOD_SHADER = "DCL/Scene_TexArray";
-
         private static readonly List<Material> TEMP_MATERIALS = new (3);
-
 
         public static TextureArraySlot?[] ApplyTextureArrayToLOD(string sceneID, Vector2Int baseCoordinate, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
         {
@@ -63,22 +63,17 @@ namespace DCL.LOD
             return newSlots.ToArray();
         }
 
-        private static void ApplyTransparency(Material duplicatedMaterial, bool setDefaultTransparency)
+        public static void CheckSceneReadiness(ISceneReadinessReportQueue sceneReadinessReportQueue, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            duplicatedMaterial.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-            duplicatedMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-
-            duplicatedMaterial.SetFloat("_Surface",  1);
-            duplicatedMaterial.SetFloat("_BlendMode", 0);
-            duplicatedMaterial.SetFloat("_AlphaCutoffEnable", 0);
-            duplicatedMaterial.SetFloat("_SrcBlend", 1f);
-            duplicatedMaterial.SetFloat("_DstBlend", 10f);
-            duplicatedMaterial.SetFloat("_AlphaSrcBlend", 1f);
-            duplicatedMaterial.SetFloat("_AlphaDstBlend", 10f);
-            duplicatedMaterial.SetFloat("_ZTestDepthEqualForOpaque", 4f);
-            duplicatedMaterial.renderQueue = (int)RenderQueue.Transparent;
-
-            duplicatedMaterial.color = new Color(duplicatedMaterial.color.r, duplicatedMaterial.color.g, duplicatedMaterial.color.b, setDefaultTransparency ? 0.8f : duplicatedMaterial.color.a);
+            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
+            {
+                for (int i = 0; i < reports!.Value.Count; i++)
+                {
+                    var report = reports.Value[i];
+                    report.ProgressCounter.Value = 1f;
+                    report.CompletionSource.TrySetResult();
+                }
+            }
         }
     }
 }

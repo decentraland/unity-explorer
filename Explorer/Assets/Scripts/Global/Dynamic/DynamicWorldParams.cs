@@ -27,5 +27,7 @@ namespace Global.Dynamic
         public List<string> Realms { get; init; }
         public Vector2Int StartParcel { get; init; }
         public bool EnableLandscape { get; init; }
+        public bool EnableLOD { get; init; }
+
     }
 }

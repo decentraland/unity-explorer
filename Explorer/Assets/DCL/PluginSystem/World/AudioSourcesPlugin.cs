@@ -58,9 +58,6 @@ namespace DCL.PluginSystem.World
             return new UniTask();
         }
 
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
-
         public class AudioSourcesPluginSettings : IDCLPluginSettings
         {
             [field: Header(nameof(AudioSourcesPlugin) + "." + nameof(AudioSourcesPluginSettings))]

@@ -149,7 +149,7 @@ namespace DCL.LOD.Systems
             if (newLod!.LodKey.Level == 0)
             {
                 scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                CheckSceneReadiness(sceneDefinitionComponent);
+                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
 
             sceneLODInfo.IsDirty = false;
@@ -198,7 +198,7 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.SetCurrentLOD(cachedAsset);
                 sceneLODInfo.IsDirty = false;
                 if (sceneLODInfo.CurrentLOD?.LodKey.Level == 0)
-                    CheckSceneReadiness(sceneDefinitionComponent);
+                    LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
                 return;
             }
 
@@ -207,7 +207,7 @@ namespace DCL.LOD.Systems
 
             var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
-                permittedSources: AssetSource.WEB,
+                permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                 manifest: manifest);
 
@@ -236,19 +236,6 @@ namespace DCL.LOD.Systems
 
             currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
         }
-
-
-        private void CheckSceneReadiness(SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
-            {
-                for (int i = 0; i < reports!.Value.Count; i++)
-                {
-                    var report = reports.Value[i];
-                    report.ProgressCounter.Value = 1f;
-                    report.CompletionSource.TrySetResult();
-                }
-            }
-        }
+        
     }
 }
