@@ -6,7 +6,7 @@ using Random = UnityEngine.Random;
 
 namespace DCL.Audio
 {
-    public static class AudioPlaybackUtilities
+    public static class AudioPlaybackUtilitiesAsync
     {
         private const int DEFAULT_PITCH = 1;
 
@@ -31,7 +31,7 @@ namespace DCL.Audio
 
         public static async UniTask SchedulePlaySound(CancellationToken ct, AudioClipConfig clipConfig, float waitTime, AudioSource audioSource)
         {
-            int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
+            int clipIndex = AudioPlaybackUtilitiesAsync.GetClipIndex(clipConfig);
             var clip = clipConfig.AudioClips[clipIndex];
 
             await UniTask.Delay(TimeSpan.FromSeconds(waitTime), cancellationToken: ct);

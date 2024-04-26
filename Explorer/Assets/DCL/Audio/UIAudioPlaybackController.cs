@@ -59,7 +59,7 @@ namespace DCL.Audio
         {
             if (startLoop && CheckAudioClips(audioClipConfig))
             {
-                int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+                int clipIndex = AudioPlaybackUtilitiesAsync.GetClipIndex(audioClipConfig);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
                 audioSource.loop = true;
                 audioSource.Play();
@@ -107,9 +107,9 @@ namespace DCL.Audio
 
         private void PlaySingleAudio(AudioClipConfig audioClipConfig)
         {
-            int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+            int clipIndex = AudioPlaybackUtilitiesAsync.GetClipIndex(audioClipConfig);
             AudioSource audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
-            audioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(audioClipConfig);
+            audioSource.pitch = AudioPlaybackUtilitiesAsync.GetPitchWithVariation(audioClipConfig);
             audioSource.PlayOneShot(audioClipConfig.AudioClips[clipIndex], audioClipConfig.RelativeVolume);
         }
 
