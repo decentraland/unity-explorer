@@ -13,10 +13,8 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
 using DCL.Audio.Jobs;
-using DCL.Audio.System;
 using DCL.Landscape;
 using DCL.Landscape.Systems;
-using System.Linq;
 using Random = UnityEngine.Random;
 
 namespace DCL.Audio.Systems
@@ -127,11 +125,11 @@ namespace DCL.Audio.Systems
             {
                 Transform cliff = cliffs[i];
 
-                var position = cliff.transform.position;
+                Vector3 position = cliff.transform.position;
 
-                oceanAudioStates[i] = new LandscapeAudioState()
+                oceanAudioStates[i] = new LandscapeAudioState
                 {
-                    CenterOfTerrain = new float2(position.x, position.z)
+                    CenterOfTerrain = new float2(position.x, position.z),
                 };
             }
 
@@ -241,7 +239,7 @@ namespace DCL.Audio.Systems
                         oceanAudioState.AudioState = audioState;
                         oceanAudioStates[i] = oceanAudioState;
                         var closestPointArray = new NativeArray<int2>(1, Allocator.Temp);
-                        closestPointArray[0] = (int2) oceanAudioState.CenterOfTerrain;
+                        closestPointArray[0] = (int2)oceanAudioState.CenterOfTerrain;
                         WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, closestPointArray, WorldAudioClipType.Ocean);
                     }
                     else if (audioState is { ShouldBeSilent: true, IsSilent: false })
