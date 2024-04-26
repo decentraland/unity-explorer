@@ -7,13 +7,23 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: FountainBlue_mat
+    second: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: FountainBlue_mat.001
     second: {fileID: 2100000, guid: fcd067b2a5f3ade45846eef4205a2cb8, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: FountainGray_mat
+    second: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: FountainGray_mat.001
-    second: {fileID: 2100000, guid: 2167a1a68188959489807267257fc5a9, type: 2}
+    second: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -44,7 +54,10 @@ ModelImporter:
     clipAnimations: []
     isReadable: 0
   meshes:
-    lODScreenPercentages: []
+    lODScreenPercentages:
+    - 0.25
+    - 0.125
+    - 0.01
     globalScale: 1
     meshCompression: 0
     addColliders: 0

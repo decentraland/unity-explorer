@@ -13,7 +13,7 @@ ModelImporter:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
       name: FountainGray_mat
-    second: {fileID: 2100000, guid: 2167a1a68188959489807267257fc5a9, type: 2}
+    second: {fileID: 2100000, guid: 080ee30e4f4ff5c4fae19015bec5167c, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
