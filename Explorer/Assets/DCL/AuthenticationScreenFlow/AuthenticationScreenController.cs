@@ -186,7 +186,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             Profile profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
             profileNameLabel!.Value = profile.Name;
-            characterPreviewController!.Initialize(profile.Avatar);
+            characterPreviewController?.Initialize(profile.Avatar);
         }
 
         private void ChangeAccount()
@@ -199,7 +199,7 @@ namespace DCL.AuthenticationScreenFlow
                 SwitchState(ViewState.Login);
             }
 
-            characterPreviewController!.OnHide();
+            characterPreviewController?.OnHide();
             CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
             ChangeAccountAsync(loginCancellationToken.Token).Forget();
@@ -211,8 +211,8 @@ namespace DCL.AuthenticationScreenFlow
             {
                 viewInstance.FinalizeAnimator.SetTrigger(JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
-                characterPreviewController!.OnHide();
-                lifeCycleTask!.TrySetResult();
+                characterPreviewController?.OnHide();
+                lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
             AnimateAndAwaitAsync().Forget();
