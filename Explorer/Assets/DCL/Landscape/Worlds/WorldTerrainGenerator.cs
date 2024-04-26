@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
@@ -73,7 +74,8 @@ namespace DCL.Landscape
                 rootGo.gameObject.SetActive(isVisible);
         }
 
-        public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
+        public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1,
+            AsyncLoadProcessReport processReport = null, CancellationToken cancellationToken = default)
         {
             if (!IsInitialized) return;
 
@@ -102,13 +104,23 @@ namespace DCL.Landscape
                 await UniTask.Yield(cancellationToken);
             }
 
+            if (processReport != null) processReport.ProgressCounter.Value = 0.5f;
+
             // Generate Terrain GameObjects
             terrains.Clear();
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                 terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
 
             await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+            // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+            await ReEnableTerrainAsync();
 
+            FreeMemory();
+            if (processReport != null) processReport.ProgressCounter.Value = 1f;
+        }
+
+        private async UniTask ReEnableTerrainAsync()
+        {
             // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
             foreach (Terrain terrain in terrains)
                 terrain.enabled = false;
@@ -117,11 +129,15 @@ namespace DCL.Landscape
 
             foreach (Terrain terrain in terrains)
                 terrain.enabled = true;
+        }
 
-            noiseGenCache.Dispose();
+        private void FreeMemory()
+        {
             emptyParcelsNeighborData.Dispose();
             emptyParcelsData.Dispose();
             emptyParcels.Dispose();
+
+            noiseGenCache.Dispose();
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)

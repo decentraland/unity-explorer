@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Ipfs;
 using DCL.Landscape;
 using DCL.MapRenderer;
@@ -8,6 +9,7 @@ using DCL.MapRenderer.MapLayers;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.ParcelsService;
+using DCL.PluginSystem.Global;
 using DCL.Roads.Systems;
 using ECS.SceneLifeCycle.Components;
 using DCL.SceneLoadingScreens.LoadingScreen;
@@ -17,6 +19,8 @@ using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using System;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -85,10 +89,18 @@ namespace Global.Dynamic
                 {
                     remoteEntities.ForceRemoveAll(world);
                     await roomHub.StopAsync();
-                    await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
+                    loadReport.ProgressCounter.Value = 0.1f;
+                    var sceneLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+                    await realmController.SetRealmAsync(realm, Vector2Int.zero, sceneLoadReport, ct);
 
                     if (realm != genesisDomain)
-                        await GenerateWorldTerrainAsync((uint)realm.GetHashCode(),ct);
+                    {
+                        var terrainLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
+
+                        await UniTask.WhenAll(terrainLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
+                            GenerateWorldTerrainAsync((uint)realm.GetHashCode(), terrainLoadReport, ct));
+                    }
 
                     await roomHub.StartAsync();
                 },
@@ -117,7 +129,7 @@ namespace Global.Dynamic
             }, ct);
         }
 
-        private async UniTask GenerateWorldTerrainAsync(uint worldSeed, CancellationToken ct)
+        private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
             if (!worldsTerrain.IsInitialized) return;
 
@@ -135,7 +147,7 @@ namespace Global.Dynamic
                 foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
                     ownedParcels.Add(parcel.ToInt2());
 
-                await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, cancellationToken: ct);
+                await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
             }
         }
 

@@ -436,6 +436,7 @@ namespace DCL.Landscape
             {
                 emptyParcelsNeighborData.Dispose();
                 emptyParcelsData.Dispose();
+                emptyParcels.Dispose();
             }
 
             noiseGenCache.Dispose();
