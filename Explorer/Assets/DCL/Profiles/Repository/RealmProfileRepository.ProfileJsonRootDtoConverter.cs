@@ -108,7 +108,7 @@ namespace DCL.Profiles
                 color.r = jObject["r"]?.Value<float>() ?? 0;
                 color.g = jObject["g"]?.Value<float>() ?? 0;
                 color.b = jObject["b"]?.Value<float>() ?? 0;
-                color.a = jObject["a"]?.Value<float>() ?? 0;
+                color.a = jObject["a"]?.Value<float>() ?? 1;
 
                 return color;
             }
