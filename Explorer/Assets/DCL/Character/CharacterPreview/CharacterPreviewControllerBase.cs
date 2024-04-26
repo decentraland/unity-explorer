@@ -58,6 +58,8 @@ namespace DCL.CharacterPreview
 
         private void Initialize()
         {
+            if (initialized) return;
+
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
@@ -66,6 +68,8 @@ namespace DCL.CharacterPreview
                 name = "Preview Texture",
             };
 
+            newTexture.antiAliasing = 8;
+            newTexture.useDynamicScale = true;
             newTexture.Create();
 
             view.RawImage.texture = newTexture;
@@ -78,6 +82,7 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
+            initialized = false;
             previewController?.Dispose();
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
