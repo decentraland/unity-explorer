@@ -10,7 +10,6 @@ using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
@@ -119,9 +118,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                 case ComponentID.ENGINE_INFO: // onSceneReady observable
                                     if (reportedSceneReady) continue;
 
-                                    if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.SceneReady)) { sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.SceneReady, new SceneReadyPayload())); }
+                                    if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.SceneReady))
+                                    {
+                                        sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.SceneReady, new SceneReadyPayload()));
+                                        reportedSceneReady = true;
+                                    }
 
-                                    reportedSceneReady = true;
                                     break;
                                 case ComponentID.PLAYER_IDENTITY_DATA: // onEnterScene + playerConnected observables
                                     bool onEnterSceneSubscribed = sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene);
