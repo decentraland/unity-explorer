@@ -11,7 +11,7 @@ namespace DCL.Landscape
 {
     public static class TerrainGenerationUtils
     {
-        public static async UniTask AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
+        public static async UniTask<GrassColorMapRenderer> AddColorMapRendererAsync(Transform parent, IReadOnlyList<Terrain> terrains, TerrainFactory factory)
         {
             // we wait at least one frame so all the terrain chunks are properly rendered so we can render the color map
             await UniTask.Yield();
@@ -26,6 +26,7 @@ namespace DCL.Landscape
             grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
 
             colorMapRenderer.Render();
+            return colorMapRenderer;
         }
 
         public static void ExtractEmptyParcels(TerrainModel terrainModel, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
