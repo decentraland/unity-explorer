@@ -169,6 +169,7 @@ namespace DCL.Audio
                 ContinuousAudioAvatarAudioSource.Stop();
                 cancellationTokenSource?.Cancel();
                 cancellationTokenSource?.Dispose();
+                cancellationTokenSource = null;
             }
 
             if (!AvatarAudioSettings.AudioEnabled) return;
