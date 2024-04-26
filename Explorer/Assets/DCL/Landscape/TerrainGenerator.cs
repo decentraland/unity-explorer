@@ -111,7 +111,7 @@ namespace DCL.Landscape
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
-        public async UniTask SwitchVisibility(bool isVisible)
+        public async UniTask SwitchVisibilityAsync(bool isVisible)
         {
             if (!isInitialized) return;
 
