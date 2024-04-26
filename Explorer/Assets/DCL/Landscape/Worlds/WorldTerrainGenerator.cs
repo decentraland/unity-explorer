@@ -39,6 +39,7 @@ namespace DCL.Landscape
         private NativeParallelHashSet<int2> ownedParcels;
 
         private readonly List<Terrain> terrains = new ();
+        private NoiseGeneratorCache noiseGenCache;
         public bool IsInitialized { get; private set; }
 
         public WorldTerrainGenerator(bool measureTime = false)
@@ -95,7 +96,7 @@ namespace DCL.Landscape
             await SetupEmptyParcelDataAsync(cancellationToken, terrainModel);
 
             // Generate TerrainData's
-            var noiseGenCache = new NoiseGeneratorCache();
+            noiseGenCache = new NoiseGeneratorCache();
             chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
 
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
