@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
-using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -15,7 +14,6 @@ namespace ECS.Unity.GLTFContainer.Systems
     ///     Utility to write Gltf Container Loading State to CRDT (propagate it back to the scene)
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
-    [UpdateAfter(typeof(LoadGltfContainerSystem))]
     [UpdateAfter(typeof(FinalizeGltfContainerLoadingSystem))]
     public partial class WriteGltfContainerLoadingStateSystem : BaseUnityLoopSystem
     {
@@ -40,14 +38,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!component.State.ChangedThisFrame())
                 return;
 
-            var entity = sdkEntity;
             ecsToCRDTWriter.PutMessage<PBGltfContainerLoadingState, LoadingState>(
-                //TODO move to static
-                (component, loadingState) =>
-                {
-                    component.CurrentState = loadingState;
-                    ReportHub.Log(ReportCategory.CRDT, $"Loading state for entity {entity.Id}: {loadingState}");
-                },
+                static (component, loadingState) => component.CurrentState = loadingState,
                 sdkEntity,
                 component.State.Value
             );
