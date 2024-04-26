@@ -66,6 +66,8 @@ namespace DCL.CharacterPreview
                 name = "Preview Texture",
             };
 
+            newTexture.antiAliasing = 8;
+            newTexture.useDynamicScale = true;
             newTexture.Create();
 
             view.RawImage.texture = newTexture;
