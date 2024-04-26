@@ -62,8 +62,8 @@ namespace DCL.Rendering.Avatar
 
                     // We cant to render all objects using our material
                     //uint outlineLayerMask = 0;
-                    m_FilteringSettings.renderingLayerMask = 2; //((uint)1 << outlineLayerMask);
-                    context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
+                    // m_FilteringSettings.renderingLayerMask = 2; //((uint)1 << outlineLayerMask);
+                    // context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
                     m_FilteringSettings.renderingLayerMask = 1;
                     drawSettings.overrideMaterial = depthNormalsMaterial;
                     context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
