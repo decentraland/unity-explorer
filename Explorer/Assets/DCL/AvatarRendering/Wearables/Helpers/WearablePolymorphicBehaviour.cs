@@ -113,7 +113,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static ref WearableAssets InitializeResultsArray(IWearable wearable, BodyShape bodyShape, int size)
         {
-            if (wearable.IsUnisex())
+            if (wearable.IsUnisex() && wearable.HasSameModelsForAllGenders())
             {
                 SetByRef(BodyShape.MALE);
                 SetByRef(BodyShape.FEMALE);

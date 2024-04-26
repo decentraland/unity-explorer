@@ -1,3 +1,4 @@
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
@@ -9,7 +10,8 @@ namespace Global.Dynamic
 {
     public interface IRealmController
     {
-        GlobalWorld GlobalWorld { set; }
+        GlobalWorld GlobalWorld { get; set; }
+        Entity RealmEntity { get; }
 
         /// <summary>
         ///     Unload the current realm and load the new one

@@ -2,7 +2,6 @@
 using DCL.PluginSystem.Global;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using System;
 using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
@@ -19,6 +18,7 @@ namespace Global.Dynamic
         public DynamicSettings DynamicSettings;
         public IWeb3VerifiedAuthenticator Web3Authenticator;
         public IWeb3IdentityCache Web3IdentityCache;
+        public Animator SplashAnimator;
     }
 
     public struct DynamicWorldParams

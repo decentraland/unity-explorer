@@ -42,41 +42,11 @@ namespace DCL.CharacterTriggerArea.Systems
         [Query]
         private void UpdateCharacterTriggerArea(ref TransformComponent transformComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
-            CharacterTriggerArea triggerAreaMonoBehaviour = triggerAreaComponent.MonoBehaviour;
-
-            if (!sceneStateProvider.IsCurrent)
-            {
-                triggerAreaMonoBehaviour?.Dispose();
+            if (triggerAreaComponent.TryDispose(sceneStateProvider))
                 return;
-            }
 
-            if (triggerAreaComponent.IsDirty)
-            {
-                triggerAreaComponent.IsDirty = false;
-
-                if (triggerAreaMonoBehaviour == null)
-                {
-                    triggerAreaMonoBehaviour = poolRegistry.Get();
-
-                    if (triggerAreaComponent.TargetOnlyMainPlayer)
-                        triggerAreaMonoBehaviour.TargetTransform = mainPlayerTransform;
-
-                    triggerAreaComponent.MonoBehaviour = triggerAreaMonoBehaviour;
-                }
-
-                triggerAreaComponent.MonoBehaviour.BoxCollider.size = triggerAreaComponent.AreaSize;
-            }
-
-            Transform triggerAreaTransform = triggerAreaMonoBehaviour.transform;
-
-            if (transformComponent.Cached.WorldPosition != triggerAreaTransform.position)
-                triggerAreaTransform.position = transformComponent.Cached.WorldPosition;
-
-            if (transformComponent.Cached.WorldRotation != triggerAreaTransform.rotation)
-                triggerAreaTransform.rotation = transformComponent.Cached.WorldRotation;
-
-            if (!triggerAreaMonoBehaviour.BoxCollider.enabled)
-                triggerAreaMonoBehaviour.BoxCollider.enabled = true;
+            triggerAreaComponent.TryAssignArea(poolRegistry, mainPlayerTransform);
+            triggerAreaComponent.TryUpdateTransform(ref transformComponent);
         }
     }
 }

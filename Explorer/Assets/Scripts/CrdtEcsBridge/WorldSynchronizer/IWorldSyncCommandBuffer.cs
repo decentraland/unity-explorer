@@ -1,4 +1,4 @@
-using Arch.CommandBuffer;
+using Arch.Buffer;
 using Arch.Core;
 using CRDT;
 using CRDT.Protocol;

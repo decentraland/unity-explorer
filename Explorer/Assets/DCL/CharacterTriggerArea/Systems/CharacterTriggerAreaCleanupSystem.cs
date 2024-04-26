@@ -1,18 +1,18 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 
 namespace DCL.CharacterTriggerArea.Systems
 {
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPostPhysicsSystemGroup))]
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class CharacterTriggerAreaCleanupSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
@@ -25,39 +25,39 @@ namespace DCL.CharacterTriggerArea.Systems
 
         protected override void Update(float t)
         {
-            ClearDetectedCharactersCollectionQuery(World);
+            ClearDetectedCharactersCollectionQuery(World!);
 
-            HandleEntityDestructionQuery(World);
-            World.Remove<CharacterTriggerAreaComponent>(HandleEntityDestruction_QueryDescription);
+            HandleEntityDestructionQuery(World!);
+            World!.Remove<CharacterTriggerAreaComponent>(HandleEntityDestruction_QueryDescription);
 
-            HandleComponentRemovalQuery(World);
-            World.Remove<CharacterTriggerAreaComponent>(HandleComponentRemoval_QueryDescription);
+            HandleComponentRemovalQuery(World!);
+            World!.Remove<CharacterTriggerAreaComponent>(HandleComponentRemoval_QueryDescription);
         }
 
         [Query]
         private void ClearDetectedCharactersCollection(ref CharacterTriggerAreaComponent component)
         {
-            component.MonoBehaviour?.Clear();
+            component.TryClear();
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(ref CharacterTriggerAreaComponent component)
         {
-            poolRegistry.Release(component.MonoBehaviour);
+            component.TryRelease(poolRegistry);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea))]
         private void HandleComponentRemoval(ref CharacterTriggerAreaComponent component)
         {
-            poolRegistry.Release(component.MonoBehaviour);
+            component.TryRelease(poolRegistry);
         }
 
         [Query]
         private void FinalizeComponents(in Entity entity, ref CharacterTriggerAreaComponent component)
         {
-            poolRegistry.Release(component.MonoBehaviour);
+            component.TryRelease(poolRegistry);
             World.Remove<CharacterTriggerAreaComponent>(entity);
         }
 

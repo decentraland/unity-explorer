@@ -8,6 +8,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
@@ -15,7 +16,7 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     [ThrottlingEnabled]
     public partial class UpdateMediaPlayerSystem: BaseUnityLoopSystem

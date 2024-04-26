@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Cinemachine;
+using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
 using ECS.Abstract;
 using UnityEngine;
@@ -16,7 +17,12 @@ namespace DCL.CharacterCamera.Systems
     [UpdateAfter(typeof(ControlCinemachineVirtualCameraSystem))]
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
-        internal ApplyCinemachineCameraInputSystem(World world) : base(world) { }
+        private readonly DCLInput input;
+
+        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input) : base(world)
+        {
+            this.input = input;
+        }
 
         protected override void Update(float t)
         {
@@ -30,8 +36,12 @@ namespace DCL.CharacterCamera.Systems
         {
             switch (camera.Mode)
             {
+                case CameraMode.DroneView:
+                    CinemachineFreeLook dvc = cinemachinePreset.DroneViewCameraData.Camera;
+                    dvc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
+                    dvc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
+                    break;
                 case CameraMode.ThirdPerson:
-
                     CinemachineFreeLook tpc = cinemachinePreset.ThirdPersonCameraData.Camera;
                     tpc.m_XAxis.m_InputAxisValue = cameraInput.Delta.x;
                     tpc.m_YAxis.m_InputAxisValue = cameraInput.Delta.y;
@@ -50,6 +60,10 @@ namespace DCL.CharacterCamera.Systems
                     break;
             }
 
+            cameraInput.SetFreeFly = input.Camera.ToggleFreeFly.WasPressedThisFrame();
+            cameraInput.SwitchState = input.Camera.SwitchState.WasPressedThisFrame();
+            cameraInput.ChangeShoulder = input.Camera.ChangeShoulder.WasPressedThisFrame();
+
             // Update the brain manually
             cinemachinePreset.Brain.ManualUpdate();
         }
@@ -59,6 +73,9 @@ namespace DCL.CharacterCamera.Systems
         {
             switch (camera.Mode)
             {
+                case CameraMode.DroneView:
+                    cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
+                    break;
                 case CameraMode.ThirdPerson:
                     cinemachinePreset.ForceThirdPersonCameraLookAt(lookAtIntent);
                     break;

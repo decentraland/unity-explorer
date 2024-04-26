@@ -14,6 +14,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 using Vector3 = UnityEngine.Vector3;
+using Random = UnityEngine.Random;
 
 namespace DCL.Landscape.Systems
 {
@@ -67,12 +68,12 @@ namespace DCL.Landscape.Systems
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainGenerated()) return;
+            if (!terrainGenerator.IsTerrainGenerated) return;
 
             if (!isTerrainViewInitialized)
             {
-                isTerrainViewInitialized = true;
                 InitializeTerrainVisibility();
+                isTerrainViewInitialized = true;
             }
 
             if (isTerrainViewInitialized)
@@ -81,7 +82,7 @@ namespace DCL.Landscape.Systems
 
         private void InitializeTerrainVisibility()
         {
-            IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
+            IReadOnlyList<Terrain> terrains = terrainGenerator.Terrains;
             terrainVisibilities = new NativeArray<VisibleBounds>(terrains.Count, Allocator.Persistent);
 
             for (var i = 0; i < terrains.Count; i++)
@@ -113,12 +114,11 @@ namespace DCL.Landscape.Systems
                 drawTerrain = landscapeData.drawTerrain;
                 drawDetail = landscapeData.drawTerrainDetails;
 
-                IReadOnlyList<Terrain> terrains = terrainGenerator.GetTerrains();
+                IReadOnlyList<Terrain> terrains = terrainGenerator.Terrains;
 
                 for (var i = 0; i < terrainVisibilities.Length; i++)
                 {
                     VisibleBounds visibility = terrainVisibilities[i];
-
                     if (!visibility.IsDirty && !isSettingsDirty) continue;
 
                     Terrain terrain = terrains[i];
@@ -146,7 +146,7 @@ namespace DCL.Landscape.Systems
                     nativeFrustumPlanes[i] = new float4(plane.normal.x, plane.normal.y, plane.normal.z, plane.distance);
                 }
 
-                var job = new UpdateBoundariesCullingJob(terrainVisibilities, nativeFrustumPlanes, cameraPosition, landscapeData.detailDistance);
+                var job = new UpdateBoundariesCullingJob(terrainVisibilities, nativeFrustumPlanes, cameraPosition, landscapeData.DetailDistance);
                 jobHandle = job.Schedule(terrainVisibilities.Length, 32, jobHandle);
                 Profiler.EndSample();
             }
