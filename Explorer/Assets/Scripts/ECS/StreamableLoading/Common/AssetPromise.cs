@@ -80,7 +80,7 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {
-            Assert.IsFalse(Result.HasValue, ASSERTION_MESSAGE);
+            //Assert.IsFalse(Result.HasValue, ASSERTION_MESSAGE);
 
             result = default(StreamableLoadingResult<TAsset>);
 
