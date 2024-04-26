@@ -55,7 +55,7 @@ namespace DCL.Audio
 
         private void SetupAudioClip(AudioSource audioSource, AudioClipConfig audioClipConfig)
         {
-            int clipIndex = AudioPlaybackUtilitiesAsync.GetClipIndex(audioClipConfig);
+            int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
             AudioClip clip = audioClipConfig.AudioClips[clipIndex];
             audioSource.clip = clip;
             audioSource.time = Random.Range(0, clip.length);

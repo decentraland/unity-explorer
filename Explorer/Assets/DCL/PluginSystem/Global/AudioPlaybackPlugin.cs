@@ -46,6 +46,7 @@ namespace DCL.PluginSystem.Global
             worldAudioPlaybackController.Value.Initialize();
         }
 
+        [Serializable]
         public class PluginSettings : IDCLPluginSettings
         {
             [field: SerializeField] public LandscapeAudioSettingsReference LandscapeAudioSettingsReference { get; private set; }
