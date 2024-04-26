@@ -38,8 +38,6 @@ namespace DCL.PluginSystem.Global
             interactionsAudioConfigs = await assetsProvisioner.ProvideMainAssetAsync(settings.InteractionsAudioConfigsReference, ct: ct);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
-
         public class PluginSettings : IDCLPluginSettings
         {
             [field: SerializeField] public InteractionsAudioConfigsReference InteractionsAudioConfigsReference { get; private set; }
