@@ -16,6 +16,7 @@ namespace ECS.Unity.GLTFContainer.Systems
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
     [UpdateAfter(typeof(LoadGltfContainerSystem))]
+    [UpdateAfter(typeof(FinalizeGltfContainerLoadingSystem))]
     public partial class WriteGltfContainerLoadingStateSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -28,8 +29,8 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
-            ExecuteQuery(World);
-            RemoveQuery(World);
+            ExecuteQuery(World!);
+            RemoveQuery(World!);
         }
 
         [Query]
