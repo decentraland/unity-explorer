@@ -15,13 +15,13 @@ MonoBehaviour:
   settings:
     invert: 0
     normalize: 0
-    scale: 8.78
-    octaves: 5
+    scale: 12.1
+    octaves: 3
     persistance: 1
-    lacunarity: 21.8
+    lacunarity: 18.8
     seed: 21
     offset: {x: 0, y: 0}
-    cutoff: 0.5
+    cutoff: 1.1
     noiseType: 2
     baseValue: 0
     multiplyValue: 0

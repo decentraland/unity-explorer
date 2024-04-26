@@ -4,6 +4,7 @@ using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
@@ -15,7 +16,7 @@ using Utility;
 
 namespace DCL.Landscape
 {
-    public class WorldTerrainGenerator
+    public class WorldTerrainGenerator : IDisposable
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
@@ -70,16 +71,7 @@ namespace DCL.Landscape
             if (!IsInitialized) return;
 
             if (rootGo != null)
-            {
-                if (!isVisible)
-                {
-                    emptyParcels.Dispose();
-                    emptyParcelsData.Dispose();
-                    emptyParcelsNeighborData.Dispose();
-                }
-
                 rootGo.gameObject.SetActive(isVisible);
-            }
         }
 
         public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
@@ -125,6 +117,11 @@ namespace DCL.Landscape
 
             foreach (Terrain terrain in terrains)
                 terrain.enabled = true;
+
+            noiseGenCache.Dispose();
+            emptyParcelsNeighborData.Dispose();
+            emptyParcelsData.Dispose();
+            emptyParcels.Dispose();
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)
