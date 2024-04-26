@@ -7,6 +7,7 @@ using DCL.Optimization.Pools;
 using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
 using System.Linq;
+using ECS.SceneLifeCycle.Reporting;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -80,6 +81,19 @@ namespace DCL.LOD
             duplicatedMaterial.renderQueue = (int)RenderQueue.Transparent;
 
             duplicatedMaterial.color = new Color(duplicatedMaterial.color.r, duplicatedMaterial.color.g, duplicatedMaterial.color.b, setDefaultTransparency ? 0.8f : duplicatedMaterial.color.a);
+        }
+
+        public static void CheckSceneReadiness(ISceneReadinessReportQueue sceneReadinessReportQueue, SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
+            {
+                for (int i = 0; i < reports!.Value.Count; i++)
+                {
+                    var report = reports.Value[i];
+                    report.ProgressCounter.Value = 1f;
+                    report.CompletionSource.TrySetResult();
+                }
+            }
         }
     }
 }

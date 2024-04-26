@@ -431,6 +431,21 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <EmotesWheelPrefab>k__BackingField:
+          m_AssetGUID: 58c436690cb47644492bc0d655dbcce8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <PersistentEmoteWheelOpenerPrefab>k__BackingField:
+          m_AssetGUID: c522d0b7573224f59a5c1fde68c734e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmoteWheelRarityBackgrounds>k__BackingField:
+          m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

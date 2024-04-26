@@ -29,10 +29,10 @@ namespace DCL.Landscape
             foreach (int2 parcel in ownedParcels)
             {
                 if (parcel.x < minParcel.x) minParcel.x = parcel.x;
-                else if (parcel.x > maxParcel.x) maxParcel.x = parcel.x;
+                if (parcel.x > maxParcel.x) maxParcel.x = parcel.x;
 
                 if (parcel.y < minParcel.y) minParcel.y = parcel.y;
-                else if (parcel.y > maxParcel.y) maxParcel.y = parcel.y;
+                if (parcel.y > maxParcel.y) maxParcel.y = parcel.y;
             }
 
             return (minParcel, maxParcel);
