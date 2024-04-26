@@ -20,7 +20,6 @@ namespace DCL.Landscape
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
-        private readonly NoiseGeneratorCache noiseGenCache = new ();
         private readonly TimeProfiler timeProfiler;
 
         private int parcelSize;
@@ -61,7 +60,7 @@ namespace DCL.Landscape
             parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
-            chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE, noiseGenCache);
+            chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE);
 
             IsInitialized = true;
         }
@@ -94,7 +93,8 @@ namespace DCL.Landscape
             await SetupEmptyParcelDataAsync(cancellationToken, terrainModel);
 
             // Generate TerrainData's
-            chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData);
+            var noiseGenCache = new NoiseGeneratorCache();
+            chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
 
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
