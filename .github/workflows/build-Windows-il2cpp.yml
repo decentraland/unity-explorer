@@ -88,6 +88,13 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
 
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
@@ -105,6 +112,44 @@ jobs:
           git add .
           git reset --hard
           
+      - name: Create Version
+        id: create-version
+        run: | 
+          $latestTag = git describe --tags
+          
+          # Extract version components
+          if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
+          $version = $matches[1]
+          $minorVersion = $matches[2]
+          $build = $matches[3]
+          $commit = $matches[4]
+          
+          Write-Output "Version: $version"
+          Write-Output "Minor Version: $minorVersion"
+          Write-Output "Build: $build"
+          Write-Output "Commit: $commit"
+          } else {
+            Write-Output "String does not match expected pattern. No Version Added!"
+          }
+          
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            $branchName = $env:GITHUB_HEAD_REF
+          } else {
+            $branchName = ($env:GITHUB_REF -split '/')[2]
+          }
+          
+          $semVer = "v$($version).$($minorVersion).$($build)-$($commit)-$($branchName)"
+          Write-Output "Version: $semVer"
+          Write-Output "version=$($semVer)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+          
+      - name: 'Using Version'
+        run: |
+          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
+          Write-Output "Version: ($env:SELECTED_COLOR)"
+          
+        shell: pwsh
+      
       - name: Restore Library cache
         uses: actions/cache@v3
         with:
@@ -180,26 +225,6 @@ jobs:
               # Display list of files
               ls
 
-      - name: Create Version
-        run: |
-          git fetch --tags
-          $latestTag = git describe --tags $(git rev-list --tags --max-count=1)        
-          
-          # Extract version components
-          $semVer = $latestTag -replace '^v(\d+\.\d+\.\d+).*$', '$1'
-          
-          # Increment patch version
-          $semVerArray = $semVer -split '\.'
-          $patch = [int]$semVerArray[2] + 1
-          $semVer = "$($semVerArray[0]).$($semVerArray[1]).$patch"
-          
-          $branchName = $env:GITHUB_REF -replace 'refs/heads/', ''
-          $shortSha = $env:GITHUB_SHA.Substring(0,7)
-          
-          Write-Output "::set-output name=version::$semVer-$branchName-$shortSha"
-        
-        shell: pwsh
-        
       - uses: game-ci/unity-builder@v4.2.3
         id: build
         timeout-minutes: 120
@@ -210,7 +235,7 @@ jobs:
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: Decentraland
           versioning: Custom
-          version: ${{ steps.CreateVersion.outputs.version }}
+          version: ${{ steps.create-version.outputs.version }}
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
