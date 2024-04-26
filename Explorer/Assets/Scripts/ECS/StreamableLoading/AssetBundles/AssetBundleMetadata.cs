@@ -10,5 +10,13 @@ namespace ECS.StreamableLoading.AssetBundles
         public string version = "1.0";
         public List<string> dependencies;
         public string mainAsset;
+
+        public void Clear()
+        {
+            timestamp = -1;
+            version = "1.0";
+            dependencies.Clear();
+            mainAsset = "";
+        }
     }
 }

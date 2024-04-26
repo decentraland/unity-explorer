@@ -28,7 +28,9 @@ namespace ECS.StreamableLoading.AssetBundles
         private const string METADATA_FILENAME = "metadata.json";
         private const string METRICS_FILENAME = "metrics.json";
         private static readonly ThreadSafeObjectPool<AssetBundleMetadata> METADATA_POOL
-            = new (() => new AssetBundleMetadata(), maxSize: 100);
+            = new (() => new AssetBundleMetadata(),
+                actionOnRelease: metadata => metadata.Clear()
+                , maxSize: 100);
 
         private readonly AssetBundleLoadingMutex loadingMutex;
 
@@ -147,7 +149,9 @@ namespace ECS.StreamableLoading.AssetBundles
         private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, string reportCategory, CancellationToken ct) {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
-            AssetBundleRequest asyncOp = !string.IsNullOrEmpty(mainAsset) ? assetBundle.LoadAssetAsync(mainAsset, objectType) : assetBundle.LoadAllAssetsAsync(objectType);
+            var asyncOp = !string.IsNullOrEmpty(mainAsset)
+                ? assetBundle.LoadAssetAsync(mainAsset)
+                : assetBundle.LoadAllAssetsAsync(objectType);
             await asyncOp.WithCancellation(ct);
 
             var assets = asyncOp.allAssets;

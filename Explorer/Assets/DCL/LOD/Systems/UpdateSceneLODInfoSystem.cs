@@ -65,7 +65,7 @@ namespace DCL.LOD.Systems
         {
             UpdateLODLevelQuery(World);
             ResolveCurrentLODPromiseQuery(World);
-            InstantiateCurrentLODQuery(World);
+            //InstantiateCurrentLODQuery(World);
         }
 
         [Query]
@@ -90,14 +90,9 @@ namespace DCL.LOD.Systems
             if (currentLOD.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
                 currentLOD.AsyncInstantiation.IsWaitingForSceneActivation())
             {
-                FinalizeInstantiation(currentLOD, sceneDefinitionComponent);
+                FinalizeAsyncInstantiation(currentLOD, sceneDefinitionComponent);
                 sceneLODInfo.UpdateCurrentVisibleLOD();
-                if (currentLOD!.LodKey.Level == 0)
-                {
-                    scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                    CheckSceneReadiness(sceneDefinitionComponent);
-                }
-                sceneLODInfo.IsDirty = false;
+                CleanSceneLODInfo(ref sceneLODInfo, sceneDefinitionComponent, currentLOD);
             }
         }
 
@@ -116,30 +111,48 @@ namespace DCL.LOD.Systems
                 LODAsset newLod = default;
                 if (result.Succeeded)
                 {
-                    //NOTE: Using the count API since the one without count does not parent correctly.
+                    //NOTE (JUANI): Using the count API since the one without count does not parent correctly.
+                    //ANOTHER NOTE: InstantiateAsync has an issue with SMR assignation. Its a Unity bug we cannot fix,
+                    //so we'll use Instantiate until solved.
+                    //var asyncInstantiation =
+                    //    Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(),1,
+                    //        lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
+                    //asyncInstantiation.allowSceneActivation = false;
+                    //newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                    //    lodCache, result.Asset, asyncInstantiation);
 
-                    var asyncInstantiation =
-                        Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(), 1,
-                            lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
-                    asyncInstantiation.allowSceneActivation = false;
-                    
+
+                    //Remove everything down here once Unity fixes AsyncInstantiation
+                    //Uncomment everything above here and the InstantiateCurrentLODQuery
+                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
+                        sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity, lodsTransformParent);
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        lodCache, result.Asset, asyncInstantiation);
+                        lodCache, result.Asset, null);
+                    FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
+                    sceneLODInfo.UpdateCurrentVisibleLOD();
+                    CleanSceneLODInfo(ref sceneLODInfo, sceneDefinitionComponent, newLod);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
-                    if (newLod.LodKey.Level == 0)
-                    {
-                        scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                        CheckSceneReadiness(sceneDefinitionComponent);
-                    }
-                    sceneLODInfo.IsDirty = false;
+                    CleanSceneLODInfo(ref sceneLODInfo, sceneDefinitionComponent, newLod);
                 }
+
                 sceneLODInfo.SetCurrentLOD(newLod);
             }
+        }
+
+        private void CleanSceneLODInfo(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent, LODAsset newLod)
+        {
+            if (newLod!.LodKey.Level == 0)
+            {
+                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                CheckSceneReadiness(sceneDefinitionComponent);
+            }
+
+            sceneLODInfo.IsDirty = false;
         }
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
@@ -194,7 +207,7 @@ namespace DCL.LOD.Systems
 
             var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
-                permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
+                permittedSources: AssetSource.WEB,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                 manifest: manifest);
 
@@ -204,21 +217,26 @@ namespace DCL.LOD.Systems
             sceneLODInfo.IsDirty = true;
         }
 
-        private void FinalizeInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent)
+        private void FinalizeAsyncInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent)
         {
             currentLOD.AsyncInstantiation.allowSceneActivation = true;
             currentLOD.AsyncInstantiation.WaitForCompletion();
-
             var newRoot = currentLOD.AsyncInstantiation.Result[0];
+            FinalizeInstantiation(currentLOD, sceneDefinitionComponent, newRoot);
+        }
+
+        private void FinalizeInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD)
+        {
             var slots = Array.Empty<TextureArraySlot?>();
             if (!currentLOD.LodKey.Level.Equals(0))
             {
                 slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.Definition.id,
-                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, newRoot, lodTextureArrayContainer);
+                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
             }
 
-            currentLOD?.FinalizeInstantiation(newRoot, slots);
+            currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
         }
+
 
         private void CheckSceneReadiness(SceneDefinitionComponent sceneDefinitionComponent)
         {
