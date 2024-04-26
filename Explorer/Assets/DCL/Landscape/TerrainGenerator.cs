@@ -61,6 +61,9 @@ namespace DCL.Landscape
         private bool showTerrainByDefault;
 
         private Transform rootGo;
+        private GrassColorMapRenderer grassRenderer;
+        private bool isInitialized;
+
         public Transform Ocean { get; private set; }
         public Transform Wind { get; private set; }
         public IReadOnlyList<Transform> Cliffs { get; private set; }
@@ -68,7 +71,6 @@ namespace DCL.Landscape
         public IReadOnlyList<Terrain> Terrains => terrains;
 
         public bool IsTerrainGenerated { get; private set; }
-        private bool isInitialized;
 
         public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -82,9 +84,6 @@ namespace DCL.Landscape
             terrains = new List<Terrain>();
         }
 
-        public int GetChunkSize() =>
-            terrainGenData.chunkSize;
-
         public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
         {
             this.ownedParcels = ownedParcels;
@@ -95,7 +94,7 @@ namespace DCL.Landscape
             factory = new TerrainFactory(terrainGenData);
             localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION);
 
-            chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData, noiseGenCache);
+            chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
 
             isInitialized = true;
@@ -109,12 +108,21 @@ namespace DCL.Landscape
                 UnityObjectUtils.SafeDestroy(rootGo);
         }
 
-        public void SwitchVisibility(bool isVisible)
+        public int GetChunkSize() =>
+            terrainGenData.chunkSize;
+
+        public async UniTask SwitchVisibilityAsync(bool isVisible)
         {
             if (!isInitialized) return;
 
-            if (rootGo != null)
+            if (rootGo != null && rootGo.gameObject.activeSelf != isVisible)
                 rootGo.gameObject.SetActive(isVisible);
+
+            if (isVisible)
+            {
+                await UniTask.Yield();
+                grassRenderer.Render();
+            }
         }
 
         public async UniTask GenerateTerrainAsync(
@@ -169,7 +177,7 @@ namespace DCL.Landscape
                     // GenerateTerrainDataAsync is Sequential on purpose [ Looks nicer at the loading screen ]
                     // Each TerrainData generation uses 100% of the CPU anyway so it makes no difference running it in parallel
                     /////////////////////////
-                    chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData);
+                    chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
 
                     foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
                     {
@@ -182,7 +190,7 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
 
-                    await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+                    grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
                     // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
                     await ReEnableTerrainAsync(processReport);
@@ -428,6 +436,7 @@ namespace DCL.Landscape
             {
                 emptyParcelsNeighborData.Dispose();
                 emptyParcelsData.Dispose();
+                emptyParcels.Dispose();
             }
 
             noiseGenCache.Dispose();

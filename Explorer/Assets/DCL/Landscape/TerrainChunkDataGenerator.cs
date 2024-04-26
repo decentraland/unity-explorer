@@ -26,7 +26,7 @@ namespace DCL.Landscape
         private readonly TerrainGeneratorLocalCache localCache;
         private readonly TimeProfiler timeProfiler;
         private readonly TerrainGenerationData terrainGenData;
-        private readonly NoiseGeneratorCache noiseGenCache;
+        private NoiseGeneratorCache noiseGenCache;
 
         private readonly ReportData reportData;
 
@@ -37,22 +37,23 @@ namespace DCL.Landscape
         private int parcelSize;
         private int resolution;
 
-        public TerrainChunkDataGenerator(TerrainGeneratorLocalCache localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData, NoiseGeneratorCache noiseGenCache)
+        public TerrainChunkDataGenerator(TerrainGeneratorLocalCache localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData)
         {
             this.localCache = localCache;
             this.timeProfiler = timeProfiler;
             this.terrainGenData = terrainGenData;
-            this.noiseGenCache = noiseGenCache;
 
             this.reportData = reportData;
         }
 
-        public void Prepare(int worldSeed, int parcelSize, ref NativeParallelHashMap<int2, int> emptyParcelsData, ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData)
+        public void Prepare(int worldSeed, int parcelSize, ref NativeParallelHashMap<int2, int> emptyParcelsData, ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData, NoiseGeneratorCache noiseGeneratorCache)
         {
             this.worldSeed = worldSeed;
             this.emptyParcelsNeighborData = emptyParcelsNeighborData;
             this.emptyParcelsData = emptyParcelsData;
             this.parcelSize = parcelSize;
+
+            this.noiseGenCache = noiseGeneratorCache;
         }
 
         public async UniTask SetHeightsAsync(int2 chunkMinParcel, int maxHeightIndex, int parcelSize, TerrainData terrainData, uint baseSeed,
