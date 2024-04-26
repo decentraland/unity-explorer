@@ -26,21 +26,6 @@ namespace DCL.Landscape
             grassColorMap.bounds.center = new Vector3(grassColorMap.bounds.center.x, 0, grassColorMap.bounds.center.z);
 
             colorMapRenderer.Render();
-
-            // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
-            await BugWorkaroundAsync();
-            return;
-
-            async UniTask BugWorkaroundAsync()
-            {
-                foreach (Terrain terrain in terrains)
-                    terrain.enabled = false;
-
-                await UniTask.Yield();
-
-                foreach (Terrain terrain in terrains)
-                    terrain.enabled = true;
-            }
         }
 
         public static void ExtractEmptyParcels(TerrainModel terrainModel, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)

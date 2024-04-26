@@ -146,7 +146,15 @@ namespace DCL.Backpack.EmotesSection
                                      };
 
                     embeddedEmotes = filteredEmotes.ToList();
+
+                    int customOwnedEmotesAmount = totalAmount;
                     totalAmount += embeddedEmotes.Count;
+
+                    var embeddedEmotesToSkip = 0;
+                    int emotesPageIndex = (pageNumber - 1) * CURRENT_PAGE_SIZE;
+
+                    if (emotesPageIndex > customOwnedEmotesAmount)
+                        embeddedEmotesToSkip = emotesPageIndex - customOwnedEmotesAmount;
 
                     // We always need to concat embedded emotes at the end, no matter the filter & sorting
                     // otherwise the pagination in the realm provider get inconsistent with the union of the embedded emotes
@@ -156,8 +164,7 @@ namespace DCL.Backpack.EmotesSection
                     // 2. Page 1 will contain some embedded emotes & owned emotes
                     // 3. Request page 2, the realm will not provide any of the owned emotes since they are part of page 1
                     // 4. We will probably skip most of the owned emotes in the grid becoming inconsistent
-                    emotes = customOwnedEmotes.Concat(embeddedEmotes)
-                                              .Skip((pageNumber - 1) * CURRENT_PAGE_SIZE)
+                    emotes = customOwnedEmotes.Concat(embeddedEmotes.Skip(embeddedEmotesToSkip))
                                               .Take(CURRENT_PAGE_SIZE)
                                               .ToArray();
                 }

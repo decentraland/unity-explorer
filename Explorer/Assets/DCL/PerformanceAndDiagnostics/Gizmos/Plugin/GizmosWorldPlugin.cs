@@ -50,7 +50,5 @@ namespace DCL.Gizmos.Plugin
         {
             DrawSceneGizmosHubSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, SCENE_GIZMOS_PROVIDERS_POOL);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

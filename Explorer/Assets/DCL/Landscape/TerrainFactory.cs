@@ -79,7 +79,7 @@ namespace DCL.Landscape
             return collider;
         }
 
-        public Terrain CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material, bool drawTreesAndFoliage)
+        public Terrain CreateTerrainObject(TerrainData terrainData, Transform parent, int2 at, Material material)
         {
             Terrain terrain = Terrain.CreateTerrainGameObject(terrainData)
                                      .GetComponent<Terrain>();
@@ -89,7 +89,7 @@ namespace DCL.Landscape
             terrain.detailObjectDistance = 200;
             terrain.enableHeightmapRayTracing = false;
             terrain.drawHeightmap = true; // forced to true for the color map renderer
-            terrain.drawTreesAndFoliage = drawTreesAndFoliage;
+            terrain.drawTreesAndFoliage = true;
 
             terrain.transform.position = new Vector3(at.x, -terrainGenData.minHeight, at.y);
             terrain.transform.SetParent(parent, false);
