@@ -6,6 +6,7 @@ using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using ECS.TestSuite;
 using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.UIElements;
@@ -24,7 +25,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         {
             CreateEntities();
 
-            system = new UITransformSortingSystem(world, entitiesMap, sceneRoot);
+            system = new UITransformSortingSystem(world);
         }
 
         [Test]
@@ -35,8 +36,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
             system.Update(0);
 
             // Assert
-            var expected = ORDER.Select(i => world.Get<UITransformComponent>(entitiesMap[i]).Transform).ToArray();
-            var actual = world.Get<UITransformComponent>(sceneRoot).Transform.Children();
+            VisualElement[] expected = ORDER.Select(i => world.Get<UITransformComponent>(entitiesMap[i]).Transform).ToArray();
+            IEnumerable<VisualElement>? actual = world.Get<UITransformComponent>(sceneRoot).Transform.Children();
 
             CollectionAssert.AreEqual(expected, actual);
         }
@@ -45,13 +46,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
         {
             entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
-            var root = new UITransformComponent { Transform = new VisualElement(), Children = new HashSet<EntityReference>() };
+            var root = new UITransformComponent { Transform = new VisualElement() };
             entitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRoot = world.Create(root);
 
             // shuffle randomly
-            System.Random rng = new System.Random();
+            var rng = new Random();
 
-            var copy = ORDER.ToArray();
+            int[] copy = ORDER.ToArray();
             int n = ORDER.Length;
 
             while (n > 1)
@@ -65,22 +66,23 @@ namespace DCL.SDKComponents.SceneUI.Tests
             {
                 var crdtEntity = new CRDTEntity(i);
 
-                var sdkModel = new PBUiTransform { IsDirty = true };
+                int rightOf = i - 1;
+
+                var sdkModel = new PBUiTransform { IsDirty = true, RightOf = rightOf };
 
                 var vs = new VisualElement();
                 root.Transform.Add(vs);
 
                 var component = new UITransformComponent
                 {
-                    RightOf = i > 0 ? i - 1 : 0,
+                    RelationData = new UITransformRelationData { rightOf = rightOf },
                     Transform = vs,
-                    Children = new HashSet<EntityReference>()
                 };
 
-                var e = world.Create(crdtEntity, sdkModel, component);
+                Entity e = world.Create(crdtEntity, sdkModel, component);
 
                 entitiesMap[crdtEntity] = e;
-                root.Children.Add(world.Reference(e));
+                root.RelationData.AddChild(world.Reference(sceneRoot), world.Reference(e), ref component.RelationData);
             }
         }
     }

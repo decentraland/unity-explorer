@@ -38,10 +38,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [All(typeof(PBUiTransform), typeof(UITransformComponent), typeof(DeleteEntityIntention))]
         private void OrphanChildrenOfDeletedEntity(ref UITransformComponent uiTransformComponentToBeDeleted)
         {
-            foreach (EntityReference childEntity in uiTransformComponentToBeDeleted.Children)
-                SetNewChild(ref World.Get<UITransformComponent>(childEntity.Entity), childEntity, sceneRoot);
+            var children = uiTransformComponentToBeDeleted.RelationData.Children;
+            if (children == null) return;
 
-            uiTransformComponentToBeDeleted.Children.Clear();
+            foreach (EntityReference childEntity in children)
+            {
+                ref var uiTransform = ref World.Get<UITransformComponent>(childEntity.Entity);
+                uiTransformComponentToBeDeleted.RelationData.RemoveChild(ref uiTransform.RelationData);
+                SetNewChild(ref uiTransform, childEntity, sceneRoot);
+            }
         }
 
         [Query]
@@ -50,15 +55,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            Entity parentReference = sceneRoot;
-
             if (entitiesMap.TryGetValue(sdkModel.Parent, out Entity newParentEntity))
             {
-                parentReference = newParentEntity;
+                Entity parentReference = newParentEntity;
 
                 //We have to remove the child from the old parent
                 if (uiTransformComponent.RelationData.parent != parentReference)
-                    RemoveFromParent(uiTransformComponent, World.Reference(entity));
+                    RemoveFromParent(uiTransformComponent);
 
                 if (parentReference != sceneRoot)
                     SetNewChild(ref uiTransformComponent, World.Reference(entity), parentReference);
@@ -81,15 +84,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (parentComponent == childComponent)
                 return;
 
+            parentComponent.RelationData.AddChild(World.Reference(parentEntity), childEntityReference, ref childComponent.RelationData);
             parentComponent.Transform.Add(childComponent.Transform);
-            childComponent.RelationData.parent = World.Reference(parentEntity);
-            parentComponent.Children.Add(childEntityReference);
         }
 
-        private void RemoveFromParent(UITransformComponent childComponent, EntityReference childEntityReference)
+        private void RemoveFromParent(UITransformComponent childComponent)
         {
             if (childComponent.RelationData.parent.IsAlive(World))
-                World.Get<UITransformComponent>(childComponent.RelationData.parent.Entity).Children.Remove(childEntityReference);
+                World.Get<UITransformComponent>(childComponent.RelationData.parent.Entity).RelationData.RemoveChild(ref childComponent.RelationData);
         }
     }
 }

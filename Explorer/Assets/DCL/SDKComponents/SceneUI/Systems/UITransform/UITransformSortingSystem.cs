@@ -2,13 +2,11 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
-using System.Collections.Generic;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -18,51 +16,46 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     [ThrottlingEnabled]
     public partial class UITransformSortingSystem : BaseUnityLoopSystem
     {
-        private readonly Entity sceneRoot;
-        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
-
-        internal UITransformSortingSystem(World world, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap, Entity sceneRoot) : base(world)
+        internal UITransformSortingSystem(World world) : base(world)
         {
-            this.sceneRoot = sceneRoot;
-            this.entitiesMap = entitiesMap;
         }
 
         protected override void Update(float t)
         {
-            DoUITransformSortingQuery(World);
+            // First check if siblings' rightOf has changed
+            ResolveSiblingsOrderQuery(World);
+
+            // Change the actual order of VisualElements
+            ApplySortingQuery(World);
         }
 
         [Query]
-        private void DoUITransformSorting(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        private void ResolveSiblingsOrder(in Entity entity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
 
-            SortUITransform(ref uiTransformComponent);
+            // if the entity was added its rightOf will be the same
+            // otherwise if it is changed we need to evaluate the new child position
 
-            if (uiTransformComponent.RelationData.parent == EntityReference.Null)
-                return;
-
-            foreach (EntityReference brotherEntity in World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent).Children)
+            if (sdkModel.RightOf != uiTransformComponent.RelationData.rightOf)
             {
-                if (!brotherEntity.IsAlive(World))
-                    continue;
+                // Require parent to re-evaluate its children order
 
-                SortUITransform(ref World.Get<UITransformComponent>(brotherEntity));
+                if (uiTransformComponent.RelationData.parent != EntityReference.Null)
+                {
+                    ref var parent = ref World.Get<UITransformComponent>(uiTransformComponent.RelationData.parent);
+                    parent.RelationData.ChangeChildRightOf(uiTransformComponent.RelationData.rightOf, sdkModel.RightOf, World.Reference(entity));
+                }
+
+                uiTransformComponent.RelationData.rightOf = sdkModel.RightOf;
             }
         }
 
-        private void SortUITransform(ref UITransformComponent uiTransform)
+        [Query]
+        private void ApplySorting(ref UITransformComponent uiTransformComponent)
         {
-            if (!entitiesMap.TryGetValue(uiTransform.RightOf, out Entity entityOnLeft) || entityOnLeft == sceneRoot)
-                return;
-
-            var uiTransformOnLeft = World.Get<UITransformComponent>(entityOnLeft);
-
-            if (uiTransform.Transform.parent != uiTransformOnLeft.Transform.parent)
-                return;
-
-            uiTransform.Transform.PlaceInFront(uiTransformOnLeft.Transform);
+            uiTransformComponent.SortIfRequired(World);
         }
     }
 }

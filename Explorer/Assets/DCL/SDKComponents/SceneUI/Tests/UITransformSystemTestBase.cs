@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CRDT;
 using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -26,6 +27,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         protected Entity entity;
         protected UIDocument canvas;
         protected ISceneStateProvider sceneStateProvider;
+        protected Dictionary<CRDTEntity, Entity> entitiesMap;
 
         protected async Task Initialize()
         {
@@ -38,6 +40,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             entity = world.Create();
             canvas = Object.Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            entitiesMap = new Dictionary<CRDTEntity, Entity>();
         }
 
         protected PBUiTransform CreateUITransform()
@@ -46,7 +49,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             if (system is UITransformInstantiationSystem transformInstantiationSystem)
                 instantiationSystem = transformInstantiationSystem;
             else
-                instantiationSystem = new UITransformInstantiationSystem(world, canvas, poolsRegistry);
+                instantiationSystem = new UITransformInstantiationSystem(world, canvas, poolsRegistry, entitiesMap);
 
             var input = new PBUiTransform();
             world.Add(entity, input);

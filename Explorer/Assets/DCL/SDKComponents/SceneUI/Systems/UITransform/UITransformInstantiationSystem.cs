@@ -45,8 +45,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             UITransformComponent newTransform = transformsPool.Get();
 
-            newTransform.Initialize(COMPONENT_NAME, entity,
-                entitiesMap.TryGetValue(sdkModel.RightOf, out var rightOfEntity) ? World.Reference(rightOfEntity) : EntityReference.Null);
+            newTransform.Initialize(COMPONENT_NAME, entity, sdkModel.RightOf);
 
             if (sdkModel.Parent == SpecialEntitiesID.SCENE_ROOT_ENTITY)
                 canvas.rootVisualElement.Add(newTransform.Transform);
