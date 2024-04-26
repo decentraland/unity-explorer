@@ -145,7 +145,7 @@ namespace DCL.Audio
         {
             if (!AvatarAudioSettings.AudioEnabled) return;
 
-            if (!playingContinuousAudio && cancellationTokenSource != null)
+            if (!playingContinuousAudio)
             {
                 AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
                 int clipIndex = AudioPlaybackUtilitiesAsync.GetClipIndex(clipConfig);
@@ -154,6 +154,7 @@ namespace DCL.Audio
                 ContinuousAudioAvatarAudioSource.Play();
                 playingContinuousAudio = true;
 
+                cancellationTokenSource = new CancellationTokenSource();
                 var ct = cancellationTokenSource.Token;
                 AudioPlaybackUtilitiesAsync.SchedulePlaySound(ct, clipConfig, ContinuousAudioAvatarAudioSource.clip.length, ContinuousAudioAvatarAudioSource).Forget();
             }
@@ -167,6 +168,7 @@ namespace DCL.Audio
                 playingContinuousAudio = false;
                 ContinuousAudioAvatarAudioSource.Stop();
                 cancellationTokenSource?.Cancel();
+                cancellationTokenSource?.Dispose();
             }
 
             if (!AvatarAudioSettings.AudioEnabled) return;
