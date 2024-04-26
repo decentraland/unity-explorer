@@ -3,8 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
@@ -39,8 +39,17 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!component.State.ChangedThisFrame())
                 return;
 
+            var entity = sdkEntity;
             ecsToCRDTWriter.PutMessage<PBGltfContainerLoadingState, LoadingState>(
-                static (component, loadingState) => component.CurrentState = loadingState, sdkEntity, component.State.Value);
+                //TODO move to static
+                (component, loadingState) =>
+                {
+                    component.CurrentState = loadingState;
+                    ReportHub.Log(ReportCategory.CRDT, $"Loading state for entity {entity.Id}: {loadingState}");
+                },
+                sdkEntity,
+                component.State.Value
+            );
         }
 
         [Query]
