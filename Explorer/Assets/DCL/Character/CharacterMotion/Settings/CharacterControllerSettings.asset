@@ -85,6 +85,7 @@ MonoBehaviour:
   <SlideAnimationBlendSpeed>k__BackingField: 7
   <MinSlopeAngle>k__BackingField: 50
   <MaxSlopeAngle>k__BackingField: 80
+  <EnableCharacterRotationBySlope>k__BackingField: 0
   <SlopeCharacterRotationDelay>k__BackingField: 0.05
   <SlopeVelocityModifier>k__BackingField:
     serializedVersion: 2
@@ -141,7 +142,7 @@ MonoBehaviour:
   <HipsHeightCorrection>k__BackingField: 0.05
   <HandsIKWallHitDistance>k__BackingField: 0.5
   <HandsIKWeightSpeed>k__BackingField: 5
-  <HandsIKElbowOffset>k__BackingField: {x: -0.256, y: 0.9800129, z: -0.4610018}
+  <HandsIKElbowOffset>k__BackingField: {x: 0.256, y: 0.9800129, z: -0.4610018}
   <HeadIKIsEnabled>k__BackingField: 1
   <HeadIKVerticalAngleLimit>k__BackingField: 60
   <HeadIKHorizontalAngleLimit>k__BackingField: 50
