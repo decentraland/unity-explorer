@@ -119,9 +119,6 @@ namespace Global.Dynamic
                 WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
             }, ct);
-
-            var postRealmLoadReport = AsyncLoadProcessReport.Create();
-            if (!isLocal && realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain) await genesisTerrain.ShowAsync(postRealmLoadReport);
         }
 
         private async UniTask ChangeRealmWithTerrain(URLDomain realm, CancellationToken ct, AsyncLoadProcessReport loadReport, bool isGenesis)
