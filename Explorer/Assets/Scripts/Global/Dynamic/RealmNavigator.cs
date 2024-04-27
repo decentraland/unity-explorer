@@ -91,9 +91,14 @@ namespace Global.Dynamic
                     await roomHub.StopAsync();
                     await ChangeRealmWithTerrain(realm, ct, loadReport, isGenesis);
                     await roomHub.StartAsync();
+
+                    loadReport.ProgressCounter.Value = 1f;
                 },
                 ct
             );
+
+            var postRealmLoadReport = AsyncLoadProcessReport.Create();
+            if (isGenesis) await genesisTerrain.ShowAsync(postRealmLoadReport);
 
             return true;
         }
@@ -106,19 +111,21 @@ namespace Global.Dynamic
             {
                 if (!isLocal && realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
-                    await ChangeRealmWithTerrain(genesisDomain, ct, loadReport, true);
+                    var terrainLoadReport = AsyncLoadProcessReport.Create();
+                    await ChangeRealmWithTerrain(genesisDomain, ct, terrainLoadReport, true);
                     ct.ThrowIfCancellationRequested();
                 }
 
                 WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                 await waitForSceneReadiness.ToUniTask(ct);
             }, ct);
+
+            var postRealmLoadReport = AsyncLoadProcessReport.Create();
+            if (!isLocal && realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain) await genesisTerrain.ShowAsync(postRealmLoadReport);
         }
 
         private async UniTask ChangeRealmWithTerrain(URLDomain realm, CancellationToken ct, AsyncLoadProcessReport loadReport, bool isGenesis)
         {
-            loadReport.ProgressCounter.Value = 0.1f;
-
             var sceneLoadReport = AsyncLoadProcessReport.Create();
             await realmController.SetRealmAsync(realm, Vector2Int.zero, sceneLoadReport, ct);
 

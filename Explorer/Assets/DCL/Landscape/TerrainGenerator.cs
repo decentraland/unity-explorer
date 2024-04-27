@@ -119,9 +119,11 @@ namespace DCL.Landscape
                 rootGo.gameObject.SetActive(true);
 
             await UniTask.Yield();
+            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+
             grassRenderer.Render();
 
-            await ReEnableTerrainAsync(postRealmLoadReport, 500);
+            await ReEnableTerrainAsync(postRealmLoadReport);
 
             postRealmLoadReport.ProgressCounter.Value = 1f;
         }
