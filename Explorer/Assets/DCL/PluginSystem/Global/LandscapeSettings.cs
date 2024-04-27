@@ -1,5 +1,4 @@
-﻿using DCL.Audio.System;
-using DCL.Landscape.Config;
+﻿using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
 using System;
 using UnityEngine;
@@ -14,8 +13,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public StaticSettings.RealmPartitionSettingsRef realmPartitionSettings;
         [field: SerializeField] public LandscapeDataRef landscapeData;
         [field: SerializeField] public ParcelsRef parsedParcels;
-        [field: SerializeField] public LandscapeAudioSettingsReference landscapeAudioSettingsReference;
-
 
         [Serializable]
         public class LandscapeDataRef : AssetReferenceT<LandscapeData>
@@ -27,12 +24,6 @@ namespace DCL.PluginSystem.Global
         public class ParcelsRef : AssetReferenceT<ParcelData>
         {
             public ParcelsRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class LandscapeAudioSettingsReference : AssetReferenceT<LandscapeAudioSystemSettings>
-        {
-            public LandscapeAudioSettingsReference(string guid) : base(guid) { }
         }
     }
 }

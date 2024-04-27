@@ -79,8 +79,6 @@ namespace Global.Dynamic
 
         public LODContainer LODContainer { get; private set; } = null!;
 
-        public AudioPlaybackContainer AudioPlaybackContainer { get; private set; } = null!;
-
         public IRealmController RealmController { get; private set; } = null!;
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
@@ -96,7 +94,7 @@ namespace Global.Dynamic
         // TODO move multiplayer related dependencies to a separate container
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
 
-        public IEmotesMessageBus EmotesMessageBus { get; private set; } = null!;
+        public IEmotesMessageBus EmotesMessageBus { get; } = null!;
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
 
@@ -104,7 +102,7 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; }
 
-        public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; private set; } = null!;
+        public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; } = null!;
 
         public void Dispose()
         {
@@ -147,7 +145,6 @@ namespace Global.Dynamic
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, realmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
-                container.AudioPlaybackContainer = await AudioPlaybackContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -385,6 +382,7 @@ namespace Global.Dynamic
                 new MultiplayerMovementPlugin(staticContainer.AssetsProvisioner, new MultiplayerMovementMessageBus(container.MessagePipesHub, entityParticipantTable)),
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
+                new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
