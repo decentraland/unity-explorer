@@ -99,11 +99,13 @@ namespace DCL.Backpack.CharacterPreview
         {
             IEmote? emote = equippedEmotes.EmoteInSlot(slot);
             if (emote == null) return;
+            inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
             PlayEmote(emote.GetUrn().Shorten());
         }
 
         private void OnEmoteSelected(IEmote emote)
         {
+            inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
             PlayEmote(emote.GetUrn().Shorten());
         }
     }
