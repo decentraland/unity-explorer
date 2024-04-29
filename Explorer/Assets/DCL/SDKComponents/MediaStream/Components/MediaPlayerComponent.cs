@@ -1,7 +1,9 @@
 ﻿using DCL.ECSComponents;
+using DCL.Utilities;
 using RenderHeads.Media.AVProVideo;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.SDKComponents.MediaStream
 {
@@ -23,7 +25,7 @@ namespace DCL.SDKComponents.MediaStream
         public void Dispose()
         {
             MediaPlayer = null;
-            Cts.Dispose();
+            Cts.SafeCancelAndDispose();
         }
     }
 }
