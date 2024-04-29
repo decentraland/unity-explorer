@@ -202,7 +202,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.MonoBehaviour.Clear();
+            component.TryClear();
 
             // Move character outside area
             fakeMainPlayerGO.transform.position = entityTransformComponent.Transform.position + (Vector3.one * 50);
@@ -240,7 +240,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(1, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.MonoBehaviour.Clear();
+            component.TryClear();
 
             // Simulate "getting outside current scene"
             sceneStateProvider.IsCurrent.Returns(false);
@@ -348,7 +348,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             Assert.AreEqual(onlyMainPlayer ? 1 : 2, component.EnteredThisFrame.Count);
             Assert.AreEqual(0, component.ExitedThisFrame.Count);
-            component.MonoBehaviour.Clear();
+            component.TryClear();
 
             // Move both characters outside area
             fakeMainPlayerGO.transform.position += Vector3.one * 30;

@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Backpack;
 using DCL.CharacterMotion.Components;
 using DCL.Navmap;
@@ -107,7 +106,12 @@ namespace DCL.ExplorePanel
             isControlClosing = false;
 
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
+            {
                 ToggleSection(section == inputData.Section, tab, section, false);
+
+                if (inputData.BackpackSection != null)
+                    backpackController.Toggle(inputData.BackpackSection.Value);
+            }
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
@@ -202,12 +206,14 @@ namespace DCL.ExplorePanel
         {
             world.Add<CameraBlockerComponent>(playerEntity);
             world.Add<MovementBlockerComponent>(playerEntity);
+            dclInput.Camera.Disable();
         }
 
         private void UnblockUnwantedActions()
         {
             world.Remove<CameraBlockerComponent>(playerEntity);
             world.Remove<MovementBlockerComponent>(playerEntity);
+            dclInput.Camera.Enable();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
@@ -237,10 +243,12 @@ namespace DCL.ExplorePanel
     public readonly struct ExplorePanelParameter
     {
         public readonly ExploreSections Section;
+        public readonly BackpackSections? BackpackSection;
 
-        public ExplorePanelParameter(ExploreSections section)
+        public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null)
         {
             Section = section;
+            BackpackSection = backpackSection;
         }
     }
 }

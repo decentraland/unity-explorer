@@ -14,7 +14,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public LandscapeDataRef landscapeData;
         [field: SerializeField] public ParcelsRef parsedParcels;
 
-
         [Serializable]
         public class LandscapeDataRef : AssetReferenceT<LandscapeData>
         {

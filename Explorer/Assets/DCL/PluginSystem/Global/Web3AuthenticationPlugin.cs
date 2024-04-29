@@ -27,9 +27,10 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly Animator splashScreenAnimator;
 
         private CancellationTokenSource? cancellationTokenSource;
-        private AuthenticationScreenController authenticationScreenController;
+        private AuthenticationScreenController authenticationScreenController = null!;
 
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -40,7 +41,8 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
-            ICharacterPreviewFactory characterPreviewFactory)
+            ICharacterPreviewFactory characterPreviewFactory,
+            Animator splashScreenAnimator)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
@@ -51,6 +53,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
+            this.splashScreenAnimator = splashScreenAnimator;
         }
 
         public void Dispose() { }
@@ -59,9 +62,9 @@ namespace DCL.PluginSystem.Global
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
 
-            ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
+            ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator);
             mvcManager.RegisterController(authenticationScreenController);
         }
 

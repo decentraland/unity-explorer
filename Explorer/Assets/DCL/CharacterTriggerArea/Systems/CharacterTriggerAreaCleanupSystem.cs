@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.CharacterTriggerArea.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -10,7 +9,6 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using System;
 
 namespace DCL.CharacterTriggerArea.Systems
 {
@@ -35,7 +33,7 @@ namespace DCL.CharacterTriggerArea.Systems
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(Entity entity, ref CharacterTriggerAreaComponent component)
         {
-            poolRegistry.Release(component.MonoBehaviour);
+            component.TryRelease(poolRegistry);
 
             // For some reason bulk deletion shows very bad performance (probably due to the total number of archetypes/chunks)
             World.Remove<CharacterTriggerAreaComponent>(entity);
@@ -45,14 +43,14 @@ namespace DCL.CharacterTriggerArea.Systems
         [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea))]
         private void HandleComponentRemoval(Entity entity, ref CharacterTriggerAreaComponent component)
         {
-            poolRegistry.Release(component.MonoBehaviour);
+            component.TryRelease(poolRegistry);
             World.Remove<CharacterTriggerAreaComponent>(entity);
         }
 
         [Query]
         private void FinalizeComponents(ref CharacterTriggerAreaComponent component)
         {
-            poolRegistry.Release(component.MonoBehaviour);
+            component.TryRelease(poolRegistry);
         }
 
         public void FinalizeComponents(in Query query)

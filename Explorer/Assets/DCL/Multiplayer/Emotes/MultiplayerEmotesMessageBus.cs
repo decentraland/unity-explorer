@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
@@ -26,7 +27,7 @@ namespace DCL.Multiplayer.Emotes
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesDeduplication messageDeduplication;
-        private EmoteSendIdProvider sendIdProvider = new ();
+        private EmoteSendIdProvider sendIdProvider;
 
         private World globalWorld = null!;
 
@@ -104,9 +105,26 @@ namespace DCL.Multiplayer.Emotes
             if (messageDeduplication.TryPass(walletId, incrementalId) == false)
                 return;
 
-            Entity entity = identityCache.Identity!.Address.Equals(walletId) ? playerEntity : entityParticipantTable.Entity(walletId);
+            var entity = EntityOrNull(walletId);
+
+            if (entity == Entity.Null)
+            {
+                ReportHub.LogWarning(ReportCategory.EMOTE, $"Cannot find entity for walletId: {walletId}");
+                return;
+            }
 
             TriggerEmote(emoteURN, entity);
+        }
+
+        private Entity EntityOrNull(string walletId)
+        {
+            if (identityCache.Identity!.Address.Equals(walletId))
+                return playerEntity;
+
+            if (entityParticipantTable.Has(walletId))
+                return entityParticipantTable.Entity(walletId);
+
+            return Entity.Null;
         }
 
         private void TriggerEmote(URN emoteURN, in Entity entity)

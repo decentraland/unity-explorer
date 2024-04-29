@@ -36,7 +36,5 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBCameraModeArea>.InjectToWorld(ref builder);
             CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy, cameraEntityProxy);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

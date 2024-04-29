@@ -38,9 +38,28 @@ MonoBehaviour:
   - rid: 3836309668583964676
   - rid: 6697045322133929986
   - rid: 4132209997426458630
+  - rid: 758312859982102531
   references:
     version: 2
     RefIds:
+    - rid: 758312859982102531
+      type: {class: AudioPlaybackPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <LandscapeAudioSettingsReference>k__BackingField:
+          m_AssetGUID: 81289e85b8c13dc4b8ea68b7940e76a5
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <UIAudioPlaybackControllerReference>k__BackingField:
+          m_AssetGUID: df3decac75a242f4689cb445dc93eb06
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <WorldAudioPlaybackControllerReference>k__BackingField:
+          m_AssetGUID: d9a7adc162dc338449107a4654a26d50
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 1095376790733193218
       type: {class: Web3AuthPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -161,6 +180,7 @@ MonoBehaviour:
         - dontsee
         - hammer
         - handsair
+        - hands_in_the_air
         - hohoho
         - robot
         - snowfall
@@ -425,6 +445,21 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <EmotesWheelPrefab>k__BackingField:
+          m_AssetGUID: 58c436690cb47644492bc0d655dbcce8
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <PersistentEmoteWheelOpenerPrefab>k__BackingField:
+          m_AssetGUID: c522d0b7573224f59a5c1fde68c734e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <EmoteWheelRarityBackgrounds>k__BackingField:
+          m_AssetGUID: 7a43321b8055d407ba2e871e873c7062
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -456,6 +491,11 @@ MonoBehaviour:
       data:
         <cinemachinePreset>k__BackingField:
           m_AssetGUID: 654e496ed12f12e4f80243ab9f1d97c7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <cinemachineCameraAudioSettingsReference>k__BackingField:
+          m_AssetGUID: 86a5a8acd91f6994788c37e301d06c56
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

@@ -27,7 +27,6 @@ namespace DCL.PluginSystem.Global
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly bool enableLandscape;
-
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
         private ProvidedAsset<LandscapeData> landscapeData;
         private ProvidedAsset<ParcelData> parcelData;

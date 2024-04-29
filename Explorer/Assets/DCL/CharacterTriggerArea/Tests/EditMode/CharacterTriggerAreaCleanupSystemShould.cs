@@ -45,8 +45,7 @@ namespace DCL.CharacterTriggerArea.Tests
         [Test]
         public void HandleCameraModeAreaComponentRemoveCorrectly()
         {
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
-            component.MonoBehaviour = characterTriggerArea;
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4, monoBehaviour: characterTriggerArea);
             world.Add(entity, component, new PBCameraModeArea());
 
             system.Update(0);
@@ -65,8 +64,7 @@ namespace DCL.CharacterTriggerArea.Tests
         [Test]
         public void HandleAvatarModifierAreaComponentRemoveCorrectly()
         {
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
-            component.MonoBehaviour = characterTriggerArea;
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4, monoBehaviour: characterTriggerArea);
             world.Add(entity, component, new PBAvatarModifierArea());
 
             system.Update(0);
@@ -85,8 +83,7 @@ namespace DCL.CharacterTriggerArea.Tests
         [Test]
         public void HandleEntityDestructionCorrectly()
         {
-            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
-            component.MonoBehaviour = characterTriggerArea;
+            var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4, monoBehaviour: characterTriggerArea);
             world.Add(entity, component, new PBAvatarModifierArea());
 
             system.Update(0);

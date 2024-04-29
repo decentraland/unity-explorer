@@ -8,7 +8,10 @@ namespace DCL.CharacterCamera.Settings
     {
         [SerializeField] private CinemachineFirstPersonCameraData firstPersonCameraData;
         [SerializeField] private CinemachineThirdPersonCameraData thirdPersonCameraData;
+        [SerializeField] private CinemachineThirdPersonCameraData droneViewCameraData;
         [SerializeField] private CinemachineFreeCameraData freeCameraData;
+        [SerializeField] private int shoulderChangeSpeed;
+
 
         [field: SerializeField]
         public CameraMode DefaultCameraMode { get; private set; }
@@ -19,7 +22,10 @@ namespace DCL.CharacterCamera.Settings
         ICinemachineThirdPersonCameraData ICinemachinePreset.ThirdPersonCameraData => thirdPersonCameraData;
 
         ICinemachineFirstPersonCameraData ICinemachinePreset.FirstPersonCameraData => firstPersonCameraData;
+        ICinemachineThirdPersonCameraData ICinemachinePreset.DroneViewCameraData => droneViewCameraData;
 
         ICinemachineFreeCameraData ICinemachinePreset.FreeCameraData => freeCameraData;
+
+        int ICinemachinePreset.ShoulderChangeSpeed => shoulderChangeSpeed;
     }
 }

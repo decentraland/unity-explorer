@@ -277,18 +277,23 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: df3decac75a242f4689cb445dc93eb06
-    m_Address: Assets/DCL/Audio/Prefabs/UIAudioContainer.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e38b0fb061d7ffa47b54d89ecd483bd2
-    m_Address: Assets/DCL/Audio/Prefabs/GeneralAudioMixer.mixer
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 58ab8549017bacb42b310dbb452a2f6e
     m_Address: Assets/DCL/Quality/Quality Settings.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58c436690cb47644492bc0d655dbcce8
+    m_Address: EmotesWheelHUD.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7a43321b8055d407ba2e871e873c7062
+    m_Address: EmoteWheelRarityBackgrounds.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
+    m_Address: PersistentEmoteWheelOpener.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

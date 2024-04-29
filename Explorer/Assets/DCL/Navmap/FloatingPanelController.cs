@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -109,6 +110,7 @@ namespace DCL.Navmap
             view.gameObject.SetActive(true);
             view.CanvasGroup.interactable = true;
             view.CanvasGroup.blocksRaycasts = true;
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.OnShowAudio);
 
             cts = new CancellationTokenSource();
             GetPlaceInfoAsync(parcel, animationTrigger).Forget();

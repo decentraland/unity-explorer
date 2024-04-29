@@ -292,7 +292,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             characterTriggerArea.OnTriggerEnter(fakeAvatar2ShapeCollider);
 
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.MonoBehaviour = characterTriggerArea;
+            component.ForceAssignArea(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -350,7 +350,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.MonoBehaviour = characterTriggerArea;
+            component.ForceAssignArea(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);
@@ -389,7 +389,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             // "Enter" trigger area
             characterTriggerArea.OnTriggerEnter(fakeAvatarShapeCollider);
             CharacterTriggerAreaComponent component = world.Get<CharacterTriggerAreaComponent>(triggerAreaEntity);
-            component.MonoBehaviour = characterTriggerArea;
+            component.ForceAssignArea(characterTriggerArea);
             world.Set(triggerAreaEntity, component);
 
             system.Update(0);

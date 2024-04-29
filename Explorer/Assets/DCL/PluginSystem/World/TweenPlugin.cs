@@ -22,9 +22,5 @@ namespace DCL.PluginSystem.World
             var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
-        {
-        }
     }
 }

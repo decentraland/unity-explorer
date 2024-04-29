@@ -21,7 +21,7 @@ MonoBehaviour:
   - rid: 1045841226745774107
   - rid: 1045841258647388162
   - rid: 758312499805421571
-  - rid: 758312628874641408
+  - rid: 758312842344792066
   references:
     version: 2
     RefIds:
@@ -29,11 +29,11 @@ MonoBehaviour:
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         AudioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
-    - rid: 758312628874641408
-      type: {class: UIAudioPlaybackContainer/AudioPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 758312842344792066
+      type: {class: InteractionsAudioPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <UIAudioPlaybackControllerReference>k__BackingField:
-          m_AssetGUID: df3decac75a242f4689cb445dc93eb06
+        <InteractionsAudioConfigsReference>k__BackingField:
+          m_AssetGUID: cbb820cf51b7a714e88a7c873eb5de9c
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -163,6 +163,7 @@ MonoBehaviour:
           <IntField>k__BackingField: {fileID: 9197481963319205126, guid: de80afad302843447b618cd6ca98f3ed, type: 3}
           <IntSlider>k__BackingField: {fileID: 9197481963319205126, guid: ef1076a0aebac6c4c84b891d303e85ec, type: 3}
           <FloatField>k__BackingField: {fileID: 9197481963319205126, guid: 3f2e0e33e167f85488492c41409dc34a, type: 3}
+          <FloatSlider>k__BackingField: {fileID: 9197481963319205126, guid: ff6253c6bd224de4aaf597f510466a41, type: 3}
           <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
           <Vector3Field>k__BackingField: {fileID: 9197481963319205126, guid: 6e52ba5e3264bfd43b23db247aa2457a, type: 3}
           <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
