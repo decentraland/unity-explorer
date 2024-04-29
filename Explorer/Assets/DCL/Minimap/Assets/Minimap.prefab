@@ -385,6 +385,7 @@ GameObject:
   - component: {fileID: 5724739437676983889}
   - component: {fileID: 3616003038488729521}
   - component: {fileID: 4185186173191747787}
+  - component: {fileID: 8367701782724776176}
   m_Layer: 5
   m_Name: Collapse
   m_TagString: Untagged
@@ -494,6 +495,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8367701782724776176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1445338901880467424}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 4185186173191747787}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &1680032195383766461
 GameObject:
   m_ObjectHideFlags: 0
@@ -908,6 +924,7 @@ GameObject:
   - component: {fileID: 1040481897273627235}
   - component: {fileID: 3332869142386664307}
   - component: {fileID: 2913232251365639464}
+  - component: {fileID: 4884540204215377748}
   m_Layer: 5
   m_Name: ExpandButton
   m_TagString: Untagged
@@ -1017,6 +1034,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4884540204215377748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3364477478745112431}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1cdc6c1a43024e58bcd05d3e69a19db4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 2913232251365639464}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &3553545222316724595
 GameObject:
   m_ObjectHideFlags: 0
@@ -2507,6 +2539,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 4843367397424901149}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &9152785347356188261
 GameObject:
   m_ObjectHideFlags: 0
@@ -2732,6 +2765,10 @@ PrefabInstance:
       value: 24
       objectReference: {fileID: 0}
     - target: {fileID: 2301638907023502333, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonHoverAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+    - target: {fileID: 2301638907023502333, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
       propertyPath: <ButtonPressedAudio>k__BackingField
       value: 
       objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
@@ -2739,6 +2776,10 @@ PrefabInstance:
       propertyPath: m_PixelsPerUnitMultiplier
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 2886492361444090652, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonHoverAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
     - target: {fileID: 2886492361444090652, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
       propertyPath: <ButtonPressedAudio>k__BackingField
       value: 
@@ -3224,9 +3265,17 @@ PrefabInstance:
       value: 57.9
       objectReference: {fileID: 0}
     - target: {fileID: 9007011967924448020, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonHoverAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
+    - target: {fileID: 9007011967924448020, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
       propertyPath: <ButtonPressedAudio>k__BackingField
       value: 
       objectReference: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+    - target: {fileID: 9017803013713818890, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
+      propertyPath: <ButtonHoverAudio>k__BackingField
+      value: 
+      objectReference: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
     - target: {fileID: 9017803013713818890, guid: 9feb3014d432e432c9848c4aa8766a0d, type: 3}
       propertyPath: <ButtonPressedAudio>k__BackingField
       value: 

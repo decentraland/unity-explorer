@@ -19,14 +19,15 @@ MonoBehaviour:
     randomRotationY: {x: 0, y: 360}
     randomRotationZ: {x: -5, y: 5}
     proportionalScale: 1
-    randomScale: {x: 1, y: 2}
+    randomScale: {x: 0.75, y: 1.5}
     randomScaleX: {x: 0, y: 0}
     randomScaleY: {x: 0, y: 0}
     randomScaleZ: {x: 0, y: 0}
     positionOffsetX: {x: 0, y: 0}
     positionOffsetY: {x: -0.1, y: -0.2}
     positionOffsetZ: {x: 0, y: 0}
-  radius: 18
+  radius: 9
+  secondaryRadius: 2
   TerrainDetailSettings:
     alignToGround: 100
     positionJitter: 50

@@ -35,7 +35,7 @@ namespace DCL.CharacterPreview
             if(view.EnableZooming)
                 view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
 
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent += OnPointerMove;
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent += OnPointerEnter;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
@@ -58,6 +58,8 @@ namespace DCL.CharacterPreview
 
         private void Initialize()
         {
+            if (initialized) return;
+
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
@@ -80,16 +82,17 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
+            initialized = false;
             previewController?.Dispose();
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent -= OnPointerMove;
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
             cursorController.Dispose();
         }
 
-        private void OnPointerMove(PointerEventData pointerEventData)
+        private void OnPointerEnter(PointerEventData pointerEventData)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.HoverAudio);
         }
