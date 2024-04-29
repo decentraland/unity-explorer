@@ -49,7 +49,7 @@ namespace SceneRunner.Tests
         {
             path = $"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}";
 
-            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
+            sceneRuntimeFactory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
 
             ecsWorldFactory = Substitute.For<IECSWorldFactory>().EnsureNotNull();
 

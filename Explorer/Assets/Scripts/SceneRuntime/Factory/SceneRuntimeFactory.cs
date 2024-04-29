@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision.CodeResolver;
 using DCL.WebRequests;
 using DCL.Diagnostics;
+using ECS;
 using SceneRuntime.Factory.JsSceneSourceCode;
 using SceneRuntime.Factory.WebSceneSource;
 using SceneRuntime.Factory.WebSceneSource.Cache;
@@ -18,6 +19,8 @@ namespace SceneRuntime.Factory
 {
     public class SceneRuntimeFactory
     {
+        private readonly IRealmData realmData;
+
         public enum InstantiationBehavior
         {
             StayOnMainThread,
@@ -30,8 +33,9 @@ namespace SceneRuntime.Factory
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
         private readonly IJsSceneSourceCode jsSceneSourceCode = new IJsSceneSourceCode.Default();
 
-        public SceneRuntimeFactory(IWebRequestController webRequestController)
+        public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData)
         {
+            this.realmData = realmData;
             jsSourcesCache = EnabledJsScenesFileCachingOrIgnore();
 
             webJsSources = new CachedWebJsSources(
@@ -78,7 +82,7 @@ namespace SceneRuntime.Factory
             AssertCalledOnTheMainThread();
 
             jsSourcesCache.Cache(
-                $"{sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
+                $"{realmData.RealmName} {sceneShortInfo.BaseParcel.x},{sceneShortInfo.BaseParcel.y} {sceneShortInfo.Name}.js",
                 sourceCode
             );
 

@@ -7,7 +7,6 @@ using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
-using CrdtEcsBridge.Engine;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
@@ -36,6 +35,7 @@ using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Factory;
 using System;
 using System.Collections.Generic;
@@ -229,7 +229,7 @@ namespace SceneRunner
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
             var webSocketAipImplementation = new WebSocketApiImplementation();
             var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
-            var simpleFetchApiImplementation = new SimpleFetchApiImplementation();
+            var simpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
 
             sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
 
@@ -246,7 +246,7 @@ namespace SceneRunner
                 identityCache,
                 communicationsControllerAPI,
                 instancePoolsProvider,
-                simpleFetchApiImplementation);
+                simpleFetchApi);
 
             sceneRuntime.ExecuteSceneJson();
 

@@ -9,6 +9,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.Ethereums;
+using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Apis.Modules.Players;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
