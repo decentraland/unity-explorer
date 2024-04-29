@@ -165,6 +165,7 @@ namespace DCL.Navmap
             {
                 ToggleSection(section == NavmapSections.Satellite, tab, section, true);
             }
+            sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
         }
 
         public void Deactivate()

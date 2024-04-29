@@ -183,6 +183,7 @@ namespace DCL.Backpack
             {
                 ToggleSection(section == BackpackSections.Avatar, tab, section, true);
             }
+            sectionSelectorController.SetAnimationState(true, tabsBySections[BackpackSections.Avatar]);
         }
 
         public void Deactivate()
