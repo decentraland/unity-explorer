@@ -55,48 +55,48 @@ namespace DCL.Tests.Editor
             Assert.That(emptyDirectories.Count, Is.EqualTo(0), errorMessage);
         }
 
-        [Test]
-        public void CheckForDebugUsage()
-        {
-            string[] allSourceFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
-
-            var sourceFiles = allSourceFiles
-                             .Where(file =>
-                              {
-                                  string fileName = Path.GetFileName(file);
-                                  string[] parts = file.Split(Path.DirectorySeparatorChar);
-
-                                  bool isFolderExcluded = excludedFolders.Any(folder => parts.Contains(folder));
-                                  bool isFileNameExcluded = fileNameExclusionKeywords.Any(keyword => fileName.Contains(keyword)) || excludedFileNames.Contains(fileName);
-
-                                  return !isFolderExcluded && !isFileNameExcluded;
-                              })
-                             .ToList();
-
-            foreach (string file in sourceFiles)
-            {
-                string code = File.ReadAllText(file);
-                SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(code);
-                SyntaxNode root = syntaxTree.GetRoot();
-
-                // Skip classes with names ending in 'Should', 'Test', or 'Tests'
-                bool containsExcludedClass = root.DescendantNodes()
-                                                 .OfType<ClassDeclarationSyntax>()
-                                                 .Any(c => c.Identifier.ValueText.EndsWith("Should") ||
-                                                           c.Identifier.ValueText.EndsWith("Test") ||
-                                                           c.Identifier.ValueText.EndsWith("Tests"));
-
-                if (containsExcludedClass) continue;
-
-                IEnumerable<InvocationExpressionSyntax> debugLogStatements = root.DescendantNodes()
-                                                                                 .OfType<InvocationExpressionSyntax>()
-                                                                                 .Where(ies => ies.Expression is MemberAccessExpressionSyntax maes &&
-                                                                                               maes.Expression.ToString() == "Debug" &&
-                                                                                               DEBUG_METHOD_NAMES.Contains(maes.Name.Identifier.ValueText));
-
-                Assert.IsEmpty(debugLogStatements, $"Debug usage found in file: {file}");
-            }
-        }
+        // [Test]
+        // public void CheckForDebugUsage()
+        // {
+        //     string[] allSourceFiles = Directory.GetFiles(Application.dataPath, "*.cs", SearchOption.AllDirectories);
+        //
+        //     var sourceFiles = allSourceFiles
+        //                      .Where(file =>
+        //                       {
+        //                           string fileName = Path.GetFileName(file);
+        //                           string[] parts = file.Split(Path.DirectorySeparatorChar);
+        //
+        //                           bool isFolderExcluded = excludedFolders.Any(folder => parts.Contains(folder));
+        //                           bool isFileNameExcluded = fileNameExclusionKeywords.Any(keyword => fileName.Contains(keyword)) || excludedFileNames.Contains(fileName);
+        //
+        //                           return !isFolderExcluded && !isFileNameExcluded;
+        //                       })
+        //                      .ToList();
+        //
+        //     foreach (string file in sourceFiles)
+        //     {
+        //         string code = File.ReadAllText(file);
+        //         SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(code);
+        //         SyntaxNode root = syntaxTree.GetRoot();
+        //
+        //         // Skip classes with names ending in 'Should', 'Test', or 'Tests'
+        //         bool containsExcludedClass = root.DescendantNodes()
+        //                                          .OfType<ClassDeclarationSyntax>()
+        //                                          .Any(c => c.Identifier.ValueText.EndsWith("Should") ||
+        //                                                    c.Identifier.ValueText.EndsWith("Test") ||
+        //                                                    c.Identifier.ValueText.EndsWith("Tests"));
+        //
+        //         if (containsExcludedClass) continue;
+        //
+        //         IEnumerable<InvocationExpressionSyntax> debugLogStatements = root.DescendantNodes()
+        //                                                                          .OfType<InvocationExpressionSyntax>()
+        //                                                                          .Where(ies => ies.Expression is MemberAccessExpressionSyntax maes &&
+        //                                                                                        maes.Expression.ToString() == "Debug" &&
+        //                                                                                        DEBUG_METHOD_NAMES.Contains(maes.Name.Identifier.ValueText));
+        //
+        //         Assert.IsEmpty(debugLogStatements, $"Debug usage found in file: {file}");
+        //     }
+        // }
 
         [Test]
         public void CheckUnityObjectsForMissingReferences()

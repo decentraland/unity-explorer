@@ -42,7 +42,6 @@ namespace Global.Dynamic
         [SerializeField] private bool enableLandscape;
         [SerializeField] private bool enableLOD;
 
-
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
@@ -68,9 +67,11 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+            Debug.Log("Awake.EnsureNotNull");
             EnsureNotNull();
+            Debug.Log("Awake.SetupInitialConfig");
             SetupInitialConfig();
-
+            Debug.Log("Awake.InitializeFlowAsync");
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
