@@ -18,6 +18,8 @@ namespace DCL.SDKComponents.MediaStream
         public CancellationTokenSource Cts;
         public VideoState State;
 
+        public OpenMediaPromise OpenMediaPromise;
+
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
         public float Duration => (float)MediaPlayer.Info.GetDuration();

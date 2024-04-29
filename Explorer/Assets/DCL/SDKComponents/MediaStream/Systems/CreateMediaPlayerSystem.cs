@@ -74,6 +74,9 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
             {
                 MediaPlayer mediaPlayer = component.MediaPlayer;
+
+                component.OpenMediaPromise = OpenMediaPromise.Create(webRequestController, component.URL, OnComplete, component.Cts.Token);
+
                 mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay, component.Cts.Token, OnComplete).SuppressCancellationThrow().Forget();
                 void OnComplete() => onComplete?.Invoke(mediaPlayer);
             }
