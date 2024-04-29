@@ -9,40 +9,38 @@ namespace DCL.SDKComponents.MediaStream
 {
     public class OpenMediaPromise
     {
-        private readonly IWebRequestController webRequestController;
-        private readonly string url;
-
-        public readonly Action<MediaPlayer> OnResolved;
-
-        public bool IsReachable { get; private set; }
-        public bool IsResolved { get; private set; }
-
-        public static OpenMediaPromise Create(IWebRequestController webRequestController, string url, Action<MediaPlayer> onResolved, CancellationToken ct)
-        {
-            var promise = new OpenMediaPromise(webRequestController, url, onResolved);
-            promise.CheckIfReachableAsync(ct).Forget();
-
-            return promise;
+        private enum Status {
+            Pending, Resolved, Consumed,
         }
 
-        public void Reject()
+        private Status status;
+
+        private readonly Action<MediaPlayer> onResolved;
+
+        private string url;
+        private bool isReachable;
+
+        public async UniTask CheckIfReachableAsync(IWebRequestController webRequestController, string url, CancellationToken ct)
         {
 
-        }
+            status = Status.Pending;
 
-        private OpenMediaPromise(IWebRequestController webRequestController,  string url, Action<MediaPlayer> onResolved)
-        {
-            this.webRequestController = webRequestController;
             this.url = url;
+            isReachable = await webRequestController.IsReachableAsync(URLAddress.FromString(this.url), ct);
 
-            this.OnResolved = onResolved;
+            status = Status.Resolved;
         }
 
-        private async UniTask CheckIfReachableAsync(CancellationToken ct)
+        public bool CanConsume(string url) =>
+            status == Status.Resolved && isReachable && this.url == url;
+
+        public void Consume(MediaPlayer mediaPlayer, bool autoPlay)
         {
-            IsReachable = await webRequestController.IsReachableAsync(URLAddress.FromString(url), ct);
-            IsResolved = true;
-        }
+            status = Status.Consumed;
 
+            mediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay);
+
+            isReachable = false;
+        }
     }
 }

@@ -73,29 +73,32 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
 
-            if (marker.IsDirty && frameTimeBudget.TrySpendBudget())
-            {
-                MediaPlayer mediaPlayer = component.MediaPlayer;
+            if (component.OpenMediaPromise.CanConsume(component.URL))
+                component.OpenMediaPromise.Consume(component.MediaPlayer, hasPlaying && playing);
 
-                if (component.URL != url)
-                {
-                    UpdateStreamUrl(ref component, url);
-
-                    if (component.State != VideoState.VsError)
-                    {
-                        component.Cts.Cancel();
-                        component.Cts = new CancellationTokenSource();
-                        mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
-
-                        void OnComplete() =>
-                            onComplete?.Invoke(mediaPlayer);
-                    }
-                }
-                else if (component.State != VideoState.VsError)
-                    mediaPlayer.UpdatePlayback(hasPlaying, playing);
-
-                marker.IsDirty = false;
-            }
+            // if (marker.IsDirty && frameTimeBudget.TrySpendBudget())
+            // {
+            //     MediaPlayer mediaPlayer = component.MediaPlayer;
+            //
+            //     if (component.URL != url)
+            //     {
+            //         UpdateStreamUrl(ref component, url);
+            //
+            //         if (component.State != VideoState.VsError)
+            //         {
+            //             component.Cts.Cancel();
+            //             component.Cts = new CancellationTokenSource();
+            //             mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay: false, component.Cts.Token, OnComplete).Forget();
+            //
+            //             void OnComplete() =>
+            //                 onComplete?.Invoke(mediaPlayer);
+            //         }
+            //     }
+            //     else if (component.State != VideoState.VsError)
+            //         mediaPlayer.UpdatePlayback(hasPlaying, playing);
+            //
+            //     marker.IsDirty = false;
+            // }
         }
 
         [Query]
