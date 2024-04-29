@@ -282,6 +282,7 @@ namespace Global.Dynamic
             catch (OperationCanceledException)
             {
                 // ignore
+                Debug.Log("InitializeFlowAsync.OperationCanceledException");
             }
             catch (Exception)
             {
