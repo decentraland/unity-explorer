@@ -15,7 +15,6 @@ namespace DCL.Quality.Runtime
 
         private PersistentSetting<int> sceneLoadRadius;
         private PersistentSetting<int> lod1Threshold;
-        private PersistentSetting<int> lod2Threshold;
         private PersistentSetting<float> terrainLODBias;
         private PersistentSetting<float> detailDensity;
         private PersistentSetting<float> grassDistance;
@@ -54,9 +53,6 @@ namespace DCL.Quality.Runtime
             SetLodThreshold(preset.environmentSettings.lod1Threshold, 0);
             lod1Threshold.Value = preset.environmentSettings.lod1Threshold;
 
-            SetLodThreshold(preset.environmentSettings.lod2Threshold, 1);
-            lod2Threshold.Value = preset.environmentSettings.lod2Threshold;
-
             SetTerrainLodBias(preset.environmentSettings.terrainLODBias);
             this.terrainLODBias.Value = preset.environmentSettings.terrainLODBias;
 
@@ -74,7 +70,6 @@ namespace DCL.Quality.Runtime
         {
             sceneLoadRadius = PersistentSetting.CreateInt("SceneLoadRadius", currentPreset.environmentSettings.sceneLoadRadius);
             lod1Threshold = PersistentSetting.CreateInt("LOD1Threshold", currentPreset.environmentSettings.lod1Threshold);
-            lod2Threshold = PersistentSetting.CreateInt("LOD2Threshold", currentPreset.environmentSettings.lod2Threshold);
             terrainLODBias = PersistentSetting.CreateFloat("TerrainLODBias", currentPreset.environmentSettings.terrainLODBias);
             detailDensity = PersistentSetting.CreateFloat("DetailDensity", currentPreset.environmentSettings.detailDensity);
             grassDistance = PersistentSetting.CreateFloat("GrassDistance", currentPreset.environmentSettings.grassDistance);
@@ -83,7 +78,6 @@ namespace DCL.Quality.Runtime
             // Apply settings
             SetSceneLoadRadius(sceneLoadRadius.Value);
             SetLodThreshold(lod1Threshold.Value, 0);
-            SetLodThreshold(lod2Threshold.Value, 1);
             SetTerrainLodBias(terrainLODBias.Value);
             SetDetailDensity(detailDensity.Value);
             SetGrassDistance(grassDistance.Value);
