@@ -13,6 +13,8 @@ namespace DCL.ExplorePanel
 {
     public class ExplorePanelView : ViewBase, IView
     {
+        private const float ANIMATION_SPEED = 0.2f;
+
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; } = null!;
 
@@ -57,7 +59,7 @@ namespace DCL.ExplorePanel
             if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
-            return CanvasGroup.DOFade(1, 0.2f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+            return CanvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
@@ -65,7 +67,7 @@ namespace DCL.ExplorePanel
             if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
-            return CanvasGroup.DOFade(0, 0.2f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+            return CanvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
     }
 
