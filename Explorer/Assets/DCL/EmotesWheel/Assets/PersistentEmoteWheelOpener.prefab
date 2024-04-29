@@ -292,6 +292,7 @@ MonoBehaviour:
   <OpenEmoteWheelButton>k__BackingField: {fileID: 2772674678068339908}
   <EmotesEnabledContainer>k__BackingField: {fileID: 4596462494624646587}
   <EmotesDisabledContainer>k__BackingField: {fileID: 4753231099487728027}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!1 &8926289785583344591
 GameObject:
   m_ObjectHideFlags: 0
