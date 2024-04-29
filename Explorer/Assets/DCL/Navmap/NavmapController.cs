@@ -115,7 +115,7 @@ namespace DCL.Navmap
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
-            
+
             if (isOn)
                 lastShownSection = shownSection;
         }
@@ -164,7 +164,6 @@ namespace DCL.Navmap
             foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections)
             {
                 ToggleSection(section == NavmapSections.Satellite, tab, section, true);
-                //sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
             }
         }
 

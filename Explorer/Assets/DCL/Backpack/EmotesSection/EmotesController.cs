@@ -7,6 +7,8 @@ namespace DCL.Backpack
 {
     public class EmotesController : ISection, IDisposable
     {
+        private static readonly int IN = Animator.StringToHash("In");
+
         private readonly RectTransform rectTransform;
         private readonly EmotesView view;
         private readonly BackpackEmoteSlotsController slotsController;
@@ -37,7 +39,7 @@ namespace DCL.Backpack
 
         public void Animate(int triggerId)
         {
-
+            view.gameObject.SetActive(triggerId == IN);
         }
 
         public RectTransform GetRectTransform() =>

@@ -105,7 +105,7 @@ namespace DCL.ExplorePanel
 
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
-                ToggleSection(section == inputData.Section, tab, section, false);
+                ToggleSection(section == inputData.Section, tab, section, true);
                 sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
             }
 

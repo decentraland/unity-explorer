@@ -11,6 +11,7 @@ using DCL.UI;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -31,6 +32,9 @@ namespace DCL.Backpack
         private readonly BackpackEmoteGridController backpackEmoteGridController;
         private readonly EmotesController emotesController;
         private readonly Dictionary<BackpackSections, ISection> backpackSections;
+        private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
+        private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
+        private BackpackSections lastShownSection;
 
         private CancellationTokenSource? animationCts;
         private CancellationTokenSource? profileLoadingCts;
@@ -83,29 +87,36 @@ namespace DCL.Backpack
             foreach (KeyValuePair<BackpackSections, ISection> keyValuePair in backpackSections)
                 keyValuePair.Value.Deactivate();
 
-            var sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
+            sectionSelectorController = new SectionSelectorController<BackpackSections>(backpackSections, BackpackSections.Avatar);
+            tabsBySections = view.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
 
-            foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
+            foreach ((BackpackSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
-                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-
-                BackpackSections section = tabSelector.Section;
-
-                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
+                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     isOn =>
                     {
-                        animationCts.SafeCancelAndDispose();
-                        animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token, false).Forget();
-
-                        if (isOn)
-                            currentSection = section;
-                    });
+                        ToggleSection(isOn, tabSelector, section, true);
+                    }
+                );
             }
 
             this.backpackCharacterPreviewController = backpackCharacterPreviewController;
             view.TipsButton.onClick.AddListener(ToggleTipsContent);
             view.TipsPanelDeselectable.OnDeselectEvent += ToggleTipsContent;
+        }
+
+        private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, BackpackSections shownSection, bool animate)
+        {
+            if(isOn && animate && shownSection != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
+            animationCts.SafeCancelAndDispose();
+            animationCts = new CancellationTokenSource();
+            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+
+            if (isOn)
+                lastShownSection = shownSection;
         }
 
         public void Dispose()
@@ -168,6 +179,10 @@ namespace DCL.Backpack
 
             view.gameObject.SetActive(true);
             backpackCharacterPreviewController.OnShow();
+            foreach ((BackpackSections section, TabSelectorView? tab) in tabsBySections)
+            {
+                ToggleSection(section == BackpackSections.Avatar, tab, section, true);
+            }
         }
 
         public void Deactivate()
