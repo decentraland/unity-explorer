@@ -171,7 +171,7 @@ namespace Global
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.AssetsProvisioner);
             Debug.Log($"StaticContainer.CacheCleaner");
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-            Debug.Log($"StaticContainer.DiagnosticsContainer");
+            Debug.Log($"StaticContainer.DiagnosticsContainer({container.ReportHandlingSettings})");
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
