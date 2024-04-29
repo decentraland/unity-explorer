@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
 
 namespace DCL.PluginSystem
@@ -7,14 +8,18 @@ namespace DCL.PluginSystem
     {
         protected TSettings settings { get; private set; } = default!;
 
-        public virtual void Dispose()
-        {
-        }
+        public virtual void Dispose() { }
 
-        public UniTask InitializeAsync(TSettings settings, CancellationToken ct)
+        public async UniTask InitializeAsync(TSettings settings, CancellationToken ct)
         {
             this.settings = settings;
-            return InitializeInternalAsync(settings, ct);
+
+            try
+            {
+                await settings.EnsureValidAsync();
+                await InitializeInternalAsync(settings, ct);
+            }
+            catch (Exception e) { throw new Exception($"Cannot initialize container {typeof(TSettings).FullName}", e); }
         }
 
         protected virtual UniTask InitializeInternalAsync(TSettings settings, CancellationToken ct) =>

@@ -45,7 +45,7 @@ namespace Global
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController),
+                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake()),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
