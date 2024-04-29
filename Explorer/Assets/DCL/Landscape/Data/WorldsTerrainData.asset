@@ -16,7 +16,7 @@ MonoBehaviour:
   terrainSize: 1
   chunkSize: 1
   heightScaleNerf: 0.25
-  seed: 97
+  seed: 380
   terrainHoleEdgeSize: 0.5
   minHeight: 0
   pondDepth: 0
