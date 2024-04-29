@@ -76,7 +76,8 @@ namespace DCL.LOD
             for (int i = 0; i < Slots.Length; i++)
                 Slots[i]?.FreeSlot();
 
-            AsyncInstantiation.Cancel();
+
+            AsyncInstantiation?.Cancel();
             if (State == LOD_STATE.SUCCESS)
                 UnityObjectUtils.SafeDestroy(Root);
 
