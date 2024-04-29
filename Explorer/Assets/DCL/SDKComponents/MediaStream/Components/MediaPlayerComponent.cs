@@ -15,10 +15,11 @@ namespace DCL.SDKComponents.MediaStream
         public const float DEFAULT_POSITION = 0f;
 
         public MediaPlayer MediaPlayer;
+
         public string URL;
-        public CancellationTokenSource Cts;
         public VideoState State;
 
+        public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;
 
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();

@@ -73,8 +73,10 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
 
-            if (component.OpenMediaPromise.CanConsume(component.URL))
-                component.OpenMediaPromise.Consume(component.MediaPlayer, hasPlaying && playing);
+            if (component.OpenMediaPromise.IsResolved)
+            {
+                component.OpenMediaPromise.TryConsume(component.MediaPlayer,  component.URL, hasPlaying && playing);
+            }
 
             // if (marker.IsDirty && frameTimeBudget.TrySpendBudget())
             // {
