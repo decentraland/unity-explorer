@@ -61,7 +61,8 @@ namespace DCL.Settings
 
         public void Animate(int triggerId)
         {
-
+            view.PanelAnimator.SetTrigger(triggerId);
+            view.HeaderAnimator.SetTrigger(triggerId);
         }
 
         public RectTransform GetRectTransform() =>

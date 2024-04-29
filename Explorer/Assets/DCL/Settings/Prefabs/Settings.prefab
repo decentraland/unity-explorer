@@ -1583,6 +1583,8 @@ MonoBehaviour:
   <SoundSectionBackground>k__BackingField: {fileID: 0}
   <ControlsSectionBackground>k__BackingField: {fileID: 0}
   <ContentScrollRect>k__BackingField: {fileID: 8443518669722437240}
+  <PanelAnimator>k__BackingField: {fileID: 7577837248126847787}
+  <HeaderAnimator>k__BackingField: {fileID: 3857306504030539470}
 --- !u!225 &5907525099274342716
 CanvasGroup:
   m_ObjectHideFlags: 0
