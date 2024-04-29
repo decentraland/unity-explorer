@@ -110,9 +110,8 @@ namespace DCL.ExplorePanel
                 sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
             }
 
-                if (inputData.BackpackSection != null)
-                    backpackController.Toggle(inputData.BackpackSection.Value);
-            }
+            if (inputData.BackpackSection != null)
+                backpackController.Toggle(inputData.BackpackSection.Value);
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
