@@ -16,7 +16,7 @@ namespace DCL.CharacterPreview
     public class CharacterPreviewFactory : ICharacterPreviewFactory
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
-        private IComponentPool<CharacterPreviewAvatarContainer> characterPreviewComponentPool;
+        private IComponentPool<CharacterPreviewAvatarContainer>? characterPreviewComponentPool;
 
         public CharacterPreviewFactory(IComponentPoolsRegistry poolsRegistry)
         {

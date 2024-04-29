@@ -4,9 +4,10 @@ using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
-using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner.Scene;
 using System.Linq;
+using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -25,14 +26,12 @@ namespace DCL.LOD
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         public static string LOD_SHADER = "DCL/Scene_TexArray";
-
         private static readonly List<Material> TEMP_MATERIALS = new (3);
 
-
-        public static TextureArraySlot?[] ApplyTextureArrayToLOD(SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
+        public static TextureArraySlot?[] ApplyTextureArrayToLOD(string sceneID, Vector2Int baseCoordinate, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
         {
             var newSlots = TEXTURE_ARRAY_SLOTS.Get();
-            using (PoolExtensions.Scope<List<Renderer>> pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
+            using (var pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
             {
                 for (int i = 0; i < pooledList.Value.Count; i++)
                 {
@@ -43,13 +42,13 @@ namespace DCL.LOD
                         {
                             if (TEMP_MATERIALS[j].mainTexture.width != TEMP_MATERIALS[j].mainTexture.height)
                             {
-                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}");
+                                ReportHub.LogWarning(ReportCategory.LOD, $"Trying to apply a non square resolution in {sceneID} {baseCoordinate}");
                                 continue;
                             }
 
                             if (TEMP_MATERIALS[j].shader.name != LOD_SHADER)
                             {
-                                ReportHub.LogWarning(ReportCategory.LOD, $"One material does not have the correct shader in {sceneDefinitionComponent.Definition.id} {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase}. " +
+                                ReportHub.LogWarning(ReportCategory.LOD, $"One material does not have the correct shader in {sceneID} {baseCoordinate}. " +
                                                                          $"It has {pooledList.Value[i].materials[j].shader} while it should be {LOD_SHADER}. Please check the AB Converter");
                                 continue;
                             }
@@ -64,22 +63,17 @@ namespace DCL.LOD
             return newSlots.ToArray();
         }
 
-        private static void ApplyTransparency(Material duplicatedMaterial, bool setDefaultTransparency)
+        public static void CheckSceneReadiness(ISceneReadinessReportQueue sceneReadinessReportQueue, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            duplicatedMaterial.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-            duplicatedMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-
-            duplicatedMaterial.SetFloat("_Surface",  1);
-            duplicatedMaterial.SetFloat("_BlendMode", 0);
-            duplicatedMaterial.SetFloat("_AlphaCutoffEnable", 0);
-            duplicatedMaterial.SetFloat("_SrcBlend", 1f);
-            duplicatedMaterial.SetFloat("_DstBlend", 10f);
-            duplicatedMaterial.SetFloat("_AlphaSrcBlend", 1f);
-            duplicatedMaterial.SetFloat("_AlphaDstBlend", 10f);
-            duplicatedMaterial.SetFloat("_ZTestDepthEqualForOpaque", 4f);
-            duplicatedMaterial.renderQueue = (int)RenderQueue.Transparent;
-
-            duplicatedMaterial.color = new Color(duplicatedMaterial.color.r, duplicatedMaterial.color.g, duplicatedMaterial.color.b, setDefaultTransparency ? 0.8f : duplicatedMaterial.color.a);
+            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
+            {
+                for (int i = 0; i < reports!.Value.Count; i++)
+                {
+                    var report = reports.Value[i];
+                    report.ProgressCounter.Value = 1f;
+                    report.CompletionSource.TrySetResult();
+                }
+            }
         }
     }
 }

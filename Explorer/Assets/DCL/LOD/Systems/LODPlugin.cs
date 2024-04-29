@@ -35,7 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
-
+        private readonly bool lodEnabled;
         
         private IExtendedObjectPool<Material> lodMaterialPool;
         private ILODSettingsAsset lodSettingsAsset;
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
-            ILODSettingsAsset lodSettingsAsset)
+            ILODSettingsAsset lodSettingsAsset, bool lodEnabled)
         {
             lodAssetsPool = new LODAssetsPool();
             cacheCleaner.Register(lodAssetsPool);
@@ -59,6 +59,7 @@ namespace DCL.PluginSystem.Global
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
             this.lodSettingsAsset = lodSettingsAsset;
+            this.lodEnabled = lodEnabled;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -72,14 +73,26 @@ namespace DCL.PluginSystem.Global
             var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
             lodDebugContainer.transform.SetParent(lodContainer.transform);
 
-            lodTextureArrayContainer = textureArrayContainerFactory.Create(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutions, TextureFormat.BC7, lodSettingsAsset.TextureArrayMinSize);
+            AsyncInstantiateOperation.SetIntegrationTimeMS(lodSettingsAsset.AsyncIntegrationTimeMS);
+
+            lodTextureArrayContainer = textureArrayContainerFactory.CreateSceneLOD(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
+                TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
             
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);
-            UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget,
-                frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform, lodTextureArrayContainer);
-            UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
-            LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
+
+            if (lodEnabled)
+            {
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget,
+                    frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform, lodTextureArrayContainer);
+                UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
+                LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
+            }
+            else
+            {
+                UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
+            }
+           
         }
 
         public void Dispose()
@@ -88,4 +101,5 @@ namespace DCL.PluginSystem.Global
         }
       
     }
+
 }

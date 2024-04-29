@@ -23,9 +23,11 @@ function require(moduleName) {
     const logger = {
         error: (m) => console.error(m),
         warning: (m) => console.warning(m),
+        log: (m) => console.log(m),
     }
     
     Validates.registerBundle(module.exports, logger)
+    Validates.registerLogs(module.exports, logger)
     //TODO implement later
     // Validates.registerIntegrationTests(module.exports, logger)
     

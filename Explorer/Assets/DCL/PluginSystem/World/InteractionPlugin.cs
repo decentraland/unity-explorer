@@ -73,8 +73,6 @@ namespace DCL.PluginSystem.World
             InteractionHighlightSystem.InjectToWorld(ref builder, hoverMaterial, hoverOorMaterial);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
-
         [Serializable]
         public class Settings : IDCLPluginSettings
         {

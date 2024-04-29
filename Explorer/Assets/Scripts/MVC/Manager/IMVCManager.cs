@@ -9,6 +9,9 @@ namespace MVC
     /// </summary>
     public interface IMVCManager : IDisposable
     {
+        event Action<IController> OnViewShowed;
+        event Action<IController> OnViewClosed;
+
         /// <summary>
         ///     Called externally to schedule a view opening
         /// </summary>

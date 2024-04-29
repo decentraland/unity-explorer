@@ -30,8 +30,6 @@ namespace DCL.PluginSystem.World
             LoadTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, sharedDependencies.MutexSync);
         }
 
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             LoadGlobalTextureSystem.InjectToWorld(ref builder, texturesCache, webRequestController, new MutexSync());
