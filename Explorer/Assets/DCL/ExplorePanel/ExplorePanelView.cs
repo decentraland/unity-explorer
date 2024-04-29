@@ -32,6 +32,10 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public AudioClipConfig? BackgroundMusic { get; private set; }
         [field: SerializeField]
+        public AudioClipConfig? OpenMenu { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig? CloseMenu { get; private set; }
+        [field: SerializeField]
         public AudioMixerSnapshot? MuteSoundsSnapshot { get; private set; }
         [field: SerializeField]
         public AudioMixerSnapshot? RestoreSoundsSnapShot { get; private set; }
@@ -48,6 +52,7 @@ namespace DCL.ExplorePanel
         {
             if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
             AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }
@@ -56,6 +61,7 @@ namespace DCL.ExplorePanel
         {
             if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
             AnimationTransform.anchoredPosition = Vector2.zero;
             return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
         }

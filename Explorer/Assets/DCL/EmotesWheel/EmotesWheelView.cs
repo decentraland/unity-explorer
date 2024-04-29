@@ -35,7 +35,6 @@ namespace DCL.EmotesWheel
             foreach (Button button in closeButtons)
                 button.onClick.AddListener(() =>
                 {
-                    UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
                     OnClose?.Invoke();
                 });
         }
@@ -43,6 +42,11 @@ namespace DCL.EmotesWheel
         private void OnEnable()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenAudio);
+        }
+
+        private void OnDisable()
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
         }
     }
 }
