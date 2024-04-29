@@ -136,7 +136,7 @@ namespace Global.Dynamic
 
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
-                DotNetLoggingPlugin.Initialize();
+                // DotNetLoggingPlugin.Initialize();
                 
                 Debug.Log($"InitializeFlowAsync.identityCache.ctor");
 
