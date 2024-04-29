@@ -70,7 +70,7 @@ namespace DCL.Interaction.Systems
 
             if (raycastResult.IsValidHit && canHover)
             {
-                GlobalColliderEntityInfo entityInfo = raycastResult.EntityInfo.Value;
+                GlobalColliderEntityInfo entityInfo = raycastResult.GetEntityInfo();
 
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
@@ -83,7 +83,7 @@ namespace DCL.Interaction.Systems
                     // Entity should be alive and contain PBPointerEvents component to be qualified
                     if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
                     {
-                        hoverStateComponent.LastHitCollider = raycastResult.UnityRaycastHit.collider;
+                        hoverStateComponent.LastHitCollider = raycastResult.GetCollider();
                         hoverStateComponent.HasCollider = true;
 
                         bool newEntityWasHovered = !candidateForHoverLeaveIsValid
@@ -93,7 +93,7 @@ namespace DCL.Interaction.Systems
                         if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
                             candidateForHoverLeaveIsValid = false;
 
-                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.UnityRaycastHit, raycastResult.OriginRay);
+                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.GetRaycastHit(), raycastResult.GetOriginRay());
 
                         bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
 

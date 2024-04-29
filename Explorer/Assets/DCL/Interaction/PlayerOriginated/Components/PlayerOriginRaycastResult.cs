@@ -1,4 +1,5 @@
 using DCL.Interaction.Utility;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.Interaction.PlayerOriginated.Components
@@ -8,13 +9,57 @@ namespace DCL.Interaction.PlayerOriginated.Components
         /// <summary>
         ///     Collider is hit and it belongs to an entity
         /// </summary>
-        public bool IsValidHit => EntityInfo.HasValue;
-        public float Distance;
+        public bool IsValidHit => entityInfo.HasValue;
 
-        public GlobalColliderEntityInfo? EntityInfo;
+        private float distance;
+        private GlobalColliderEntityInfo? entityInfo;
+        private RaycastHit unityRaycastHit;
+        private Ray originRay;
 
-        public RaycastHit UnityRaycastHit;
+        public PlayerOriginRaycastResult(RaycastHit unityRaycastHit) : this()
+        {
+            this.unityRaycastHit = unityRaycastHit;
+        }
 
-        public Ray OriginRay;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Reset()
+        {
+            unityRaycastHit = default(RaycastHit);
+            entityInfo = null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetRay(Ray ray)
+        {
+            originRay = ray;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetupHit(RaycastHit hitInfo, GlobalColliderEntityInfo entityInfo, float distance)
+        {
+            unityRaycastHit = hitInfo;
+            this.entityInfo = entityInfo;
+            this.distance = distance;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public GlobalColliderEntityInfo GetEntityInfo() =>
+            entityInfo!.Value;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Collider GetCollider() =>
+            unityRaycastHit.collider;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RaycastHit GetRaycastHit() =>
+            unityRaycastHit;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Ray GetOriginRay() =>
+            originRay;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public readonly float GetDistance() =>
+            distance;
     }
 }

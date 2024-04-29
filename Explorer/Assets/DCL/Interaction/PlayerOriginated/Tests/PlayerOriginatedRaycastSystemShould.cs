@@ -74,7 +74,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.True);
-            Assert.That(raycastResult.UnityRaycastHit.collider, Is.EqualTo(collider));
+            Assert.That(raycastResult.GetCollider(), Is.EqualTo(collider));
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.True);
-            Assert.That(raycastResult.UnityRaycastHit.collider, Is.EqualTo(collider));
+            Assert.That(raycastResult.GetCollider(), Is.EqualTo(collider));
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.EntityInfo, Is.Null);
+            Assert.That(raycastResult.GetEntityInfo(), Is.Null);
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.EntityInfo, Is.Null);
+            Assert.That(raycastResult.GetCollider(), Is.Null);
         }
 
         [Test]
@@ -166,7 +166,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.EntityInfo, Is.Null);
+            Assert.That(raycastResult.GetEntityInfo(), Is.Null);
         }
     }
 }
