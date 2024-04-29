@@ -41,6 +41,7 @@ namespace DCL.Backpack.CharacterPreview
                     rotateEnabled = true;
                     panEnabled = true;
                     zoomEnabled = true;
+                    StopEmotes();
                     break;
                 case BackpackSections.Emotes:
                     inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);

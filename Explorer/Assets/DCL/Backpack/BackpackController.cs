@@ -22,7 +22,6 @@ namespace DCL.Backpack
     {
         private readonly BackpackView view;
         private readonly BackpackCommandBus backpackCommandBus;
-        private readonly BackpackEventBus backpackEventBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
         private readonly AvatarController avatarController;
@@ -62,7 +61,6 @@ namespace DCL.Backpack
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
             this.emotesController = emotesController;
-            this.backpackEventBus = backpackEventBus;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 

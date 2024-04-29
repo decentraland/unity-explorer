@@ -47,6 +47,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             ConsumeEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
+            CancelEmotesByFlagQuery(World);
             CancelEmotesByMovementQuery(World);
             CancelEmotesByTagQuery(World);
             UpdateEmoteTagsQuery(World);
@@ -60,20 +61,37 @@ namespace DCL.AvatarRendering.Emotes
             emoteComponent.CurrentAnimationTag = avatarView.GetAnimatorCurrentStateTag();
         }
 
+        [Query]
+        [None(typeof(CharacterEmoteIntent))]
+        private void CancelEmotesByFlag(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            if (emoteComponent.StopEmote)
+            {
+                EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+                if (emoteReference == null) return;
+
+                emoteComponent.StopEmote = false;
+                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+                StopEmote(ref emoteComponent, emoteReference);
+            }
+        }
+
+
         // emotes that do not loop need to trigger some kind of cancellation so we can take care of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByTag(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
             bool wasPlayingEmote = emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE || emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
-
-            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag();
-            bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
+            if (!wasPlayingEmote) return;
 
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
             if (emoteReference == null) return;
 
-            if (wasPlayingEmote && isOnAnotherTag)
+            int animatorCurrentStateTag = avatarView.GetAnimatorCurrentStateTag();
+            bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
+
+            if (isOnAnotherTag)
                 StopEmote(ref emoteComponent, emoteReference);
         }
 
@@ -101,6 +119,7 @@ namespace DCL.AvatarRendering.Emotes
             emoteComponent.EmoteClip = null;
             emoteComponent.EmoteLoop = false;
             emoteComponent.CurrentEmoteReference = null;
+            emoteReference.animator.StopPlayback();
             emotePlayer.Stop(emoteReference);
         }
 
