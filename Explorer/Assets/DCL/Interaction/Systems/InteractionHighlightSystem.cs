@@ -6,6 +6,9 @@ using DCL.Interaction.Raycast.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Components;
+using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
@@ -53,61 +56,88 @@ namespace DCL.Interaction.Systems
             if (highlightComponent.ReadyForMaterial())
             {
                 highlightComponent.UpdateMaterialAndSwitchEntity(materialToUse);
-
-                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntityOrNull());
-                TryAddHoverMaterials(ref highlightComponent, in transformComponent);
+                TryAddHoverMaterials(ref highlightComponent, highlightComponent.CurrentEntityOrNull());
             }
             else
             {
                 if (highlightComponent.IsEmpty())
                     return;
 
-                TransformComponent transformComponent = World!.Get<TransformComponent>(highlightComponent.CurrentEntityOrNull());
-                TryRemoveHoverMaterialFromComponentSiblings(ref highlightComponent, in transformComponent);
+                TryRemoveHoverMaterialFromComponentSiblings(ref highlightComponent, highlightComponent.CurrentEntityOrNull());
                 highlightComponent.MoveNextAndRemoveMaterial();
             }
         }
 
-        private void TryAddHoverMaterials(ref HighlightComponent highlightComponent, in TransformComponent transformComponent)
+        private void TryAddHoverMaterials(ref HighlightComponent highlightComponent, in EntityReference entity)
         {
-            if (!World.TryGet(transformComponent.Parent, out TransformComponent parentTransform)) return;
+            List<Renderer> renderers = ListPool<Renderer>.Get();
+            AddRenderersFromEntity(entity, renderers);
 
-            foreach (EntityReference brother in parentTransform.Children)
+            TransformComponent entityTransform = World!.Get<TransformComponent>(entity);
+            GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
+
+            foreach (Renderer renderer in renderers)
             {
-                // TODO: we should support other rendereables like gltf
-                if (!World.TryGet(brother, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
-                    continue;
-
-                if (highlightComponent.OriginalMaterials.ContainsKey(brother))
+                if (highlightComponent.OriginalMaterials.ContainsKey(renderer))
                     continue;
 
                 List<Material> materials = ListPool<Material>.Get();
-                MeshRenderer renderer = primitiveMeshRendererComponent.MeshRenderer;
-                highlightComponent.OriginalMaterials.Add(brother, renderer.sharedMaterials);
+                highlightComponent.OriginalMaterials.Add(renderer, renderer.sharedMaterials);
 
-                // override materials
                 renderer.GetMaterials(materials);
                 materials.Add(highlightComponent.MaterialOnUse());
                 renderer.SetMaterials(materials);
 
                 ListPool<Material>.Release(materials);
             }
+
+            ListPool<Renderer>.Release(renderers);
         }
 
-        private void TryRemoveHoverMaterialFromComponentSiblings(ref HighlightComponent highlightComponent, in TransformComponent transformComponent)
+        private void TryRemoveHoverMaterialFromComponentSiblings(ref HighlightComponent highlightComponent, in EntityReference entity)
         {
-            if (!World.TryGet(transformComponent.Parent, out TransformComponent parentTransform)) return;
+            List<Renderer> renderers = ListPool<Renderer>.Get();
+            AddRenderersFromEntity(entity, renderers);
 
-            foreach (EntityReference brother in parentTransform.Children)
+            TransformComponent entityTransform = World!.Get<TransformComponent>(entity);
+            GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
+
+            foreach (Renderer renderer in renderers)
             {
-                if (!World.TryGet(brother, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
+                if (!highlightComponent.OriginalMaterials.ContainsKey(renderer))
                     continue;
 
-                if (!highlightComponent.OriginalMaterials.ContainsKey(brother)) continue;
-
-                primitiveMeshRendererComponent.MeshRenderer.sharedMaterials = highlightComponent.OriginalMaterials[brother];
-                highlightComponent.OriginalMaterials.Remove(brother);
+                renderer.sharedMaterials = highlightComponent.OriginalMaterials[renderer];
+                highlightComponent.OriginalMaterials.Remove(renderer);
             }
+
+            ListPool<Renderer>.Release(renderers);
+        }
+
+        private void GetRenderersFromChildrenRecursive(ref TransformComponent entityTransform, List<Renderer> list)
+        {
+            foreach (EntityReference child in entityTransform.Children)
+            {
+                AddRenderersFromEntity(child, list);
+
+                TransformComponent childTransform = World!.Get<TransformComponent>(child);
+                GetRenderersFromChildrenRecursive(ref childTransform, list);
+            }
+        }
+
+        private void AddRenderersFromEntity(EntityReference child, List<Renderer> renderers)
+        {
+            if (World.TryGet(child, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
+                renderers.Add(primitiveMeshRendererComponent.MeshRenderer);
+
+            if (!World.TryGet(child, out GltfContainerComponent gltfContainer))
+                return;
+
+            if (!gltfContainer.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> loadingResult))
+                return;
+
+            if (loadingResult.Asset?.Renderers != null)
+                renderers.AddRange(loadingResult.Asset.Renderers);
         }
     }
 }

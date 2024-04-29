@@ -15,7 +15,7 @@ namespace DCL.Interaction.Raycast.Components
         private Material? materialOnUse;
 
         //Should be repooled
-        public readonly Dictionary<EntityReference, Material[]> OriginalMaterials;
+        public readonly Dictionary<Renderer, Material[]> OriginalMaterials;
 
         public HighlightComponent(bool isEnabled, bool isAtDistance, EntityReference currentEntity, EntityReference nextEntity) : this()
         {
@@ -23,7 +23,7 @@ namespace DCL.Interaction.Raycast.Components
             this.isAtDistance = isAtDistance;
             this.currentEntity = currentEntity;
             this.nextEntity = nextEntity;
-            OriginalMaterials = new Dictionary<EntityReference, Material[]>();
+            OriginalMaterials = new Dictionary<Renderer, Material[]>();
         }
 
         public void Setup(bool atDistance, EntityReference newNextEntity)

@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.Global
         private readonly Animator splashScreenAnimator;
 
         private CancellationTokenSource? cancellationTokenSource;
-        private AuthenticationScreenController authenticationScreenController;
+        private AuthenticationScreenController authenticationScreenController = null!;
 
         public Web3AuthenticationPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -62,7 +62,7 @@ namespace DCL.PluginSystem.Global
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
 
-            ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod? authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
+            ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
             authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator);
             mvcManager.RegisterController(authenticationScreenController);
