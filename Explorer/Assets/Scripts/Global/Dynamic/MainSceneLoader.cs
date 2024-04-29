@@ -327,6 +327,7 @@ namespace Global.Dynamic
                 animationEnded = true;
 
             splashAnimation.loopPointReached += OnAnimationEnded;
+            splashAnimation.Play();
 
             await UniTask.WaitUntil(() => animationEnded, cancellationToken: ct);
 
