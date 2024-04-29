@@ -194,7 +194,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 1647044090541485172}
   <raycaster>k__BackingField: {fileID: 8235211841819826033}
   <OpenExploreButton>k__BackingField: {fileID: 6259155982829355887}
-  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: ed99255f331fdd34c92d271fbbaddfb2, type: 2}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
 --- !u!95 &2111446578221211890
 Animator:
   serializedVersion: 5
