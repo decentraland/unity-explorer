@@ -115,8 +115,11 @@ namespace DCL.Landscape
             if (rootGo != null)
                 rootGo.gameObject.SetActive(true);
 
+            UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+
             grassRenderer.Render();
             await ReEnableTerrainAsync(postRealmLoadReport);
+            IsTerrainGenerated = true;
 
             postRealmLoadReport.ProgressCounter.Value = 1f;
         }
@@ -129,6 +132,7 @@ namespace DCL.Landscape
             {
                 rootGo.gameObject.SetActive(false);
                 ReEnableChunksDetails();
+                IsTerrainGenerated = false;
             }
         }
 

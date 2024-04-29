@@ -104,6 +104,8 @@ namespace DCL.Landscape.Systems
         [Query]
         private void UpdateTerrainVisibility(in Entity _, in CameraComponent cameraComponent)
         {
+            if (!terrainGenerator.IsTerrainGenerated) return;
+
             // Update Renderers
             if (jobHandle.IsCompleted && !jobHandle.Equals(default(JobHandle)))
             {
