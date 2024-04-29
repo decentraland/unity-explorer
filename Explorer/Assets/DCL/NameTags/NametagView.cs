@@ -231,7 +231,7 @@ namespace DCL.Nametags
         private float CalculatePreferredWidth(string messageContent)
         {
             if(Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth + (isClaimedName ? VerifiedIcon.sizeDelta.x : 0) > MessageContent.preferredWidth)
-                return Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth;
+                return Username.preferredWidth + chatBubbleConfiguration.nametagMarginOffsetWidth + (isClaimedName ? VerifiedIcon.sizeDelta.x : 0);
 
             if(MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x < MaxWidth)
                 return MessageContent.GetPreferredValues(messageContent, MaxWidth, 0).x;

@@ -115,10 +115,8 @@ namespace Global.Dynamic
             showAuthentication = true;
             showLoading = true;
             enableLOD = true;
-
+            enableLandscape = true;
 #endif
-
-            //enableLandscape = true;
 #endif
             
             Debug.Log($"InitializeFlowAsync.settings: {showSplash}, {showAuthentication}, {showLoading}, {enableLOD}");

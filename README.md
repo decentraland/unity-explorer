@@ -1,7 +1,6 @@
 # unity-explorer
 
 Explorer renderer 
-Dummy commit
 
 # Protocol Generation
 ## Update protocol

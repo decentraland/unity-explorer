@@ -371,7 +371,7 @@ MonoBehaviour:
   showSplash: 1
   showAuthentication: 1
   showLoading: 1
-  enableLandscape: 0
+  enableLandscape: 1
   enableLOD: 1
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
@@ -769,7 +769,7 @@ GameObject:
   - component: {fileID: 6583871705109680749}
   - component: {fileID: 1532335364287344054}
   - component: {fileID: 6583871705109680750}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: VideoTexture
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -858,7 +858,7 @@ GameObject:
   - component: {fileID: 2304836991248520654}
   - component: {fileID: 3802847475654272365}
   - component: {fileID: 3802847475654272366}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Mask
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -920,7 +920,7 @@ VideoPlayer:
   m_RenderMode: 2
   m_AspectRatio: 2
   m_DataSource: 0
-  m_TimeUpdateMode: 1
+  m_TimeUpdateMode: 2
   m_PlaybackSpeed: 1
   m_AudioOutputMode: 2
   m_TargetAudioSources: []
@@ -1035,7 +1035,7 @@ GameObject:
   - component: {fileID: 5385049054729086175}
   - component: {fileID: 4327321310632415857}
   - component: {fileID: 5385049054729086176}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: VideoPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1053,7 +1053,7 @@ GameObject:
   - component: {fileID: 5635599234481492570}
   - component: {fileID: 8546359234551999556}
   - component: {fileID: 6075134925147427691}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Container
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1253,8 +1253,7 @@ GameObject:
   - component: {fileID: 5776215482542905213}
   - component: {fileID: 6063382712672796138}
   - component: {fileID: 7722564697705550553}
-  - component: {fileID: 7722564697705550554}
-  m_Layer: 5
+  m_Layer: 0
   m_Name: Splash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1282,18 +1281,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!225 &7722564697705550554
-CanvasGroup:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7722564697705550552}
-  m_Enabled: 1
-  m_Alpha: 1
-  m_Interactable: 1
-  m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
 --- !u!222 &8546359234551999556
 CanvasRenderer:
   m_ObjectHideFlags: 0
