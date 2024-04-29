@@ -207,6 +207,7 @@ namespace Global
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
                 new InteractionsAudioPlugin(addressablesProvisioner),
                 new MultiplayerPlugin(),
+                new RealmInfoPlugin(),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
