@@ -54,6 +54,8 @@ namespace DCL.Backpack
             view.gameObject.SetActive(triggerId == IN);
         }
 
+        public void ResetAnimator() { }
+
         public RectTransform GetRectTransform() =>
             rectTransform;
     }

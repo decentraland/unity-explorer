@@ -59,6 +59,8 @@ namespace DCL.Navmap
             view.gameObject.SetActive(triggerId == IN);
         }
 
+        public void ResetAnimator() { }
+
         public RectTransform GetRectTransform() =>
             rectTransform;
     }

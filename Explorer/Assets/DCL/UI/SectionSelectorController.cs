@@ -16,6 +16,8 @@ namespace DCL.UI
 
         void Animate(int triggerId);
 
+        void ResetAnimator();
+
         RectTransform GetRectTransform();
     }
 
@@ -66,6 +68,14 @@ namespace DCL.UI
                 sections[section].GetRectTransform().gameObject.SetActive(true);
                 SetPanelsPosition(sections[previousSection].GetRectTransform(), sections[section].GetRectTransform());
                 previousSection = section;
+            }
+        }
+
+        public void ResetAnimators()
+        {
+            foreach (var keyValuePair in sections)
+            {
+                keyValuePair.Value.ResetAnimator();
             }
         }
 

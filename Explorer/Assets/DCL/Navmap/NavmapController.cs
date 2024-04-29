@@ -182,6 +182,14 @@ namespace DCL.Navmap
             navmapView.HeaderAnimator.SetTrigger(triggerId);
         }
 
+        public void ResetAnimator()
+        {
+            navmapView.PanelAnimator.Rebind();
+            navmapView.HeaderAnimator.Rebind();
+            navmapView.PanelAnimator.Update(0);
+            navmapView.HeaderAnimator.Update(0);
+        }
+
         public RectTransform GetRectTransform() =>
             rectTransform;
 

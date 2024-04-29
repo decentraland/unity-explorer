@@ -39,6 +39,11 @@ namespace DCL.UI
 
         private void OnEnable()
         {
+            if (tabAnimator != null)
+            {
+                tabAnimator.Rebind();
+                tabAnimator.Update(0);
+            }
             TabSelectorToggle.onValueChanged.AddListener(OnToggle);
         }
 

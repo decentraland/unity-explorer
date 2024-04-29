@@ -102,7 +102,7 @@ namespace DCL.ExplorePanel
         protected override void OnViewShow()
         {
             isControlClosing = false;
-
+            sectionSelectorController.ResetAnimators();
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
                 ToggleSection(section == inputData.Section, tab, section, true);
