@@ -31,7 +31,7 @@ namespace ECS.Unity.Visibility.Systems
             if (sdkComponent.IsDirty || visibilityComponent.IsDirty
                                      || component.State.ChangedThisFrameTo(LoadingState.Finished))
             {
-                if (!component.Promise.TryGetResult(World, out var result))
+                if (!component.Promise.TryGetResult(World, out var result) || !result.Succeeded)
                     return;
 
                 var renderers = result.Asset!.Renderers;

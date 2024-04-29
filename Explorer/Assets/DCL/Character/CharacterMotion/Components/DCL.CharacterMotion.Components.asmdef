@@ -2,7 +2,8 @@
     "name": "DCL.CharacterMotion.Components",
     "rootNamespace": "",
     "references": [
-        "GUID:ac3295688c7c22745a96e6ac34718181"
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:04c3e7e2f3374472f84666dc489d6cd2"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

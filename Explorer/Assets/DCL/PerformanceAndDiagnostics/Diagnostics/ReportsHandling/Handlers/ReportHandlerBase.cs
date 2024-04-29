@@ -38,14 +38,14 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public void LogException<T>(T ecsSystemException) where T: Exception, IManagedEcsException
         {
-            if (IsLogMessageAllowed(ecsSystemException.ToString(), in ecsSystemException.ReportData, LogType.Exception))
+            if (IsLogMessageAllowed(ecsSystemException, in ecsSystemException.ReportData, LogType.Exception))
                 LogExceptionInternal(ecsSystemException);
         }
 
         [HideInCallstack]
         public void LogException(Exception exception, ReportData reportData, Object context)
         {
-            if (IsLogMessageAllowed(exception.ToString(), reportData, LogType.Exception))
+            if (IsLogMessageAllowed(exception, reportData, LogType.Exception))
                 LogExceptionInternal(exception, reportData, context);
         }
 

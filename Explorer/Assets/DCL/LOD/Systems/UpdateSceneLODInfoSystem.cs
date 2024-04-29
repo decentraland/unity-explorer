@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
@@ -23,6 +24,7 @@ using ECS.Unity.SceneBoundsChecker;
 using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
+using Object = UnityEngine.Object;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
@@ -34,15 +36,16 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-        private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly IPerformanceBudget frameCapBudget;
+        private readonly ILODSettingsAsset lodSettingsAsset; 
         private readonly IPerformanceBudget memoryBudget;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        internal IPerformanceBudget frameCapBudget;
+
 
         private readonly Transform lodsTransformParent;
-
         private readonly TextureArrayContainer lodTextureArrayContainer;
+
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
@@ -62,6 +65,7 @@ namespace DCL.LOD.Systems
         {
             UpdateLODLevelQuery(World);
             ResolveCurrentLODPromiseQuery(World);
+            //InstantiateCurrentLODQuery(World);
         }
 
         [Query]
@@ -72,11 +76,33 @@ namespace DCL.LOD.Systems
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLOD == null) return;
+
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+
+            var currentLOD = sceneLODInfo.CurrentLOD;
+
+            if (currentLOD.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
+                currentLOD.AsyncInstantiation.IsWaitingForSceneActivation())
+            {
+                FinalizeAsyncInstantiation(currentLOD, sceneDefinitionComponent);
+                sceneLODInfo.UpdateCurrentVisibleLOD();
+                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
+            }
+        }
+
+
+
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!sceneLODInfo.IsDirty) return;
+            if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLODPromise.IsConsumed) return;
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
@@ -85,35 +111,46 @@ namespace DCL.LOD.Systems
                 LODAsset newLod = default;
                 if (result.Succeeded)
                 {
-                    var instantiatedLOD = Object.Instantiate(result.Asset?.GetMainAsset<GameObject>(), sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
-                        Quaternion.identity, lodsTransformParent)!;
+                    //NOTE (JUANI): Using the count API since the one without count does not parent correctly.
+                    //ANOTHER NOTE: InstantiateAsync has an issue with SMR assignation. Its a Unity bug (https://issuetracker.unity3d.com/issues/instantiated-prefabs-recttransform-values-are-incorrect-when-object-dot-instantiateasync-is-used)
+                    //we cannot fix, so we'll use Instantiate until solved.
+                    //var asyncInstantiation =
+                    //    Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(),1,
+                    //        lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
+                    //asyncInstantiation.allowSceneActivation = false;
+                    //newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                    //    lodCache, result.Asset, asyncInstantiation);
 
-                    if (!sceneLODInfo.CurrentLODLevel.Equals(0))
-                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache, LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent, instantiatedLOD, lodTextureArrayContainer));
-                    else
-                        newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                            instantiatedLOD, result.Asset, lodCache);
 
-                    ConfigureSceneMaterial.EnableSceneBounds(in instantiatedLOD,
-                        in sceneDefinitionComponent.SceneGeometry.CircumscribedPlanes);
+                    //Remove everything down here once Unity fixes AsyncInstantiation
+                    //Uncomment everything above here and the InstantiateCurrentLODQuery
+                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
+                        sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity, lodsTransformParent);
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
+                        lodCache, result.Asset, null);
+                    FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel));
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
                 }
 
                 sceneLODInfo.SetCurrentLOD(newLod);
-                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                CheckSceneReadiness(sceneDefinitionComponent);
-                sceneLODInfo.IsDirty = false;
+                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
 
-
+        private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            if (sceneLODInfo.CurrentLOD.LodKey.Level == 0)
+            {
+                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+            }
+            sceneLODInfo.IsDirty = false;
+        }
 
         private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
@@ -139,56 +176,61 @@ namespace DCL.LOD.Systems
             var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
 
             //If the current LOD is the candidate, no need to make a new promise or set anything new
-            if (newLODKey.Equals(sceneLODInfo.GetCurrentLOD()))
+            if (newLODKey.Equals(sceneLODInfo.CurrentLOD))
             {
                 sceneLODInfo.IsDirty = false;
                 return;
             }
 
-            if (newLODKey.Equals(sceneLODInfo.GetCurrentSuccessfulLOD()))
+            if (newLODKey.Equals(sceneLODInfo.CurrentVisibleLOD))
             {
+                sceneLODInfo.ResetToCurrentVisibleLOD();
                 sceneLODInfo.IsDirty = false;
-                sceneLODInfo.ResetToCurrentSuccesfullLOD();
                 return;
             }
-                
 
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
                 sceneLODInfo.SetCurrentLOD(cachedAsset);
-                sceneLODInfo.IsDirty = false;
-                CheckSceneReadiness(sceneDefinitionComponent);
+                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
+                return;
             }
-            else
-            {
-                string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-                var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-                var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
-                    platformLODKey,
-                    permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
-                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                    manifest: manifest);
+            string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-                sceneLODInfo.CurrentLODPromise =
-                    Promise.Create(World, assetBundleIntention, partitionComponent);
+            var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
+                platformLODKey,
+                permittedSources: AssetSource.ALL,
+                customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+                manifest: manifest);
 
-                sceneLODInfo.IsDirty = true;
-            }
+            sceneLODInfo.CurrentLODPromise =
+                Promise.Create(World, assetBundleIntention, partitionComponent);
+
+            sceneLODInfo.IsDirty = true;
         }
 
-        private void CheckSceneReadiness(SceneDefinitionComponent sceneDefinitionComponent)
+        private void FinalizeAsyncInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
-            {
-                for (int i = 0; i < reports!.Value.Count; i++)
-                {
-                    var report = reports.Value[i];
-                    report.ProgressCounter.Value = 1f;
-                    report.CompletionSource.TrySetResult();
-                }
-            }
+            currentLOD.AsyncInstantiation.allowSceneActivation = true;
+            currentLOD.AsyncInstantiation.WaitForCompletion();
+            var newRoot = currentLOD.AsyncInstantiation.Result[0];
+            FinalizeInstantiation(currentLOD, sceneDefinitionComponent, newRoot);
         }
+
+        private void FinalizeInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD)
+        {
+            var slots = Array.Empty<TextureArraySlot?>();
+            if (!currentLOD.LodKey.Level.Equals(0))
+            {
+                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.Definition.id,
+                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
+            }
+
+            currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
+        }
+        
     }
 }

@@ -32,10 +32,5 @@ namespace DCL.PluginSystem.World
         {
             BillboardSystem.InjectToWorld(ref builder, cameraData);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
-        {
-            BillboardSystem.InjectToWorld(ref builder, cameraData);
-        }
     }
 }

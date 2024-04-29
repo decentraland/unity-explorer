@@ -15,9 +15,9 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 0
-  m_FogColor: {r: 0.8352941, g: 0.29178533, b: 0.48649436, a: 0.16862746}
-  m_FogMode: 1
-  m_FogDensity: 0.5
+  m_FogColor: {r: 0.8773585, g: 0.47592562, b: 0.47592562, a: 0.31764707}
+  m_FogMode: 2
+  m_FogDensity: 0.4
   m_LinearFogStart: 0
   m_LinearFogEnd: 0
   m_AmbientSkyColor: {r: 0.4125427, g: 0.49693304, b: 0.65837497, a: 1}
@@ -292,7 +292,7 @@ Light:
   m_RenderMode: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 201523831
   m_RenderingLayerMask: 1
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
@@ -371,7 +371,8 @@ MonoBehaviour:
   showSplash: 1
   showAuthentication: 1
   showLoading: 1
-  enableLandscape: 1
+  enableLandscape: 0
+  enableLOD: 1
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}

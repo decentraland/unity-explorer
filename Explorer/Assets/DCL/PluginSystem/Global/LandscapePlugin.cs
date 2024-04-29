@@ -2,8 +2,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AsyncLoadReporting;
-using DCL.Audio.System;
-using DCL.Audio.Systems;
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.Landscape.Config;
@@ -34,7 +32,6 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<ParcelData> parcelData;
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
-        private ProvidedAsset<LandscapeAudioSystemSettings> landscapeAudioSettingsReference;
 
         public LandscapePlugin(SatelliteFloor floor, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
             MapRendererTextureContainer textureContainer, bool enableLandscape)
@@ -65,8 +62,6 @@ namespace DCL.PluginSystem.Global
 
             if (!enableLandscape) return;
 
-            landscapeAudioSettingsReference = await assetsProvisioner.ProvideMainAssetAsync(settings.landscapeAudioSettingsReference, ct: ct);
-
             parcelData = await assetsProvisioner.ProvideMainAssetAsync(settings.parsedParcels, ct);
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
@@ -87,7 +82,6 @@ namespace DCL.PluginSystem.Global
             LandscapeDebugSystem.InjectToWorld(ref builder, debugContainerBuilder, floor, realmPartitionSettings.Value, landscapeData.Value);
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
-            LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettingsReference.Value);
         }
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)

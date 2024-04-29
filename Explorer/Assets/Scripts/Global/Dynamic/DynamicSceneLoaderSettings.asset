@@ -16,6 +16,7 @@ MonoBehaviour:
   <StaticLoadPositions>k__BackingField: []
   <Realms>k__BackingField:
   - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main
+  - https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
   - https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main
   - https://sdk-test-scenes.decentraland.zone
   - https://peer.decentraland.org
