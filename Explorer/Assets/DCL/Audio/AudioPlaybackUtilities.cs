@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace DCL.Audio
 {
@@ -22,6 +26,26 @@ namespace DCL.Audio
                     return startingClip;
                 case AudioClipSelectionMode.Random:
                     return Random.Range(0, audioClipConfig.AudioClips.Length);
+            }
+        }
+
+        public static async UniTask SchedulePlaySoundAsync(CancellationToken ct, AudioClipConfig clipConfig, float waitTime, AudioSource audioSource)
+        {
+            int clipIndex = GetClipIndex(clipConfig);
+            var clip = clipConfig.AudioClips[clipIndex];
+
+            if (ct.IsCancellationRequested) return;
+
+            await UniTask.Delay(TimeSpan.FromSeconds(waitTime), cancellationToken: ct);
+
+            if (ct.IsCancellationRequested) return;
+
+            audioSource.clip = clip;
+            audioSource.Play();
+
+            if (!ct.IsCancellationRequested)
+            {
+                SchedulePlaySoundAsync(ct, clipConfig, audioSource.clip.length, audioSource).Forget();
             }
         }
     }
