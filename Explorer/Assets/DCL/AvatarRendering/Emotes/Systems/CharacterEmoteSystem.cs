@@ -119,7 +119,6 @@ namespace DCL.AvatarRendering.Emotes
             emoteComponent.EmoteClip = null;
             emoteComponent.EmoteLoop = false;
             emoteComponent.CurrentEmoteReference = null;
-            emoteReference.animator.StopPlayback();
             emotePlayer.Stop(emoteReference);
         }
 
@@ -150,8 +149,13 @@ namespace DCL.AvatarRendering.Emotes
 
                     StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.WearableAssetResults[0];
 
+                    if (streamableAsset == null)
+                    {
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
+
                     // the emote is still loading? dont remove the intent yet, wait for it
-                    if (streamableAsset == null) return;
                     if (!streamableAsset.Value.Succeeded) return;
                     if (streamableAsset.Value.Exception != null) return;
 
