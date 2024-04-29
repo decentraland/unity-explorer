@@ -108,7 +108,7 @@ namespace DCL.LOD.Systems
 
                 sceneLODInfo.SetCurrentLOD(newLod);
                 scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
-                CheckSceneReadiness(sceneDefinitionComponent);
+                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
                 sceneLODInfo.IsDirty = false;
             }
         }
@@ -158,7 +158,7 @@ namespace DCL.LOD.Systems
                 //If its cached, no need to make a new promise
                 sceneLODInfo.SetCurrentLOD(cachedAsset);
                 sceneLODInfo.IsDirty = false;
-                CheckSceneReadiness(sceneDefinitionComponent);
+                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
             else
             {
@@ -178,17 +178,5 @@ namespace DCL.LOD.Systems
             }
         }
 
-        private void CheckSceneReadiness(SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (sceneReadinessReportQueue.TryDequeue(sceneDefinitionComponent.Parcels, out var reports))
-            {
-                for (int i = 0; i < reports!.Value.Count; i++)
-                {
-                    var report = reports.Value[i];
-                    report.ProgressCounter.Value = 1f;
-                    report.CompletionSource.TrySetResult();
-                }
-            }
-        }
     }
 }

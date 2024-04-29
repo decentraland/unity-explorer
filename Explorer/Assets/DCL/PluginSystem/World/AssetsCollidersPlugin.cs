@@ -40,7 +40,5 @@ namespace DCL.PluginSystem.World
 
             finalizeWorldSystems.Add(releaseColliderSystem);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }

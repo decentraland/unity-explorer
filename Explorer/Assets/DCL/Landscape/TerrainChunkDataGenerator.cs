@@ -26,7 +26,7 @@ namespace DCL.Landscape
         private readonly TerrainGeneratorLocalCache localCache;
         private readonly TimeProfiler timeProfiler;
         private readonly TerrainGenerationData terrainGenData;
-        private readonly NoiseGeneratorCache noiseGenCache;
+        private NoiseGeneratorCache noiseGenCache;
 
         private readonly ReportData reportData;
 
@@ -37,22 +37,23 @@ namespace DCL.Landscape
         private int parcelSize;
         private int resolution;
 
-        public TerrainChunkDataGenerator(TerrainGeneratorLocalCache localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData, NoiseGeneratorCache noiseGenCache)
+        public TerrainChunkDataGenerator(TerrainGeneratorLocalCache localCache, TimeProfiler timeProfiler, TerrainGenerationData terrainGenData, ReportData reportData)
         {
             this.localCache = localCache;
             this.timeProfiler = timeProfiler;
             this.terrainGenData = terrainGenData;
-            this.noiseGenCache = noiseGenCache;
 
             this.reportData = reportData;
         }
 
-        public void Prepare(int worldSeed, int parcelSize, ref NativeParallelHashMap<int2, int> emptyParcelsData, ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData)
+        public void Prepare(int worldSeed, int parcelSize, ref NativeParallelHashMap<int2, int> emptyParcelsData, ref NativeParallelHashMap<int2, EmptyParcelNeighborData> emptyParcelsNeighborData, NoiseGeneratorCache noiseGeneratorCache)
         {
             this.worldSeed = worldSeed;
             this.emptyParcelsNeighborData = emptyParcelsNeighborData;
             this.emptyParcelsData = emptyParcelsData;
             this.parcelSize = parcelSize;
+
+            this.noiseGenCache = noiseGeneratorCache;
         }
 
         public async UniTask SetHeightsAsync(int2 chunkMinParcel, int maxHeightIndex, int parcelSize, TerrainData terrainData, uint baseSeed,
@@ -180,7 +181,7 @@ namespace DCL.Landscape
 
                 var treeInstances = new NativeParallelHashMap<int2, TreeInstance>(chunkSize * chunkSize, Allocator.Persistent);
                 var treeInvalidationMap = new NativeParallelHashMap<int2, bool>(chunkSize * chunkSize, Allocator.Persistent);
-                var treeRadiusMap = new NativeHashMap<int, float>(terrainGenData.treeAssets.Length, Allocator.Persistent);
+                var treeRadiusMap = new NativeHashMap<int, TreeRadiusPair>(terrainGenData.treeAssets.Length, Allocator.Persistent);
                 var treeParallelRandoms = new NativeArray<Random>(chunkSize * chunkSize, Allocator.Persistent);
 
                 JobHandle instancingHandle = default;
@@ -194,7 +195,8 @@ namespace DCL.Landscape
                             LandscapeAsset treeAsset = terrainGenData.treeAssets[treeAssetIndex];
                             NoiseDataBase treeNoiseData = treeAsset.noiseData;
 
-                            treeRadiusMap.Add(treeAssetIndex, treeAsset.radius);
+                            var treeRadiusPair = new TreeRadiusPair { radius = treeAsset.radius, secondaryRadius = treeAsset.secondaryRadius };
+                            treeRadiusMap.Add(treeAssetIndex, treeRadiusPair);
 
                             INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
                             var noiseDataPointer = new NoiseDataPointer(chunkSize, chunkMinParcel.x, chunkMinParcel.y);
@@ -210,7 +212,7 @@ namespace DCL.Landscape
                                 treeInstances.AsParallelWriter(),
                                 emptyParcelsNeighborData.AsReadOnly(),
                                 in treeAsset.randomization,
-                                treeAsset.radius,
+                                treeRadiusPair,
                                 treeAssetIndex,
                                 chunkMinParcel,
                                 chunkSize,

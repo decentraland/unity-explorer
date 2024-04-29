@@ -45,13 +45,5 @@ namespace DCL.PluginSystem.World
 
             finalizeWorldSystems.Add(releaseTransformSystem);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies)
-        {
-            UpdateTransformSystem.InjectToWorld(ref builder);
-            InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            ParentingTransformSystem.InjectToWorld(ref builder, dependencies.FakeEntitiesMap, dependencies.SceneRoot, dependencies.SceneData.SceneShortInfo);
-            ReleasePoolableComponentSystem<Transform, TransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry);
-        }
     }
 }

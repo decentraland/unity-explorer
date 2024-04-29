@@ -38,7 +38,5 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
         }
-
-        public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
     }
 }
