@@ -26,43 +26,40 @@ namespace Decentraland.Kernel.Apis {
           string.Concat(
             "CiZkZWNlbnRyYWxhbmQva2VybmVsL2FwaXMvcnVudGltZS5wcm90bxIYZGVj",
             "ZW50cmFsYW5kLmtlcm5lbC5hcGlzGilkZWNlbnRyYWxhbmQvY29tbW9uL2Nv",
-            "bnRlbnRfbWFwcGluZy5wcm90byJwCglSZWFsbUluZm8SEAoIYmFzZV91cmwY",
-            "ASABKAkSEgoKcmVhbG1fbmFtZRgCIAEoCRISCgpuZXR3b3JrX2lkGAMgASgF",
-            "EhUKDWNvbW1zX2FkYXB0ZXIYBCABKAkSEgoKaXNfcHJldmlldxgFIAEoCCJf",
-            "ChBHZXRSZWFsbVJlc3BvbnNlEjwKCnJlYWxtX2luZm8YASABKAsyIy5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuUmVhbG1JbmZvSACIAQFCDQoLX3JlYWxt",
-            "X2luZm8iJwoUR2V0V29ybGRUaW1lUmVzcG9uc2USDwoHc2Vjb25kcxgBIAEo",
-            "BSIRCg9HZXRSZWFsbVJlcXVlc3QiFQoTR2V0V29ybGRUaW1lUmVxdWVzdCIk",
-            "Cg9SZWFkRmlsZVJlcXVlc3QSEQoJZmlsZV9uYW1lGAEgASgJIjEKEFJlYWRG",
-            "aWxlUmVzcG9uc2USDwoHY29udGVudBgBIAEoDBIMCgRoYXNoGAIgASgJIhsK",
-            "GUN1cnJlbnRTY2VuZUVudGl0eVJlcXVlc3QiiAEKGkN1cnJlbnRTY2VuZUVu",
-            "dGl0eVJlc3BvbnNlEgsKA3VybhgBIAEoCRI0Cgdjb250ZW50GAIgAygLMiMu",
-            "ZGVjZW50cmFsYW5kLmNvbW1vbi5Db250ZW50TWFwcGluZxIVCg1tZXRhZGF0",
-            "YV9qc29uGAMgASgJEhAKCGJhc2VfdXJsGAQgASgJIh8KHUdldEV4cGxvcmVy",
-            "SW5mb3JtYXRpb25SZXF1ZXN0It4BCh5HZXRFeHBsb3JlckluZm9ybWF0aW9u",
-            "UmVzcG9uc2USDQoFYWdlbnQYASABKAkSEAoIcGxhdGZvcm0YAiABKAkSZAoO",
-            "Y29uZmlndXJhdGlvbnMYAyADKAsyTC5kZWNlbnRyYWxhbmQua2VybmVsLmFw",
-            "aXMuR2V0RXhwbG9yZXJJbmZvcm1hdGlvblJlc3BvbnNlLkNvbmZpZ3VyYXRp",
-            "b25zRW50cnkaNQoTQ29uZmlndXJhdGlvbnNFbnRyeRILCgNrZXkYASABKAkS",
-            "DQoFdmFsdWUYAiABKAk6AjgBMuAECg5SdW50aW1lU2VydmljZRJjCghHZXRS",
-            "ZWFsbRIpLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5HZXRSZWFsbVJlcXVl",
-            "c3QaKi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuR2V0UmVhbG1SZXNwb25z",
-            "ZSIAEm8KDEdldFdvcmxkVGltZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBp",
-            "cy5HZXRXb3JsZFRpbWVSZXF1ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLkdldFdvcmxkVGltZVJlc3BvbnNlIgASYwoIUmVhZEZpbGUSKS5kZWNl",
-            "bnRyYWxhbmQua2VybmVsLmFwaXMuUmVhZEZpbGVSZXF1ZXN0GiouZGVjZW50",
-            "cmFsYW5kLmtlcm5lbC5hcGlzLlJlYWRGaWxlUmVzcG9uc2UiABKCAQoTR2V0",
-            "U2NlbmVJbmZvcm1hdGlvbhIzLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5D",
-            "dXJyZW50U2NlbmVFbnRpdHlSZXF1ZXN0GjQuZGVjZW50cmFsYW5kLmtlcm5l",
-            "bC5hcGlzLkN1cnJlbnRTY2VuZUVudGl0eVJlc3BvbnNlIgASjQEKFkdldEV4",
-            "cGxvcmVySW5mb3JtYXRpb24SNy5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMu",
-            "R2V0RXhwbG9yZXJJbmZvcm1hdGlvblJlcXVlc3QaOC5kZWNlbnRyYWxhbmQu",
-            "a2VybmVsLmFwaXMuR2V0RXhwbG9yZXJJbmZvcm1hdGlvblJlc3BvbnNlIgBi",
-            "BnByb3RvMw=="));
+            "bnRlbnRfbWFwcGluZy5wcm90bxosZGVjZW50cmFsYW5kL3Nkay9jb21wb25l",
+            "bnRzL3JlYWxtX2luZm8ucHJvdG8iZAoQR2V0UmVhbG1SZXNwb25zZRJBCgpy",
+            "ZWFsbV9pbmZvGAEgASgLMiguZGVjZW50cmFsYW5kLnNkay5jb21wb25lbnRz",
+            "LlBCUmVhbG1JbmZvSACIAQFCDQoLX3JlYWxtX2luZm8iJwoUR2V0V29ybGRU",
+            "aW1lUmVzcG9uc2USDwoHc2Vjb25kcxgBIAEoBSIRCg9HZXRSZWFsbVJlcXVl",
+            "c3QiFQoTR2V0V29ybGRUaW1lUmVxdWVzdCIkCg9SZWFkRmlsZVJlcXVlc3QS",
+            "EQoJZmlsZV9uYW1lGAEgASgJIjEKEFJlYWRGaWxlUmVzcG9uc2USDwoHY29u",
+            "dGVudBgBIAEoDBIMCgRoYXNoGAIgASgJIhsKGUN1cnJlbnRTY2VuZUVudGl0",
+            "eVJlcXVlc3QiiAEKGkN1cnJlbnRTY2VuZUVudGl0eVJlc3BvbnNlEgsKA3Vy",
+            "bhgBIAEoCRI0Cgdjb250ZW50GAIgAygLMiMuZGVjZW50cmFsYW5kLmNvbW1v",
+            "bi5Db250ZW50TWFwcGluZxIVCg1tZXRhZGF0YV9qc29uGAMgASgJEhAKCGJh",
+            "c2VfdXJsGAQgASgJIh8KHUdldEV4cGxvcmVySW5mb3JtYXRpb25SZXF1ZXN0",
+            "It4BCh5HZXRFeHBsb3JlckluZm9ybWF0aW9uUmVzcG9uc2USDQoFYWdlbnQY",
+            "ASABKAkSEAoIcGxhdGZvcm0YAiABKAkSZAoOY29uZmlndXJhdGlvbnMYAyAD",
+            "KAsyTC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuR2V0RXhwbG9yZXJJbmZv",
+            "cm1hdGlvblJlc3BvbnNlLkNvbmZpZ3VyYXRpb25zRW50cnkaNQoTQ29uZmln",
+            "dXJhdGlvbnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgB",
+            "MuAECg5SdW50aW1lU2VydmljZRJjCghHZXRSZWFsbRIpLmRlY2VudHJhbGFu",
+            "ZC5rZXJuZWwuYXBpcy5HZXRSZWFsbVJlcXVlc3QaKi5kZWNlbnRyYWxhbmQu",
+            "a2VybmVsLmFwaXMuR2V0UmVhbG1SZXNwb25zZSIAEm8KDEdldFdvcmxkVGlt",
+            "ZRItLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5HZXRXb3JsZFRpbWVSZXF1",
+            "ZXN0Gi4uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkdldFdvcmxkVGltZVJl",
+            "c3BvbnNlIgASYwoIUmVhZEZpbGUSKS5kZWNlbnRyYWxhbmQua2VybmVsLmFw",
+            "aXMuUmVhZEZpbGVSZXF1ZXN0GiouZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlz",
+            "LlJlYWRGaWxlUmVzcG9uc2UiABKCAQoTR2V0U2NlbmVJbmZvcm1hdGlvbhIz",
+            "LmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5DdXJyZW50U2NlbmVFbnRpdHlS",
+            "ZXF1ZXN0GjQuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLkN1cnJlbnRTY2Vu",
+            "ZUVudGl0eVJlc3BvbnNlIgASjQEKFkdldEV4cGxvcmVySW5mb3JtYXRpb24S",
+            "Ny5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuR2V0RXhwbG9yZXJJbmZvcm1h",
+            "dGlvblJlcXVlc3QaOC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuR2V0RXhw",
+            "bG9yZXJJbmZvcm1hdGlvblJlc3BvbnNlIgBiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { global::Decentraland.Common.ContentMappingReflection.Descriptor, },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.ContentMappingReflection.Descriptor, global::DCL.ECSComponents.RealmInfoReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.RealmInfo), global::Decentraland.Kernel.Apis.RealmInfo.Parser, new[]{ "BaseUrl", "RealmName", "NetworkId", "CommsAdapter", "IsPreview" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.GetRealmResponse), global::Decentraland.Kernel.Apis.GetRealmResponse.Parser, new[]{ "RealmInfo" }, new[]{ "RealmInfo" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.GetWorldTimeResponse), global::Decentraland.Kernel.Apis.GetWorldTimeResponse.Parser, new[]{ "Seconds" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.GetRealmRequest), global::Decentraland.Kernel.Apis.GetRealmRequest.Parser, null, null, null, null, null),
@@ -79,343 +76,6 @@ namespace Decentraland.Kernel.Apis {
 
   }
   #region Messages
-  public sealed partial class RealmInfo : pb::IMessage<RealmInfo>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<RealmInfo> _parser = new pb::MessageParser<RealmInfo>(() => new RealmInfo());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RealmInfo> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[0]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RealmInfo() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RealmInfo(RealmInfo other) : this() {
-      baseUrl_ = other.baseUrl_;
-      realmName_ = other.realmName_;
-      networkId_ = other.networkId_;
-      commsAdapter_ = other.commsAdapter_;
-      isPreview_ = other.isPreview_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RealmInfo Clone() {
-      return new RealmInfo(this);
-    }
-
-    /// <summary>Field number for the "base_url" field.</summary>
-    public const int BaseUrlFieldNumber = 1;
-    private string baseUrl_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string BaseUrl {
-      get { return baseUrl_; }
-      set {
-        baseUrl_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "realm_name" field.</summary>
-    public const int RealmNameFieldNumber = 2;
-    private string realmName_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string RealmName {
-      get { return realmName_; }
-      set {
-        realmName_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "network_id" field.</summary>
-    public const int NetworkIdFieldNumber = 3;
-    private int networkId_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int NetworkId {
-      get { return networkId_; }
-      set {
-        networkId_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "comms_adapter" field.</summary>
-    public const int CommsAdapterFieldNumber = 4;
-    private string commsAdapter_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string CommsAdapter {
-      get { return commsAdapter_; }
-      set {
-        commsAdapter_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "is_preview" field.</summary>
-    public const int IsPreviewFieldNumber = 5;
-    private bool isPreview_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool IsPreview {
-      get { return isPreview_; }
-      set {
-        isPreview_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as RealmInfo);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RealmInfo other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (BaseUrl != other.BaseUrl) return false;
-      if (RealmName != other.RealmName) return false;
-      if (NetworkId != other.NetworkId) return false;
-      if (CommsAdapter != other.CommsAdapter) return false;
-      if (IsPreview != other.IsPreview) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (BaseUrl.Length != 0) hash ^= BaseUrl.GetHashCode();
-      if (RealmName.Length != 0) hash ^= RealmName.GetHashCode();
-      if (NetworkId != 0) hash ^= NetworkId.GetHashCode();
-      if (CommsAdapter.Length != 0) hash ^= CommsAdapter.GetHashCode();
-      if (IsPreview != false) hash ^= IsPreview.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (BaseUrl.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(BaseUrl);
-      }
-      if (RealmName.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteString(RealmName);
-      }
-      if (NetworkId != 0) {
-        output.WriteRawTag(24);
-        output.WriteInt32(NetworkId);
-      }
-      if (CommsAdapter.Length != 0) {
-        output.WriteRawTag(34);
-        output.WriteString(CommsAdapter);
-      }
-      if (IsPreview != false) {
-        output.WriteRawTag(40);
-        output.WriteBool(IsPreview);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (BaseUrl.Length != 0) {
-        output.WriteRawTag(10);
-        output.WriteString(BaseUrl);
-      }
-      if (RealmName.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteString(RealmName);
-      }
-      if (NetworkId != 0) {
-        output.WriteRawTag(24);
-        output.WriteInt32(NetworkId);
-      }
-      if (CommsAdapter.Length != 0) {
-        output.WriteRawTag(34);
-        output.WriteString(CommsAdapter);
-      }
-      if (IsPreview != false) {
-        output.WriteRawTag(40);
-        output.WriteBool(IsPreview);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (BaseUrl.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(BaseUrl);
-      }
-      if (RealmName.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(RealmName);
-      }
-      if (NetworkId != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeInt32Size(NetworkId);
-      }
-      if (CommsAdapter.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(CommsAdapter);
-      }
-      if (IsPreview != false) {
-        size += 1 + 1;
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RealmInfo other) {
-      if (other == null) {
-        return;
-      }
-      if (other.BaseUrl.Length != 0) {
-        BaseUrl = other.BaseUrl;
-      }
-      if (other.RealmName.Length != 0) {
-        RealmName = other.RealmName;
-      }
-      if (other.NetworkId != 0) {
-        NetworkId = other.NetworkId;
-      }
-      if (other.CommsAdapter.Length != 0) {
-        CommsAdapter = other.CommsAdapter;
-      }
-      if (other.IsPreview != false) {
-        IsPreview = other.IsPreview;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 10: {
-            BaseUrl = input.ReadString();
-            break;
-          }
-          case 18: {
-            RealmName = input.ReadString();
-            break;
-          }
-          case 24: {
-            NetworkId = input.ReadInt32();
-            break;
-          }
-          case 34: {
-            CommsAdapter = input.ReadString();
-            break;
-          }
-          case 40: {
-            IsPreview = input.ReadBool();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-        switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 10: {
-            BaseUrl = input.ReadString();
-            break;
-          }
-          case 18: {
-            RealmName = input.ReadString();
-            break;
-          }
-          case 24: {
-            NetworkId = input.ReadInt32();
-            break;
-          }
-          case 34: {
-            CommsAdapter = input.ReadString();
-            break;
-          }
-          case 40: {
-            IsPreview = input.ReadBool();
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
   public sealed partial class GetRealmResponse : pb::IMessage<GetRealmResponse>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -430,7 +90,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[1]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[0]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -462,10 +122,10 @@ namespace Decentraland.Kernel.Apis {
 
     /// <summary>Field number for the "realm_info" field.</summary>
     public const int RealmInfoFieldNumber = 1;
-    private global::Decentraland.Kernel.Apis.RealmInfo realmInfo_;
+    private global::DCL.ECSComponents.PBRealmInfo realmInfo_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::Decentraland.Kernel.Apis.RealmInfo RealmInfo {
+    public global::DCL.ECSComponents.PBRealmInfo RealmInfo {
       get { return realmInfo_; }
       set {
         realmInfo_ = value;
@@ -559,7 +219,7 @@ namespace Decentraland.Kernel.Apis {
       }
       if (other.realmInfo_ != null) {
         if (realmInfo_ == null) {
-          RealmInfo = new global::Decentraland.Kernel.Apis.RealmInfo();
+          RealmInfo = new global::DCL.ECSComponents.PBRealmInfo();
         }
         RealmInfo.MergeFrom(other.RealmInfo);
       }
@@ -580,7 +240,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           case 10: {
             if (realmInfo_ == null) {
-              RealmInfo = new global::Decentraland.Kernel.Apis.RealmInfo();
+              RealmInfo = new global::DCL.ECSComponents.PBRealmInfo();
             }
             input.ReadMessage(RealmInfo);
             break;
@@ -602,7 +262,7 @@ namespace Decentraland.Kernel.Apis {
             break;
           case 10: {
             if (realmInfo_ == null) {
-              RealmInfo = new global::Decentraland.Kernel.Apis.RealmInfo();
+              RealmInfo = new global::DCL.ECSComponents.PBRealmInfo();
             }
             input.ReadMessage(RealmInfo);
             break;
@@ -628,7 +288,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[1]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -817,7 +477,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[2]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -969,7 +629,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1121,7 +781,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1313,7 +973,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[6]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1545,7 +1205,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[7]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1697,7 +1357,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[8]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1998,7 +1658,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[9]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[8]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -2150,7 +1810,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[10]; }
+      get { return global::Decentraland.Kernel.Apis.RuntimeReflection.Descriptor.MessageTypes[9]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
