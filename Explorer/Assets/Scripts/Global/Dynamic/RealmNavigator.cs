@@ -89,7 +89,7 @@ namespace Global.Dynamic
                 {
                     remoteEntities.ForceRemoveAll(world);
                     await roomHub.StopAsync();
-                    await ChangeRealmWithTerrain(realm, ct, loadReport, isGenesis);
+                    await ChangeRealmWithTerrainAsync(realm, ct, loadReport, isGenesis);
                     await roomHub.StartAsync();
 
                     loadReport.ProgressCounter.Value = 1f;
@@ -112,7 +112,7 @@ namespace Global.Dynamic
                 if (!isLocal && realmController.GetRealm().Ipfs.CatalystBaseUrl != genesisDomain)
                 {
                     var terrainLoadReport = AsyncLoadProcessReport.Create();
-                    await ChangeRealmWithTerrain(genesisDomain, ct, terrainLoadReport, true);
+                    await ChangeRealmWithTerrainAsync(genesisDomain, ct, terrainLoadReport, true);
                     ct.ThrowIfCancellationRequested();
                 }
 
@@ -121,7 +121,7 @@ namespace Global.Dynamic
             }, ct);
         }
 
-        private async UniTask ChangeRealmWithTerrain(URLDomain realm, CancellationToken ct, AsyncLoadProcessReport loadReport, bool isGenesis)
+        private async UniTask ChangeRealmWithTerrainAsync(URLDomain realm, CancellationToken ct, AsyncLoadProcessReport loadReport, bool isGenesis)
         {
             var sceneLoadReport = AsyncLoadProcessReport.Create();
             await realmController.SetRealmAsync(realm, Vector2Int.zero, sceneLoadReport, ct);
