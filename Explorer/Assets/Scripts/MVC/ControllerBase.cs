@@ -22,8 +22,8 @@ namespace MVC
 
         private readonly ViewFactoryMethod viewFactory;
 
-        public static ViewFactoryMethod CreateLazily<TViewMono>(TViewMono prefab, Transform root) where TViewMono: MonoBehaviour, TView =>
-            () => Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root);
+        public static ViewFactoryMethod CreateLazily<TViewMono>(TViewMono prefab, Transform? root) where TViewMono: MonoBehaviour, TView =>
+            () => Object.Instantiate(prefab, Vector3.zero, Quaternion.identity, root!)!;
 
         public static ViewFactoryMethod Preallocate<TViewMono>(TViewMono prefab, Transform root, out TViewMono instance) where TViewMono: MonoBehaviour, TView
         {

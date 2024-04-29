@@ -8,14 +8,13 @@ namespace DCL.WebRequests
 {
     public struct WebRequestHeadersInfo : IDisposable
     {
-        internal static readonly WebRequestHeadersInfo EMPTY = new ();
         private static readonly IReadOnlyDictionary<string, string> EMPTY_HEADERS = new Dictionary<string, string>();
 
         private static readonly ListObjectPool<WebRequestHeader> POOL = new (listInstanceDefaultCapacity: 4);
 
         private List<WebRequestHeader>? values;
 
-        public readonly IReadOnlyList<WebRequestHeader> Value => values!;
+        public readonly IReadOnlyList<WebRequestHeader> Value => values as IReadOnlyList<WebRequestHeader> ?? Array.Empty<WebRequestHeader>();
 
         public WebRequestHeadersInfo(IReadOnlyDictionary<string, string>? headers)
         {
@@ -24,6 +23,9 @@ namespace DCL.WebRequests
             foreach ((string key, string s) in headers ?? EMPTY_HEADERS)
                 Add(key, s);
         }
+
+        internal static WebRequestHeadersInfo NewEmpty() =>
+            new ();
 
         public WebRequestHeadersInfo Add(WebRequestHeader header)
         {
@@ -40,6 +42,20 @@ namespace DCL.WebRequests
             Add("x-identity-timestamp", unixTimestamp.ToString()!);
             Add("x-identity-metadata", jsonMetaData);
             return this;
+        }
+
+        /// <param name="key">Case sensitive key</param>
+        /// <returns>Value of the key or not, if the key doesn't exist</returns>
+        public readonly string? HeaderOrNull(string key)
+        {
+            if (values == null)
+                return null;
+
+            foreach (WebRequestHeader header in values)
+                if (header.Name == key)
+                    return header.Value;
+
+            return null;
         }
 
         public readonly IReadOnlyDictionary<string, string> AsDictionary() =>

@@ -17,7 +17,7 @@ namespace DCL.WebRequests
         public readonly CancellationToken Ct;
         private readonly InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest;
         private readonly TWebRequestArgs args;
-        private readonly WebRequestHeadersInfo? headersInfo;
+        private readonly WebRequestHeadersInfo headersInfo;
         private readonly WebRequestSignInfo? signInfo;
         private readonly ISet<long>? responseCodeIgnores;
 
@@ -28,7 +28,7 @@ namespace DCL.WebRequests
             CommonArguments commonArguments, TWebRequestArgs args,
             CancellationToken ct,
             string reportCategory,
-            WebRequestHeadersInfo? headersInfo,
+            WebRequestHeadersInfo headersInfo,
             WebRequestSignInfo? signInfo,
             ISet<long>? responseCodeIgnores = null
         )
@@ -51,7 +51,7 @@ namespace DCL.WebRequests
             + $"\nArgs: {args}"
             + $"\nCancellation Token cancelled: {Ct.IsCancellationRequested}"
             + $"\nReportCategory: {ReportCategory}"
-            + $"\nHeaders: {headersInfo?.ToString() ?? NONE}"
+            + $"\nHeaders: {headersInfo.ToString()}"
             + $"\nSignInfo: {signInfo?.ToString() ?? NONE}";
 
         public TWebRequest InitializedWebRequest(IWeb3IdentityCache web3IdentityCache)
@@ -68,7 +68,8 @@ namespace DCL.WebRequests
 
         public void Dispose()
         {
-            headersInfo?.Dispose();
+            // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
+            headersInfo.Dispose();
         }
 
         public bool ShouldIgnoreResponseError(UnityWebRequest webRequest)
@@ -99,16 +100,13 @@ namespace DCL.WebRequests
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SetHeaders(UnityWebRequest unityWebRequest)
         {
-            if (headersInfo.HasValue == false)
-                return;
-
             var info = headersInfo.Value;
-            int count = info.Value.Count;
+            int count = info.Count;
 
             // ReSharper disable once ForCanBeConvertedToForeach
             for (var i = 0; i < count; i++)
             {
-                WebRequestHeader header = info.Value[i];
+                WebRequestHeader header = info[i];
                 unityWebRequest.SetRequestHeader(header.Name, header.Value);
             }
         }
