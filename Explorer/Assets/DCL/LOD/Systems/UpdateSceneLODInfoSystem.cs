@@ -92,7 +92,7 @@ namespace DCL.LOD.Systems
             {
                 FinalizeAsyncInstantiation(currentLOD, sceneDefinitionComponent);
                 sceneLODInfo.UpdateCurrentVisibleLOD();
-                CleanSceneLODInfo(ref sceneLODInfo, sceneDefinitionComponent, currentLOD);
+                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
 
@@ -112,8 +112,8 @@ namespace DCL.LOD.Systems
                 if (result.Succeeded)
                 {
                     //NOTE (JUANI): Using the count API since the one without count does not parent correctly.
-                    //ANOTHER NOTE: InstantiateAsync has an issue with SMR assignation. Its a Unity bug we cannot fix,
-                    //so we'll use Instantiate until solved.
+                    //ANOTHER NOTE: InstantiateAsync has an issue with SMR assignation. Its a Unity bug (https://issuetracker.unity3d.com/issues/instantiated-prefabs-recttransform-values-are-incorrect-when-object-dot-instantiateasync-is-used)
+                    //we cannot fix, so we'll use Instantiate until solved.
                     //var asyncInstantiation =
                     //    Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(),1,
                     //        lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
@@ -129,29 +129,26 @@ namespace DCL.LOD.Systems
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
                         lodCache, result.Asset, null);
                     FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
-                    sceneLODInfo.UpdateCurrentVisibleLOD();
-                    CleanSceneLODInfo(ref sceneLODInfo, sceneDefinitionComponent, newLod);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(),
                         $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
-                    CleanSceneLODInfo(ref sceneLODInfo, sceneDefinitionComponent, newLod);
                 }
 
                 sceneLODInfo.SetCurrentLOD(newLod);
+                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
 
-        private void CleanSceneLODInfo(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent, LODAsset newLod)
+        private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (newLod!.LodKey.Level == 0)
+            if (sceneLODInfo.CurrentLOD.LodKey.Level == 0)
             {
                 scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
                 LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
-
             sceneLODInfo.IsDirty = false;
         }
 
@@ -196,9 +193,7 @@ namespace DCL.LOD.Systems
             {
                 //If its cached, no need to make a new promise
                 sceneLODInfo.SetCurrentLOD(cachedAsset);
-                sceneLODInfo.IsDirty = false;
-                if (sceneLODInfo.CurrentLOD?.LodKey.Level == 0)
-                    LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                 return;
             }
 
@@ -207,7 +202,7 @@ namespace DCL.LOD.Systems
 
             var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
-                permittedSources: lodSettingsAsset.EnableLODStreaming ? AssetSource.ALL : AssetSource.EMBEDDED,
+                permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                 manifest: manifest);
 

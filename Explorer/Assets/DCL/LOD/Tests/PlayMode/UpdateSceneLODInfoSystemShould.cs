@@ -104,6 +104,8 @@ namespace DCL.LOD.Tests
         }
 
 
+  
+         
         [Test]
         public void ResolvePromiseAndInstantiate()
         {
@@ -125,34 +127,36 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
             Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
         }
-        
-        [Test]
-        public void ResolvePromiseAndDontInstantiate()
-        {
-            var frameCapBudget = Substitute.For<IPerformanceBudget>();
-            frameCapBudget.TrySpendBudget().Returns(true, false);
 
-            system.frameCapBudget = frameCapBudget;
+        /*
+   TODO: Uncomment when LOD Async Instantiation is back up
+  [Test]
+  public void ResolvePromiseAndDontInstantiate()
+  {
+      var frameCapBudget = Substitute.For<IPerformanceBudget>();
+      frameCapBudget.TrySpendBudget().Returns(true, false);
 
-            //Arrange
-            var promiseGenerated = GenerateLODPromise();
-            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
-            sceneLODInfo.CurrentLODLevel = 1;
-            sceneLODInfo.IsDirty = true;
-            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
+      system.frameCapBudget = frameCapBudget;
 
-            //Act
-            system.Update(0);
+      //Arrange
+      var promiseGenerated = GenerateLODPromise();
+      sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
+      sceneLODInfo.CurrentLODLevel = 1;
+      sceneLODInfo.IsDirty = true;
+      var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
-            //Assert
-            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
-            Assert.IsTrue(sceneLODInfoRetrieved.IsDirty);
-            Assert.Null(sceneLODInfoRetrieved.CurrentLOD?.Root);
-            Assert.AreNotEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
-            Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
-            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
-        }
+      //Act
+      system.Update(0);
 
+      //Assert
+      var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
+      Assert.IsTrue(sceneLODInfoRetrieved.IsDirty);
+      Assert.Null(sceneLODInfoRetrieved.CurrentLOD?.Root);
+      Assert.AreNotEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
+      Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
+      Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
+  }
+  */
         [Test]
         public void UpdateCache()
         {
