@@ -286,8 +286,9 @@ namespace Global.Dynamic
                 // ignore
                 Debug.Log("InitializeFlowAsync.OperationCanceledException");
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Debug.LogException(e);
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
