@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
+using DCL.UI;
 using System.Collections.Generic;
 
 namespace DCL.Backpack.CharacterPreview
@@ -29,6 +30,25 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.UnEquipEmoteEvent += OnEmoteUnEquipped;
             backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
+            backpackEventBus.ChangedBackpackSectionEvent += OnBackpackSectionChanged;
+        }
+
+        private void OnBackpackSectionChanged(BackpackSections backpackSection)
+        {
+            switch (backpackSection)
+            {
+                case BackpackSections.Avatar:
+                    rotateEnabled = true;
+                    panEnabled = true;
+                    zoomEnabled = true;
+                    break;
+                case BackpackSections.Emotes:
+                    inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
+                    rotateEnabled = true;
+                    panEnabled = false;
+                    zoomEnabled = false;
+                    break;
+            }
         }
 
         public new void Dispose()
@@ -43,6 +63,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.EmoteSlotSelectEvent -= OnEmoteSlotSelected;
             backpackEventBus.FilterCategoryByEnumEvent -= OnChangeCategory;
             backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
+            backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
         }
 
         private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
@@ -99,13 +120,11 @@ namespace DCL.Backpack.CharacterPreview
         {
             IEmote? emote = equippedEmotes.EmoteInSlot(slot);
             if (emote == null) return;
-            inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
             PlayEmote(emote.GetUrn().Shorten());
         }
 
         private void OnEmoteSelected(IEmote emote)
         {
-            inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
             PlayEmote(emote.GetUrn().Shorten());
         }
     }

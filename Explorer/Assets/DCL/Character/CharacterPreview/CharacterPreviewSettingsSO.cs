@@ -1,13 +1,10 @@
 ﻿using System;
 using UnityEngine;
 
-// ReSharper disable InconsistentNaming
-
 namespace DCL.CharacterPreview
 {
     [CreateAssetMenu(fileName = "CharacterPreviewSettings", menuName = "SO/CharacterPreviewSettings")]
 
-    // ReSharper disable once InconsistentNaming
     public class CharacterPreviewSettingsSO : ScriptableObject
     {
         [field: Header("Camera Settings")]
