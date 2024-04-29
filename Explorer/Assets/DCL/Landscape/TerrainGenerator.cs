@@ -58,7 +58,6 @@ namespace DCL.Landscape
         private int processedTerrainDataCount;
         private int spawnedTerrainDataCount;
         private float terrainDataCount;
-        private bool showTerrainByDefault;
 
         private Transform rootGo;
         private GrassColorMapRenderer grassRenderer;
@@ -146,8 +145,6 @@ namespace DCL.Landscape
             CancellationToken cancellationToken = default)
         {
             if (!isInitialized) return;
-
-            this.showTerrainByDefault = showTerrainByDefault;
 
             this.hideDetails = hideDetails;
             this.hideTrees = hideTrees;

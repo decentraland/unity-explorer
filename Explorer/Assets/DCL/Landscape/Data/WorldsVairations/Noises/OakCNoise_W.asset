@@ -15,17 +15,17 @@ MonoBehaviour:
   settings:
     invert: 0
     normalize: 1
-    scale: 30.41
+    scale: 8.75
     octaves: 2
     persistance: 1
-    lacunarity: 1.66
+    lacunarity: 2.4
     seed: 22
     offset: {x: 0, y: 0}
     cutoff: 0
     noiseType: 1
     baseValue: 0
     multiplyValue: 1
-    divideValue: 2
+    divideValue: 2.63
   operations:
   - operation: 2
     noise: {fileID: 11400000, guid: f1828e41f6f44394c8807749fc57c5bd, type: 2}

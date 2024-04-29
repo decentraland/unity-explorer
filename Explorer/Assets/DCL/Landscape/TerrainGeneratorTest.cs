@@ -51,6 +51,12 @@ namespace DCL.Landscape
         [ContextMenu("Generate")]
         public async UniTask GenerateAsync()
         {
+            var worldLastTerrain = GameObject.Find("World Generated Terrain");
+            if (worldLastTerrain != null) DestroyImmediate(worldLastTerrain);
+
+            var lastTerrain = GameObject.Find("Generated Terrain");
+            if (lastTerrain != null) DestroyImmediate(lastTerrain);
+
             Log("Generate started");
             ownedParcels = parcelData.GetOwnedParcels();
             emptyParcels = parcelData.GetEmptyParcels();
