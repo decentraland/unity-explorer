@@ -600,8 +600,8 @@ MonoBehaviour:
   - {fileID: 23667455666942771}
   - {fileID: 5745709140729244512}
   <CurrentEmoteName>k__BackingField: {fileID: 143119229750994052}
-  <OpenAudio>k__BackingField: {fileID: 0}
-  <CloseAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
+  <OpenAudio>k__BackingField: {fileID: 11400000, guid: 59137f938439a5546aa4f9a63a582583, type: 2}
+  <CloseAudio>k__BackingField: {fileID: 11400000, guid: d9055205eadb2454585c619d3fc7a723, type: 2}
 --- !u!223 &7899065392233343085
 Canvas:
   m_ObjectHideFlags: 0
