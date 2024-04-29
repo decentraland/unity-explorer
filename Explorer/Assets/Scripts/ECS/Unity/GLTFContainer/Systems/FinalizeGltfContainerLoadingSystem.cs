@@ -39,7 +39,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
-            ref TransformComponent sceneTransform = ref World.Get<TransformComponent>(sceneRoot);
+            ref TransformComponent sceneTransform = ref World!.Get<TransformComponent>(sceneRoot);
             ParcelMathHelper.SceneCircumscribedPlanes sceneCircumscribedPlanes = sceneData.Geometry.CircumscribedPlanes;
 
             FinalizeLoadingQuery(World, in sceneCircumscribedPlanes);
@@ -65,9 +65,8 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!capBudget.TrySpendBudget())
                 return;
 
-            // Try consume removes the entity if the loading is finished
             if (component.State.Value == LoadingState.Loading
-                && component.Promise.TryConsume(World, out StreamableLoadingResult<GltfContainerAsset> result))
+                && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
                 if (!result.Succeeded)
                 {
@@ -75,13 +74,13 @@ namespace ECS.Unity.GLTFContainer.Systems
                     return;
                 }
 
-                ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset);
-                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset, in sceneCircumscribedPlanes);
+                ConfigureGltfContainerColliders.SetupColliders(ref component, result.Asset!);
+                ConfigureSceneMaterial.EnableSceneBounds(in result.Asset!, in sceneCircumscribedPlanes);
 
-                entityCollidersSceneCache.Associate(in component, World.Reference(entity), sdkEntity);
+                entityCollidersSceneCache.Associate(in component, World!.Reference(entity), sdkEntity);
 
                 // Re-parent to the current transform
-                result.Asset.Root.transform.SetParent(transformComponent.Transform);
+                result.Asset!.Root.transform.SetParent(transformComponent.Transform);
                 result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);
 

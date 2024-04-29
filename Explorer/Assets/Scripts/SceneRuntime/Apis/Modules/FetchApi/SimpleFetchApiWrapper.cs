@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
+﻿using DCL.WebRequests;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using System;
@@ -7,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Utility;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.FetchApi
 {
     public class SimpleFetchApiWrapper : IJsApiWrapper
     {

@@ -3,7 +3,7 @@ using DCL.WebRequests;
 using System;
 using System.Threading;
 
-namespace SceneRuntime.Apis.Modules
+namespace SceneRuntime.Apis.Modules.FetchApi
 {
     public interface ISimpleFetchApi : IDisposable
     {
