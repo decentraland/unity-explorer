@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Menu_ExplorePanel_Close
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 94a661191efbdc244bb890c7fab8fef1, type: 3}
+  - {fileID: 8300000, guid: bd93a16f2d9589140847436ee9cd974e, type: 3}
   relativeVolume: 0.6
   audioCategory: 0
   pitchVariation: 0
