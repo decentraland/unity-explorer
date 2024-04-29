@@ -88,7 +88,6 @@ namespace DCL.ExplorePanel
             foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     isOn =>
                     {
