@@ -70,7 +70,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             };
         }
 
-        public TextureArrayContainer Create(string shaderName, IReadOnlyList<TextureArrayResolutionDescriptor> defaultResolutions, TextureFormat format,
+        public TextureArrayContainer CreateSceneLOD(string shaderName, IReadOnlyList<TextureArrayResolutionDescriptor> defaultResolutions, TextureFormat format,
             int arraySizeForMissingResolutions, int capacityForMissingResolutions)
         {
             return shaderName switch
