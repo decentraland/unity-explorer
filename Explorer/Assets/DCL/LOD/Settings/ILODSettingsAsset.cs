@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using UnityEngine;
 
 namespace DCL.LOD
@@ -7,20 +8,20 @@ namespace DCL.LOD
     public interface ILODSettingsAsset
     {
         //Threshold for bucket partition (inclusive) 
-        public int[] LodPartitionBucketThresholds { get; set; }
+        int[] LodPartitionBucketThresholds { get;  }
 
-        //Texture array settings
-        public int TextureArrayMinSize { get; }
-        int[] DefaultTextureArrayResolutions { get;  }
-
+        //Texture array settings. Default resolutions and their default sizes
+        TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get;  }
+        int ArraySizeForMissingResolutions { get; }
+        int CapacityForMissingResolutions { get; }
+        
         //Debug features        
-        public bool IsColorDebuging { get; set; }
-        public Color[] LODDebugColors { get; set; }
-        public FaillingLODCube FaillingCube { get; set; }
+        bool IsColorDebuging { get; set; }
+        Color[] LODDebugColors { get;  }
+        DebugCube DebugCube { get; }
 
-        public bool EnableLODStreaming { get; set; }
-
-        
-        
+        bool EnableLODStreaming { get; set; }
+        float AsyncIntegrationTimeMS { get;  }
+  
     }
 }

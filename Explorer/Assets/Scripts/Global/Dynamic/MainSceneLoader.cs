@@ -270,7 +270,7 @@ namespace Global.Dynamic
                             {
                                 InitialRealm.GenesisCity => IRealmNavigator.GENESIS_URL,
                                 InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
-                                InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + targetWorld,
+                                InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + "/" + targetWorld,
                                 InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
                                 InitialRealm.Custom => customRealm,
                                 _ => startingRealm,

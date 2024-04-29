@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
@@ -15,7 +14,7 @@ namespace ECS.Unity.GLTFContainer.Systems
     ///     Utility to write Gltf Container Loading State to CRDT (propagate it back to the scene)
     /// </summary>
     [UpdateInGroup(typeof(GltfContainerGroup))]
-    [UpdateAfter(typeof(LoadGltfContainerSystem))]
+    [UpdateAfter(typeof(FinalizeGltfContainerLoadingSystem))]
     public partial class WriteGltfContainerLoadingStateSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -28,8 +27,8 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         protected override void Update(float t)
         {
-            ExecuteQuery(World);
-            RemoveQuery(World);
+            ExecuteQuery(World!);
+            RemoveQuery(World!);
         }
 
         [Query]
@@ -40,7 +39,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                 return;
 
             ecsToCRDTWriter.PutMessage<PBGltfContainerLoadingState, LoadingState>(
-                static (component, loadingState) => component.CurrentState = loadingState, sdkEntity, component.State.Value);
+                static (component, loadingState) => component.CurrentState = loadingState,
+                sdkEntity,
+                component.State.Value
+            );
         }
 
         [Query]

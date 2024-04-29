@@ -3,6 +3,7 @@ using CrdtEcsBridge.PoolsProviders;
 using Cysharp.Threading.Tasks;
 using ECS.TestSuite;
 using DCL.Diagnostics;
+using ECS;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -24,7 +25,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
 
                 var sourceCode = @"
                 const engineApi = require('~system/EngineApi')
@@ -57,7 +58,7 @@ namespace SceneRuntime.Factory.Tests
             UniTask.ToCoroutine(async () =>
             {
                 // Arrange
-                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
+                var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
 
                 // Act
@@ -80,7 +81,7 @@ namespace SceneRuntime.Factory.Tests
         public void WrapInModuleCommonJs()
         {
             // Arrange
-            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE);
+            var factory = new SceneRuntimeFactory(TestWebRequestController.INSTANCE, new IRealmData.Fake());
             var sourceCode = "console.log('Hello, world!');";
 
             // Act
