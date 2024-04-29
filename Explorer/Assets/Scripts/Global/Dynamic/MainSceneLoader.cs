@@ -321,17 +321,7 @@ namespace Global.Dynamic
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
         {
-            var animationEnded = false;
-
-            void OnAnimationEnded(VideoPlayer p) =>
-                animationEnded = true;
-
-            splashAnimation.loopPointReached += OnAnimationEnded;
-            splashAnimation.Play();
-
-            await UniTask.WaitUntil(() => animationEnded, cancellationToken: ct);
-
-            splashAnimation.loopPointReached -= OnAnimationEnded;
+            await UniTask.Delay(3000, cancellationToken: ct);
         }
 
         private async UniTask ChangeRealmAsync(CancellationToken ct)
