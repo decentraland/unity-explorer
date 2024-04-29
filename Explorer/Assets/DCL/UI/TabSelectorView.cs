@@ -39,6 +39,7 @@ namespace DCL.UI
 
         private void OnEnable()
         {
+            tabAnimator.enabled = true;
             if (tabAnimator != null)
             {
                 tabAnimator.Rebind();
@@ -50,6 +51,7 @@ namespace DCL.UI
         private void OnDisable()
         {
             TabSelectorToggle.onValueChanged.RemoveListener(OnToggle);
+            tabAnimator.enabled = false;
         }
 
         private void OnToggle(bool toggle)
