@@ -26,6 +26,11 @@ namespace DCL.CharacterPreview
         private CharacterPreviewController? previewController;
         private bool initialized;
         private CancellationTokenSource cancellationTokenSource;
+        private Color profileColor;
+
+        protected bool zoomEnabled = true;
+        protected bool panEnabled = true;
+        protected bool rotateEnabled = true;
 
         protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
         {
@@ -35,7 +40,7 @@ namespace DCL.CharacterPreview
             if(view.EnableZooming)
                 view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
 
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent += OnPointerMove;
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent += OnPointerEnter;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
@@ -88,56 +93,55 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent -= OnPointerMove;
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
             cursorController.Dispose();
         }
 
-        private void OnPointerMove(PointerEventData pointerEventData)
+        private void OnPointerEnter(PointerEventData pointerEventData)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.HoverAudio);
         }
 
         private void OnPointerUp(PointerEventData pointerEventData)
         {
-            inputEventBus.OnPointerUp(pointerEventData);
+            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled)  ||
+               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
+                inputEventBus.OnPointerUp(pointerEventData);
         }
 
         private void OnPointerDown(PointerEventData pointerEventData)
         {
-            inputEventBus.OnPointerDown(pointerEventData);
+            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled)  ||
+               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
+                inputEventBus.OnPointerDown(pointerEventData);
         }
 
         private void OnScroll(PointerEventData pointerEventData)
         {
-            inputEventBus.OnScroll(pointerEventData);
+            if (zoomEnabled)
+            {
+                inputEventBus.OnScroll(pointerEventData);
 
-            if (pointerEventData.scrollDelta.y > 0)
-            {
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(view.ZoomInAudio);
-            }
-            else
-            {
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(view.ZoomOutAudio);
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(pointerEventData.scrollDelta.y > 0 ? view.ZoomInAudio : view.ZoomOutAudio);
             }
         }
 
         private void OnDrag(PointerEventData pointerEventData)
         {
-            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning) ||
-               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating))
+            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled)  ||
+               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
+            {
                 inputEventBus.OnDrag(pointerEventData);
 
-            if (pointerEventData.button != PointerEventData.InputButton.Middle)
-            {
-                switch (pointerEventData.button)
-                {
-                    case PointerEventData.InputButton.Right when view.EnablePanning:
-                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
-                        break;
-                    case PointerEventData.InputButton.Left when view.EnableRotating:
-                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
-                        break;
-                }
+                    switch (pointerEventData.button)
+                    {
+                        case PointerEventData.InputButton.Right when view.EnablePanning:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
+                            break;
+                        case PointerEventData.InputButton.Left when view.EnableRotating:
+                            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
+                            break;
+                    }
             }
         }
 
@@ -167,8 +171,6 @@ namespace DCL.CharacterPreview
             cancellationTokenSource = new CancellationTokenSource();
             WrapInSpinnerAsync(cancellationTokenSource.Token).Forget();
         }
-
-        private Color profileColor;
 
         private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
         {

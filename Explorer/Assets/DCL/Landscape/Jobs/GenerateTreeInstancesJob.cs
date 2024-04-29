@@ -25,7 +25,7 @@ namespace DCL.Landscape.Jobs
         [ReadOnly] private NativeArray<float>.ReadOnly treeNoise;
         [ReadOnly] private ObjectRandomization treeRandomization;
         [ReadOnly] private readonly NativeParallelHashMap<int2, EmptyParcelNeighborData>.ReadOnly emptyParcelResult;
-        [ReadOnly] private readonly float treeRadius;
+        [ReadOnly] private readonly TreeRadiusPair treeRadius;
         [ReadOnly] private readonly int treeIndex;
         [ReadOnly] private readonly int chunkSize;
         [ReadOnly] private readonly int2 chunkMinParcel;
@@ -40,7 +40,7 @@ namespace DCL.Landscape.Jobs
             NativeParallelHashMap<int2, TreeInstance>.ParallelWriter treeInstances,
             NativeParallelHashMap<int2, EmptyParcelNeighborData>.ReadOnly emptyParcelResult,
             in ObjectRandomization treeRandomization,
-            float treeRadius,
+            TreeRadiusPair treeRadius,
             int treeIndex,
             in int2 chunkMinParcel,
             int chunkSize,
@@ -97,7 +97,7 @@ namespace DCL.Landscape.Jobs
             {
                 if(!emptyParcelResult.TryGetValue(parcel, out EmptyParcelNeighborData item)) return;
 
-                float radius = treeRadius * scale * value;
+                float radius = treeRadius.radius * scale * value;
 
                 // We check nearby boundaries (there has to be a simpler way)
                 bool u = CheckAssetPosition(item, parcel, parcelWorldPos, treeWorldPosition, up, 0, radius);

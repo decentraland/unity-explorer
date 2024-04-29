@@ -31,13 +31,18 @@ namespace DCL.LOD.Systems
             this.lodSettingsAsset = lodSettingsAsset;
             this.missingSceneParent = missingSceneParent;
             lodSettingsAsset.IsColorDebuging = false;
-            debugBuilder.AddWidget("LOD")
-                .AddSingleButton("LOD Debugging", ToggleLODColor)
-                .AddToggleField("Enable LOD Streaming", evt => lodSettingsAsset.EnableLODStreaming = evt.newValue, false)
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[0], "LOD 1 Threshold",  newValue => SetLOD(newValue, 0))
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[1], "LOD 2 Threshold",  newValue => SetLOD(newValue, 1))
-                .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[2], "LOD 3 Threshold",  newValue => SetLOD(newValue, 2));
 
+            var debugWidgetBuilder = debugBuilder.AddWidget("LOD");
+            debugWidgetBuilder
+                .AddSingleButton("LOD Debugging", ToggleLODColor)
+                .AddToggleField("Enable LOD Streaming", evt => lodSettingsAsset.EnableLODStreaming = evt.newValue, lodSettingsAsset.EnableLODStreaming);
+
+            for (int i = 0; i < lodSettingsAsset.LodPartitionBucketThresholds.Length; i++)
+            {
+                int index = i;
+                debugWidgetBuilder
+                    .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[i], $"LOD {i + 1} Threshold",  newValue => SetLOD(newValue, index));
+            }
         }
 
         private void SetLOD(int newValue, int i)
@@ -81,9 +86,9 @@ namespace DCL.LOD.Systems
         [Query]
         [All(typeof(SceneLODInfo))]
         [None(typeof(SceneLODInfoDebug))]
-        private void AddSceneLODInfoDebug(in Entity entity)
+        private void AddSceneLODInfoDebug(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            World.Add(entity, SceneLODInfoDebug.Create(missingSceneParent));
+            World.Add(entity, SceneLODInfoDebug.Create(missingSceneParent, lodSettingsAsset, sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels));
         }
 
         [Query]
@@ -95,13 +100,13 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        private void UpdateLODDebugInfo(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
+        private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
         {
-            if (sceneLODInfo.GetCurrentLOD() == null) return;
+            if (sceneLODInfo.CurrentLOD == null) return;
 
-            var lodAsset = sceneLODInfo.GetCurrentLOD()!.Value;
-            if (!lodAsset.LodKey.Level.Equals(sceneLODInfoDebug.CurrentLODLevel))
-                sceneLODInfoDebug.Update(sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, lodAsset, lodSettingsAsset);
+            var lodAsset = sceneLODInfo.CurrentLOD;
+            if (lodAsset.LodKey.Level != sceneLODInfoDebug.CurrentLODLevel || lodAsset.State != sceneLODInfoDebug.CurrentLODState)
+                sceneLODInfoDebug.Update(lodAsset);
         }
     }
 
