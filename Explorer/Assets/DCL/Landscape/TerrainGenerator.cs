@@ -8,10 +8,8 @@ using DCL.Landscape.Utils;
 using StylizedGrass;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -114,14 +112,10 @@ namespace DCL.Landscape
         {
             if (!isInitialized) return;
 
-            if (rootGo != null && !rootGo.gameObject.activeSelf)
+            if (rootGo != null)
                 rootGo.gameObject.SetActive(true);
 
-            await UniTask.Yield();
-            await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
-
             grassRenderer.Render();
-
             await ReEnableTerrainAsync(postRealmLoadReport);
 
             postRealmLoadReport.ProgressCounter.Value = 1f;
@@ -132,7 +126,10 @@ namespace DCL.Landscape
             if (!isInitialized) return;
 
             if (rootGo != null && rootGo.gameObject.activeSelf)
+            {
                 rootGo.gameObject.SetActive(false);
+                ReEnableChunksDetails();
+            }
         }
 
         public async UniTask GenerateTerrainAsync(
@@ -140,7 +137,6 @@ namespace DCL.Landscape
             bool withHoles = true,
             bool hideTrees = false,
             bool hideDetails = false,
-            bool showTerrainByDefault = false,
             AsyncLoadProcessReport processReport = null,
             CancellationToken cancellationToken = default)
         {
@@ -243,6 +239,15 @@ namespace DCL.Landscape
 
                 i += batch;
                 if (i >= terrains.Count) break;
+            }
+        }
+
+        private void ReEnableChunksDetails()
+        {
+            foreach (Terrain terrain in terrains)
+            {
+                terrain.drawHeightmap = true;
+                terrain.drawTreesAndFoliage = true;
             }
         }
 

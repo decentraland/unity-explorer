@@ -97,9 +97,6 @@ namespace Global.Dynamic
                 ct
             );
 
-            var postRealmLoadReport = AsyncLoadProcessReport.Create();
-            if (isGenesis) await genesisTerrain.ShowAsync(postRealmLoadReport);
-
             return true;
         }
 
