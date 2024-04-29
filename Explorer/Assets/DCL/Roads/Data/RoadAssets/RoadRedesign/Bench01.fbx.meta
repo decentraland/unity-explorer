@@ -7,6 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Bench_mat
+    second: {fileID: 2100000, guid: 228e96616bb1ef14da15352b4fcec919, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: RoadSide01_mat
     second: {fileID: 2100000, guid: 2167a1a68188959489807267257fc5a9, type: 2}
   materials:

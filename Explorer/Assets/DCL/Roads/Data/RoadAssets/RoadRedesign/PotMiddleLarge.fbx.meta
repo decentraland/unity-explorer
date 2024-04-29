@@ -22,6 +22,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: PotMiddleLarge_mat
+    second: {fileID: 2100000, guid: a040b0cb96966f14989182b6e9a3e5fd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Soil_mat
     second: {fileID: 2100000, guid: 5721e1ca88803ff48b9d8efefee458ca, type: 2}
   - first:
