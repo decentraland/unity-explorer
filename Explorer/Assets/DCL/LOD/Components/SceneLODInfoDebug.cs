@@ -11,8 +11,6 @@ namespace DCL.LOD
     {
         public Color[] OriginalColors;
         public Renderer[] Renderers;
-
-        //TODO (Juani): Is it possible to make this a struct? Problems when fetching it from the dictionary
         public LODAsset.LOD_STATE LodState;
     }
 
