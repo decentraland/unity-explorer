@@ -181,6 +181,8 @@ namespace Global.Dynamic
                 Debug.Log($"InitializeFlowAsync.StaticContainer.CreateAsync");
 
                 (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
+                
+                Debug.Log($"InitializeFlowAsync.StaticContainer.CreateAsync.result: {isLoaded}");
 
                 if (!isLoaded)
                 {

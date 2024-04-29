@@ -183,6 +183,8 @@ namespace Global
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
+            
+            Debug.Log($"StaticContainer.CreateWorldPlugins");
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -216,6 +218,8 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
             };
+            
+            Debug.Log($"StaticContainer.CreateGlobalPlugins");
 
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
@@ -223,6 +227,8 @@ namespace Global
                 new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner),
                 textureResolvePlugin,
             };
+            
+            Debug.Log($"StaticContainer.return: true");
 
             return (container, true);
         }
