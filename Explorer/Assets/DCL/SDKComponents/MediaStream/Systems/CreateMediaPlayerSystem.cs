@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
@@ -23,9 +24,11 @@ namespace DCL.SDKComponents.MediaStream
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
+        private readonly ISceneData sceneData;
 
-        public CreateMediaPlayerSystem(World world, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
+        public CreateMediaPlayerSystem(World world, ISceneData sceneData, IComponentPool<MediaPlayer> mediaPlayerPool, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
+            this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
             this.mediaPlayerPool = mediaPlayerPool;
@@ -41,9 +44,9 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            if(!frameTimeBudget.TrySpendBudget()) return;
+            if (!frameTimeBudget.TrySpendBudget()) return;
 
-            var component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
+            MediaPlayerComponent component = CreateMediaPlayerComponent(sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
             World.Add(entity, component);
         }
 
@@ -52,17 +55,25 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureComponent))]
         private void CreateVideoPlayer(in Entity entity, ref PBVideoPlayer sdkComponent)
         {
-            if(!frameTimeBudget.TrySpendBudget()) return;
+            if (!frameTimeBudget.TrySpendBudget()) return;
 
-            var component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
+            MediaPlayerComponent component = CreateMediaPlayerComponent(sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
 
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.SetPlaybackProperties(sdkComponent);
+
             World.Add(entity, component);
         }
 
         private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume, bool autoPlay)
         {
+            // if it is not valid, we try get it as a scene local video
+            if (!url.IsValidUrl())
+            {
+                sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl);
+                url = mediaUrl;
+            }
+
             var component = new MediaPlayerComponent
             {
                 MediaPlayer = mediaPlayerPool.Get(),
@@ -70,9 +81,10 @@ namespace DCL.SDKComponents.MediaStream
                 State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError,
             };
 
-            component.MediaPlayer
-                     .OpenMediaIfValid(component.URL, autoPlay)
-                     .UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
+            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
+
+            if (component.State != VideoState.VsError)
+                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, url, autoPlay);
 
             return component;
         }

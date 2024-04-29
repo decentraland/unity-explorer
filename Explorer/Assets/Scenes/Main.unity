@@ -15,9 +15,9 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
   m_Fog: 0
-  m_FogColor: {r: 0.8352941, g: 0.29178533, b: 0.48649436, a: 0.16862746}
-  m_FogMode: 1
-  m_FogDensity: 0.5
+  m_FogColor: {r: 0.8773585, g: 0.47592562, b: 0.47592562, a: 0.31764707}
+  m_FogMode: 2
+  m_FogDensity: 0.4
   m_LinearFogStart: 0
   m_LinearFogEnd: 0
   m_AmbientSkyColor: {r: 0.4125427, g: 0.49693304, b: 0.65837497, a: 1}
@@ -292,7 +292,7 @@ Light:
   m_RenderMode: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 201523831
   m_RenderingLayerMask: 1
   m_Lightmapping: 4
   m_LightShadowCasterMode: 0
@@ -372,6 +372,7 @@ MonoBehaviour:
   showAuthentication: 1
   showLoading: 1
   enableLandscape: 1
+  enableLOD: 1
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
@@ -468,6 +469,7 @@ MonoBehaviour:
       m_SubObjectType: 
       m_EditorAssetChanged: 0
   splashRoot: {fileID: 7722564697705550552}
+  splashScreenAnimation: {fileID: 7722564697705550553}
   splashAnimation: {fileID: 4327321310632415857}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
 --- !u!1 &704497306
@@ -1250,6 +1252,7 @@ GameObject:
   - component: {fileID: 461083453953300887}
   - component: {fileID: 5776215482542905213}
   - component: {fileID: 6063382712672796138}
+  - component: {fileID: 7722564697705550553}
   m_Layer: 0
   m_Name: Splash
   m_TagString: Untagged
@@ -1257,6 +1260,27 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!95 &7722564697705550553
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7722564697705550552}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 92598d29dba78034dbf00d70df4a366f, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!222 &8546359234551999556
 CanvasRenderer:
   m_ObjectHideFlags: 0

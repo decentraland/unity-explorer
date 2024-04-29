@@ -1,15 +1,20 @@
-﻿using Arch.Core;
+using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DG.Tweening;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
 namespace DCL.CharacterPreview
 {
     public abstract class CharacterPreviewControllerBase : IDisposable
     {
+        private static readonly float AVATAR_FADE_ANIMATION = 0.5f;
         protected readonly CharacterPreviewInputEventBus inputEventBus;
 
         private readonly CharacterPreviewView view;
@@ -20,17 +25,21 @@ namespace DCL.CharacterPreview
         protected CharacterPreviewAvatarModel previewAvatarModel;
         private CharacterPreviewController? previewController;
         private bool initialized;
+        private CancellationTokenSource cancellationTokenSource;
 
         protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
         {
             this.view = view;
             this.previewFactory = previewFactory;
             this.world = world;
-            view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
+            if(view.EnableZooming)
+                view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
+
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent += OnPointerEnter;
             view.CharacterPreviewInputDetector.OnDraggingEvent += OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent += OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent += OnPointerDown;
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent += OnPointerMove;
+
             inputEventBus = new CharacterPreviewInputEventBus();
             cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
         }
@@ -49,6 +58,8 @@ namespace DCL.CharacterPreview
 
         private void Initialize()
         {
+            if (initialized) return;
+
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
@@ -57,6 +68,8 @@ namespace DCL.CharacterPreview
                 name = "Preview Texture",
             };
 
+            newTexture.antiAliasing = 8;
+            newTexture.useDynamicScale = true;
             newTexture.Create();
 
             view.RawImage.texture = newTexture;
@@ -69,16 +82,17 @@ namespace DCL.CharacterPreview
 
         public void Dispose()
         {
+            initialized = false;
             previewController?.Dispose();
             view.CharacterPreviewInputDetector.OnScrollEvent -= OnScroll;
             view.CharacterPreviewInputDetector.OnDraggingEvent -= OnDrag;
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
-            view.CharacterPreviewInputDetector.OnPointerMoveEvent -= OnPointerMove;
+            view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
             cursorController.Dispose();
         }
 
-        private void OnPointerMove(PointerEventData pointerEventData)
+        private void OnPointerEnter(PointerEventData pointerEventData)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(view.HoverAudio);
         }
@@ -109,16 +123,18 @@ namespace DCL.CharacterPreview
 
         private void OnDrag(PointerEventData pointerEventData)
         {
-            inputEventBus.OnDrag(pointerEventData);
+            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning) ||
+               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating))
+                inputEventBus.OnDrag(pointerEventData);
 
             if (pointerEventData.button != PointerEventData.InputButton.Middle)
             {
                 switch (pointerEventData.button)
                 {
-                    case PointerEventData.InputButton.Right:
+                    case PointerEventData.InputButton.Right when view.EnablePanning:
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
                         break;
-                    case PointerEventData.InputButton.Left:
+                    case PointerEventData.InputButton.Left when view.EnableRotating:
                         UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
                         break;
                 }
@@ -147,7 +163,35 @@ namespace DCL.CharacterPreview
 
         protected void OnModelUpdated()
         {
-            previewController?.UpdateAvatar(previewAvatarModel);
+            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource = new CancellationTokenSource();
+            WrapInSpinnerAsync(cancellationTokenSource.Token).Forget();
+        }
+
+        private Color profileColor;
+
+        private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
+        {
+            GameObject spinner = EnableSpinner();
+            await (previewController?.UpdateAvatar(previewAvatarModel, ct) ?? UniTask.CompletedTask);
+            DisableSpinner(spinner);
+        }
+
+        private void DisableSpinner(GameObject spinner)
+        {
+            spinner.SetActive(false);
+            profileColor.a = 1;
+            view.RawImage.DOColor(profileColor, AVATAR_FADE_ANIMATION);
+        }
+
+        private GameObject EnableSpinner()
+        {
+            profileColor = view.RawImage.color;
+            profileColor.a = 0;
+            view.RawImage.color = profileColor;
+            var spinner = view.Spinner;
+            spinner.SetActive(true);
+            return spinner;
         }
 
         protected void PlayEmote(string emoteId) =>

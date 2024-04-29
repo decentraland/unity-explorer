@@ -118,8 +118,6 @@ namespace DCL.Character.Plugin
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
                     sharedDependencies.ScenePartition, bucketPropagationLimit);
             }
-
-            public void InjectToEmptySceneWorld(ref ArchSystemsWorldBuilder<World> builder, in EmptyScenesWorldSharedDependencies dependencies) { }
         }
 
         [Serializable]

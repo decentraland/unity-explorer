@@ -7,6 +7,7 @@ on:
       - reopened
       - synchronize
       - ready_for_review
+      - labeled
   merge_group: {}
   push: { branches: [main] }
   workflow_dispatch:
@@ -42,7 +43,7 @@ jobs:
     name: Build
     runs-on: bigwin2022
     timeout-minutes: 120
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft)
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft) || ${{ github.event.label.name == 'force-build' }}
     steps:
       - name: Set SHA env variable
         run: |
@@ -87,6 +88,13 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
 
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
@@ -104,6 +112,44 @@ jobs:
           git add .
           git reset --hard
           
+      - name: Create Version
+        id: create-version
+        run: | 
+          $latestTag = git describe --tags
+          
+          # Extract version components
+          if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
+          $version = $matches[1]
+          $minorVersion = $matches[2]
+          $build = $matches[3]
+          $commit = $matches[4]
+          
+          Write-Output "Version: $version"
+          Write-Output "Minor Version: $minorVersion"
+          Write-Output "Build: $build"
+          Write-Output "Commit: $commit"
+          } else {
+            Write-Output "String does not match expected pattern. No Version Added!"
+          }
+          
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            $branchName = $env:GITHUB_HEAD_REF
+          } else {
+            $branchName = ($env:GITHUB_REF -split '/')[2]
+          }
+          
+          $semVer = "v$($version).$($minorVersion).$($build)-$($commit)-$($branchName)"
+          Write-Output "Version: $semVer"
+          Write-Output "version=$($semVer)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+          
+      - name: 'Using Version'
+        run: |
+          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
+          Write-Output "Version: ($env:SELECTED_COLOR)"
+          
+        shell: pwsh
+      
       - name: Restore Library cache
         uses: actions/cache@v3
         with:
@@ -188,15 +234,11 @@ jobs:
           buildTimeout: 120
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: Decentraland
-          versioning: Semantic
+          versioning: Custom
+          version: ${{ steps.create-version.outputs.version }}
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
-
-      - name: Download and Extract Zip File for LODS
-        run: |
-          Invoke-WebRequest -Uri "${{ secrets.LODS_URL }}" -OutFile "build/${{ matrix.targetPlatform }}/Decentraland_Data/StreamingAssets/AssetBundles/lods/lods.zip"
-        shell: pwsh
 
       # Upload artifact
       - name: Upload windows artifact

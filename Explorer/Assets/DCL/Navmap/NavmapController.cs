@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.MapRenderer;
 using DCL.MapRenderer.CommonBehavior;
@@ -41,6 +42,8 @@ namespace DCL.Navmap
         private readonly StreetViewController streetViewController;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
         private readonly NavmapLocationController navmapLocationController;
+
+        private Vector2 lastParcelHovered;
 
         public NavmapController(
             NavmapView navmapView,
@@ -91,8 +94,21 @@ namespace DCL.Navmap
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.StreetViewRenderImage.ParcelClicked += OnParcelClicked;
+            this.navmapView.StreetViewRenderImage.HoveredParcel += OnParcelHovered;
+            this.navmapView.SatelliteRenderImage.HoveredParcel += OnParcelHovered;
+
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
+            lastParcelHovered = Vector2.zero;
+        }
+
+        private void OnParcelHovered(Vector2 parcel)
+        {
+            if (!parcel.Equals(lastParcelHovered))
+            {
+                lastParcelHovered = parcel;
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.HoverAudio);
+            }
         }
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
@@ -104,8 +120,11 @@ namespace DCL.Navmap
             floatingPanelController.HandlePanelVisibility(result, true);
         }
 
+
+
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
             floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, false);
         }
 
@@ -125,6 +144,7 @@ namespace DCL.Navmap
             navmapLocationController.InjectCameraController(cameraController);
             mapSections[NavmapSections.Satellite].Activate();
             zoomController.Activate(cameraController);
+            lastParcelHovered = Vector2.zero;
         }
 
         public void Deactivate()
@@ -147,6 +167,10 @@ namespace DCL.Navmap
 
         public void Dispose()
         {
+            this.navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
+            this.navmapView.StreetViewRenderImage.ParcelClicked -= OnParcelClicked;
+            this.navmapView.StreetViewRenderImage.HoveredParcel -= OnParcelHovered;
+            this.navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
             animationCts?.Dispose();
             zoomController?.Dispose();
             floatingPanelController?.Dispose();

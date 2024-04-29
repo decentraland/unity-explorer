@@ -35,6 +35,7 @@ namespace DCL.CharacterPreview
             camera.gameObject.TryGetComponent(out UniversalAdditionalCameraData cameraData);
             if (cameraData)
             {
+            //We disable post processing on OSX as the shader is not working correctly and it shows a black background
                 cameraData.renderPostProcessing = false;
             }
 #endif

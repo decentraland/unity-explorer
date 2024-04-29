@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Backpack;
 using DCL.CharacterMotion.Components;
 using DCL.Navmap;
@@ -109,6 +108,10 @@ namespace DCL.ExplorePanel
             {
                 ToggleSection(section == inputData.Section, tab, section, false);
                 sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
+            }
+
+                if (inputData.BackpackSection != null)
+                    backpackController.Toggle(inputData.BackpackSection.Value);
             }
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
@@ -253,10 +256,12 @@ namespace DCL.ExplorePanel
     public readonly struct ExplorePanelParameter
     {
         public readonly ExploreSections Section;
+        public readonly BackpackSections? BackpackSection;
 
-        public ExplorePanelParameter(ExploreSections section)
+        public ExplorePanelParameter(ExploreSections section, BackpackSections? backpackSection = null)
         {
             Section = section;
+            BackpackSection = backpackSection;
         }
     }
 }

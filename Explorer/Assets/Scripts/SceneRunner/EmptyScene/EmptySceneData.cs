@@ -14,8 +14,6 @@ namespace SceneRunner.EmptyScene
     /// </summary>
     public class EmptySceneData : ISceneData
     {
-        public readonly IReadOnlyList<EmptySceneMapping> Mappings;
-        private readonly Dictionary<string, string> fileToHash;
 
         /// <summary>
         ///     Per scene data is not resolved as empty scenes use the shared world for all instances
@@ -30,20 +28,10 @@ namespace SceneRunner.EmptyScene
         public SceneAssetBundleManifest AssetBundleManifest => SceneAssetBundleManifest.NULL;
         public StaticSceneMessages StaticSceneMessages => StaticSceneMessages.EMPTY;
 
-        public EmptySceneData(IReadOnlyList<EmptySceneMapping> mappings, IReadOnlyList<Vector2Int> parcels)
+        public EmptySceneData(IReadOnlyList<Vector2Int> parcels)
         {
-            Mappings = mappings;
             Parcels = parcels;
-
             SceneShortInfo = new SceneShortInfo(Vector2Int.zero, "Empty Scene");
-
-            fileToHash = new Dictionary<string, string>(mappings.Count * 2, StringComparer.OrdinalIgnoreCase);
-
-            foreach (EmptySceneMapping mapping in mappings)
-            {
-                fileToHash[mapping.grass.file] = mapping.grass.hash;
-                fileToHash[mapping.environment.file] = mapping.environment.hash;
-            }
         }
 
         public bool HasRequiredPermission(string permission) =>
@@ -56,7 +44,7 @@ namespace SceneRunner.EmptyScene
             throw new NotImplementedException();
 
         public bool TryGetHash(string name, out string hash) =>
-            fileToHash.TryGetValue(name, out hash);
+            throw new NotImplementedException();
 
         public bool TryGetMediaUrl(string url, out URLAddress result) =>
             throw new NotImplementedException();

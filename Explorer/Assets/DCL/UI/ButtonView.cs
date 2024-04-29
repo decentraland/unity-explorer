@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class ButtonView : MonoBehaviour
+    public class ButtonView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField]
         public Button Button { get; private set;}
@@ -13,6 +13,8 @@ namespace DCL.UI
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ButtonPressedAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ButtonHoverAudio { get; private set; }
 
         private void OnEnable()
         {
@@ -29,5 +31,11 @@ namespace DCL.UI
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
         }
 
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoverAudio);
+        }
+
+        public void OnPointerExit(PointerEventData eventData) { }
     }
 }

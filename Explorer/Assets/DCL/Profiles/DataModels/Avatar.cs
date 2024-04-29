@@ -7,7 +7,7 @@ namespace DCL.Profiles
 {
     public class Avatar
     {
-        private const int MAX_EQUIPPED_EMOTES = 10;
+        public const int MAX_EQUIPPED_EMOTES = 10;
 
         public BodyShape BodyShape { get; internal set; }
 

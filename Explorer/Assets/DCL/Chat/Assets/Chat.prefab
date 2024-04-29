@@ -369,6 +369,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 8143675807956903832}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!114 &5796404896790943328
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -734,6 +735,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Button>k__BackingField: {fileID: 1104092725699042680}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: 9c57af4963cf9cf4194435271beb8b73, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &3553545222316724595
 GameObject:
   m_ObjectHideFlags: 0
@@ -2419,6 +2421,7 @@ MonoBehaviour:
   <ChatSendMessageAudio>k__BackingField: {fileID: 11400000, guid: efe341aa011f4c8428d3246fa65ef5b0, type: 2}
   <ChatReceiveMessageAudio>k__BackingField: {fileID: 11400000, guid: 1c179628ffe816f4c9be1ba12630f97f, type: 2}
   <ChatInputTextAudio>k__BackingField: {fileID: 11400000, guid: d6b0660efe9c3954c937d083f8aa9c98, type: 2}
+  <EnterInputAudio>k__BackingField: {fileID: 11400000, guid: 8703731941d082441b7bc7c6e9720b34, type: 2}
 --- !u!1001 &1618022358711868011
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3225,6 +3228,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8150196112421136534, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4075505095707676828}
+    - targetCorrespondingSourceObject: {fileID: 5830754110663800589, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6210091301472756179}
     - targetCorrespondingSourceObject: {fileID: 8192779450872384030, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
       insertIndex: -1
       addedObject: {fileID: 5571662662318568932}
@@ -3342,6 +3348,23 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1729956468865756193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1 &2128785472763990825 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5830754110663800589, guid: e3a4405d489824695b3e3fb7b8a2e4a7, type: 3}
+  m_PrefabInstance: {fileID: 5575466110840448036}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6210091301472756179
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2128785472763990825}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
