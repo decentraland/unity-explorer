@@ -49,6 +49,8 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
+            CharacterTriggerAreaCleanUpRegisteredCollisionsSystem.InjectToWorld(ref builder);
+
             var cleanupSystem = CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!);
             finalizeWorldSystems.Add(cleanupSystem);
         }
@@ -58,16 +60,14 @@ namespace DCL.PluginSystem.World
         private async UniTask CreateCharacterTriggerAreaPoolAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)
         {
             CharacterTriggerArea.CharacterTriggerArea characterTriggerAreaPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.CharacterTriggerAreaPrefab, ct: ct)).Value.GetComponent<CharacterTriggerArea.CharacterTriggerArea>();
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease, onGet: OnTriggerAreaPoolGet);
-            characterTriggerAreaPoolRegistry = componentPoolsRegistry.GetReferenceTypePool<CharacterTriggerArea.CharacterTriggerArea>();
-
+            characterTriggerAreaPoolRegistry = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(characterTriggerAreaPrefab, Vector3.zero, Quaternion.identity), onRelease: OnTriggerAreaPoolRelease, onGet: OnTriggerAreaPoolGet);
             cacheCleaner.Register(characterTriggerAreaPoolRegistry);
         }
 
-        private void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
+        private static void OnTriggerAreaPoolRelease(CharacterTriggerArea.CharacterTriggerArea area) =>
             area.Dispose();
 
-        private void OnTriggerAreaPoolGet(CharacterTriggerArea.CharacterTriggerArea area) =>
+        private static void OnTriggerAreaPoolGet(CharacterTriggerArea.CharacterTriggerArea area) =>
             area.Clear();
     }
 }

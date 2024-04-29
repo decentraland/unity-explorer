@@ -43,38 +43,6 @@ namespace DCL.CharacterTriggerArea.Tests
         }
 
         [Test]
-        public void ClearEnterExitCollectionsCorrectly()
-        {
-            var component = new CharacterTriggerAreaComponent(Vector3.one);
-            component.MonoBehaviour = characterTriggerArea;
-            world.Add(entity, component, new PBCameraModeArea());
-
-            component.MonoBehaviour.enteredThisFrame.Add(fakeAvatarGO.transform);
-            world.Set(entity, component);
-            Assert.AreEqual(1, component.EnteredThisFrame.Count);
-
-            system.Update(0);
-            Assert.AreEqual(0, component.EnteredThisFrame.Count);
-
-            component.MonoBehaviour.exitedThisFrame.Add(fakeAvatarGO.transform);
-            world.Set(entity, component);
-            Assert.AreEqual(1, component.ExitedThisFrame.Count);
-
-            system.Update(0);
-            Assert.AreEqual(0, component.ExitedThisFrame.Count);
-
-            component.MonoBehaviour.enteredThisFrame.Add(fakeAvatarGO.transform);
-            component.MonoBehaviour.exitedThisFrame.Add(fakeAvatarGO.transform);
-            world.Set(entity, component);
-            Assert.AreEqual(1, component.EnteredThisFrame.Count);
-            Assert.AreEqual(1, component.ExitedThisFrame.Count);
-
-            system.Update(0);
-            Assert.AreEqual(0, component.EnteredThisFrame.Count);
-            Assert.AreEqual(0, component.ExitedThisFrame.Count);
-        }
-
-        [Test]
         public void HandleCameraModeAreaComponentRemoveCorrectly()
         {
             var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
@@ -131,7 +99,6 @@ namespace DCL.CharacterTriggerArea.Tests
             system.Update(0);
 
             poolRegistry.Received(1).Release(characterTriggerArea);
-            Assert.IsFalse(world.Has<CharacterTriggerAreaComponent>(entity));
         }
     }
 }
