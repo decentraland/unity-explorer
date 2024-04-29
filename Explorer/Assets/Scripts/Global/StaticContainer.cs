@@ -147,8 +147,6 @@ namespace Global
             container.AssetsProvisioner = addressablesProvisioner;
             container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
             
-            Debug.Log($"StaticContainer.InitializeContainersAsync");
-
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
             if (!result)
@@ -165,34 +163,22 @@ namespace Global
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
-
-            Debug.Log($"StaticContainer.QualityContainer.CreateAsync");
             
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.AssetsProvisioner);
-            Debug.Log($"StaticContainer.CacheCleaner");
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-            Debug.Log($"StaticContainer.DiagnosticsContainer({container.ReportHandlingSettings})");
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
             container.ProfilingProvider = profilingProvider;
-            Debug.Log($"StaticContainer.EntityCollidersGlobalCache");
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            Debug.Log($"StaticContainer.WebRequestsContainer");
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
-            Debug.Log($"StaticContainer.PhysicsTickProvider");
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
-            Debug.Log($"StaticContainer.AssetBundlesPlugin");
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
-            Debug.Log($"StaticContainer.TexturesLoadingPlugin");
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
-            Debug.Log($"StaticContainer.VideoTextureFactory.CreateVideoTexturesPool");
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();
-            
-            Debug.Log($"StaticContainer.CreateWorldPlugins");
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
@@ -226,8 +212,6 @@ namespace Global
                 new GizmosWorldPlugin(),
 #endif
             };
-            
-            Debug.Log($"StaticContainer.CreateGlobalPlugins");
 
             container.SharedPlugins = new IDCLGlobalPlugin[]
             {
@@ -235,8 +219,6 @@ namespace Global
                 new ResourceUnloadingPlugin(sharedDependencies.MemoryBudget, container.CacheCleaner),
                 textureResolvePlugin,
             };
-            
-            Debug.Log($"StaticContainer.return: true");
 
             return (container, true);
         }

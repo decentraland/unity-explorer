@@ -1,3 +1,9 @@
+#nullable disable
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -8,13 +14,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Quality.Debug;
 using DCL.Quality.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using UnityEngine;
-
-#nullable disable
 
 namespace DCL.Quality
 {
@@ -31,27 +31,20 @@ namespace DCL.Quality
 
         public static async UniTask<QualityContainer> CreateAsync(IPluginSettingsContainer pluginSettingsContainer, IAssetsProvisioner assetsProvisioner)
         {
-            UnityEngine.Debug.Log($"QualityContainer.pluginSettingsContainer.GetSettings<Settings>()");
-            
             Settings settings = pluginSettingsContainer.GetSettings<Settings>();
 
-            UnityEngine.Debug.Log($"QualityContainer.assetsProvisioner.ProvideMainAssetAsync(RealmPartitionSettings: {settings.RealmPartitionSettings})");
             var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, CancellationToken.None);
-            UnityEngine.Debug.Log($"QualityContainer.assetsProvisioner.ProvideMainAssetAsync(LODSettingAsset: {settings.LODSettingAsset})");
             var lodSettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.LODSettingAsset, CancellationToken.None);
-            UnityEngine.Debug.Log($"QualityContainer.assetsProvisioner.ProvideMainAssetAsync(LandscapeData: {settings.LandscapeData})");
             var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, CancellationToken.None);
 
             var rendererFeaturesCache = new RendererFeaturesCache();
-            UnityEngine.Debug.Log($"QualityContainer.QualityRuntimeFactory.Create");
+            
             IQualityLevelController controller = QualityRuntimeFactory.Create(
                 rendererFeaturesCache,
                 settings.QualitySettings,
                 realmPartitionSettings.Value,
                 lodSettingsAsset.Value,
                 landscapeData.Value);
-            
-            UnityEngine.Debug.Log($"QualityContainer.return.ctor");
 
             return new QualityContainer
             {
