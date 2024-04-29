@@ -92,7 +92,7 @@ namespace DCL.Navmap
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     isOn =>
                     {
-                        ToggleSection(isOn, tabSelector, section, false);
+                        ToggleSection(isOn, tabSelector, section, true);
                     }
                 );
             }
@@ -115,10 +115,7 @@ namespace DCL.Navmap
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
-
-            if (shownSection == lastShownSection)
-                mapSections[lastShownSection].Activate();
-
+            
             if (isOn)
                 lastShownSection = shownSection;
         }
@@ -166,7 +163,7 @@ namespace DCL.Navmap
             lastParcelHovered = Vector2.zero;
             foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections)
             {
-                ToggleSection(section == NavmapSections.Satellite, tab, section, false);
+                ToggleSection(section == NavmapSections.Satellite, tab, section, true);
                 //sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
             }
         }

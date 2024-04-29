@@ -10,6 +10,8 @@ namespace DCL.Navmap
 {
     public class StreetViewController : ISection
     {
+        private static readonly int IN = Animator.StringToHash("In");
+
         private readonly StreetViewView view;
         private readonly RectTransform rectTransform;
         private readonly MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData;
@@ -36,6 +38,7 @@ namespace DCL.Navmap
 
         public void Activate()
         {
+            mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, false);
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, true);
             view.gameObject.SetActive(true);
             view.StreetViewPixelPerfectMapRendererTextureProvider.Activate(cameraController);
@@ -53,7 +56,7 @@ namespace DCL.Navmap
 
         public void Animate(int triggerId)
         {
-
+            view.gameObject.SetActive(triggerId == IN);
         }
 
         public RectTransform GetRectTransform() =>

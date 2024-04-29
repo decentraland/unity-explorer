@@ -999,7 +999,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &8235211841819826033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3394,6 +3394,10 @@ PrefabInstance:
       propertyPath: section
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 8873916236923606513, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: tabAnimator
+      value: 
+      objectReference: {fileID: 8791119589443936387}
     - target: {fileID: 8947677506439260397, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Color.b
       value: 0.22352941
@@ -4225,6 +4229,10 @@ PrefabInstance:
       propertyPath: section
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 8873916236923606513, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: tabAnimator
+      value: 
+      objectReference: {fileID: 7896608115997061346}
     - target: {fileID: 8947677506439260397, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Color.b
       value: 0.22352941
