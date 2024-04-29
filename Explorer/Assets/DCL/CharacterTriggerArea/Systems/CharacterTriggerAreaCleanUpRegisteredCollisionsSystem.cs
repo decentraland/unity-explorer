@@ -22,7 +22,7 @@ namespace DCL.CharacterTriggerArea.Systems
         [Query]
         private void ClearDetectedCharactersCollection(ref CharacterTriggerAreaComponent component)
         {
-            component.MonoBehaviour?.Clear();
+            component.TryClear();
         }
     }
 }
