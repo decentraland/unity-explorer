@@ -35,6 +35,10 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public AudioClipConfig? BackgroundMusic { get; private set; }
         [field: SerializeField]
+        public AudioClipConfig? OpenMenu { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig? CloseMenu { get; private set; }
+        [field: SerializeField]
         public AudioMixerSnapshot? MuteSoundsSnapshot { get; private set; }
         [field: SerializeField]
         public AudioMixerSnapshot? RestoreSoundsSnapShot { get; private set; }
@@ -52,6 +56,7 @@ namespace DCL.ExplorePanel
             CanvasGroup.alpha = 0;
             if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
             return CanvasGroup.DOFade(1, 0.2f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
@@ -59,6 +64,7 @@ namespace DCL.ExplorePanel
         {
             if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
             return CanvasGroup.DOFade(0, 0.2f).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
     }

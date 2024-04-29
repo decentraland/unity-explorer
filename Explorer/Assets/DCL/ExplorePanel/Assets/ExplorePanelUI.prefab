@@ -1659,6 +1659,8 @@ MonoBehaviour:
   <ProfileWidget>k__BackingField: {fileID: 6577566074449924958}
   <SystemMenu>k__BackingField: {fileID: 4430083555923337431}
   <BackgroundMusic>k__BackingField: {fileID: 11400000, guid: 1667cfb9246eccd4e896cf95e870dc9b, type: 2}
+  <OpenMenu>k__BackingField: {fileID: 11400000, guid: ed99255f331fdd34c92d271fbbaddfb2, type: 2}
+  <CloseMenu>k__BackingField: {fileID: 11400000, guid: 4cd70dff1a2f8374faad51b696201090, type: 2}
   <MuteSoundsSnapshot>k__BackingField: {fileID: -1473976123031914414, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
   <RestoreSoundsSnapShot>k__BackingField: {fileID: 24500006, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
 --- !u!225 &9170972586690210485
