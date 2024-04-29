@@ -120,17 +120,25 @@ namespace Global.Dynamic
 
             //enableLandscape = true;
 #endif
+            
+            Debug.Log($"InitializeFlowAsync.settings: {showSplash}, {showAuthentication}, {showLoading}, {enableLOD}");
 
             // Hides the debug UI during the initial flow
             debugUiRoot.rootVisualElement.style.display = DisplayStyle.None;
 
             try
             {
+                Debug.Log($"InitializeFlowAsync.splashRoot.SetActive");
+                
                 splashRoot.SetActive(showSplash);
+                
+                Debug.Log($"InitializeFlowAsync.DotNetLoggingPlugin.Initialize");
 
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
+                
+                Debug.Log($"InitializeFlowAsync.identityCache.ctor");
 
                 identityCache = new LogWeb3IdentityCache(
                     new ProxyIdentityCache(
@@ -153,6 +161,9 @@ namespace Global.Dynamic
                 string authServerUrl = settings.AuthWebSocketUrl;
                 string authSignatureUrl = settings.AuthSignatureUrl;
 #endif
+                
+                Debug.Log($"InitializeFlowAsync.authServerUrl: {authServerUrl}");
+                Debug.Log($"InitializeFlowAsync.authSignatureUrl: {authSignatureUrl}");
 
                 web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
                     authServerUrl,
@@ -166,6 +177,8 @@ namespace Global.Dynamic
 
                 // First load the common global plugin
                 bool isLoaded;
+                
+                Debug.Log($"InitializeFlowAsync.StaticContainer.CreateAsync");
 
                 (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
@@ -176,6 +189,8 @@ namespace Global.Dynamic
                 }
 
                 bool shouldEnableLandscape = initialRealm == InitialRealm.GenesisCity && enableLandscape;
+                
+                Debug.Log($"InitializeFlowAsync.DynamicWorldContainer.CreateAsync");
 
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
@@ -206,6 +221,8 @@ namespace Global.Dynamic
 
                 var webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
                 var roomHub = dynamicWorldContainer!.RoomHub;
+                
+                Debug.Log($"InitializeFlowAsync.SceneSharedContainer.Create");
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
                     identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
@@ -231,19 +248,27 @@ namespace Global.Dynamic
                 UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
 
                 Entity playerEntity;
+                
+                Debug.Log($"InitializeFlowAsync.dynamicWorldContainer!.GlobalWorldFactory.Create");
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
 
                 debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
+                
+                Debug.Log($"InitializeFlowAsync.ChangeRealmAsync");
 
                 await ChangeRealmAsync(ct);
+                
+                Debug.Log($"InitializeFlowAsync.WaitUntilSplashAnimationEndsAsync");
 
                 if (showSplash)
                     await WaitUntilSplashAnimationEndsAsync(ct);
 
                 splashScreenAnimation.transform.SetSiblingIndex(1);
+                
+                Debug.Log($"InitializeFlowAsync.dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync");
 
                 await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                     globalWorld.EcsWorld, playerEntity, ct);
@@ -251,6 +276,7 @@ namespace Global.Dynamic
                 splashRoot.SetActive(false);
 
                 UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
+                Debug.Log($"InitializeFlowAsync.OpenDefaultUI");
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             }
             catch (OperationCanceledException)
