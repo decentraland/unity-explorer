@@ -769,7 +769,7 @@ GameObject:
   - component: {fileID: 6583871705109680749}
   - component: {fileID: 1532335364287344054}
   - component: {fileID: 6583871705109680750}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: VideoTexture
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -858,7 +858,7 @@ GameObject:
   - component: {fileID: 2304836991248520654}
   - component: {fileID: 3802847475654272365}
   - component: {fileID: 3802847475654272366}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Mask
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1035,7 +1035,7 @@ GameObject:
   - component: {fileID: 5385049054729086175}
   - component: {fileID: 4327321310632415857}
   - component: {fileID: 5385049054729086176}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: VideoPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1053,7 +1053,7 @@ GameObject:
   - component: {fileID: 5635599234481492570}
   - component: {fileID: 8546359234551999556}
   - component: {fileID: 6075134925147427691}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Container
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1254,7 +1254,7 @@ GameObject:
   - component: {fileID: 6063382712672796138}
   - component: {fileID: 7722564697705550553}
   - component: {fileID: 7722564697705550554}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Splash
   m_TagString: Untagged
   m_Icon: {fileID: 0}
