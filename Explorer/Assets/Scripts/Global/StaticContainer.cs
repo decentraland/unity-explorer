@@ -146,6 +146,8 @@ namespace Global
 
             container.AssetsProvisioner = addressablesProvisioner;
             container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
+            
+            Debug.Log($"StaticContainer.InitializeContainersAsync");
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
@@ -164,6 +166,8 @@ namespace Global
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
             );
 
+            Debug.Log($"StaticContainer.QualityContainer.CreateAsync");
+            
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.AssetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
