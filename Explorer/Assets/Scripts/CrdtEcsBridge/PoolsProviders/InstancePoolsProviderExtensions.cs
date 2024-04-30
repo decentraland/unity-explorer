@@ -1,4 +1,7 @@
-﻿using Microsoft.ClearScript.JavaScript;
+﻿using CRDT.Protocol;
+using Microsoft.ClearScript.JavaScript;
+using System;
+using System.Collections.Generic;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
@@ -26,10 +29,30 @@ namespace CrdtEcsBridge.PoolsProviders
                 scriptArray.Read(0, scriptArray.Length, lastInput.Array, 0);
         }
 
+        public static ScopedCRDTMessages ScopedMessages(this IInstancePoolsProvider instancePoolsProvider) =>
+            new (instancePoolsProvider);
+
         public static void ReleaseAndDispose(this ref PoolableByteArray lastInput)
         {
             lastInput.Dispose();
             lastInput = PoolableByteArray.EMPTY;
+        }
+    }
+
+    public readonly struct ScopedCRDTMessages : IDisposable
+    {
+        private readonly IInstancePoolsProvider poolsProvider;
+        public readonly List<CRDTMessage> Messages;
+
+        public ScopedCRDTMessages(IInstancePoolsProvider poolsProvider)
+        {
+            this.poolsProvider = poolsProvider;
+            Messages = poolsProvider.GetDeserializationMessagesPool();
+        }
+
+        public void Dispose()
+        {
+            poolsProvider.ReleaseDeserializationMessagesPool(Messages);
         }
     }
 }

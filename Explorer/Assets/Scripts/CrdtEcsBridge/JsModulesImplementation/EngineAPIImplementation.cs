@@ -85,7 +85,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // Called on the thread where the Scene Runtime is running (background thread)
 
             // Deserialize messages from the byte array
-            List<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
+            using var scopedMessage = instancePoolsProvider.ScopedMessages();
+            List<CRDTMessage> messages = scopedMessage.Messages;
 
             using (var _ = deserializeBatchSampler.MeasureScope())
             {
@@ -120,7 +121,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             worldSyncBufferSampler.End();
 
             ApplySyncCommandBuffer(worldSyncBuffer);
-            instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
 
             return returnData ? SerializeOutgoingCRDTMessages() : PoolableByteArray.EMPTY;
         }
