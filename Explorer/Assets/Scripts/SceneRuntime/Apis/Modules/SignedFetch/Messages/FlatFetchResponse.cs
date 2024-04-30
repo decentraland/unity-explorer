@@ -3,27 +3,20 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using UnityEngine.Networking;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
 {
     [Serializable]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class FlatFetchResponse
+    public struct FlatFetchResponse
     {
-        public bool ok;
-        public long status;
-        public string statusText;
-        public string body;
-        public Dictionary<string, string> headers;
-
-        public FlatFetchResponse(UnityWebRequest webRequest) : this(
-            webRequest.result is UnityWebRequest.Result.Success,
-            webRequest.responseCode,
-            webRequest.responseCode.ToString()!,
-            webRequest.downloadHandler?.text ?? string.Empty,
-            webRequest.GetResponseHeaders()!
-        ) { }
+        public readonly bool ok;
+        public readonly long status;
+        public readonly string statusText;
+        public readonly string body;
+        public readonly Dictionary<string, string> headers;
 
         public FlatFetchResponse(bool ok, long status, string statusText, string body, Dictionary<string, string> headers)
         {
@@ -33,11 +26,21 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
             this.body = body;
             this.headers = headers;
         }
+    }
 
-        public static async UniTask<FlatFetchResponse> NewAsync(UniTask<UnityWebRequest> task)
+    public struct FlatFetchResponse<TRequest> : IWebRequestOp<TRequest, FlatFetchResponse> where TRequest : struct, ITypedWebRequest
+    {
+        public UniTask<FlatFetchResponse> ExecuteAsync(TRequest request, CancellationToken ct)
         {
-            var result = await task;
-            return new FlatFetchResponse(result);
+            var webRequest = request.UnityWebRequest;
+
+            return UniTask.FromResult(new FlatFetchResponse(
+                webRequest.result is UnityWebRequest.Result.Success,
+                webRequest.responseCode,
+                webRequest.responseCode.ToString()!,
+                webRequest.downloadHandler?.text ?? string.Empty,
+                webRequest.GetResponseHeaders()!
+            ));
         }
     }
 }
