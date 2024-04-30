@@ -98,6 +98,30 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             }
         }
 
+        public void Send(byte[] data)
+        {
+            // if (!sceneStateProvider.IsCurrent)
+            //     return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
+
+            EncodeAndSend();
+
+            void EncodeAndSend()
+            {
+                Span<byte> encodedMessage = stackalloc byte[data.Length + 1];
+                encodedMessage[0] = (byte)MsgType.String;
+                data.CopyTo(encodedMessage[1..]);
+                SendMessage(encodedMessage);
+            }
+
+            // lock (eventsToProcess)
+            // {
+            //     object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
+            //     CleanUpReceivedMessages();
+            //
+            //     return result;
+            // }
+        }
+
         private void CleanUpReceivedMessages()
         {
             foreach (IMemoryOwner<byte>? message in eventsToProcess)
@@ -108,6 +132,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private void SendMessage(ReadOnlySpan<byte> message)
         {
+            UnityEngine.Debug.Log($"PRAVS - SendMessage - ID: {sceneData.SceneEntityDefinition.id}");
             messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
@@ -118,8 +143,17 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 ReadOnlySpan<byte> decodedMessage = receivedMessage.Payload.Data.Span;
                 MsgType msgType = DecodeMessage(ref decodedMessage);
 
-                if (msgType != MsgType.Uint8Array || decodedMessage.Length == 0)
+                UnityEngine.Debug.Log($"PRAVS - OnMessageReceived - 1");
+
+                // TODO: Receive MsgType.String
+                if (decodedMessage.Length == 0)
                     return;
+
+                if (msgType == MsgType.String)
+                {
+                    UnityEngine.Debug.Log($"PRAVS - OnMessageReceived - 2");
+                    return;
+                }
 
                 // Wallet Id
                 int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.FromWalletId);

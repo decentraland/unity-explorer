@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
@@ -73,6 +74,39 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 }
 
                 return api.SendBinary(lastInput);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.ENGINE);
+                throw;
+            }
+        }
+
+        [UsedImplicitly]
+        public void Send(string data)
+        {
+            try
+            {
+                /*for (var i = 0; i < dataList.Count; i++)
+                {
+                    var message = (ITypedArray<byte>)dataList[i];
+                    var messageLength = message.Length;
+                    PoolableByteArray element = PoolableByteArray.EMPTY;
+
+                    if (lastInput.Count <= i)
+                    {
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        lastInput.Add(element);
+                    }
+                    else
+                    {
+                        element = lastInput[i];
+                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
+                        lastInput[i] = element;
+                    }
+                }*/
+
+                api.Send(Encoding.UTF8.GetBytes(data));
             }
             catch (Exception e)
             {
