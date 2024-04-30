@@ -23,7 +23,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private readonly UIDocument canvas;
         private readonly IComponentPool<UITransformComponent> transformsPool;
 
-        public UITransformInstantiationSystem(World world, UIDocument canvas, IComponentPoolsRegistry poolsRegistry) : base(world)
+        public UITransformInstantiationSystem(World world, UIDocument canvas,
+            IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
             transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
@@ -39,11 +40,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
         {
             UITransformComponent newTransform = transformsPool.Get();
-            newTransform.Initialize(COMPONENT_NAME, entity, ref sdkModel);
+
+            newTransform.Initialize(COMPONENT_NAME, entity, sdkModel.RightOf);
 
             if (sdkModel.Parent == SpecialEntitiesID.SCENE_ROOT_ENTITY)
                 canvas.rootVisualElement.Add(newTransform.Transform);
-            
+
             World.Add(entity, newTransform);
         }
     }
