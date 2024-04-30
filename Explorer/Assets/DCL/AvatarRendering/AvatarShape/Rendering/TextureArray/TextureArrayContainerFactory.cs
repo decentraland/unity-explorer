@@ -13,12 +13,13 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             this.defaultTextures = defaultTextures;
         }
 
-        private TextureArrayContainer CreateSceneLOD(int minArraySize, TextureFormat textureFormat, IReadOnlyList<int> defaultResolution)
+        private TextureArrayContainer CreateSceneLOD(TextureFormat textureFormat, IReadOnlyList<TextureArrayResolutionDescriptor> defaultResolutionsDescriptors,
+            int arraySizeForMissingResolutions, int capacityForMissingResolutions)
         {
             return new TextureArrayContainer( new TextureArrayMapping[]
             {
-                new (new TextureArrayHandler(minArraySize, BASE_MAP_TEX_ARR_INDEX, BASE_MAP_TEX_ARR,
-                        defaultResolution, textureFormat, new Dictionary<TextureArrayKey, Texture>()),
+                new (new TextureArrayHandler(defaultResolutionsDescriptors, BASE_MAP_TEX_ARR_INDEX, BASE_MAP_TEX_ARR,
+                        textureFormat, new Dictionary<TextureArrayKey, Texture>(), arraySizeForMissingResolutions, capacityForMissingResolutions),
                     MAINTEX_ORIGINAL_TEXTURE, MAIN_TEXTURE_RESOLUTION)
             });
         }
@@ -69,12 +70,16 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             };
         }
 
-        public TextureArrayContainer Create(string shaderName, IReadOnlyList<int> defaultResolutions, TextureFormat format, int minArraySize)
+        public TextureArrayContainer CreateSceneLOD(string shaderName, IReadOnlyList<TextureArrayResolutionDescriptor> defaultResolutions, TextureFormat format,
+            int arraySizeForMissingResolutions, int capacityForMissingResolutions)
         {
             return shaderName switch
             {
-                SCENE_TEX_ARRAY_SHADER => CreateSceneLOD(minArraySize, format, defaultResolutions),
-                _ => CreatePBR(defaultResolutions)
+                SCENE_TEX_ARRAY_SHADER => CreateSceneLOD(format, defaultResolutions, arraySizeForMissingResolutions, capacityForMissingResolutions),
+                _ => CreatePBR(new []
+                {
+                    256
+                })
             };
         }
 

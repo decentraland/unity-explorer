@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CharacterPreview_Rotate
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: acadc18bb0e770549b4c6e93cbb9e766, type: 3}
+  - {fileID: 0}
   relativeVolume: 1
   audioCategory: 0
   pitchVariation: 0

@@ -23,10 +23,10 @@ namespace DCL.Profiles
         public float r;
         public float g;
         public float b;
-        public float a;
+        public float? a;
 
         public Color ToColor() =>
-            new (r, g, b, a);
+            new (r, g, b, a ?? 1);
 
         public void Reset()
         {

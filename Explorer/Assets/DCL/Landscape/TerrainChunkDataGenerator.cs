@@ -181,7 +181,7 @@ namespace DCL.Landscape
 
                 var treeInstances = new NativeParallelHashMap<int2, TreeInstance>(chunkSize * chunkSize, Allocator.Persistent);
                 var treeInvalidationMap = new NativeParallelHashMap<int2, bool>(chunkSize * chunkSize, Allocator.Persistent);
-                var treeRadiusMap = new NativeHashMap<int, float>(terrainGenData.treeAssets.Length, Allocator.Persistent);
+                var treeRadiusMap = new NativeHashMap<int, TreeRadiusPair>(terrainGenData.treeAssets.Length, Allocator.Persistent);
                 var treeParallelRandoms = new NativeArray<Random>(chunkSize * chunkSize, Allocator.Persistent);
 
                 JobHandle instancingHandle = default;
@@ -195,7 +195,8 @@ namespace DCL.Landscape
                             LandscapeAsset treeAsset = terrainGenData.treeAssets[treeAssetIndex];
                             NoiseDataBase treeNoiseData = treeAsset.noiseData;
 
-                            treeRadiusMap.Add(treeAssetIndex, treeAsset.radius);
+                            var treeRadiusPair = new TreeRadiusPair { radius = treeAsset.radius, secondaryRadius = treeAsset.secondaryRadius };
+                            treeRadiusMap.Add(treeAssetIndex, treeRadiusPair);
 
                             INoiseGenerator generator = noiseGenCache.GetGeneratorFor(treeNoiseData, baseSeed);
                             var noiseDataPointer = new NoiseDataPointer(chunkSize, chunkMinParcel.x, chunkMinParcel.y);
@@ -211,7 +212,7 @@ namespace DCL.Landscape
                                 treeInstances.AsParallelWriter(),
                                 emptyParcelsNeighborData.AsReadOnly(),
                                 in treeAsset.randomization,
-                                treeAsset.radius,
+                                treeRadiusPair,
                                 treeAssetIndex,
                                 chunkMinParcel,
                                 chunkSize,

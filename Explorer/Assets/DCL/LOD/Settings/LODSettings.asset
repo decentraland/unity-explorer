@@ -12,14 +12,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b0b2609fd084bb696d6821c99c000c1, type: 3}
   m_Name: LODSettings
   m_EditorClassIdentifier: 
-  <LodPartitionBucketThresholds>k__BackingField: 040000000500000006000000
-  <TextureArrayMinSize>k__BackingField: 500
-  <DefaultTextureArrayResolutions>k__BackingField: 0001000000020000
-  <IsColorDebuging>k__BackingField: 1
+  <LodPartitionBucketThresholds>k__BackingField: 04000000
+  <DefaultTextureArrayResolutionDescriptors>k__BackingField:
+  - Resolution: 256
+    ArraySize: 500
+    InitialArrayCapacity: 100
+  - Resolution: 512
+    ArraySize: 100
+    InitialArrayCapacity: 10
+  - Resolution: 1024
+    ArraySize: 100
+    InitialArrayCapacity: 10
+  - Resolution: 2048
+    ArraySize: 25
+    InitialArrayCapacity: 10
+  - Resolution: 4096
+    ArraySize: 25
+    InitialArrayCapacity: 10
   <LODDebugColors>k__BackingField:
   - {r: 0, g: 1, b: 0, a: 1}
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 1, g: 0, b: 0, a: 1}
   - {r: 0, g: 0, b: 0, a: 1}
-  <FaillingCube>k__BackingField: {fileID: 8255452435763093729, guid: c9870b17ce36346458f07a63c096a16a, type: 3}
+  <DebugCube>k__BackingField: {fileID: 8255452435763093729, guid: c9870b17ce36346458f07a63c096a16a, type: 3}
   <EnableLODStreaming>k__BackingField: 1
+  <AsyncIntegrationTimeMS>k__BackingField: 33

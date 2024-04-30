@@ -1,50 +1,102 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.LOD
 {
-    public struct SceneLODInfoDebugContent
+    public class SceneLODInfoDebugContent
     {
         public Color[] OriginalColors;
         public Renderer[] Renderers;
-        public FaillingLODCube[] FaillingCubesGameObjects;
+        public LODAsset.LOD_STATE LodState;
     }
 
     public struct SceneLODInfoDebug : IDisposable
     {
         private Dictionary<byte, SceneLODInfoDebugContent> SceneLODInfoDebugContents;
-        private Transform MissingSceneParent;
+        private ILODSettingsAsset LodSettingsAsset;
         public byte CurrentLODLevel;
+        public LODAsset.LOD_STATE CurrentLODState;
+        public DebugCube[] DebugCubes;
+        
 
         //This is a sync method, so we can use a shared list
         private static readonly List<Material> TEMP_MATERIALS = new (3);
-        
-        private void UpdateContent(SceneLODInfoDebugContent newContent, Color debugColor)
-        {
-            for (int i = 0; i < newContent.Renderers.Length; i++)
-            {
-                newContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
-                foreach (var t in TEMP_MATERIALS)
-                    t.color = debugColor;
-            }
 
-            foreach (var faillingCubesGameObjects in newContent.FaillingCubesGameObjects)
-                faillingCubesGameObjects.gameObject.SetActive(true);
+        private void UpdateContent(SceneLODInfoDebugContent debugContent, LODAsset lodAsset)
+        {
+            if (debugContent.LodState != lodAsset.State)
+                UpdateState(ref debugContent, lodAsset);
+
+            CurrentLODState = debugContent.LodState;
+            CurrentLODLevel = lodAsset.LodKey.Level;
+
+            if (debugContent.LodState == LODAsset.LOD_STATE.SUCCESS)
+            {
+                for (int i = 0; i < debugContent.Renderers.Length; i++)
+                {
+                    debugContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
+                    foreach (var t in TEMP_MATERIALS)
+                        t.color = LodSettingsAsset.LODDebugColors[CurrentLODLevel];
+                }
+            }
+            else
+            {
+                var debugColor = GetDebugColor(debugContent);
+                foreach (var debugCube in DebugCubes)
+                {
+                    debugCube.failingLODCubeMeshRenderer.material.color = debugColor;
+                    ;
+                    debugCube.gameObject.SetActive(true);
+                }
+            }
         }
 
-        public void Update(IReadOnlyList<Vector2Int> parcels, LODAsset lodAsset, ILODSettingsAsset lodSettingsAsset)
+        private Color GetDebugColor(SceneLODInfoDebugContent debugAsset)
         {
-            if (!lodSettingsAsset.IsColorDebuging)
+            if (debugAsset.LodState == LODAsset.LOD_STATE.FAILED)
+                return LodSettingsAsset.LODDebugColors[CurrentLODLevel];
+
+            //Still in loading state    
+            return Color.magenta;
+        }
+
+        private void UpdateState(ref SceneLODInfoDebugContent debugContent, LODAsset lodAsset)
+        {
+            if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
+            {
+                var renderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
+                var originalColorsList = new List<Color>();
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].SafeGetMaterials(TEMP_MATERIALS);
+                    foreach (var t in TEMP_MATERIALS)
+                        originalColorsList.Add(t.color);
+                }
+
+                debugContent.OriginalColors = originalColorsList.ToArray();
+                debugContent.Renderers = renderers;
+            }
+
+            debugContent.LodState = lodAsset.State;
+        }
+
+        public void Update(LODAsset lodAsset)
+        {
+            if (!LodSettingsAsset.IsColorDebuging)
                 return;
 
             if (!SceneLODInfoDebugContents.TryGetValue(lodAsset.LodKey.Level, out var sceneLODInfoDebugContents))
-                sceneLODInfoDebugContents = CreateSceneLODInfoDebugContents(parcels, lodAsset, lodSettingsAsset);
+            {
+                sceneLODInfoDebugContents = CreateSceneLODInfoDebugContents();
+                SceneLODInfoDebugContents.Add(lodAsset.LodKey.Level, sceneLODInfoDebugContents);
+            }
+            
             ClearPreviousContent();
-            CurrentLODLevel = lodAsset.LodKey.Level;
-            UpdateContent(sceneLODInfoDebugContents, lodSettingsAsset.LODDebugColors[CurrentLODLevel]);
+            UpdateContent(sceneLODInfoDebugContents, lodAsset);
         }
 
         private void ClearPreviousContent()
@@ -55,8 +107,8 @@ namespace DCL.LOD
 
         private void ClearContent(SceneLODInfoDebugContent debugContent)
         {
-            foreach (var faillingCubesGameObject in debugContent.FaillingCubesGameObjects)
-                faillingCubesGameObject.gameObject.SetActive(false);
+            foreach (var debugCubes in DebugCubes)
+                debugCubes.gameObject.SetActive(false);
             for (int i = 0; i < debugContent.Renderers.Length; i++)
             {
                 debugContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
@@ -65,55 +117,38 @@ namespace DCL.LOD
             }
         }
 
-        private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents(IReadOnlyList<Vector2Int> parcels, LODAsset lodAsset, ILODSettingsAsset lodSettingsAsset)
+        private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents()
         {
-            SceneLODInfoDebugContent sceneLODInfoDebugContents;
-            if (lodAsset.LoadingFailed)
+            var sceneLODInfoDebugContents = new SceneLODInfoDebugContent
             {
-                var faillingCubes =  new FaillingLODCube[parcels.Count];
-                for (int i = 0; i < parcels.Count; i++)
-                {
-                    faillingCubes[i] = Object.Instantiate(lodSettingsAsset.FaillingCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, MissingSceneParent);
-                    faillingCubes[i].failingLODCubeMeshRenderer.material.color = lodSettingsAsset.LODDebugColors[lodAsset.LodKey.Level];
-                    faillingCubes[i].gameObject.SetActive(false);
-                }
-
-                sceneLODInfoDebugContents  = new SceneLODInfoDebugContent
-                {
-                    OriginalColors = Array.Empty<Color>(), Renderers = Array.Empty<Renderer>(), FaillingCubesGameObjects = faillingCubes
-                };
-            }
-            else
-            {
-                var renderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
-                var originalColorsList = new List<Color>();
-                for (int i = 0; i < renderers.Length; i++)
-                {
-                    renderers[i].SafeGetMaterials(TEMP_MATERIALS);
-                    foreach (var t in TEMP_MATERIALS)
-                        originalColorsList.Add(t.color);
-                }
-                sceneLODInfoDebugContents  = new SceneLODInfoDebugContent
-                {
-                    OriginalColors = originalColorsList.ToArray(), Renderers = renderers, FaillingCubesGameObjects = Array.Empty<FaillingLODCube>()
-                };
-            }
-            SceneLODInfoDebugContents.Add(lodAsset.LodKey.Level, sceneLODInfoDebugContents);
+                OriginalColors = Array.Empty<Color>(), Renderers = Array.Empty<Renderer>(), LodState = LODAsset.LOD_STATE.UNINTIALIZED
+            };
             return sceneLODInfoDebugContents;
         }
 
-        public static SceneLODInfoDebug Create(Transform missingSceneParent)
+        public static SceneLODInfoDebug Create(Transform missingSceneParent, ILODSettingsAsset lodSettingsAsset, IReadOnlyList<Vector2Int> parcels)
         {
+            var debugCubes =  new DebugCube[parcels.Count];
+            for (int i = 0; i < parcels.Count; i++)
+            {
+                debugCubes[i] = Object.Instantiate(lodSettingsAsset.DebugCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, missingSceneParent);
+                debugCubes[i].gameObject.SetActive(false);
+            }
+            
             return new SceneLODInfoDebug
             {
-                SceneLODInfoDebugContents = new Dictionary<byte, SceneLODInfoDebugContent>(), CurrentLODLevel = byte.MaxValue, MissingSceneParent = missingSceneParent
+                SceneLODInfoDebugContents = new Dictionary<byte, SceneLODInfoDebugContent>(), CurrentLODLevel = byte.MaxValue, DebugCubes = debugCubes, LodSettingsAsset = lodSettingsAsset
             };
         }
 
         public void Dispose()
         {
             foreach (var keyValuePair in SceneLODInfoDebugContents)
+            {
                 ClearContent(keyValuePair.Value);
+                foreach (var debugCubes in DebugCubes)
+                    UnityObjectUtils.SafeDestroy(debugCubes);
+            }
         }
     }
 }

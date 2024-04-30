@@ -45,6 +45,47 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 CreateHandler(new Vector2Int(defaultResolutions[i], defaultResolutions[i]));
         }
 
+
+        public TextureArrayHandler(
+            IReadOnlyList<TextureArrayResolutionDescriptor> textureArrayResolutionDescriptors,
+            int arrayID,
+            int textureID,
+            TextureFormat textureFormat,
+            IReadOnlyDictionary<TextureArrayKey, Texture> defaultTextures,
+            int arraySizeForMissingResolutions,
+            int initialCapacityForEachResolution)
+        {
+            minArraySize = arraySizeForMissingResolutions;
+            this.arrayID = arrayID;
+            this.textureID = textureID;
+            this.textureFormat = textureFormat;
+            this.defaultTextures = defaultTextures;
+            this.initialCapacityForEachResolution = initialCapacityForEachResolution;
+
+            handlersByResolution = new Dictionary<Vector2Int, TextureArraySlotHandler>(textureArrayResolutionDescriptors.Count);
+
+            for (int i = 0; i < textureArrayResolutionDescriptors.Count; i++)
+                CreateHandler(textureArrayResolutionDescriptors[i]);
+        }
+
+        private TextureArraySlotHandler CreateHandler(TextureArrayResolutionDescriptor descriptor)
+        {
+            var resolution = new Vector2Int(descriptor.Resolution, descriptor.Resolution);
+
+            var slotHandler = new TextureArraySlotHandler(resolution, descriptor.ArraySize, descriptor.InitialArrayCapacity, textureFormat);
+            handlersByResolution[resolution] = slotHandler;
+
+            // When the handler is created initialize the default texture
+            if (defaultTextures.TryGetValue(new TextureArrayKey(textureID, resolution), out var defaultTexture))
+            {
+                var defaultSlot = slotHandler.GetNextFreeSlot();
+                Graphics.CopyTexture(defaultTexture, srcElement: 0, srcMip: 0, defaultSlot.TextureArray, dstElement: defaultSlot.UsedSlotIndex, dstMip: 0);
+            }
+
+            return slotHandler;
+        }
+
+
         private TextureArraySlotHandler CreateHandler(Vector2Int resolution)
         {
             //We are creating a considerably smaller array for non square resolutions. Shouldn't be a common case
@@ -95,5 +136,9 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             material.SetInteger(arrayID, DEFAULT_SLOT_INDEX);
             material.SetTexture(textureID, defaultSlotArray);
         }
+        
+        public TextureFormat GetTextureFormat() =>
+            textureFormat;
+        
     }
 }
