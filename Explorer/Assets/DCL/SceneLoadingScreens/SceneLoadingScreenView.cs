@@ -127,7 +127,7 @@ namespace DCL.SceneLoadingScreens
             tips[index].gameObject.SetActive(false);
         }
 
-        public async UniTask ChangeBackgroundColorFade(Color toColor, float duration, CancellationToken ct)
+        public async UniTask ChangeBackgroundColorFadeAsync(Color toColor, float duration, CancellationToken ct)
         {
             Color currentColor = Background.material.GetColor(BG_COLOR_PROPERTY);
             float time = 0f;

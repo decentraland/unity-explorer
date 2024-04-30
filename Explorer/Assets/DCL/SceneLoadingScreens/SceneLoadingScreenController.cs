@@ -176,7 +176,7 @@ namespace DCL.SceneLoadingScreens
         private void AddLoadProgress(float progress) =>
             SetLoadProgress(viewInstance.ProgressBar.normalizedValue + progress);
 
-        private async void ShowTip(int index)
+        private void ShowTip(int index)
         {
             if (index < 0)
                 index = tips.Tips.Count - 1;
@@ -208,7 +208,7 @@ namespace DCL.SceneLoadingScreens
 
                 await UniTask.WhenAll
                 (
-                    viewInstance.ChangeBackgroundColorFade(tips.Tips[index].BackgroundColor, 0.3f, ct),
+                    viewInstance.ChangeBackgroundColorFadeAsync(tips.Tips[index].BackgroundColor, 0.3f, ct),
                     viewInstance.ShowTipWithFadeAsync(index, 0.3f, ct)
                 );
             }
