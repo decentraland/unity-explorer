@@ -72,8 +72,14 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if ((partitionComponent.IsDirty || sceneLODInfo.CurrentLODLevel == byte.MaxValue) && !partitionComponent.IsBehind)
+            if (partitionComponent.IsDirty)
+            {
+                //If the scene is behind and has not been initialized, we return until we see it at least once
+                if (partitionComponent.IsBehind && sceneLODInfo.CurrentLODLevel == byte.MaxValue)
+                    return;
+                
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+            }
         }
 
 
