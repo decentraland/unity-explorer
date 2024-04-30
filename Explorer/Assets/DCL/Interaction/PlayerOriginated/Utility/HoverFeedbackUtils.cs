@@ -10,25 +10,23 @@ namespace DCL.Interaction.PlayerOriginated.Utility
     {
         public static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResult raycastResult, in GlobalColliderEntityInfo previousEntityInfo)
         {
-            using (previousEntityInfo.EcsExecutor.Sync.GetScope())
+            using (previousEntityInfo.EcsExecutor.SyncedWorldAccessScope(out World world))
             {
-                World world = previousEntityInfo.EcsExecutor.World;
-
                 // Entity died or PointerEvents component was removed, nothing to do
                 if (!previousEntityInfo.ColliderEntityInfo.EntityReference.IsAlive(world) ||
-                    !world.TryGet(previousEntityInfo.ColliderEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
+                    !world.TryGet(previousEntityInfo.ColliderEntityInfo.EntityReference, out PBPointerEvents? pbPointerEvents))
                     return;
 
-                TryAppendHoverInput(ref pbPointerEvents, in raycastResult, PointerEventType.PetHoverLeave);
+                TryAppendHoverInput(ref pbPointerEvents!, in raycastResult, PointerEventType.PetHoverLeave);
             }
         }
 
         private static void TryAppendHoverInput(ref PBPointerEvents pbPointerEvents, in PlayerOriginRaycastResult raycastResult, PointerEventType type)
         {
-            for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
+            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
             {
-                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
-                PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
+                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i]!;
+                PBPointerEvents.Types.Info info = pointerEvent.EventInfo!;
 
                 if (!InteractionInputUtils.IsQualifiedByDistance(raycastResult, info)) continue;
 

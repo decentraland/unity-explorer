@@ -6,7 +6,7 @@ namespace SceneRunner.Scene
     /// <summary>
     ///     Provides an exposed way to write into ECS World from the global world
     /// </summary>
-    public readonly struct SceneEcsExecutor
+    public readonly struct
     {
         public SceneEcsExecutor(World world, MutexSync sync)
         {
@@ -20,5 +20,11 @@ namespace SceneRunner.Scene
         public readonly World World;
 
         public readonly MutexSync Sync;
+
+        public MutexSync.Scope SyncedWorldAccessScope(out World world)
+        {
+            world = World;
+            return Sync.GetScope();
+        }
     }
 }

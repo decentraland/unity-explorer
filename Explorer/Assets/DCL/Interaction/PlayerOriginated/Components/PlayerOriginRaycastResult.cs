@@ -16,5 +16,17 @@ namespace DCL.Interaction.PlayerOriginated.Components
         public RaycastHit UnityRaycastHit;
 
         public Ray OriginRay;
+
+        public bool TryGetValidHit(out GlobalColliderEntityInfo entityInfo)
+        {
+            if (IsValidHit)
+            {
+                entityInfo = EntityInfo!.Value;
+                return true;
+            }
+
+            entityInfo = new GlobalColliderEntityInfo();
+            return false;
+        }
     }
 }
