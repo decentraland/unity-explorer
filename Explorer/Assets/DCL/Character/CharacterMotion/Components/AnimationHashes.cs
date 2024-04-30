@@ -6,6 +6,7 @@ namespace DCL.Character.CharacterMotion.Components
     {
         public static readonly int EMOTE = Animator.StringToHash("Emote");
         public static readonly int EMOTE_LOOP = Animator.StringToHash("EmoteLoop");
+        public static readonly int LOOP = Animator.StringToHash("Loop");
         public static readonly int EMOTE_RESET = Animator.StringToHash("EmoteForceRestart");
         public static readonly int EMOTE_STOP = Animator.StringToHash("EmoteStop");
         public static readonly int MOVEMENT_BLEND = Animator.StringToHash("MovementBlend");

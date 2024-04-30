@@ -3,7 +3,6 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
-// using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -62,7 +61,10 @@ namespace DCL.AvatarRendering.Emotes
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
             if (emoteReferences.propClip != null)
+            {
                 emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
+                emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+            }
 
             if (audioAsset != null)
             {
