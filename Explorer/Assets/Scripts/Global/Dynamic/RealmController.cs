@@ -19,7 +19,6 @@ using System.Threading;
 using DCL.LOD.Components;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests.GenericHead;
 using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
 using UnityEngine;
@@ -107,7 +106,7 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            GenericGetRequest genericGetRequest = await webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(
@@ -141,7 +140,7 @@ namespace Global.Dynamic
 
             try
             {
-                await webRequestController.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct);
+                await webRequestController.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct).WithNoOpAsync();
             }
             catch (Exception)
             {
