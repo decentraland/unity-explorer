@@ -35,7 +35,6 @@ namespace ECS.StreamableLoading.AudioClips
                 ProfilingCounters.AudioClipsReferenced.Value++;
 
             referencesCount++;
-            Debug.LogError($"AUDIOCLIP - {AudioClip.name} Referenced {referencesCount}");
             LastUsedFrame = MultithreadingUtility.FrameCount;
         }
 
