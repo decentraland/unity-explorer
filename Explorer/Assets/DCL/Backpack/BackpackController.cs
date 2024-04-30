@@ -22,6 +22,7 @@ namespace DCL.Backpack
     {
         private readonly BackpackView view;
         private readonly BackpackCommandBus backpackCommandBus;
+        private readonly BackpackEventBus backpackEventBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
         private readonly AvatarController avatarController;
@@ -36,6 +37,7 @@ namespace DCL.Backpack
         private CancellationTokenSource? profileLoadingCts;
         private BackpackSections currentSection = BackpackSections.Avatar;
         private bool isAvatarLoaded;
+        private bool instantSectionToggle;
 
         public BackpackController(
             BackpackView view,
@@ -60,6 +62,7 @@ namespace DCL.Backpack
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
             this.emotesController = emotesController;
+            this.backpackEventBus = backpackEventBus;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -95,10 +98,14 @@ namespace DCL.Backpack
                     {
                         animationCts.SafeCancelAndDispose();
                         animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token).Forget();
+                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, section, animationCts.Token, !instantSectionToggle).Forget();
 
                         if (isOn)
+                        {
                             currentSection = section;
+                            backpackEventBus.SendChangedBackpackSectionEvent(currentSection);
+                        }
+
                     });
             }
 
@@ -185,5 +192,19 @@ namespace DCL.Backpack
 
         public RectTransform GetRectTransform() =>
             rectTransform;
+
+        public void Toggle(BackpackSections section)
+        {
+            bool tmp = instantSectionToggle;
+            instantSectionToggle = true;
+
+            foreach (BackpackPanelTabSelectorMapping tabSelector in view.TabSelectorMappedViews)
+            {
+                if (tabSelector.Section != section) continue;
+                tabSelector.TabSelectorViews.TabSelectorToggle.isOn = true;
+            }
+
+            instantSectionToggle = tmp;
+        }
     }
 }

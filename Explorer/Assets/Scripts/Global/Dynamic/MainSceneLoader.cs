@@ -5,6 +5,7 @@ using DCL.Audio;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.Diagnostics;
+using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Minimap;
 using DCL.PluginSystem;
@@ -19,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.Video;
@@ -33,11 +35,13 @@ namespace Global.Dynamic
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
         private Vector2Int targetScene;
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = "https://peer.decentraland.org";
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = IRealmNavigator.GENESIS_URL;
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
         [SerializeField] private bool enableLandscape;
+        [SerializeField] private bool enableLOD;
+
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -59,7 +63,7 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
-        private string startingRealm = "https://peer.decentraland.org";
+        private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
 
         private void Awake()
@@ -101,7 +105,7 @@ namespace Global.Dynamic
         }
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
-        {                
+        {
 #if !UNITY_EDITOR
 #if !DEVELOPMENT_BUILD
 
@@ -109,9 +113,9 @@ namespace Global.Dynamic
             showSplash = true;
             showAuthentication = true;
             showLoading = true;
+            enableLOD = true;
+            enableLandscape = true;
 #endif
-
-            //enableLandscape = true;
 #endif
 
             // Hides the debug UI during the initial flow
@@ -120,7 +124,7 @@ namespace Global.Dynamic
             try
             {
                 splashRoot.SetActive(showSplash);
-                
+
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
@@ -187,7 +191,7 @@ namespace Global.Dynamic
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
-                        EnableLandscape = shouldEnableLandscape,
+                        EnableLandscape = shouldEnableLandscape, EnableLOD = enableLOD
                     }, ct
                 );
 
@@ -225,8 +229,7 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
 
-                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory,
-                    dynamicWorldContainer.EmptyScenesWorldFactory);
+                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
 
                 debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
                 dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
@@ -263,10 +266,10 @@ namespace Global.Dynamic
         {
             startingRealm = initialRealm switch
                             {
-                                InitialRealm.GenesisCity => "https://peer.decentraland.org",
-                                InitialRealm.SDK => "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest",
-                                InitialRealm.World => "https://worlds-content-server.decentraland.org/world/" + targetWorld,
-                                InitialRealm.Localhost => "http://127.0.0.1:8000",
+                                InitialRealm.GenesisCity => IRealmNavigator.GENESIS_URL,
+                                InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
+                                InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + "/" + targetWorld,
+                                InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
                                 InitialRealm.Custom => customRealm,
                                 _ => startingRealm,
                             };
@@ -276,9 +279,11 @@ namespace Global.Dynamic
 
         private void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
+            // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)

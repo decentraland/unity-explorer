@@ -41,12 +41,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternalAsync(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             if (intention.DefinitionComponent.IsEmpty)
-            {
-                if (loadEmptySceneSystemLogic.Inactive)
-                    throw new ArgumentException("Empty scene loading is inactive");
-
-                return new StreamableLoadingResult<ISceneFacade>(await loadEmptySceneSystemLogic.FlowAsync(World, intention, partition, ct));
-            }
+                return new StreamableLoadingResult<ISceneFacade>(loadEmptySceneSystemLogic.Flow(intention));
 
             return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
         }

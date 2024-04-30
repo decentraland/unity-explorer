@@ -15,7 +15,7 @@ namespace DCL.Interaction.Raycast.Components
         private Material? materialOnUse;
 
         //Should be repooled
-        public readonly Dictionary<EntityReference, Material[]> OriginalMaterials;
+        public readonly Dictionary<Renderer, Material[]> OriginalMaterials;
 
         public HighlightComponent(bool isEnabled, bool isAtDistance, EntityReference currentEntity, EntityReference nextEntity) : this()
         {
@@ -23,7 +23,7 @@ namespace DCL.Interaction.Raycast.Components
             this.isAtDistance = isAtDistance;
             this.currentEntity = currentEntity;
             this.nextEntity = nextEntity;
-            OriginalMaterials = new Dictionary<EntityReference, Material[]>();
+            OriginalMaterials = new Dictionary<Renderer, Material[]>();
         }
 
         public void Setup(bool atDistance, EntityReference newNextEntity)
@@ -72,7 +72,7 @@ namespace DCL.Interaction.Raycast.Components
             currentEntity == EntityReference.Null || materialOnUse == null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly bool CanUpdate(Material materialToUse) =>
+        public readonly bool CanPassAnUpdate(Material materialToUse) =>
             materialOnUse == materialToUse
             && currentEntity == nextEntity
             && isEnabled;
@@ -82,8 +82,9 @@ namespace DCL.Interaction.Raycast.Components
             materialOnUse == null && isEnabled && nextEntity != EntityReference.Null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateMaterial(Material materialToUse)
+        public void UpdateMaterialAndSwitchEntity(Material materialToUse)
         {
+            currentEntity = nextEntity;
             materialOnUse = materialToUse;
         }
     }

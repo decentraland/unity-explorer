@@ -53,10 +53,11 @@ namespace DCL.LOD.Systems
             RealmData realmData,
             TextureArrayContainerFactory textureArrayContainerFactory,
             DebugContainerBuilder debugBuilder,
+            bool lodEnabled,
             CancellationToken ct)
         {
             var container = new LODContainer(staticContainer.AssetsProvisioner);
-
+            
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
@@ -75,7 +76,7 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
-                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value);
+                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, lodEnabled);
 
                 return UniTask.CompletedTask;
             });

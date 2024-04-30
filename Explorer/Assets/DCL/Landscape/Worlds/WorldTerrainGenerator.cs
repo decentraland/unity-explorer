@@ -1,9 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Landscape.Jobs;
 using DCL.Landscape.NoiseGeneration;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Collections;
@@ -15,11 +17,10 @@ using Utility;
 
 namespace DCL.Landscape
 {
-    public class WorldTerrainGenerator
+    public class WorldTerrainGenerator : IDisposable
     {
         private const string TERRAIN_OBJECT_NAME = "World Generated Terrain";
         private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
-        private readonly NoiseGeneratorCache noiseGenCache = new ();
         private readonly TimeProfiler timeProfiler;
 
         private int parcelSize;
@@ -38,6 +39,8 @@ namespace DCL.Landscape
         private NativeParallelHashSet<int2> ownedParcels;
 
         private readonly List<Terrain> terrains = new ();
+        private NoiseGeneratorCache noiseGenCache;
+        public bool IsInitialized { get; private set; }
 
         public WorldTerrainGenerator(bool measureTime = false)
         {
@@ -46,6 +49,8 @@ namespace DCL.Landscape
 
         public void Dispose()
         {
+            if (!IsInitialized) return;
+
             if (rootGo != null)
                 UnityObjectUtils.SafeDestroy(rootGo);
         }
@@ -57,26 +62,24 @@ namespace DCL.Landscape
             parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
-            chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE, noiseGenCache);
+            chunkDataGenerator = new TerrainChunkDataGenerator(null, timeProfiler, terrainGenData, ReportCategory.LANDSCAPE);
+
+            IsInitialized = true;
         }
 
         public void SwitchVisibility(bool isVisible)
         {
-            if (rootGo != null)
-            {
-                if (!isVisible)
-                {
-                    emptyParcels.Dispose();
-                    emptyParcelsData.Dispose();
-                    emptyParcelsNeighborData.Dispose();
-                }
+            if (!IsInitialized) return;
 
+            if (rootGo != null)
                 rootGo.gameObject.SetActive(isVisible);
-            }
         }
 
-        public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1, CancellationToken cancellationToken = default)
+        public async UniTask GenerateTerrainAsync(NativeParallelHashSet<int2> ownedParcels, uint worldSeed = 1,
+            AsyncLoadProcessReport processReport = null, CancellationToken cancellationToken = default)
         {
+            if (!IsInitialized) return;
+
             this.ownedParcels = ownedParcels;
             var worldModel = new WorldModel(ownedParcels);
             var terrainModel = new TerrainModel(parcelSize, worldModel, terrainGenData.borderPadding + Mathf.RoundToInt(0.1f * (worldModel.SizeInParcels.x + worldModel.SizeInParcels.y) / 2f));
@@ -93,7 +96,8 @@ namespace DCL.Landscape
             await SetupEmptyParcelDataAsync(cancellationToken, terrainModel);
 
             // Generate TerrainData's
-            chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData);
+            noiseGenCache = new NoiseGeneratorCache();
+            chunkDataGenerator.Prepare((int)worldSeed, parcelSize, ref emptyParcelsData, ref emptyParcelsNeighborData, noiseGenCache);
 
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
             {
@@ -101,11 +105,40 @@ namespace DCL.Landscape
                 await UniTask.Yield(cancellationToken);
             }
 
+            if (processReport != null) processReport.ProgressCounter.Value = 0.5f;
+
             // Generate Terrain GameObjects
+            terrains.Clear();
             foreach (ChunkModel chunkModel in terrainModel.ChunkModels)
-                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial, true));
+                terrains.Add(factory.CreateTerrainObject(chunkModel.TerrainData, rootGo, chunkModel.MinParcel * parcelSize, terrainGenData.terrainMaterial));
 
             await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
+            // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+            await ReEnableTerrainAsync();
+
+            FreeMemory();
+            if (processReport != null) processReport.ProgressCounter.Value = 1f;
+        }
+
+        // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+        private async UniTask ReEnableTerrainAsync()
+        {
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = false;
+
+            await UniTask.Yield();
+
+            foreach (Terrain terrain in terrains)
+                terrain.enabled = true;
+        }
+
+        private void FreeMemory()
+        {
+            emptyParcelsNeighborData.Dispose();
+            emptyParcelsData.Dispose();
+            emptyParcels.Dispose();
+
+            noiseGenCache.Dispose();
         }
 
         private async UniTask GenerateTerrainDataAsync(ChunkModel chunkModel, TerrainModel terrainModel, uint worldSeed, CancellationToken cancellationToken)

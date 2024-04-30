@@ -29,7 +29,6 @@ namespace DCL.UI
         [field: SerializeField]
         public AudioClipConfig TabClickAudio { get; private set; }
 
-
         private void OnEnable()
         {
             TabSelectorToggle.onValueChanged.AddListener(OnToggle);

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCL.Audio.System
+namespace DCL.Audio
 {
     public interface ILandscapeAudioSystemSettings
     {

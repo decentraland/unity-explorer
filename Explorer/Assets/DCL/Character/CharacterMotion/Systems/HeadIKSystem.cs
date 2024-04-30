@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.IK;
@@ -76,7 +77,8 @@ namespace DCL.CharacterMotion.Systems
             ref AvatarBase avatarBase,
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
-            in StunComponent stunComponent
+            in StunComponent stunComponent,
+            in CharacterEmoteComponent emoteComponent
         )
         {
             headIK.IsDisabled = !this.headIKIsEnabled;
@@ -85,7 +87,8 @@ namespace DCL.CharacterMotion.Systems
                              && rigidTransform.IsGrounded
                              && !rigidTransform.IsOnASteepSlope
                              && !headIK.IsDisabled
-                             && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f);
+                             && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
+                             && emoteComponent.CurrentEmoteReference == null;
 
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, 2 * dt);
 

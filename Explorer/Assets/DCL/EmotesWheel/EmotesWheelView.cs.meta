@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: 3552da97835d47af8ff3bf688dadb819
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - <canvas>k__BackingField: {instanceID: 0}
+  - <raycaster>k__BackingField: {instanceID: 0}
+  - <EditButton>k__BackingField: {instanceID: 0}
+  - <CurrentEmoteName>k__BackingField: {instanceID: 0}
+  - <OpenAudio>k__BackingField: {fileID: 11400000, guid: 59137f938439a5546aa4f9a63a582583, type: 2}
+  - <CloseAudio>k__BackingField: {fileID: 11400000, guid: d9055205eadb2454585c619d3fc7a723, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,42 +1,44 @@
 using Arch.Core;
-using CRDT;
+using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Multiplayer.SDK.Systems;
-using DCL.Optimization.Pools;
+using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System;
+using WritePlayerIdentityDataSystem = DCL.Multiplayer.SDK.Systems.SceneWorld.WritePlayerIdentityDataSystem;
 
 namespace DCL.Multiplayer.SDK.Tests
 {
     public class WritePlayerIdentityDataSystemShould : UnitySystemTestBase<WritePlayerIdentityDataSystem>
     {
+        private const string FAKE_USER_ID = "Ia4Ia5Cth0ulhu2Ftaghn2";
+
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
-        private PlayerIdentityDataComponent playerIdentityData;
+        private Profile profile;
+        private PlayerCRDTEntity playerCRDTEntity;
 
         [SetUp]
         public void Setup()
         {
             ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>();
 
-            IComponentPool<PBPlayerIdentityData> componentPoolRegistry = Substitute.For<IComponentPool<PBPlayerIdentityData>>();
-            var instantiatedPbComponent = new PBPlayerIdentityData();
-            componentPoolRegistry.Get().Returns(instantiatedPbComponent);
-            system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter, componentPoolRegistry);
+            system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter);
 
-            playerIdentityData = new PlayerIdentityDataComponent
-            {
-                Address = "Y065SoThoT",
-                IsGuest = false,
-                CRDTEntity = 3,
-            };
+            profile = Profile.NewRandomProfile(FAKE_USER_ID);
 
-            entity = world.Create(playerIdentityData);
+            playerCRDTEntity = new PlayerCRDTEntity(
+                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
+                Substitute.For<ISceneFacade>(),
+                entity
+            );
+
+            entity = world.Create(playerCRDTEntity);
         }
 
         [TearDown]
@@ -46,44 +48,32 @@ namespace DCL.Multiplayer.SDK.Tests
         }
 
         [Test]
-        public void PropagatePlayerIdentityDataCorrectly()
+        public void DispatchPlayerIdentityDataUpdateCorrectly()
         {
-            Assert.IsFalse(world.Has<PBPlayerIdentityData>(entity));
-            Assert.IsFalse(world.Has<CRDTEntity>(entity));
+            world.Add(entity, profile);
 
             system.Update(0);
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBPlayerIdentityData, PlayerIdentityDataComponent>>(),
-                                Arg.Is<CRDTEntity>(crdtEntity => crdtEntity.Id == playerIdentityData.CRDTEntity.Id),
-                                Arg.Is<PlayerIdentityDataComponent>(comp =>
-                                    comp.Address == playerIdentityData.Address
-                                    && comp.IsGuest == playerIdentityData.IsGuest));
-
-            Assert.IsTrue(world.TryGet(entity, out PBPlayerIdentityData pbPlayerIdentityData));
-            Assert.AreEqual(pbPlayerIdentityData.Address, playerIdentityData.Address);
-            Assert.AreEqual(pbPlayerIdentityData.IsGuest, playerIdentityData.IsGuest);
-            Assert.IsTrue(world.Has<CRDTEntity>(entity));
+                                Arg.Any<Action<PBPlayerIdentityData, (string address, bool isGuest)>>(),
+                                playerCRDTEntity.CRDTEntity,
+                                Arg.Is<(string address, bool isGuest)>(data =>
+                                    data.address == profile.UserId
+                                    && data.isGuest == !profile.HasConnectedWeb3));
         }
 
         [Test]
         public void HandleComponentRemovalCorrectly()
         {
-            Assert.IsFalse(world.Has<PBPlayerIdentityData>(entity));
+            world.Add(entity, profile);
+            system.Update(0);
+
+            world.Add<DeleteEntityIntention>(entity);
 
             system.Update(0);
 
-            Assert.IsTrue(world.Has<PBPlayerIdentityData>(entity));
-
-            world.Remove<PlayerIdentityDataComponent>(entity);
-
-            system.Update(0);
-
-            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerIdentityData.CRDTEntity.Id);
-            Assert.IsFalse(world.Has<PBPlayerIdentityData>(entity));
-            Assert.IsFalse(world.Has<CRDTEntity>(entity));
-            Assert.IsTrue(world.Has<DeleteEntityIntention>(entity));
+            ecsToCRDTWriter.Received(1).DeleteMessage<PBPlayerIdentityData>(playerCRDTEntity.CRDTEntity);
         }
     }
 }

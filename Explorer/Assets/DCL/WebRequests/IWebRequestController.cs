@@ -56,7 +56,7 @@ namespace DCL.WebRequests
                     args,
                     ct,
                     reportCategory,
-                    headersInfo,
+                    headersInfo ?? WebRequestHeadersInfo.NewEmpty(),
                     signInfo,
                     ignoreErrorCodes
                 )
