@@ -20,7 +20,7 @@ namespace DCL.Optimization.ThreadSafePool
             }
         }
 
-        public ThreadSafeObjectPool(Func<T> createFunc, Action<T> actionOnGet = null, Action<T> actionOnRelease = null, Action<T> actionOnDestroy = null, bool collectionCheck = true,
+        public ThreadSafeObjectPool(Func<T> createFunc, Action<T>? actionOnGet = null, Action<T>? actionOnRelease = null, Action<T>? actionOnDestroy = null, bool collectionCheck = true,
             int defaultCapacity = 10, int maxSize = 10000)
         {
             objectPoolImplementation = new ExtendedObjectPool<T>(createFunc, actionOnGet, actionOnRelease, actionOnDestroy, collectionCheck, defaultCapacity, maxSize);

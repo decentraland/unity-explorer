@@ -11,7 +11,7 @@ namespace DCL.Optimization.Pools
     {
         public class WithDefaultCtor<T> : WithFactory<T> where T : class, new()
         {
-            public WithDefaultCtor(Action<T> onGet = null, Action<T> onRelease = null, Action<T> actionOnDestroy = null, int defaultCapacity = 10, int maxSize = 10000) :
+            public WithDefaultCtor(Action<T>? onGet = null, Action<T>? onRelease = null, Action<T>? actionOnDestroy = null, int defaultCapacity = 10, int maxSize = 10000) :
                 base(static () => new T(), onGet, onRelease, actionOnDestroy, defaultCapacity, maxSize)
             {
             }
@@ -26,7 +26,7 @@ namespace DCL.Optimization.Pools
 
             public int CountInactive => objectPool.CountInactive;
 
-            public WithFactory(Func<T> createFunc, Action<T> onGet = null, Action<T> onRelease = null, Action<T> actionOnDestroy = null, int defaultCapacity = 10, int maxSize = 10000)
+            public WithFactory(Func<T> createFunc, Action<T>? onGet = null, Action<T>? onRelease = null, Action<T>? actionOnDestroy = null, int defaultCapacity = 10, int maxSize = 10000)
             {
                 objectPool = new ThreadSafeObjectPool<T>(createFunc, actionOnGet: onGet, actionOnRelease: onRelease, actionOnDestroy: actionOnDestroy, collectionCheck: PoolConstants.CHECK_COLLECTIONS,
                     defaultCapacity: defaultCapacity, maxSize: maxSize);

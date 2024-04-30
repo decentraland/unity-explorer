@@ -1,4 +1,5 @@
 using CrdtEcsBridge.Serialization;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using Google.Protobuf;
@@ -32,9 +33,14 @@ namespace CrdtEcsBridge.Components
         /// <summary>
         ///     Provide a default pool behavior for SDK components, it is a must
         /// </summary>
-        public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T> onGet = null, Action<T> onRelease = null) where T: class, new()
+        public static SDKComponentBuilder<T> WithPool<T>(this SDKComponentBuilder<T> sdkComponentBuilder, Action<T>? onGet = null, Action<T>? onRelease = null, bool useLog = false) where T: class, new()
         {
-            sdkComponentBuilder.pool = new ComponentPool.WithDefaultCtor<T>(onGet: onGet, onRelease: onRelease);
+            IComponentPool<T> pool = new ComponentPool.WithDefaultCtor<T>(onGet: onGet, onRelease: onRelease);
+
+            if (useLog)
+                pool = new LogComponentPool<T>(pool, ReportHub.WithReport(ReportCategory.ENGINE).Log);
+
+            sdkComponentBuilder.pool = pool;
             return sdkComponentBuilder;
         }
 

@@ -9,18 +9,18 @@ namespace DCL.Optimization.Pools
     public class ExtendedObjectPool<T> : ObjectPool<T>, IExtendedObjectPool<T> where T: class
     {
         private readonly List<T> list;
-        private readonly Action<T> onDestroyAction;
+        private readonly Action<T>? onDestroyAction;
         private readonly FieldInfo countAllField;
 
         public ExtendedObjectPool(
             Func<T> createFunc,
-            Action<T> actionOnGet = null,
-            Action<T> actionOnRelease = null,
-            Action<T> actionOnDestroy = null,
+            Action<T>? actionOnGet = null,
+            Action<T>? actionOnRelease = null,
+            Action<T>? actionOnDestroy = null,
             bool collectionCheck = PoolConstants.CHECK_COLLECTIONS,
             int defaultCapacity = 10,
             int maxSize = 10000)
-            : base(createFunc, actionOnGet, actionOnRelease, actionOnDestroy, collectionCheck, defaultCapacity, maxSize)
+            : base(createFunc, actionOnGet!, actionOnRelease!, actionOnDestroy!, collectionCheck, defaultCapacity, maxSize)
         {
             onDestroyAction = actionOnDestroy;
 
