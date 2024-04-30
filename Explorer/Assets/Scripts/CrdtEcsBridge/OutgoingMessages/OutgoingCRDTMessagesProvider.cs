@@ -97,7 +97,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             }
         }
 
-        public TMessage AppendMessage<TMessage, TData>(Action<TMessage, TData> prepareMessage, CRDTEntity entity, int timestamp, TData data) where TMessage: class, IMessage
+        public TMessage? AppendMessage<TMessage, TData>(Action<TMessage, TData> prepareMessage, CRDTEntity entity, int timestamp, TData data) where TMessage: class, IMessage
         {
             if (!TryGetComponentBridge<TMessage>(out SDKComponentBridge componentBridge)) return null;
 
@@ -151,6 +151,11 @@ namespace CrdtEcsBridge.OutgoingMessages
                         case CRDTMessageType.DELETE_COMPONENT:
                             processedMessages.Add(crdtProtocol.CreateDeleteMessage(pendingMessage.Entity, pendingMessage.Bridge.Id));
                             break;
+                        case CRDTMessageType.NONE:
+                        case CRDTMessageType.DELETE_ENTITY:
+                            ReportHub.LogWarning(ReportCategory.CRDT_ECS_BRIDGE,"Message NONE and DELETE_ENTITY are ignored");
+                            break;
+                        default: throw new ArgumentOutOfRangeException();
                     }
                 }
 
