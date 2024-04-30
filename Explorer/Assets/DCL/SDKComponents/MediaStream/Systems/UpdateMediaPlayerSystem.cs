@@ -66,16 +66,8 @@ namespace DCL.SDKComponents.MediaStream
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
 
-            HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, OnPlaybackUpdate);
-            ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing, OnMediaOpened);
-
-            return;
-
-            void OnMediaOpened(MediaPlayer mediaPlayer) =>
-                mediaPlayer.SetPlaybackProperties(sdkComponent);
-
-            void OnPlaybackUpdate(MediaPlayer mediaPlayer) =>
-                mediaPlayer.UpdatePlaybackProperties(sdkComponent);
+            HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
+            ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
         }
 
         [Query]
@@ -96,11 +88,12 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, string url, bool hasPlaying, bool isPlaying,
-            Action<MediaPlayer> onPlaybackUpdate = null)
+            PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onPlaybackUpdate = null)
         {
             if (!sdkComponent.IsDirty) return;
 
             sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl);
+
             if (component.URL != url && component.URL != localMediaUrl)
             {
                 component.MediaPlayer.CloseCurrentStream();
@@ -116,20 +109,24 @@ namespace DCL.SDKComponents.MediaStream
             else if (component.State != VideoState.VsError)
             {
                 component.MediaPlayer.UpdatePlayback(hasPlaying, isPlaying);
-                onPlaybackUpdate?.Invoke(component.MediaPlayer);
+
+                if (sdkVideoComponent != null)
+                    onPlaybackUpdate?.Invoke(component.MediaPlayer, sdkVideoComponent);
             }
 
             sdkComponent.IsDirty = false;
         }
 
-        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, Action<MediaPlayer> onOpened = null)
+        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onOpened = null)
         {
             if (!component.OpenMediaPromise.IsResolved) return;
 
             if (component.OpenMediaPromise.IsReachableConsume(component.URL))
             {
                 component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.URL, autoPlay);
-                onOpened?.Invoke(component.MediaPlayer);
+
+                if (sdkVideoComponent != null)
+                    onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
             }
             else
             {
