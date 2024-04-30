@@ -5,7 +5,6 @@ using JetBrains.Annotations;
 using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Threading;
-using UnityEngine.Networking;
 using Utility;
 using Utility.Times;
 
@@ -34,9 +33,9 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         [UsedImplicitly]
         public object SignedFetch(SignedFetchRequest request)
         {
-            UniTask<FlatFetchResponse> ExecuteAsync()
-            {
-                string? method = request.init?.method?.ToLower();
+            ReportHub.Log(ReportCategory.JAVASCRIPT, $"Signed request received {request}");
+
+            string? method = request.init?.method?.ToLower();
                 ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
                 var headers = new WebRequestHeadersInfo(request.init?.headers)
@@ -49,43 +48,42 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     method ?? string.Empty
                 );
 
-                async UniTask<UnityWebRequest> RequestAsync() =>
+                UniTask<FlatFetchResponse> CreatePromise() =>
                     method switch
                     {
-                        null => (await webController.SignedFetchPostAsync(
+                        null => webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
                             request.url,
+                            new FlatFetchResponse<GenericPostRequest>(),
                             request.init?.body ?? string.Empty,
                             cancellationTokenSource.Token
-                        )).UnityWebRequest,
-                        "post" => (await webController.PostAsync(
+                        ),
+                        "post" => webController.PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
                             request.url,
+                            new FlatFetchResponse<GenericPostRequest>(),
                             GenericPostArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        )).UnityWebRequest,
-                        "get" => (await webController.GetAsync(
+                        ),
+                        "get" => webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                             request.url,
+                            new FlatFetchResponse<GenericGetRequest>(),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        )).UnityWebRequest,
-                        "put" => (await webController.PutAsync(
+                        ),
+                        "put" => webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
                             request.url,
+                            new FlatFetchResponse<GenericPutRequest>(),
                             GenericPutArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        )).UnityWebRequest,
+                        ),
                         _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
                     };
 
-                return FlatFetchResponse.NewAsync(RequestAsync());
-            }
-
-            ReportHub.Log(ReportCategory.JAVASCRIPT, $"Signed request received {request}");
-
-            return ExecuteAsync().ToPromise();
+                return CreatePromise().ToPromise();
         }
 
         public void Dispose()
