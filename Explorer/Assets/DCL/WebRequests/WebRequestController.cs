@@ -42,6 +42,8 @@ namespace DCL.WebRequests
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
                     await op.ExecuteAsync(request, envelope.Ct);
+                    // After the operation is executed, the flow may continue in the background thread
+                    return op;
                 }
                 catch (UnityWebRequestException exception)
                 {
