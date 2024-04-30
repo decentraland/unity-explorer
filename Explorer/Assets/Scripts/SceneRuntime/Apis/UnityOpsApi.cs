@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.ClearScript.V8;
 using SceneRuntime.ModuleHub;
+using System;
 
 namespace SceneRuntime.Apis
 {
@@ -35,6 +36,12 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Error(object message)
         {
+            if (message is string str && str.StartsWith("SceneError: warning", StringComparison.InvariantCultureIgnoreCase))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
+                return;
+            }
+
             ReportHub.LogError(
                 new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo),
                 message + " stackTrace: " + engine.GetStackTrace()
