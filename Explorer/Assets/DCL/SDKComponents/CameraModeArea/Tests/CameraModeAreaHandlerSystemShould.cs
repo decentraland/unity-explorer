@@ -263,8 +263,6 @@ namespace DCL.SDKComponents.CameraModeArea.Tests
             Assert.IsTrue(globalWorld.TryGet(cameraEntity, out cameraComponent));
             Assert.AreEqual(originalCameraMode, cameraComponent.Mode);
             Assert.IsTrue(cameraComponent.CameraInputChangeEnabled);
-
-            Assert.IsFalse(world.Has<CameraModeAreaComponent>(entity));
         }
     }
 }

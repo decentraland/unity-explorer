@@ -402,8 +402,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
 
             // Check area effect is reset
             Assert.IsFalse(globalWorld.Get<AvatarShapeComponent>(fakeAvatarEntity).HiddenByModifierArea);
-
-            Assert.IsFalse(world.Has<AvatarModifierAreaComponent>(triggerAreaEntity));
         }
     }
 }

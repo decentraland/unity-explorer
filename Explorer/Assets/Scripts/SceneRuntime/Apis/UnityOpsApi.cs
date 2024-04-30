@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.ClearScript.V8;
 using SceneRuntime.ModuleHub;
+using System;
 
 namespace SceneRuntime.Apis
 {
@@ -35,6 +36,12 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Error(object message)
         {
+            if (message is string str && str.StartsWith("SceneError: warning", StringComparison.InvariantCultureIgnoreCase))
+            {
+                ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
+                return;
+            }
+
             ReportHub.LogError(
                 new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo),
                 message + " stackTrace: " + engine.GetStackTrace()
@@ -42,7 +49,7 @@ namespace SceneRuntime.Apis
         }
 
         [UsedImplicitly]
-        public object LoadAndEvaluateCode(string moduleName) // "~system/EngineApi"
+        public object? LoadAndEvaluateCode(string moduleName) // "~system/EngineApi"
         {
             const char PATH_CHAR = '~';
 
@@ -50,13 +57,13 @@ namespace SceneRuntime.Apis
             if (moduleName == "~scene.js")
                 return engine.Evaluate(sceneScript);
 
-            if (moduleName.Length == 0 || moduleName[0] != PATH_CHAR)
+            if (moduleName.Length == 0)
             {
                 ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), $"{moduleName} is not a module and won't be evaluated");
                 return null;
             }
 
-            string filename = moduleName.Substring(1);
+            string filename = moduleName.StartsWith(PATH_CHAR) ? moduleName.Substring(1) : moduleName;
 
             // Load JavaScript wrapper in the Runtime
             V8Script moduleScript = moduleHub.ModuleScript(filename);

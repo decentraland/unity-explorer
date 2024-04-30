@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioClips:
   - {fileID: 8300000, guid: ac7856256a6a14043bf65a9ff4c1cb95, type: 3}
-  relativeVolume: 1
+  relativeVolume: 0.5
   audioCategory: 0
-  pitchVariation: 0
+  pitchVariation: 0.1
   clipSelectionMode: 0
