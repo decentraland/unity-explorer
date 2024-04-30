@@ -35,12 +35,14 @@ namespace ECS.StreamableLoading.AudioClips
                 ProfilingCounters.AudioClipsReferenced.Value++;
 
             referencesCount++;
+            Debug.LogError($"AUDIOCLIP - {AudioClip.name} Referenced {referencesCount}");
             LastUsedFrame = MultithreadingUtility.FrameCount;
         }
 
         public void RemoveReference()
         {
             referencesCount--;
+
             Assert.IsFalse(referencesCount < 0, "Reference count of AudioClip should never be negative!");
 
             LastUsedFrame = MultithreadingUtility.FrameCount;
