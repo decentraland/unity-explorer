@@ -8,10 +8,8 @@ using DCL.Landscape.Utils;
 using StylizedGrass;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -27,7 +25,7 @@ namespace DCL.Landscape
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 3;
+        private const int CACHE_VERSION = 4;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -110,17 +108,31 @@ namespace DCL.Landscape
         public int GetChunkSize() =>
             terrainGenData.chunkSize;
 
-        public async UniTask SwitchVisibilityAsync(bool isVisible)
+        public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
         {
             if (!isInitialized) return;
 
-            if (rootGo != null && rootGo.gameObject.activeSelf != isVisible)
-                rootGo.gameObject.SetActive(isVisible);
+            if (rootGo != null)
+                rootGo.gameObject.SetActive(true);
 
-            if (isVisible)
+            UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+
+            grassRenderer.Render();
+            await ReEnableTerrainAsync(postRealmLoadReport);
+            IsTerrainGenerated = true;
+
+            postRealmLoadReport.ProgressCounter.Value = 1f;
+        }
+
+        public void Hide()
+        {
+            if (!isInitialized) return;
+
+            if (rootGo != null && rootGo.gameObject.activeSelf)
             {
-                await UniTask.Yield();
-                grassRenderer.Render();
+                rootGo.gameObject.SetActive(false);
+                ReEnableChunksDetails();
+                IsTerrainGenerated = false;
             }
         }
 
@@ -129,7 +141,6 @@ namespace DCL.Landscape
             bool withHoles = true,
             bool hideTrees = false,
             bool hideDetails = false,
-            bool showTerrainByDefault = false,
             AsyncLoadProcessReport processReport = null,
             CancellationToken cancellationToken = default)
         {
@@ -189,7 +200,6 @@ namespace DCL.Landscape
 
                     grassRenderer = await TerrainGenerationUtils.AddColorMapRendererAsync(rootGo, terrains, factory);
 
-                    // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
                     await ReEnableTerrainAsync(processReport);
 
                     if (processReport != null) processReport.ProgressCounter.Value = 1f;
@@ -212,17 +222,36 @@ namespace DCL.Landscape
             }
         }
 
-        private async UniTask ReEnableTerrainAsync(AsyncLoadProcessReport processReport)
+        // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
+        private async UniTask ReEnableTerrainAsync(AsyncLoadProcessReport processReport, int batch = 1)
         {
             foreach (Terrain terrain in terrains)
                 terrain.enabled = false;
 
-            // we enable them one by one to avoid a super hiccup
-            for (var i = 0; i < terrains.Count; i++)
+            // we enable them one by batches to avoid a super hiccup
+            var i = 0;
+            while (i < terrains.Count)
             {
-                terrains[i].enabled = true;
-                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + (i / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
                 await UniTask.Yield();
+
+                // Process batch
+                for (int j = i; j < Math.Min(i + batch, terrains.Count); j++)
+                {
+                    terrains[j].enabled = true;
+                    if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + (j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
+                }
+
+                i += batch;
+                if (i >= terrains.Count) break;
+            }
+        }
+
+        private void ReEnableChunksDetails()
+        {
+            foreach (Terrain terrain in terrains)
+            {
+                terrain.drawHeightmap = true;
+                terrain.drawTreesAndFoliage = true;
             }
         }
 

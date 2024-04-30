@@ -120,9 +120,9 @@ namespace DCL.Landscape
             if (processReport != null) processReport.ProgressCounter.Value = 1f;
         }
 
+        // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
         private async UniTask ReEnableTerrainAsync()
         {
-            // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
             foreach (Terrain terrain in terrains)
                 terrain.enabled = false;
 
