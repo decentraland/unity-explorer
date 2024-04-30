@@ -38,7 +38,7 @@ namespace DCL.UI
         public async UniTask RequestImageAsync(string uri, CancellationToken ct)
         {
             view.LoadingObject.SetActive(true);
-            Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(uri)), new GetTextureArguments(false), ct)).CreateTexture(TextureWrapMode.Clamp);
+            Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(uri)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct)).Texture;
             view.Image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             view.LoadingObject.SetActive(false);
         }

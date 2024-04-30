@@ -6,7 +6,7 @@ namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
-        public static async UniTask<T> WithCustomExceptionAsync<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod) where T: ITypedWebRequest
+        public static async UniTask<T> WithCustomExceptionAsync<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod)
         {
             try { return await webRequestFlow; }
             catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }
@@ -33,5 +33,13 @@ namespace DCL.WebRequests
 
         public static bool IsAborted(this UnityWebRequestException exception) =>
             exception is { Result: UnityWebRequest.Result.ConnectionError or UnityWebRequest.Result.ProtocolError, Error: "Request aborted" or "User Aborted" };
+
+        /// <summary>
+        /// Does nothing with the web request
+        /// </summary>
+        public readonly struct NoOp<TWebRequest> : IWebRequestOp<TWebRequest> where TWebRequest : struct, ITypedWebRequest
+        {
+            public UniTask ExecuteAsync(TWebRequest webRequest, System.Threading.CancellationToken ct) => UniTask.CompletedTask;
+        }
     }
 }

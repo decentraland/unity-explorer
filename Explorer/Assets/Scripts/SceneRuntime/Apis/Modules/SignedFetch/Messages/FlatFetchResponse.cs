@@ -3,13 +3,14 @@ using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using UnityEngine.Networking;
 
 namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
 {
     [Serializable]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public class FlatFetchResponse
+    public struct FlatFetchResponse<TRequest> : IWebRequestOp<TRequest> where TRequest : struct, ITypedWebRequest
     {
         public bool ok;
         public long status;
@@ -17,27 +18,17 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         public string body;
         public Dictionary<string, string> headers;
 
-        public FlatFetchResponse(UnityWebRequest webRequest) : this(
-            webRequest.result is UnityWebRequest.Result.Success,
-            webRequest.responseCode,
-            webRequest.responseCode.ToString()!,
-            webRequest.downloadHandler?.text ?? string.Empty,
-            webRequest.GetResponseHeaders()!
-        ) { }
-
-        public FlatFetchResponse(bool ok, long status, string statusText, string body, Dictionary<string, string> headers)
+        public UniTask ExecuteAsync(TRequest request, CancellationToken ct)
         {
-            this.ok = ok;
-            this.status = status;
-            this.statusText = statusText;
-            this.body = body;
-            this.headers = headers;
-        }
+            var webRequest = request.UnityWebRequest;
 
-        public static async UniTask<FlatFetchResponse> NewAsync(UniTask<UnityWebRequest> task)
-        {
-            var result = await task;
-            return new FlatFetchResponse(result);
+            ok = webRequest.result is UnityWebRequest.Result.Success;
+            status = webRequest.responseCode;
+            statusText = webRequest.responseCode.ToString()!;
+            body = webRequest.downloadHandler?.text ?? string.Empty;
+            headers = webRequest.GetResponseHeaders()!;
+
+            return UniTask.CompletedTask;
         }
     }
 }

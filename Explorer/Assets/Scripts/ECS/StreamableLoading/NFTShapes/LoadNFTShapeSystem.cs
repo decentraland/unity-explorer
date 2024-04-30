@@ -39,21 +39,22 @@ namespace ECS.StreamableLoading.NFTShapes
             if (isOkSize == false)
                 return new StreamableLoadingResult<Texture2D>(new Exception("Image size is too big"));
 
-            //texture request
+            // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            GetTextureWebRequest request = await webRequestController.GetTextureAsync(
+            var request = await webRequestController.GetTextureAsync(
                 new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
                 new GetTextureArguments(false),
+                new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
                 ct,
                 reportCategory: GetReportCategory()
             );
 
-            return new StreamableLoadingResult<Texture2D>(request.CreateTexture(TextureWrapMode.Clamp, FilterMode.Bilinear)!);
+            return new StreamableLoadingResult<Texture2D>(request.Texture!);
         }
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)
         {
-            var infoRequest = await webRequestController.GetAsync(commonArguments, ct, GetReportCategory());
+            var infoRequest = webRequestController.GetAsync(commonArguments, ct, GetReportCategory());
             var nft = await infoRequest.CreateFromJson<NftInfoDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
             return nft.ImageUrl();
         }

@@ -20,14 +20,15 @@ namespace DCL.WebRequests
             this.log = log;
         }
 
-        public async UniTask<TWebRequest> SendAsync<TWebRequest, TWebRequestArgs>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope)
-            where TWebRequest: struct, ITypedWebRequest
+        public async UniTask<TWebRequestOp> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
+            where TWebRequest: struct, ITypedWebRequest
+            where TWebRequestOp: IWebRequestOp<TWebRequest>
         {
             try
             {
                 log($"WebRequestController send start: {envelope}");
-                var result = await origin.SendAsync(envelope);
+                var result = await origin.SendAsync(envelope, op);
                 log($"WebRequestController send finish: {envelope}");
                 return result;
             }

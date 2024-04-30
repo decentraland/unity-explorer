@@ -19,9 +19,10 @@ namespace DCL.WebRequests
             this.web3IdentityCache = web3IdentityCache;
         }
 
-        public async UniTask<TWebRequest> SendAsync<TWebRequest, TWebRequestArgs>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope)
+        public async UniTask<TWebRequestOp> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
+            where TWebRequestOp : IWebRequestOp<TWebRequest>
         {
             int attemptsLeft = envelope.CommonArguments.TotalAttempts();
 
@@ -31,42 +32,34 @@ namespace DCL.WebRequests
             while (attemptsLeft > 0)
             {
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
-                var exceptionThrown = false;
+
+                // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
+                using var wr = request.UnityWebRequest;
 
                 try
                 {
-                    analyticsContainer.OnRequestStarted(request);
-                    await request.SendRequest(envelope.Ct);
-                    // if no exception is thrown Request is successful
-                    return request;
+                    await request.WithAnalytics(analyticsContainer, request.SendRequest(envelope.Ct));
+
+                    // if no exception is thrown Request is successful and the continuation op can be executed
+                    await op.ExecuteAsync(request, envelope.Ct);
                 }
                 catch (UnityWebRequestException exception)
                 {
+                    // The operation will be in an unresolved state in that case
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
-                        return request;
+                        return op;
 
-                    exceptionThrown = true;
                     attemptsLeft--;
 
                     // Print verbose
                     ReportHub.LogError(
                         envelope.ReportCategory,
-                        $"Exception occured on loading {typeof(TWebRequest).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
+                        $"Exception occured on loading {typeof(TWebRequestOp).Name} from {envelope.CommonArguments.URL} with {envelope}\n"
                         + $"Attempt Left: {attemptsLeft}"
                     );
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
                         throw;
-                }
-                finally
-                {
-                    analyticsContainer.OnRequestFinished(request);
-
-                    if (exceptionThrown)
-                    {
-                        // Make the request no longer usable as all data needed is written into the exception itself
-                        request.UnityWebRequest.Dispose();
-                    }
                 }
             }
 
