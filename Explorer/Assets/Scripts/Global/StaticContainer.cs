@@ -45,8 +45,8 @@ namespace Global
     {
         public readonly ObjectProxy<World> GlobalWorldProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
-        public IRealmData RealmData;
-        public IRoomHub RoomHub;
+        public readonly ObjectProxy<IRealmData> RealmDataProxy = new ();
+        public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
 
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
@@ -212,7 +212,7 @@ namespace Global
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
                 new InteractionsAudioPlugin(addressablesProvisioner),
                 new MultiplayerPlugin(),
-                new RealmInfoPlugin(container.RealmData, container.RoomHub),
+                new RealmInfoPlugin(container.RealmDataProxy, container.RoomHubProxy),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),

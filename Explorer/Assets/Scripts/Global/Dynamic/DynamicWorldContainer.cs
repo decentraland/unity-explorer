@@ -240,11 +240,6 @@ namespace Global.Dynamic
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
-            // TODO: Use ObjectProxy for these? or is there any "shared dependencies" object
-            // that we can use to propagate them?
-            staticContainer.RoomHub = container.RoomHub;
-            staticContainer.RealmData = realmData;
-
             var entityParticipantTable = new EntityParticipantTable();
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
@@ -405,6 +400,9 @@ namespace Global.Dynamic
                 container.MessagePipesHub);
 
             container.GlobalPlugins = globalPlugins;
+
+            staticContainer.RoomHubProxy.SetObject(container.RoomHub);
+            staticContainer.RealmDataProxy.SetObject(realmData);
 
             BuildTeleportWidget(realmNavigator, debugBuilder, dynamicWorldParams.Realms);
 

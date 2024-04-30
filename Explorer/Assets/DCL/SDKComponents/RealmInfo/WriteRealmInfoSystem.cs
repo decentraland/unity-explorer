@@ -4,6 +4,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Utilities;
 using ECS;
 using ECS.Abstract;
 using ECS.Groups;
@@ -14,24 +15,27 @@ namespace DCL.SDKComponents.RealmInfo
     public partial class WriteRealmInfoSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly IRealmData realmData;
-        private readonly IRoomHub roomHub;
+        private readonly ObjectProxy<IRealmData> realmDataProxy;
+        private readonly ObjectProxy<IRoomHub> roomHubProxy;
 
-        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, IRoomHub roomHub) : base(world)
+        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, ObjectProxy<IRealmData> realmDataProxy, ObjectProxy<IRoomHub> roomHubProxy) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.realmData = realmData;
-            this.roomHub = roomHub;
-        }
-
-        public override void Initialize()
-        {
-            PropagateToScene();
+            this.realmDataProxy = realmDataProxy;
+            this.roomHubProxy = roomHubProxy;
         }
 
         protected override void Update(float t)
         {
-            // PropagateToScene();
+            if (!realmDataProxy.Configured
+                || !roomHubProxy.Configured
+                || !realmDataProxy.Object!.IsDirty
+                || !realmDataProxy.Object.Configured)
+                return;
+
+            PropagateToScene();
+
+            realmDataProxy.Object.IsDirty = false;
         }
 
         private void PropagateToScene()
@@ -42,9 +46,12 @@ namespace DCL.SDKComponents.RealmInfo
                 component.RealmName = data.realmData.RealmName;
                 component.NetworkId = data.realmData.NetworkId;
                 component.CommsAdapter = data.realmData.CommsAdapter;
-                component.Room = data.roomHub.IslandRoom().Info.Sid; // TODO: Is this the correct prop to read??
-                // component.IsPreview
-            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (realmData, roomHub));
+
+                var room = data.roomHub.IslandRoom().Info.Sid;
+                component.Room = string.IsNullOrEmpty(room) ? string.Empty : room;
+                // component.IsPreview // TODO: when E@ supports running in preview mode
+
+            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (realmDataProxy.Object, roomHubProxy.Object));
         }
     }
 }
