@@ -8,6 +8,7 @@ using DCL.ECSComponents;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -23,10 +24,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private readonly List<SDKObservableEvent> sdkObservableEvents = new ();
         private readonly HashSet<string> sdkObservableEventSubscriptions = new ();
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
+        private readonly ICommunicationsControllerAPI commsApi;
         private bool reportedSceneReady;
 
-        public SDKObservableEventsEngineApiWrapper(IEngineApi api, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
+        public SDKObservableEventsEngineApiWrapper(IEngineApi api, ICommunicationsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
         {
+            this.commsApi = commsApi;
+
             // TO DEBUG
             /*SubscribeToSDKObservableEvent(SDKObservableEventIds.SceneReady);
             TriggerSDKObservableEvent(SDKObservableEventIds.SceneReady, new SceneStartPayload());*/
@@ -215,8 +219,18 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                             break;
                     }
                 }
-
                 api.OutgoingCRDTMessages.Clear();
+
+                // Comms messagebus
+                if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.Comms))
+                {
+                    foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
+                    {
+                        sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.Comms, currentPayload));
+                    }
+                }
+                commsApi.SceneCommsMessages.Clear();
+
                 return sdkObservableEvents;
             }
             catch (Exception e)

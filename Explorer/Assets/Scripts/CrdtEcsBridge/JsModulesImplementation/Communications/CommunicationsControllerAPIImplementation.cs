@@ -6,6 +6,7 @@ using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -136,6 +137,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
+        public List<CommsPayload> SceneCommsMessages { get; } = new List<CommsPayload>();
         private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
             using (receivedMessage)
@@ -143,15 +145,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 ReadOnlySpan<byte> decodedMessage = receivedMessage.Payload.Data.Span;
                 MsgType msgType = DecodeMessage(ref decodedMessage);
 
-                UnityEngine.Debug.Log($"PRAVS - OnMessageReceived - 1");
-
-                // TODO: Receive MsgType.String
                 if (decodedMessage.Length == 0)
                     return;
 
                 if (msgType == MsgType.String)
                 {
-                    UnityEngine.Debug.Log($"PRAVS - OnMessageReceived - 2");
+                    UnityEngine.Debug.Log($"PRAVS - OnMessageReceived - wallet id: {receivedMessage.FromWalletId}; DecodedMessage: {Encoding.UTF8.GetString(decodedMessage)}");
+
+                    SceneCommsMessages.Add(new CommsPayload()
+                    {
+                        sender = receivedMessage.FromWalletId,
+                        message = Encoding.UTF8.GetString(decodedMessage)
+                    });
                     return;
                 }
 

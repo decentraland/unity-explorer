@@ -1,4 +1,5 @@
 ﻿using CrdtEcsBridge.PoolsProviders;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
 using System.Collections.Generic;
 
@@ -10,5 +11,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         void Send(byte[] data);
 
         void OnSceneIsCurrentChanged(bool isCurrent);
+
+        List<CommsPayload> SceneCommsMessages { get; }
     }
 }
