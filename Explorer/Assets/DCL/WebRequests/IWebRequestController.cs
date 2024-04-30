@@ -2,10 +2,10 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Web3.Identities;
-using DCL.WebRequests.GenericHead;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility.Times;
 
 namespace DCL.WebRequests
@@ -20,10 +20,10 @@ namespace DCL.WebRequests
 
         public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { 404 };
 
-        UniTask<TWebRequestOp> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+        UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
-            where TWebRequestOp: IWebRequestOp<TWebRequest>;
+            where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>;
     }
 
     public static class WebRequestControllerExtensions
@@ -37,7 +37,7 @@ namespace DCL.WebRequests
         internal static readonly InitializeRequest<GetTextureArguments, GetTextureWebRequest> GET_TEXTURE = GetTextureWebRequest.Initialize;
         private static readonly InitializeRequest<GetAudioClipArguments, GetAudioClipWebRequest> GET_AUDIO_CLIP = GetAudioClipWebRequest.Initialize;
 
-        public static UniTask<TWebRequestOp> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp>(
+        public static UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
             this IWebRequestController controller,
             InitializeRequest<TWebRequestArgs, TWebRequest> initializeRequest,
             CommonArguments commonArguments, TWebRequestArgs args,
@@ -50,8 +50,8 @@ namespace DCL.WebRequests
         )
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
-            where TWebRequestOp: struct, IWebRequestOp<TWebRequest> =>
-            controller.SendAsync(
+            where TWebRequestOp: struct, IWebRequestOp<TWebRequest, TResult> =>
+            controller.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
                 new RequestEnvelope<TWebRequest, TWebRequestArgs>(
                     initializeRequest,
                     commonArguments,
@@ -64,18 +64,18 @@ namespace DCL.WebRequests
                 ), op
             );
 
-        public static UniTask<TOp> SignedFetchPostAsync<TOp>(
+        public static UniTask<TResult> SignedFetchPostAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
             string jsonMetaData,
             CancellationToken ct
         )
-            where TOp: struct, IWebRequestOp<GenericPostRequest>
+            where TOp: struct, IWebRequestOp<GenericPostRequest, TResult>
         {
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            return controller.PostAsync(
+            return controller.PostAsync<TOp, TResult>(
                 commonArguments,
                 webRequestOp,
                 GenericPostArguments.Empty,
@@ -85,20 +85,10 @@ namespace DCL.WebRequests
             );
         }
 
-        public static UniTask<TOp> SignedFetchPostAsync<TOp>(
-            this IWebRequestController controller,
-            string url,
-            TOp webRequestOp,
-            string jsonMetaData,
-            CancellationToken ct
-        )
-            where TOp: struct, IWebRequestOp<GenericPostRequest> =>
-            controller.SignedFetchPostAsync(new CommonArguments(URLAddress.FromString(url)), webRequestOp, jsonMetaData, ct);
-
         /// <summary>
         ///     Make a generic get request to download arbitrary data
         /// </summary>
-        public static UniTask<TOp> GetAsync<TOp>(
+        public static UniTask<TResult> GetAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
@@ -107,10 +97,10 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null,
             ISet<long>? ignoreErrorCodes = null
-        ) where TOp: struct, IWebRequestOp<GenericGetRequest> =>
-            controller.SendAsync(GET_GENERIC, commonArguments, default(GenericGetArguments), webRequestOp, ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes);
+        ) where TOp: struct, IWebRequestOp<GenericGetRequest, TResult> =>
+            controller.SendAsync<GenericGetRequest, GenericGetArguments, TOp, TResult>(GET_GENERIC, commonArguments, default(GenericGetArguments), webRequestOp, ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes);
 
-        public static UniTask<TOp> PostAsync<TOp>(
+        public static UniTask<TResult> PostAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
@@ -118,10 +108,10 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPostRequest> =>
-            controller.SendAsync(POST_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPostRequest, TResult> =>
+            controller.SendAsync<GenericPostRequest, GenericPostArguments, TOp, TResult>(POST_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static UniTask<TOp> PutAsync<TOp>(
+        public static UniTask<TResult> PutAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
@@ -129,10 +119,10 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPutRequest> =>
-            controller.SendAsync(PUT_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPutRequest, TResult> =>
+            controller.SendAsync<GenericPutRequest, GenericPutArguments, TOp, TResult>(PUT_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static UniTask<TOp> PatchAsync<TOp>(
+        public static UniTask<TResult> PatchAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
@@ -140,10 +130,10 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPatchRequest> =>
-            controller.SendAsync(PATCH_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericPatchRequest, TResult> =>
+            controller.SendAsync<GenericPatchRequest, GenericPatchArguments, TOp, TResult>(PATCH_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static UniTask<TOp> HeadAsync<TOp>(
+        public static UniTask<TResult> HeadAsync<TOp, TResult>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
@@ -151,10 +141,10 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericHeadRequest> =>
-            controller.SendAsync(HEAD_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GenericHeadRequest, TResult> =>
+            controller.SendAsync<GenericHeadRequest, GenericHeadArguments, TOp, TResult>(HEAD_GENERIC, commonArguments, arguments, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static UniTask<TOp> GetTextureAsync<TOp>(
+        public static UniTask<Texture2D> GetTextureAsync<TOp>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetTextureArguments args,
@@ -163,13 +153,13 @@ namespace DCL.WebRequests
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null
-        ) where TOp: struct, IWebRequestOp<GetTextureWebRequest> =>
-            controller.SendAsync(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+        ) where TOp: struct, IWebRequestOp<GetTextureWebRequest, Texture2D> =>
+            controller.SendAsync<GetTextureWebRequest, GetTextureArguments, TOp, Texture2D>(GET_TEXTURE, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
         /// <summary>
         ///     Make a request that is optimized for audio clip
         /// </summary>
-        public static UniTask<TOp> GetAudioClipAsync<TOp>(
+        public static UniTask<AudioClip> GetAudioClipAsync<TOp>(
             this IWebRequestController controller,
             CommonArguments commonArguments,
             GetAudioClipArguments args,
@@ -177,7 +167,7 @@ namespace DCL.WebRequests
             CancellationToken ct,
             string reportCategory = ReportCategory.AUDIO_CLIP_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
-            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest> =>
-            controller.SendAsync(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+            WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
+            controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
     }
 }

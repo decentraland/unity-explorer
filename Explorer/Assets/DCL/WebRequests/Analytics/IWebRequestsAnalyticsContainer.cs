@@ -28,7 +28,7 @@ namespace DCL.WebRequests.Analytics
 
     public static class WebRequestsAnalyticsExtensions
     {
-        internal static async UniTask WithAnalytics<T>(this T request, IWebRequestsAnalyticsContainer analyticsContainer, UniTask innerTask) where T: ITypedWebRequest
+        internal static async UniTask WithAnalyticsAsync<T>(this T request, IWebRequestsAnalyticsContainer analyticsContainer, UniTask innerTask) where T: ITypedWebRequest
         {
             try
             {

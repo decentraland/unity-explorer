@@ -19,7 +19,6 @@ using System.Threading;
 using DCL.LOD.Components;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.WebRequests.GenericHead;
 using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
 using UnityEngine;
@@ -141,7 +140,7 @@ namespace Global.Dynamic
 
             try
             {
-                await webRequestController.HeadAsync(new CommonArguments(url), new WebRequestUtils.NoOp<GenericHeadRequest>(), default(GenericHeadArguments), ct);
+                await webRequestController.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct).WithNoOpAsync();
             }
             catch (Exception)
             {

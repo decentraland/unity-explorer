@@ -119,11 +119,10 @@ namespace DCL.Ipfs
             URLAddress url = Url();
             return webRequestController.PostAsync(
                 new CommonArguments(url),
-                new WebRequestUtils.NoOp<GenericPostRequest>(),
                 GenericPostArguments.CreateWWWForm(form),
                 ct,
                 ReportCategory.REALM
-            );
+            ).WithNoOpAsync();
         }
 
         private URLAddress Url()

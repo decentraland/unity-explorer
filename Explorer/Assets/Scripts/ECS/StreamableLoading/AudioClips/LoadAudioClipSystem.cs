@@ -28,14 +28,14 @@ namespace ECS.StreamableLoading.AudioClips
         protected override async UniTask<StreamableLoadingResult<AudioClip>> FlowInternalAsync(GetAudioClipIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            var request = await webRequestController.GetAudioClipAsync(
+            var result = await webRequestController.GetAudioClipAsync(
                 intention.CommonArguments,
                 new GetAudioClipArguments(intention.AudioType),
                 new GetAudioClipWebRequest.CreateAudioClipOp(),
                 ct,
                 reportCategory: GetReportCategory());
 
-            return new StreamableLoadingResult<AudioClip>(request.Clip);
+            return new StreamableLoadingResult<AudioClip>(result);
         }
     }
 }

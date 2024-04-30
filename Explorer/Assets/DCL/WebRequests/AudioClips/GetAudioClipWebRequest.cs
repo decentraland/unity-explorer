@@ -22,14 +22,12 @@ namespace DCL.WebRequests
             UnityWebRequest = unityWebRequest;
         }
 
-        public struct CreateAudioClipOp : IWebRequestOp<GetAudioClipWebRequest>
+        public struct CreateAudioClipOp : IWebRequestOp<GetAudioClipWebRequest, AudioClip>
         {
-            public AudioClip Clip { get; private set; }
-
             /// <summary>
             ///     Creates the audio clip
             /// </summary>
-            public UniTask ExecuteAsync(GetAudioClipWebRequest webRequest, CancellationToken ct)
+            public UniTask<AudioClip?> ExecuteAsync(GetAudioClipWebRequest webRequest, CancellationToken ct)
             {
                 UnityWebRequest unityWebRequest = webRequest.UnityWebRequest;
 
@@ -37,14 +35,14 @@ namespace DCL.WebRequests
                 if (unityWebRequest.downloadedBytes > 1000000)
                     ((DownloadHandlerAudioClip)unityWebRequest.downloadHandler).streamAudio = true;
 
-                Clip = DownloadHandlerAudioClip.GetContent(unityWebRequest);
+                AudioClip clip = DownloadHandlerAudioClip.GetContent(unityWebRequest);
 
                 unityWebRequest.Dispose();
 
-                Clip.SetDebugName(webRequest.url);
+                clip.SetDebugName(webRequest.url);
                 ProfilingCounters.AudioClipsAmount.Value++;
 
-                return UniTask.CompletedTask;
+                return UniTask.FromResult(clip)!;
             }
         }
 

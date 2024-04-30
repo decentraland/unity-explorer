@@ -37,9 +37,15 @@ namespace DCL.WebRequests
         /// <summary>
         /// Does nothing with the web request
         /// </summary>
-        public readonly struct NoOp<TWebRequest> : IWebRequestOp<TWebRequest> where TWebRequest : struct, ITypedWebRequest
+        public readonly struct NoOp<TWebRequest> : IWebRequestOp<TWebRequest, NoResult> where TWebRequest : struct, ITypedWebRequest
         {
-            public UniTask ExecuteAsync(TWebRequest webRequest, System.Threading.CancellationToken ct) => UniTask.CompletedTask;
+            public UniTask<NoResult> ExecuteAsync(TWebRequest webRequest, System.Threading.CancellationToken ct) =>
+                UniTask.FromResult(new NoResult());
+        }
+
+        public readonly struct NoResult
+        {
+
         }
     }
 }

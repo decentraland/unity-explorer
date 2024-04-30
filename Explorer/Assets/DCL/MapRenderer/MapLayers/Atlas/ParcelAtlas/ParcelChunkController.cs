@@ -41,9 +41,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas
             var url = $"{CHUNKS_API}?center={mapPosition.x},{mapPosition.y}&width={chunkSize}&height={chunkSize}&size={parcelSize}";
 
             Texture2D texture =
-                (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
+                await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
                     new GetTextureArguments(false),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct)).Texture;
+                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
 
             spriteRenderer.sprite =
                 Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);

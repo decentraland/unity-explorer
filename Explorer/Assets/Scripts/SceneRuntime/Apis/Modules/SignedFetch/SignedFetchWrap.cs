@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using JetBrains.Annotations;
@@ -47,42 +48,42 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     method ?? string.Empty
                 );
 
-                object CreatePromise() =>
+                UniTask<FlatFetchResponse> CreatePromise() =>
                     method switch
                     {
-                        null => webController.SignedFetchPostAsync(
+                        null => webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
                             request.url,
                             new FlatFetchResponse<GenericPostRequest>(),
                             request.init?.body ?? string.Empty,
                             cancellationTokenSource.Token
-                        ).ToPromise(),
-                        "post" => webController.PostAsync(
+                        ),
+                        "post" => webController.PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
                             request.url,
                             new FlatFetchResponse<GenericPostRequest>(),
                             GenericPostArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        ).ToPromise(),
-                        "get" => webController.GetAsync(
+                        ),
+                        "get" => webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
                             request.url,
                             new FlatFetchResponse<GenericGetRequest>(),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        ).ToPromise(),
-                        "put" => webController.PutAsync(
+                        ),
+                        "put" => webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
                             request.url,
                             new FlatFetchResponse<GenericPutRequest>(),
                             GenericPutArguments.CreateJsonOrDefault(request.init?.body),
                             cancellationTokenSource.Token,
                             headersInfo: headers,
                             signInfo: signInfo
-                        ).ToPromise(),
+                        ),
                         _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
                     };
 
-                return CreatePromise();
+                return CreatePromise().ToPromise();
         }
 
         public void Dispose()

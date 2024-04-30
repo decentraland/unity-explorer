@@ -41,7 +41,7 @@ namespace ECS.StreamableLoading.NFTShapes
 
             // texture request
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            var request = await webRequestController.GetTextureAsync(
+            var result = await webRequestController.GetTextureAsync(
                 new CommonLoadingArguments(URLAddress.FromString(imageUrl), attempts: 1),
                 new GetTextureArguments(false),
                 new GetTextureWebRequest.CreateTextureOp(TextureWrapMode.Clamp, FilterMode.Bilinear),
@@ -49,7 +49,7 @@ namespace ECS.StreamableLoading.NFTShapes
                 reportCategory: GetReportCategory()
             );
 
-            return new StreamableLoadingResult<Texture2D>(request.Texture!);
+            return new StreamableLoadingResult<Texture2D>(result);
         }
 
         private async UniTask<string> ImageUrlAsync(CommonArguments commonArguments, CancellationToken ct)

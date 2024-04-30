@@ -83,6 +83,16 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) =>
             new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, PATCH_GENERIC);
 
+        public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
+            this IWebRequestController controller,
+            CommonArguments commonArguments,
+            GenericHeadArguments arguments,
+            CancellationToken ct,
+            string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
+            WebRequestHeadersInfo? headersInfo = null,
+            WebRequestSignInfo? signInfo = null) =>
+            new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
+
         private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
             if (EnumUtils.HasFlag(flags, WRThreadFlags.SwitchBackToMainThread))
@@ -127,47 +137,35 @@ namespace DCL.WebRequests
                 this.controller = controller;
             }
 
-            internal UniTask<TOp> SendAsync<TOp>(TOp op) where TOp: struct, IWebRequestOp<TRequest> =>
-                controller.SendAsync(initializeRequest, commonArguments, args, op, ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes);
+            internal UniTask<TResult> SendAsync<TOp, TResult>(TOp op) where TOp: struct, IWebRequestOp<TRequest, TResult> =>
+                controller.SendAsync<TRequest, TWebRequestArgs, TOp, TResult>(initializeRequest, commonArguments, args, op, ct, reportCategory, headersInfo, signInfo, ignoreErrorCodes);
 
-            public async UniTask<T> CreateFromJson<T>(WRJsonParser jsonParser,
+            public UniTask WithNoOpAsync() =>
+                SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());
+
+            public UniTask<T> CreateFromJson<T>(WRJsonParser jsonParser,
                 WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null)
-            {
-                CreateFromJsonOp<T, TRequest> op = await SendAsync(new CreateFromJsonOp<T, TRequest>(jsonParser, threadFlags, createCustomExceptionOnFailure));
-                return op.Result!;
-            }
+                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
+                SendAsync<CreateFromJsonOp<T, TRequest>, T>(new CreateFromJsonOp<T, TRequest>(jsonParser, threadFlags, createCustomExceptionOnFailure));
 
-            public async UniTask<T> CreateFromNewtonsoftJsonAsync<T>(
+            public UniTask<T> CreateFromNewtonsoftJsonAsync<T>(
                 WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
                 CreateExceptionOnParseFail? createCustomExceptionOnFailure = null,
-                JsonSerializerSettings? serializerSettings = null)
-            {
-                CreateFromJsonOp<T, TRequest> op = await SendAsync(new CreateFromJsonOp<T, TRequest>(WRJsonParser.Newtonsoft, threadFlags, createCustomExceptionOnFailure, serializerSettings));
-                return op.Result!;
-            }
+                JsonSerializerSettings? serializerSettings = null) =>
+                SendAsync<CreateFromJsonOp<T, TRequest>, T>(new CreateFromJsonOp<T, TRequest>(WRJsonParser.Newtonsoft, threadFlags, createCustomExceptionOnFailure, serializerSettings));
 
-            public async UniTask<string> StoreTextAsync()
-            {
-                StoreTextOp<TRequest> op = await SendAsync(new StoreTextOp<TRequest>());
-                return op.Text;
-            }
+            public UniTask<string> StoreTextAsync() =>
+                SendAsync<StoreTextOp<TRequest>, string>(new StoreTextOp<TRequest>());
 
-            public async UniTask<byte[]> GetDataCopyAsync()
-            {
-                GetDataCopyOp<TRequest> op = await SendAsync(new GetDataCopyOp<TRequest>());
-                return op.Data;
-            }
+            public UniTask<byte[]> GetDataCopyAsync() =>
+                SendAsync<GetDataCopyOp<TRequest>, byte[]>(new GetDataCopyOp<TRequest>());
 
-            public async UniTask<T> OverwriteFromJsonAsync<T>(
+            public UniTask<T> OverwriteFromJsonAsync<T>(
                 T targetObject,
                 WRJsonParser jsonParser,
                 WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null)
-            {
-                OverwriteFromJsonAsyncOp<T, TRequest> op = await SendAsync(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, jsonParser, threadFlags, createCustomExceptionOnFailure));
-                return op.Target;
-            }
+                CreateExceptionOnParseFail? createCustomExceptionOnFailure = null) =>
+                SendAsync<OverwriteFromJsonAsyncOp<T, TRequest>, T>(new OverwriteFromJsonAsyncOp<T, TRequest>(targetObject, jsonParser, threadFlags, createCustomExceptionOnFailure));
 
             /// <summary>
             ///     Executes the web request and does nothing with the result
@@ -176,7 +174,7 @@ namespace DCL.WebRequests
             {
                 try
                 {
-                    await SendAsync(new WebRequestUtils.NoOp<TRequest>());
+                    await SendAsync<WebRequestUtils.NoOp<TRequest>, WebRequestUtils.NoResult>(new WebRequestUtils.NoOp<TRequest>());
                     return new WebRequestUtils.NoOp<TRequest>();
                 }
                 catch (UnityWebRequestException e) { throw newExceptionFactoryMethod(e); }
@@ -189,18 +187,13 @@ namespace DCL.WebRequests
         ///     Reads the text from the download handler and saves in the property
         /// </summary>
         /// <typeparam name="TRequest"></typeparam>
-        public struct StoreTextOp<TRequest> : IWebRequestOp<TRequest> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        public struct StoreTextOp<TRequest> : IWebRequestOp<TRequest, string> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
-            public string Text { get; private set; }
-
-            public UniTask ExecuteAsync(TRequest webRequest, CancellationToken ct)
-            {
-                Text = webRequest.UnityWebRequest.downloadHandler.text;
-                return UniTask.CompletedTask;
-            }
+            public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.text)!;
         }
 
-        public struct CreateFromJsonOp<T, TRequest> : IWebRequestOp<TRequest> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        public struct CreateFromJsonOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
             private readonly WRJsonParser jsonParser;
@@ -213,12 +206,9 @@ namespace DCL.WebRequests
                 this.threadFlags = threadFlags;
                 this.newtonsoftSettings = newtonsoftSettings;
                 this.createCustomExceptionOnFailure = createCustomExceptionOnFailure;
-                Result = default(T);
             }
 
-            public T? Result { get; private set; }
-
-            public async UniTask ExecuteAsync(TRequest request, CancellationToken ct)
+            public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 UnityWebRequest webRequest = request.UnityWebRequest;
                 string text = webRequest.downloadHandler.text;
@@ -230,11 +220,9 @@ namespace DCL.WebRequests
                     switch (jsonParser)
                     {
                         case WRJsonParser.Unity:
-                            Result = JsonUtility.FromJson<T>(text);
-                            return;
+                            return JsonUtility.FromJson<T>(text);
                         case WRJsonParser.Newtonsoft:
-                            Result = JsonConvert.DeserializeObject<T>(text, newtonsoftSettings);
-                            return;
+                            return JsonConvert.DeserializeObject<T>(text, newtonsoftSettings);
                         case WRJsonParser.NewtonsoftInEditor:
                             if (Application.isEditor)
                                 goto case WRJsonParser.Newtonsoft;
@@ -255,7 +243,7 @@ namespace DCL.WebRequests
             }
         }
 
-        public struct OverwriteFromJsonAsyncOp<T, TRequest> : IWebRequestOp<TRequest> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        public struct OverwriteFromJsonAsyncOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
             private readonly CreateExceptionOnParseFail? createCustomExceptionOnFailure;
             private readonly WRJsonParser jsonParser;
@@ -271,7 +259,7 @@ namespace DCL.WebRequests
                 this.createCustomExceptionOnFailure = createCustomExceptionOnFailure;
             }
 
-            public async UniTask ExecuteAsync(TRequest request, CancellationToken ct)
+            public async UniTask<T?> ExecuteAsync(TRequest request, CancellationToken ct)
             {
                 UnityWebRequest webRequest = request.UnityWebRequest;
 
@@ -285,10 +273,10 @@ namespace DCL.WebRequests
                     {
                         case WRJsonParser.Unity:
                             JsonUtility.FromJsonOverwrite(text, Target);
-                            return;
+                            return Target;
                         case WRJsonParser.Newtonsoft:
                             JsonConvert.PopulateObject(text, Target!);
-                            return;
+                            return Target;
                         case WRJsonParser.NewtonsoftInEditor:
                             if (Application.isEditor)
                                 goto case WRJsonParser.Newtonsoft;
@@ -308,15 +296,10 @@ namespace DCL.WebRequests
             }
         }
 
-        public struct GetDataCopyOp<TRequest> : IWebRequestOp<TRequest> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        public struct GetDataCopyOp<TRequest> : IWebRequestOp<TRequest, byte[]> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
         {
-            public byte[] Data { get; private set; }
-
-            public UniTask ExecuteAsync(TRequest webRequest, CancellationToken ct)
-            {
-                Data = webRequest.UnityWebRequest.downloadHandler.data;
-                return UniTask.CompletedTask;
-            }
+            public UniTask<byte[]?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.data)!;
         }
     }
 }

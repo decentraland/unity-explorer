@@ -34,7 +34,7 @@ namespace DCL.WebRequests
             return new GetTextureWebRequest(wr, commonArguments.URL);
         }
 
-        public struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest>
+        public struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
         {
             private readonly TextureWrapMode wrapMode;
             private readonly FilterMode filterMode;
@@ -43,20 +43,16 @@ namespace DCL.WebRequests
             {
                 this.wrapMode = wrapMode;
                 this.filterMode = filterMode;
-
-                Texture = null;
             }
 
-            public Texture2D? Texture { get; private set; }
-
-            public UniTask ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            public UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
-                Texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
-                Texture.wrapMode = wrapMode;
-                Texture.filterMode = filterMode;
-                Texture.SetDebugName(webRequest.url);
+                var texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
+                texture.wrapMode = wrapMode;
+                texture.filterMode = filterMode;
+                texture.SetDebugName(webRequest.url);
                 ProfilingCounters.TexturesAmount.Value++;
-                return UniTask.CompletedTask;
+                return UniTask.FromResult(texture)!;
             }
         }
     }

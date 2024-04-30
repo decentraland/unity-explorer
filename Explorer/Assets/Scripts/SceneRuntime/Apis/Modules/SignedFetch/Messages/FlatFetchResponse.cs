@@ -10,25 +10,37 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
 {
     [Serializable]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
-    public struct FlatFetchResponse<TRequest> : IWebRequestOp<TRequest> where TRequest : struct, ITypedWebRequest
+    public struct FlatFetchResponse
     {
-        public bool ok;
-        public long status;
-        public string statusText;
-        public string body;
-        public Dictionary<string, string> headers;
+        public readonly bool ok;
+        public readonly long status;
+        public readonly string statusText;
+        public readonly string body;
+        public readonly Dictionary<string, string> headers;
 
-        public UniTask ExecuteAsync(TRequest request, CancellationToken ct)
+        public FlatFetchResponse(bool ok, long status, string statusText, string body, Dictionary<string, string> headers)
+        {
+            this.ok = ok;
+            this.status = status;
+            this.statusText = statusText;
+            this.body = body;
+            this.headers = headers;
+        }
+    }
+
+    public struct FlatFetchResponse<TRequest> : IWebRequestOp<TRequest, FlatFetchResponse> where TRequest : struct, ITypedWebRequest
+    {
+        public UniTask<FlatFetchResponse> ExecuteAsync(TRequest request, CancellationToken ct)
         {
             var webRequest = request.UnityWebRequest;
 
-            ok = webRequest.result is UnityWebRequest.Result.Success;
-            status = webRequest.responseCode;
-            statusText = webRequest.responseCode.ToString()!;
-            body = webRequest.downloadHandler?.text ?? string.Empty;
-            headers = webRequest.GetResponseHeaders()!;
-
-            return UniTask.CompletedTask;
+            return UniTask.FromResult<FlatFetchResponse>(new FlatFetchResponse(
+                webRequest.result is UnityWebRequest.Result.Success,
+                webRequest.responseCode,
+                webRequest.responseCode.ToString()!,
+                webRequest.downloadHandler?.text ?? string.Empty,
+                webRequest.GetResponseHeaders()!
+            ));
         }
     }
 }

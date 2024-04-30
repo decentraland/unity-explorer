@@ -1,7 +1,6 @@
-using Cysharp.Threading.Tasks;
 using UnityEngine.Networking;
 
-namespace DCL.WebRequests.GenericHead
+namespace DCL.WebRequests
 {
     public readonly struct GenericHeadRequest : ITypedWebRequest, GenericDownloadHandlerUtils.IGenericDownloadHandlerRequest
     {

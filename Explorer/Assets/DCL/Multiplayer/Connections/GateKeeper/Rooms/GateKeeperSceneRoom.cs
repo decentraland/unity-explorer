@@ -60,11 +60,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
-            AdapterResponse response = (await webRequests.SignedFetchPostAsync(
+            AdapterResponse response = await webRequests.SignedFetchPostAsync(
                 sceneHandleUrl,
-                new GenericDownloadHandlerUtils.CreateFromJsonOp<AdapterResponse, GenericPostRequest>(WRJsonParser.Unity),
                 meta.ToJson(),
-                token)).Result;
+                token).CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
 
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");

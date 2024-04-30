@@ -19,10 +19,10 @@ namespace DCL.WebRequests
             this.web3IdentityCache = web3IdentityCache;
         }
 
-        public async UniTask<TWebRequestOp> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
-            where TWebRequestOp : IWebRequestOp<TWebRequest>
+            where TWebRequestOp : IWebRequestOp<TWebRequest, TResult>
         {
             int attemptsLeft = envelope.CommonArguments.TotalAttempts();
 
@@ -38,18 +38,17 @@ namespace DCL.WebRequests
 
                 try
                 {
-                    await request.WithAnalytics(analyticsContainer, request.SendRequest(envelope.Ct));
+                    await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
 
                     // if no exception is thrown Request is successful and the continuation op can be executed
-                    await op.ExecuteAsync(request, envelope.Ct);
+                    return await op.ExecuteAsync(request, envelope.Ct);
                     // After the operation is executed, the flow may continue in the background thread
-                    return op;
                 }
                 catch (UnityWebRequestException exception)
                 {
-                    // The operation will be in an unresolved state in that case
+                    // No result can be concluded in this case
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
-                        return op;
+                        return default(TResult);
 
                     attemptsLeft--;
 
