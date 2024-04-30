@@ -506,12 +506,16 @@ Shader "DCL/DCL_Toon"
         PackageRequirements
         {
              "com.unity.render-pipelines.universal": "10.5.0"
-        }    
-        Tags {
+        }
+        
+        Tags
+        {
             "RenderType"="Opaque"
             "RenderPipeline" = "UniversalPipeline"
         }
-        Pass {
+        
+        Pass
+        {
             Name "Outline"
             Tags {
                 "LightMode" = "Outline"
@@ -550,6 +554,50 @@ Shader "DCL/DCL_Toon"
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonHead.hlsl"
             #include "DCL_ToonOutline.hlsl"
+#endif
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Highlight"
+            Tags {
+                "LightMode" = "Highlight"
+            }
+            Cull [_SRPDefaultUnlitColMode]
+            ColorMask [_SPRDefaultUnlitColorMask]
+            Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref[_StencilNo]
+                Comp[_StencilComp]
+                Pass[_StencilOpPass]
+                Fail[_StencilOpFail]
+
+            }
+
+            HLSLPROGRAM
+            //#pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+            #pragma vertex vert
+            #pragma fragment frag
+
+            #pragma shader_feature_local _DCL_COMPUTE_SKINNING
+            #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
+            
+            //V.2.0.4
+            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO _IS_OUTLINE_CLIPPING_YES
+            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
+            //#pragma multi_compile_instancing
+            //#pragma instancing_options renderinglayer
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            // Outline is implemented in UniversalToonOutline.hlsl.
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
+            #include "DCL_ToonInput.hlsl"
+            #include "DCL_ToonHead.hlsl"
+            #include "DCL_ToonHighlight.hlsl"
 #endif
             ENDHLSL
         }
