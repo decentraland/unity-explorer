@@ -10,7 +10,7 @@ namespace DCL.Ipfs
         public const string DEFAULT_VERSION = "v3";
 
         public List<ContentDefinition>? content;
-        public string id;
+        public string? id;
         public T metadata;
         public List<string>? pointers;
         public string version;
