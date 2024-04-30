@@ -16,6 +16,8 @@ using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using Utility;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
@@ -31,15 +33,19 @@ namespace DCL.CharacterPreview
 
         public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
-            CharacterPreviewCameraSettings cameraSettings)
+            CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool)
         {
             globalWorld = world;
             characterPreviewAvatarContainer = avatarContainer;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewAvatarContainer, cameraSettings);
             this.characterPreviewContainerPool = characterPreviewContainerPool;
 
+            var parent = transformPool.Get();
+            parent.SetParent(avatarContainer.avatarParent, false);
+            parent.gameObject.layer = avatarContainer.avatarParent.gameObject.layer;
+
             characterPreviewEntity = world.Create(
-                new CharacterTransform(avatarContainer.avatarParent),
+                new CharacterTransform(parent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
                 new CharacterPreviewComponent(),
                 new CharacterEmoteComponent());
