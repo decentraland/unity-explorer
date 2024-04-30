@@ -6,12 +6,7 @@ module.exports.sendBinary = async function(message) {
 }
 
 // Needed for COMMS Messagebus support
-module.exports.send = async function(message) {
-    // message.message
-    // message.payload
-    // TODO: message variable should be converted to Uint8Array/ByteArray as Comms only parses that
-    
-    UnityCommunicationsControllerApi.Send(message.message)
-    
+module.exports.send = async function(message) {    
+    UnityCommunicationsControllerApi.Send(message.message)    
     return {};
 }

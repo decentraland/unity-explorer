@@ -101,9 +101,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public void Send(byte[] data)
         {
-            // if (!sceneStateProvider.IsCurrent)
-            //     return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
-
             EncodeAndSend();
 
             void EncodeAndSend()
@@ -113,14 +110,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
                 data.CopyTo(encodedMessage[1..]);
                 SendMessage(encodedMessage);
             }
-
-            // lock (eventsToProcess)
-            // {
-            //     object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
-            //     CleanUpReceivedMessages();
-            //
-            //     return result;
-            // }
         }
 
         private void CleanUpReceivedMessages()
@@ -133,7 +122,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private void SendMessage(ReadOnlySpan<byte> message)
         {
-            UnityEngine.Debug.Log($"PRAVS - SendMessage - ID: {sceneData.SceneEntityDefinition.id}");
             messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
@@ -150,8 +138,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
                 if (msgType == MsgType.String)
                 {
-                    UnityEngine.Debug.Log($"PRAVS - OnMessageReceived - wallet id: {receivedMessage.FromWalletId}; DecodedMessage: {Encoding.UTF8.GetString(decodedMessage)}");
-
                     SceneCommsMessages.Add(new CommsPayload()
                     {
                         sender = receivedMessage.FromWalletId,

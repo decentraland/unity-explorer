@@ -87,25 +87,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
         {
             try
             {
-                /*for (var i = 0; i < dataList.Count; i++)
-                {
-                    var message = (ITypedArray<byte>)dataList[i];
-                    var messageLength = message.Length;
-                    PoolableByteArray element = PoolableByteArray.EMPTY;
-
-                    if (lastInput.Count <= i)
-                    {
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
-                        lastInput.Add(element);
-                    }
-                    else
-                    {
-                        element = lastInput[i];
-                        instancePoolsProvider.RenewCrdtRawDataPoolFromScriptArray(message, ref element);
-                        lastInput[i] = element;
-                    }
-                }*/
-
                 api.Send(Encoding.UTF8.GetBytes(data));
             }
             catch (Exception e)
