@@ -364,10 +364,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3d1aa6130624aef8f718d1dc5f139a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialRealm: 0
+  initialRealm: 4
   targetScene: {x: 0, y: 0}
   targetWorld: MetadyneLabs.dcl.eth
-  customRealm: https://peer.decentraland.org
+  customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main
   showSplash: 1
   showAuthentication: 1
   showLoading: 1
