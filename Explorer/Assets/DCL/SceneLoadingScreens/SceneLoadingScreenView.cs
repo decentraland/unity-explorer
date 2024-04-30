@@ -124,5 +124,23 @@ namespace DCL.SceneLoadingScreens
 
             tips[index].gameObject.SetActive(false);
         }
+
+        public async UniTask ChangeBackgroundColor(Material material, string property, Color toColor, float duration, CancellationToken cancellationToken = default)
+        {
+            Color currentColor = material.GetColor(property);
+            float time = 0f;
+            while (time < duration)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+                Color newColor = Color.Lerp(currentColor, toColor, time / duration);
+                material.SetColor(property, newColor);
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                time += Time.deltaTime;
+            }
+            material.SetColor(property, toColor);
+        }
     }
 }

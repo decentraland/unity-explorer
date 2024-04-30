@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BackgroundMaterial
-  m_Shader: {fileID: 4800000, guid: 71bfc7caf99844aaf8be12500224136b, type: 3}
+  m_Shader: {fileID: 4800000, guid: 55469a28bf0d2b14db8e6452e462bd4c, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -29,9 +29,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Amplitude: 30
     - _BlurSize: 0.001
     - _ColorMask: 15
+    - _Frequency: 5
     - _Samples: 30
+    - _Speed: 1
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0
@@ -40,4 +43,8 @@ Material:
     - _UseUIAlphaClip: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color1: {r: 0.44705883, g: 0.14901963, b: 0.2894992, a: 1}
+    - _Color2: {r: 0.10654206, g: 0, b: 0.21509439, a: 1}
+    - _Color3: {r: 0.16860767, g: 0.0023424616, b: 0.17735851, a: 1}
+    - _Color4: {r: 0.12169808, g: 0, b: 0.16226411, a: 1}
   m_BuildTextureStacks: []
