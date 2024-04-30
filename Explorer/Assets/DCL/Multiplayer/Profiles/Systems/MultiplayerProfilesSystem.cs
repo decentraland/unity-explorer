@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Profiles.Systems
     ///     4 auto flow of avatar
     /// </summary>
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(AvatarInstantiatorSystem))]
+    [UpdateAfter(typeof(FinishAvatarMatricesCalculationSystem))]
     public partial class MultiplayerProfilesSystem : BaseUnityLoopSystem
     {
         private readonly IRemoteAnnouncements remoteAnnouncements;
