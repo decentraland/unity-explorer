@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.CharacterPreview;
+using DCL.UI;
 using System;
 using System.Collections.Generic;
 
@@ -18,6 +19,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
         public event Action<string> FilterCategoryEvent;
         public event Action<AvatarWearableCategoryEnum> FilterCategoryByEnumEvent;
+        public event Action<BackpackSections>? ChangedBackpackSectionEvent;
         public event Action PublishProfileEvent;
 
         public event Action<string> SearchEvent;
@@ -57,5 +59,8 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendEmoteSlotSelect(int slot) =>
             EmoteSlotSelectEvent?.Invoke(slot);
+
+        public void SendChangedBackpackSectionEvent(BackpackSections backpackSections) =>
+            ChangedBackpackSectionEvent?.Invoke(backpackSections);
     }
 }

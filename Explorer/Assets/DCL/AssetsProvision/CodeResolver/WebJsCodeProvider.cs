@@ -16,9 +16,7 @@ namespace DCL.AssetsProvision.CodeResolver
 
         public async UniTask<string> GetJsCodeAsync(URLAddress url, CancellationToken cancellationToken = default)
         {
-            GenericGetRequest rqs = await webRequestController.GetAsync(new CommonArguments(url), cancellationToken);
-            string text = rqs.UnityWebRequest.downloadHandler.text;
-            rqs.UnityWebRequest.Dispose();
+            string text = await webRequestController.GetAsync(new CommonArguments(url), cancellationToken).StoreTextAsync();
             return text;
         }
     }

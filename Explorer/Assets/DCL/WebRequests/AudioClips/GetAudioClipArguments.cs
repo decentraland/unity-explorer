@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace DCL.WebRequests.AudioClips
+namespace DCL.WebRequests
 {
     public struct GetAudioClipArguments
     {

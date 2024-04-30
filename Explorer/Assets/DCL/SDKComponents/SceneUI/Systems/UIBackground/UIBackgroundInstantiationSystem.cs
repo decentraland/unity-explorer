@@ -93,20 +93,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             if (uiBackgroundComponent.Status != LifeCycle.LoadingInProgress ||
                 uiBackgroundComponent.TexturePromise == null ||
+                uiBackgroundComponent.TexturePromise.Value.IsConsumed ||
                 !frameTimeBudgetProvider.TrySpendBudget() ||
                 !memoryBudgetProvider.TrySpendBudget())
                 return;
 
-            if (uiBackgroundComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
+            var texturePromise = uiBackgroundComponent.TexturePromise.Value;
+
+            if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
             {
                 if (promiseResult.Succeeded)
-                {
                     // Backgrounds with texture
                     UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
-                    uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
-                }
                 else
                     ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
+                uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
+
+                // Write value back as it's nullable (and can't be accessed by ref)
+                uiBackgroundComponent.TexturePromise = texturePromise;
             }
         }
 

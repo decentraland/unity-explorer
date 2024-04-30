@@ -34,7 +34,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             try
             {
-                return await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), new AssetBundleLoadingMutex(), Array.Empty<AssetBundleData>(),
+                return await LoadAssetBundleSystem.CreateAssetBundleDataAsync(assetBundle, null, typeof(GameObject), "",new AssetBundleLoadingMutex(), Array.Empty<AssetBundleData>(),
                     ReportCategory.ASSET_BUNDLES, CancellationToken.None);
             }
             catch (Exception e)
