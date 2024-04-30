@@ -64,11 +64,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.systemGroupsUpdateGate = systemGroupsUpdateGate;
             this.exceptionsHandler = exceptionsHandler;
 
-            deserializeBatchSampler = CustomSampler.Create("DeserializeBatch");
-            worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer");
-            outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
-            crdtProcessMessagesSampler = CustomSampler.Create("CRDTProcessMessage");
-            applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
+            deserializeBatchSampler = CustomSampler.Create("DeserializeBatch")!;
+            worldSyncBufferSampler = CustomSampler.Create("WorldSyncBuffer")!;
+            outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages")!;
+            crdtProcessMessagesSampler = CustomSampler.Create("CRDTProcessMessage")!;
+            applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer))!;
         }
 
         public void Dispose()
