@@ -52,7 +52,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         {
             string adapterUrl = await currentAdapterAddress.AdapterUrlAsync(token);
             string metadata = FixedMetadata.Default.ToJson();
-            GenericPostRequest result = await webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
+            var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.fixedAdapter;
             ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");

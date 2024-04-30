@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: HedgeLeafYellow
+  m_Shader: {fileID: 4800000, guid: d7dd1c3f4cba1d441a7d295a168bac0d, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _ENVIRONMENTREFLECTIONS_OFF
+  - _SIMPLE_LIGHTING
+  - _SPECULARHIGHLIGHTS_OFF
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: _TranslucencyDirect
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BaseMap:
+        m_Texture: {fileID: 2800000, guid: c2414e7bcfd629947bbc160950db49a1, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ExtraTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 2800000, guid: baac77a69801b814db973a5b99aa0733, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SubsurfaceTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TranslucencyMap:
+        m_Texture: {fileID: 2800000, guid: 8ae7a19dd7c05ad4c904853b127a609f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WindMap:
+        m_Texture: {fileID: 2800000, guid: 58ee3d953f2ad1d4bb6dce9e0821b8c0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AdvancedLighting: 1
+    - _AlphaClip: 0
+    - _AlphaToCoverage: 0
+    - _AngleFading: 0
+    - _BendFlattenStrength: 1
+    - _BendInfluence: 1
+    - _BendMode: 0
+    - _BendPushStrength: 1
+    - _Billboard: 0
+    - _BillboardKwToggle: 0
+    - _BillboardShadowFade: 0.5
+    - _Blend: 0
+    - _BumpScale: 1
+    - _ColorMapHeight: 0
+    - _ColorMapStrength: 0.15
+    - _Cull: 0
+    - _Cutoff: 0.5
+    - _Darkening: 0.487
+    - _DstBlend: 0
+    - _EnvironmentReflections: 0
+    - _FadeAngleThreshold: 15
+    - _FadingOn: 0
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
+    - _HueVariationHeight: 0
+    - _HueVariationKwToggle: 0
+    - _LightingMode: 1
+    - _Metallic: 0
+    - _NormalFlattenDepthNormals: 0
+    - _NormalFlattening: 0.5
+    - _NormalMapKwToggle: 0
+    - _NormalSpherify: 0
+    - _NormalSpherifyMask: 0
+    - _OcclusionStrength: 0.5
+    - _PerspectiveCorrection: 0.5
+    - _QueueOffset: 0
+    - _ReceiveShadows: 1
+    - _Scalemap: 0
+    - _ShadowBiasCorrection: 0
+    - _Smoothness: 0.074
+    - _SmoothnessTextureChannel: 0
+    - _SpecularAmount: 0
+    - _SpecularHighlights: 0
+    - _SpherifyNormals: 1
+    - _SrcBlend: 1
+    - _SubsurfaceIndirect: 0.25
+    - _SubsurfaceKwToggle: 0
+    - _Surface: 0
+    - _Translucency: 1
+    - _TranslucencyDirect: 0.41
+    - _TranslucencyFalloff: 1.76
+    - _TranslucencyIndirect: 0
+    - _TranslucencyOffset: 1
+    - _TwoSided: 0
+    - _VertexColorBendingChannel: 0
+    - _VertexColorShadingChannel: 0
+    - _VertexColorWindChannel: 0
+    - _VertexDarkening: 0.2
+    - _WindAmbientStrength: 0.1
+    - _WindFlutter: 0.559
+    - _WindGustFreq: 0.33
+    - _WindGustSpeed: 5
+    - _WindGustStrength: 0.055
+    - _WindGustTint: 0.08
+    - _WindObjectRand: 1
+    - _WindQuality: 0
+    - _WindRandSpeed: 1
+    - _WindRandStrength: 0.5
+    - _WindSpeed: 3.44
+    - _WindStr: 0.067
+    - _WindStrength: 0.128
+    - _WindStrengths: 1
+    - _WindSwinging: 0.1
+    - _WindVertexRand: 1
+    - _WorkflowMode: 1
+    - _ZWrite: 1
+    m_Colors:
+    - _BaseColor: {r: 0.8666667, g: 0.5497813, b: 0.11764705, a: 1}
+    - _BendTint: {r: 0, g: 0.81831217, b: 1, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _FadeFar: {r: 50, g: 100, b: 0, a: 0}
+    - _FadeNear: {r: 0.25, g: 0.5, b: 0, a: 0}
+    - _FadeParams: {r: 50, g: 100, b: 0, a: 0}
+    - _HueVariation: {r: 1, g: 0.26142192, b: 0.031372547, a: 0.46666667}
+    - _HueVariationColor: {r: 1, g: 0.5, b: 0, a: 0.1}
+    - _LODDebugColor: {r: 1, g: 1, b: 1, a: 1}
+    - _NormalParams: {r: 0, g: 1, b: 0, a: 0}
+    - _ScalemapInfluence: {r: 0, g: 1, b: 0, a: 0}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _SubsurfaceColor: {r: 1, g: 1, b: 1, a: 1}
+    - _WindDirection: {r: 1, g: 0, b: 1, a: 0}
+    - _WindSpeed: {r: 0, g: 0, b: 0, a: 0}
+  m_BuildTextureStacks: []
+--- !u!114 &5473917896841254419
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
