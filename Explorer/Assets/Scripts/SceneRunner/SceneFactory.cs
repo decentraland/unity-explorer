@@ -17,8 +17,6 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
@@ -157,7 +155,7 @@ namespace SceneRunner
 
             // Per scene instance dependencies
             var ecsMutexSync = new MutexSync();
-            var crdtProtocol = new CRDTProtocol();
+            var crdtProtocol = new LogCRDTProtocol(new CRDTProtocol());
             InstancePoolsProvider instancePoolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
             CRDTPooledMemoryAllocator crdtMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             var crdtDeserializer = new CRDTDeserializer(crdtMemoryAllocator);
