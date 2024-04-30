@@ -8,6 +8,7 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System.Collections;
 using System.Threading;
@@ -67,7 +68,7 @@ namespace SceneRuntime.Factory.Tests
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
                 SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
-                sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineApi(engineApi, Substitute.For<ICommunicationsControllerAPI>(), sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert

@@ -231,7 +231,7 @@ namespace SceneRunner
             var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
             var simpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
 
-            sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
+            sceneRuntime.RegisterEngineApi(engineAPI, communicationsControllerAPI, exceptionsHandler);
 
             sceneRuntime.RegisterAll(
                 exceptionsHandler,
