@@ -80,7 +80,8 @@ namespace Global
                                                         .WithProtobufSerializer()
                                                         .WithPool(
                                                              onGet: SDKComponentBuilderExtensions.SetAsDirty,
-                                                             onRelease: pbe => pbe.Reset())
+                                                             onRelease: pbe => pbe.Reset(),
+                                                             useLog: true)
                                                         .Build())
                .Add(SDKComponentBuilder<PBVideoEvent>.Create(ComponentID.VIDEO_EVENT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBCameraMode>.Create(ComponentID.CAMERA_MODE).AsProtobufResult())

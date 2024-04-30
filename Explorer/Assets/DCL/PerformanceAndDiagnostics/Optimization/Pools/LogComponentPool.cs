@@ -5,7 +5,7 @@ namespace DCL.Optimization.Pools
 {
     public class LogComponentPool<T> : IComponentPool<T> where T: class
     {
-        private const string PREFIX = "LogComponentPool:";
+        private const string PREFIX = "LogComponentPool";
         private static readonly string COMPONENT_NAME = typeof(T).Name;
         private readonly IComponentPool<T> origin;
         private readonly Action<string> log;
