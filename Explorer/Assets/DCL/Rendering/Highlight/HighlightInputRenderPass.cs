@@ -9,7 +9,7 @@ namespace DCL.Rendering.Highlight
     {
         public class HighlightInputRenderPass : ScriptableRenderPass
         {
-            private const string profilerTag = "_HighlightInputPass";
+            private const string profilerTag = "Custom Pass: Highlight Input";
 
             //private RTHandle destinationHandle;
             private readonly ShaderTagId m_ShaderTagId = new ("HighLightInput");
@@ -53,7 +53,7 @@ namespace DCL.Rendering.Highlight
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
-                CommandBuffer cmd = CommandBufferPool.Get("_DepthNormalsPass");
+                CommandBuffer cmd = CommandBufferPool.Get("_HighlightInputPass");
 
                 using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
