@@ -80,7 +80,7 @@ namespace DCL.AvatarRendering.Emotes
         // when moving or jumping we detect the emote cancellation and we take care of getting rid of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
+        private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform)
         {
             float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
             float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
@@ -142,7 +142,7 @@ namespace DCL.AvatarRendering.Emotes
 
                     AudioClip? audioAsset = emote.AudioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioAsset, emote.IsLooping(), in avatarView, ref emoteComponent))
+                    if (!emotePlayer.Play(mainAsset, audioAsset, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                     emoteComponent.EmoteUrn = emoteId;

@@ -300,8 +300,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise,
-            ref IEmote emote, ref BodyShape bodyShape)
+        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -357,12 +356,24 @@ namespace DCL.AvatarRendering.Emotes
                         manifest: manifest, cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
 
+                TryCreateAudioClipPromise(component, intention.BodyShape);
+
                 component.IsLoading = true;
                 World.Create(promise, component, intention.BodyShape);
                 return true;
             }
 
             return false;
+        }
+
+        private void TryCreateAudioClipPromise(IEmote component, BodyShape intentionBodyShape)
+        {
+            AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
+
+            foreach (AvatarAttachmentDTO.Content item in content)
+            {
+                if (item.file.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)) { Debug.Log("Download: " + item.hash); }
+            }
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
