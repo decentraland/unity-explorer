@@ -114,10 +114,8 @@ namespace Global.Dynamic
             showAuthentication = true;
             showLoading = true;
             enableLOD = true;
-
+            enableLandscape = true;
 #endif
-
-            //enableLandscape = true;
 #endif
 
             // Hides the debug UI during the initial flow
