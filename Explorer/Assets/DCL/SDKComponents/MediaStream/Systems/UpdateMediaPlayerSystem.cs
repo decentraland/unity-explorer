@@ -100,7 +100,8 @@ namespace DCL.SDKComponents.MediaStream
         {
             if (!sdkComponent.IsDirty) return;
 
-            if (component.URL != url)
+            sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl);
+            if (component.URL != url && component.URL != localMediaUrl)
             {
                 component.MediaPlayer.CloseCurrentStream();
 
