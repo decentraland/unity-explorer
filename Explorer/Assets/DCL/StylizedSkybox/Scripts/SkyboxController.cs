@@ -130,12 +130,8 @@ public class SkyboxController : MonoBehaviour
         {
             RenderSettings.fog = true;
             /*
-            RenderSettings.fogMode = FogMode.Exponential;
             RenderSettings.fogDensity = 0.001f;
             */
-            RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogStartDistance = 200;
-            RenderSettings.fogEndDistance = 2500;
         }
 
         isInitialized = true;
