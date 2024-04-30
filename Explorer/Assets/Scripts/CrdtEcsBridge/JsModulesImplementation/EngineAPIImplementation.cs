@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
+using Utility.CustomSamplers;
 using Utility.Multithreading;
 
 namespace CrdtEcsBridge.JsModulesImplementation
@@ -86,12 +87,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // Deserialize messages from the byte array
             List<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
 
-            deserializeBatchSampler.Begin();
-
-            // TODO add metrics to understand bottlenecks better
-            crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
-
-            deserializeBatchSampler.End();
+            using (var _ = deserializeBatchSampler.MeasureScope())
+            {
+                // TODO add metrics to understand bottlenecks better
+                crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
+            }
 
             worldSyncBufferSampler.Begin();
 
