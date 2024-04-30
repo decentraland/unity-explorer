@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.MediaStream
         [None(typeof(MediaPlayerComponent))]
         private void CreateAudioStream(in Entity entity, ref PBAudioStream sdkComponent)
         {
-            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume, autoPlay: sdkComponent.HasPlaying && sdkComponent.Playing);
+            CreateMediaPlayer(entity, sdkComponent.Url, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
         [Query]
@@ -59,25 +59,17 @@ namespace DCL.SDKComponents.MediaStream
         [All(typeof(VideoTextureComponent))]
         private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
         {
-            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume, sdkComponent.HasPlaying && sdkComponent.Playing, OnComplete);
-            return;
-
-            void OnComplete(MediaPlayer mediaPlayer) => mediaPlayer.SetPlaybackProperties(sdkComponent);
+            CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
-        private void CreateMediaPlayer(in Entity entity, string url, bool hasVolume, float volume, bool autoPlay, Action<MediaPlayer> onComplete = null)
+        private void CreateMediaPlayer(in Entity entity, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
             MediaPlayerComponent component = CreateMediaPlayerComponent(url, hasVolume, volume);
 
             if (component.State != VideoState.VsError)
-            {
-                MediaPlayer mediaPlayer = component.MediaPlayer;
-                component.OpenMediaPromise.CheckIfReachableAsync(webRequestController, component.URL, component.Cts.Token).SuppressCancellationThrow().Forget();
-                // mediaPlayer.OpenMediaIfReachableAsync(webRequestController, component.URL, autoPlay, component.Cts.Token, OnComplete).SuppressCancellationThrow().Forget();
-                // void OnComplete() => onComplete?.Invoke(mediaPlayer);
-            }
+                component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, component.Cts.Token).SuppressCancellationThrow().Forget();
 
             World.Add(entity, component);
         }
