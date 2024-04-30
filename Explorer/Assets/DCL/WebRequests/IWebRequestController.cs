@@ -150,7 +150,7 @@ namespace DCL.WebRequests
 
             try
             {
-                await controller.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct);
+                await controller.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct).WithNoOpAsync();
             }
             catch (Exception)
             {
