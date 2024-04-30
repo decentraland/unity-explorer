@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             if (system is UITransformInstantiationSystem transformInstantiationSystem)
                 instantiationSystem = transformInstantiationSystem;
             else
-                instantiationSystem = new UITransformInstantiationSystem(world, canvas, poolsRegistry, entitiesMap);
+                instantiationSystem = new UITransformInstantiationSystem(world, canvas, poolsRegistry);
 
             var input = new PBUiTransform();
             world.Add(entity, input);

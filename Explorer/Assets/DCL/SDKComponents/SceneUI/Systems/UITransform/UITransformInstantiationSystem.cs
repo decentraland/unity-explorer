@@ -2,7 +2,6 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
-using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -10,7 +9,6 @@ using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
-using System.Collections.Generic;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
@@ -24,13 +22,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         private readonly UIDocument canvas;
         private readonly IComponentPool<UITransformComponent> transformsPool;
-        private readonly IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap;
 
         public UITransformInstantiationSystem(World world, UIDocument canvas,
-            IComponentPoolsRegistry poolsRegistry, IReadOnlyDictionary<CRDTEntity, Entity> entitiesMap) : base(world)
+            IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            this.entitiesMap = entitiesMap;
             transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
         }
 

@@ -23,15 +23,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [SetUp]
         public void SetUp()
         {
-            CreateEntities();
-
             system = new UITransformSortingSystem(world);
         }
 
         [Test]
-        [Repeat(5)]
-        public void SortChildren()
+        public void SortChildren([Values(429673, 23458458, 12, 445, 33068)] int seed)
         {
+            CreateEntities(seed);
+
             // Act
             system.Update(0);
 
@@ -42,7 +41,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             CollectionAssert.AreEqual(expected, actual);
         }
 
-        private void CreateEntities()
+        private void CreateEntities(int seed)
         {
             entitiesMap = new Dictionary<CRDTEntity, Entity>();
 
@@ -50,7 +49,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             entitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRoot = world.Create(root);
 
             // shuffle randomly
-            var rng = new Random();
+            var rng = new Random(seed);
 
             int[] copy = ORDER.ToArray();
             int n = ORDER.Length;
