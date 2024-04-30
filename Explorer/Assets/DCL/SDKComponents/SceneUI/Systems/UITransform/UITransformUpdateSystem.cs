@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         private void CheckUITransformOutOfScene([Data] bool isCurrent, ref UITransformComponent uiTransformComponent)
         {
             // Ignore all the child transforms
-            if (uiTransformComponent.Parent != EntityReference.Null)
+            if (uiTransformComponent.RelationData.parent != EntityReference.Null)
                 return;
 
             // Depending on the scene state, we add or remove the root transform from the canvas
