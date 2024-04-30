@@ -136,5 +136,9 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
             material.SetInteger(arrayID, DEFAULT_SLOT_INDEX);
             material.SetTexture(textureID, defaultSlotArray);
         }
+        
+        public TextureFormat GetTextureFormat() =>
+            textureFormat;
+        
     }
 }
