@@ -1,7 +1,6 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
-using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -62,7 +61,7 @@ namespace Global
                                                              onRelease: raycastHitResult =>
                                                              {
                                                                  // Return hits to their own pool
-                                                                 for (var i = 0; i < raycastHitResult.Hits.Count; i++)
+                                                                 for (var i = 0; i < raycastHitResult.Hits!.Count; i++)
                                                                      raycastHitPool.Release(raycastHitResult.Hits[i]);
                                                              })
                                                         .Build())
