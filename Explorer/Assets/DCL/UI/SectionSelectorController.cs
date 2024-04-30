@@ -14,6 +14,10 @@ namespace DCL.UI
 
         void Deactivate();
 
+        void Animate(int triggerId);
+
+        void ResetAnimator();
+
         RectTransform GetRectTransform();
     }
 
@@ -21,6 +25,9 @@ namespace DCL.UI
     {
         private readonly Dictionary<T, ISection> sections;
         private T previousSection;
+        private static readonly int ACTIVE = Animator.StringToHash("Active");
+        private static readonly int OUT = Animator.StringToHash("Out");
+        private static readonly int IN = Animator.StringToHash("In");
 
         public SectionSelectorController(Dictionary<T, ISection> sections, T initialSection)
         {
@@ -28,24 +35,30 @@ namespace DCL.UI
             previousSection = initialSection;
         }
 
+        public void SetAnimationState(bool isOn, TabSelectorView selectorToggle)
+        {
+            if (selectorToggle.tabAnimator == null)
+                return;
+
+            if(isOn)
+                selectorToggle.tabAnimator.SetTrigger(ACTIVE);
+            else
+            {
+                selectorToggle.tabAnimator.Rebind();
+                selectorToggle.tabAnimator.Update(0);
+            }
+        }
+
         public async UniTaskVoid OnTabSelectorToggleValueChangedAsync(bool isOn, TabSelectorView selectorToggle, T section, CancellationToken ct, bool animate = true)
         {
-            selectorToggle.SelectedImage.gameObject.SetActive(isOn);
-            selectorToggle.UnselectedImage.gameObject.SetActive(!isOn);
-            selectorToggle.SelectedText.SetActive(isOn);
-            selectorToggle.UnselectedText.SetActive(!isOn);
-            selectorToggle.SelectedBackground.gameObject.SetActive(isOn);
-
             if (!isOn || EnumUtils.Equals(section, previousSection))
                 return;
 
+            SetAnimationState(true, selectorToggle);
+
             if (animate)
             {
-                await AnimatePanelsAsync(
-                    sections[previousSection],
-                    sections[section],
-                    section,
-                    ct);
+                AnimatePanelsAsync(sections[previousSection], sections[section], section, ct);
             }
             else
             {
@@ -58,44 +71,27 @@ namespace DCL.UI
             }
         }
 
+        public void ResetAnimators()
+        {
+            foreach (var keyValuePair in sections)
+            {
+                keyValuePair.Value.ResetAnimator();
+            }
+        }
+
         private void SetPanelsPosition(RectTransform panelClosing, RectTransform panelOpening)
         {
             panelClosing.anchoredPosition = new Vector2(panelClosing.rect.width, 0);
             panelOpening.anchoredPosition = Vector2.zero;
         }
 
-        private async UniTask AnimatePanelsAsync(ISection panelClosing, ISection panelOpening, T newSection, CancellationToken ct)
+        private void AnimatePanelsAsync(ISection panelClosing, ISection panelOpening, T newSection, CancellationToken ct)
         {
             panelOpening.Activate();
-
-            RectTransform openingRectTransform = panelOpening.GetRectTransform();
-            RectTransform closingRectTransform = panelClosing.GetRectTransform();
-            openingRectTransform.gameObject.SetActive(true);
-
-            closingRectTransform.anchoredPosition = Vector2.zero;
-            openingRectTransform.anchoredPosition = new Vector2(closingRectTransform.rect.width, 0);
-
-            var closingTask = closingRectTransform.DOAnchorPos(new Vector2(-closingRectTransform.rect.width, 0), 1f)
-                                                  .SetEase(Ease.OutCubic)
-                                                  .ToUniTask(cancellationToken: ct);
-
-            var openingTask = openingRectTransform.DOAnchorPos(Vector2.zero, 1f)
-                                                  .SetEase(Ease.OutCubic)
-                                                  .ToUniTask(cancellationToken: ct);
-
-            try { await UniTask.WhenAll(closingTask, openingTask).AttachExternalCancellation(ct); }
-            catch (Exception e) when (e is not OperationCanceledException) { throw; }
-            finally
-            {
-                //Ensures that if cancelled the closing panel is in the correct position and disabled
-                closingRectTransform.anchoredPosition = new Vector2(-closingRectTransform.rect.width, 0);
-                panelClosing.Deactivate();
-                closingRectTransform.gameObject.SetActive(false);
-
-                //Ensures that if cancelled the panel is in the correct position
-                closingRectTransform.anchoredPosition = Vector2.zero;
-                previousSection = newSection;
-            }
+            panelOpening.ResetAnimator();
+            panelOpening.Animate(IN);
+            panelClosing.Animate(OUT);
+            previousSection = newSection;
         }
     }
 }
