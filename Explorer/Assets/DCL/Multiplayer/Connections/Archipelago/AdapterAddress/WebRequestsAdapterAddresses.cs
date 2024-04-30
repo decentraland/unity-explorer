@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
         {
             try
             {
-                GenericGetRequest result = await webRequestController.GetAsync(
+                var result = webRequestController.GetAsync(
                     new CommonArguments(URLAddress.FromString(aboutUrl)),
                     token,
                     ReportCategory.ARCHIPELAGO_REQUEST
