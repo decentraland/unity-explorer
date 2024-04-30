@@ -1,12 +1,12 @@
-﻿#ifndef DCL_OUTLINE_VERTEX_INCLUDED
-#define DCL_OUTLINE_VERTEX_INCLUDED
+﻿#ifndef DCL_HIGHLIGHT_VERTEX_INCLUDED
+#define DCL_HIGHLIGHT_VERTEX_INCLUDED
 
 // Includes
-#include "Assets/DCL/Rendering/Outline/Outline_Data.hlsl"
+#include "Assets/DCL/Rendering/Highlight/Highlight_Data.hlsl"
 
-ol_v2f ol_vert(ol_appdata IN)
+hl_v2f hl_vert(hl_appdata IN)
 {
-    ol_v2f OUT;
+    hl_v2f OUT;
 
     #if UNITY_UV_STARTS_AT_TOP
         const float2 vertexPositions[3] =
@@ -52,4 +52,4 @@ ol_v2f ol_vert(ol_appdata IN)
     return OUT;
 }
 
-#endif // DCL_OUTLINE_VERTEX_INCLUDED
+#endif // DCL_HIGHLIGHT_VERTEX_INCLUDED

@@ -1,4 +1,4 @@
-﻿Shader "Outline/DepthNormals"
+﻿Shader "Highlight/HighlightInput"
 {
     Properties
     {

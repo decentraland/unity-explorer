@@ -3,49 +3,49 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace DCL.Rendering.Avatar
+namespace DCL.Rendering.Highlight
 {
-    public partial class OutlineRendererFeature : ScriptableRendererFeature
+    public partial class HighlightRendererFeature : ScriptableRendererFeature
     {
-        public class DepthNormalsRenderPass : ScriptableRenderPass
+        public class HighlightInputRenderPass : ScriptableRenderPass
         {
-            private const string profilerTag = "_DepthNormalsPass";
+            private const string profilerTag = "_HighlightInputPass";
 
             //private RTHandle destinationHandle;
-            private readonly ShaderTagId m_ShaderTagId = new ("DepthNormals");
-            private ReportData m_ReportData = new ("DCL_RenderFeature_Outline_DepthNormalsPass", ReportHint.SessionStatic);
+            private readonly ShaderTagId m_ShaderTagId = new ("HighLightInput");
+            private ReportData m_ReportData = new ("DCL_RenderFeature_Highlight_InputPass", ReportHint.SessionStatic);
 
-            private Material depthNormalsMaterial;
-            private RTHandle depthNormalsRTHandle_Colour;
-            private RTHandle depthNormalsRTHandle_Depth;
-            private RenderTextureDescriptor depthNormalsRTDescriptor_Colour;
-            private RenderTextureDescriptor depthNormalsRTDescriptor_Depth;
+            private Material highLightInputMaterial;
+            private RTHandle highLightRTHandle_Colour;
+            private RTHandle highLightRTHandle_Depth;
+            private RenderTextureDescriptor highLightRTDescriptor_Colour;
+            private RenderTextureDescriptor highLightRTDescriptor_Depth;
 
             private FilteringSettings m_FilteringSettings;
 
-            public DepthNormalsRenderPass()
+            public HighlightInputRenderPass()
             {
                 m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
             }
 
-            public void Setup(Material _depthNormalsMaterial,
-                RTHandle _depthNormalsRTHandle_Colour,
-                RenderTextureDescriptor _depthNormalsRTDescriptor_Colour,
-                RTHandle _depthNormalsRTHandle_Depth,
-                RenderTextureDescriptor _depthNormalsRTDescriptor_Depth)
+            public void Setup(Material _highLightInputMaterial,
+                                RTHandle _highLightRTHandle_Colour,
+                                RenderTextureDescriptor _highLightRTDescriptor_Colour,
+                                RTHandle _highLightRTHandle_Depth,
+                                RenderTextureDescriptor _highLightRTDescriptor_Depth)
             {
-                depthNormalsMaterial = _depthNormalsMaterial;
-                depthNormalsRTHandle_Colour = _depthNormalsRTHandle_Colour;
-                depthNormalsRTDescriptor_Colour = _depthNormalsRTDescriptor_Colour;
-                depthNormalsRTHandle_Depth = _depthNormalsRTHandle_Depth;
-                depthNormalsRTDescriptor_Depth = _depthNormalsRTDescriptor_Depth;
+                highLightInputMaterial = _highLightInputMaterial;
+                highLightRTHandle_Colour = _highLightRTHandle_Colour;
+                highLightRTDescriptor_Colour = _highLightRTDescriptor_Colour;
+                highLightRTHandle_Depth = _highLightRTHandle_Depth;
+                highLightRTDescriptor_Depth = _highLightRTDescriptor_Depth;
             }
 
             // Configure the pass by creating a temporary render texture and
             // readying it for rendering
             public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
             {
-                ConfigureTarget(depthNormalsRTHandle_Colour, depthNormalsRTHandle_Depth);
+                ConfigureTarget(highLightRTHandle_Colour, highLightRTHandle_Depth);
                 ConfigureClear(ClearFlag.All, Color.black);
                 ConfigureColorStoreAction(RenderBufferStoreAction.Resolve);
                 ConfigureDepthStoreAction(RenderBufferStoreAction.DontCare);
@@ -65,7 +65,7 @@ namespace DCL.Rendering.Avatar
                     // m_FilteringSettings.renderingLayerMask = 2; //((uint)1 << outlineLayerMask);
                     // context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
                     m_FilteringSettings.renderingLayerMask = 31;
-                    drawSettings.overrideMaterial = depthNormalsMaterial;
+                    drawSettings.overrideMaterial = highLightInputMaterial;
                     context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
                 }
 
@@ -77,8 +77,8 @@ namespace DCL.Rendering.Avatar
 
             public void Dispose()
             {
-                depthNormalsRTHandle_Colour?.Release();
-                depthNormalsRTHandle_Depth?.Release();
+                highLightRTHandle_Colour?.Release();
+                highLightRTHandle_Depth?.Release();
             }
         }
     }

@@ -1,15 +1,15 @@
-﻿#ifndef DCL_OUTLINE_DATA_INCLUDED
-#define DCL_OUTLINE_DATA_INCLUDED
+﻿#ifndef DCL_HIGHLIGHT_DATA_INCLUDED
+#define DCL_HIGHLIGHT_DATA_INCLUDED
 
 #include "UnityCG.cginc"
 
-struct ol_appdata
+struct hl_appdata
 {
     uint vertexID : SV_VertexID;
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
-struct ol_v2f
+struct hl_v2f
 {
     float4 vertex           : SV_POSITION;
     float3 localTexcoord    : TEXCOORD0;    // Texcoord local to the update zone (== globalTexcoord if no partial update zone is specified)
@@ -19,4 +19,4 @@ struct ol_v2f
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
-#endif // DCL_OUTLINE_DATA_INCLUDED
+#endif // DCL_HIGHLIGHT_DATA_INCLUDED

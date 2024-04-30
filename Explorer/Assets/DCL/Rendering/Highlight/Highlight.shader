@@ -1,10 +1,7 @@
-﻿Shader "Avatar/Outline"
+﻿Shader "DCL/Highlight"
 {
     HLSLINCLUDE
         #pragma editor_sync_compilation
-        #include "Outline_Vert.hlsl"
-        #include "Outline_Render_Frag.hlsl"
-        #include "Outline_Draw_Frag.hlsl"
     ENDHLSL
 
     Properties
@@ -27,35 +24,40 @@
         Cull Off
         ZWrite Off
 
-        // 0 - OutlineRender
+        // 0 - Highlight Input
         Pass
         {
-            Name "OutlineRender"
+            Name "Highlight_Input"
 
             ZTest LEqual
             ZWrite Off
             Cull Off
 
+            
             HLSLPROGRAM
-                #pragma vertex ol_vert
-                #pragma fragment ol_Draw_frag
-                #pragma target 3.0                
+                #include "Highlight_Vert.hlsl"
+                #include "HighlightInput_Frag.hlsl"
+                #pragma vertex hl_vert
+                #pragma fragment hl_Input_frag
+                #pragma target 4.5                
             ENDHLSL
         }
 
-        // 1 - OutlineDraw
+        // 1 - Highlight Output
         Pass
         {
-            Name "OutlineDraw"
+            Name "Highlight_Output"
 
             ZTest Always
             ZWrite Off
             Cull Off
 
             HLSLPROGRAM
-                #pragma vertex ol_vert
-                #pragma fragment ol_Render_frag
-                #pragma target 3.0                
+                #include "Highlight_Vert.hlsl"
+                #include "HighlightOutput_Frag.hlsl"
+                #pragma vertex hl_vert
+                #pragma fragment hl_Output_frag
+                #pragma target 4.5                
             ENDHLSL
         }
     }

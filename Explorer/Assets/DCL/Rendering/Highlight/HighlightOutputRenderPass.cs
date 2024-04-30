@@ -3,25 +3,26 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace DCL.Rendering.Avatar
+namespace DCL.Rendering.Highlight
 {
-    public partial class OutlineRendererFeature : ScriptableRendererFeature
+    public partial class HighlightRendererFeature : ScriptableRendererFeature
     {
-        private class OutlineRenderPass : ScriptableRenderPass
+        private class HighlightOutputRenderPass : ScriptableRenderPass
         {
             private enum ShaderPasses
             {
-                OutlineRender = 0,
-                OutlineDraw = 1,
+                HighlightInput = 0,
+                HighlightOutput = 1,
             }
 
-            private const string profilerTag = "Custom Pass: Outline";
+            private const string profilerTag = "Custom Pass: Highlight";
 
             // Texture IDs for Outline Shader - defined in Outline.HLSL
-            private const string OUTLINE_TEXTURE_NAME = "_OutlineTexture";
+            private const string HIGHLIGHT_TEXTURE_NAME = "_OutlineTexture";
             private const string COLOUR_TEXTURE_NAME = "_CameraColorTexture";
             private const string DEPTH_TEXTURE_NAME = "_CameraDepthTexture";
             private const string DEPTHNORMALS_TEXTURE_NAME = "_CameraDepthNormalsTexture";
+
             private static readonly int s_OutlineTextureID = Shader.PropertyToID(OUTLINE_TEXTURE_NAME);
             private static readonly int s_ColourTextureID = Shader.PropertyToID(COLOUR_TEXTURE_NAME);
             private static readonly int s_DepthTextureID = Shader.PropertyToID(DEPTH_TEXTURE_NAME);
@@ -37,14 +38,14 @@ namespace DCL.Rendering.Avatar
             // Debug
             private ReportData m_ReportData = new ("DCL_RenderFeature_Outline_OutlinePass", ReportHint.SessionStatic);
 
-            private OutlineRendererFeature_Settings m_Settings;
+            private HighlightRendererFeature_Settings m_Settings;
 
             private Material outlineMaterial;
             private RTHandle outlineRTHandle;
             private RenderTextureDescriptor outlineRTDescriptor;
             private RTHandle depthNormalsRTHandle;
 
-            public void Setup(OutlineRendererFeature_Settings _Settings, Material _outlineMaterial, RTHandle _outlineRTHandle, RenderTextureDescriptor _outlineRTDescriptor, RTHandle _depthNormalsRTHandle)
+            public void Setup(HighlightRendererFeature_Settings _Settings, Material _outlineMaterial, RTHandle _outlineRTHandle, RenderTextureDescriptor _outlineRTDescriptor, RTHandle _depthNormalsRTHandle)
             {
                 m_Settings = _Settings;
                 outlineMaterial = _outlineMaterial;
@@ -73,7 +74,7 @@ namespace DCL.Rendering.Avatar
             // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
             public override void Execute(ScriptableRenderContext _context, ref RenderingData _renderingData)
             {
-                CommandBuffer cmd = CommandBufferPool.Get("_OutlinePass");
+                CommandBuffer cmd = CommandBufferPool.Get("_HighlightOutputPass");
 
                 using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
