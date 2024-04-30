@@ -53,7 +53,6 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
-        [SerializeField] private VideoPlayer splashAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic;
 
         private DynamicWorldContainer? dynamicWorldContainer;
@@ -288,7 +287,7 @@ namespace Global.Dynamic
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
         {
-            await UniTask.WaitUntil(() => splashAnimation.frame >= (long)(splashAnimation.frameCount - 1),
+            await UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
                 cancellationToken: ct);
         }
 
