@@ -14,6 +14,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
+using DCL.Profiles;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -106,7 +107,27 @@ namespace DCL.Multiplayer.Profiles.Entities
         private void TryCreateRemoteEntity(in RemoteProfile profile, World world)
         {
             if (entityParticipantTable.Has(profile.WalletId))
+            {
+                var existingParticipantEntity = entityParticipantTable.Entity(profile.WalletId);
+                ref Profile existingProfile = ref world.TryGetRef<Profile>(existingParticipantEntity, out bool containsProfile);
+
+                if (!containsProfile)
+                {
+                    world.Add(existingParticipantEntity, profile.Profile);
+                    // Force to update the avatar from the profile
+                    profile.Profile.IsDirty = true;
+                    
+                    return;
+                }
+                
+                if (existingProfile.Version == profile.Profile.Version) return;
+                
+                world.Set(existingParticipantEntity, profile.Profile);
+                // Force to update the avatar from the profile
+                profile.Profile.IsDirty = true;
+
                 return;
+            }
 
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
