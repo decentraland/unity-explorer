@@ -11,7 +11,6 @@ using System;
 using System.Threading;
 using UnityEngine;
 using Utility.PriorityQueue;
-using static DCL.CharacterMotion.Components.CharacterAnimationComponent;
 
 namespace DCL.Multiplayer.Movement.Systems
 {

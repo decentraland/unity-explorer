@@ -16,7 +16,7 @@ namespace DCL.AvatarRendering.AvatarShape.GPUSkinning
     ///     It is crucial to schedule it as early as possible to give Unity some space to decide
     ///     how to distribute workload
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateBefore(typeof(AvatarInstantiatorSystem))]
     public partial class StartAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {

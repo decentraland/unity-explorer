@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     [LogCategory(ReportCategory.AVATAR)]
     [UpdateBefore(typeof(AvatarInstantiatorSystem))]
     public partial class MakeVertsOutBufferDefragmentationSystem : BaseUnityLoopSystem

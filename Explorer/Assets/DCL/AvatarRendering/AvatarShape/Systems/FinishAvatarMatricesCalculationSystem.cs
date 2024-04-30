@@ -9,7 +9,7 @@ using ECS.LifeCycle.Components;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
     public partial class FinishAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
