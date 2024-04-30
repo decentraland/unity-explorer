@@ -169,7 +169,7 @@ namespace CrdtEcsBridge.OutgoingMessages
 
         internal readonly struct PendingMessage
         {
-            public readonly IMessage Message;
+            public readonly IMessage? Message;
             public readonly CRDTEntity Entity;
             public readonly SDKComponentBridge Bridge;
             public readonly CRDTMessageType MessageType;
@@ -179,7 +179,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             /// </summary>
             public readonly int Timestamp;
 
-            public PendingMessage(IMessage message, SDKComponentBridge bridge, CRDTEntity entity, CRDTMessageType messageType, int timestamp = 0)
+            public PendingMessage(IMessage? message, SDKComponentBridge bridge, CRDTEntity entity, CRDTMessageType messageType, int timestamp = 0)
             {
                 Message = message;
                 Bridge = bridge;
