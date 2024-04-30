@@ -43,8 +43,8 @@ namespace DCL.Interaction.PlayerOriginated.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GlobalColliderEntityInfo GetEntityInfo() =>
-            entityInfo!.Value;
+        public GlobalColliderEntityInfo? GetEntityInfo() =>
+            entityInfo;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Collider GetCollider() =>
