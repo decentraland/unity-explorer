@@ -5,9 +5,9 @@ namespace DCL.WebRequests
 {
     public readonly struct GenericPatchArguments
     {
-        public readonly List<IMultipartFormSection> MultipartFormSections;
+        public readonly List<IMultipartFormSection>? MultipartFormSections;
         public readonly string PatchData;
-        public readonly string ContentType;
+        public readonly string? ContentType;
 
         private GenericPatchArguments(List<IMultipartFormSection> multipartFormSections)
         {
