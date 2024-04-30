@@ -2,10 +2,10 @@ Shader "Custom/LavaFlow"
 {
     Properties 
     {
-        _Color1 ("Color 1", Color) = (.957, .804, .623, 1)
-        _Color2 ("Color 2", Color) = (.192, .384, .933, 1)
-        _Color3 ("Color 3", Color) = (.910, .510, .800, 1)
-        _Color4 ("Color 4", Color) = (0.350, .71, .953, 1)
+        _Color1 ("Color 1", Color) = (.957, .804, .623)
+        _Color2 ("Color 2", Color) = (.192, .384, .933)
+        _Color3 ("Color 3", Color) = (.910, .510, .800)
+        _Color4 ("Color 4", Color) = (0.350, .71, .953)
         _Speed ("Speed", float) = 1
         _Frequency ("Frequency", float) = 5
         _Amplitude ("Amplitude", float) = 30
@@ -25,7 +25,7 @@ Shader "Custom/LavaFlow"
         Lighting Off
         ZWrite Off
         ZTest [unity_GUIZTestMode]
-        Blend One OneMinusSrcAlpha
+        Blend SrcAlpha OneMinusSrcAlpha
 
         Pass 
         {

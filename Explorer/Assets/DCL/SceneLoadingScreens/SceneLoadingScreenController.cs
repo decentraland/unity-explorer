@@ -111,8 +111,8 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask FadeOutAsync(CancellationToken ct)
         {
-            var contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.3f).ToUniTask(cancellationToken: ct);
-            var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.6f).ToUniTask(cancellationToken: ct);
+            var contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.5f).ToUniTask(cancellationToken: ct);
+            var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.7f).ToUniTask(cancellationToken: ct);
             await UniTask.WhenAll(contentTask, rootTask);
         }
 
