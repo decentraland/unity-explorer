@@ -62,9 +62,7 @@ namespace DCL.Interaction.Systems
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderEntityInfo previousEntityInfo);
             hoverStateComponent.Reset();
 
-            bool canHover = !eventSystem.IsPointerOverGameObject();
-
-            if (canHover && raycastResult.TryGetValidHit(out GlobalColliderEntityInfo entityInfo))
+            if (CanHover() && raycastResult.TryGetValidHit(out GlobalColliderEntityInfo entityInfo))
             {
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
@@ -77,10 +75,7 @@ namespace DCL.Interaction.Systems
                     if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents? pbPointerEvents))
                     {
                         bool newEntityWasHovered = !candidateForHoverLeaveIsValid
-                                                   || (
-                                                       previousEntityInfo.EcsExecutor.World != world
-                                                       && previousEntityInfo.ColliderEntityInfo.EntityReference != entityRef
-                                                   );
+                                                   || EntityIsNotFromPreviousWorld(previousEntityInfo, world, entityRef);
 
                         // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
                         if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
@@ -104,6 +99,14 @@ namespace DCL.Interaction.Systems
                 HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousEntityInfo);
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool CanHover() =>
+            eventSystem.IsPointerOverGameObject() == false;
+
+        private static bool EntityIsNotFromPreviousWorld(GlobalColliderEntityInfo previousEntityInfo, World world, EntityReference entityRef) =>
+            previousEntityInfo.EcsExecutor.World != world
+            && previousEntityInfo.ColliderEntityInfo.EntityReference != entityRef;
 
         private void SetupHighlights(World world, bool isAtDistance, EntityReference entityRef)
         {
