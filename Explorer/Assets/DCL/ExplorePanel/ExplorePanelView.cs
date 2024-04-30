@@ -51,7 +51,8 @@ namespace DCL.ExplorePanel
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
             if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
-            UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
+            // TODO (Fran): Uncomment this line after fixing the UIAudioPlaybackController for allowing multiple audio sources
+            //UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
             AnimationTransform.anchoredPosition = new Vector2(0, canvas.pixelRect.width);
             return AnimationTransform.DOAnchorPos(Vector2.zero, 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
@@ -60,7 +61,8 @@ namespace DCL.ExplorePanel
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
             if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
-            UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
+            // TODO (Fran): Uncomment this line after fixing the UIAudioPlaybackController for allowing multiple audio sources
+            //UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
             AnimationTransform.anchoredPosition = Vector2.zero;
             return AnimationTransform.DOAnchorPos(new Vector2(canvas.pixelRect.width, 0), 0.5f).SetEase(Ease.OutCubic).ToUniTask(cancellationToken: ct);
