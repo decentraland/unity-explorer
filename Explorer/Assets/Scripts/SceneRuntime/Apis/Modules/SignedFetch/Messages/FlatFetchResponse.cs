@@ -34,7 +34,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch.Messages
         {
             var webRequest = request.UnityWebRequest;
 
-            return UniTask.FromResult<FlatFetchResponse>(new FlatFetchResponse(
+            return UniTask.FromResult(new FlatFetchResponse(
                 webRequest.result is UnityWebRequest.Result.Success,
                 webRequest.responseCode,
                 webRequest.responseCode.ToString()!,

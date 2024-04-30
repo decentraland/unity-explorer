@@ -20,7 +20,7 @@ namespace DCL.WebRequests
 
         public static readonly ISet<long> IGNORE_NOT_FOUND = new HashSet<long> { 404 };
 
-        UniTask<TResult> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
+        UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>;
