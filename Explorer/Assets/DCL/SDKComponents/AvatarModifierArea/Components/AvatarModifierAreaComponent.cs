@@ -1,5 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Components
 {
@@ -9,7 +9,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Components
 
         public AvatarModifierAreaComponent(IEnumerable<string> excludedIds)
         {
-            ExcludedIds = new HashSet<string>();
+            ExcludedIds = HashSetPool<string>.Get();
             SetExcludedIds(excludedIds);
         }
 
@@ -22,6 +22,11 @@ namespace DCL.SDKComponents.AvatarModifierArea.Components
                 // Profile component stores UserId in lowercase...
                 ExcludedIds.Add(excludedId.ToLower());
             }
+        }
+
+        public void Dispose()
+        {
+            HashSetPool<string>.Release(ExcludedIds);
         }
     }
 }
