@@ -88,7 +88,7 @@ namespace DCL.UI
         private void AnimatePanelsAsync(ISection panelClosing, ISection panelOpening, T newSection, CancellationToken ct)
         {
             panelOpening.Activate();
-
+            panelOpening.ResetAnimator();
             panelOpening.Animate(IN);
             panelClosing.Animate(OUT);
             previousSection = newSection;

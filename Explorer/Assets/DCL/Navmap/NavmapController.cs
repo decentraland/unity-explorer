@@ -146,6 +146,7 @@ namespace DCL.Navmap
 
         public void Activate()
         {
+            cameraController?.Release(this);
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
