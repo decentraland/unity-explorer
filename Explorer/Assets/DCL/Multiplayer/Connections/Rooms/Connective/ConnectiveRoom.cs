@@ -29,6 +29,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
     {
         private readonly PrewarmAsyncDelegate prewarmAsync;
         private readonly CycleStepDelegate runConnectCycleStepAsync;
+        private readonly Action<string> log;
 
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
@@ -53,11 +54,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public ConnectiveRoom(
             PrewarmAsyncDelegate prewarmAsync,
-            CycleStepDelegate runConnectCycleStepAsync
+            CycleStepDelegate runConnectCycleStepAsync,
+            Action<string> log
         )
         {
             this.prewarmAsync = prewarmAsync;
             this.runConnectCycleStepAsync = runConnectCycleStepAsync;
+            this.log = log;
         }
 
         public void Start()
@@ -111,6 +114,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
+            log($"Trying to connect to started: {connectionString}");
+
             var newRoom = roomPool.Get()!;
 
             var credentials = new ConnectionStringCredentials(connectionString);
@@ -125,6 +130,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             await AssignNewRoomAndReleasePreviousAsync(newRoom, token);
             roomState.Set(IConnectiveRoom.State.Running);
+            log($"Trying to connect to finished successfully: {connectionString}");
         }
 
         private async UniTask AssignNewRoomAndReleasePreviousAsync(IRoom newRoom, CancellationToken token)

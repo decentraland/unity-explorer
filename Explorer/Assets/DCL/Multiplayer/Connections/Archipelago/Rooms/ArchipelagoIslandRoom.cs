@@ -59,7 +59,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             connectiveRoom = new RenewableConnectiveRoom(
                 () => new ConnectiveRoom(
                     PrewarmAsync,
-                    SendHeartbeatAsync
+                    SendHeartbeatAsync,
+                    m => ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"ArchipelagoIslandRoom: {m}")
                 )
             );
         }

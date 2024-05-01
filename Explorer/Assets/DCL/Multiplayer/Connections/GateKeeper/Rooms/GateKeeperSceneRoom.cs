@@ -29,7 +29,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
-                RunConnectCycleStepAsync
+                RunConnectCycleStepAsync,
+                m => ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"GateKeeperSceneRoom: {m}")
             );
         }
 
@@ -61,9 +62,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             AdapterResponse response = await webRequests.SignedFetchPostAsync(
-                sceneHandleUrl,
-                meta.ToJson(),
-                token).CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+                                                             sceneHandleUrl,
+                                                             meta.ToJson(),
+                                                             token)
+                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
 
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");
