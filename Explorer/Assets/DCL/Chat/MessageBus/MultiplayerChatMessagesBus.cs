@@ -13,19 +13,20 @@ namespace DCL.Chat.MessageBus
 {
     public class MultiplayerChatMessagesBus : IChatMessagesBus
     {
-        private readonly IMessagePipesHub messagePipesHub;
+        private readonly IMessagePipe messagePipe;
         private readonly IProfileRepository profileRepository;
         private readonly IMessageDeduplication<double> messageDeduplication;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
         public MultiplayerChatMessagesBus(IMessagePipesHub messagePipesHub, IProfileRepository profileRepository, IMessageDeduplication<double> messageDeduplication)
+            : this(messagePipesHub.ScenePipe(), profileRepository, messageDeduplication) { }
+
+        public MultiplayerChatMessagesBus(IMessagePipe messagePipe, IProfileRepository profileRepository, IMessageDeduplication<double> messageDeduplication)
         {
-            this.messagePipesHub = messagePipesHub;
+            this.messagePipe = messagePipe;
             this.profileRepository = profileRepository;
             this.messageDeduplication = messageDeduplication;
-
-            messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
-            messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
+            messagePipe.Subscribe<Decentraland.Kernel.Comms.Rfc4.Chat>(Packet.MessageOneofCase.Chat, OnMessageReceived);
         }
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Chat> receivedMessage)
@@ -62,11 +63,10 @@ namespace DCL.Chat.MessageBus
                 throw new Exception("ChatMessagesBus is disposed");
 
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
-            SendTo(message, timestamp, messagePipesHub.IslandPipe());
-            SendTo(message, timestamp, messagePipesHub.ScenePipe());
+            SendTo(message, timestamp, messagePipe);
         }
 
-        private  void SendTo(string message, double timestamp, IMessagePipe messagePipe)
+        private void SendTo(string message, double timestamp, IMessagePipe messagePipe)
         {
             var chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             chat.Payload.Message = message;
