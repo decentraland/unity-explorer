@@ -28,6 +28,7 @@ namespace DCL.SDKComponents.MediaStream
             this.url = url;
 
             isReachable = await webRequestController.IsReachableAsync(URLAddress.FromString(this.url), ct);
+            ReportHub.Log(ReportCategory.MEDIA_STREAM, $"Resource <{url}> isReachable = <{isReachable}>");
 
             status = Status.Resolved;
         }
