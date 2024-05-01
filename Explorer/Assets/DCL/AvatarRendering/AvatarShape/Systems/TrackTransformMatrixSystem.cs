@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using System.Linq;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
@@ -30,8 +31,8 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!deleteEntityIntention.DeferDeletion && !avatarTransformMatrixComponent.disposed)
             {
-                ReportHub.LogError(ReportCategory.AVATAR, $"{nameof(AvatarTransformMatrixComponent)} was not disposed properly. Archetype:\n {World.GetArchetype(entity)}");
                 avatarTransformMatrixComponent.Dispose();
+                ReportHub.LogError(ReportCategory.AVATAR, $"{nameof(AvatarTransformMatrixComponent)} was not disposed properly. Archetype:\n {LogArchetype(World.GetArchetype(entity))}");
             }
         }
 
@@ -41,9 +42,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             if (!avatarTransformMatrixComponent.completed)
             {
-                ReportHub.LogError(ReportCategory.AVATAR, $"{nameof(AvatarTransformMatrixComponent)} was not completed properly. Archetype:\n {World.GetArchetype(entity)}");
                 avatarTransformMatrixComponent.CompleteBoneMatrixCalculations();
+                ReportHub.LogError(ReportCategory.AVATAR, $"{nameof(AvatarTransformMatrixComponent)} was not completed properly. {entity.ToString()} Archetype:\n {LogArchetype(World.GetArchetype(entity))}");
             }
+        }
+
+        private static string LogArchetype(Archetype archetype)
+        {
+            return string.Join(",", archetype.Types.Select(p => p.Type.Name));
         }
     }
 }

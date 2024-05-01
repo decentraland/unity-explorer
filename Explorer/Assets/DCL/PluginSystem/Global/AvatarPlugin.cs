@@ -1,18 +1,14 @@
-using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
-using DCL.AvatarRendering.AvatarShape.GPUSkinning;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.DemoScripts.Systems;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Character.Components;
 using DCL.Chat;
 using DCL.DebugUtilities;
-using DCL.ECSComponents;
 using DCL.Nametags;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -33,6 +29,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.Pool;
 using Utility;
 using Object = UnityEngine.Object;
+using StartAvatarMatricesCalculationSystem = DCL.AvatarRendering.AvatarShape.Systems.StartAvatarMatricesCalculationSystem;
 
 namespace DCL.PluginSystem.Global
 {

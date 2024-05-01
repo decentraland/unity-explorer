@@ -43,6 +43,8 @@ namespace DCL.CharacterPreview
             var parent = transformPool.Get();
             parent.SetParent(avatarContainer.avatarParent, false);
             parent.gameObject.layer = avatarContainer.avatarParent.gameObject.layer;
+            parent.name = "CharacterPreview";
+            parent.ResetLocalTRS();
 
             characterPreviewEntity = world.Create(
                 new CharacterTransform(parent),

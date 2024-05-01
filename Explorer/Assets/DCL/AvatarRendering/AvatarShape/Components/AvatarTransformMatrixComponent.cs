@@ -20,6 +20,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void ScheduleBoneMatrixCalculation(Matrix4x4 avatarWorldToLocalMatrix)
         {
+            if (disposed)
+                throw new ObjectDisposedException(nameof(AvatarTransformMatrixComponent), $"{nameof(ScheduleBoneMatrixCalculation)} called on the disposed component");
+
             if (!handle.IsCompleted)
                 return;
 
