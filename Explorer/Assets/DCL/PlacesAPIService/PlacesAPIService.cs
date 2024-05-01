@@ -13,7 +13,6 @@ namespace DCL.PlacesAPIService
 
         internal readonly Dictionary<string, PlacesData.PlaceInfo> placesById = new ();
         internal readonly Dictionary<Vector2Int, PlacesData.PlaceInfo> placesByCoords = new ();
-        internal readonly List<PlacesData.PlaceInfo> composedFavorites = new ();
         internal readonly Dictionary<string, bool> localFavorites = new ();
 
         private readonly IPlacesAPIClient client;
@@ -22,8 +21,8 @@ namespace DCL.PlacesAPIService
 
         //Favorites
         internal bool composedFavoritesDirty = true;
-        internal UniTaskCompletionSource<PlacesData.IPlacesAPIResponse> serverFavoritesCompletionSource;
-        private List<string> pointsOfInterestCoords;
+        internal UniTaskCompletionSource<PlacesData.IPlacesAPIResponse>? serverFavoritesCompletionSource;
+        private List<string>? pointsOfInterestCoords;
         private DateTime serverFavoritesLastRetrieval = DateTime.MinValue;
 
         public PlacesAPIService(IPlacesAPIClient client)
@@ -41,8 +40,8 @@ namespace DCL.PlacesAPIService
             else if (placesByCoords.TryGetValue(coords, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo place = await client.GetPlaceAsync(coords, ct);
-            CachePlace(place);
+            PlacesData.PlaceInfo? place = await client.GetPlaceAsync(coords, ct);
+            TryCachePlace(place);
             return place;
         }
 
@@ -53,8 +52,8 @@ namespace DCL.PlacesAPIService
             else if (placesById.TryGetValue(placeUUID, out PlacesData.PlaceInfo placeInfo))
                 return placeInfo;
 
-            PlacesData.PlaceInfo place = await client.GetPlaceAsync(placeUUID, ct);
-            CachePlace(place);
+            PlacesData.PlaceInfo? place = await client.GetPlaceAsync(placeUUID, ct);
+            TryCachePlace(place);
             return place;
         }
 
@@ -89,7 +88,7 @@ namespace DCL.PlacesAPIService
                 places = await client.GetPlacesByCoordsListAsync(coordsToRequest.Value, places, ct);
 
                 foreach (PlacesData.PlaceInfo place in places)
-                    CachePlace(place);
+                    TryCachePlace(place);
             }
 
             places.AddRange(alreadyCachedPlaces);
@@ -110,7 +109,7 @@ namespace DCL.PlacesAPIService
                 else { favorites = await client.GetFavoritesAsync(pageNumber, pageSize, disposeCts.Token); }
 
                 foreach (PlacesData.PlaceInfo place in favorites.Data)
-                    CachePlace(place);
+                    TryCachePlace(place);
 
                 composedFavoritesDirty = true;
                 source.TrySetResult(favorites);
@@ -165,10 +164,12 @@ namespace DCL.PlacesAPIService
             await client.SetPlaceVoteAsync(isUpvote, placeUUID, ct);
         }
 
-        internal void CachePlace(PlacesData.PlaceInfo placeInfo)
+        private void TryCachePlace(PlacesData.PlaceInfo? placeInfo)
         {
-            placesById[placeInfo.id] = placeInfo;
+            if (placeInfo == null)
+                return;
 
+            placesById[placeInfo.id] = placeInfo;
             foreach (Vector2Int placeInfoPosition in placeInfo.Positions) { placesByCoords[placeInfoPosition] = placeInfo; }
         }
 
