@@ -52,6 +52,14 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private CancellationTokenSource? cancellationTokenSource;
 
+        public ConnectiveRoom(PrewarmAsyncDelegate prewarmAsync, CycleStepDelegate runConnectCycleStepAsync, string logPrefix) : this(
+            prewarmAsync,
+            runConnectCycleStepAsync,
+            m => ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"Room log - {logPrefix}: {m}")
+        )
+        {
+        }
+
         public ConnectiveRoom(
             PrewarmAsyncDelegate prewarmAsync,
             CycleStepDelegate runConnectCycleStepAsync,

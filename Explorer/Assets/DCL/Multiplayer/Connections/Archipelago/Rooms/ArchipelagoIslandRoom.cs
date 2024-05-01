@@ -60,7 +60,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
                 () => new ConnectiveRoom(
                     PrewarmAsync,
                     SendHeartbeatAsync,
-                    m => ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"ArchipelagoIslandRoom: {m}")
+                    nameof(ArchipelagoIslandRoom)
                 )
             );
         }
@@ -70,6 +70,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         public UniTask StopAsync() =>
             UniTask.WhenAll(
+
                 //signFlow.DisconnectAsync(CancellationToken.None),
                 connectiveRoom.StopAsync()
             );

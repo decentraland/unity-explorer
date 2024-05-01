@@ -24,7 +24,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
                 RunConnectCycleStepAsync,
-                m => ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"FixedConnectiveRoom: {m}")
+                nameof(FixedConnectiveRoom)
             );
         }
 

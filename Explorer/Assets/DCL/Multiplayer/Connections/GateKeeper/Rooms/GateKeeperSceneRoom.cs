@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
                 RunConnectCycleStepAsync,
-                m => ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"GateKeeperSceneRoom: {m}")
+                nameof(GateKeeperSceneRoom)
             );
         }
 
