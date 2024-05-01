@@ -55,29 +55,29 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         [Query]
         private void RaycastFromCamera(ref CameraComponent camera, in CursorComponent cursorComponent)
         {
+            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
+
+            if (cursorComponent.CursorState == CursorState.Panning)
+            {
+                raycastResult.Reset();
+                return;
+            }
+
             Ray ray = CreateRay(in camera, in cursorComponent);
 
             // we are interested in one hit only
-
             bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, maxRaycastDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
 
-            raycastResult.OriginRay = ray;
+            raycastResult.SetRay(ray);
 
             if (hasHit && collidersGlobalCache.TryGetEntity(hitInfo.collider, out GlobalColliderEntityInfo entityInfo))
             {
-                raycastResult.UnityRaycastHit = hitInfo;
-                raycastResult.EntityInfo = entityInfo;
-
-                raycastResult.Distance =
-                    camera.Mode == CameraMode.FirstPerson
-                        ? hitInfo.distance
-                        : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
+                float distance = camera.Mode == CameraMode.FirstPerson ? hitInfo.distance : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
+                raycastResult.SetupHit(hitInfo, entityInfo, distance);
             }
             else
             {
-                raycastResult.UnityRaycastHit = default(RaycastHit);
-                raycastResult.EntityInfo = null;
+                raycastResult.Reset();
             }
         }
 
