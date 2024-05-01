@@ -32,7 +32,7 @@ jobs:
           echo "Ref: ${{ github.ref }}"
           echo "Label Name: ${{ github.event.label.name }}"
           echo "Is pull request a draft? ${GITHUB_EVENT_PATH}" && cat "${GITHUB_EVENT_PATH}" && echo "Pull request draft status: ${github.event.pull_request.draft}"
-    steps:
+          
       - name: Checkout code
         uses: actions/checkout@v3
 
