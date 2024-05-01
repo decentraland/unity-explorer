@@ -91,7 +91,7 @@ namespace DCL.Interaction.Systems
 
                         bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
 
-                        hoverStateComponent.Setup(raycastResult.UnityRaycastHit.collider!, isAtDistance);
+                        hoverStateComponent.Setup(raycastResult.GetCollider(), isAtDistance);
                         SetupHighlights(world, isAtDistance, entityRef);
                     }
                 }
