@@ -1,8 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
-using RenderHeads.Media.AVProVideo;
-using System;
 using System.Threading;
 
 namespace DCL.SDKComponents.MediaStream
@@ -36,7 +35,14 @@ namespace DCL.SDKComponents.MediaStream
         public bool IsReachableConsume(string url)
         {
             status = Status.Consumed;
-            return isReachable && this.url == url;
+
+            if (this.url != url)
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{url}>, but was <{this.url}>");
+
+            if (isReachable)
+                ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{this.url}>");
+
+            return true;
         }
     }
 }

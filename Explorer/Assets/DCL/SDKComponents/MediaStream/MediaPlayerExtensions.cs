@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.MediaStream
                 mediaPlayer.AudioVolume = 0f;
             else
             {
-                if (!hasVolume && mediaPlayer.AudioVolume != MediaPlayerComponent.DEFAULT_VOLUME)
+                if (!hasVolume)
                     mediaPlayer.AudioVolume = MediaPlayerComponent.DEFAULT_VOLUME;
                 else if (!Mathf.Approximately(mediaPlayer.AudioVolume, volume))
                     mediaPlayer.AudioVolume = volume;
