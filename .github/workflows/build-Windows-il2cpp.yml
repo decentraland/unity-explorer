@@ -44,6 +44,9 @@ jobs:
     timeout-minutes: 120
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || ${{ github.event.label.name == 'force-build' }}
     steps:
+      - name: Log Pull Request Draft Status
+        run: echo "Is pull request a draft? ${GITHUB_EVENT_PATH}" && cat "${GITHUB_EVENT_PATH}" && echo "Pull request draft status: ${github.event.pull_request.draft}"
+    steps:
       - name: Set SHA env variable
         run: |
           $eventName = "${{ github.event_name }}"
