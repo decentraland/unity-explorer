@@ -10,8 +10,10 @@ using DCL.EmotesWheel;
 using DCL.Input;
 using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Profiles.Self;
+using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using MVC;
 using System;
@@ -21,6 +23,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility.Multithreading;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
+using LoadAudioClipSystem = DCL.AvatarRendering.Emotes.LoadAudioClipSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -37,6 +40,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
+        private readonly AudioClipsCache audioClipsCache;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteCache emoteCache,
@@ -46,7 +50,8 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
-            DCLInput dclInput)
+            DCLInput dclInput,
+            CacheCleaner cacheCleaner)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -57,6 +62,9 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
+
+            audioClipsCache = new AudioClipsCache();
+            cacheCleaner.Register(audioClipsCache);
         }
 
         public override void Dispose()
@@ -81,6 +89,8 @@ namespace DCL.PluginSystem.Global
                 emoteCache, mutexSync);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
+
+            LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, mutexSync);
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)

@@ -44,6 +44,13 @@ namespace DCL.SDKComponents.AudioSources
             return true;
         }
 
+        public static Promise CreateAudioClipPromise(World world, string url, AudioType audioType, IPartitionComponent partitionComponent) =>
+            Promise.Create(world, new GetAudioClipIntention
+            {
+                CommonArguments = new CommonLoadingArguments(url),
+                AudioType = audioType,
+            }, partitionComponent);
+
         public static AudioType ToAudioType(this string url)
         {
             if (string.IsNullOrEmpty(url))

@@ -39,6 +39,8 @@ namespace ECS.StreamableLoading.AudioClips
                 listedCache.Add((key, cache[key]));
             }
 
+            Debug.Log("Added audio clip to cache");
+
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
         }
 

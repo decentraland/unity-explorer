@@ -13,6 +13,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -21,6 +22,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using Global.Dynamic;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -36,6 +38,7 @@ using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.Ava
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -57,6 +60,8 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
+        private readonly IRealmController containerRealmController;
+        private readonly URLBuilder urlBuilder;
 
         public LoadEmotesByPointersSystem(World world,
             IWebRequestController webRequestController,
@@ -71,6 +76,7 @@ namespace DCL.AvatarRendering.Emotes
             this.emoteCache = emoteCache;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            urlBuilder = new URLBuilder();
         }
 
         protected override void Update(float t)
@@ -81,6 +87,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeEmoteDTOQuery(World);
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
+            FinalizeAudioClipPromiseQuery(World);
         }
 
         protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(
@@ -130,7 +137,7 @@ namespace DCL.AvatarRendering.Emotes
             using PoolExtensions.Scope<List<EmoteDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
             await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
-               .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             lock (results) { results.AddRange(dtoPooledList.Value); }
         }
@@ -356,7 +363,7 @@ namespace DCL.AvatarRendering.Emotes
                         manifest: manifest, cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
 
-                TryCreateAudioClipPromise(component, intention.BodyShape);
+                TryCreateAudioClipPromise(component, intention.BodyShape, partitionComponent);
 
                 component.IsLoading = true;
                 World.Create(promise, component, intention.BodyShape);
@@ -366,13 +373,49 @@ namespace DCL.AvatarRendering.Emotes
             return false;
         }
 
-        private void TryCreateAudioClipPromise(IEmote component, BodyShape intentionBodyShape)
+        private void TryCreateAudioClipPromise(IEmote component, BodyShape intentionBodyShape, IPartitionComponent partitionComponent)
         {
             AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
 
             foreach (AvatarAttachmentDTO.Content item in content)
             {
-                if (item.file.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase)) { Debug.Log("Download: " + item.hash); }
+                var audioType = item.file.ToAudioType();
+
+                if (audioType == AudioType.UNKNOWN)
+                    continue;
+
+                urlBuilder.Clear();
+                urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
+                URLAddress url = urlBuilder.Build();
+
+                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, partitionComponent);
+                Debug.Log("Creating audio promise for: " + item.file);
+                World.Create(promise, component);
+            }
+        }
+
+        [Query]
+        private void FinalizeAudioClipPromise(in Entity entity, ref IEmote emote, ref AudioPromise promise)
+        {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+                return;
+            }
+
+            if (!promise.IsConsumed)
+            {
+                if (promise.TryConsume(World, out StreamableLoadingResult<AudioClip> result))
+                {
+                    if (result.Succeeded)
+                    {
+                        Debug.Log("SUCCESSSS!!!!");
+                        emote.AudioAssetResult = result;
+                    }
+
+                    World.Destroy(entity);
+                }
             }
         }
 
