@@ -9,12 +9,12 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
     public struct MetaData : IEquatable<MetaData>
     {
         public string realmName;
-        public string sceneId;
+        public string? sceneId;
 
         public MetaData(string realmName, string? sceneId)
         {
             this.realmName = realmName;
-            this.sceneId = sceneId ?? string.Empty;
+            this.sceneId = sceneId;
         }
 
         public string ToJson() =>

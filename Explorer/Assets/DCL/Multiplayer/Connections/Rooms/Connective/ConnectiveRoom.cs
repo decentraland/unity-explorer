@@ -21,9 +21,15 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
     public delegate UniTask PrewarmAsyncDelegate(CancellationToken token);
 
-    public delegate UniTask CycleStepDelegate(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token);
+    public delegate UniTask CycleStepDelegate(
+        ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate,
+        DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate,
+        CancellationToken token
+    );
 
     public delegate UniTask ConnectToRoomAsyncDelegate(string connectionString, CancellationToken token);
+
+    public delegate UniTask DisconnectCurrentRoomAsyncDelegate(CancellationToken token);
 
     public class ConnectiveRoom : IConnectiveRoom
     {
@@ -115,9 +121,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             while (token.IsCancellationRequested == false)
             {
-                await runConnectCycleStepAsync(TryConnectToRoomAsync, token);
+                await runConnectCycleStepAsync(TryConnectToRoomAsync, DisconnectCurrentRoomAsync, token);
                 await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
             }
+        }
+
+        private async UniTask DisconnectCurrentRoomAsync(CancellationToken token)
+        {
+            log($"Trying to disconnect current room started");
+            await AssignNewRoomAndReleasePreviousAsync(NullRoom.INSTANCE, token);
+            log($"Trying to disconnect current room finished");
         }
 
         private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)

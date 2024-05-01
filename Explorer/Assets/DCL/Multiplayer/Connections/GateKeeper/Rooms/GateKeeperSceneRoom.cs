@@ -46,9 +46,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public IRoom Room() =>
             connectiveRoom.Room();
 
-        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token)
+        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
         {
             MetaData meta = await metaDataSource.MetaDataAsync(token);
+
+            if (meta.sceneId == null)
+            {
+                await disconnectCurrentRoomAsyncDelegate(token);
+                return;
+            }
 
             if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running || meta.Equals(previousMetaData) == false)
             {
