@@ -33,6 +33,7 @@ concurrency:
 
 jobs:
   build:
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build')
     strategy:
       max-parallel: 1
       matrix:
@@ -42,7 +43,6 @@ jobs:
     name: Build
     runs-on: bigwin2022
     timeout-minutes: 120
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || ${{ github.event.label.name == 'force-build' }}
     steps:
       - name: Log Pull Request Status
         run: |
