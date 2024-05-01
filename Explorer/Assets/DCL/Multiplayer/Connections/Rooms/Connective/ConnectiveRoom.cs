@@ -129,7 +129,9 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         private async UniTask DisconnectCurrentRoomAsync(CancellationToken token)
         {
             log($"Trying to disconnect current room started");
+            roomState.Set(IConnectiveRoom.State.Stopping);
             await AssignNewRoomAndReleasePreviousAsync(NullRoom.INSTANCE, token);
+            roomState.Set(IConnectiveRoom.State.Stopped);
             log($"Trying to disconnect current room finished");
         }
 
