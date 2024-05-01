@@ -49,6 +49,7 @@ namespace ECS.StreamableLoading.AudioClips
             if (cache.TryGetValue(key, out AudioClipData? value))
             {
                 asset = value.AudioClip;
+                value.AddReference();
                 return true;
             }
 
