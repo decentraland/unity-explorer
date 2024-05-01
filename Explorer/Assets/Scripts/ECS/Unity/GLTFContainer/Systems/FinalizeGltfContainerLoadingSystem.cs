@@ -66,7 +66,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 return;
 
             if (component.State.Value == LoadingState.Loading
-                && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
+                && component.Promise.TrySafeConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
                 if (!result.Succeeded)
                 {

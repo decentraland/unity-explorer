@@ -96,6 +96,28 @@ namespace ECS.StreamableLoading.Common
         }
 
         /// <summary>
+        ///     Returns the result and deletes an entity if the loading is finished,
+        ///     if tried to be consumed a second time - return false
+        /// </summary>
+        public bool TrySafeConsume(World world, out StreamableLoadingResult<TAsset> result)
+        {
+            result = default(StreamableLoadingResult<TAsset>);
+
+            if (Result.HasValue)
+                return false;
+
+            if (world.TryGet(Entity, out result))
+            {
+                Result = result;
+                world.Destroy(Entity);
+                Entity = EntityReference.Null;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         ///     Destroys the loading entity
         /// </summary>
         public void Consume(World world)
