@@ -167,15 +167,14 @@ namespace DCL.CharacterPreview
 
         protected void OnModelUpdated()
         {
-            cancellationTokenSource.SafeCancelAndDispose();
-            cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             WrapInSpinnerAsync(cancellationTokenSource.Token).Forget();
         }
 
         private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
         {
             GameObject spinner = EnableSpinner();
-            await (previewController?.UpdateAvatar(previewAvatarModel, ct) ?? UniTask.CompletedTask);
+            await (previewController?.UpdateAvatarAsync(previewAvatarModel, ct) ?? UniTask.CompletedTask);
             DisableSpinner(spinner);
         }
 
