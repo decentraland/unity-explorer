@@ -29,7 +29,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsQualifiedByDistance(in PlayerOriginRaycastResult raycastResult, PBPointerEvents.Types.Info info) =>
-            !(raycastResult.Distance > info.MaxDistance);
+            !(raycastResult.GetDistance() > info.MaxDistance);
 
         /// <summary>
         ///     Adds hover input if the entry is qualified for listening to it

@@ -24,6 +24,7 @@ namespace DCL.Navmap
         private readonly FloatingPanelView floatingPanelView;
         private readonly HistoryRecordPanelView historyRecordPanelView;
         private readonly SearchResultPanelController searchResultPanelController;
+        private readonly DCLInput dclInput;
 
         private CancellationTokenSource cts;
         private bool isAlreadySelected = false;
@@ -37,12 +38,14 @@ namespace DCL.Navmap
             HistoryRecordPanelView historyRecordPanelView,
             IPlacesAPIService placesAPIService,
             FloatingPanelView floatingPanelView,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            DCLInput dclInput)
         {
             this.view = view;
             this.historyRecordPanelView = historyRecordPanelView;
             this.placesAPIService = placesAPIService;
             this.floatingPanelView = floatingPanelView;
+            this.dclInput = dclInput;
 
             searchResultPanelController = new SearchResultPanelController(searchResultPanelView, webRequestController);
             searchResultPanelController.OnResultClicked += ClickedResult;
@@ -50,6 +53,7 @@ namespace DCL.Navmap
             historyRecordPanelView.OnClickedHistoryRecord += ClickedHistoryResult;
 
             view.inputField.onSelect.AddListener((_) => OnSelectedSearchbarChange(true));
+            view.inputField.onDeselect.AddListener((_) => OnSelectedSearchbarChange(false));
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
             floatingPanelView.closeButton.onClick.AddListener(ClearSearch);
@@ -99,8 +103,16 @@ namespace DCL.Navmap
                 return;
 
             isAlreadySelected = isSelected;
+
             if (isSelected)
+            {
                 GetAndShowPreviousSearches();
+                dclInput.Shortcuts.Disable();
+            }
+            else
+            {
+                dclInput.Shortcuts.Enable();
+            }
         }
 
         private async UniTaskVoid SearchAndShowAsync(string searchText)
