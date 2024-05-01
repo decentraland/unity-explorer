@@ -57,7 +57,8 @@ namespace DCL.ExplorePanel
         {
             CanvasGroup.alpha = 0;
             if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
-            UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
+            // TODO (Fran): Uncomment this line after fixing the UIAudioPlaybackController for allowing multiple audio sources
+            //UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
             return CanvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
@@ -65,7 +66,8 @@ namespace DCL.ExplorePanel
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
             if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
-            UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
+            // TODO (Fran): Uncomment this line after fixing the UIAudioPlaybackController for allowing multiple audio sources
+            //UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
             return CanvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
