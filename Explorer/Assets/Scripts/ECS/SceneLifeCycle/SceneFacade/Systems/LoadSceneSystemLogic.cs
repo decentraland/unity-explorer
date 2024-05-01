@@ -68,7 +68,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
                 return ReadOnlyMemory<byte>.Empty;
 
-            return (await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)).GetDataCopy();
+            return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
         }
 
         private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, string reportCategory, CancellationToken ct)
@@ -77,7 +77,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             try
             {
-                SceneAbDto sceneAbDto = await (await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory))
+                SceneAbDto sceneAbDto = await (webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory))
                    .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 if (sceneAbDto.ValidateVersion())
@@ -111,7 +111,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             SceneMetadata target = intention.DefinitionComponent.Definition.metadata;
 
-            await (await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory))
+            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
                .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
