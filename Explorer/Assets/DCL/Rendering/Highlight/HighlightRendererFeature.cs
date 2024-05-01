@@ -21,7 +21,7 @@ namespace DCL.Rendering.Highlight
     public partial class HighlightRendererFeature : ScriptableRendererFeature
     {
         private const string k_ShaderName_HighlightInput = "DCL/Highlight";
-        private const string k_ShaderName_HighlightOutput = "Avatar/Outline";
+        private const string k_ShaderName_HighlightOutput = "DCL/Highlight";
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private HighlightRendererFeature_Settings m_Settings;
@@ -66,7 +66,7 @@ namespace DCL.Rendering.Highlight
 
                     if (m_ShaderHighlightInput == null)
                     {
-                        ReportHub.LogError(m_ReportData, "m_ShaderDepthNormals not found.");
+                        ReportHub.LogError(m_ReportData, "m_ShaderHighlightInput not found.");
                         return;
                     }
 
@@ -74,7 +74,7 @@ namespace DCL.Rendering.Highlight
 
                     if (highlightInputMaterial == null)
                     {
-                        ReportHub.LogError(m_ReportData, "depthNormalsMaterial not found.");
+                        ReportHub.LogError(m_ReportData, "highlightInputMaterial not found.");
                         return;
                     }
                 }
@@ -103,7 +103,7 @@ namespace DCL.Rendering.Highlight
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Colour = desc;
-                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour, highlightRTDescriptor_Colour, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_DepthNormals_ColourTexture");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour, highlightRTDescriptor_Colour, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture");
                 }
 
                 // Highlight - Depth Texture
@@ -130,7 +130,7 @@ namespace DCL.Rendering.Highlight
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Depth = desc;
-                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Depth, highlightRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_DepthNormals_DepthTexture");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Depth, highlightRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_DepthTexture");
                 }
 
                 highlightInputRenderPass.Setup(highlightInputMaterial, highlightRTHandle_Colour, highlightRTDescriptor_Colour, highlightRTHandle_Depth, highlightRTDescriptor_Depth);
@@ -144,7 +144,7 @@ namespace DCL.Rendering.Highlight
 
                     if (m_ShaderHighlightOutput == null)
                     {
-                        ReportHub.LogError(m_ReportData, "m_ShaderOutline not found.");
+                        ReportHub.LogError(m_ReportData, "m_ShaderHighlightOutput not found.");
                         return;
                     }
 
@@ -152,7 +152,7 @@ namespace DCL.Rendering.Highlight
 
                     if (highlightOutputMaterial == null)
                     {
-                        ReportHub.LogError(m_ReportData, "outlineMaterial not found.");
+                        ReportHub.LogError(m_ReportData, "highlightOutputMaterial not found.");
                         return;
                     }
                 }
@@ -166,11 +166,11 @@ namespace DCL.Rendering.Highlight
 
         public override void AddRenderPasses(ScriptableRenderer _renderer, ref RenderingData _renderingData)
         {
-            // DepthNormals
+            // Highlight Input
             if (highlightInputMaterial != null && m_ShaderHighlightInput != null && highlightRTHandle_Colour != null) { _renderer.EnqueuePass(highlightInputRenderPass); }
 
-            // Outline
-            if (highlightOutputMaterial != null && m_ShaderHighlightOutput != null) { _renderer.EnqueuePass(highlightOutputRenderPass); }
+            // HighLight Output
+            //if (highlightOutputMaterial != null && m_ShaderHighlightOutput != null) { _renderer.EnqueuePass(highlightOutputRenderPass); }
         }
 
         protected override void Dispose(bool _bDisposing)

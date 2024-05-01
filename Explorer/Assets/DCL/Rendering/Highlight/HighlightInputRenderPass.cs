@@ -12,7 +12,7 @@ namespace DCL.Rendering.Highlight
             private const string profilerTag = "Custom Pass: Highlight Input";
 
             //private RTHandle destinationHandle;
-            private readonly ShaderTagId m_ShaderTagId = new ("HighLightInput");
+            private readonly ShaderTagId m_ShaderTagId = new ("Highlight");
             private ReportData m_ReportData = new ("DCL_RenderFeature_Highlight_InputPass", ReportHint.SessionStatic);
 
             private Material highLightInputMaterial;
@@ -57,15 +57,8 @@ namespace DCL.Rendering.Highlight
 
                 using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
-                    // Create the draw settings, which configures a new draw call to the GPU
                     DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
-
-                    // We cant to render all objects using our material
-                    //uint outlineLayerMask = 0;
-                    // m_FilteringSettings.renderingLayerMask = 2; //((uint)1 << outlineLayerMask);
-                    // context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
-                    m_FilteringSettings.renderingLayerMask = 31;
-                    drawSettings.overrideMaterial = highLightInputMaterial;
+                    //drawSettings.overrideMaterial = highLightInputMaterial;
                     context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
                 }
 

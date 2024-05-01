@@ -44,12 +44,12 @@ namespace DCL.Rendering.Highlight
             private RenderTextureDescriptor highlightRTDescriptor;
             //private RTHandle depthNormalsRTHandle;
 
-            public void Setup(HighlightRendererFeature_Settings _Settings, Material _outlineMaterial, RTHandle _outlineRTHandle, RenderTextureDescriptor _outlineRTDescriptor, RTHandle _depthNormalsRTHandle)
+            public void Setup(HighlightRendererFeature_Settings _Settings, Material _highlightOutputMaterial, RTHandle _highlightRTHandle, RenderTextureDescriptor _highlightRTDescriptor)
             {
                 m_Settings = _Settings;
-                highlightOutputMaterial = _outlineMaterial;
-                highlightRTHandle = _outlineRTHandle;
-                highlightRTDescriptor = _outlineRTDescriptor;
+                highlightOutputMaterial = _highlightOutputMaterial;
+                highlightRTHandle = _highlightRTHandle;
+                highlightRTDescriptor = _highlightRTDescriptor;
                 //depthNormalsRTHandle = _depthNormalsRTHandle;
             }
 

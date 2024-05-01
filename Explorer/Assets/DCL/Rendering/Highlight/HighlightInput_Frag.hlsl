@@ -14,15 +14,15 @@ float4 _OutlineColor;
 
 float4 hl_Input_frag(hl_v2f IN) : SV_Target
 {
-    float4 vCol = float4(0.0, 0.0, 0.0, 0.0);
+    float4 vCol = float4(1.0, 0.0, 0.0, 1.0);
 
-    Outline_float(IN.localTexcoord,
-        _OutlineThickness,
-        _DepthSensitivity,
-        _NormalsSensitivity,
-        _ColorSensitivity,
-        _OutlineColor,
-        vCol);
+    // Outline_float(IN.localTexcoord,
+    //     _OutlineThickness,
+    //     _DepthSensitivity,
+    //     _NormalsSensitivity,
+    //     _ColorSensitivity,
+    //     _OutlineColor,
+    //     vCol);
 
     return vCol;
 }

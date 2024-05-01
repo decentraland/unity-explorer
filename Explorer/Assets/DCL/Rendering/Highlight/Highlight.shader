@@ -43,23 +43,23 @@
             ENDHLSL
         }
 
-        // 1 - Highlight Output
-        Pass
-        {
-            Name "Highlight_Output"
-
-            ZTest Always
-            ZWrite Off
-            Cull Off
-
-            HLSLPROGRAM
-                #include "Highlight_Vert.hlsl"
-                #include "HighlightOutput_Frag.hlsl"
-                #pragma vertex hl_vert
-                #pragma fragment hl_Output_frag
-                #pragma target 4.5                
-            ENDHLSL
-        }
+//        // 1 - Highlight Output
+//        Pass
+//        {
+//            Name "Highlight_Output"
+//
+//            ZTest Always
+//            ZWrite Off
+//            Cull Off
+//
+//            HLSLPROGRAM
+//                #include "Highlight_Vert.hlsl"
+//                #include "HighlightOutput_Frag.hlsl"
+//                #pragma vertex hl_vert
+//                #pragma fragment hl_Output_frag
+//                #pragma target 4.5                
+//            ENDHLSL
+//        }
     }
 
     Fallback Off

@@ -579,8 +579,8 @@ Shader "DCL/DCL_Toon"
             HLSLPROGRAM
             //#pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
-            #pragma vertex vert
-            #pragma fragment frag
+            #pragma vertex vert_highlight
+            #pragma fragment frag_highlight
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
