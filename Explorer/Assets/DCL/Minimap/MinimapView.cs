@@ -51,6 +51,12 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal Animator minimapAnimator  { get; private set; }
 
+        [field: SerializeField]
+        internal Button goToGenesisCityButton { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject nonWorldContainer { get; private set; }
+
         private void Start()
         {
             minimapRendererButton.OnButtonHover += OnHoverMap;

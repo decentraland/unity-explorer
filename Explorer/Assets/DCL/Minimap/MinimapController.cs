@@ -34,6 +34,7 @@ namespace DCL.Minimap
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private CancellationTokenSource cts;
+        private bool isCollapsed;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
@@ -73,18 +74,26 @@ namespace DCL.Minimap
 
         private void ExpandMinimap()
         {
+            if (!isCollapsed)
+                return;
+
             viewInstance.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
             viewInstance.minimapAnimator.SetTrigger(EXPAND);
+            isCollapsed = false;
         }
 
         private void CollapseMinimap()
         {
+            if (isCollapsed)
+                return;
+
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
             viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
+            isCollapsed = true;
         }
 
         private void OpenSideMenu()
@@ -150,6 +159,7 @@ namespace DCL.Minimap
                 return;
 
             previousParcelPosition = playerParcelPosition;
+            SetWorldMode(playerParcelPosition != Vector2Int.zero);
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
@@ -170,6 +180,16 @@ namespace DCL.Minimap
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
                 finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
             }
+        }
+
+        private void SetWorldMode(bool isWorld)
+        {
+            viewInstance.nonWorldContainer.SetActive(!isWorld);
+
+            if (isWorld)
+                CollapseMinimap();
+            else
+                ExpandMinimap();
         }
 
         public override void Dispose()
