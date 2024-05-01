@@ -60,7 +60,6 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
-        private readonly IRealmController containerRealmController;
         private readonly URLBuilder urlBuilder;
 
         public LoadEmotesByPointersSystem(World world,
