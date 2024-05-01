@@ -373,7 +373,7 @@ namespace DCL.AvatarRendering.Emotes
             return false;
         }
 
-        private void TryCreateAudioClipPromise(IEmote component, BodyShape intentionBodyShape, IPartitionComponent partitionComponent)
+        private void TryCreateAudioClipPromise(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
         {
             AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
 
@@ -389,13 +389,12 @@ namespace DCL.AvatarRendering.Emotes
                 URLAddress url = urlBuilder.Build();
 
                 AudioPromise promise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, partitionComponent);
-                Debug.Log("Creating audio promise for: " + item.file);
-                World.Create(promise, component);
+                World.Create(promise, component, bodyShape);
             }
         }
 
         [Query]
-        private void FinalizeAudioClipPromise(in Entity entity, ref IEmote emote, ref AudioPromise promise)
+        private void FinalizeAudioClipPromise(in Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -404,19 +403,15 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (!promise.IsConsumed)
-            {
-                if (promise.TryConsume(World, out StreamableLoadingResult<AudioClip> result))
-                {
-                    if (result.Succeeded)
-                    {
-                        Debug.Log("SUCCESSSS!!!!");
-                        emote.AudioAssetResult = result;
-                    }
+            if (promise.IsConsumed) return;
 
-                    World.Destroy(entity);
-                }
-            }
+            if (!promise.TryConsume(World, out StreamableLoadingResult<AudioClip> result))
+                return;
+
+            if (result.Succeeded)
+                emote.AudioAssetResults[bodyShape] = result;
+
+            World.Destroy(entity);
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)

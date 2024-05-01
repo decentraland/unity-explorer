@@ -3,7 +3,9 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
@@ -107,7 +109,7 @@ namespace DCL.AvatarRendering.Emotes
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumeEmoteIntent(in Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
+        private void ConsumeEmoteIntent(in Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -129,7 +131,8 @@ namespace DCL.AvatarRendering.Emotes
                         return;
                     }
 
-                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.WearableAssetResults[0];
+                    BodyShape bodyShape = avatarShapeComponent.BodyShape;
+                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.WearableAssetResults[bodyShape];
 
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null) return;
@@ -140,9 +143,10 @@ namespace DCL.AvatarRendering.Emotes
 
                     if (mainAsset == null) return;
 
-                    AudioClip? audioAsset = emote.AudioAssetResult?.Asset;
+                    StreamableLoadingResult<AudioClip>? audioAssetResult = emote.AudioAssetResults[bodyShape];
+                    AudioClip? audioClip = audioAssetResult?.Asset;
 
-                    if (!emotePlayer.Play(mainAsset, audioAsset, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
+                    if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
                         ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                     emoteComponent.EmoteUrn = emoteId;

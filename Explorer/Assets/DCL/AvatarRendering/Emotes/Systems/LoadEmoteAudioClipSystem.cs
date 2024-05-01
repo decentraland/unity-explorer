@@ -29,9 +29,6 @@ namespace DCL.AvatarRendering.Emotes
 
         protected override async UniTask<StreamableLoadingResult<AudioClip>> FlowInternalAsync(GetAudioClipIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            Debug.Log("Loading audio clip from: " + intention.CommonArguments.URL);
-
             AudioClip? result = await webRequestController.GetAudioClipAsync(
                 intention.CommonArguments,
                 new GetAudioClipArguments(intention.AudioType),
