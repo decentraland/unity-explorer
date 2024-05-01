@@ -18,11 +18,11 @@ namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [LogCategory(ReportCategory.AUDIO_SOURCES)]
-    public class LoadAudioClipSystem : LoadSystemBase<AudioClip, GetAudioClipIntention>
+    public partial class LoadEmoteAudioClipSystem : LoadSystemBase<AudioClip, GetAudioClipIntention>
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
+        internal LoadEmoteAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.webRequestController = webRequestController;
         }

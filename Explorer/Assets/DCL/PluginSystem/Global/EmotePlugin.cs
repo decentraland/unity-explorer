@@ -23,7 +23,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using Utility.Multithreading;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
-using LoadAudioClipSystem = DCL.AvatarRendering.Emotes.LoadAudioClipSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -90,7 +89,7 @@ namespace DCL.PluginSystem.Global
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 
-            LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, mutexSync);
+            LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, mutexSync);
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)
