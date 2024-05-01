@@ -26,12 +26,6 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Log Pull Request Status
-        run: |
-          echo "Event name: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Pull request draft: ${{ github.event.pull_request.draft }}"
-          echo "Label name: ${{ github.event.label.name }}"
 
       - name: Checkout code
         uses: actions/checkout@v3

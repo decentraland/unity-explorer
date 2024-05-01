@@ -44,13 +44,7 @@ jobs:
     runs-on: bigwin2022
     timeout-minutes: 120
     steps:
-      - name: Log Pull Request Status
-        run: |
-          echo "Event name: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Pull request draft: ${{ github.event.pull_request.draft }}"
-          echo "Label name: ${{ github.event.label.name }}"
-
+      
       - name: Set SHA env variable
         run: |
           $eventName = "${{ github.event_name }}"
