@@ -21,8 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Cliff
-  m_Shader: {fileID: -6465566751694194690, guid: 4c0071f1ad885644bb08c4d69a1de235,
-    type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 4c0071f1ad885644bb08c4d69a1de235, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -145,6 +144,6 @@ Material:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _Moss: {r: 0.297231, g: 0.3773585, b: 0.20469919, a: 0}
+    - _Moss: {r: 0.649, g: 0.23631646, b: 0.16419701, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

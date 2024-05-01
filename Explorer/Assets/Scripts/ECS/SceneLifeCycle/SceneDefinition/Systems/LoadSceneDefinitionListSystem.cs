@@ -62,7 +62,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             bodyBuilder.Append("]}");
 
             List<SceneEntityDefinition> targetList = await
-                (await webRequestController.PostAsync(intention.CommonArguments, GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct))
+                webRequestController.PostAsync(intention.CommonArguments, GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
                .OverwriteFromJsonAsync(intention.TargetCollection, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             return new StreamableLoadingResult<SceneDefinitions>(new SceneDefinitions(targetList));

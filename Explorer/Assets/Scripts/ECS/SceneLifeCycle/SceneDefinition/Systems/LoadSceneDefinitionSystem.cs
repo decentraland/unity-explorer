@@ -10,12 +10,8 @@ using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using Ipfs;
 using System.Threading;
 using Utility.Multithreading;
-#if !UNITY_EDITOR
-using UnityEngine;
-#endif
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -37,7 +33,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         protected override async UniTask<StreamableLoadingResult<SceneEntityDefinition>> FlowInternalAsync(GetSceneDefinition intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             SceneEntityDefinition sceneEntityDefinition = await
-                (await webRequestController.GetAsync(intention.CommonArguments, ct, GetReportCategory()))
+                webRequestController.GetAsync(intention.CommonArguments, ct, GetReportCategory())
                .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             sceneEntityDefinition.id ??= intention.IpfsPath.EntityId;

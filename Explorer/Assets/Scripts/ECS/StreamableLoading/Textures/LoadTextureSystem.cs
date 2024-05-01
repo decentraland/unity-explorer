@@ -28,13 +28,14 @@ namespace ECS.StreamableLoading.Textures
         protected override async UniTask<StreamableLoadingResult<Texture2D>> FlowInternalAsync(GetTextureIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            GetTextureWebRequest request = await webRequestController.GetTextureAsync(
+            var result = await webRequestController.GetTextureAsync(
                 intention.CommonArguments,
                 new GetTextureArguments(intention.IsReadable),
+                GetTextureWebRequest.CreateTexture(intention.WrapMode, intention.FilterMode),
                 ct,
                 reportCategory: ReportCategory.TEXTURES);
 
-            return new StreamableLoadingResult<Texture2D>(request.CreateTexture(intention.WrapMode, intention.FilterMode));
+            return new StreamableLoadingResult<Texture2D>(result);
         }
     }
 }

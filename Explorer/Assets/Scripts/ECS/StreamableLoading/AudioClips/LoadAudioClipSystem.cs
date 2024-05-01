@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
-using DCL.WebRequests.AudioClips;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -29,13 +28,14 @@ namespace ECS.StreamableLoading.AudioClips
         protected override async UniTask<StreamableLoadingResult<AudioClip>> FlowInternalAsync(GetAudioClipIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            GetAudioClipWebRequest request = await webRequestController.GetAudioClipAsync(
+            var result = await webRequestController.GetAudioClipAsync(
                 intention.CommonArguments,
                 new GetAudioClipArguments(intention.AudioType),
+                new GetAudioClipWebRequest.CreateAudioClipOp(),
                 ct,
                 reportCategory: GetReportCategory());
 
-            return new StreamableLoadingResult<AudioClip>(request.CreateAudioClip());
+            return new StreamableLoadingResult<AudioClip>(result);
         }
     }
 }

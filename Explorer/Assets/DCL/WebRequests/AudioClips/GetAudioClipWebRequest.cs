@@ -1,14 +1,16 @@
-﻿using DCL.Profiling;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Profiling;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
 
-namespace DCL.WebRequests.AudioClips
+namespace DCL.WebRequests
 {
     /// <summary>
     ///     Representation of the created web request dedicated to download an audio clip
     /// </summary>
-    public readonly struct GetAudioClipWebRequest: ITypedWebRequest
+    public readonly struct GetAudioClipWebRequest : ITypedWebRequest
     {
         private readonly string url;
 
@@ -20,25 +22,29 @@ namespace DCL.WebRequests.AudioClips
             UnityWebRequest = unityWebRequest;
         }
 
-        /// <summary>
-        ///     Creates the audio clip and finalizes the request
-        /// </summary>
-        public AudioClip CreateAudioClip()
+        public struct CreateAudioClipOp : IWebRequestOp<GetAudioClipWebRequest, AudioClip>
         {
-            // files bigger than 1MB will be treated as streaming
-            if (UnityWebRequest.downloadedBytes > 1000000)
-                ((DownloadHandlerAudioClip)UnityWebRequest.downloadHandler).streamAudio = true;
+            /// <summary>
+            ///     Creates the audio clip
+            /// </summary>
+            public UniTask<AudioClip?> ExecuteAsync(GetAudioClipWebRequest webRequest, CancellationToken ct)
+            {
+                UnityWebRequest unityWebRequest = webRequest.UnityWebRequest;
 
-            AudioClip clip = DownloadHandlerAudioClip.GetContent(UnityWebRequest);
+                // files bigger than 1MB will be treated as streaming
+                if (unityWebRequest.downloadedBytes > 1000000)
+                    ((DownloadHandlerAudioClip)unityWebRequest.downloadHandler).streamAudio = true;
 
-            UnityWebRequest.Dispose();
+                AudioClip clip = DownloadHandlerAudioClip.GetContent(unityWebRequest);
 
-            clip.SetDebugName(url);
-            ProfilingCounters.AudioClipsAmount.Value++;
+                unityWebRequest.Dispose();
 
-            return clip;
+                clip.SetDebugName(webRequest.url);
+                ProfilingCounters.AudioClipsAmount.Value++;
+
+                return UniTask.FromResult(clip)!;
+            }
         }
-
 
         internal static GetAudioClipWebRequest Initialize(in CommonArguments commonArguments, GetAudioClipArguments audioClipArguments)
         {

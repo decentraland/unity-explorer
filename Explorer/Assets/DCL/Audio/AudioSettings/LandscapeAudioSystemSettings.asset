@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   distanceThreshold: 10
   mutingDistanceThreshold: 20
-  rowsPerChunk: 9
+  rowsPerChunk: 4
   systemUpdateFrequency: 10
   audioSourcePositioningRetryAttempts: 3
   oceanDistanceThreshold: 150

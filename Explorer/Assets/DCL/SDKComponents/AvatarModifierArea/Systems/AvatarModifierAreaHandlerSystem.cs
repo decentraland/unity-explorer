@@ -21,8 +21,8 @@ using UnityEngine;
 
 namespace DCL.SDKComponents.AvatarModifierArea.Systems
 {
-    [UpdateInGroup(typeof(SyncedPostPhysicsSystemGroup))]
-    [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
+    [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
+    [UpdateBefore(typeof(CharacterTriggerAreaCleanUpRegisteredCollisionsSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     public partial class AvatarModifierAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
@@ -41,9 +41,6 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
 
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
-
-            World.Remove<AvatarModifierAreaComponent>(HandleComponentRemoval_QueryDescription);
-            World.Remove<AvatarModifierAreaComponent, PBAvatarModifierArea>(HandleEntityDestruction_QueryDescription);
         }
 
         [Query]
@@ -83,15 +80,27 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private void HandleEntityDestruction(ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside) { ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+            {
+                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
+            }
+
+            modifierComponent.Dispose();
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBAvatarModifierArea))]
-        private void HandleComponentRemoval(ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
+        private void HandleComponentRemoval(Entity e, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside) { ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+            {
+                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
+            }
+
+            modifierComponent.Dispose();
+
+            World.Remove<AvatarModifierAreaComponent>(e);
         }
 
         internal void ToggleAvatarHiding(Transform avatarTransform, bool shouldHide, HashSet<string> excludedIds)

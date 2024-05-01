@@ -17,8 +17,8 @@ using ECS.Unity.Transforms.Components;
 
 namespace DCL.SDKComponents.CameraModeArea.Systems
 {
-    [UpdateInGroup(typeof(SyncedPostPhysicsSystemGroup))]
-    [UpdateBefore(typeof(CharacterTriggerAreaCleanupSystem))]
+    [UpdateInGroup(typeof(SyncedInitializationFixedUpdateThrottledGroup))]
+    [UpdateBefore(typeof(CharacterTriggerAreaCleanUpRegisteredCollisionsSystem))]
     [LogCategory(ReportCategory.CAMERA_MODE_AREA)]
     public partial class CameraModeAreaHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
@@ -42,9 +42,6 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
             HandleComponentRemovalQuery(World);
             HandleEntityDestructionQuery(World);
-
-            World.Remove<CameraModeAreaComponent>(HandleComponentRemoval_QueryDescription);
-            World.Remove<CameraModeAreaComponent, PBCameraModeArea>(HandleEntityDestruction_QueryDescription);
         }
 
         [Query]
@@ -79,9 +76,10 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea))]
         [All(typeof(CameraModeAreaComponent))]
-        private void HandleComponentRemoval()
+        private void HandleComponentRemoval(Entity e)
         {
             OnExitedCameraModeArea();
+            World.Remove<CameraModeAreaComponent>(e);
         }
 
         internal void OnEnteredCameraModeArea(CameraMode targetCameraMode)
@@ -105,15 +103,15 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
 
         [Query]
         [All(typeof(CameraModeAreaComponent))]
-        private void FinalizeComponents(in Entity entity)
+        private void FinalizeComponents()
         {
             OnExitedCameraModeArea();
-            World.Remove<CameraModeAreaComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)
         {
             FinalizeComponentsQuery(World);
+            World.Remove<CameraModeAreaComponent>(FinalizeComponents_QueryDescription);
         }
     }
 }

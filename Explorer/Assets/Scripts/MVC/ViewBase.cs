@@ -29,7 +29,6 @@ namespace MVC
 
         public virtual async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
         {
-            gameObject.SetActive(false);
             if (raycaster) raycaster.enabled = false;
 
             if (!isInstant)

@@ -1,12 +1,17 @@
 using DCL.Audio;
 using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.UI
 {
-    public class TabSelectorView : MonoBehaviour
+    public class TabSelectorView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        private static readonly int HOVER = Animator.StringToHash("Hover");
+        private static readonly int UNHOVER = Animator.StringToHash("Unhover");
+        private static readonly int ACTIVE = Animator.StringToHash("Active");
+
         [field: SerializeField]
         public Toggle TabSelectorToggle { get; private set; }
 
@@ -25,23 +30,45 @@ namespace DCL.UI
         [field: SerializeField]
         public GameObject SelectedText { get; private set; }
 
+        [field: SerializeField]
+        public Animator tabAnimator;
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig TabClickAudio { get; private set; }
 
         private void OnEnable()
         {
+            tabAnimator.enabled = true;
+            if (tabAnimator != null)
+            {
+                tabAnimator.Rebind();
+                tabAnimator.Update(0);
+            }
             TabSelectorToggle.onValueChanged.AddListener(OnToggle);
         }
 
         private void OnDisable()
         {
             TabSelectorToggle.onValueChanged.RemoveListener(OnToggle);
+            tabAnimator.enabled = false;
         }
 
         private void OnToggle(bool toggle)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (tabAnimator != null)
+                tabAnimator.SetTrigger(HOVER);
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if(tabAnimator != null)
+                tabAnimator.SetTrigger(UNHOVER);
         }
     }
 }

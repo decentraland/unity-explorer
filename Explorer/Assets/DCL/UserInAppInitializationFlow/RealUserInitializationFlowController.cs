@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Landscape.Interface;
@@ -34,6 +35,8 @@ namespace DCL.UserInAppInitializationFlow
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly ObjectProxy<Entity> cameraEntity;
 
+        private readonly AudioClipConfig backgroundMusic;
+
         private AsyncLoadProcessReport? loadReport;
 
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
@@ -45,8 +48,8 @@ namespace DCL.UserInAppInitializationFlow
             ObjectProxy<Entity> cameraEntity,
             CameraSamplingData cameraSamplingData,
             bool enableLandscape,
-            ILandscapeInitialization landscapeInitialization
-        )
+            ILandscapeInitialization landscapeInitialization,
+            AudioClipConfig backgroundMusic)
         {
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
@@ -58,6 +61,7 @@ namespace DCL.UserInAppInitializationFlow
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
             this.cameraEntity = cameraEntity;
             this.cameraSamplingData = cameraSamplingData;
+            this.backgroundMusic = backgroundMusic;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -66,6 +70,7 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity,
             CancellationToken ct)
         {
+            UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
             loadReport = AsyncLoadProcessReport.Create();
 
             if (showAuthentication)
@@ -77,6 +82,8 @@ namespace DCL.UserInAppInitializationFlow
                 await UniTask.WhenAll(ShowLoadingScreenAsync(ct), showLoadingScreenAsyncTask);
             else
                 await showLoadingScreenAsyncTask;
+
+            UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
         }
 
         private async UniTask LoadCharacterAndWorldAsync(World world, Entity ownPlayerEntity, CancellationToken ct)

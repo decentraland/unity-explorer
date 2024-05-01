@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.AvatarShape.Rendering.TextureArray
                 TextureArrayMapping mapping = mappings[i];
                 // Check if the texture is present in the original material
                 var tex = originalMaterial.GetTexture(mapping.OriginalTextureID) as Texture2D;
-                if (tex)
+                if (tex && tex.format == mapping.Handler.GetTextureFormat())
                     results[i] = mapping.Handler.SetTexture(targetMaterial, tex, new Vector2Int(tex.width, tex.height));
                 else
                    mapping.Handler.SetDefaultTexture(targetMaterial, mapping.DefaultFallbackResolution);

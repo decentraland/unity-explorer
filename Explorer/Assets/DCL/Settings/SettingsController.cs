@@ -59,6 +59,20 @@ namespace DCL.Settings
             view.gameObject.SetActive(false);
         }
 
+        public void Animate(int triggerId)
+        {
+            view.PanelAnimator.SetTrigger(triggerId);
+            view.HeaderAnimator.SetTrigger(triggerId);
+        }
+
+        public void ResetAnimator()
+        {
+            view.PanelAnimator.Rebind();
+            view.HeaderAnimator.Rebind();
+            view.PanelAnimator.Update(0);
+            view.HeaderAnimator.Update(0);
+        }
+
         public RectTransform GetRectTransform() =>
             rectTransform;
 

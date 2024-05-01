@@ -25,7 +25,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CipkZWNlbnRyYWxhbmQva2VybmVsL2NvbW1zL3JmYzQvY29tbXMucHJvdG8S",
-            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCKoBQoGUGFja2V0EjwK",
+            "HmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNCLCBQoGUGFja2V0EjwK",
             "CHBvc2l0aW9uGAEgASgLMiguZGVjZW50cmFsYW5kLmtlcm5lbC5jb21tcy5y",
             "ZmM0LlBvc2l0aW9uSAASUQoPcHJvZmlsZV92ZXJzaW9uGAIgASgLMjYuZGVj",
             "ZW50cmFsYW5kLmtlcm5lbC5jb21tcy5yZmM0LkFubm91bmNlUHJvZmlsZVZl",
@@ -40,34 +40,35 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             "ZXJuZWwuY29tbXMucmZjNC5Nb3ZlbWVudEgAEkMKDHBsYXllcl9lbW90ZRgJ",
             "IAEoCzIrLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5QbGF5ZXJF",
             "bW90ZUgAEkEKC3NjZW5lX2Vtb3RlGAogASgLMiouZGVjZW50cmFsYW5kLmtl",
-            "cm5lbC5jb21tcy5yZmM0LlNjZW5lRW1vdGVIAEIJCgdtZXNzYWdlIqUBCghQ",
-            "b3NpdGlvbhINCgVpbmRleBgBIAEoDRISCgpwb3NpdGlvbl94GAMgASgCEhIK",
-            "CnBvc2l0aW9uX3kYBCABKAISEgoKcG9zaXRpb25fehgFIAEoAhISCgpyb3Rh",
-            "dGlvbl94GAYgASgCEhIKCnJvdGF0aW9uX3kYByABKAISEgoKcm90YXRpb25f",
-            "ehgIIAEoAhISCgpyb3RhdGlvbl93GAkgASgCIssCCghNb3ZlbWVudBIRCgl0",
-            "aW1lc3RhbXAYASABKAISEgoKcG9zaXRpb25feBgCIAEoAhISCgpwb3NpdGlv",
-            "bl95GAMgASgCEhIKCnBvc2l0aW9uX3oYBCABKAISEgoKdmVsb2NpdHlfeBgF",
-            "IAEoAhISCgp2ZWxvY2l0eV95GAYgASgCEhIKCnZlbG9jaXR5X3oYByABKAIS",
-            "HAoUbW92ZW1lbnRfYmxlbmRfdmFsdWUYCCABKAISGQoRc2xpZGVfYmxlbmRf",
-            "dmFsdWUYCSABKAISEwoLaXNfZ3JvdW5kZWQYCiABKAgSEgoKaXNfanVtcGlu",
-            "ZxgLIAEoCBIUCgxpc19sb25nX2p1bXAYDCABKAgSFAoMaXNfbG9uZ19mYWxs",
-            "GA0gASgIEhIKCmlzX2ZhbGxpbmcYDiABKAgSEgoKaXNfc3R1bm5lZBgPIAEo",
-            "CCIyCgtQbGF5ZXJFbW90ZRIWCg5pbmNyZW1lbnRhbF9pZBgBIAEoDRILCgN1",
-            "cm4YAiABKAkiNQoKU2NlbmVFbW90ZRIXCg9zY2VuZV9lbnRpdHlfaWQYASAB",
-            "KAkSDgoGc291cmNlGAIgASgJIjEKFkFubm91bmNlUHJvZmlsZVZlcnNpb24S",
-            "FwoPcHJvZmlsZV92ZXJzaW9uGAEgASgNIjoKDlByb2ZpbGVSZXF1ZXN0Eg8K",
-            "B2FkZHJlc3MYBCABKAkSFwoPcHJvZmlsZV92ZXJzaW9uGAMgASgNIj8KD1By",
-            "b2ZpbGVSZXNwb25zZRIaChJzZXJpYWxpemVkX3Byb2ZpbGUYASABKAkSEAoI",
-            "YmFzZV91cmwYAiABKAkiKgoEQ2hhdBIPCgdtZXNzYWdlGAEgASgJEhEKCXRp",
-            "bWVzdGFtcBgCIAEoASInCgVTY2VuZRIQCghzY2VuZV9pZBgBIAEoCRIMCgRk",
-            "YXRhGAIgASgMIosBCgVWb2ljZRIXCg9lbmNvZGVkX3NhbXBsZXMYASABKAwS",
-            "DQoFaW5kZXgYAiABKA0SPwoFY29kZWMYAyABKA4yMC5kZWNlbnRyYWxhbmQu",
-            "a2VybmVsLmNvbW1zLnJmYzQuVm9pY2UuVm9pY2VDb2RlYyIZCgpWb2ljZUNv",
-            "ZGVjEgsKB1ZDX09QVVMQAGIGcHJvdG8z"));
+            "cm5lbC5jb21tcy5yZmM0LlNjZW5lRW1vdGVIABIYChBwcm90b2NvbF92ZXJz",
+            "aW9uGAsgASgNQgkKB21lc3NhZ2UipQEKCFBvc2l0aW9uEg0KBWluZGV4GAEg",
+            "ASgNEhIKCnBvc2l0aW9uX3gYAyABKAISEgoKcG9zaXRpb25feRgEIAEoAhIS",
+            "Cgpwb3NpdGlvbl96GAUgASgCEhIKCnJvdGF0aW9uX3gYBiABKAISEgoKcm90",
+            "YXRpb25feRgHIAEoAhISCgpyb3RhdGlvbl96GAggASgCEhIKCnJvdGF0aW9u",
+            "X3cYCSABKAIiywIKCE1vdmVtZW50EhEKCXRpbWVzdGFtcBgBIAEoAhISCgpw",
+            "b3NpdGlvbl94GAIgASgCEhIKCnBvc2l0aW9uX3kYAyABKAISEgoKcG9zaXRp",
+            "b25fehgEIAEoAhISCgp2ZWxvY2l0eV94GAUgASgCEhIKCnZlbG9jaXR5X3kY",
+            "BiABKAISEgoKdmVsb2NpdHlfehgHIAEoAhIcChRtb3ZlbWVudF9ibGVuZF92",
+            "YWx1ZRgIIAEoAhIZChFzbGlkZV9ibGVuZF92YWx1ZRgJIAEoAhITCgtpc19n",
+            "cm91bmRlZBgKIAEoCBISCgppc19qdW1waW5nGAsgASgIEhQKDGlzX2xvbmdf",
+            "anVtcBgMIAEoCBIUCgxpc19sb25nX2ZhbGwYDSABKAgSEgoKaXNfZmFsbGlu",
+            "ZxgOIAEoCBISCgppc19zdHVubmVkGA8gASgIIjIKC1BsYXllckVtb3RlEhYK",
+            "DmluY3JlbWVudGFsX2lkGAEgASgNEgsKA3VybhgCIAEoCSI1CgpTY2VuZUVt",
+            "b3RlEhcKD3NjZW5lX2VudGl0eV9pZBgBIAEoCRIOCgZzb3VyY2UYAiABKAki",
+            "MQoWQW5ub3VuY2VQcm9maWxlVmVyc2lvbhIXCg9wcm9maWxlX3ZlcnNpb24Y",
+            "ASABKA0iOgoOUHJvZmlsZVJlcXVlc3QSDwoHYWRkcmVzcxgEIAEoCRIXCg9w",
+            "cm9maWxlX3ZlcnNpb24YAyABKA0iPwoPUHJvZmlsZVJlc3BvbnNlEhoKEnNl",
+            "cmlhbGl6ZWRfcHJvZmlsZRgBIAEoCRIQCghiYXNlX3VybBgCIAEoCSIqCgRD",
+            "aGF0Eg8KB21lc3NhZ2UYASABKAkSEQoJdGltZXN0YW1wGAIgASgBIicKBVNj",
+            "ZW5lEhAKCHNjZW5lX2lkGAEgASgJEgwKBGRhdGEYAiABKAwiiwEKBVZvaWNl",
+            "EhcKD2VuY29kZWRfc2FtcGxlcxgBIAEoDBINCgVpbmRleBgCIAEoDRI/CgVj",
+            "b2RlYxgDIAEoDjIwLmRlY2VudHJhbGFuZC5rZXJuZWwuY29tbXMucmZjNC5W",
+            "b2ljZS5Wb2ljZUNvZGVjIhkKClZvaWNlQ29kZWMSCwoHVkNfT1BVUxAAYgZw",
+            "cm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote" }, new[]{ "Message" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Packet), global::Decentraland.Kernel.Comms.Rfc4.Packet.Parser, new[]{ "Position", "ProfileVersion", "ProfileRequest", "ProfileResponse", "Chat", "Scene", "Voice", "Movement", "PlayerEmote", "SceneEmote", "ProtocolVersion" }, new[]{ "Message" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Position), global::Decentraland.Kernel.Comms.Rfc4.Position.Parser, new[]{ "Index", "PositionX", "PositionY", "PositionZ", "RotationX", "RotationY", "RotationZ", "RotationW" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.Movement), global::Decentraland.Kernel.Comms.Rfc4.Movement.Parser, new[]{ "Timestamp", "PositionX", "PositionY", "PositionZ", "VelocityX", "VelocityY", "VelocityZ", "MovementBlendValue", "SlideBlendValue", "IsGrounded", "IsJumping", "IsLongJump", "IsLongFall", "IsFalling", "IsStunned" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote), global::Decentraland.Kernel.Comms.Rfc4.PlayerEmote.Parser, new[]{ "IncrementalId", "Urn" }, null, null, null, null),
@@ -118,6 +119,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public Packet(Packet other) : this() {
+      protocolVersion_ = other.protocolVersion_;
       switch (other.MessageCase) {
         case MessageOneofCase.Position:
           Position = other.Position.Clone();
@@ -280,6 +282,18 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       }
     }
 
+    /// <summary>Field number for the "protocol_version" field.</summary>
+    public const int ProtocolVersionFieldNumber = 11;
+    private uint protocolVersion_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint ProtocolVersion {
+      get { return protocolVersion_; }
+      set {
+        protocolVersion_ = value;
+      }
+    }
+
     private object message_;
     /// <summary>Enum of possible cases for the "message" oneof.</summary>
     public enum MessageOneofCase {
@@ -334,6 +348,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (!object.Equals(Movement, other.Movement)) return false;
       if (!object.Equals(PlayerEmote, other.PlayerEmote)) return false;
       if (!object.Equals(SceneEmote, other.SceneEmote)) return false;
+      if (ProtocolVersion != other.ProtocolVersion) return false;
       if (MessageCase != other.MessageCase) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
@@ -352,6 +367,7 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (messageCase_ == MessageOneofCase.Movement) hash ^= Movement.GetHashCode();
       if (messageCase_ == MessageOneofCase.PlayerEmote) hash ^= PlayerEmote.GetHashCode();
       if (messageCase_ == MessageOneofCase.SceneEmote) hash ^= SceneEmote.GetHashCode();
+      if (ProtocolVersion != 0) hash ^= ProtocolVersion.GetHashCode();
       hash ^= (int) messageCase_;
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
@@ -411,6 +427,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(82);
         output.WriteMessage(SceneEmote);
       }
+      if (ProtocolVersion != 0) {
+        output.WriteRawTag(88);
+        output.WriteUInt32(ProtocolVersion);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -461,6 +481,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
         output.WriteRawTag(82);
         output.WriteMessage(SceneEmote);
       }
+      if (ProtocolVersion != 0) {
+        output.WriteRawTag(88);
+        output.WriteUInt32(ProtocolVersion);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -501,6 +525,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
       if (messageCase_ == MessageOneofCase.SceneEmote) {
         size += 1 + pb::CodedOutputStream.ComputeMessageSize(SceneEmote);
       }
+      if (ProtocolVersion != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ProtocolVersion);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -512,6 +539,9 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
     public void MergeFrom(Packet other) {
       if (other == null) {
         return;
+      }
+      if (other.ProtocolVersion != 0) {
+        ProtocolVersion = other.ProtocolVersion;
       }
       switch (other.MessageCase) {
         case MessageOneofCase.Position:
@@ -681,6 +711,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             SceneEmote = subBuilder;
             break;
           }
+          case 88: {
+            ProtocolVersion = input.ReadUInt32();
+            break;
+          }
         }
       }
     #endif
@@ -784,6 +818,10 @@ namespace Decentraland.Kernel.Comms.Rfc4 {
             }
             input.ReadMessage(subBuilder);
             SceneEmote = subBuilder;
+            break;
+          }
+          case 88: {
+            ProtocolVersion = input.ReadUInt32();
             break;
           }
         }

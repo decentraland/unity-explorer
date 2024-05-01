@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -54,6 +55,12 @@ namespace DCL.Optimization.Pools
 
         private void HandleGet(T component)
         {
+            if (UnityObjectUtils.IsQuitting)
+            {
+                ReportHub.LogError(ReportCategory.ENGINE, $"Trying to get a component {typeof(T).Name} from a pool while quitting!");
+                return;
+            }
+
             component.gameObject.SetActive(true);
             onGet?.Invoke(component);
         }

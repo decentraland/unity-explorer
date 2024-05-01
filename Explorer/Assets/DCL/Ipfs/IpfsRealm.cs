@@ -122,7 +122,7 @@ namespace DCL.Ipfs
                 GenericPostArguments.CreateWWWForm(form),
                 ct,
                 ReportCategory.REALM
-            );
+            ).WithNoOpAsync();
         }
 
         private URLAddress Url()

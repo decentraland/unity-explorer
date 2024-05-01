@@ -12,7 +12,7 @@ using ECS.LifeCycle.Components;
 
 namespace DCL.CharacterTriggerArea.Systems
 {
-    [UpdateInGroup(typeof(SyncedPostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(CleanUpGroup))] // Throttling enabled for the group itself
     [LogCategory(ReportCategory.CHARACTER_TRIGGER_AREA)]
     public partial class CharacterTriggerAreaCleanupSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
@@ -25,40 +25,32 @@ namespace DCL.CharacterTriggerArea.Systems
 
         protected override void Update(float t)
         {
-            ClearDetectedCharactersCollectionQuery(World!);
-
-            HandleEntityDestructionQuery(World!);
-            World!.Remove<CharacterTriggerAreaComponent>(HandleEntityDestruction_QueryDescription);
-
-            HandleComponentRemovalQuery(World!);
-            World!.Remove<CharacterTriggerAreaComponent>(HandleComponentRemoval_QueryDescription);
-        }
-
-        [Query]
-        private void ClearDetectedCharactersCollection(ref CharacterTriggerAreaComponent component)
-        {
-            component.TryClear();
+            HandleEntityDestructionQuery(World);
+            HandleComponentRemovalQuery(World);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref CharacterTriggerAreaComponent component)
+        private void HandleEntityDestruction(Entity entity, ref CharacterTriggerAreaComponent component)
         {
             component.TryRelease(poolRegistry);
+
+            // For some reason bulk deletion shows very bad performance (probably due to the total number of archetypes/chunks)
+            World.Remove<CharacterTriggerAreaComponent>(entity);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention), typeof(PBCameraModeArea), typeof(PBAvatarModifierArea))]
-        private void HandleComponentRemoval(ref CharacterTriggerAreaComponent component)
-        {
-            component.TryRelease(poolRegistry);
-        }
-
-        [Query]
-        private void FinalizeComponents(in Entity entity, ref CharacterTriggerAreaComponent component)
+        private void HandleComponentRemoval(Entity entity, ref CharacterTriggerAreaComponent component)
         {
             component.TryRelease(poolRegistry);
             World.Remove<CharacterTriggerAreaComponent>(entity);
+        }
+
+        [Query]
+        private void FinalizeComponents(ref CharacterTriggerAreaComponent component)
+        {
+            component.TryRelease(poolRegistry);
         }
 
         public void FinalizeComponents(in Query query)

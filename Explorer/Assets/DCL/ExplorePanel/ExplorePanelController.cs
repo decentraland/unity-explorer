@@ -76,7 +76,6 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Backpack, backpackController },
             };
 
-
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
             lastShownSection = ExploreSections.Navmap;
@@ -89,7 +88,6 @@ namespace DCL.ExplorePanel
             foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
                     isOn =>
                     {
@@ -101,17 +99,18 @@ namespace DCL.ExplorePanel
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(ShowSystemMenu);
         }
 
-        protected override void OnBeforeViewShow()
+        protected override void OnViewShow()
         {
             isControlClosing = false;
-
+            sectionSelectorController.ResetAnimators();
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
-                ToggleSection(section == inputData.Section, tab, section, false);
-
-                if (inputData.BackpackSection != null)
-                    backpackController.Toggle(inputData.BackpackSection.Value);
+                ToggleSection(section == inputData.Section, tab, section, true);
+                sectionSelectorController.SetAnimationState(section == inputData.Section, tabsBySections[section]);
             }
+
+            if (inputData.BackpackSection != null)
+                backpackController.Toggle(inputData.BackpackSection.Value);
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
@@ -127,6 +126,9 @@ namespace DCL.ExplorePanel
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
         {
+            if(isOn && animate && shownSection != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
@@ -155,7 +157,10 @@ namespace DCL.ExplorePanel
         private void OnMapHotkeyPressed(InputAction.CallbackContext obj)
         {
             if (lastShownSection != ExploreSections.Navmap)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Navmap);
+            }
             else
                 isControlClosing = true;
         }
@@ -163,7 +168,10 @@ namespace DCL.ExplorePanel
         private void OnSettingsHotkeyPressed(InputAction.CallbackContext obj)
         {
             if (lastShownSection != ExploreSections.Settings)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Settings);
+            }
             else
                 isControlClosing = true;
         }
@@ -171,7 +179,10 @@ namespace DCL.ExplorePanel
         private void OnBackpackHotkeyPressed(InputAction.CallbackContext obj)
         {
             if (lastShownSection != ExploreSections.Backpack)
+            {
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
                 ShowSection(ExploreSections.Backpack);
+            }
             else
                 isControlClosing = true;
         }

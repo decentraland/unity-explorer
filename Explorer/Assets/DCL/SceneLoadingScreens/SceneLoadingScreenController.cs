@@ -111,8 +111,8 @@ namespace DCL.SceneLoadingScreens
 
         private async UniTask FadeOutAsync(CancellationToken ct)
         {
-            var contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.3f).ToUniTask(cancellationToken: ct);
-            var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.6f).ToUniTask(cancellationToken: ct);
+            var contentTask = viewInstance.ContentCanvasGroup.DOFade(0f, 0.5f).ToUniTask(cancellationToken: ct);
+            var rootTask = viewInstance.RootCanvasGroup.DOFade(0f, 0.7f).ToUniTask(cancellationToken: ct);
             await UniTask.WhenAll(contentTask, rootTask);
         }
 
@@ -185,7 +185,8 @@ namespace DCL.SceneLoadingScreens
 
             viewInstance.HideAllTips();
             viewInstance.ShowTip(index);
-            viewInstance.Background.color = tips.Tips[index].BackgroundColor;
+
+            viewInstance.ChangeBackgroundColor(tips.Tips[index].BackgroundColor);
 
             currentTip = index;
         }
@@ -202,16 +203,14 @@ namespace DCL.SceneLoadingScreens
                 int prevTip = currentTip;
                 currentTip = index;
 
-                var backgroundTask = viewInstance.Background.DOBlendableColor(tips.Tips[index].BackgroundColor, 1f)
-                                                 .ToUniTask(cancellationToken: ct);
 
-                async UniTask HideAndShowAsync()
-                {
-                    await viewInstance.HideTipWithFadeAsync(prevTip, 0.5f, ct);
-                    await viewInstance.ShowTipWithFadeAsync(index, 0.5f, ct);
-                }
+                await viewInstance.HideTipWithFadeAsync(prevTip, 0.3f, ct);
 
-                await UniTask.WhenAll(backgroundTask, HideAndShowAsync());
+                await UniTask.WhenAll
+                (
+                    viewInstance.ChangeBackgroundColorFadeAsync(tips.Tips[index].BackgroundColor, 0.3f, ct),
+                    viewInstance.ShowTipWithFadeAsync(index, 0.3f, ct)
+                );
             }
 
             ShowTipWithFadeAsync(tipsFadeCancellationToken!.Token).Forget();

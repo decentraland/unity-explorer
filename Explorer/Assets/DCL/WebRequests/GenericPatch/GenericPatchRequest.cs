@@ -22,10 +22,5 @@ namespace DCL.WebRequests
         {
             UnityWebRequest = unityWebRequest;
         }
-
-        public UniTask<T> CreateFromJson<T>(
-            WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread) =>
-            this.CreateFromJsonAsync<GenericPatchRequest, T>(jsonParser, threadFlags);
     }
 }

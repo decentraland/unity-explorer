@@ -74,7 +74,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.True);
-            Assert.That(raycastResult.UnityRaycastHit.collider, Is.EqualTo(collider));
+            Assert.That(raycastResult.GetCollider(), Is.EqualTo(collider));
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.True);
-            Assert.That(raycastResult.UnityRaycastHit.collider, Is.EqualTo(collider));
+            Assert.That(raycastResult.GetCollider(), Is.EqualTo(collider));
         }
 
         [Test]
@@ -125,7 +125,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.EntityInfo, Is.Null);
+            Assert.That(raycastResult.GetEntityInfo(), Is.Null);
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.EntityInfo, Is.Null);
+            Assert.That(raycastResult.GetCollider(), Is.Null);
         }
 
         [Test]
@@ -166,7 +166,34 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
             Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.EntityInfo, Is.Null);
+            Assert.That(raycastResult.GetEntityInfo(), Is.Null);
+        }
+
+        [Test]
+        public void DoNotRaycastWhenPanningCamera()
+        {
+            var colliderGo = new GameObject(nameof(PlayerOriginatedRaycastSystemShould));
+            colliderGo.transform.ResetLocalTRS();
+            colliderGo.transform.localPosition = new Vector3(0, 0, 10);
+            colliderGo.layer = PhysicsLayers.DEFAULT_LAYER;
+            BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
+            collider.size = Vector3.one;
+
+            entityCollidersGlobalCache.TryGetEntity(collider, out Arg.Any<GlobalColliderEntityInfo>())
+                                      .Returns(x =>
+                                       {
+                                           x[1] = new GlobalColliderEntityInfo();
+                                           return true;
+                                       });
+
+            ref CursorComponent cc = ref world.Get<CursorComponent>(cameraEntity);
+            cc.CursorState = CursorState.Panning;
+
+            system.Update(0);
+
+            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
+            Assert.That(raycastResult.IsValidHit, Is.False);
+            Assert.That(raycastResult.GetCollider(), Is.Null);
         }
     }
 }

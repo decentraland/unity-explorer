@@ -22,6 +22,12 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; }
+
+        [field: SerializeField]
+        public Animator PanelAnimator { get; private set; }
+
+        [field: SerializeField]
+        public Animator HeaderAnimator { get; private set; }
     }
 
     [Serializable]

@@ -16,6 +16,9 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
         public void ScheduleBoneMatrixCalculation(Matrix4x4 avatarWorldToLocalMatrix)
         {
+            if (!Handle.IsCompleted)
+                return;
+            
             Job.AvatarTransform = avatarWorldToLocalMatrix;
             Handle = Job.Schedule(Bones);
         }

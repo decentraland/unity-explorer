@@ -1,4 +1,6 @@
+using Cysharp.Threading.Tasks;
 using DCL.Profiling;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility;
@@ -12,38 +14,46 @@ namespace DCL.WebRequests
     {
         private readonly string url;
 
-        public UnityWebRequest UnityWebRequest { get; }
-
         private GetTextureWebRequest(UnityWebRequest unityWebRequest, string url)
         {
             this.url = url;
             UnityWebRequest = unityWebRequest;
         }
 
+        public UnityWebRequest UnityWebRequest { get; }
+
         /// <summary>
-        ///     Creates the texture and finalizes the request
+        ///     Creates the texture
         /// </summary>
-        /// <param name="wrapMode"></param>
-        /// <param name="filterMode"></param>
-        /// <returns></returns>
-        public Texture2D CreateTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point)
-        {
-            Texture2D tex = DownloadHandlerTexture.GetContent(UnityWebRequest);
-            tex.wrapMode = wrapMode;
-            tex.filterMode = filterMode;
-
-            UnityWebRequest.Dispose();
-
-            tex.SetDebugName(url);
-            ProfilingCounters.TexturesAmount.Value++;
-
-            return tex;
-        }
+        public static CreateTextureOp CreateTexture(TextureWrapMode wrapMode, FilterMode filterMode = FilterMode.Point) =>
+            new (wrapMode, filterMode);
 
         internal static GetTextureWebRequest Initialize(in CommonArguments commonArguments, GetTextureArguments textureArguments)
         {
             UnityWebRequest wr = UnityWebRequestTexture.GetTexture(commonArguments.URL, !textureArguments.IsReadable);
             return new GetTextureWebRequest(wr, commonArguments.URL);
+        }
+
+        public struct CreateTextureOp : IWebRequestOp<GetTextureWebRequest, Texture2D>
+        {
+            private readonly TextureWrapMode wrapMode;
+            private readonly FilterMode filterMode;
+
+            public CreateTextureOp(TextureWrapMode wrapMode, FilterMode filterMode)
+            {
+                this.wrapMode = wrapMode;
+                this.filterMode = filterMode;
+            }
+
+            public UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
+            {
+                var texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);
+                texture.wrapMode = wrapMode;
+                texture.filterMode = filterMode;
+                texture.SetDebugName(webRequest.url);
+                ProfilingCounters.TexturesAmount.Value++;
+                return UniTask.FromResult(texture)!;
+            }
         }
     }
 }

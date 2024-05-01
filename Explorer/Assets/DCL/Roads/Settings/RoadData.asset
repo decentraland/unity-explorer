@@ -438,7 +438,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: -142, y: -65}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -142, y: -66}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -1857,7 +1857,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: -121, y: -32}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -121, y: -33}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -2787,7 +2787,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: -106, y: -29}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -106, y: -30}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -2916,7 +2916,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: -105, y: -42}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -105, y: -43}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -6405,7 +6405,7 @@ MonoBehaviour:
     RoadModel: Road_D
   - RoadCoordinate: {x: -46, y: 127}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -46, y: 126}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_B
@@ -6687,7 +6687,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: -44, y: 35}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -44, y: 34}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -6717,7 +6717,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: -44, y: 23}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -44, y: 22}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -7875,7 +7875,7 @@ MonoBehaviour:
     RoadModel: Road_D
   - RoadCoordinate: {x: -35, y: 44}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -35, y: 43}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_B
@@ -8208,7 +8208,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: -32, y: 29}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -32, y: 28}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -8526,7 +8526,7 @@ MonoBehaviour:
     RoadModel: Road_D
   - RoadCoordinate: {x: -29, y: 32}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -29, y: 31}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_B
@@ -9177,7 +9177,7 @@ MonoBehaviour:
     RoadModel: Road_D
   - RoadCoordinate: {x: -23, y: 44}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: -23, y: 43}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_B
@@ -11642,7 +11642,7 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_C
   - RoadCoordinate: {x: -9, y: 11}
-    Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
     RoadModel: EmptyFork_B
   - RoadCoordinate: {x: -9, y: 10}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
@@ -12056,7 +12056,7 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_0
   - RoadCoordinate: {x: -6, y: 11}
-    Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
+    Rotation: {x: 0, y: 0, z: 0, w: 1}
     RoadModel: EmptyFork_0
   - RoadCoordinate: {x: -6, y: 10}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
@@ -14214,7 +14214,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: 10, y: -67}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: 10, y: -68}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -17427,7 +17427,7 @@ MonoBehaviour:
     RoadModel: Road_B
   - RoadCoordinate: {x: 30, y: -33}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: 30, y: -34}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_D
@@ -17754,7 +17754,7 @@ MonoBehaviour:
     RoadModel: Road_D
   - RoadCoordinate: {x: 33, y: -30}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_B
+    RoadModel: Crossroads_C
   - RoadCoordinate: {x: 33, y: -31}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_B

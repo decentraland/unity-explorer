@@ -56,6 +56,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree03 Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      propertyPath: m_LODs.Array.data[0].screenRelativeHeight
+      value: 0.49620578
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      propertyPath: m_LODs.Array.data[1].screenRelativeHeight
+      value: 0.2508349
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      propertyPath: m_LODs.Array.data[2].screenRelativeHeight
+      value: 0.098236546
+      objectReference: {fileID: 0}
+    - target: {fileID: 4742473837712756890, guid: 856e12e0f12cc1847acb7dacb5ed9bd7, type: 3}
+      propertyPath: m_LODs.Array.data[3].screenRelativeHeight
+      value: 0.017368691
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

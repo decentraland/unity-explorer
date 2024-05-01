@@ -55,6 +55,8 @@ namespace DCL.SceneLoadingScreens
         private readonly List<TipView> tips = new ();
         private readonly List<TipBreadcrumb> tipsBreadcrumbs = new ();
 
+        private const string BG_COLOR_PROPERTY = "_Color1";
+
         public void ClearTips()
         {
             foreach (TipView tip in tips)
@@ -123,6 +125,26 @@ namespace DCL.SceneLoadingScreens
                  .ToUniTask(cancellationToken: ct);
 
             tips[index].gameObject.SetActive(false);
+        }
+
+        public async UniTask ChangeBackgroundColorFadeAsync(Color toColor, float duration, CancellationToken ct)
+        {
+            Color currentColor = Background.material.GetColor(BG_COLOR_PROPERTY);
+            float time = 0f;
+            while (time < duration)
+            {
+                ct.ThrowIfCancellationRequested();
+                Color newColor = Color.Lerp(currentColor, toColor, time / duration);
+                Background.material.SetColor(BG_COLOR_PROPERTY, newColor);
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+                time += Time.deltaTime;
+            }
+            Background.material.SetColor(BG_COLOR_PROPERTY, toColor);
+        }
+
+        public void ChangeBackgroundColor(Color toColor)
+        {
+            Background.material.SetColor(BG_COLOR_PROPERTY, toColor);
         }
     }
 }

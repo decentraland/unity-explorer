@@ -1,4 +1,4 @@
-﻿namespace DCL.WebRequests.GenericHead
+﻿namespace DCL.WebRequests
 {
     /// <summary>
     ///     Empty arguments - no extra data

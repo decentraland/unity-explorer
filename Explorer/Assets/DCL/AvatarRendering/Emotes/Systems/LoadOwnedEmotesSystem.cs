@@ -43,8 +43,8 @@ namespace DCL.AvatarRendering.Emotes
             IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             LambdaOwnedEmoteElementList lambdaResponse =
-                await (await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
-                        ct, GetReportCategory()))
+                await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
+                        ct, GetReportCategory())
                    .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
             if (lambdaResponse.elements.Count == 0)

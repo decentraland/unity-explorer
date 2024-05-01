@@ -110,6 +110,9 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
+            transform.rotation = Quaternion.identity;
+            transform.localScale = Vector3.one;
+
             var transformComp = new CharacterTransform(transform);
 
             Entity entity = world.Create(

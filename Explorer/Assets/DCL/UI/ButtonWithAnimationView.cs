@@ -20,6 +20,8 @@ namespace DCL.UI
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ButtonPressedAudio { get; private set; }
+        [field: SerializeField]
+        public AudioClipConfig ButtonHoverAudio { get; private set; }
 
         private void OnEnable()
         {
@@ -44,6 +46,7 @@ namespace DCL.UI
         public void OnPointerEnter(PointerEventData eventData)
         {
             ButtonAnimator.SetTrigger(HOVER);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoverAudio);
         }
 
         public void OnPointerExit(PointerEventData eventData)

@@ -129,6 +129,7 @@ namespace Global.Dynamic
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
+            AudioClipConfig backgroundMusic,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -211,7 +212,8 @@ namespace Global.Dynamic
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
                 dynamicWorldParams.EnableLandscape,
-                landscapePlugin
+                landscapePlugin,
+                backgroundMusic
             );
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));

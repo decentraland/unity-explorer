@@ -16,6 +16,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -40,10 +41,13 @@ namespace DCL.Navmap
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
-        private readonly Dictionary<NavmapSections, ISection> mapSections;
         private readonly NavmapLocationController navmapLocationController;
 
         private Vector2 lastParcelHovered;
+        private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
+        private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
+        private readonly Dictionary<NavmapSections, ISection> mapSections;
+        private NavmapSections lastShownSection;
 
         public NavmapController(
             NavmapView navmapView,
@@ -64,7 +68,7 @@ namespace DCL.Navmap
 
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
-            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController);
+            searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, dclInput);
             floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
 
             searchBarController.OnResultClicked += OnResultClicked;
@@ -79,17 +83,18 @@ namespace DCL.Navmap
                 { NavmapSections.StreetView, streetViewController },
             };
 
-            var sectionSelectorController = new SectionSelectorController<NavmapSections>(mapSections, NavmapSections.Satellite);
-            foreach (var tabSelector in navmapView.TabSelectorMappedViews)
+            sectionSelectorController = new SectionSelectorController<NavmapSections>(mapSections, NavmapSections.Satellite);
+            tabsBySections = navmapView.TabSelectorMappedViews.ToDictionary(map => map.Section, map => map.TabSelectorViews);
+
+            foreach ((NavmapSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
-                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.RemoveAllListeners();
-                tabSelector.TabSelectorViews.TabSelectorToggle.onValueChanged.AddListener(
-                    (isOn) =>
+                tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+                tabSelector.TabSelectorToggle.onValueChanged.AddListener(
+                    isOn =>
                     {
-                        animationCts.SafeCancelAndDispose();
-                        animationCts = new CancellationTokenSource();
-                        sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelector.TabSelectorViews, tabSelector.Section, animationCts.Token, false).Forget();
-                    });
+                        ToggleSection(isOn, tabSelector, section, true);
+                    }
+                );
             }
 
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
@@ -100,6 +105,19 @@ namespace DCL.Navmap
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             lastParcelHovered = Vector2.zero;
+        }
+
+        private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, NavmapSections shownSection, bool animate)
+        {
+            if(isOn && animate && shownSection != lastShownSection)
+                sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
+
+            animationCts.SafeCancelAndDispose();
+            animationCts = new CancellationTokenSource();
+            sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
+
+            if (isOn)
+                lastShownSection = shownSection;
         }
 
         private void OnParcelHovered(Vector2 parcel)
@@ -120,8 +138,6 @@ namespace DCL.Navmap
             floatingPanelController.HandlePanelVisibility(result, true);
         }
 
-
-
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
@@ -130,6 +146,7 @@ namespace DCL.Navmap
 
         public void Activate()
         {
+            cameraController?.Release(this);
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
@@ -145,6 +162,11 @@ namespace DCL.Navmap
             mapSections[NavmapSections.Satellite].Activate();
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;
+            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections)
+            {
+                ToggleSection(section == NavmapSections.Satellite, tab, section, true);
+            }
+            sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
         }
 
         public void Deactivate()
@@ -154,6 +176,20 @@ namespace DCL.Navmap
 
             zoomController.Deactivate();
             cameraController?.Release(this);
+        }
+
+        public void Animate(int triggerId)
+        {
+            navmapView.PanelAnimator.SetTrigger(triggerId);
+            navmapView.HeaderAnimator.SetTrigger(triggerId);
+        }
+
+        public void ResetAnimator()
+        {
+            navmapView.PanelAnimator.Rebind();
+            navmapView.HeaderAnimator.Rebind();
+            navmapView.PanelAnimator.Update(0);
+            navmapView.HeaderAnimator.Update(0);
         }
 
         public RectTransform GetRectTransform() =>

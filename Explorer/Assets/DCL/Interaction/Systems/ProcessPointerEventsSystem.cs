@@ -11,6 +11,7 @@ using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -62,14 +63,19 @@ namespace DCL.Interaction.Systems
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderEntityInfo previousEntityInfo);
             hoverStateComponent.Reset();
 
-            if (CanHover() && raycastResult.TryGetValidHit(out GlobalColliderEntityInfo entityInfo))
+            GlobalColliderEntityInfo? entityInfo = raycastResult.GetEntityInfo();
+
+            if (raycastResult.IsValidHit && CanHover() && entityInfo != null)
             {
+                SceneEcsExecutor ecsExecutor = entityInfo.Value.EcsExecutor;
+                ColliderEntityInfo colliderInfo = entityInfo.Value.ColliderEntityInfo;
+
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
                 // External world access should be always synchronized (Global World calls into Scene World)
-                using (entityInfo.EcsExecutor.SyncedWorldAccessScope(out World world))
+                using (ecsExecutor.SyncedWorldAccessScope(out World world))
                 {
-                    EntityReference entityRef = entityInfo.ColliderEntityInfo.EntityReference;
+                    EntityReference entityRef = colliderInfo.EntityReference;
 
                     // Entity should be alive and contain PBPointerEvents component to be qualified
                     if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents? pbPointerEvents))
@@ -81,7 +87,7 @@ namespace DCL.Interaction.Systems
                         if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
                             candidateForHoverLeaveIsValid = false;
 
-                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.UnityRaycastHit, raycastResult.OriginRay);
+                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.GetRaycastHit(), raycastResult.GetOriginRay());
 
                         bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
 

@@ -12,20 +12,32 @@ Shader "Custom/LavaFlow"
     }
     SubShader 
     {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+        Tags
+        {
+            "Queue"="Transparent"
+            "IgnoreProjector"="True"
+            "RenderType"="Transparent"
+            "PreviewType"="Plane"
+            "CanUseSpriteAtlas"="True"
+        }
+        
+        Cull Off
+        Lighting Off
+        ZWrite Off
+        ZTest [unity_GUIZTestMode]
+        Blend SrcAlpha OneMinusSrcAlpha
 
         Pass 
         {
             CGPROGRAM
             #pragma vertex vertexShader
             #pragma fragment fragmentShader
-            #include "UnityCG.cginc"
 
-            float3 _Color1; 
-            float3 _Color2;
-            float3 _Color3;
-            float3 _Color4;
+            float4 _Color1; 
+            float4 _Color2;
+            float4 _Color3;
+            float4 _Color4;
+            float _Alpha;
             float _Speed;
             float _Frequency;
             float _Amplitude;
@@ -34,12 +46,14 @@ Shader "Custom/LavaFlow"
             {
                 float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
+                float4 color : COLOR; 
             };
 
             struct interpolator 
             {
                 float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
+                float4 color : COLOR; 
             };
 
             interpolator vertexShader (mesh m) 
@@ -47,6 +61,7 @@ Shader "Custom/LavaFlow"
                 interpolator o;
                 o.vertex = UnityObjectToClipPos(m.vertex); 
                 o.uv = m.uv;
+                o.color = m.color;
                 return o;
             }
 
@@ -87,7 +102,7 @@ Shader "Custom/LavaFlow"
             }
 
 
-            fixed4 fragmentShader (interpolator i) : SV_Target 
+            float4 fragmentShader (interpolator i) : SV_Target 
             {
                 float2 uv = i.uv;
                 float ratio = _ScreenParams.x / _ScreenParams.y;
@@ -106,14 +121,14 @@ Shader "Custom/LavaFlow"
                 tuv.y += sin(tuv.x * _Frequency * 1.5 + speed) / (_Amplitude * 0.5);
 
                 // Mix colors based on adjusted UVs
-                float3 layer1 = lerp(_Color1, _Color2, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
-                float3 layer2 = lerp(_Color3, _Color4, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
-                float3 finalComp = lerp(layer1, layer2, smoothstep(.5, -.3, tuv.y));
+                float4 layer1 = lerp(_Color1, _Color2, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
+                float4 layer2 = lerp(_Color3, _Color4, smoothstep(-.3, .2, mul(tuv, rotate(radians(-5.0))).x));
+                float4 finalComp = lerp(layer1, layer2, smoothstep(.5, -.3, tuv.y));
+                finalComp.a = i.color.a; 
 
-                return fixed4(finalComp,1.0);
+                return finalComp;
             }
             ENDCG
         }
     }
-    FallBack "Diffuse"
 }

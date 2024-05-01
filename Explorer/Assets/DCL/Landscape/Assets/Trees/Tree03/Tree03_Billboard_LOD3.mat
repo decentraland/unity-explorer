@@ -87,5 +87,5 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _HueVariationColor: {r: 0.18039212, g: 0.36470586, b: 0.6117647, a: 0.6509804}
-    - _SubsurfaceColor: {r: 0.5568628, g: 0.98039216, b: 0.8117648, a: 1}
+    - _SubsurfaceColor: {r: 0.568, g: 1, b: 0.82800007, a: 1}
   m_BuildTextureStacks: []

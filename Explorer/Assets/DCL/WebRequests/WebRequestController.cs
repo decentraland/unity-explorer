@@ -19,9 +19,10 @@ namespace DCL.WebRequests
             this.web3IdentityCache = web3IdentityCache;
         }
 
-        public async UniTask<TWebRequest> SendAsync<TWebRequest, TWebRequestArgs>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope)
+        public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op)
             where TWebRequestArgs: struct
             where TWebRequest: struct, ITypedWebRequest
+            where TWebRequestOp : IWebRequestOp<TWebRequest, TResult>
         {
             int attemptsLeft = envelope.CommonArguments.TotalAttempts();
 
@@ -31,21 +32,24 @@ namespace DCL.WebRequests
             while (attemptsLeft > 0)
             {
                 TWebRequest request = envelope.InitializedWebRequest(web3IdentityCache);
-                var exceptionThrown = false;
+
+                // No matter what we must release UnityWebRequest, otherwise it crashes in the destructor
+                using var wr = request.UnityWebRequest;
 
                 try
                 {
-                    analyticsContainer.OnRequestStarted(request);
-                    await request.SendRequest(envelope.Ct);
-                    // if no exception is thrown Request is successful
-                    return request;
+                    await request.WithAnalyticsAsync(analyticsContainer, request.SendRequest(envelope.Ct));
+
+                    // if no exception is thrown Request is successful and the continuation op can be executed
+                    return await op.ExecuteAsync(request, envelope.Ct);
+                    // After the operation is executed, the flow may continue in the background thread
                 }
                 catch (UnityWebRequestException exception)
                 {
+                    // No result can be concluded in this case
                     if (envelope.ShouldIgnoreResponseError(exception.UnityWebRequest!))
-                        return request;
+                        return default(TResult);
 
-                    exceptionThrown = true;
                     attemptsLeft--;
 
                     // Print verbose
@@ -57,16 +61,6 @@ namespace DCL.WebRequests
 
                     if (exception.IsIrrecoverableError(attemptsLeft))
                         throw;
-                }
-                finally
-                {
-                    analyticsContainer.OnRequestFinished(request);
-
-                    if (exceptionThrown)
-                    {
-                        // Make the request no longer usable as all data needed is written into the exception itself
-                        request.UnityWebRequest.Dispose();
-                    }
                 }
             }
 

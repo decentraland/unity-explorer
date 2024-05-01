@@ -37,14 +37,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [Query]
         [None(typeof(PBUiBackground), typeof(DeleteEntityIntention))]
         private void HandleUIBackgroundRemoval(ref UIBackgroundComponent uiBackgroundComponent) =>
-            RemoveDCLImage(uiBackgroundComponent);
+            RemoveDCLImage(ref uiBackgroundComponent);
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(ref UIBackgroundComponent uiBackgroundComponent) =>
-            RemoveDCLImage(uiBackgroundComponent);
+            RemoveDCLImage(ref uiBackgroundComponent);
 
-        private void RemoveDCLImage(UIBackgroundComponent uiBackgroundComponent)
+        private void RemoveDCLImage(ref UIBackgroundComponent uiBackgroundComponent)
         {
             if (uiBackgroundComponent.TexturePromise != null)
             {

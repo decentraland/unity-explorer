@@ -53,7 +53,6 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
-        [SerializeField] private VideoPlayer splashAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic;
 
         private DynamicWorldContainer? dynamicWorldContainer;
@@ -192,7 +191,7 @@ namespace Global.Dynamic
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
                         EnableLandscape = shouldEnableLandscape, EnableLOD = enableLOD
-                    }, ct
+                    }, backgroundMusic, ct
                 );
 
                 if (!isLoaded)
@@ -225,8 +224,6 @@ namespace Global.Dynamic
                     return;
                 }
 
-                UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
-
                 Entity playerEntity;
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
@@ -247,7 +244,6 @@ namespace Global.Dynamic
 
                 splashRoot.SetActive(false);
 
-                UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             }
             catch (OperationCanceledException)
@@ -288,7 +284,7 @@ namespace Global.Dynamic
 
         private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
         {
-            await UniTask.WaitUntil(() => splashAnimation.frame >= (long)(splashAnimation.frameCount - 1),
+            await UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
                 cancellationToken: ct);
         }
 

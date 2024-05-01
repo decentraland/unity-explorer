@@ -15,7 +15,6 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         private TextureArrayContainer textureArrayContainer;
         private Material testSourceMaterial;
         private Material testTargetMaterial;
-        private Texture2D testTexture;
 
         protected abstract string targetShaderName { get; }
 
@@ -23,21 +22,28 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         public void SetUp()
         {
             var targetShader = Shader.Find(targetShaderName);
-            Texture texture = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
+            Texture texture_BC7 = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_BASEMAP_TEXTURE_FORMAT, false, false);
+            Texture texture_BC5 = new Texture2D(TEST_RESOLUTION, TEST_RESOLUTION, TextureArrayConstants.DEFAULT_NORMALMAP_TEXTURE_FORMAT, false, false);
+
 
             var defaultTextures = new Dictionary<TextureArrayKey, Texture>
             {
-                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture,
-                [new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
-                [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture,
-                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture
+                [new TextureArrayKey(TextureArrayConstants.MAINTEX_ARR_TEX_SHADER, TEST_RESOLUTION)] = texture_BC7,
+                [new TextureArrayKey(TextureArrayConstants.BASE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC7,
+                [new TextureArrayKey(TextureArrayConstants.NORMAL_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC5,
+                [new TextureArrayKey(TextureArrayConstants.EMISSIVE_MAP_TEX_ARR, TEST_RESOLUTION)] = texture_BC7
             };
             var factory = new TextureArrayContainerFactory(defaultTextures);
             textureArrayContainer = factory.Create(targetShader, DEFAULT_RESOLUTIONS);
             testSourceMaterial = new Material(Shader.Find("DCL/Universal Render Pipeline/Lit"));
 
             foreach (TextureArrayMapping textureArrayMapping in textureArrayContainer.mappings)
-                testSourceMaterial.SetTexture(textureArrayMapping.OriginalTextureID, texture);
+            {
+                if (textureArrayMapping.Handler.GetTextureFormat() == TextureFormat.BC7)
+                    testSourceMaterial.SetTexture(textureArrayMapping.OriginalTextureID, texture_BC7);
+                else
+                    testSourceMaterial.SetTexture(textureArrayMapping.OriginalTextureID, texture_BC5);
+            }
 
             testTargetMaterial = new Material(targetShader);
         }
