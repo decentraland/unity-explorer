@@ -64,13 +64,17 @@ namespace DCL.AvatarRendering.Emotes
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotes(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
+            bool stopEmote = emoteComponent.StopEmote;
+
+            emoteComponent.StopEmote = false;
+
             bool wasPlayingEmote = emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE || emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
             if (!wasPlayingEmote) return;
 
             EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
             if (emoteReference == null) return;
 
-            if (emoteComponent.StopEmote)
+            if (stopEmote)
             {
                 emoteComponent.StopEmote = false;
                 avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);

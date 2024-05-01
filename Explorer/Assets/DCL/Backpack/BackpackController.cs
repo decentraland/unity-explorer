@@ -34,6 +34,7 @@ namespace DCL.Backpack
         private readonly Dictionary<BackpackSections, ISection> backpackSections;
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
+        private readonly BackpackEventBus backpackEventBus;
         private BackpackSections lastShownSection;
 
         private CancellationTokenSource? animationCts;
@@ -65,6 +66,7 @@ namespace DCL.Backpack
             this.playerEntity = playerEntity;
             this.backpackEmoteGridController = backpackEmoteGridController;
             this.emotesController = emotesController;
+            this.backpackEventBus = backpackEventBus;
 
             rectTransform = view.transform.parent.GetComponent<RectTransform>();
 
@@ -100,7 +102,7 @@ namespace DCL.Backpack
 
                         if (isOn)
                         {
-                            backpackEventBus.SendChangedBackpackSectionEvent(currentSection);
+                            backpackEventBus.SendChangedBackpackSectionEvent(section);
                         }
                     }
                 );
@@ -121,7 +123,10 @@ namespace DCL.Backpack
             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
 
             if (isOn)
+            {
                 lastShownSection = shownSection;
+                backpackEventBus.SendChangedBackpackSectionEvent(shownSection);
+            }
         }
 
         public void Dispose()
