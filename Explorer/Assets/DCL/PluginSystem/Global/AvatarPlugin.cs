@@ -71,6 +71,7 @@ namespace DCL.PluginSystem.Global
         private readonly DefaultFaceFeaturesHandler defaultFaceFeaturesHandler;
         private readonly IEntityParticipantTable entityParticipantTable;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
+        private readonly IWearableCatalog wearableCatalog;
 
         public AvatarPlugin(
             IComponentPoolsRegistry poolsRegistry,
@@ -85,7 +86,8 @@ namespace DCL.PluginSystem.Global
             DefaultFaceFeaturesHandler defaultFaceFeaturesHandler,
             IEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
-            TextureArrayContainerFactory textureArrayContainerFactory)
+            TextureArrayContainerFactory textureArrayContainerFactory,
+            IWearableCatalog wearableCatalog)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.frameTimeCapBudget = frameTimeCapBudget;
@@ -99,6 +101,7 @@ namespace DCL.PluginSystem.Global
             this.memoryBudget = memoryBudget;
             this.nametagsData = nametagsData;
             this.textureArrayContainerFactory = textureArrayContainerFactory;
+            this.wearableCatalog = wearableCatalog;
             componentPoolsRegistry = poolsRegistry;
 
             cacheCleaner.Register(wearableAssetsCache);
@@ -138,7 +141,8 @@ namespace DCL.PluginSystem.Global
                 cacheCleaner.Register(extendedObjectPool.Pool);
 
             AvatarInstantiatorSystem.InjectToWorld(ref builder, frameTimeCapBudget, memoryBudget, avatarPoolRegistry, avatarMaterialPoolHandler,
-                computeShaderPool, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler);
+                computeShaderPool, wearableAssetsCache, skinningStrategy, vertOutBuffer, mainPlayerAvatarBaseProxy, defaultFaceFeaturesHandler,
+                wearableCatalog);
 
             MakeVertsOutBufferDefragmentationSystem.InjectToWorld(ref builder, vertOutBuffer, skinningStrategy);
 
