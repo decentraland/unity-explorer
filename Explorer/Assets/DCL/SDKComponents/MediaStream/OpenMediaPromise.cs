@@ -38,10 +38,16 @@ namespace DCL.SDKComponents.MediaStream
             status = Status.Consumed;
 
             if (this.url != url)
+            {
                 ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume different url - wanted <{url}>, but was <{this.url}>");
+                return false;
+            }
 
-            if (isReachable)
+            if (!isReachable)
+            {
                 ReportHub.LogWarning(ReportCategory.MEDIA_STREAM, $"Try to consume not reachable URL <{this.url}>");
+                return false;
+            }
 
             return true;
         }
