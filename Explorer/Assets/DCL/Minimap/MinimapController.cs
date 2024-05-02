@@ -15,6 +15,7 @@ using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DG.Tweening;
+using ECS;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,7 @@ namespace DCL.Minimap
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmData realmData;
         private CancellationTokenSource cts;
         private bool isCollapsed;
 
@@ -52,13 +54,15 @@ namespace DCL.Minimap
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
-            TrackPlayerPositionSystem system
+            TrackPlayerPositionSystem system,
+            IRealmData realmData
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
             this.placesAPIService = placesAPIService;
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
+            this.realmData = realmData;
         }
 
         protected override void OnViewInstantiated()
@@ -159,7 +163,7 @@ namespace DCL.Minimap
                 return;
 
             previousParcelPosition = playerParcelPosition;
-            SetWorldMode(playerParcelPosition != Vector2Int.zero);
+            SetWorldMode(realmData.ScenesAreFixed);
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
