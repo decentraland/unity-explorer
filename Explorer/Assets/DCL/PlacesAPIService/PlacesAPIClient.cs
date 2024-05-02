@@ -71,7 +71,7 @@ namespace DCL.PlacesAPIService
             return response;
         }
 
-        public async UniTask<PlacesData.PlaceInfo> GetPlaceAsync(Vector2Int coords, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct)
         {
             const string URL = BASE_URL + "?positions={0},{1}&with_realms_detail=true";
 
@@ -84,12 +84,12 @@ namespace DCL.PlacesAPIService
                         .WithCustomExceptionAsync(static exc => new PlacesAPIException(exc, "Error fetching place info:"));
 
             if (response.data.Count == 0)
-                throw new NotAPlaceException(coords);
+                return null;
 
             return response.data[0];
         }
 
-        public async UniTask<PlacesData.PlaceInfo> GetPlaceAsync(string placeUUID, CancellationToken ct)
+        public async UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeUUID, CancellationToken ct)
         {
             var url = $"{BASE_URL}/{placeUUID}?with_realms_detail=true";
 
@@ -103,9 +103,6 @@ namespace DCL.PlacesAPIService
                 throw new NotAPlaceException(placeUUID);
 
             // At this moment WR is already disposed
-            if (response.data == null)
-                throw new Exception($"No place info retrieved:\n{placeUUID}");
-
             return response.data;
         }
 
