@@ -296,14 +296,6 @@ namespace DCL.Chat
                 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
 
-                if (entityParticipantTable.Has(itemData.WalletAddress))
-                {
-                    var entity = entityParticipantTable.Entity(itemData.WalletAddress);
-                    Profile profile = world.Get<Profile>(entity);
-                    if(profile.ProfilePicture != null)
-                        itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
-                }
-
                 //temporary approach to extract the username without the walledId, will be refactored
                 //once we have the proper integration of the profile retrieval
                 Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
