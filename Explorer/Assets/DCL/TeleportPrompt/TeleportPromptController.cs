@@ -53,6 +53,7 @@ namespace DCL.TeleportPrompt
         protected override void OnViewShow()
         {
             cursor.Unlock();
+
             RequestTeleport(inputData.Coords, result =>
             {
                 if (result != TeleportPromptResultType.Approved)
@@ -101,13 +102,14 @@ namespace DCL.TeleportPrompt
                 placeImageController.SetImage(viewInstance.defaultImage);
                 SetPopupAsLoading(true);
                 await UniTask.Delay(300, cancellationToken: ct);
-                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, ct);
-                SetPlaceInfo(placeInfo);
+                PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, ct);
+
+                if (placeInfo == null)
+                    SetEmptyPlaceInfo(parcel);
+                else
+                    SetPlaceInfo(placeInfo);
             }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                SetEmptyPlaceInfo(parcel);
-            }
+            catch (Exception e) when (e is not OperationCanceledException) { SetEmptyPlaceInfo(parcel); }
         }
 
         private void SetPlaceInfo(PlacesData.PlaceInfo placeInfo)
