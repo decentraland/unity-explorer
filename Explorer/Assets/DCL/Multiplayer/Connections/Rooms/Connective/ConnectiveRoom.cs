@@ -21,14 +21,21 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 {
     public delegate UniTask PrewarmAsyncDelegate(CancellationToken token);
 
-    public delegate UniTask CycleStepDelegate(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token);
+    public delegate UniTask CycleStepDelegate(
+        ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate,
+        DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate,
+        CancellationToken token
+    );
 
     public delegate UniTask ConnectToRoomAsyncDelegate(string connectionString, CancellationToken token);
+
+    public delegate UniTask DisconnectCurrentRoomAsyncDelegate(CancellationToken token);
 
     public class ConnectiveRoom : IConnectiveRoom
     {
         private readonly PrewarmAsyncDelegate prewarmAsync;
         private readonly CycleStepDelegate runConnectCycleStepAsync;
+        private readonly Action<string> log;
 
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
@@ -51,13 +58,23 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private CancellationTokenSource? cancellationTokenSource;
 
+        public ConnectiveRoom(PrewarmAsyncDelegate prewarmAsync, CycleStepDelegate runConnectCycleStepAsync, string logPrefix) : this(
+            prewarmAsync,
+            runConnectCycleStepAsync,
+            m => ReportHub.WithReport(ReportCategory.LIVEKIT).Log($"Room log - {logPrefix}: {m}")
+        )
+        {
+        }
+
         public ConnectiveRoom(
             PrewarmAsyncDelegate prewarmAsync,
-            CycleStepDelegate runConnectCycleStepAsync
+            CycleStepDelegate runConnectCycleStepAsync,
+            Action<string> log
         )
         {
             this.prewarmAsync = prewarmAsync;
             this.runConnectCycleStepAsync = runConnectCycleStepAsync;
+            this.log = log;
         }
 
         public void Start()
@@ -104,13 +121,24 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             while (token.IsCancellationRequested == false)
             {
-                await runConnectCycleStepAsync(TryConnectToRoomAsync, token);
+                await runConnectCycleStepAsync(TryConnectToRoomAsync, DisconnectCurrentRoomAsync, token);
                 await UniTask.Delay(heartbeatsInterval, cancellationToken: token);
             }
         }
 
+        private async UniTask DisconnectCurrentRoomAsync(CancellationToken token)
+        {
+            log($"Trying to disconnect current room started");
+            roomState.Set(IConnectiveRoom.State.Stopping);
+            await AssignNewRoomAndReleasePreviousAsync(NullRoom.INSTANCE, token);
+            roomState.Set(IConnectiveRoom.State.Stopped);
+            log($"Trying to disconnect current room finished");
+        }
+
         private async UniTask TryConnectToRoomAsync(string connectionString, CancellationToken token)
         {
+            log($"Trying to connect to started: {connectionString}");
+
             var newRoom = roomPool.Get()!;
 
             var credentials = new ConnectionStringCredentials(connectionString);
@@ -125,6 +153,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             await AssignNewRoomAndReleasePreviousAsync(newRoom, token);
             roomState.Set(IConnectiveRoom.State.Running);
+            log($"Trying to connect to finished successfully: {connectionString}");
         }
 
         private async UniTask AssignNewRoomAndReleasePreviousAsync(IRoom newRoom, CancellationToken token)

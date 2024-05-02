@@ -13,6 +13,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
@@ -53,6 +54,7 @@ namespace DCL.GlobalPartitioning
                 CreateQuery<GetNFTShapeIntention, Texture2D>(),
                 CreateQuery<GetEmotesByPointersFromRealmIntention, EmotesDTOList>(),
                 CreateQuery<GetOwnedEmotesFromRealmIntention, EmotesResolution>(),
+                CreateQuery<GetAudioClipIntention, AudioClip>(),
             };
         }
 
