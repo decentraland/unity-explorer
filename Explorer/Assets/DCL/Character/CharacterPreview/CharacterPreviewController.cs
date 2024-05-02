@@ -89,8 +89,7 @@ namespace DCL.CharacterPreview
 
         private async UniTask WaitForAvatarInstantiatedAsync(CancellationToken ct)
         {
-            while (globalWorld.Has<AvatarShapeComponent>(characterPreviewEntity)
-                   && globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
+            while (globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
             {
                 if (ct.IsCancellationRequested)
                     return;
