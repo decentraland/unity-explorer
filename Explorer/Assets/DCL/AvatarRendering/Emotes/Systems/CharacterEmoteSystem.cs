@@ -78,7 +78,6 @@ namespace DCL.AvatarRendering.Emotes
 
             if (stopEmote)
             {
-                emoteComponent.StopEmote = false;
                 avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
                 StopEmote(ref emoteComponent, emoteReference);
                 return;
