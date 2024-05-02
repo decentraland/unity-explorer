@@ -148,11 +148,13 @@ namespace DCL.Backpack
                 gridItemsPool.Release(loadingResults[j]);
             }
 
-            //When clicking too fast through the wearables page numbers
-            //the gridWearables can return 32 items instead of the max 16 defined
-            //In that case, this Min assures the backpack wont crash
-            for (int i = Math.Min(gridWearables.Length - 1, loadingResults.Length - 1); i >= 0; i--)
+            for (int i = Math.Min(gridWearables.Length, loadingResults.Length) - 1; i >= 0; i--)
             {
+                //This only happens in last page of results, when gridWearables returned twice the amount of wearables
+                //caused by clicking repeatedly on the same number on the backpack
+                if (usedPoolItems.ContainsKey(gridWearables[i].GetUrn()))
+                    continue;
+
                 BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
@@ -254,7 +256,7 @@ namespace DCL.Backpack
         {
             AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!uniTaskAsync.Result!.Value.Succeeded)
+            if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
                 return;
 
             currentPageWearables = uniTaskAsync.Result.Value.Asset.Wearables;
