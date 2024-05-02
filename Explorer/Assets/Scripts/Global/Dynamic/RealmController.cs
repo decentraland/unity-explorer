@@ -76,25 +76,6 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
         }
 
-        /// <summary>
-        ///     it is an async process so it should be executed before ECS kicks in
-        /// </summary>
-        public async UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport loadReport, CancellationToken ct)
-        {
-            await SetRealmAsync(realm, ct);
-
-            loadReport.ProgressCounter.Value = 0.1f;
-
-            var sceneLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-            try
-            {
-                await UniTask.WhenAll(sceneLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
-                    teleportController.TeleportToSceneSpawnPointAsync(playerStartPosition, sceneLoadReport, ct).ContinueWith(w => w.ToUniTask(ct)));
-            }
-            catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
-        }
-
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
             World world = globalWorld!.EcsWorld;

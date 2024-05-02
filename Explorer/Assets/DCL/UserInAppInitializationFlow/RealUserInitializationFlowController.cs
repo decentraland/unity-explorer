@@ -135,7 +135,7 @@ namespace DCL.UserInAppInitializationFlow
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
             await UniTask.WhenAny(
                 teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
-                realmNavigator.TeleportToParcelAsync(startParcel, teleportLoadReport , ct));
+                realmNavigator.TeleportToParcelAsync(true, startParcel, teleportLoadReport , ct));
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
