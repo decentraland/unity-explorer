@@ -41,6 +41,7 @@ namespace ECS.StreamableLoading.AudioClips
         public void RemoveReference()
         {
             referencesCount--;
+
             Assert.IsFalse(referencesCount < 0, "Reference count of AudioClip should never be negative!");
 
             LastUsedFrame = MultithreadingUtility.FrameCount;

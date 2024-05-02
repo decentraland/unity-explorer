@@ -21,8 +21,8 @@ namespace DCL.Audio
         [SerializeField] private int systemUpdateFrequency = 10;
         [SerializeField] private int audioSourcePositioningRetryAttempts = 3;
         [SerializeField] private int oceanDistanceThreshold = 150;
-        public float ListeningDistanceThreshold => mutingDistanceThreshold;
-        public float MutingDistanceThreshold => distanceThreshold;
+        public float ListeningDistanceThreshold => distanceThreshold;
+        public float MutingDistanceThreshold => mutingDistanceThreshold;
         public int RowsPerChunk => rowsPerChunk;
         public int SystemUpdateFrequency => systemUpdateFrequency;
         public int AudioSourcePositioningRetryAttempts => audioSourcePositioningRetryAttempts;
