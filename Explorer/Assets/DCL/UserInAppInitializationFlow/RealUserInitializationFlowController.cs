@@ -15,6 +15,7 @@ using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
 using System.Threading;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.Assertions;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
@@ -39,6 +40,9 @@ namespace DCL.UserInAppInitializationFlow
 
         private AsyncLoadProcessReport? loadReport;
 
+        private readonly IRealmNavigator realmNavigator;
+
+
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
             ITeleportController teleportController,
             IMVCManager mvcManager,
@@ -49,7 +53,8 @@ namespace DCL.UserInAppInitializationFlow
             CameraSamplingData cameraSamplingData,
             bool enableLandscape,
             ILandscapeInitialization landscapeInitialization,
-            AudioClipConfig backgroundMusic)
+            AudioClipConfig backgroundMusic,
+            IRealmNavigator realmNavigator)
         {
             this.teleportController = teleportController;
             this.mvcManager = mvcManager;
@@ -62,6 +67,7 @@ namespace DCL.UserInAppInitializationFlow
             this.cameraEntity = cameraEntity;
             this.cameraSamplingData = cameraSamplingData;
             this.backgroundMusic = backgroundMusic;
+            this.realmNavigator = realmNavigator;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -94,9 +100,9 @@ namespace DCL.UserInAppInitializationFlow
 
             await LoadPlayerAvatar(world, ownPlayerEntity, ownProfile, ct);
 
-            await LoadLandscapeAsync(ct);
-
-            await TeleportToSpawnPointAsync(world, ct);
+            await realmNavigator.TeleportToParcelAsync(startParcel, ct);
+            //await LoadLandscapeAsync(ct);
+            //await TeleportToSpawnPointAsync(world, ct);
 
             loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
             loadReport.CompletionSource.TrySetResult();
