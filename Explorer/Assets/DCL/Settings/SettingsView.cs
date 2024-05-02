@@ -26,5 +26,7 @@ namespace DCL.Settings
         [field: SerializeField] public Sprite ControlsSectionBackground { get; private set; }
         [field: Header("Others")]
         [field: SerializeField] public ScrollRect ContentScrollRect { get; private set; }
+        [field: SerializeField] public Animator PanelAnimator { get; private set; }
+        [field: SerializeField] public Animator HeaderAnimator { get; private set; }
     }
 }

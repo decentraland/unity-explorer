@@ -68,7 +68,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "720c8268a37c4fe56dacc976c93473696bcdfda2"
+      "hash": "08012f4d8072199fc2650ac32fb29a43b54297a2"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
@@ -481,6 +481,15 @@
       "dependencies": {
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
+      }
+    },
+    "com.unity.visualeffectgraph": {
+      "version": "14.0.10",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.shadergraph": "14.0.10",
+        "com.unity.render-pipelines.core": "14.0.10"
       }
     },
     "com.unity.visualscripting": {

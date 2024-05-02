@@ -23,7 +23,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
-                RunConnectCycleStepAsync
+                RunConnectCycleStepAsync,
+                nameof(FixedConnectiveRoom)
             );
         }
 
@@ -39,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         public IRoom Room() =>
             connectiveRoom.Room();
 
-        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token)
+        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
         {
             if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running)
             {
@@ -52,7 +53,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         {
             string adapterUrl = await currentAdapterAddress.AdapterUrlAsync(token);
             string metadata = FixedMetadata.Default.ToJson();
-            GenericPostRequest result = await webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
+            var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
             string connectionString = response.fixedAdapter;
             ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");

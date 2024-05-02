@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using UnityEngine.Networking;
+﻿using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
@@ -22,11 +21,5 @@ namespace DCL.WebRequests
         {
             UnityWebRequest = unityWebRequest;
         }
-
-        public UniTask<T> CreateFromJson<T>(
-            WRJsonParser jsonParser,
-            WRThreadFlags threadFlags = WRThreadFlags.SwitchToThreadPool | WRThreadFlags.SwitchBackToMainThread,
-            GenericDownloadHandlerUtils.CreateExceptionOnParseFail createCustomExceptionOnFailure = null) =>
-            this.CreateFromJsonAsync<GenericPostRequest, T>(jsonParser, threadFlags, createCustomExceptionOnFailure);
     }
 }

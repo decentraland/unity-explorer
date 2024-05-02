@@ -3,8 +3,9 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
-// using UnityEditor;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Pool;
 using Object = UnityEngine.Object;
 
 namespace DCL.AvatarRendering.Emotes
@@ -23,7 +24,8 @@ namespace DCL.AvatarRendering.Emotes
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
         }
 
-        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, in IAvatarView view, ref CharacterEmoteComponent emoteComponent)
+        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
+            ref CharacterEmoteComponent emoteComponent)
         {
             Animator animator = mainAsset.GetComponent<Animator>();
 
@@ -67,12 +69,18 @@ namespace DCL.AvatarRendering.Emotes
             view.SetAnimatorBool(AnimationHashes.EMOTE_LOOP, emoteComponent.EmoteLoop);
 
             if (emoteReferences.propClip != null)
+            {
                 emoteReferences.animator.SetTrigger(emoteReferences.propClipHash);
+                emoteReferences.animator.SetBool(AnimationHashes.LOOP, emoteComponent.EmoteLoop);
+            }
 
             if (audioAsset != null)
             {
                 AudioSource? audioSource = audioSourcePool.Get();
                 audioSource.clip = audioAsset;
+                audioSource.spatialize = isSpatial;
+                audioSource.spatialBlend = isSpatial ? 1 : 0;
+                audioSource.transform.position = avatarTransform.position;
                 audioSource.Play();
                 emoteReferences.audioSource = audioSource;
             }
@@ -105,22 +113,18 @@ namespace DCL.AvatarRendering.Emotes
             references.animator = animator;
 
             RuntimeAnimatorController? rac = animator.runtimeAnimatorController;
-            AnimationClip[]? clips = rac.animationClips;
+            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get();
 
-            if (clips.Length == 1)
-                references.avatarClip = clips[0];
+            foreach (AnimationClip clip in rac.animationClips)
+                if (!uniqueClips.Contains(clip))
+                    uniqueClips.Add(clip);
+
+            if (uniqueClips.Count == 1)
+                references.avatarClip = uniqueClips[0];
             else
-                foreach (AnimationClip animationClip in clips)
+            {
+                foreach (AnimationClip animationClip in uniqueClips)
                 {
-                    if (isLooping)
-                    {
-                        animationClip.wrapMode = WrapMode.Loop;
-                        // TODO move looping to the Asset Bundle Converter
-                        // AnimationClipSettings? settings = AnimationUtility.GetAnimationClipSettings(animationClip);
-                        // settings.loopTime = true;
-                        // AnimationUtility.SetAnimationClipSettings(animationClip, settings);
-                    }
-
                     if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
                         references.avatarClip = animationClip;
 
@@ -130,6 +134,9 @@ namespace DCL.AvatarRendering.Emotes
                         references.propClipHash = Animator.StringToHash(animationClip.name);
                     }
                 }
+            }
+
+            ListPool<AnimationClip>.Release(uniqueClips);
 
             // some of our legacy emotes have unity events that we are not handling, so we disable that system to avoid further errors
             animator.fireEvents = false;

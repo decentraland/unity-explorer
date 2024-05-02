@@ -8,9 +8,12 @@ namespace DCL.Backpack
 {
     public class AvatarController : ISection, IDisposable
     {
+        private static readonly int IN = Animator.StringToHash("In");
+
         private readonly RectTransform rectTransform;
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
+        private readonly AvatarView view;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
 
         public AvatarController(AvatarView view,
@@ -22,6 +25,7 @@ namespace DCL.Backpack
             BackpackInfoPanelController backpackInfoPanelController,
             IThumbnailProvider thumbnailProvider)
         {
+            this.view = view;
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
@@ -44,6 +48,13 @@ namespace DCL.Backpack
         public void Activate() { }
 
         public void Deactivate() { }
+
+        public void Animate(int triggerId)
+        {
+            view.gameObject.SetActive(triggerId == IN);
+        }
+
+        public void ResetAnimator() { }
 
         public RectTransform GetRectTransform() =>
             rectTransform;
