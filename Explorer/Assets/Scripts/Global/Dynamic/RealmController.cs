@@ -130,25 +130,8 @@ namespace Global.Dynamic
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
         }
 
-        public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct)
-        {
-            await UniTask.SwitchToMainThread();
-
-            var isReachable = true;
-
-            URLAddress url = realm.Append(new URLPath("/about"));
-
-            try
-            {
-                await webRequestController.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct).WithNoOpAsync();
-            }
-            catch (Exception)
-            {
-                isReachable = false;
-            }
-
-            return isReachable;
-        }
+        public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
+            await webRequestController.IsReachableAsync(realm.Append(new URLPath("/about")), ct);
 
         public IRealmData GetRealm() =>
             realmData;

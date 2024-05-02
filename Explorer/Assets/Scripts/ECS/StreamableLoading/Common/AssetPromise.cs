@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
+using DCL.Diagnostics;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using UnityEngine.Assertions;
 
 namespace ECS.StreamableLoading.Common
 {
@@ -80,7 +80,22 @@ namespace ECS.StreamableLoading.Common
         /// </summary>
         public bool TryConsume(World world, out StreamableLoadingResult<TAsset> result)
         {
-            Assert.IsFalse(Result.HasValue, ASSERTION_MESSAGE);
+            if (Result.HasValue)
+            {
+                // It means `TryGet` was called so now remove the entity
+                if (Entity != EntityReference.Null)
+                {
+                    ReportHub.LogError(ReportCategory.STREAMABLE_LOADING,
+                        $"{nameof(TryGetResult)} was called before {nameof(TryConsume)} for {LoadingIntention.ToString()}, the flow is inconclusive and should be fixed!");
+
+                    world.Destroy(Entity);
+                    Entity = EntityReference.Null;
+                    result = Result.Value;
+                    return true;
+                }
+
+                throw new Exception($"{ASSERTION_MESSAGE} {LoadingIntention.ToString()}");
+            }
 
             result = default(StreamableLoadingResult<TAsset>);
 
