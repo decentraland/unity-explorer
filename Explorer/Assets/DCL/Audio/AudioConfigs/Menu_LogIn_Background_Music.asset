@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Menu_LogIn_Background_Music
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 98463b37ef02444cd846b4ab1a5d66fe, type: 3}
-  relativeVolume: 0.5
+  - {fileID: 8300000, guid: 240b163307475414fa79d5ad70945080, type: 3}
+  relativeVolume: 0.2
   audioCategory: 4
   pitchVariation: 0
   clipSelectionMode: 0
