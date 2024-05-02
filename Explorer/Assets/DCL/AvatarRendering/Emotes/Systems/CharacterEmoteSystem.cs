@@ -73,10 +73,14 @@ namespace DCL.AvatarRendering.Emotes
             bool wasPlayingEmote = emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE || emoteComponent.CurrentAnimationTag == AnimationHashes.EMOTE_LOOP;
             if (!wasPlayingEmote) return;
 
+            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+            if (emoteReference == null) return;
+
             if (stopEmote)
             {
+                emoteComponent.StopEmote = false;
                 avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-                StopEmote(ref emoteComponent);
+                StopEmote(ref emoteComponent, emoteReference);
                 return;
             }
 
@@ -84,9 +88,7 @@ namespace DCL.AvatarRendering.Emotes
             bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
             if (isOnAnotherTag)
-            {
-                StopEmote(ref emoteComponent);
-            }
+                StopEmote(ref emoteComponent, emoteReference);
         }
 
         // when moving or jumping we detect the emote cancellation and we take care of getting rid of the emote props and sounds
@@ -95,21 +97,25 @@ namespace DCL.AvatarRendering.Emotes
         private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform)
         {
             float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
-            if (velocity <= 0.2f) return;
-
             float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
-            if (verticalVelocity <= 0.2f) return;
 
-            StopEmote(ref emoteComponent);
+            bool canEmoteBeCancelled = velocity > 0.2f || verticalVelocity > 0.2f;
+
+            if (!canEmoteBeCancelled) return;
+
+            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+            if (emoteReference == null) return;
+
+            StopEmote(ref emoteComponent, emoteReference);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(ref CharacterEmoteComponent emoteComponent)
+        private void StopEmote(ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReference)
         {
             emoteComponent.EmoteClip = null;
             emoteComponent.EmoteLoop = false;
             emoteComponent.CurrentEmoteReference = null;
-            emotePlayer.StopEmotes();
+            emotePlayer.Stop(emoteReference);
         }
 
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote

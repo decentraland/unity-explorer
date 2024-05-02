@@ -3,10 +3,8 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
-using System;
 using UnityEngine;
 using System.Threading;
-using Utility;
 
 namespace DCL.Audio
 {
@@ -27,15 +25,10 @@ namespace DCL.Audio
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        private void OnDisable()
-        {
-            ContinuousAudioAvatarAudioSource.Stop();
-            cancellationTokenSource?.SafeCancelAndDispose();
-        }
-
         private void OnDestroy()
         {
-            cancellationTokenSource?.SafeCancelAndDispose();
+            cancellationTokenSource?.Cancel();
+            cancellationTokenSource?.Dispose();
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -174,7 +167,8 @@ namespace DCL.Audio
             {
                 playingContinuousAudio = false;
                 ContinuousAudioAvatarAudioSource.Stop();
-                cancellationTokenSource?.SafeCancelAndDispose();
+                cancellationTokenSource?.Cancel();
+                cancellationTokenSource?.Dispose();
                 cancellationTokenSource = null;
             }
 
