@@ -26,7 +26,7 @@ namespace DCL.Diagnostics
         }
 #endif
 
-        public static void Inject()
+        private static void Inject()
         {
             var traceInternal = Type.GetType("System.Diagnostics.TraceInternal,System");
             var listeners = (TraceListenerCollection)traceInternal.GetProperty("Listeners", BindingFlags.Public | BindingFlags.Static).GetValue(null);
@@ -45,7 +45,7 @@ namespace DCL.Diagnostics
                 stringBuilder.Append(detailMessage);
             }
 
-            throw new DiagnosticsException(message);
+            throw new DiagnosticsException(stringBuilder.ToString());
         }
 
         public override void Write(string? message)
