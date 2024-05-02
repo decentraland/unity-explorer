@@ -97,7 +97,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (emoteId.IsNullOrEmpty()) return;
 
-            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId };
+            var newEmoteIntent = new CharacterEmoteIntent { EmoteId = emoteId, Spatial = true };
             ref var emoteIntent = ref World.AddOrGet(entity, newEmoteIntent);
             emoteIntent = newEmoteIntent;
 

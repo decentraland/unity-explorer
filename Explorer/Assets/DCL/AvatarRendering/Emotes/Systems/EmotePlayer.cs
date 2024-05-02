@@ -24,7 +24,8 @@ namespace DCL.AvatarRendering.Emotes
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
         }
 
-        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, in IAvatarView view, ref CharacterEmoteComponent emoteComponent)
+        public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
+            ref CharacterEmoteComponent emoteComponent)
         {
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
@@ -76,6 +77,9 @@ namespace DCL.AvatarRendering.Emotes
             {
                 AudioSource? audioSource = audioSourcePool.Get();
                 audioSource.clip = audioAsset;
+                audioSource.spatialize = isSpatial;
+                audioSource.spatialBlend = isSpatial ? 1 : 0;
+                audioSource.transform.position = avatarTransform.position;
                 audioSource.Play();
                 emoteReferences.audioSource = audioSource;
             }

@@ -25,5 +25,7 @@ namespace DCL.CharacterCamera.Components
         ///     When in free camera mode, this is the movement vector
         /// </summary>
         public Vector2 FreeMovement;
+        public Vector2 FreePanning;
+        public Vector2 FreeFOV;
     }
 }
