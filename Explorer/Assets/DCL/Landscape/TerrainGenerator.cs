@@ -219,6 +219,10 @@ namespace DCL.Landscape
                     localCache.Save();
 
                 IsTerrainGenerated = true;
+
+                emptyParcels.Dispose();
+                ownedParcels.Dispose();
+
             }
         }
 

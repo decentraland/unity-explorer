@@ -1,6 +1,7 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using DCL.AsyncLoadReporting;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Realm
@@ -20,6 +21,10 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct);
 
-        UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+        UniTask InitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+
+        UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
+
+        UniTask TeleportToParcelAsync(Vector2Int initialParcel, AsyncLoadProcessReport processReport,  CancellationToken ct);
     }
 }

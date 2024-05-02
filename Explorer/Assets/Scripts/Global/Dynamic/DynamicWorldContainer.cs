@@ -270,7 +270,6 @@ namespace Global.Dynamic
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
                 dynamicWorldParams.EnableLandscape,
-                landscapePlugin,
                 backgroundMusic,
                 realmNavigator
             );

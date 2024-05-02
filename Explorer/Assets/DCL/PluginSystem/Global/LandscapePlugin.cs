@@ -5,7 +5,6 @@ using DCL.AsyncLoadReporting;
 using DCL.DebugUtilities;
 using DCL.Landscape;
 using DCL.Landscape.Config;
-using DCL.Landscape.Interface;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
 using DCL.MapRenderer.ComponentsFactory;
@@ -17,7 +16,7 @@ using LandscapeDebugSystem = DCL.Landscape.Systems.LandscapeDebugSystem;
 
 namespace DCL.PluginSystem.Global
 {
-    public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>, ILandscapeInitialization
+    public class LandscapePlugin : IDCLGlobalPlugin<LandscapeSettings>
     {
         private readonly TerrainGenerator terrainGenerator;
         private readonly WorldTerrainGenerator worldTerrainGenerator;
@@ -83,13 +82,6 @@ namespace DCL.PluginSystem.Global
             LandscapeTerrainCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
             LandscapeMiscCullingSystem.InjectToWorld(ref builder, landscapeData.Value, terrainGenerator);
         }
-
-        public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
-        {
-            await terrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
-
-            emptyParcels.Dispose();
-            ownedParcels.Dispose();
-        }
+       
     }
 }
