@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
@@ -10,20 +11,21 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Emotes.Interfaces;
+using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
 {
     [LogCategory(ReportCategory.EMOTE)]
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(AvatarGroup))]
+    [UpdateAfter(typeof(RemoteEmotesSystem))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         // todo: use this to add nice Debug UI to trigger any emote?
@@ -107,7 +109,7 @@ namespace DCL.AvatarRendering.Emotes
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumeEmoteIntent(in Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
+        private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -122,7 +124,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (emoteCache.TryGetEmote(emoteId.Shorten(), out IEmote emote))
                 {
                     // emote failed to load? remove intent
-                    if (emote.ManifestResult is { IsInitialized: true, Exception: not null })
+                    if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
                         ReportHub.LogError(reportCategory, $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
                         World.Remove<CharacterEmoteIntent>(entity);
@@ -133,12 +135,16 @@ namespace DCL.AvatarRendering.Emotes
 
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null) return;
-                    if (!streamableAsset.Value.Succeeded) return;
-                    if (streamableAsset.Value.Exception != null) return;
 
-                    GameObject? mainAsset = streamableAsset.Value.Asset!.MainAsset;
+                    var streamableAssetValue = streamableAsset.Value;
+                    GameObject? mainAsset;
 
-                    if (mainAsset == null) return;
+                    if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
+                    {
+                        // We can't play emote, remove intent, otherwise there is no place to remove it
+                        World.Remove<CharacterEmoteIntent>(entity);
+                        return;
+                    }
 
                     AudioClip? audioAsset = emote.AudioAssetResult?.Asset;
 

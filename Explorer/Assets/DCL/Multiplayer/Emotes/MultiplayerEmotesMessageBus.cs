@@ -6,14 +6,15 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
-using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Multiplayer.Movement;
-using DCL.Multiplayer.Profiles.Tables;
-using DCL.Web3.Identities;
+using DCL.Multiplayer.Profiles.Bunches;
+using DCL.Optimization.Pools;
 using Decentraland.Kernel.Comms.Rfc4;
 using LiveKit.Proto;
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using Utility.Multithreading;
 
 namespace DCL.Multiplayer.Emotes
 {
@@ -22,22 +23,17 @@ namespace DCL.Multiplayer.Emotes
         private const float LATENCY = 0.1f;
 
         private readonly IMessagePipesHub messagePipesHub;
-        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private readonly IWeb3IdentityCache identityCache;
 
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private readonly EmotesDeduplication messageDeduplication;
         private EmoteSendIdProvider sendIdProvider;
 
-        private World globalWorld = null!;
+        private readonly HashSet<RemoteEmoteIntention> emoteIntentions = new (PoolConstants.AVATARS_COUNT);
+        private readonly MutexSync sync = new ();
 
-        private Entity playerEntity;
-
-        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable, IWeb3IdentityCache identityCache)
+        public MultiplayerEmotesMessageBus(IMessagePipesHub messagePipesHub)
         {
             this.messagePipesHub = messagePipesHub;
-            this.entityParticipantTable = entityParticipantTable;
-            this.identityCache = identityCache;
 
             messageDeduplication = new EmotesDeduplication();
 
@@ -51,11 +47,8 @@ namespace DCL.Multiplayer.Emotes
             cancellationTokenSource.Dispose();
         }
 
-        public void InjectWorld(World world, Entity playerEntity)
-        {
-            globalWorld = world;
-            this.playerEntity = playerEntity;
-        }
+        public OwnedBunch<RemoteEmoteIntention> EmoteIntentions() =>
+            new (sync, emoteIntentions);
 
         public void Send(URN emote, bool loopCyclePassed, bool sendToSelfReplica)
         {
@@ -105,32 +98,8 @@ namespace DCL.Multiplayer.Emotes
             if (messageDeduplication.TryPass(walletId, incrementalId) == false)
                 return;
 
-            var entity = EntityOrNull(walletId);
-
-            if (entity == Entity.Null)
-            {
-                ReportHub.LogWarning(ReportCategory.EMOTE, $"Cannot find entity for walletId: {walletId}");
-                return;
-            }
-
-            TriggerEmote(emoteURN, entity);
-        }
-
-        private Entity EntityOrNull(string walletId)
-        {
-            if (identityCache.Identity!.Address.Equals(walletId))
-                return playerEntity;
-
-            if (entityParticipantTable.Has(walletId))
-                return entityParticipantTable.Entity(walletId);
-
-            return Entity.Null;
-        }
-
-        private void TriggerEmote(URN emoteURN, in Entity entity)
-        {
-            if (!emoteURN.IsNullOrEmpty())
-                globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteURN });
+            using (sync.GetScope())
+                emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId));
         }
     }
 }

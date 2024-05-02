@@ -9,6 +9,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -39,7 +40,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent))]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
         private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {

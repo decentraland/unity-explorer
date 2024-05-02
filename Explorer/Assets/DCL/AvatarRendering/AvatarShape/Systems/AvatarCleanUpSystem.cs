@@ -1,19 +1,18 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using System;
 using UnityEngine.Pool;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
@@ -22,6 +21,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     ///     The system must be executed last to ensure that `DeleteEntityIntention` is properly handled before entity is destroyed.
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarCleanUpSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget instantiationFrameTimeBudget;

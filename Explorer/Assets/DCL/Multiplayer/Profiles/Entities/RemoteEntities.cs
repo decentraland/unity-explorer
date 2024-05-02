@@ -77,10 +77,7 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             var entity = entityParticipantTable.Entity(walletId);
 
-            if (world.Has<RemotePlayerMovementComponent>(entity))
-                world.Get<RemotePlayerMovementComponent>(entity).Dispose();
-
-            world.Add(entity, new DeleteEntityIntention());
+            world.AddOrGet(entity, new DeleteEntityIntention());
             entityParticipantTable.Release(walletId);
         }
 
