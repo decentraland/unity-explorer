@@ -13,6 +13,7 @@ using DCL.UI;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -147,7 +148,10 @@ namespace DCL.Backpack
                 gridItemsPool.Release(loadingResults[j]);
             }
 
-            for (int i = gridWearables.Length - 1; i >= 0; i--)
+            //When clicking too fast through the wearables page numbers
+            //the gridWearables can return 32 items instead of the max 16 defined
+            //In that case, this Min assures the backpack wont crash
+            for (int i = Math.Min(gridWearables.Length - 1, loadingResults.Length - 1); i >= 0; i--)
             {
                 BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i);
