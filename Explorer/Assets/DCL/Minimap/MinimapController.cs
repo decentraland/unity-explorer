@@ -159,8 +159,8 @@ namespace DCL.Minimap
             {
                 try
                 {
-                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
-                    viewInstance.placeNameText.text = placeInfo.title;
+                    PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
+                    viewInstance.placeNameText.text = placeInfo?.title ?? "Unknown place";
                 }
                 catch (NotAPlaceException notAPlaceException)
                 {
