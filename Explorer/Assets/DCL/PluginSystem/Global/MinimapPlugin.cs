@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Minimap;
+using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using ECS;
 using Global.Dynamic;
@@ -19,14 +20,17 @@ namespace DCL.PluginSystem.Global
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
+        private readonly ITeleportController teleportController;
 
-        public MinimapPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService, IRealmData realmData)
+        public MinimapPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
+            IRealmData realmData, ITeleportController teleportController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
             this.placesAPIService = placesAPIService;
             this.realmData = realmData;
+            this.teleportController = teleportController;
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
@@ -37,7 +41,7 @@ namespace DCL.PluginSystem.Global
             {
                 mvcManager.RegisterController(new MinimapController(MinimapController.CreateLazily(prefab, null),
                     mapRendererContainer.MapRenderer, mvcManager, placesAPIService, TrackPlayerPositionSystem.InjectToWorld(ref world),
-                    realmData));
+                    realmData, teleportController));
             };
         }
 

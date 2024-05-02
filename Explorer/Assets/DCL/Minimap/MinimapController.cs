@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AsyncLoadReporting;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
@@ -12,6 +13,7 @@ using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
+using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DG.Tweening;
@@ -35,15 +37,18 @@ namespace DCL.Minimap
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
+        private readonly ITeleportController teleportController;
         private CancellationTokenSource cts;
-        private bool isCollapsed;
+        private bool isWorld;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
+
         private static readonly int EXPAND = Animator.StringToHash("Expand");
         private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -55,7 +60,8 @@ namespace DCL.Minimap
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
             TrackPlayerPositionSystem system,
-            IRealmData realmData
+            IRealmData realmData,
+            ITeleportController teleportController
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -63,6 +69,7 @@ namespace DCL.Minimap
             this.placesAPIService = placesAPIService;
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
             this.realmData = realmData;
+            this.teleportController = teleportController;
         }
 
         protected override void OnViewInstantiated()
@@ -71,6 +78,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+            viewInstance.goToGenesisCityButton.onClick.AddListener(GoToGenesisCity);
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
@@ -78,26 +86,18 @@ namespace DCL.Minimap
 
         private void ExpandMinimap()
         {
-            if (!isCollapsed)
-                return;
-
             viewInstance.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
             viewInstance.minimapAnimator.SetTrigger(EXPAND);
-            isCollapsed = false;
         }
 
         private void CollapseMinimap()
         {
-            if (isCollapsed)
-                return;
-
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
             viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
-            isCollapsed = true;
         }
 
         private void OpenSideMenu()
@@ -112,6 +112,9 @@ namespace DCL.Minimap
                 viewInstance.SideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
         }
+
+        private void GoToGenesisCity() =>
+            teleportController.TeleportToSceneSpawnPointAsync(Vector2Int.zero, AsyncLoadProcessReport.Create(), CancellationToken.None).Forget();
 
         [All(typeof(PlayerComponent))]
         [Query]
@@ -141,7 +144,11 @@ namespace DCL.Minimap
                 GetPlaceInfoAsync(position);
             }
 
-            SetWorldMode(realmData.ScenesAreFixed);
+            if (isWorld != realmData.ScenesAreFixed)
+            {
+                isWorld = realmData.ScenesAreFixed;
+                SetWorldMode(realmData.ScenesAreFixed);
+            }
         }
 
         protected override void OnBlur()
@@ -187,15 +194,15 @@ namespace DCL.Minimap
             }
         }
 
-        private void SetWorldMode(bool isWorld)
+        private void SetWorldMode(bool isWorldModeActivated)
         {
-            viewInstance.nonWorldContainer.SetActive(!isWorld);
-            viewInstance.goToGenesisCityButton.gameObject.SetActive(isWorld);
+            foreach (GameObject go in viewInstance.objectsToActivateForGenesis)
+                go.SetActive(!isWorldModeActivated);
 
-            if (isWorld)
-                CollapseMinimap();
-            else
-                ExpandMinimap();
+            foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
+                go.SetActive(isWorldModeActivated);
+
+            viewInstance.minimapAnimator.runtimeAnimatorController = isWorldModeActivated ? viewInstance.worldsAnimatorController : viewInstance.genesisCityAnimatorController;
         }
 
         public override void Dispose()
