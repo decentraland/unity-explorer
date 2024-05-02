@@ -4,6 +4,7 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
+using DCL.WebRequests;
 using SceneRunner.Scene;
 using UnityEngine;
 
@@ -17,19 +18,32 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
     public class MediaPlayerPluginWrapper
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IWebRequestController webRequestController;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
 
-        public MediaPlayerPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool, IPerformanceBudget frameTimeBudget)
+        public MediaPlayerPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, IWebRequestController webRequestController, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool, IPerformanceBudget frameTimeBudget)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.componentPoolsRegistry = componentPoolsRegistry;
+            this.webRequestController = webRequestController;
 
             this.videoTexturePool = videoTexturePool;
             this.frameTimeBudget = frameTimeBudget;
             cacheCleaner.Register(videoTexturePool);
 
-            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(onRelease: mp => mp.CloseCurrentStream());
+            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(
+                onGet: mp =>
+            {
+                mp.AutoOpen = false;
+                mp.enabled = true;
+            },
+                onRelease: mp =>
+            {
+                mp.CloseCurrentStream();
+                mp.enabled = false;
+            });
+
             cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>());
 #endif
         }
@@ -39,8 +53,8 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
 
-            CreateMediaPlayerSystem.InjectToWorld(ref builder, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
-            UpdateMediaPlayerSystem.InjectToWorld(ref builder, sceneStateProvider, frameTimeBudget);
+            CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
+            UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget);
             CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool);
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
