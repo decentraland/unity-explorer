@@ -40,7 +40,7 @@ namespace DCL.Navmap
         private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
-           IWebRequestController webRequestController, IRealmNavigator realmNavigator)
+            IWebRequestController webRequestController, IRealmNavigator realmNavigator)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
@@ -122,14 +122,18 @@ namespace DCL.Navmap
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
                 view.jumpInButton.onClick.AddListener(() => realmNavigator.TeleportToParcelAsync(parcel, cts.Token).Forget());
-                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
+                PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
-                SetFloatingPanelInfo(placeInfo);
+
+                if (placeInfo == null)
+                    SetEmptyParcelInfo(parcel);
+                else
+                    SetFloatingPanelInfo(placeInfo);
             }
-            catch (Exception ex) { SetEmptyParcelInfo(parcel); }
+            catch (Exception) { SetEmptyParcelInfo(parcel); }
             finally
             {
-                if(animationTrigger != -1)
+                if (animationTrigger != -1)
                     view.panelAnimator.SetTrigger(animationTrigger);
             }
         }

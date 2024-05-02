@@ -35,7 +35,7 @@ namespace DCL.PlacesAPIService
             (PlacesData.PlacesAPIResponse response, bool _) = await pagePointer.GetPageAsync(pageNumber, key, ct);
 
             foreach (PlacesData.PlaceInfo place in response.data)
-                CachePlace(place);
+                TryCachePlace(place);
 
             return (response.data, response.total);
         }
