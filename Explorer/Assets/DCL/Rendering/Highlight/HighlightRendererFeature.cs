@@ -170,7 +170,7 @@ namespace DCL.Rendering.Highlight
             if (highlightInputMaterial != null && m_ShaderHighlightInput != null && highlightRTHandle_Colour != null) { _renderer.EnqueuePass(highlightInputRenderPass); }
 
             // HighLight Output
-            //if (highlightOutputMaterial != null && m_ShaderHighlightOutput != null) { _renderer.EnqueuePass(highlightOutputRenderPass); }
+            if (highlightOutputMaterial != null && m_ShaderHighlightOutput != null) { _renderer.EnqueuePass(highlightOutputRenderPass); }
         }
 
         protected override void Dispose(bool _bDisposing)

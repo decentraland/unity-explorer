@@ -53,17 +53,27 @@ namespace DCL.Rendering.Highlight
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
-                CommandBuffer cmd = CommandBufferPool.Get("_HighlightInputPass");
-
-                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
-                    DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
-                    //drawSettings.overrideMaterial = highLightInputMaterial;
-                    context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
+                    CommandBuffer cmd = CommandBufferPool.Get("_HighlightInputPass");
+                    using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+                    {
+                        DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
+                        context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
+                    }
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
                 }
 
-                context.ExecuteCommandBuffer(cmd);
-                CommandBufferPool.Release(cmd);
+                {
+                    CommandBuffer cmd = CommandBufferPool.Get("_HighlightInputPass");
+                    using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+                    {
+                        DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
+                        context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
+                    }
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
+                }
             }
 
             public override void FrameCleanup(CommandBuffer cmd) { }
@@ -76,3 +86,43 @@ namespace DCL.Rendering.Highlight
         }
     }
 }
+
+// private void DrawAvatar()
+// {
+//     if (m_HighLightRenderers != null && m_HighLightRenderers.empty)
+//     {
+//         CommandBuffer cmd = CommandBufferPool.Get("_HighlightInputPass");
+//         using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+//         {
+//             for(objectrenderer in m_HighLightRenderers)
+//             {
+//                 if (objectrenderer.renderer == null)
+//                     continue;
+//
+//                 //Ignore disabled or culled by camera avatars
+//                 if (!objectrenderer.renderer.gameObject.activeSelf || (renderingData.cameraData.camera.cullingMask & (1 << objectrenderer.renderer.gameObject.layer)) == 0)
+//                     continue;
+//
+//                 for (var i = 0; i < objectrenderer.meshCount; ++i)
+//                 {
+//                     Material materialToUse = null;
+//
+//                     // We use a GPU Skinning based material
+//                     if (avatar.renderer.materials[i] != null)
+//                     {
+//                         int originalMaterialOutlinerPass = avatar.renderer.materials[i].FindPass("Highlight");
+//                         if (originalMaterialOutlinerPass != -1)
+//                         {
+//                             //The material has a built in pass we can use
+//                             cmd.DrawRenderer(avatar.renderer, avatar.renderer.materials[i], i, originalMaterialOutlinerPass);
+//                         }
+//                         else
+//                         {
+//                             cmd.DrawRenderer(avatar.renderer, materialToUse, i, 0);
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
