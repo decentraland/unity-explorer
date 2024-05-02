@@ -58,7 +58,7 @@ namespace DCL.Profiles.Self
 
             if (profile == null)
             {
-                profile = Profile.NewRandomProfile(web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized"));
+                profile = Profile.NewRandomProfile(web3IdentityCache.Identity.EnsureNotNull("Web Identity is not initialized").Address);
                 await profileRepository.SetAsync(profile, ct);
                 return;
             }
@@ -80,7 +80,7 @@ namespace DCL.Profiles.Self
                                     .WithForceRender(forceRender)
                                     .Build();
 
-            profile.UserId = web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized")!;
+            profile.UserId = web3IdentityCache.Identity.EnsureNotNull("Web Identity is not initialized").Address;
 
             await profileRepository.SetAsync(profile, ct);
         }
