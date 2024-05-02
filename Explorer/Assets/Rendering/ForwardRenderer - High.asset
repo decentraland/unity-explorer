@@ -35,6 +35,25 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
   - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
   m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
+--- !u!114 &-2800157803868567574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32ece3c6636d58f4e9f925c9eb9b72c2, type: 3}
+  m_Name: HighlightRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  m_Settings:
+    OutlineThickness: 1
+    DepthSensitivity: 0.05
+    NormalsSensitivity: 1
+    ColorSensitivity: 0.5
+    OutlineColor: {r: 1, g: 1, b: 1, a: 0.5}
 --- !u!114 &-2287974757364210156
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -73,7 +92,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -5135254060917694649}
   - {fileID: -2287974757364210156}
-  m_RendererFeatureMap: 475f9eaba3e9bbb814e63e94147b3fe0
+  - {fileID: -2800157803868567574}
+  m_RendererFeatureMap: 475f9eaba3e9bbb814e63e94147b3fe0ea47603150d723d9
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}

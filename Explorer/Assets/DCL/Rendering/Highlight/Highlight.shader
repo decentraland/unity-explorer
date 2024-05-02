@@ -29,7 +29,8 @@
         {
             Name "Highlight_Input"
 
-            ZTest LEqual
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZTest Off
             ZWrite Off
             Cull Off
 

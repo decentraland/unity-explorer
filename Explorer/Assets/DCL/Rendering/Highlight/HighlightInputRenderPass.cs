@@ -46,7 +46,7 @@ namespace DCL.Rendering.Highlight
             public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
             {
                 ConfigureTarget(highLightRTHandle_Colour, highLightRTHandle_Depth);
-                ConfigureClear(ClearFlag.All, Color.black);
+                ConfigureClear(ClearFlag.All, Color.clear);
                 ConfigureColorStoreAction(RenderBufferStoreAction.Resolve);
                 ConfigureDepthStoreAction(RenderBufferStoreAction.DontCare);
             }

@@ -157,10 +157,7 @@ namespace DCL.Rendering.Highlight
                     }
                 }
 
-                // outlineRTDescriptor = _renderingData.cameraData.cameraTargetDescriptor;
-                // outlineRTDescriptor.depthBufferBits = 0;
-                // RenderingUtils.ReAllocateIfNeeded(ref outlineRTHandle, outlineRTDescriptor, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_OutlineTexture");
-                // outlineRenderPass.Setup(m_Settings, outlineMaterial, outlineRTHandle, outlineRTDescriptor, depthNormalsRTHandle_Colour);
+                highlightOutputRenderPass.Setup(m_Settings, highlightOutputMaterial, highlightRTHandle_Colour, highlightRTDescriptor_Colour);
             }
         }
 
