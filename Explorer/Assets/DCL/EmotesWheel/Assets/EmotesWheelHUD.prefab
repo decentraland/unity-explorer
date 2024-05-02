@@ -602,6 +602,7 @@ MonoBehaviour:
   - {fileID: 23667455666942771}
   - {fileID: 5745709140729244512}
   <CurrentEmoteName>k__BackingField: {fileID: 143119229750994052}
+  <EmotesWheelAnimator>k__BackingField: {fileID: 8229971583099982502}
   <OpenAudio>k__BackingField: {fileID: 11400000, guid: 59137f938439a5546aa4f9a63a582583, type: 2}
   <CloseAudio>k__BackingField: {fileID: 11400000, guid: d9055205eadb2454585c619d3fc7a723, type: 2}
 --- !u!223 &7899065392233343085
