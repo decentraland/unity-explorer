@@ -257,7 +257,8 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 genesisTerrain,
                 worldsTerrain,
-                satelliteView
+                satelliteView,
+                dynamicWorldParams.EnableLandscape
             );
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
@@ -268,7 +269,6 @@ namespace Global.Dynamic
                 staticContainer.MainPlayerAvatarBaseProxy,
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
-                dynamicWorldParams.EnableLandscape,
                 backgroundMusic,
                 realmNavigator
             );

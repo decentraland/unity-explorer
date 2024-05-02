@@ -42,6 +42,7 @@ namespace Global.Dynamic
         private readonly TerrainGenerator genesisTerrain;
         private readonly WorldTerrainGenerator worldsTerrain;
         private readonly SatelliteFloor satelliteFloor;
+        private readonly bool landscapeEnabled;
 
         public RealmNavigator(
             ILoadingScreen loadingScreen,
@@ -54,8 +55,8 @@ namespace Global.Dynamic
             RoadPlugin roadsPlugin,
             TerrainGenerator genesisTerrain,
             WorldTerrainGenerator worldsTerrain,
-            SatelliteFloor satelliteFloor
-        )
+            SatelliteFloor satelliteFloor,
+            bool landscapeEnabled)
         {
             this.loadingScreen = loadingScreen;
             this.mapRenderer = mapRenderer;
@@ -65,6 +66,7 @@ namespace Global.Dynamic
             this.genesisTerrain = genesisTerrain;
             this.worldsTerrain = worldsTerrain;
             this.satelliteFloor = satelliteFloor;
+            this.landscapeEnabled = landscapeEnabled;
             this.roomHub = roomHub;
             this.remoteEntities = remoteEntities;
             this.globalWorldProxy = globalWorldProxy;
@@ -137,15 +139,18 @@ namespace Global.Dynamic
         
         public async UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
-            bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
-            var postRealmLoadReport = AsyncLoadProcessReport.Create();
-            await UniTask.WhenAll(postRealmLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
-                isGenesis
-                    ? genesisTerrain.IsTerrainGenerated ? genesisTerrain.ShowAsync(postRealmLoadReport) : genesisTerrain.GenerateTerrainAsync(cancellationToken: ct)
-                    : GenerateWorldTerrainAsync((uint)realmController.GetRealm().GetHashCode(), postRealmLoadReport, ct));
+            if (landscapeEnabled)
+            {
+                bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
+                var postRealmLoadReport = AsyncLoadProcessReport.Create();
+                await UniTask.WhenAll(postRealmLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
+                    isGenesis
+                        ? genesisTerrain.IsTerrainGenerated ? genesisTerrain.ShowAsync(postRealmLoadReport) : genesisTerrain.GenerateTerrainAsync(cancellationToken: ct)
+                        : GenerateWorldTerrainAsync((uint)realmController.GetRealm().GetHashCode(), postRealmLoadReport, ct));
+            }
         }
 
-        public async UniTask TeleportToParcelAsync(bool waitForFixedPointers, Vector2Int parcel, AsyncLoadProcessReport processReport  , CancellationToken ct)
+        public async UniTask TeleportToParcelAsync(bool waitForFixedPointers, Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
             WaitForSceneReadiness? waitForSceneReadiness;
 
@@ -158,7 +163,7 @@ namespace Global.Dynamic
             }
             else
                 waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
-
+            
             await waitForSceneReadiness.ToUniTask(ct);
         }
 
@@ -167,6 +172,7 @@ namespace Global.Dynamic
         {
             if (!worldsTerrain.IsInitialized) return;
 
+            await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Has<FixedScenePointers>(realmController.RealmEntity), cancellationToken: ct);
             await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
 
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).Promises;
