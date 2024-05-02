@@ -162,6 +162,10 @@ namespace DCL.AuthenticationScreenFlow
 
                     SwitchState(ViewState.Finalize);
                 }
+                catch (OperationCanceledException)
+                {
+                    SwitchState(ViewState.Login);
+                }
                 catch (Exception e)
                 {
                     SwitchState(ViewState.Login);
