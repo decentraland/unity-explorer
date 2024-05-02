@@ -115,7 +115,7 @@ namespace SceneRuntime
             Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
         }
 
-        public void RegisterSDKObservablesEngineApi(IEngineApi engineApiImplementation, ISDKMessageBusCommsControllerAPI commsApiImplementation, ISceneExceptionsHandler sceneExceptionsHandler)
+        public void RegisterSDKObservablesEngineApi(ISDKObservableEventsEngineApi engineApiImplementation, ISDKMessageBusCommsControllerAPI commsApiImplementation, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             Register("UnityEngineApi", engineApi = new SDKObservableEventsEngineApiWrapper(engineApiImplementation, commsApiImplementation, instancePoolsProvider, sceneExceptionsHandler));
         }

@@ -43,8 +43,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler worldSyncBufferSampler;
         private bool isDisposing;
 
-        public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages { get; } = new ();
-
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
             IInstancePoolsProvider instancePoolsProvider,
@@ -265,9 +263,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
             {
-                OutgoingCRDTMessages.Add(processedCRDTMessage);
-                crdtSerializer.Serialize(ref span, in processedCRDTMessage);
+                SerializeProcessedMessage(ref span, in processedCRDTMessage);
             }
+        }
+
+        protected virtual void SerializeProcessedMessage(ref Span<byte> span, in ProcessedCRDTMessage processedCRDTMessage)
+        {
+            crdtSerializer.Serialize(ref span, in processedCRDTMessage);
         }
 
         private async UniTaskVoid DisposeMemoryOnNextFrame(IMemoryOwner<byte> memoryOwner)

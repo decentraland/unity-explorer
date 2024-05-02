@@ -36,6 +36,8 @@ using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Factory;
 using System;
@@ -215,18 +217,6 @@ namespace SceneRunner
             ct.ThrowIfCancellationRequested();
 
             var crdtWorldSynchronizer = new CRDTWorldSynchronizer(ecsWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
-
-            var engineAPI = new EngineAPIImplementation(
-                sharedPoolsProvider, instancePoolsProvider,
-                crdtProtocol,
-                crdtDeserializer,
-                crdtSerializer,
-                crdtWorldSynchronizer,
-                outgoingCRDTMessagesProvider,
-                systemGroupThrottler,
-                exceptionsHandler,
-                ecsMutexSync);
-
             var restrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, instanceDependencies.SceneStateProvider, globalWorldActions, sceneData);
             var runtimeImplementation = new RuntimeImplementation(sceneRuntime, sceneData, worldTimeProvider, realmData);
             var sceneApiImplementation = new SceneApiImplementation(sceneData);
@@ -234,14 +224,36 @@ namespace SceneRunner
             var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
             var simpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
 
+            IEngineApi engineAPI;
             if (ENABLE_SDK_OBSERVABLES)
             {
+                engineAPI = new SDKObservableEventsEngineAPIImplementation(
+                    sharedPoolsProvider, instancePoolsProvider,
+                    crdtProtocol,
+                    crdtDeserializer,
+                    crdtSerializer,
+                    crdtWorldSynchronizer,
+                    outgoingCRDTMessagesProvider,
+                    systemGroupThrottler,
+                    exceptionsHandler,
+                    ecsMutexSync);
+
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
-                sceneRuntime.RegisterSDKObservablesEngineApi(engineAPI, sdkCommsControllerAPI, exceptionsHandler);
+                sceneRuntime.RegisterSDKObservablesEngineApi(engineAPI as ISDKObservableEventsEngineApi, sdkCommsControllerAPI, exceptionsHandler);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
             }
             else
             {
+                engineAPI = new EngineAPIImplementation(
+                    sharedPoolsProvider, instancePoolsProvider,
+                    crdtProtocol,
+                    crdtDeserializer,
+                    crdtSerializer,
+                    crdtWorldSynchronizer,
+                    outgoingCRDTMessagesProvider,
+                    systemGroupThrottler,
+                    exceptionsHandler,
+                    ecsMutexSync);
                 sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
             }
 

@@ -25,13 +25,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private readonly List<SDKObservableEvent> sdkObservableEvents = new ();
         private readonly HashSet<string> sdkObservableEventSubscriptions = new ();
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
+        private readonly ISDKObservableEventsEngineApi engineApi;
         private readonly ISDKMessageBusCommsControllerAPI commsApi;
         private bool reportedSceneReady;
 
-        // public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages { get; } = new ();
-
-        public SDKObservableEventsEngineApiWrapper(IEngineApi api, ISDKMessageBusCommsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
+        public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api, ISDKMessageBusCommsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
         {
+            this.engineApi = api;
             this.commsApi = commsApi;
 
             // TO DEBUG
@@ -117,7 +117,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 // TODO: run a 2nd pass for observables that rely on using userIdEntitiesMap
                 // due to uncertain messages order
 
-                foreach (ProcessedCRDTMessage outgoingCRDTMessage in api.OutgoingCRDTMessages)
+                foreach (ProcessedCRDTMessage outgoingCRDTMessage in engineApi.OutgoingCRDTMessages)
                 {
                     CRDTMessage message = outgoingCRDTMessage.message;
 
@@ -188,7 +188,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                             {
                                 if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerExpression))
                                 {
-                                    Debug.Log($"PRAVS - DeserializeEmoteCommandSerializer - memoryOwnerID: {message.Data.GetHashCode()}");
                                     avatarEmoteCommandSerializer.DeserializeInto(avatarEmoteCommand, message.Data.Memory.Span);
 
                                     sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
@@ -225,9 +224,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                             break;
                     }
                 }
-                api.OutgoingCRDTMessages.Clear();
+                engineApi.OutgoingCRDTMessages.Clear();
 
-                // SDK 'comms' observable for scene's MessageBus
+                // SDK 'comms' observable for scenes MessageBus
                 if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.Comms))
                 {
                     foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
@@ -265,7 +264,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 generic = new SDKObservableEvent.Generic
                 {
                     eventId = eventId,
-                    eventData = JsonConvert.SerializeObject(eventData), // TODO: Optimize JSON Serialization if needed...
+                    eventData = JsonConvert.SerializeObject(eventData)
                 },
             };
     }
