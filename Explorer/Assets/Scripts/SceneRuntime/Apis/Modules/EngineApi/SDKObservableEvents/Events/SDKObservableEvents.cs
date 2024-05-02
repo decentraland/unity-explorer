@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
+namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
 {
     public static class SDKObservableEventIds
     {

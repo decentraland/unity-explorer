@@ -1,12 +1,10 @@
 ﻿using CRDT.Memory;
 using CrdtEcsBridge.PoolsProviders;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
-using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -19,17 +17,18 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         internal enum MsgType
         {
-            String = 1, // Deprecated in SDK7
+            String = 1, // SDK MessageBus messages
             Uint8Array = 2,
         }
 
-        private readonly CancellationTokenSource cancellationTokenSource = new ();
+        protected readonly CancellationTokenSource cancellationTokenSource = new ();
+        protected readonly ICommunicationControllerHub messagePipesHub;
+        protected readonly ISceneData sceneData;
+
         private readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IJsOperations jsOperations;
-        private readonly ICommunicationControllerHub messagePipesHub;
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
-        private readonly ISceneData sceneData;
 
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
@@ -51,7 +50,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             onMessageReceivedCached = OnMessageReceived;
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
@@ -99,19 +98,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             }
         }
 
-        public void Send(byte[] data)
-        {
-            EncodeAndSend();
-
-            void EncodeAndSend()
-            {
-                Span<byte> encodedMessage = stackalloc byte[data.Length + 1];
-                encodedMessage[0] = (byte)MsgType.String;
-                data.CopyTo(encodedMessage[1..]);
-                SendMessage(encodedMessage);
-            }
-        }
-
         private void CleanUpReceivedMessages()
         {
             foreach (IMemoryOwner<byte>? message in eventsToProcess)
@@ -125,26 +111,15 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
-        public List<CommsPayload> SceneCommsMessages { get; } = new List<CommsPayload>();
-        private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
+        protected virtual void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
             using (receivedMessage)
             {
                 ReadOnlySpan<byte> decodedMessage = receivedMessage.Payload.Data.Span;
                 MsgType msgType = DecodeMessage(ref decodedMessage);
 
-                if (decodedMessage.Length == 0)
+                if (msgType != MsgType.Uint8Array || decodedMessage.Length == 0)
                     return;
-
-                if (msgType == MsgType.String)
-                {
-                    SceneCommsMessages.Add(new CommsPayload()
-                    {
-                        sender = receivedMessage.FromWalletId,
-                        message = Encoding.UTF8.GetString(decodedMessage)
-                    });
-                    return;
-                }
 
                 // Wallet Id
                 int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.FromWalletId);
@@ -164,7 +139,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             }
         }
 
-        private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
+        internal static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {
             var msgType = (MsgType)value[0];
             value = value[1..];

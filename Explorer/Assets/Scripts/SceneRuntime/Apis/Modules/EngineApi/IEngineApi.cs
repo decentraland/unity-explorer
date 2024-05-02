@@ -24,6 +24,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         /// </summary>
         void SetIsDisposing();
 
+        // TODO: move to SDKObservableEventsEngineApiWrapper or to a new dedicated interface
         public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages { get; }
     }
 }

@@ -5,8 +5,8 @@ module.exports.sendBinary = async function(message) {
     };
 }
 
-// Needed for COMMS Messagebus support
-module.exports.send = async function(message) {    
-    UnityCommunicationsControllerApi.Send(message.message)    
+// Needed for scenes own MessageBus through 'comms' observable
+module.exports.send = async function(message) { 
+    UnitySDKMessageBusCommsControllerApi.Send(message.message)
     return {};
 }

@@ -8,7 +8,8 @@ using DCL.ECSComponents;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
-using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -24,10 +25,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private readonly List<SDKObservableEvent> sdkObservableEvents = new ();
         private readonly HashSet<string> sdkObservableEventSubscriptions = new ();
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
-        private readonly ICommunicationsControllerAPI commsApi;
+        private readonly ISDKMessageBusCommsControllerAPI commsApi;
         private bool reportedSceneReady;
 
-        public SDKObservableEventsEngineApiWrapper(IEngineApi api, ICommunicationsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
+        // public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages { get; } = new ();
+
+        public SDKObservableEventsEngineApiWrapper(IEngineApi api, ISDKMessageBusCommsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
         {
             this.commsApi = commsApi;
 
@@ -110,6 +113,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             try
             {
                 sdkObservableEvents.Clear();
+
+                // TODO: run a 2nd pass for observables that rely on using userIdEntitiesMap
+                // due to uncertain messages order
 
                 foreach (ProcessedCRDTMessage outgoingCRDTMessage in api.OutgoingCRDTMessages)
                 {
@@ -221,7 +227,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 }
                 api.OutgoingCRDTMessages.Clear();
 
-                // Comms messagebus
+                // SDK 'comms' observable for scene's MessageBus
                 if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.Comms))
                 {
                     foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)

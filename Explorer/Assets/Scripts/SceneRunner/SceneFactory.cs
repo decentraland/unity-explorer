@@ -9,6 +9,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ComponentWriter;
 using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
+using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
@@ -49,6 +50,8 @@ namespace SceneRunner
 {
     public class SceneFactory : ISceneFactory
     {
+        private const bool ENABLE_SDK_OBSERVABLES = true;
+
         private readonly ICRDTSerializer crdtSerializer;
         private readonly IECSWorldFactory ecsWorldFactory;
         private readonly ISceneEntityFactory entityFactory;
@@ -231,7 +234,16 @@ namespace SceneRunner
             var communicationsControllerAPI = new CommunicationsControllerAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
             var simpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
 
-            sceneRuntime.RegisterEngineApi(engineAPI, communicationsControllerAPI, exceptionsHandler);
+            if (ENABLE_SDK_OBSERVABLES)
+            {
+                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, crdtMemoryAllocator, instanceDependencies.SceneStateProvider);
+                sceneRuntime.RegisterSDKObservablesEngineApi(engineAPI, sdkCommsControllerAPI, exceptionsHandler);
+                sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
+            }
+            else
+            {
+                sceneRuntime.RegisterEngineApi(engineAPI, exceptionsHandler);
+            }
 
             sceneRuntime.RegisterAll(
                 exceptionsHandler,

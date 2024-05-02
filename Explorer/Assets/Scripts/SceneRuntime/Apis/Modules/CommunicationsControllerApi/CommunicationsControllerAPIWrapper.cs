@@ -4,7 +4,6 @@ using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
@@ -74,20 +73,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 }
 
                 return api.SendBinary(lastInput);
-            }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, ReportCategory.ENGINE);
-                throw;
-            }
-        }
-
-        [UsedImplicitly]
-        public void Send(string data)
-        {
-            try
-            {
-                api.Send(Encoding.UTF8.GetBytes(data));
             }
             catch (Exception e)
             {
