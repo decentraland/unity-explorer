@@ -122,8 +122,7 @@ namespace DCL.Backpack
 
         private void SetGridAsLoading()
         {
-            cts.SafeCancelAndDispose();
-            cts = new CancellationTokenSource();
+            cts = cts.SafeRestart();
             ClearPoolElements();
 
             for (var i = 0; i < CURRENT_PAGE_SIZE; i++)
@@ -279,10 +278,9 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitWearablesPromiseForSizeAsync(ParamPromise wearablesPromise, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
             AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!uniTaskAsync.Result!.Value.Succeeded)
+            if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
                 return;
 
             pageSelectorController.Configure(uniTaskAsync.Result.Value.Asset.TotalAmount, CURRENT_PAGE_SIZE);
