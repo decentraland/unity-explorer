@@ -262,7 +262,6 @@ namespace Global.Dynamic
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
                 realFlowLoadingStatus,
-                parcelServiceContainer.TeleportController,
                 container.MvcManager,
                 selfProfile,
                 dynamicWorldParams.StartParcel,

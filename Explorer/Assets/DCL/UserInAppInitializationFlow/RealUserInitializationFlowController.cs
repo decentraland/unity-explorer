@@ -23,7 +23,6 @@ namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInitializationFlowController : IUserInAppInitializationFlow
     {
-        private readonly ITeleportController teleportController;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly Vector2Int startParcel;
@@ -42,7 +41,6 @@ namespace DCL.UserInAppInitializationFlow
 
 
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
-            ITeleportController teleportController,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             Vector2Int startParcel,
@@ -53,7 +51,6 @@ namespace DCL.UserInAppInitializationFlow
             AudioClipConfig backgroundMusic,
             IRealmNavigator realmNavigator)
         {
-            this.teleportController = teleportController;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.startParcel = startParcel;
