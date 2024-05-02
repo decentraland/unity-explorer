@@ -289,9 +289,9 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
-
             Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+
+            if (ct.IsCancellationRequested) return;
 
             itemView.WearableThumbnail.sprite = sprite;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);
