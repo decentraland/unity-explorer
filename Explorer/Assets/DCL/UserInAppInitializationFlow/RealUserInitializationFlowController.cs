@@ -91,6 +91,7 @@ namespace DCL.UserInAppInitializationFlow
 
             loadReport!.ProgressCounter.Value = loadingStatus.SetStage(ProfileLoaded);
 
+            realmNavigator.SwitchMiscVisibilityAsync();
             await LoadPlayerAvatar(world, ownPlayerEntity, ownProfile, ct);
             await LoadLandscapeAsync(ct);
             await TeleportToSpawnPointAsync(world, ct);

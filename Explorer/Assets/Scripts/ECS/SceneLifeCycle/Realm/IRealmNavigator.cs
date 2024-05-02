@@ -26,5 +26,7 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask TeleportToParcelAsync(Vector2Int initialParcel, AsyncLoadProcessReport processReport,  CancellationToken ct);
+
+        void SwitchMiscVisibilityAsync();
     }
 }

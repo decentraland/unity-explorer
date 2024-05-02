@@ -91,11 +91,8 @@ namespace Global.Dynamic
                         remoteEntities.ForceRemoveAll(world);
                         await roomHub.StopAsync();
                         loadReport.ProgressCounter.Value = 0.3f;
-                        await realmController.SetRealmAsync(realm, Vector2Int.zero, loadReport, ct);
-                        await LoadTerrainAsync(loadReport, ct);
-                        await teleportController.TeleportToSceneSpawnPointAsync(Vector2Int.zero, loadReport, ct);
+                        await ChangeRealm(Vector2Int.zero, loadReport, ct);
                         loadReport.ProgressCounter.Value = 0.7f;
-
                         ct.ThrowIfCancellationRequested();
                         await roomHub.StartAsync();
 
@@ -120,11 +117,7 @@ namespace Global.Dynamic
                     if (isLocal)
                         await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
                     else
-                    {
-                        await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
-                        await LoadTerrainAsync(loadReport, ct);
-                        await teleportController.TeleportToSceneSpawnPointAsync(parcel, loadReport, ct);
-                    }
+                        await ChangeRealm(parcel, loadReport, ct);
 
                     ct.ThrowIfCancellationRequested();
                 }, ct);
@@ -132,11 +125,17 @@ namespace Global.Dynamic
             catch (TimeoutException) { }
         }
 
+        private async UniTask ChangeRealm(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        {
+            await realmController.SetRealmAsync(genesisDomain, Vector2Int.zero, loadReport, ct);
+            SwitchMiscVisibilityAsync();
+            await LoadTerrainAsync(loadReport, ct);
+            await TeleportToParcelAsync(parcel, loadReport, ct);
+        }
+        
         public async UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
-
-            SwitchMiscVisibilityAsync(isGenesis);
             var postRealmLoadReport = AsyncLoadProcessReport.Create();
             await UniTask.WhenAll(postRealmLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
                 isGenesis
@@ -189,15 +188,17 @@ namespace Global.Dynamic
            
         }
 
-        private void SwitchMiscVisibilityAsync(bool isVisible)
+        public void SwitchMiscVisibilityAsync()
         {
+            bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
+            
             // is NOT visible
-            worldsTerrain.SwitchVisibility(!isVisible);
+            worldsTerrain.SwitchVisibility(!isGenesis);
 
             // isVisible
-            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isVisible);
-            satelliteFloor.SwitchVisibility(isVisible);
-            roadsPlugin.RoadAssetPool?.SwitchVisibility(isVisible);
+            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
+            satelliteFloor.SwitchVisibility(isGenesis);
+            roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
     }
 }
