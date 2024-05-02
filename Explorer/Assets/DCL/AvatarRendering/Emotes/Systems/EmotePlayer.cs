@@ -28,8 +28,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
-            if (emoteInUse != null)
-                Stop(emoteInUse);
+            StopEmotes();
 
             if (!pools.ContainsKey(mainAsset))
                 pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping)));
@@ -45,13 +44,18 @@ namespace DCL.AvatarRendering.Emotes
 
             // Set the layer of the objects & children everytime since the emote can be created and stored in the pool elsewhere, like the avatar preview
             // In that case, the hierarchy will keep the wrong layer in the future usages
-            emoteTransform.gameObject.layer = avatarTransform.gameObject.layer;
+            if (avatarTransform.gameObject.layer != emoteTransform.gameObject.layer)
+            {
+                emoteTransform.gameObject.layer = avatarTransform.gameObject.layer;
 
-            using PoolExtensions.Scope<List<Transform>> children = avatarTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
+                using PoolExtensions.Scope<List<Transform>> children = emoteTransform.gameObject.GetComponentsInChildrenIntoPooledList<Transform>(true);
 
-            foreach (Transform? child in children.Value)
-                if (child != null)
-                    child.gameObject.layer = avatarTransform.gameObject.layer;
+                foreach (Transform? child in children.Value)
+                {
+                    if (child != null)
+                        child.gameObject.layer = avatarTransform.gameObject.layer;
+                }
+            }
 
             if (emoteReferences.avatarClip != null)
             {
@@ -134,16 +138,17 @@ namespace DCL.AvatarRendering.Emotes
             return references;
         }
 
-        public void Stop(EmoteReferences emoteReference)
+        public void StopEmotes()
         {
-            if (!emotesInUse.TryGetValue(emoteReference, out GameObjectPool<EmoteReferences>? pool))
-                return;
+            foreach (var values in emotesInUse)
+            {
+                EmoteReferences emoteReferences = values.Key;
+                if (emoteReferences.audioSource != null)
+                    audioSourcePool.Release(emoteReferences.audioSource);
 
-            pool.Release(emoteReference);
-            emotesInUse.Remove(emoteReference);
-
-            if (emoteReference.audioSource != null)
-                audioSourcePool.Release(emoteReference.audioSource);
+                values.Value.Release(emoteReferences);
+            }
+            emotesInUse.Clear();
         }
     }
 }
