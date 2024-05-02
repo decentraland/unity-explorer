@@ -140,6 +140,8 @@ namespace DCL.Minimap
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
                 GetPlaceInfoAsync(position);
             }
+
+            SetWorldMode(realmData.ScenesAreFixed);
         }
 
         protected override void OnBlur()
@@ -163,7 +165,6 @@ namespace DCL.Minimap
                 return;
 
             previousParcelPosition = playerParcelPosition;
-            SetWorldMode(realmData.ScenesAreFixed);
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
@@ -189,6 +190,7 @@ namespace DCL.Minimap
         private void SetWorldMode(bool isWorld)
         {
             viewInstance.nonWorldContainer.SetActive(!isWorld);
+            viewInstance.goToGenesisCityButton.gameObject.SetActive(isWorld);
 
             if (isWorld)
                 CollapseMinimap();
