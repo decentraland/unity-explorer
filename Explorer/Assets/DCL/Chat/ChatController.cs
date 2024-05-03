@@ -143,9 +143,9 @@ namespace DCL.Chat
             raycastResults = eventSystem.RaycastAll(device.position.value);
             var clickedOnPanel = false;
             foreach (RaycastResult raycasted in raycastResults)
-                if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.gameObject)
+                if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.ScrollView.gameObject)
                     clickedOnPanel = true;
-
+            
             if (!clickedOnPanel)
             {
                 viewInstance.EmojiPanelButton.SetState(false);
