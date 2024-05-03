@@ -198,7 +198,11 @@ namespace Global.Dynamic
             var decodedParcelsAmount = 0;
 
             foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
+            {
+                //TODO (JUANI) : Shouldnt be possible, but some promises result are null
+                if (promise.Result == null) continue;
                 decodedParcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
+            }
 
             using (var ownedParcels = new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
             {
