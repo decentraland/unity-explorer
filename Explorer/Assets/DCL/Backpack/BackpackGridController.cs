@@ -13,6 +13,7 @@ using DCL.UI;
 using DCL.Web3.Identities;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -121,8 +122,7 @@ namespace DCL.Backpack
 
         private void SetGridAsLoading()
         {
-            cts.SafeCancelAndDispose();
-            cts = new CancellationTokenSource();
+            cts = cts.SafeRestart();
             ClearPoolElements();
 
             for (var i = 0; i < CURRENT_PAGE_SIZE; i++)
@@ -147,8 +147,13 @@ namespace DCL.Backpack
                 gridItemsPool.Release(loadingResults[j]);
             }
 
-            for (int i = gridWearables.Length - 1; i >= 0; i--)
+            for (int i = Math.Min(gridWearables.Length, loadingResults.Length) - 1; i >= 0; i--)
             {
+                //This only happens in last page of results, when gridWearables returned twice the amount of wearables
+                //caused by clicking repeatedly on the same number on the backpack
+                if (usedPoolItems.ContainsKey(gridWearables[i].GetUrn()))
+                    continue;
+
                 BackpackItemView backpackItemView = loadingResults[i];
                 usedPoolItems.Remove(i);
                 usedPoolItems.Add(gridWearables[i].GetUrn(), backpackItemView);
@@ -250,7 +255,7 @@ namespace DCL.Backpack
         {
             AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!uniTaskAsync.Result!.Value.Succeeded)
+            if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
                 return;
 
             currentPageWearables = uniTaskAsync.Result.Value.Asset.Wearables;
@@ -273,10 +278,9 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitWearablesPromiseForSizeAsync(ParamPromise wearablesPromise, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
             AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!uniTaskAsync.Result!.Value.Succeeded)
+            if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
                 return;
 
             pageSelectorController.Configure(uniTaskAsync.Result.Value.Asset.TotalAmount, CURRENT_PAGE_SIZE);
@@ -285,9 +289,9 @@ namespace DCL.Backpack
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
         {
-            ct.ThrowIfCancellationRequested();
-
             Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+
+            if (ct.IsCancellationRequested) return;
 
             itemView.WearableThumbnail.sprite = sprite;
             itemView.LoadingView.FinishLoadingAnimation(itemView.FullBackpackItem);

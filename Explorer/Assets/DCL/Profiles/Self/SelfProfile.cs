@@ -52,7 +52,7 @@ namespace DCL.Profiles.Self
                 ct
             );
 
-        public async UniTask PublishAsync(CancellationToken ct)
+        public async UniTask<Profile?> PublishAsync(CancellationToken ct)
         {
             Profile? profile = await ProfileAsync(ct);
 
@@ -60,7 +60,7 @@ namespace DCL.Profiles.Self
             {
                 profile = Profile.NewRandomProfile(web3IdentityCache.Identity.EnsureNotNull("Web Identity is not initialized").Address);
                 await profileRepository.SetAsync(profile, ct);
-                return;
+                return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
             }
 
             using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
@@ -78,11 +78,13 @@ namespace DCL.Profiles.Self
                                     .WithWearables(uniqueWearables)
                                     .WithEmotes(uniqueEmotes)
                                     .WithForceRender(forceRender)
+                                    .WithVersion(profile!.Version + 1)
                                     .Build();
 
             profile.UserId = web3IdentityCache.Identity.EnsureNotNull("Web Identity is not initialized").Address;
 
             await profileRepository.SetAsync(profile, ct);
+            return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
         }
 
         private void ConvertEquippedWearablesIntoUniqueUrns(Profile? profile, ISet<URN> uniqueWearables)
