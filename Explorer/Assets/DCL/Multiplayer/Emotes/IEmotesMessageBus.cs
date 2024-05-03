@@ -1,11 +1,11 @@
-using Arch.Core;
 using CommunicationData.URLHelpers;
+using DCL.Multiplayer.Profiles.Bunches;
 
-namespace DCL.Multiplayer.Emotes.Interfaces
+namespace DCL.Multiplayer.Emotes
 {
     public interface IEmotesMessageBus
     {
-        void InjectWorld(World world, Entity playerEntity);
+        OwnedBunch<RemoteEmoteIntention> EmoteIntentions();
 
         void Send(URN urn, bool loopCyclePassed, bool sendToSelfReplica);
 

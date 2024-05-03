@@ -1,6 +1,6 @@
 ﻿namespace DCL.Diagnostics
 {
-    public interface IManagedEcsException
+    public interface IDecentralandException
     {
         ref readonly ReportData ReportData { get; }
         /// <summary>
