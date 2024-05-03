@@ -32,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<ParcelData> parcelData;
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
+        private bool landscapeGenerated;
 
         public LandscapePlugin(SatelliteFloor floor, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
             MapRendererTextureContainer textureContainer, bool enableLandscape)
@@ -86,10 +87,19 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
+            if (landscapeGenerated)
+            {
+                loadReport.ProgressCounter.Value = 1f;
+                loadReport.CompletionSource.TrySetResult();
+                return;
+            }
+
             await terrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
 
             emptyParcels.Dispose();
             ownedParcels.Dispose();
+
+            landscapeGenerated = true;
         }
     }
 }
