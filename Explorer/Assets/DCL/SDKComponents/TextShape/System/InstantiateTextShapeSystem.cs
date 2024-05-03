@@ -1,20 +1,21 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Renderer.Factory;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using ECS.Unity.Transforms.Components;
+using ECS.Unity.Transforms.Systems;
 
 namespace DCL.SDKComponents.TextShape.System
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [ThrottlingEnabled]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(InstantiateTransformSystem))]
+    [UpdateBefore(typeof(ParentingTransformSystem))]
     public partial class InstantiateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly ITextShapeRendererFactory textShapeRendererFactory;
@@ -44,8 +45,8 @@ namespace DCL.SDKComponents.TextShape.System
         [None(typeof(TextShapeRendererComponent))]
         private void InstantiateRemaining(in Entity entity, in TransformComponent transform, in PBTextShape textShape)
         {
-            if (instantiationFrameTimeBudget.TrySpendBudget() == false)
-                return;
+            // if (instantiationFrameTimeBudget.TrySpendBudget() == false)
+            //     return;
 
             var renderer = textShapeRendererFactory.New(transform.Transform);
             renderer.Apply(textShape);
