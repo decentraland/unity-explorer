@@ -46,19 +46,27 @@ namespace DCL.Profiles.Self
             this.forceRender = forceRender;
         }
 
-        public UniTask<Profile?> ProfileAsync(CancellationToken ct) =>
-            profileRepository.GetAsync(
-                web3IdentityCache.Identity?.Address.EnsureNotNull("Web Identity is not initialized")!,
+        public UniTask<Profile?> ProfileAsync(CancellationToken ct)
+        {
+            if (web3IdentityCache.Identity == null)
+                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+
+            return profileRepository.GetAsync(
+                web3IdentityCache.Identity.Address,
                 ct
             );
+        }
 
         public async UniTask<Profile?> PublishAsync(CancellationToken ct)
         {
             Profile? profile = await ProfileAsync(ct);
 
+            if (web3IdentityCache.Identity == null)
+                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+
             if (profile == null)
             {
-                profile = Profile.NewRandomProfile(web3IdentityCache.Identity.EnsureNotNull("Web Identity is not initialized").Address);
+                profile = Profile.NewRandomProfile(web3IdentityCache.Identity.Address);
                 await profileRepository.SetAsync(profile, ct);
                 return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
             }
@@ -81,7 +89,7 @@ namespace DCL.Profiles.Self
                                     .WithVersion(profile!.Version + 1)
                                     .Build();
 
-            profile.UserId = web3IdentityCache.Identity.EnsureNotNull("Web Identity is not initialized").Address;
+            profile.UserId = web3IdentityCache.Identity.Address;
 
             await profileRepository.SetAsync(profile, ct);
             return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
