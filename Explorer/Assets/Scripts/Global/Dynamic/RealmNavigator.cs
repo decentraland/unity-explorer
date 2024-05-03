@@ -20,10 +20,13 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using System;
 using System.Threading;
+using DCL.UserInAppInitializationFlow;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using Utility;
+using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
+
 
 namespace Global.Dynamic
 {
@@ -72,7 +75,7 @@ namespace Global.Dynamic
             this.globalWorldProxy = globalWorldProxy;
         }
 
-        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct)
+        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default)
         {
             World world = globalWorldProxy.Object.EnsureNotNull();
 
@@ -89,13 +92,15 @@ namespace Global.Dynamic
                     {
                         remoteEntities.ForceRemoveAll(world);
                         await roomHub.StopIfNotAsync();
-                        loadReport.ProgressCounter.Value = 0.3f;
                         await ChangeRealm(realm, loadReport, ct);
-                        await TeleportToParcelAsync(true, Vector2Int.zero, loadReport, ct);
-                        loadReport.ProgressCounter.Value = 0.7f;
+                        loadReport.ProgressCounter.Value = RealFlowLoadingStatus.PROGRESS[ProfileLoaded];
+                        await LoadTerrainAsync(loadReport, ct);
+                        loadReport.ProgressCounter.Value = RealFlowLoadingStatus.PROGRESS[LandscapeLoaded];
+                        var waitForSceneReadiness = await InitializeTeleportToSpawnPointAsync(loadReport, ct, parcelToTeleport);
+                        await waitForSceneReadiness;
+                        loadReport.ProgressCounter.Value = RealFlowLoadingStatus.PROGRESS[PlayerTeleported];
                         ct.ThrowIfCancellationRequested();
                         await roomHub.StartAsync();
-
                         loadReport.ProgressCounter.Value = 1f;
                     },
                     ct
@@ -106,42 +111,52 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask InitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false)
+        public async UniTask<UniTask> InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport loadReport, CancellationToken ct, Vector2Int parcelToTeleport)
         {
-            ct.ThrowIfCancellationRequested();
-
-            try
+            bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
+            if (isGenesis)
             {
-                await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
-                {
-                    if (isLocal)
-                        await TeleportToParcelAsync(false, parcel, loadReport, ct);
-                    else
-                    {
-                        bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
-                        if (!isGenesis)
-                            await ChangeRealm(genesisDomain, loadReport, ct);
-                        await TeleportToParcelAsync(false, parcel, loadReport, ct);
-                    }
-
-                    ct.ThrowIfCancellationRequested();
-                }, ct);
+                var waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, loadReport, ct);
+                return waitForSceneReadiness;
             }
-            catch (TimeoutException) { }
+            else
+            {
+                var waitForSceneReadiness = await TeleportToWorldSpawnPoint(loadReport, ct);
+                return waitForSceneReadiness;
+            }
         }
 
-        private async UniTask ChangeRealm(URLDomain realm, AsyncLoadProcessReport loadReport, CancellationToken ct)
+
+        public async UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false)
         {
-            await realmController.SetRealmAsync(realm, ct);
-            SwitchMiscVisibilityAsync();
-            await LoadTerrainAsync(loadReport, ct);
+            ct.ThrowIfCancellationRequested();
+            try
+            {
+                bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
+                if (!isLocal && !isGenesis)
+                {
+                    await TryChangeRealmAsync(genesisDomain, ct, parcel);
+                }
+                else
+                {
+                    await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
+                    {
+                        loadReport.ProgressCounter.Value = RealFlowLoadingStatus.PROGRESS[LandscapeLoaded];
+                        var waitForSceneReadiness = await TeleportToParcelAsync(parcel, loadReport, ct);
+                        await waitForSceneReadiness;
+                        loadReport.ProgressCounter.Value = 1f;
+                        ct.ThrowIfCancellationRequested();
+                    }, ct);
+                }
+            }
+            catch (TimeoutException) { }
         }
         
         public async UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             if (landscapeEnabled)
             {
-                bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
+                bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
                 var postRealmLoadReport = AsyncLoadProcessReport.Create();
                 await UniTask.WhenAll(postRealmLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
                     isGenesis
@@ -150,23 +165,26 @@ namespace Global.Dynamic
             }
         }
 
-        public async UniTask<UniTask> TeleportToParcelAsync(bool waitForFixedPointers, Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
+        private async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
-            WaitForSceneReadiness? waitForSceneReadiness;
-
-            bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
-            if (!isGenesis && waitForFixedPointers)
-            {
-                await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
-                AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).Promises;
-                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase, processReport, ct);
-            }
-            else
-                waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
-
+            var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
+
+        private async UniTask<UniTask> TeleportToWorldSpawnPoint(AsyncLoadProcessReport processReport, CancellationToken ct)
+        {
+            await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).Promises;
+            var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase, processReport, ct);
+            return waitForSceneReadiness.ToUniTask(ct);
+        }
+
+        private async UniTask ChangeRealm(URLDomain realm, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        {
+            await realmController.SetRealmAsync(realm, ct);
+            SwitchMiscVisibilityAsync();
+        }
         
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
@@ -190,18 +208,14 @@ namespace Global.Dynamic
 
                 await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
             }
-
-
-            
-           
         }
 
         public void SwitchMiscVisibilityAsync()
         {
-            bool isGenesis = realmController.GetRealm().Ipfs.CatalystBaseUrl == genesisDomain;
+            bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
 
+            //TODO(Juani): This two methods looks quite similar....
             if (!isGenesis) genesisTerrain.Hide();
-            
             // is NOT visible
             worldsTerrain.SwitchVisibility(!isGenesis);
 

@@ -20,13 +20,13 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
-        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct);
+        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
-        UniTask InitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+        UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+
+        UniTask<UniTask> InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport loadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
         UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
-
-        UniTask<UniTask> TeleportToParcelAsync(bool waitForFixedPointers, Vector2Int parcel, AsyncLoadProcessReport processReport,  CancellationToken ct);
 
         void SwitchMiscVisibilityAsync();
     }

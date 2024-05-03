@@ -135,7 +135,7 @@ namespace DCL.UserInAppInitializationFlow
 
             async UniTask WaitForTeleportAndStartPartitioningAsync()
             {
-                var waitForSceneReadiness = await realmNavigator.TeleportToParcelAsync(true, startParcel, teleportLoadReport , ct);
+                var waitForSceneReadiness = await realmNavigator.InitializeTeleportToSpawnPointAsync(loadReport, ct, startParcel);
 
                 // add camera sampling data to the camera entity to start partitioning
                 Assert.IsTrue(cameraEntity.Configured);
