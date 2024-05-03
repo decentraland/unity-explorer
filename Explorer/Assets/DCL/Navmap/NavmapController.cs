@@ -12,6 +12,7 @@ using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
+using ECS;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
@@ -25,6 +26,8 @@ namespace DCL.Navmap
 {
     public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
+        private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters  { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter {BackgroundIsActive = true} } };
         private const MapLayer ACTIVE_MAP_LAYERS =
@@ -42,6 +45,7 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
         private readonly NavmapLocationController navmapLocationController;
+        private readonly IRealmData realmData;
 
         private Vector2 lastParcelHovered;
         private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
@@ -59,10 +63,12 @@ namespace DCL.Navmap
             DCLInput dclInput,
             World world,
             Entity playerEntity,
-            IRealmNavigator realmNavigator)
+            IRealmNavigator realmNavigator,
+            IRealmData realmData)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
+            this.realmData = realmData;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
@@ -105,6 +111,9 @@ namespace DCL.Navmap
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             lastParcelHovered = Vector2.zero;
+
+            navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
+            navmapView.WorldsWarningNotificationView.gameObject.SetActive(false);
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, NavmapSections shownSection, bool animate)
@@ -167,10 +176,15 @@ namespace DCL.Navmap
                 ToggleSection(section == NavmapSections.Satellite, tab, section, true);
             }
             sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
+
+            if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
+                navmapView.WorldsWarningNotificationView.gameObject.SetActive(realmData is { Configured: true, ScenesAreFixed: true });
         }
 
         public void Deactivate()
         {
+            navmapView.WorldsWarningNotificationView.gameObject.SetActive(false);
+
             foreach (ISection mapSectionsValue in mapSections.Values)
                 mapSectionsValue.Deactivate();
 
