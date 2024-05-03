@@ -14,6 +14,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using LiveKit.Rooms;
 using System.Collections.Generic;
+using DCL.Profiles;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -44,10 +45,10 @@ namespace DCL.Multiplayer.Profiles.Entities
                            .EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
         }
 
-        public void TryCreate(IReadOnlyCollection<RemoteProfile> list, World world)
+        public void TryCreateOrUpdate(IReadOnlyCollection<RemoteProfile> list, World world)
         {
             foreach (RemoteProfile remoteProfile in list)
-                TryCreateRemoteEntity(remoteProfile, world);
+                TryCreateOrUpdateRemoteEntity(remoteProfile, world);
         }
 
         public void Remove(IReadOnlyCollection<RemoveIntention> list, World world)
@@ -100,11 +101,20 @@ namespace DCL.Multiplayer.Profiles.Entities
             return ContainsInRoom(roomHub.IslandRoom()) || ContainsInRoom(roomHub.SceneRoom());
         }
 
-        private void TryCreateRemoteEntity(in RemoteProfile profile, World world)
+        private void TryCreateOrUpdateRemoteEntity(in RemoteProfile profile, World world)
         {
             if (entityParticipantTable.Has(profile.WalletId))
+            {
+                UpdateCharacter(profile, world);
                 return;
+            }
 
+            Entity entity = CreateCharacter(profile, world);
+            entityParticipantTable.Register(profile.WalletId, entity);
+        }
+
+        private Entity CreateCharacter(RemoteProfile profile, World world)
+        {
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
             transform.SetParent(null);
@@ -124,8 +134,24 @@ namespace DCL.Multiplayer.Profiles.Entities
             );
 
             ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
+            
+            return entity;
+        }
 
-            entityParticipantTable.Register(profile.WalletId, entity);
+        private void UpdateCharacter(in RemoteProfile remoteProfile, World world)
+        {
+            var entity = entityParticipantTable.Entity(remoteProfile.WalletId);
+            var profile = remoteProfile.Profile;
+            
+            if (world.TryGet(entity, out Profile? existingProfile))
+                if (existingProfile!.Version == profile.Version)
+                    return;
+                
+            world.Set(entity, profile);
+            // Force to update the avatar through the profile
+            profile.IsDirty = true;
+                
+            ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
         }
     }
 }
