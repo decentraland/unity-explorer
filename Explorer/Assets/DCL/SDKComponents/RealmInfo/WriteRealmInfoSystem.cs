@@ -25,17 +25,17 @@ namespace DCL.SDKComponents.RealmInfo
             this.roomHubProxy = roomHubProxy;
         }
 
+        public override void Initialize()
+        {
+            PropagateToScene();
+        }
+
         protected override void Update(float t)
         {
-            if (!realmDataProxy.Configured
-                || !roomHubProxy.Configured
-                || !realmDataProxy.Object!.IsDirty
-                || !realmDataProxy.Object.Configured)
+            if (!realmDataProxy.Object!.IsDirty)
                 return;
 
             PropagateToScene();
-
-            realmDataProxy.Object.IsDirty = false;
         }
 
         private void PropagateToScene()

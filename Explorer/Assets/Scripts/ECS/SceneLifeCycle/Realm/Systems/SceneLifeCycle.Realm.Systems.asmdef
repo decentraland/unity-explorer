@@ -1,12 +1,11 @@
 {
-    "name": "Realm",
+    "name": "SceneLifeCycle.Realm.Systems",
     "rootNamespace": "",
     "references": [
-        "GUID:8322ea9340a544c59ddc56d4793eac74",
         "GUID:101b8b6ebaf64668909b49c4b7a1420d",
-        "GUID:e25ef972de004615a22937e739de2def",
-        "GUID:f51ebe6a0ceec4240a699833d6309b23",
-        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f"
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

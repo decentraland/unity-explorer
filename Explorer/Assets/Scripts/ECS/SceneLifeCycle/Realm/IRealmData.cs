@@ -29,7 +29,7 @@ namespace ECS
         ///     Whether the data was set at least once
         /// </summary>
         bool Configured { get; }
-        bool IsDirty { get; set; }
+        bool IsDirty { get; }
 
         class Fake : IRealmData
         {
@@ -39,7 +39,7 @@ namespace ECS
             public int NetworkId { get; }
             public string CommsAdapter { get; }
             public bool Configured { get; }
-            public bool IsDirty { get; set; }
+            public bool IsDirty { get; internal set; }
 
             public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr") : this(
                 new LocalIpfsRealm(new URLDomain()),
