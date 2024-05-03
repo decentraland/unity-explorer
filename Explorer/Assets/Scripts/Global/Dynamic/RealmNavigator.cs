@@ -150,7 +150,7 @@ namespace Global.Dynamic
             }
         }
 
-        public async UniTask TeleportToParcelAsync(bool waitForFixedPointers, Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
+        public async UniTask<UniTask> TeleportToParcelAsync(bool waitForFixedPointers, Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
             WaitForSceneReadiness? waitForSceneReadiness;
 
@@ -163,8 +163,8 @@ namespace Global.Dynamic
             }
             else
                 waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcel, processReport, ct);
-            
-            await waitForSceneReadiness.ToUniTask(ct);
+
+            return waitForSceneReadiness.ToUniTask(ct);
         }
 
         

@@ -127,15 +127,23 @@ namespace DCL.UserInAppInitializationFlow
         private async UniTask TeleportToSpawnPointAsync(World world, CancellationToken ct)
         {
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-            
-            // add camera sampling data to the camera entity to start partitioning
-            Assert.IsTrue(cameraEntity.Configured);
-            world.Add(cameraEntity.Object, cameraSamplingData);
-
             await UniTask.WhenAny(
                 teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
-                realmNavigator.TeleportToParcelAsync(true, startParcel, teleportLoadReport , ct));
+                WaitForTeleportAndStartPartitioningAsync());
+            
             loadingStatus.SetStage(PlayerTeleported);
+
+            async UniTask WaitForTeleportAndStartPartitioningAsync()
+            {
+                var waitForSceneReadiness = await realmNavigator.TeleportToParcelAsync(true, startParcel, teleportLoadReport , ct);
+
+                // add camera sampling data to the camera entity to start partitioning
+                Assert.IsTrue(cameraEntity.Configured);
+                world.Add(cameraEntity.Object, cameraSamplingData);
+
+                // Wait for the scene to fire scene readiness
+                await waitForSceneReadiness;
+            }
         }
 
         private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
