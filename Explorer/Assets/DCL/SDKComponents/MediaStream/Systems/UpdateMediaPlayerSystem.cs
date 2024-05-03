@@ -1,31 +1,39 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using Arch.SystemGroups.Throttling;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities.Extensions;
+using DCL.WebRequests;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
+using Utility;
 
 namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     [ThrottlingEnabled]
-    public partial class UpdateMediaPlayerSystem: BaseUnityLoopSystem
+    public partial class UpdateMediaPlayerSystem : BaseUnityLoopSystem
     {
+        private readonly IWebRequestController webRequestController;
+        private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IPerformanceBudget frameTimeBudget;
 
-        public UpdateMediaPlayerSystem(World world, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
+        public UpdateMediaPlayerSystem(World world, IWebRequestController webRequestController, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IPerformanceBudget frameTimeBudget) : base(world)
         {
+            this.webRequestController = webRequestController;
+            this.sceneData = sceneData;
             this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudget = frameTimeBudget;
         }
@@ -39,41 +47,35 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        private void UpdateAudioStream(ref MediaPlayerComponent component, ref PBAudioStream sdkComponent)
+        private void UpdateAudioStream(ref MediaPlayerComponent component, PBAudioStream sdkComponent)
         {
-            component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+            if (!frameTimeBudget.TrySpendBudget()) return;
 
-            if (sdkComponent.IsDirty && sdkComponent.Url.IsValidUrl() && frameTimeBudget.TrySpendBudget())
-            {
-                UpdateStreamUrl(ref component, sdkComponent.Url);
-                component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing);
-
-                sdkComponent.IsDirty = false;
-            }
-        }
-
-        [Query]
-        private void UpdateVideoStream(ref MediaPlayerComponent component, ref PBVideoPlayer sdkComponent)
-        {
             if (component.State != VideoState.VsError)
                 component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
 
-            if (sdkComponent.IsDirty && sdkComponent.Src.IsValidUrl() && frameTimeBudget.TrySpendBudget())
-            {
-                UpdateStreamUrl(ref component, sdkComponent.Src);
+            HandleComponentChange(ref component, sdkComponent, sdkComponent.Url, sdkComponent.HasPlaying, sdkComponent.Playing);
+            ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing);
+        }
 
-                component.MediaPlayer.UpdatePlayback(sdkComponent.HasPlaying, sdkComponent.Playing)
-                         .UpdatePlaybackProperties(sdkComponent);
+        [Query]
+        private void UpdateVideoStream(ref MediaPlayerComponent component, PBVideoPlayer sdkComponent)
+        {
+            if (!frameTimeBudget.TrySpendBudget()) return;
 
-                sdkComponent.IsDirty = false;
-            }
+            if (component.State != VideoState.VsError)
+                component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, sdkComponent.HasVolume, sdkComponent.Volume);
+
+            HandleComponentChange(ref component, sdkComponent, sdkComponent.Src, sdkComponent.HasPlaying, sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.UpdatePlaybackProperties(sdk));
+            ConsumePromise(ref component, sdkComponent.HasPlaying && sdkComponent.Playing, sdkComponent, static (mediaPlayer, sdk) => mediaPlayer.SetPlaybackProperties(sdk));
         }
 
         [Query]
         [All(typeof(PBVideoPlayer))]
         private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureComponent assignedTexture)
         {
-            if (!playerComponent.IsPlaying || !frameTimeBudget.TrySpendBudget()) return;
+            if (!playerComponent.IsPlaying || playerComponent.State == VideoState.VsError || !playerComponent.MediaPlayer.MediaOpened || !frameTimeBudget.TrySpendBudget())
+                return;
 
             Texture avText = playerComponent.MediaPlayer.TextureProducer.GetTexture();
             if (avText == null) return;
@@ -85,13 +87,63 @@ namespace DCL.SDKComponents.MediaStream
                 assignedTexture.Texture.ResizeTexture(to: avText); // will be updated on the next frame/update-loop
         }
 
-        private static void UpdateStreamUrl(ref MediaPlayerComponent component, string newUrl)
+        private void HandleComponentChange(ref MediaPlayerComponent component, IDirtyMarker sdkComponent, string url, bool hasPlaying, bool isPlaying,
+            PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onPlaybackUpdate = null)
         {
-            if (component.URL == newUrl) return;
+            if (!sdkComponent.IsDirty) return;
 
-            component.URL = newUrl;
+            sceneData.TryGetMediaUrl(url, out URLAddress localMediaUrl);
+
+            if (component.URL != url && component.URL != localMediaUrl)
+            {
+                component.MediaPlayer.CloseCurrentStream();
+
+                UpdateStreamUrl(ref component, url);
+
+                if (component.State != VideoState.VsError)
+                {
+                    component.Cts = component.Cts.SafeRestart();
+                    component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, component.Cts.Token).Forget();
+                }
+            }
+            else if (component.State != VideoState.VsError)
+            {
+                component.MediaPlayer.UpdatePlayback(hasPlaying, isPlaying);
+
+                if (sdkVideoComponent != null)
+                    onPlaybackUpdate?.Invoke(component.MediaPlayer, sdkVideoComponent);
+            }
+
+            sdkComponent.IsDirty = false;
+        }
+
+        private static void ConsumePromise(ref MediaPlayerComponent component, bool autoPlay, PBVideoPlayer sdkVideoComponent = null, Action<MediaPlayer, PBVideoPlayer> onOpened = null)
+        {
+            if (!component.OpenMediaPromise.IsResolved) return;
+
+            if (component.OpenMediaPromise.IsReachableConsume(component.URL))
+            {
+                component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, component.URL, autoPlay);
+
+                if (sdkVideoComponent != null)
+                    onOpened?.Invoke(component.MediaPlayer, sdkVideoComponent);
+            }
+            else
+            {
+                component.State = VideoState.VsError;
+                component.MediaPlayer.CloseCurrentStream();
+            }
+        }
+
+        private void UpdateStreamUrl(ref MediaPlayerComponent component, string url)
+        {
             component.MediaPlayer.CloseCurrentStream();
-            component.MediaPlayer.OpenMedia(MediaPathType.AbsolutePathOrURL, newUrl, autoPlay: false);
+
+            if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
+                url = mediaUrl;
+
+            component.URL = url;
+            component.State = url.IsValidUrl() ? VideoState.VsNone : VideoState.VsError;
         }
     }
 }

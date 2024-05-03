@@ -191,7 +191,7 @@ namespace Global.Dynamic
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
                         EnableLandscape = shouldEnableLandscape, EnableLOD = enableLOD
-                    }, ct
+                    }, backgroundMusic, ct
                 );
 
                 if (!isLoaded)
@@ -224,8 +224,6 @@ namespace Global.Dynamic
                     return;
                 }
 
-                UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
-
                 Entity playerEntity;
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
@@ -246,7 +244,6 @@ namespace Global.Dynamic
 
                 splashRoot.SetActive(false);
 
-                UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
             }
             catch (OperationCanceledException)

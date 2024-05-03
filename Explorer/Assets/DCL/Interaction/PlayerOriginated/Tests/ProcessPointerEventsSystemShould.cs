@@ -58,12 +58,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             previousColliderInfo.EcsExecutor.World.Add(previousColliderInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
 
-            var raycastResult = new PlayerOriginRaycastResult
-            {
-                UnityRaycastHit = new RaycastHit
-                    { distance = 99 },
-                Distance = 99,
-            };
+            PlayerOriginRaycastResult raycastResult = GetRaycastAt(99);
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
 
@@ -89,12 +84,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             previousColliderInfo.EcsExecutor.World.Add(previousColliderInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
 
-            var raycastResult = new PlayerOriginRaycastResult
-            {
-                UnityRaycastHit = new RaycastHit
-                    { distance = 150 },
-                Distance = 150,
-            };
+            PlayerOriginRaycastResult raycastResult = GetRaycastAt(150);
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
 
@@ -108,12 +98,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             // Don't add PBPointerEvents component
 
-            var raycastResult = new PlayerOriginRaycastResult
-            {
-                UnityRaycastHit = new RaycastHit
-                    { distance = 50 },
-                Distance = 50,
-            };
+            PlayerOriginRaycastResult raycastResult = GetRaycastAt(50);
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
 
@@ -138,12 +123,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             previousColliderInfo.EcsExecutor.World.Add(previousColliderInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
 
-            var raycastResult = new PlayerOriginRaycastResult
-            {
-                UnityRaycastHit = new RaycastHit
-                    { distance = 50 },
-                Distance = 50,
-            };
+            PlayerOriginRaycastResult raycastResult = GetRaycastAt(50);
 
             world.Destroy(previousColliderInfo.ColliderEntityInfo.EntityReference);
 
@@ -155,5 +135,12 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private GlobalColliderEntityInfo CreateColliderInfo() =>
             new (new SceneEcsExecutor(world, new MutexSync()),
                 new ColliderEntityInfo(world.Reference(world.Create(new CRDTEntity(123))), 123, ColliderLayer.ClPhysics));
+
+        private static PlayerOriginRaycastResult GetRaycastAt(float distance)
+        {
+            var raycastResult = new PlayerOriginRaycastResult();
+            raycastResult.SetupHit(new RaycastHit { distance = distance }, default(GlobalColliderEntityInfo), distance);
+            return raycastResult;
+        }
     }
 }

@@ -65,7 +65,7 @@ namespace ECS.StreamableLoading.Tests
             world.Add(assetPromise.Entity.Entity, new StreamableLoadingResult<Asset>(asset));
 
             Assert.IsTrue(assetPromise.TryConsume(world, out _));
-            Assert.Throws<AssertionException>(() => assetPromise.TryConsume(world, out _));
+            Assert.Throws<Exception>(() => assetPromise.TryConsume(world, out _));
         }
 
         [Test]

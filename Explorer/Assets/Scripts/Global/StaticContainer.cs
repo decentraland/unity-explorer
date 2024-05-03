@@ -206,7 +206,7 @@ namespace Global
                 container.CharacterContainer.CreateWorldPlugin(),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(sharedDependencies, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
+                new MediaPlayerPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
                 new CharacterTriggerAreaPlugin(container.MainPlayerAvatarBaseProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
                 new CameraModeAreaPlugin(container.GlobalWorldProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy),
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),

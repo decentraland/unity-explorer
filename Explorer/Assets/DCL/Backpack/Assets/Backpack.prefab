@@ -7603,6 +7603,10 @@ PrefabInstance:
       propertyPath: m_Color.r
       value: 0.9882353
       objectReference: {fileID: 0}
+    - target: {fileID: 1340690018881578410, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1392556527029171851, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_Name
       value: Emotes
@@ -7865,7 +7869,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7145261904875040787, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 116
+      value: 116.3
       objectReference: {fileID: 0}
     - target: {fileID: 7145261904875040787, guid: 1936c8ca610b0472baddc2c56969a641, type: 3}
       propertyPath: m_SizeDelta.y
