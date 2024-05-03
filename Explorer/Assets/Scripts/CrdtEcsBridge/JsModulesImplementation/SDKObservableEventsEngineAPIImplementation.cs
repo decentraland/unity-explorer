@@ -6,9 +6,11 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
+using DCL.ECS7;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -26,6 +28,18 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             OutgoingCRDTMessages.Add(processedCRDTMessage);
             base.SerializeProcessedMessage(ref span, in processedCRDTMessage);
+        }
+
+        protected override void SyncCRDTMessage(ProcessedCRDTMessage message)
+        {
+            if (message.message.Type == CRDTMessageType.APPEND_COMPONENT
+                && message.message.ComponentId == ComponentID.AVATAR_EMOTE_COMMAND)
+            {
+                // SDKObservableEventsEngineApiWrapper will dispose of the message after reading it
+                return;
+            }
+
+            base.SyncCRDTMessage(message);
         }
     }
 }

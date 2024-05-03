@@ -6,12 +6,10 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
-using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
@@ -213,26 +211,25 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             for (var i = 0; i < outgoingMessages.Count; i++)
             {
-                ProcessedCRDTMessage m = outgoingMessages[i];
+                SyncCRDTMessage(outgoingMessages[i]);
+            }
+        }
 
-                // We are interested in LWW messages only,
-                switch (m.message.Type)
-                {
-                    case CRDTMessageType.DELETE_COMPONENT:
-                    case CRDTMessageType.PUT_COMPONENT:
-                        // instead of processing via CRDTProtocol.ProcessMessage
-                        // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
-                        crdtProtocol.EnforceLWWState(m.message);
-                        break;
-                    case CRDTMessageType.APPEND_COMPONENT:
-                        // SDKObservableEventsEngineApiWrapper needs the APPEND memory before disposing it
-                        DisposeMemoryOnNextFrame(m.message.Data).Forget();
-                        break;
-                    default:
-                        // as this data is not kept in CRDTProtocol it must be released immediately
-                        m.message.Data.Dispose();
-                        break;
-                }
+        protected virtual void SyncCRDTMessage(ProcessedCRDTMessage message)
+        {
+            // We are interested in LWW messages only,
+            switch (message.message.Type)
+            {
+                case CRDTMessageType.DELETE_COMPONENT:
+                case CRDTMessageType.PUT_COMPONENT:
+                    // instead of processing via CRDTProtocol.ProcessMessage
+                    // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
+                    crdtProtocol.EnforceLWWState(message.message);
+                    break;
+                default:
+                    // as this data is not kept in CRDTProtocol it must be released immediately
+                    message.message.Data.Dispose();
+                    break;
             }
         }
 
@@ -270,12 +267,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
         protected virtual void SerializeProcessedMessage(ref Span<byte> span, in ProcessedCRDTMessage processedCRDTMessage)
         {
             crdtSerializer.Serialize(ref span, in processedCRDTMessage);
-        }
-
-        private async UniTaskVoid DisposeMemoryOnNextFrame(IMemoryOwner<byte> memoryOwner)
-        {
-            await UniTask.Yield();
-            memoryOwner.Dispose();
         }
     }
 }

@@ -153,6 +153,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                     expressionId = avatarEmoteCommand.EmoteUrn,
                                 }));
                             }
+
+                            // Release message memory as it's not needed anymore
+                            message.Data.Dispose();
                         }
 
                         break;
