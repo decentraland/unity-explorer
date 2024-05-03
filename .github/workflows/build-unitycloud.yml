@@ -38,6 +38,7 @@ jobs:
 #          - targetPlatform: StandaloneWindows64
 
     name: Build
+    runs-on: ubuntu-latest
 #    timeout-minutes: 120
 #    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft) || ${{ github.event.label.name == 'force-build' }}
     steps:
