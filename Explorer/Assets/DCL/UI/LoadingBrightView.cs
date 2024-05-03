@@ -16,8 +16,6 @@ namespace DCL.UI
 
         [field: Header("Audio")]
         [field: SerializeField]
-        public AudioClipConfig LoadingStartedAudio { get; private set; }
-        [field: SerializeField]
         public AudioClipConfig LoadingFinishedAudio { get; private set; }
 
 
@@ -26,7 +24,6 @@ namespace DCL.UI
             loadingTween.Kill();
             gameObject.SetActive(true);
             loadingHide.SetActive(false);
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(LoadingStartedAudio);
             loadingBrightObject.anchoredPosition = new Vector2(-referenceParent.rect.width, loadingBrightObject.anchoredPosition.y);
             loadingTween = loadingBrightObject.DOAnchorPosX(referenceParent.rect.width, 1f).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart);
         }

@@ -78,10 +78,7 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             var entity = entityParticipantTable.Entity(walletId);
 
-            if (world.Has<RemotePlayerMovementComponent>(entity))
-                world.Get<RemotePlayerMovementComponent>(entity).Dispose();
-
-            world.Add(entity, new DeleteEntityIntention());
+            world.AddOrGet(entity, new DeleteEntityIntention());
             entityParticipantTable.Release(walletId);
         }
 
@@ -120,6 +117,7 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             var transform = transformPool.Get()!;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
+            transform.SetParent(null);
             transform.rotation = Quaternion.identity;
             transform.localScale = Vector3.one;
 
