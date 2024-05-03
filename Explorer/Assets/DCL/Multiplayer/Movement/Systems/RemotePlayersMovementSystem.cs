@@ -1,23 +1,17 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.AvatarRendering.AvatarShape.Systems;
-using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
-using DCL.Multiplayer.Profiles.Systems;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using UnityEngine;
 using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateBefore(typeof(AvatarInstantiatorSystem))]
-    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
+    [UpdateInGroup(typeof(RemoteMotionGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayersMovementSystem : BaseUnityLoopSystem
     {
@@ -32,7 +26,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IMultiplayerMovementSettings settings;
         private readonly MultiplayerMovementMessageBus messageBus;
 
-        public RemotePlayersMovementSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
+        internal RemotePlayersMovementSystem(World world, MultiplayerMovementMessageBus messageBus, IMultiplayerMovementSettings settings) : base(world)
         {
             this.settings = settings;
             this.messageBus = messageBus;
@@ -53,7 +47,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        [None(typeof(PlayerComponent))]
+        [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {

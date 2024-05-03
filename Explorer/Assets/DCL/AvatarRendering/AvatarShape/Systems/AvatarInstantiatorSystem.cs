@@ -28,7 +28,7 @@ using EmotesLoadResult = ECS.StreamableLoading.Common.Components.StreamableLoadi
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateAfter(typeof(AvatarLoaderSystem))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarInstantiatorSystem : BaseUnityLoopSystem
@@ -64,13 +64,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         public override void Dispose()
         {
-            World.Query(in new QueryDescription().WithAll<AvatarBase, AvatarTransformMatrixComponent, AvatarShapeComponent, AvatarCustomSkinningComponent>().WithNone<DeleteEntityIntention>(),
-                (ref AvatarTransformMatrixComponent avatarTransformMatrixComponent, ref AvatarShapeComponent avatarShapeComponent, ref AvatarCustomSkinningComponent skinningComponent, ref AvatarBase avatarBase)
-                    =>
-                {
-                    InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
-                });
-
             vertOutBuffer.Dispose();
         }
 
@@ -79,7 +72,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             InstantiateMainPlayerAvatarQuery(World);
             InstantiateNewAvatarQuery(World);
             InstantiateExistingAvatarQuery(World);
-            DestroyAvatarQuery(World);
         }
 
         [Query]
@@ -133,6 +125,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         [Query]
         [All(typeof(CharacterTransform))]
+        [None(typeof(DeleteEntityIntention))]
         private void InstantiateExistingAvatar(ref AvatarShapeComponent avatarShapeComponent, AvatarBase avatarBase,
             ref AvatarCustomSkinningComponent skinningComponent)
         {
@@ -141,7 +134,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             if (!avatarShapeComponent.WearablePromise.SafeTryConsume(World, out WearablesLoadResult wearablesResult)) return;
             if (!avatarShapeComponent.EmotePromise.SafeTryConsume(World, out EmotesLoadResult emotesResult)) return;
 
-            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
+            ReleaseAvatar.Execute(vertOutBuffer, wearableAssetsCache, avatarMaterialPoolHandler, computeShaderSkinningPool, avatarShapeComponent, ref skinningComponent);
 
             // Override by ref
             skinningComponent = InstantiateAvatar(ref avatarShapeComponent, in wearablesResult, in emotesResult, avatarBase);
@@ -197,46 +190,5 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
         private bool ReadyToInstantiateNewAvatar(ref AvatarShapeComponent avatarShapeComponent) =>
             avatarShapeComponent.IsDirty && instantiationFrameTimeBudget.TrySpendBudget() && memoryBudget.TrySpendBudget();
-
-        //We only care to release AvatarShapeComponent with AvatarBase; since this are the ones that got instantiated.
-        //The ones that dont have AvatarBase never got instantiated and therefore we have nothing to release
-        [Query]
-        private void DestroyAvatar(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            AvatarBase avatarBase, AvatarCustomSkinningComponent skinningComponent, ref DeleteEntityIntention deleteEntityIntention)
-        {
-            // Use frame budget for destruction as well
-            if (!instantiationFrameTimeBudget.TrySpendBudget())
-            {
-                avatarBase.gameObject.SetActive(false);
-                deleteEntityIntention.DeferDeletion = true;
-                return;
-            }
-
-            InternalDestroyAvatar(ref avatarShapeComponent, ref skinningComponent, ref avatarTransformMatrixComponent, avatarBase);
-            deleteEntityIntention.DeferDeletion = false;
-        }
-
-        private void CommonAvatarRelease(in AvatarShapeComponent avatarShapeComponent, AvatarCustomSkinningComponent skinningComponent)
-        {
-            vertOutBuffer.Release(skinningComponent.VertsOutRegion);
-            skinningComponent.Dispose(avatarMaterialPoolHandler, computeShaderSkinningPool);
-
-            if (avatarShapeComponent.WearablePromise.IsConsumed)
-                wearableAssetsCache.ReleaseAssets(avatarShapeComponent.InstantiatedWearables);
-            else
-                avatarShapeComponent.Dereference();
-        }
-
-        private void InternalDestroyAvatar(ref AvatarShapeComponent avatarShapeComponent,
-            ref AvatarCustomSkinningComponent skinningComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
-            AvatarBase avatarBase)
-        {
-            if (mainPlayerAvatarBaseProxy.Object == avatarBase)
-                mainPlayerAvatarBaseProxy.ReleaseObject();
-
-            CommonAvatarRelease(avatarShapeComponent, skinningComponent);
-            avatarTransformMatrixComponent.Dispose();
-            avatarPoolRegistry.Release(avatarBase);
-        }
     }
 }
