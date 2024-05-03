@@ -63,9 +63,6 @@ namespace CRDT.Memory
             catch (Exception e) { throw new Exception($"Cannot provide MemoryBuffer originalStreamSize: {originalStream.Length} with shift: {shift} with length: {length}", e); }
         }
 
-        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
-            GetMemoryBuffer(originalStream, 0, originalStream.Length);
-
         private class MemoryOwner : IMemoryOwner<byte>
         {
             private readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
