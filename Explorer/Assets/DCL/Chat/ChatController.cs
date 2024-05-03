@@ -128,12 +128,14 @@ namespace DCL.Chat
         {
             base.OnViewShow();
             dclInput.UI.Click.performed += OnClick;
+            dclInput.Shortcuts.ToggleNametags.performed += ToggleNametagsFromShortcut;
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
             dclInput.UI.Click.performed -= OnClick;
+            dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
         }
 
         private void OnClick(InputAction.CallbackContext obj)
@@ -171,8 +173,27 @@ namespace DCL.Chat
                 emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
+        private void ToggleNametagsFromShortcut(InputAction.CallbackContext obj)
+        {
+            nametagsData.showNameTags = !nametagsData.showNameTags;
+
+            if (!nametagsData.showNameTags)
+            {
+                viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(true);
+                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(false);
+            }
+            else
+            {
+                viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!nametagsData.showChatBubbles);
+                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(nametagsData.showChatBubbles);
+            }
+        }
+
         private void OnToggleChatBubblesValueChanged(bool isToggled)
         {
+            if(!nametagsData.showNameTags)
+                return;
+
             viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
             viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
             nametagsData.showChatBubbles = isToggled;
