@@ -107,7 +107,13 @@ namespace DCL.Profiles
                 if (profileDto is null)
                     return null;
 
-                Profile profile = profileInCache ?? new Profile();
+                // Reusing the profile in cache does not allow other systems to properly update.
+                // It impacts on the object state and does not allow to make comparisons on change.
+                // For example the multiplayer system, whenever a remote profile update comes in,
+                // it compares the version of the profile to check if it has changed
+                // By overriding the version here, the check always fails
+                // Profile profile = profileInCache ?? new Profile();
+                Profile profile = new Profile();
                 profileDto.CopyTo(profile);
                 profileCache.Set(id, profile);
 

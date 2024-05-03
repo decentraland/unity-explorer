@@ -19,7 +19,7 @@ namespace DCL.Diagnostics
             Debug.unityLogger.LogFormat(logType, context, message.ToString(), args);
         }
 
-        public void LogException<T>(T ecsSystemException) where T: Exception, IManagedEcsException
+        public void LogException<T>(T ecsSystemException) where T: Exception, IDecentralandException
         {
             Debug.unityLogger.LogException(ecsSystemException);
         }
