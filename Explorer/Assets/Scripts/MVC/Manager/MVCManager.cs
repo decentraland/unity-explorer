@@ -89,7 +89,7 @@ namespace MVC
             catch (OperationCanceledException _)
             {
                 // TODO (Vit) : handle revert of command. Proposal - extend WizardCommands interface with Revert method and call it in case of cancellation.
-                ReportHub.LogError(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
+                ReportHub.LogWarning(ReportCategory.MVC, $"ShowAsync was cancelled for {controller.GetType()}");
             }
         }
 

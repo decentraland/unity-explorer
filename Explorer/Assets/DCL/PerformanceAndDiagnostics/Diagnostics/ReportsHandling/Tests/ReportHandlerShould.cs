@@ -88,7 +88,7 @@ namespace Diagnostics.ReportsHandling.Tests
 
             public abstract void LogFormatTest(LogType logType, ReportData category, Object context, object message, params object[] args);
 
-            public abstract void LogExceptionTest<T>(T ecsSystemException) where T: Exception, IManagedEcsException;
+            public abstract void LogExceptionTest<T>(T ecsSystemException) where T: Exception, IDecentralandException;
 
             public abstract void LogExceptionTest(Exception exception, Object context);
 

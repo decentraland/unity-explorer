@@ -262,6 +262,11 @@
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
 
         /// <summary>
+        ///     Whatever is coming from external pure C# plugins
+        /// </summary>
+        public const string PLUGINS = nameof(PLUGINS);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
