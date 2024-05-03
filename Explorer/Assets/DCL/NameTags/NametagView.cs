@@ -210,8 +210,8 @@ namespace DCL.Nametags
         {
             if (messageContent.Contains("\\U") && messageContent.Length == 10)
             {
-                additionalHeight = 0.3f;
-                MessageContent.fontSize = 3;
+                additionalHeight = 0.22f;
+                MessageContent.fontSize = 4.5f;
                 MessageContent.alignment = TextAlignmentOptions.Center;
             }
             else
