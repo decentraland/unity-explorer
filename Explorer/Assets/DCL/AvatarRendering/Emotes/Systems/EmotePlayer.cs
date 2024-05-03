@@ -28,11 +28,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (references.audioSource != null)
                     audioSourcePool.Release(references.audioSource);
 
-                references.avatarClip = null;
                 references.audioSource = null;
-                references.propClip = null;
-                references.animator = null;
-                references.propClipHash = 0;
             };
         }
 
@@ -122,7 +118,9 @@ namespace DCL.AvatarRendering.Emotes
                     renderer.forceRenderingOff = true;
             }
 
-            references.animator = animator;
+            AnimationClip? avatarClip = null;
+            AnimationClip? propClip = null;
+            int propClipHash = 0;
 
             RuntimeAnimatorController? rac = animator.runtimeAnimatorController;
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get();
@@ -132,21 +130,23 @@ namespace DCL.AvatarRendering.Emotes
                     uniqueClips.Add(clip);
 
             if (uniqueClips.Count == 1)
-                references.avatarClip = uniqueClips[0];
+                avatarClip = uniqueClips[0];
             else
             {
                 foreach (AnimationClip animationClip in uniqueClips)
                 {
                     if (animationClip.name.Contains("_avatar", StringComparison.OrdinalIgnoreCase))
-                        references.avatarClip = animationClip;
+                        avatarClip = animationClip;
 
                     if (animationClip.name.Contains("_prop", StringComparison.OrdinalIgnoreCase))
                     {
-                        references.propClip = animationClip;
-                        references.propClipHash = Animator.StringToHash(animationClip.name);
+                        propClip = animationClip;
+                        propClipHash = Animator.StringToHash(animationClip.name);
                     }
                 }
             }
+
+            references.Initialize(avatarClip, propClip, animator, propClipHash);
 
             ListPool<AnimationClip>.Release(uniqueClips);
 
