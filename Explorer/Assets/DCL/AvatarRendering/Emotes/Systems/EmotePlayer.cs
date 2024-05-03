@@ -3,7 +3,6 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Pool;
 using Object = UnityEngine.Object;
@@ -13,6 +12,7 @@ namespace DCL.AvatarRendering.Emotes
     public class EmotePlayer
     {
         private readonly GameObjectPool<AudioSource> audioSourcePool;
+        private readonly Action<EmoteReferences> releaseEmoteReferences;
         private readonly Dictionary<GameObject, GameObjectPool<EmoteReferences>> pools = new ();
         private readonly Dictionary<EmoteReferences, GameObjectPool<EmoteReferences>> emotesInUse = new ();
         private readonly Transform poolRoot;
@@ -22,6 +22,18 @@ namespace DCL.AvatarRendering.Emotes
             poolRoot = GameObject.Find("ROOT_POOL_CONTAINER").transform;
 
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
+
+            releaseEmoteReferences = references =>
+            {
+                if (references.audioSource != null)
+                    audioSourcePool.Release(references.audioSource);
+
+                references.avatarClip = null;
+                references.audioSource = null;
+                references.propClip = null;
+                references.animator = null;
+                references.propClipHash = 0;
+            };
         }
 
         public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
@@ -38,7 +50,7 @@ namespace DCL.AvatarRendering.Emotes
                 Stop(emoteInUse);
 
             if (!pools.ContainsKey(mainAsset))
-                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping)));
+                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping), onRelease: releaseEmoteReferences));
 
             EmoteReferences? emoteReferences = pools[mainAsset].Get();
             if (!emoteReferences) return false;
@@ -145,14 +157,10 @@ namespace DCL.AvatarRendering.Emotes
 
         public void Stop(EmoteReferences emoteReference)
         {
-            if (!emotesInUse.TryGetValue(emoteReference, out GameObjectPool<EmoteReferences>? pool))
+            if (!emotesInUse.Remove(emoteReference, out GameObjectPool<EmoteReferences>? pool))
                 return;
 
             pool.Release(emoteReference);
-            emotesInUse.Remove(emoteReference);
-
-            if (emoteReference.audioSource != null)
-                audioSourcePool.Release(emoteReference.audioSource);
         }
     }
 }
