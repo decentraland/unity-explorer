@@ -234,7 +234,7 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             bool isTimeout = intention.ElapsedTime >= intention.Timeout;
-            bool isSucceeded = emotesWithResponse == resolvedEmotesTmp.Count;
+            bool isSucceeded = emotesWithResponse == intention.Pointers.Count;
 
             if (isSucceeded || isTimeout)
             {
