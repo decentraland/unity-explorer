@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using DCL.Diagnostics;
@@ -10,7 +9,7 @@ using System.Collections.Generic;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     [LogCategory(ReportCategory.AVATAR)]
     [UpdateBefore(typeof(AvatarInstantiatorSystem))]
     public partial class MakeVertsOutBufferDefragmentationSystem : BaseUnityLoopSystem

@@ -23,9 +23,9 @@ namespace DCL.PlacesAPIService
         /// <param name="coords"></param>
         /// <param name="ct"></param>
         /// <returns></returns>
-        UniTask<PlacesData.PlaceInfo> GetPlaceAsync(Vector2Int coords, CancellationToken ct);
+        UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(Vector2Int coords, CancellationToken ct);
 
-        UniTask<PlacesData.PlaceInfo> GetPlaceAsync(string placeUUID, CancellationToken ct);
+        UniTask<PlacesData.PlaceInfo?> GetPlaceAsync(string placeUUID, CancellationToken ct);
 
         UniTask<PlacesData.IPlacesAPIResponse> GetFavoritesAsync(int pageNumber, int pageSize, CancellationToken ct);
 

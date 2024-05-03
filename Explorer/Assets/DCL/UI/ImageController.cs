@@ -48,5 +48,11 @@ namespace DCL.UI
             view.Image.sprite = sprite;
             view.LoadingObject.SetActive(false);
         }
+
+        public void StopLoading()
+        {
+            cts.SafeCancelAndDispose();
+            view.LoadingObject.SetActive(false);
+        }
     }
 }

@@ -159,6 +159,7 @@ namespace DCL.CharacterPreview
         {
             if (initialized)
             {
+                cancellationTokenSource.SafeCancelAndDispose();
                 previewController?.Dispose();
                 previewController = null;
                 initialized = false;

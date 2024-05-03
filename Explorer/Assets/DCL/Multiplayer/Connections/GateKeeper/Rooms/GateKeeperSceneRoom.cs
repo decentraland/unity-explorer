@@ -29,7 +29,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
 
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
-                RunConnectCycleStepAsync
+                RunConnectCycleStepAsync,
+                nameof(GateKeeperSceneRoom)
             );
         }
 
@@ -45,9 +46,15 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         public IRoom Room() =>
             connectiveRoom.Room();
 
-        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token)
+        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
         {
             MetaData meta = await metaDataSource.MetaDataAsync(token);
+
+            if (meta.sceneId == null)
+            {
+                await disconnectCurrentRoomAsyncDelegate(token);
+                return;
+            }
 
             if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running || meta.Equals(previousMetaData) == false)
             {
@@ -61,9 +68,10 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
         private async UniTask<string> ConnectionStringAsync(MetaData meta, CancellationToken token)
         {
             AdapterResponse response = await webRequests.SignedFetchPostAsync(
-                sceneHandleUrl,
-                meta.ToJson(),
-                token).CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
+                                                             sceneHandleUrl,
+                                                             meta.ToJson(),
+                                                             token)
+                                                        .CreateFromJson<AdapterResponse>(WRJsonParser.Unity);
 
             string connectionString = response.adapter;
             ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log($"String is: {connectionString}");

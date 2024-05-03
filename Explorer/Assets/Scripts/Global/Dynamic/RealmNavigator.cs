@@ -88,7 +88,7 @@ namespace Global.Dynamic
                 await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
                     {
                         remoteEntities.ForceRemoveAll(world);
-                        await roomHub.StopAsync();
+                        await roomHub.StopIfNotAsync();
                         loadReport.ProgressCounter.Value = 0.3f;
                         await ChangeRealm(realm, loadReport, ct);
                         await TeleportToParcelAsync(true, Vector2Int.zero, loadReport, ct);

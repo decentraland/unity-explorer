@@ -38,6 +38,7 @@ namespace DCL.PluginSystem.Global
             PlayerMovementNetSendSystem.InjectToWorld(ref builder, messageBus, settings.Value);
             RemotePlayersMovementSystem.InjectToWorld(ref builder, messageBus, settings.Value);
             RemotePlayerAnimationSystem.InjectToWorld(ref builder, settings.Value.ExtrapolationSettings);
+            CleanUpRemoteMotionSystem.InjectToWorld(ref builder);
         }
     }
 }
