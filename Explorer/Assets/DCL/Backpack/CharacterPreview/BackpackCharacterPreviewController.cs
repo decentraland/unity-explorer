@@ -31,6 +31,12 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent += OnBackpackSectionChanged;
+            backpackEventBus.DeactivateEvent += OnDeactivate;
+        }
+
+        private void OnDeactivate()
+        {
+            StopEmotes();
         }
 
         private void OnBackpackSectionChanged(BackpackSections backpackSection)

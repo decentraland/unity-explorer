@@ -91,6 +91,7 @@ namespace DCL.UI
             panelOpening.ResetAnimator();
             panelOpening.Animate(IN);
             panelClosing.Animate(OUT);
+            panelClosing.Deactivate();
             previousSection = newSection;
         }
     }

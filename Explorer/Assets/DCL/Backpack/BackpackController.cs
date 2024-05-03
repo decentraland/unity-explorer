@@ -208,6 +208,8 @@ namespace DCL.Backpack
 
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
+
+            backpackEventBus.SendBackpackDeactivateEvent();
         }
 
         public void Animate(int triggerId)
