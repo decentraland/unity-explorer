@@ -10,8 +10,12 @@ namespace CRDT.Memory
     {
         IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length);
 
-        IMemoryOwner<byte> GetMemoryBuffer(int length);
-
         IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream);
+    }
+
+    public static class CRDTMemoryAllocatorExtensions
+    {
+        public static IMemoryOwner<byte> GetMemoryBuffer(this ICRDTMemoryAllocator allocator, int length) =>
+            allocator.GetMemoryBuffer(ReadOnlyMemory<byte>.Empty, 0, length);
     }
 }
