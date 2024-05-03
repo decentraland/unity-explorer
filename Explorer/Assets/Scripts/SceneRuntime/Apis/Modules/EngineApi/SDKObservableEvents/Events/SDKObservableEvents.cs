@@ -16,7 +16,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
         public static string Comms => "comms";
     }
 
-    // In the future we may remove all the SDK ObservableEvent logic and just use the replacement components that are already in place
     public struct SDKObservableEvent
     {
         public Generic generic;

@@ -9,7 +9,6 @@ using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
-using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Factory;
 using System;
@@ -54,7 +53,6 @@ namespace SceneRuntime.Tests
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                // sceneRuntime.RegisterEngineApi(engineApi, Substitute.For<ICommunicationsControllerAPI>(), sceneExceptionsHandler);
                 sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
                 await sceneRuntime.StartScene();
@@ -81,7 +79,6 @@ namespace SceneRuntime.Tests
 
                 var sceneRuntimeFactory = NewSceneRuntimeFactory();
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateBySourceCodeAsync(code, poolsProvider, new SceneShortInfo(), CancellationToken.None);
-                // sceneRuntime.RegisterEngineApi(engineApi, Substitute.For<ICommunicationsControllerAPI>(), sceneExceptionsHandler);
                 sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
@@ -148,7 +145,6 @@ namespace SceneRuntime.Tests
                 var path = URLAddress.FromString($"file://{Application.dataPath + "/../TestResources/Scenes/Cube/cube.js"}");
                 SceneRuntimeImpl sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(path, poolsProvider, new SceneShortInfo(), CancellationToken.None);
 
-                // sceneRuntime.RegisterEngineApi(engineApi, Substitute.For<ICommunicationsControllerAPI>(), sceneExceptionsHandler);
                 sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 

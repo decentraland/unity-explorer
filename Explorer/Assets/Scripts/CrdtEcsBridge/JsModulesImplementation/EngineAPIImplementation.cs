@@ -150,8 +150,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 int currentStatePayloadLength = crdtProtocol.CreateMessagesFromTheCurrentState(processedMessages);
 
                 // We know exactly how many bytes we need to serialize
-                PoolableByteArray serializationBufferPoolable = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
-                Span<byte> currentStateSpan = serializationBufferPoolable.Span;
+                var serializationBufferPoolable = sharedPoolsProvider.GetSerializedStateBytesPool(currentStatePayloadLength);
+                var currentStateSpan = serializationBufferPoolable.Span;
 
                 // Serialize the current state
 

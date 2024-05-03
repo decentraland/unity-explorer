@@ -17,7 +17,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     {
         internal enum MsgType
         {
-            String = 1, // SDK MessageBus messages
+            String = 1, // SDK scenes MessageBus messages
             Uint8Array = 2,
         }
 
@@ -50,7 +50,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             onMessageReceivedCached = OnMessageReceived;
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
