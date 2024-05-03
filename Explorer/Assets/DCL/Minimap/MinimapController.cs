@@ -81,6 +81,7 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
+            SetWorldMode(false);
         }
 
         private void ExpandMinimap()
