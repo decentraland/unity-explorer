@@ -18,7 +18,7 @@ MonoBehaviour:
   directionalCaustics: 0
   displacementPrePassSettings:
     enable: 0
-    range: 500
+    range: 250
     cellSize: 0.25
 --- !u!114 &11400000
 MonoBehaviour:

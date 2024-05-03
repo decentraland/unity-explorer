@@ -130,7 +130,7 @@ namespace DCL.Multiplayer.Emotes
         private void TriggerEmote(URN emoteURN, in Entity entity)
         {
             if (!emoteURN.IsNullOrEmpty())
-                globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteURN });
+                globalWorld.Add(entity, new CharacterEmoteIntent { EmoteId = emoteURN, Spatial = true });
         }
     }
 }
