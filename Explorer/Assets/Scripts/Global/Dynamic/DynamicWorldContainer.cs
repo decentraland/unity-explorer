@@ -240,7 +240,7 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache);
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
+            container.MessagePipesHub = new IMessagePipesHub.Fake();//TODO replace new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
             var entityParticipantTable = new EntityParticipantTable();
 
