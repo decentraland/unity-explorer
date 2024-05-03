@@ -3,7 +3,6 @@ using DCL.UI.Buttons;
 using MVC;
 using System.Collections.Generic;
 using TMPro;
-using UnityEditor.Animations;
 using UnityEngine;
 using UnityEngine.UI;
 

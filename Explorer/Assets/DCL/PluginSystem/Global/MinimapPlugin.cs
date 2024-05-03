@@ -7,7 +7,6 @@ using DCL.PlacesAPIService;
 using ECS;
 using Global.Dynamic;
 using MVC;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;

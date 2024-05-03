@@ -2,7 +2,6 @@ using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
-using TMPro;
 using UnityEngine;
 
 namespace DCL.Navmap
