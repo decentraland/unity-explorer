@@ -11,8 +11,10 @@ namespace DCL.Nametags
 {
     public class NametagView : MonoBehaviour
     {
+        private const int EMOJI_LENGTH = 10;
         private const float DISTANCE_THRESHOLD = 0.1f;
         private const float DEFAULT_HEIGHT = 0.3f;
+        private const float MESSAGE_CONTENT_FONT_SIZE = 1.3f;
 
         [field: SerializeField]
         public TMP_Text Username { get; private set; }
@@ -208,7 +210,7 @@ namespace DCL.Nametags
 
         private void SetHeightAndTextStyle(string messageContent)
         {
-            if (messageContent.Contains("\\U") && messageContent.Length == 10)
+            if (messageContent.Contains("\\U") && messageContent.Length == EMOJI_LENGTH)
             {
                 additionalHeight = chatBubbleConfiguration.singleEmojiExtraHeight;
                 MessageContent.fontSize = chatBubbleConfiguration.singleEmojiSize;
@@ -217,7 +219,7 @@ namespace DCL.Nametags
             else
             {
                 additionalHeight = 0;
-                MessageContent.fontSize = 1.3f;
+                MessageContent.fontSize = MESSAGE_CONTENT_FONT_SIZE;
                 MessageContent.alignment = TextAlignmentOptions.Left;
             }
         }
