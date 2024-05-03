@@ -68,7 +68,6 @@ jobs:
           unity_cloud_build_create_share: true
           unity_cloud_build_github_branch_ref: ${{ github.ref }} # Full path branch
           unity_cloud_build_github_head_ref: ${{ github.head_ref }} # Pull request only, source branch
-          unity_cloud_build_github_commit_sha: ${{ github.sha }}
                                                                                          
 #      - name: Set SHA env variable
 #        run: |
