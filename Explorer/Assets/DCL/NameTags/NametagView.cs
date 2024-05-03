@@ -157,9 +157,11 @@ namespace DCL.Nametags
         private int AdditionalMessageVisibilityTimeMs(string chatMessage) =>
             chatMessage.Length * chatBubbleConfiguration.additionalMsPerCharacter;
 
+        private float additionalHeight;
         //TODO: jobify this to improve the performance
         private async UniTask AnimateInAsync(string messageContent)
         {
+            SetHeightAndTextStyle(messageContent);
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
             BubblePeak.gameObject.SetActive(true);
@@ -173,6 +175,7 @@ namespace DCL.Nametags
             //Calculate message content preferred size with fixed width
             preferredSize = MessageContent.GetPreferredValues(messageContent, MaxWidth, 0);
             preferredSize.x =  CalculatePreferredWidth(messageContent);
+            preferredSize.y += additionalHeight;
             MessageContentRectTransform.sizeDelta = preferredSize;
 
             //Calculate the initial message content position to animate after
@@ -201,6 +204,22 @@ namespace DCL.Nametags
                 MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token),
                 DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token)
                 );
+        }
+
+        private void SetHeightAndTextStyle(string messageContent)
+        {
+            if (messageContent.Contains("\\U") && messageContent.Length == 10)
+            {
+                additionalHeight = 0.3f;
+                MessageContent.fontSize = 3;
+                MessageContent.alignment = TextAlignmentOptions.Center;
+            }
+            else
+            {
+                additionalHeight = 0;
+                MessageContent.fontSize = 1.3f;
+                MessageContent.alignment = TextAlignmentOptions.Left;
+            }
         }
 
         private async UniTask AnimateOutAsync()
