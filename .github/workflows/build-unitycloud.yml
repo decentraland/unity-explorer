@@ -1,0 +1,212 @@
+name: Unity Cloud Build
+
+on:
+#  pull_request:
+#    types:
+#      - opened
+#      - reopened
+#      - synchronize
+#      - ready_for_review
+#      - labeled
+  merge_group: {}
+# [main]
+  push: { branches: [feat/unity-cloud-build] }
+#  workflow_dispatch:
+#    inputs:
+#      profile:
+#        description: 'Set to true, profiling will be enabled auto-connect profiler will be set to on'
+#        required: true
+#        default: 'false'
+#      deep_profile:
+#        description: 'Set to true, deep profiling will also be enabled'
+#        required: false
+#        default: 'false'
+
+#env:
+#  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+#  cancel-in-progress: true
+
+jobs:
+  build:
+#    strategy:
+#      max-parallel: 1
+#      matrix:
+#        include:
+#          - targetPlatform: StandaloneWindows64
+
+    name: Build
+#    timeout-minutes: 120
+#    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft) || ${{ github.event.label.name == 'force-build' }}
+    steps:
+      # Setup for unity-cloud-build action
+#      - name: Install Python 3
+#        uses: actions/setup-python@v4
+#        with:
+#          python-version: "3.10.4"
+#          architecture: "x64"
+#
+#      - name: Export poetry.lock for docker build
+#        run: |
+#          python -m pip install --upgrade pip
+#          pip install poetry==1.1.12
+#          cd .github/actions/unity-cloud-build/ && poetry export -f requirements.txt > requirements.txt
+      
+      - name: Build with Unity Cloud Build
+        uses: condensereality/UnityCloudBuildAction@main
+        id: build
+        with:
+          unity_cloud_build_api_key: ${{ secrets.UNITY_CLOUD_API_KEY }}
+          unity_cloud_build_org_id: ${{ secrets.UNITY_CLOUD_ORG_ID }}
+          unity_cloud_build_project_id: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
+          unity_cloud_build_polling_interval: 60
+          unity_cloud_build_primary_target: windows64
+          unity_cloud_build_download_binary: true
+          unity_cloud_build_create_share: true
+          unity_cloud_build_github_branch_ref: ${{ github.ref }} # Full path branch
+          unity_cloud_build_github_head_ref: ${{ github.head_ref }} # Pull request only, source branch
+          unity_cloud_build_github_commit_sha: ${{ github.sha }}
+                                                                                         
+#      - name: Set SHA env variable
+#        run: |
+#          $eventName = "${{ github.event_name }}"
+#          
+#          if ($eventName -eq "push") {
+#              $LONG_SHA = "${{ github.sha }}"
+#              $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+#              Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+#              Write-Output $SHORT_SHA
+#          }
+#          elseif ($eventName -eq "pull_request") {
+#              $LONG_SHA = "${{ github.event.pull_request.head.sha }}"
+#              $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+#              Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+#              Write-Output $SHORT_SHA
+#          }
+#
+#      - name: Set sentry env var
+#        run: |
+#          $branchName = "${{ github.ref }}"
+#          $SENTRY_ENVIRONMENT = "branch"
+#          
+#          if ($branchName -eq 'refs/heads/main') {
+#            $SENTRY_ENVIRONMENT = "production"
+#          } elseif ($branchName -eq 'refs/heads/dev') {
+#            $SENTRY_ENVIRONMENT = "development"
+#          }
+#          
+#          Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
+#          Write-Output $SENTRY_ENVIRONMENT
+
+#      - name: Enable or disable the upload of sentry debug symbols
+#        run: |
+#          $branchName = "${{ github.ref }}"
+#          $uploadSymbols = "false"
+#          if ($branchName -eq 'refs/heads/main') {
+#            $uploadSymbols = "true"
+#          }
+#          Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
+#          Write-Output $uploadSymbols
+
+#      - name: Checkout code
+#        uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+          
+#      - name: Extract branch name
+#        shell: bash
+#        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+#        id: extract_branch
+          
+#      - name: Create Version
+#        id: create-version
+#        run: | 
+#          $latestTag = git describe --tags
+#          
+#          # Extract version components
+#          if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
+#          $version = $matches[1]
+#          $minorVersion = $matches[2]
+#          $build = $matches[3]
+#          $commit = $matches[4]
+#          
+#          Write-Output "Version: $version"
+#          Write-Output "Minor Version: $minorVersion"
+#          Write-Output "Build: $build"
+#          Write-Output "Commit: $commit"
+#          } else {
+#            Write-Output "String does not match expected pattern. No Version Added!"
+#          }
+#          
+#          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+#            $branchName = $env:GITHUB_HEAD_REF
+#          } else {
+#            $branchName = ($env:GITHUB_REF -split '/')[2]
+#          }
+#          
+#          $semVer = "v$($version).$($minorVersion).$($build)-$($commit)-$($branchName)"
+#          Write-Output "Version: $semVer"
+#          Write-Output "version=$($semVer)" >> $env:GITHUB_OUTPUT
+#        shell: pwsh
+#          
+#      - name: 'Using Version'
+#        run: |
+#          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
+#          Write-Output "Version: ($env:SELECTED_COLOR)"
+          
+#      - name: Manage custom input parameters
+#        run: |
+#          $profileEnabled = "${{ github.event.inputs.profile }}"
+#          $deepProfileEnabled = "${{ github.event.inputs.deep_profile }}"
+#          
+#          if ($profileEnabled -eq 'true') {
+#            $profilingParam = '-profile'
+#          } else {
+#            $profilingParam = ''
+#          }
+#
+#          if ($deepProfileEnabled -eq 'true') {
+#            $deepProfilingParam = '-deepProfile'
+#          } else {
+#            $deepProfilingParam = ''
+#          }
+#
+#          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
+#          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
+
+#      - uses: game-ci/unity-builder@v4.2.3
+#        id: build
+#        timeout-minutes: 120
+#        with:
+#          buildMethod: Editor.BuildScript.Build
+#          projectPath: Explorer
+#          buildTimeout: 120
+#          targetPlatform: ${{ matrix.targetPlatform }}
+#          buildName: Decentraland
+#          versioning: Custom
+#          version: ${{ steps.create-version.outputs.version }}
+#          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
+#          sshAgent: ${{ env.SSH_AUTH_SOCK }}
+#          allowDirtyBuild: true
+
+      # Upload artifact
+#      - name: Upload windows artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: Decentraland
+#          path: |
+#            build
+#            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+#            !build/**/*_BurstDebugInformation_DoNotShip
+#          if-no-files-found: error
+          
+#      # Upload build report
+#      - name: Uploading build report (test)
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: Build Report
+#          path: |
+#            Explorer/Library/LastBuild.buildreport
+#          if-no-files-found: error
