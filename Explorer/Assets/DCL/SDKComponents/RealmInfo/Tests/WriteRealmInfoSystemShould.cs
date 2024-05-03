@@ -76,7 +76,6 @@ namespace DCL.SDKComponents.RealmInfo.Tests
                                     && data.realmData.NetworkId == realmData.NetworkId
                                     && data.realmData.Ipfs.CatalystBaseUrl == realmData.Ipfs.CatalystBaseUrl
                                     && data.roomHub.IslandRoom().Info.Sid == roomHub.IslandRoom().Info.Sid));
-            ecsToCRDTWriter.ClearReceivedCalls();
         }
 
         [Test]
@@ -113,6 +112,24 @@ namespace DCL.SDKComponents.RealmInfo.Tests
 
             realmData.IsDirty.Returns(true);
             system.Update(0);
+
+            ecsToCRDTWriter.Received(1)
+                           .PutMessage(
+                                Arg.Any<Action<PBRealmInfo, (IRealmData realmData, IRoomHub roomHub)>>(),
+                                SpecialEntitiesID.SCENE_ROOT_ENTITY,
+                                Arg.Is<(IRealmData realmData, IRoomHub roomHub)>(data =>
+                                    data.realmData.RealmName == realmData.RealmName
+                                    && data.realmData.CommsAdapter == realmData.CommsAdapter
+                                    && data.realmData.NetworkId == realmData.NetworkId
+                                    && data.realmData.Ipfs.CatalystBaseUrl == realmData.Ipfs.CatalystBaseUrl
+                                    && data.roomHub.IslandRoom().Info.Sid == roomHub.IslandRoom().Info.Sid));
+        }
+
+        [Test]
+        public void WriteRealmInfoDataOnInitializeRegardlessOfIsDirtyFlag()
+        {
+            realmData.IsDirty.Returns(false);
+            system.Initialize();
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
