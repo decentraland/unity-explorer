@@ -3,8 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Character.Components;
+using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
@@ -13,7 +13,6 @@ using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
-using DCL.ParcelsService;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DG.Tweening;
@@ -37,7 +36,7 @@ namespace DCL.Minimap
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
-        private readonly ITeleportController teleportController;
+        private readonly IChatMessagesBus chatMessagesBus;
         private CancellationTokenSource cts;
         private bool isWorld;
 
@@ -61,7 +60,7 @@ namespace DCL.Minimap
             IPlacesAPIService placesAPIService,
             TrackPlayerPositionSystem system,
             IRealmData realmData,
-            ITeleportController teleportController
+            IChatMessagesBus chatMessagesBus
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -69,7 +68,7 @@ namespace DCL.Minimap
             this.placesAPIService = placesAPIService;
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
             this.realmData = realmData;
-            this.teleportController = teleportController;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         protected override void OnViewInstantiated()
@@ -78,7 +77,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
-            viewInstance.goToGenesisCityButton.onClick.AddListener(GoToGenesisCity);
+            viewInstance.goToGenesisCityButton.onClick.AddListener(() => chatMessagesBus.Send("/goto 0,0"));
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
@@ -113,9 +112,6 @@ namespace DCL.Minimap
             }
         }
 
-        private void GoToGenesisCity() =>
-            teleportController.TeleportToSceneSpawnPointAsync(Vector2Int.zero, AsyncLoadProcessReport.Create(), CancellationToken.None).Forget();
-
         [All(typeof(PlayerComponent))]
         [Query]
         private void QueryPlayerPosition(in CharacterTransform transformComponent)
@@ -144,7 +140,7 @@ namespace DCL.Minimap
                 GetPlaceInfoAsync(position);
             }
 
-            if (isWorld != realmData.ScenesAreFixed)
+            if (realmData.Configured && isWorld != realmData.ScenesAreFixed)
             {
                 isWorld = realmData.ScenesAreFixed;
                 SetWorldMode(realmData.ScenesAreFixed);
