@@ -97,13 +97,8 @@ namespace DCL.CharacterPreview
 
         private async UniTask WaitForAvatarInstantiatedAsync(CancellationToken ct)
         {
-            while (globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
-            {
-                if (ct.IsCancellationRequested)
-                    return;
-
+            while (!ct.IsCancellationRequested && globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
                 await UniTask.Yield(ct);
-            }
         }
 
         public void PlayEmote(string emoteId)
