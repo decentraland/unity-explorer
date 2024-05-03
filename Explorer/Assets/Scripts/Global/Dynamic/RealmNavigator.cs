@@ -215,7 +215,7 @@ namespace Global.Dynamic
             bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
 
             //TODO(Juani): This two methods looks quite similar....
-            if (!isGenesis) genesisTerrain.Hide();
+            //if (!isGenesis) genesisTerrain.Hide();
             // is NOT visible
             worldsTerrain.SwitchVisibility(!isGenesis);
 
