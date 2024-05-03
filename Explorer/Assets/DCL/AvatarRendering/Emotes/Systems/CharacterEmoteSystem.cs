@@ -128,7 +128,6 @@ namespace DCL.AvatarRendering.Emotes
             emoteComponent.EmoteLoop = false;
             emoteComponent.CurrentEmoteReference = null;
             emotePlayer.Stop(emoteReference);
-            Debug.Log("Stopping emote");
         }
 
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
@@ -162,7 +161,6 @@ namespace DCL.AvatarRendering.Emotes
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null)
                     {
-                        Debug.LogError("This emote is still downloading?");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
@@ -185,7 +183,6 @@ namespace DCL.AvatarRendering.Emotes
 
                     emoteComponent.EmoteUrn = emoteId;
                 }
-                else { Debug.LogError("Trying to play an emote that was never loaded?"); }
             }
             catch (Exception e)
             {
