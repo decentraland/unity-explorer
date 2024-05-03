@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.ComputeShader;
 using ECS.Abstract;
@@ -9,7 +8,8 @@ using ECS.LifeCycle.Components;
 
 namespace DCL.AvatarRendering.AvatarShape.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
+    [UpdateAfter(typeof(StartAvatarMatricesCalculationSystem))]
     [UpdateAfter(typeof(AvatarInstantiatorSystem))]
     public partial class FinishAvatarMatricesCalculationSystem : BaseUnityLoopSystem
     {
@@ -26,13 +26,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
+        [All(typeof(AvatarShapeComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void Execute(ref AvatarShapeComponent avatarShapeComponent, ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
+        private void Execute(ref AvatarTransformMatrixComponent avatarTransformMatrixComponent,
             ref AvatarCustomSkinningComponent computeShaderSkinning)
         {
-            if (avatarShapeComponent.IsDirty)
-                return;
-
             skinningStrategy.ComputeSkinning(avatarTransformMatrixComponent.CompleteBoneMatrixCalculations(), ref computeShaderSkinning);
         }
     }

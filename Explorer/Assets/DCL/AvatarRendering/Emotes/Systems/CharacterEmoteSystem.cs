@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -12,7 +13,7 @@ using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Emotes.Interfaces;
+using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
@@ -24,7 +25,9 @@ using UnityEngine;
 namespace DCL.AvatarRendering.Emotes
 {
     [LogCategory(ReportCategory.EMOTE)]
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateAfter(typeof(AvatarGroup))]
+    [UpdateAfter(typeof(RemoteEmotesSystem))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         // todo: use this to add nice Debug UI to trigger any emote?
@@ -120,7 +123,7 @@ namespace DCL.AvatarRendering.Emotes
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void ConsumeEmoteIntent(in Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
+        private void ConsumeEmoteIntent(Entity entity, ref CharacterEmoteComponent emoteComponent, in CharacterEmoteIntent emoteIntent, in IAvatarView avatarView, in AvatarShapeComponent avatarShapeComponent)
         {
             URN emoteId = emoteIntent.EmoteId;
 
@@ -135,7 +138,7 @@ namespace DCL.AvatarRendering.Emotes
                 if (emoteCache.TryGetEmote(emoteId.Shorten(), out IEmote emote))
                 {
                     // emote failed to load? remove intent
-                    if (emote.ManifestResult is { IsInitialized: true, Exception: not null })
+                    if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
                         ReportHub.LogError(reportCategory, $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
                         World.Remove<CharacterEmoteIntent>(entity);
@@ -145,19 +148,18 @@ namespace DCL.AvatarRendering.Emotes
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
                     StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.WearableAssetResults[bodyShape];
 
-                    if (streamableAsset == null)
+                    // the emote is still loading? dont remove the intent yet, wait for it
+                    if (streamableAsset == null) return;
+
+                    var streamableAssetValue = streamableAsset.Value;
+                    GameObject? mainAsset;
+
+                    if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
                     {
+                        // We can't play emote, remove intent, otherwise there is no place to remove it
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
-
-                    // the emote is still loading? dont remove the intent yet, wait for it
-                    if (!streamableAsset.Value.Succeeded) return;
-                    if (streamableAsset.Value.Exception != null) return;
-
-                    GameObject? mainAsset = streamableAsset.Value.Asset!.MainAsset;
-
-                    if (mainAsset == null) return;
 
                     StreamableLoadingResult<AudioClip>? audioAssetResult = emote.AudioAssetResults[bodyShape];
                     AudioClip? audioClip = audioAssetResult?.Asset;

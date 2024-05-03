@@ -1,11 +1,12 @@
 fileFormatVersion: 2
-guid: 3bead12e2b2d1f043a2fae75ea9ec77b
+guid: 4c3a00e331ffc394abfd4c03c3cb43fa
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
   iconMap: {}
   executionOrder: {}
-  defineConstraints: []
+  defineConstraints:
+  - DEBUG_ARCH
   isPreloaded: 0
   isOverridable: 0
   isExplicitlyReferenced: 0
@@ -39,25 +40,25 @@ PluginImporter:
     second:
       enabled: 1
       settings:
-        CPU: None
+        CPU: AnyCPU
   - first:
       Standalone: OSXUniversal
     second:
       enabled: 1
       settings:
-        CPU: None
+        CPU: AnyCPU
   - first:
       Standalone: Win
     second:
       enabled: 1
       settings:
-        CPU: None
+        CPU: AnyCPU
   - first:
       Standalone: Win64
     second:
       enabled: 1
       settings:
-        CPU: None
+        CPU: AnyCPU
   - first:
       Windows Store Apps: WindowsStoreApps
     second:
