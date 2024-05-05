@@ -178,6 +178,16 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
+    ///     Sets the time of the skybox to an specific second
+    /// </summary>
+    /// <param name="seconds"></param>
+    public void SetTimeNormalized(float normalizedTime)
+    {
+        NormalizedTime = normalizedTime;
+        NaturalTime = normalizedTime * SecondsInDay;
+    }
+
+    /// <summary>
     ///     Auxiliary function to returnt the normalized time in HH:MM:SS
     /// </summary>
     public string GetFormatedTime()
