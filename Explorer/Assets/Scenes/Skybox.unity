@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 976580770}
-  m_IndirectSpecularColor: {r: 0.018315613, g: 0.0012570412, b: 0.34764877, a: 1}
+  m_IndirectSpecularColor: {r: 0.018319648, g: 0.0012591458, b: 0.3476618, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -2304,18 +2304,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1794225238}
     m_Modifications:
-    - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
-      propertyPath: editMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
-      propertyPath: NaturalTime
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
-      propertyPath: NormalizedTime
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 4357130098437806639, guid: 5c36aa92efab46341b9b02fd6a38a4e7, type: 3}
       propertyPath: DirectionalLight
       value: 

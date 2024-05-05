@@ -173,7 +173,7 @@ Material:
     - _Horizon_Line_Opacity: 1.15
     - _Horizon_Line_Spread: 1
     - _Metallic: 0
-    - _Moon_Mask_Size: 0
+    - _Moon_Mask_Size: 0.16
     - _NadirBlend: 1
     - _NormalizedTime: 0
     - _OcclusionStrength: 1
@@ -219,7 +219,7 @@ Material:
     - _HorizonColor: {r: 0.09045941, g: 0.02432894, b: 0.2528302, a: 1}
     - _Horizon_Line_Color: {r: 0.56981134, g: 0.8824903, b: 1, a: 0}
     - _LightDirection: {r: 0, g: -0.39794862, b: 0.9174077, a: 0}
-    - _Moon_Mask_Position: {r: -0.34, g: -0.49, b: 0, a: 0}
+    - _Moon_Mask_Position: {r: 0.01, g: -0.01, b: 0, a: 0}
     - _NadirColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 0.011961541, g: 0.04163278, b: 0.1509434, a: 1}
     - _Rim_Color: {r: 0.9622642, g: 0.9540234, b: 0.539231, a: 0}

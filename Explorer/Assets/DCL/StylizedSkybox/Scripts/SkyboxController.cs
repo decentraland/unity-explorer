@@ -29,6 +29,7 @@ public class SkyboxController : MonoBehaviour
 
     public AnimationCurve sunRadiance;
     public AnimationCurve sunRadianceIntensity;
+    public AnimationCurve moonMaskSize;
 
     [Header("Skybox Color")]
     [GradientUsage(true)] public Gradient SkyZenitColorRamp;
@@ -257,6 +258,9 @@ public class SkyboxController : MonoBehaviour
         //sampling sun randiance and intensity curves
         RenderSettings.skybox.SetFloat("_Sun_Radiance", sunRadiance.Evaluate(NormalizedTime));
         RenderSettings.skybox.SetFloat("_Sun_Radiance_Intensity", sunRadianceIntensity.Evaluate(NormalizedTime));
+
+        //change size of moon mask
+        RenderSettings.skybox.SetFloat("_Moon_Mask_Size", moonMaskSize.Evaluate(NormalizedTime));
     }
 
     /// <summary>
