@@ -195,7 +195,7 @@ MonoBehaviour:
   - volumeProfile: {fileID: -6825687089074993261}
     fogSettings:
       m_Fog: 1
-    lensFlareEnabled: 1
+    lensFlareEnabled: 0
     lensFlareComponent: {fileID: 8521501152378314052, guid: cfb1111e6759c9046956190dd1f2b0bf, type: 3}
     environmentSettings:
       sceneLoadRadius: 20
