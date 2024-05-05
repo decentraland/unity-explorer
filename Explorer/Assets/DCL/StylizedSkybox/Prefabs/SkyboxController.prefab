@@ -47,9 +47,9 @@ MonoBehaviour:
   SecondsInDay: 86400
   PlayOnStart: 1
   StopRefresh: 0
-  Speed: 1
-  NaturalTime: 21600
-  NormalizedTime: 0.25
+  Speed: 60
+  NaturalTime: 43200
+  NormalizedTime: 0.5
   skyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
   RefreshTime: 0
   DirectionalLight: {fileID: 0}
@@ -86,12 +86,12 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   SunColorRamp:
     serializedVersion: 2
-    key0: {r: 1.9099381, g: 1.1764706, b: 2.9960785, a: 1}
+    key0: {r: 0.86668736, g: 1.207649, b: 1.9219426, a: 1}
     key1: {r: 23.968628, g: 3.4297907, b: 0, a: 1}
     key2: {r: 12.43655, g: 23.968626, b: 13.216566, a: 1}
-    key3: {r: 23.968626, g: 6.6479015, b: 7.2837577, a: 0}
+    key3: {r: 20.407543, g: 9.702164, b: 5.352165, a: 0}
     key4: {r: 1.1249424, g: 1.1449859, b: 2.9960787, a: 0}
-    key5: {r: 0.95496905, g: 0.5882353, b: 1.4980392, a: 0}
+    key5: {r: 0.86668736, g: 1.207649, b: 1.9219426, a: 0}
     key6: {r: 0.95496905, g: 0.5882353, b: 1.4980392, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 4086
@@ -117,19 +117,19 @@ MonoBehaviour:
   SkyZenitColorRamp:
     serializedVersion: 2
     key0: {r: 0.028447745, g: 0.010501949, b: 0.09433961, a: 1}
-    key1: {r: 0.5566038, g: 0.38880613, b: 0.34393916, a: 1}
-    key2: {r: 0.8784314, g: 0.5993999, b: 0.53333336, a: 0}
-    key3: {r: 0.6211175, g: 0.88283235, b: 0.83269143, a: 0}
-    key4: {r: 0.19999999, g: 0.6440147, b: 1, a: 0}
-    key5: {r: 0.6077631, g: 0.30196083, b: 0.8117647, a: 0}
+    key1: {r: 0.478697, g: 0.5361797, b: 0.82641506, a: 1}
+    key2: {r: 0.6211175, g: 0.88283235, b: 0.83269143, a: 0}
+    key3: {r: 0.19999999, g: 0.6440147, b: 1, a: 0}
+    key4: {r: 0.6077631, g: 0.30196083, b: 0.8117647, a: 0}
+    key5: {r: 0.028447745, g: 0.010501949, b: 0.09433961, a: 0}
     key6: {r: 0.028447745, g: 0.010501949, b: 0.09433961, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 3277
-    ctime1: 7132
-    ctime2: 13107
-    ctime3: 20432
-    ctime4: 32768
-    ctime5: 49151
+    ctime1: 13107
+    ctime2: 20432
+    ctime3: 32768
+    ctime4: 49151
+    ctime5: 65535
     ctime6: 65535
     ctime7: 0
     atime0: 0
@@ -142,20 +142,20 @@ MonoBehaviour:
     atime7: 0
     m_Mode: 0
     m_ColorSpace: 0
-    m_NumColorKeys: 7
+    m_NumColorKeys: 6
     m_NumAlphaKeys: 2
   SkyHorizonColorRamp:
     serializedVersion: 2
     key0: {r: 0.09045941, g: 0.02432894, b: 0.2528302, a: 1}
     key1: {r: 0.8207547, g: 0.547534, b: 0.49167854, a: 1}
     key2: {r: 0.67630833, g: 0.8284684, b: 0.9622642, a: 0}
-    key3: {r: 0.6509804, g: 0.2784314, b: 0.32941177, a: 0}
+    key3: {r: 0.8117647, g: 0.44377303, b: 0.38431376, a: 0}
     key4: {r: 0.074613795, g: 0.06824489, b: 0.2679245, a: 0}
     key5: {r: 0.09045941, g: 0.02432894, b: 0.2528302, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
     ctime0: 3277
-    ctime1: 12914
+    ctime1: 19661
     ctime2: 32960
     ctime3: 49151
     ctime4: 55281
