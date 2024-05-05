@@ -27,6 +27,9 @@ public class SkyboxController : MonoBehaviour
     [GradientUsage(true)]
     public Gradient SunColorRamp;
 
+    public AnimationCurve sunRadiance;
+    public AnimationCurve sunRadianceIntensity;
+
     [Header("Skybox Color")]
     [GradientUsage(true)] public Gradient SkyZenitColorRamp;
     [GradientUsage(true)] public Gradient SkyHorizonColorRamp;
@@ -250,6 +253,10 @@ public class SkyboxController : MonoBehaviour
 
         RenderSettings.skybox.SetFloat("_SunSize", DirectionalLight.gameObject.transform.localScale.x);
         RenderSettings.skybox.SetFloat("_SunOpacity", DirectionalLight.gameObject.transform.localScale.y);
+
+        //sampling sun randiance and intensity curves
+        RenderSettings.skybox.SetFloat("_Sun_Radiance", sunRadiance.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetFloat("_Sun_Radiance_Intensity", sunRadianceIntensity.Evaluate(NormalizedTime));
     }
 
     /// <summary>
