@@ -101,9 +101,11 @@ namespace Global.Dynamic
                         await roomHub.StartAsync();
 
                         loadReport.ProgressCounter.Value = 1f;
+                        loadReport.CompletionSource.TrySetResult();
                     },
                     ct
                 );
+
             }
             catch (TimeoutException) { }
 
@@ -150,7 +152,8 @@ namespace Global.Dynamic
 
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
-            if (!worldsTerrain.IsInitialized) return;
+            if (!worldsTerrain.IsInitialized)
+                return;
 
             await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
 
