@@ -56,7 +56,8 @@ namespace DCL.UI
 
         private void OnToggle(bool toggle)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
+            if(toggle)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

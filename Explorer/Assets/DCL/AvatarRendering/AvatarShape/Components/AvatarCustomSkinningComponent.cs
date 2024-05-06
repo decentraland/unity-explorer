@@ -3,6 +3,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.Diagnostics;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -63,6 +64,8 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         internal readonly List<MaterialSetup> materials;
         internal readonly UnityEngine.ComputeShader computeShaderInstance;
 
+        private bool disposed;
+
         internal AvatarCustomSkinningComponent(int vertCount, Buffers buffers, List<MaterialSetup> materials, UnityEngine.ComputeShader computeShaderInstance)
         {
             this.vertCount = vertCount;
@@ -70,10 +73,15 @@ namespace DCL.AvatarRendering.AvatarShape.Components
             this.materials = materials;
             this.computeShaderInstance = computeShaderInstance;
             VertsOutRegion = default(FixedComputeBufferHandler.Slice);
+
+            disposed = false;
         }
 
         public void Dispose(IAvatarMaterialPoolHandler objectPool, IObjectPool<UnityEngine.ComputeShader> computeShaderSkinningPool)
         {
+            if (CheckIfDisposed())
+                return;
+
             for (var i = 0; i < materials.Count; i++)
             {
                 MaterialSetup material = materials[i];
@@ -88,6 +96,16 @@ namespace DCL.AvatarRendering.AvatarShape.Components
 
             buffers.DisposeBuffers();
             USED_SLOTS_POOL.Release(materials);
+
+            disposed = true;
+        }
+
+        private bool CheckIfDisposed()
+        {
+            if (!disposed) return false;
+
+            ReportHub.LogError(ReportCategory.AVATAR, $"{nameof(AvatarCustomSkinningComponent)} is already disposed");
+            return true;
         }
     }
 }

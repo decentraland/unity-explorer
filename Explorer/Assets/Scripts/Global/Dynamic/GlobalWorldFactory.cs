@@ -9,7 +9,7 @@ using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Emotes.Interfaces;
+using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -108,8 +108,6 @@ namespace Global.Dynamic
             builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
 
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
-
-            emotesMessageBus.InjectWorld(world, playerEntity);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 

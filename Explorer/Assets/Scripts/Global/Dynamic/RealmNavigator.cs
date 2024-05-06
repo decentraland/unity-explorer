@@ -90,7 +90,7 @@ namespace Global.Dynamic
                 await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
                     {
                         remoteEntities.ForceRemoveAll(world);
-                        await roomHub.StopAsync();
+                        await roomHub.StopIfNotAsync();
                         loadReport.ProgressCounter.Value = 0.3f;
 
                         var terrainLoadReport = AsyncLoadProcessReport.Create();
@@ -101,9 +101,11 @@ namespace Global.Dynamic
                         await roomHub.StartAsync();
 
                         loadReport.ProgressCounter.Value = 1f;
+                        loadReport.CompletionSource.TrySetResult();
                     },
                     ct
                 );
+
             }
             catch (TimeoutException) { }
 
@@ -150,7 +152,8 @@ namespace Global.Dynamic
 
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
-            if (!worldsTerrain.IsInitialized) return;
+            if (!worldsTerrain.IsInitialized)
+                return;
 
             await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
 

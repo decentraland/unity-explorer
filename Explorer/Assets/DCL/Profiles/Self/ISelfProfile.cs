@@ -8,7 +8,7 @@ namespace DCL.Profiles.Self
     {
         UniTask<Profile?> ProfileAsync(CancellationToken ct);
 
-        UniTask PublishAsync(CancellationToken ct);
+        UniTask<Profile?> PublishAsync(CancellationToken ct);
     }
 
     public static class SelfProfileExtensions

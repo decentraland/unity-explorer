@@ -9,19 +9,21 @@ namespace DCL.Profiles
     {
         public const int MAX_EQUIPPED_EMOTES = 10;
 
-        public BodyShape BodyShape { get; internal set; }
-
         internal readonly HashSet<URN> wearables = new ();
 
         internal readonly HashSet<string> forceRender = new ();
 
         internal readonly URN[] emotes = new URN[MAX_EQUIPPED_EMOTES];
 
+        public BodyShape BodyShape { get; internal set; }
+
         public IReadOnlyCollection<URN> Wearables => wearables;
 
         public IReadOnlyCollection<string> ForceRender => forceRender;
+
         /// <summary>
-        ///     Each index represents the slot on which the emote is equipped
+        ///     Each index represents the slot on which the emote is equipped,
+        ///     The slot can be unequipped - in this case it will contain `null` URN, it's a valid case
         /// </summary>
         public IReadOnlyList<URN> Emotes => emotes;
         public URLAddress FaceSnapshotUrl { get; internal set; }

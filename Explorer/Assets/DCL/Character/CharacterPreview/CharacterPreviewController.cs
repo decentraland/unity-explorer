@@ -16,6 +16,8 @@ using ECS.StreamableLoading.Common;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using Utility;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
@@ -31,15 +33,21 @@ namespace DCL.CharacterPreview
 
         public CharacterPreviewController(World world, CharacterPreviewAvatarContainer avatarContainer,
             CharacterPreviewInputEventBus inputEventBus, IComponentPool<CharacterPreviewAvatarContainer> characterPreviewContainerPool,
-            CharacterPreviewCameraSettings cameraSettings)
+            CharacterPreviewCameraSettings cameraSettings, IComponentPool<Transform> transformPool)
         {
             globalWorld = world;
             characterPreviewAvatarContainer = avatarContainer;
             cameraController = new CharacterPreviewCameraController(inputEventBus, characterPreviewAvatarContainer, cameraSettings);
             this.characterPreviewContainerPool = characterPreviewContainerPool;
 
+            var parent = transformPool.Get();
+            parent.SetParent(avatarContainer.avatarParent, false);
+            parent.gameObject.layer = avatarContainer.avatarParent.gameObject.layer;
+            parent.name = "CharacterPreview";
+            parent.ResetLocalTRS();
+
             characterPreviewEntity = world.Create(
-                new CharacterTransform(avatarContainer.avatarParent),
+                new CharacterTransform(parent),
                 new AvatarShapeComponent("CharacterPreview", "CharacterPreview"),
                 new CharacterPreviewComponent(),
                 new CharacterEmoteComponent());
@@ -55,6 +63,7 @@ namespace DCL.CharacterPreview
                 globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
             }
 
+            StopEmotes();
             characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
             cameraController.Dispose();
         }
@@ -89,18 +98,19 @@ namespace DCL.CharacterPreview
 
         private async UniTask WaitForAvatarInstantiatedAsync(CancellationToken ct)
         {
-            while (globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
-            {
-                if (ct.IsCancellationRequested)
-                    return;
-
+            while (!ct.IsCancellationRequested && globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity).IsDirty)
                 await UniTask.Yield(ct);
-            }
         }
 
         public void PlayEmote(string emoteId)
         {
             globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId });
+        }
+
+        public void StopEmotes()
+        {
+            ref CharacterEmoteComponent emoteComponent = ref globalWorld.Get<CharacterEmoteComponent>(characterPreviewEntity);
+            emoteComponent.StopEmote = true;
         }
     }
 }
