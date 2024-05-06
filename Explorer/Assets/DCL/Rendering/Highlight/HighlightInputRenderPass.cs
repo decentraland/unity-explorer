@@ -83,16 +83,16 @@ namespace DCL.Rendering.Highlight
                                     //The material has a built in pass we can use
                                     materialToUse = new Material(objectrenderer.material);
                                     materialToUse.SetColor("_HighlightColour", Color.red);
-                                    materialToUse.SetFloat("_Outline_Width", 1.0f);
+                                    materialToUse.SetFloat("_Outline_Width", 2.0f);
                                     Vector4 vOriginOffset = new Vector4(-(objectrenderer.bounds.extents.x * 0.5f), -(objectrenderer.bounds.extents.y * 0.5f), -(objectrenderer.bounds.extents.z * 0.5f), 0.0f);
                                     materialToUse.SetVector("_HighlightObjectOffset", vOriginOffset);
                                     cmd_additive.DrawRenderer(objectrenderer, materialToUse, 0, originalMaterialOutlinerPass);
                                 }
                                 else
                                 {
-                                    materialToUse = highLightInputMaterial;
+                                    materialToUse = new Material(highLightInputMaterial);
                                     materialToUse.SetColor("_HighlightColour", Color.red);
-                                    materialToUse.SetFloat("_Outline_Width", 1.0f);
+                                    materialToUse.SetFloat("_Outline_Width", 2.0f);
                                     Vector4 vOriginOffset = new Vector4(-(objectrenderer.bounds.extents.x * 0.5f), -(objectrenderer.bounds.extents.y * 0.5f), -(objectrenderer.bounds.extents.z * 0.5f), 0.0f);
                                     materialToUse.SetVector("_HighlightObjectOffset", vOriginOffset);
                                     cmd_additive.DrawRenderer(objectrenderer, materialToUse, 0, 0);
@@ -104,50 +104,54 @@ namespace DCL.Rendering.Highlight
                         CommandBufferPool.Release(cmd_additive);
                     }
 
-                    CommandBuffer cmd_subtractive = CommandBufferPool.Get("_HighlightInputPass_Subtractive");
-                    using (new ProfilingScope(cmd_subtractive, new ProfilingSampler(profilerTagOutput)))
+                    if (true)
                     {
-                        Material materialToUse = new Material(Shader.Find("DCL/DCL_Toon"));
+                        CommandBuffer cmd_subtractive = CommandBufferPool.Get("_HighlightInputPass_Subtractive");
 
-                        foreach (var objectrenderer in m_HighLightRenderers)
+                        using (new ProfilingScope(cmd_subtractive, new ProfilingSampler(profilerTagOutput)))
                         {
-                            if (objectrenderer == null)
-                                continue;
+                            Material materialToUse = new Material(Shader.Find("DCL/DCL_Toon"));
 
-                            // Ignore disabled or culled by camera avatars
-                            if (!objectrenderer.gameObject.activeSelf || (renderingData.cameraData.camera.cullingMask & (1 << objectrenderer.gameObject.layer)) == 0)
-                                continue;
-
-                            // We use a GPU Skinning based material
-                            if (objectrenderer.material != null)
+                            foreach (var objectrenderer in m_HighLightRenderers)
                             {
-                                int originalMaterialOutlinerPass = objectrenderer.material.FindPass("Highlight");
+                                if (objectrenderer == null)
+                                    continue;
 
-                                if (originalMaterialOutlinerPass != -1)
+                                // Ignore disabled or culled by camera avatars
+                                if (!objectrenderer.gameObject.activeSelf || (renderingData.cameraData.camera.cullingMask & (1 << objectrenderer.gameObject.layer)) == 0)
+                                    continue;
+
+                                // We use a GPU Skinning based material
+                                if (objectrenderer.material != null)
                                 {
-                                    //The material has a built in pass we can use
-                                    materialToUse = new Material(objectrenderer.material);
-                                    materialToUse.SetColor("_HighlightColour", Color.clear);
-                                    materialToUse.SetFloat("_Outline_Width", 0.0f);
-                                    Vector4 vOriginOffset = new Vector4(-(objectrenderer.bounds.extents.x * 0.5f), -(objectrenderer.bounds.extents.y * 0.5f), -(objectrenderer.bounds.extents.z * 0.5f), 0.0f);
-                                    materialToUse.SetVector("_HighlightObjectOffset", vOriginOffset);
-                                    cmd_subtractive.DrawRenderer(objectrenderer, materialToUse, 0, originalMaterialOutlinerPass);
-                                }
-                                else
-                                {
-                                    //The material has a built in pass we can use
-                                    materialToUse = highLightInputMaterial;
-                                    materialToUse.SetColor("_HighlightColour", Color.clear);
-                                    materialToUse.SetFloat("_Outline_Width", 0.0f);
-                                    Vector4 vOriginOffset = new Vector4(-(objectrenderer.bounds.extents.x * 0.5f), -(objectrenderer.bounds.extents.y * 0.5f), -(objectrenderer.bounds.extents.z * 0.5f), 0.0f);
-                                    materialToUse.SetVector("_HighlightObjectOffset", vOriginOffset);
-                                    cmd_subtractive.DrawRenderer(objectrenderer, materialToUse, 0, 0);
+                                    int originalMaterialOutlinerPass = objectrenderer.material.FindPass("Highlight");
+
+                                    if (originalMaterialOutlinerPass != -1)
+                                    {
+                                        //The material has a built in pass we can use
+                                        materialToUse = new Material(objectrenderer.material);
+                                        materialToUse.SetColor("_HighlightColour", Color.clear);
+                                        materialToUse.SetFloat("_Outline_Width", 0.0f);
+                                        Vector4 vOriginOffset = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+                                        materialToUse.SetVector("_HighlightObjectOffset", vOriginOffset);
+                                        cmd_subtractive.DrawRenderer(objectrenderer, materialToUse, 0, originalMaterialOutlinerPass);
+                                    }
+                                    else
+                                    {
+                                        //The material has a built in pass we can use
+                                        materialToUse = new Material(highLightInputMaterial);
+                                        materialToUse.SetColor("_HighlightColour", Color.clear);
+                                        materialToUse.SetFloat("_Outline_Width", 0.0f);
+                                        Vector4 vOriginOffset = new Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+                                        materialToUse.SetVector("_HighlightObjectOffset", vOriginOffset);
+                                        cmd_subtractive.DrawRenderer(objectrenderer, materialToUse, 0, 0);
+                                    }
                                 }
                             }
-                        }
 
-                        context.ExecuteCommandBuffer(cmd_subtractive);
-                        CommandBufferPool.Release(cmd_subtractive);
+                            context.ExecuteCommandBuffer(cmd_subtractive);
+                            CommandBufferPool.Release(cmd_subtractive);
+                        }
                     }
                 }
             }

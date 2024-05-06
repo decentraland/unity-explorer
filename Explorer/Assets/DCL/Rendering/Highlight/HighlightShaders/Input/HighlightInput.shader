@@ -2,7 +2,7 @@
 {
     Properties
     {
-        _HighlightObjectOffset ("Highlight Object Offset", Vector) = (0.0, 100.0, 0.0, 0.0)
+        _HighlightObjectOffset ("Highlight Object Offset", Vector) = (0.0, 0.0, 0.0, 0.0)
         _HighlightColour ("Highlight Colour", Color) = (0,1,0,1)
         _HighlightWidth ("Highlight Width", Float) = 1.0
         _Outline_Width ("Outline_Width", Float ) = 2
@@ -17,6 +17,8 @@
         Tags { "RenderType"="Opaque" }
         Pass
         {
+            ZWrite Off
+            
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -62,13 +64,7 @@
                 float signVar = dot(normalize(v.vertex.xyz),normalize(v.normal))<0 ? -1 : 1;
                 float4 vertOffset = _HighlightObjectOffset;
                 //vertOffset = float4(0.0f, 0.0f, 0.0f, 0.0f);
-                #ifdef _DCL_COMPUTE_SKINNING
-                    float4 vVert = float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz, 1.0f);
-                    o.pos = UnityObjectToClipPos(float4(vVert.xyz + signVar*normalize(vVert - vertOffset)*Set_Outline_Width, 1));
-                #else
-                    o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + signVar*normalize(v.vertex)*Set_Outline_Width, 1));
-                #endif
-
+                o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + signVar*normalize(v.vertex + vertOffset)*Set_Outline_Width, 1));
                 o.pos.z = o.pos.z + _Offset_Z * _ClipCameraPos.z;
                 return o;
             }

@@ -90,5 +90,5 @@ VertexOutput vert_highlight (VertexInput v)
 
 float4 frag_highlight(VertexOutput i) : SV_Target
 {
-    return _HighlightColour + float4(1.0f, 1.0f, 1.0f, 0.0f);
+    return _HighlightColour;
 }
