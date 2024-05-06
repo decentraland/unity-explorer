@@ -1008,6 +1008,7 @@ GameObject:
   - component: {fileID: 8746213363341550890}
   - component: {fileID: 8782135904965761850}
   - component: {fileID: 6630055616766752555}
+  - component: {fileID: 1479204841276357964}
   m_Layer: 5
   m_Name: CloseButton
   m_TagString: Untagged
@@ -1138,6 +1139,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1479204841276357964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6941404510284847514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6a66e979ca644f3d91fd0980c5cd5f5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Button>k__BackingField: {fileID: 8782135904965761850}
+  <ButtonAnimator>k__BackingField: {fileID: 6630055616766752555}
+  <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 11400000, guid: 59da234351971c0498a566fb811b0c36, type: 2}
 --- !u!1 &7040428932665199747
 GameObject:
   m_ObjectHideFlags: 0

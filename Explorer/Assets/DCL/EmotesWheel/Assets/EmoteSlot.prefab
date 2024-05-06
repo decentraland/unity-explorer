@@ -587,6 +587,7 @@ MonoBehaviour:
   <Thumbnail>k__BackingField: {fileID: 428376574878408969}
   <EmptyContainer>k__BackingField: {fileID: 439997931696817573}
   <LoadingSpinner>k__BackingField: {fileID: 2310063335544541152}
+  <SlotAnimator>k__BackingField: {fileID: 611709950445522836}
   <ClickAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
   <HoverAudio>k__BackingField: {fileID: 11400000, guid: 8b8a0a6a2ec74774c8d3ccac3b54e0e8, type: 2}
 --- !u!95 &611709950445522836

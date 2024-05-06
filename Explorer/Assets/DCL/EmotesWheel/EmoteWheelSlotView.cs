@@ -8,6 +8,9 @@ namespace DCL.EmotesWheel
 {
     public class EmoteWheelSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        private static readonly int HOVER = Animator.StringToHash("Hover");
+        private static readonly int UNHOVER = Animator.StringToHash("Unhover");
+
         public event Action<int>? OnPlay;
         public event Action<int>? OnHover;
         public event Action<int>? OnFocusLeave;
@@ -30,6 +33,9 @@ namespace DCL.EmotesWheel
         [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; }
 
+        [field: SerializeField]
+        public Animator SlotAnimator { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
@@ -47,6 +53,12 @@ namespace DCL.EmotesWheel
             });
         }
 
+        private void OnEnable()
+        {
+            SlotAnimator.Rebind();
+            SlotAnimator.Update(0);
+        }
+
         private void OnDisable()
         {
             hoverBackground.SetActive(false);
@@ -56,12 +68,14 @@ namespace DCL.EmotesWheel
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             hoverBackground.SetActive(true);
+            SlotAnimator.SetTrigger(HOVER);
             OnHover?.Invoke(Slot);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             hoverBackground.SetActive(false);
+            SlotAnimator.SetTrigger(UNHOVER);
             OnFocusLeave?.Invoke(Slot);
         }
     }
