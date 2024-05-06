@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
+using DCL.Rendering.Highlight;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -78,17 +79,8 @@ namespace DCL.Interaction.Systems
 
             foreach (Renderer renderer in renderers)
             {
-                if (highlightComponent.OriginalMaterials.ContainsKey(renderer))
-                    continue;
-
-                List<Material> materials = ListPool<Material>.Get();
-                highlightComponent.OriginalMaterials.Add(renderer, renderer.sharedMaterials);
-
-                renderer.GetMaterials(materials);
-                materials.Add(highlightComponent.MaterialOnUse());
-                renderer.SetMaterials(materials);
-
-                ListPool<Material>.Release(materials);
+                if (!HighlightRendererFeature.m_HighLightRenderers.Contains(renderer))
+                    HighlightRendererFeature.m_HighLightRenderers.Add(renderer);
             }
 
             ListPool<Renderer>.Release(renderers);
@@ -104,11 +96,8 @@ namespace DCL.Interaction.Systems
 
             foreach (Renderer renderer in renderers)
             {
-                if (!highlightComponent.OriginalMaterials.ContainsKey(renderer))
-                    continue;
-
-                renderer.sharedMaterials = highlightComponent.OriginalMaterials[renderer];
-                highlightComponent.OriginalMaterials.Remove(renderer);
+                if (HighlightRendererFeature.m_HighLightRenderers.Contains(renderer))
+                    HighlightRendererFeature.m_HighLightRenderers.Remove(renderer);
             }
 
             ListPool<Renderer>.Release(renderers);
