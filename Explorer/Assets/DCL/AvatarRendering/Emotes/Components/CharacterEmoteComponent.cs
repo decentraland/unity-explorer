@@ -10,5 +10,6 @@ namespace DCL.AvatarRendering.Emotes
         public AnimationClip? EmoteClip;
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
+        public bool StopEmote;
     }
 }
