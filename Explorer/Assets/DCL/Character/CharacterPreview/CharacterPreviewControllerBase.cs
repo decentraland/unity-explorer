@@ -172,10 +172,10 @@ namespace DCL.CharacterPreview
         protected void OnModelUpdated()
         {
             updateModelCancellationToken = updateModelCancellationToken.SafeRestart();
-            WrapInSpinnerAsync(updateModelCancellationToken.Token).Forget();
+            ShowLoadingSpinnerAndUpdateAvatar(updateModelCancellationToken.Token).Forget();
         }
 
-        private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
+        protected async UniTask ShowLoadingSpinnerAndUpdateAvatar(CancellationToken ct)
         {
             GameObject spinner = EnableSpinner();
 
@@ -201,7 +201,7 @@ namespace DCL.CharacterPreview
             return spinner;
         }
 
-        protected async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct)
+        private async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct)
         {
             try { await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask); }
             catch (OperationCanceledException) { }
