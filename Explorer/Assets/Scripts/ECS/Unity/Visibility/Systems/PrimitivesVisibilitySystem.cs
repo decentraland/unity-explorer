@@ -1,21 +1,17 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
-using ECS.Unity.PrimitiveRenderer.Systems;
 
 namespace ECS.Unity.Visibility.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateAfter(typeof(InstantiatePrimitiveRenderingSystem))]
+    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
-    [ThrottlingEnabled]
     public partial class PrimitivesVisibilitySystem : BaseUnityLoopSystem
     {
         public PrimitivesVisibilitySystem(World world) : base(world) { }
