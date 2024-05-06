@@ -257,7 +257,9 @@ namespace Global.Dynamic
                 genesisTerrain,
                 worldsTerrain,
                 satelliteView,
-                dynamicWorldParams.EnableLandscape
+                dynamicWorldParams.EnableLandscape,
+                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                exposedGlobalDataContainer.CameraSamplingData
             );
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
@@ -266,8 +268,6 @@ namespace Global.Dynamic
                 selfProfile,
                 dynamicWorldParams.StartParcel,
                 staticContainer.MainPlayerAvatarBaseProxy,
-                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                exposedGlobalDataContainer.CameraSamplingData,
                 backgroundMusic,
                 realmNavigator
             );

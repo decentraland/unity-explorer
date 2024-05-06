@@ -4,13 +4,10 @@ using DCL.AsyncLoadReporting;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.ParcelsService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens;
 using DCL.Utilities;
-using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
 using System.Threading;
@@ -28,9 +25,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly Vector2Int startParcel;
         private readonly RealFlowLoadingStatus loadingStatus;
 
-        private readonly CameraSamplingData cameraSamplingData;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-        private readonly ObjectProxy<Entity> cameraEntity;
 
         private readonly AudioClipConfig backgroundMusic;
 
@@ -44,8 +39,6 @@ namespace DCL.UserInAppInitializationFlow
             ISelfProfile selfProfile,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            ObjectProxy<Entity> cameraEntity,
-            CameraSamplingData cameraSamplingData,
             AudioClipConfig backgroundMusic,
             IRealmNavigator realmNavigator)
         {
@@ -54,8 +47,6 @@ namespace DCL.UserInAppInitializationFlow
             this.startParcel = startParcel;
             this.loadingStatus = loadingStatus;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
-            this.cameraEntity = cameraEntity;
-            this.cameraSamplingData = cameraSamplingData;
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
         }
@@ -103,7 +94,6 @@ namespace DCL.UserInAppInitializationFlow
             await UniTask.WhenAny(
                 landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]),
                 realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct));
-
             loadReport!.ProgressCounter.Value = loadingStatus.SetStage(LandscapeLoaded);
         }
 
@@ -129,21 +119,9 @@ namespace DCL.UserInAppInitializationFlow
             var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
             await UniTask.WhenAny(
                 teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
-                WaitForTeleportAndStartPartitioningAsync());
-            
+                realmNavigator.InitializeTeleportToSpawnPointAsync(loadReport, ct, startParcel));
             loadingStatus.SetStage(PlayerTeleported);
 
-            async UniTask WaitForTeleportAndStartPartitioningAsync()
-            {
-                var waitForSceneReadiness = await realmNavigator.InitializeTeleportToSpawnPointAsync(loadReport, ct, startParcel);
-
-                // add camera sampling data to the camera entity to start partitioning
-                Assert.IsTrue(cameraEntity.Configured);
-                world.Add(cameraEntity.Object, cameraSamplingData);
-
-                // Wait for the scene to fire scene readiness
-                await waitForSceneReadiness;
-            }
         }
 
         private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
