@@ -1,0 +1,19 @@
+{
+    "name": "SceneLifeCycle.Realm.Systems",
+    "rootNamespace": "",
+    "references": [
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:1b8e1e1bd01505f478f0369c04a4fb2f",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:275e22790c04e9b47a5085d7b0c4432a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
