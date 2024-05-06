@@ -58,9 +58,8 @@ namespace DCL.EmotesWheel
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
-            EmotesWheelAnimator.Rebind();
-            EmotesWheelAnimator.Update(0);
-            return UniTask.CompletedTask;
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
+                cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
