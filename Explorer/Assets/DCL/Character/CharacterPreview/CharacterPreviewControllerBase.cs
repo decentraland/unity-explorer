@@ -25,7 +25,7 @@ namespace DCL.CharacterPreview
         protected CharacterPreviewAvatarModel previewAvatarModel;
         private CharacterPreviewController? previewController;
         private bool initialized;
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
 
         protected bool zoomEnabled = true;
@@ -37,7 +37,8 @@ namespace DCL.CharacterPreview
             this.view = view;
             this.previewFactory = previewFactory;
             this.world = world;
-            if(view.EnableZooming)
+
+            if (view.EnableZooming)
                 view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
 
             view.CharacterPreviewInputDetector.OnPointerEnterEvent += OnPointerEnter;
@@ -95,6 +96,7 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
             view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
             cursorController.Dispose();
+            updateModelCancellationToken.SafeCancelAndDispose();
         }
 
         private void OnPointerEnter(PointerEventData pointerEventData)
@@ -104,15 +106,15 @@ namespace DCL.CharacterPreview
 
         private void OnPointerUp(PointerEventData pointerEventData)
         {
-            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled)  ||
-               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
+            if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
+                (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
                 inputEventBus.OnPointerUp(pointerEventData);
         }
 
         private void OnPointerDown(PointerEventData pointerEventData)
         {
-            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled)  ||
-               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
+            if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
+                (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
                 inputEventBus.OnPointerDown(pointerEventData);
         }
 
@@ -128,20 +130,20 @@ namespace DCL.CharacterPreview
 
         private void OnDrag(PointerEventData pointerEventData)
         {
-            if((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled)  ||
-               (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
+            if ((pointerEventData.button == PointerEventData.InputButton.Right && view.EnablePanning && panEnabled) ||
+                (pointerEventData.button == PointerEventData.InputButton.Left && view.EnableRotating && rotateEnabled))
             {
                 inputEventBus.OnDrag(pointerEventData);
 
-                    switch (pointerEventData.button)
-                    {
-                        case PointerEventData.InputButton.Right when view.EnablePanning:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
-                            break;
-                        case PointerEventData.InputButton.Left when view.EnableRotating:
-                            UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
-                            break;
-                    }
+                switch (pointerEventData.button)
+                {
+                    case PointerEventData.InputButton.Right when view.EnablePanning:
+                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.VerticalPanAudio);
+                        break;
+                    case PointerEventData.InputButton.Left when view.EnableRotating:
+                        UIAudioEventsBus.Instance.SendPlayAudioEvent(view.RotateAudio);
+                        break;
+                }
             }
         }
 
@@ -159,24 +161,27 @@ namespace DCL.CharacterPreview
         {
             if (initialized)
             {
-                cancellationTokenSource.SafeCancelAndDispose();
+                updateModelCancellationToken.SafeCancelAndDispose();
                 previewController?.Dispose();
                 previewController = null;
                 initialized = false;
+
             }
         }
 
         protected void OnModelUpdated()
         {
-            cancellationTokenSource.SafeCancelAndDispose();
-            cancellationTokenSource = new CancellationTokenSource();
-            WrapInSpinnerAsync(cancellationTokenSource.Token).Forget();
+            updateModelCancellationToken = updateModelCancellationToken.SafeRestart();
+            WrapInSpinnerAsync(updateModelCancellationToken.Token).Forget();
         }
 
         private async UniTaskVoid WrapInSpinnerAsync(CancellationToken ct)
         {
             GameObject spinner = EnableSpinner();
-            await (previewController?.UpdateAvatar(previewAvatarModel, ct) ?? UniTask.CompletedTask);
+
+            try { await (previewController?.UpdateAvatarAsync(previewAvatarModel, ct) ?? UniTask.CompletedTask); }
+            catch (OperationCanceledException) { }
+
             DisableSpinner(spinner);
         }
 
@@ -195,6 +200,11 @@ namespace DCL.CharacterPreview
             var spinner = view.Spinner;
             spinner.SetActive(true);
             return spinner;
+        }
+
+        public void StopEmotes()
+        {
+            previewController?.StopEmotes();
         }
 
         protected void PlayEmote(string emoteId) =>

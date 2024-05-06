@@ -63,11 +63,12 @@ namespace DCL.CharacterPreview
                 globalWorld.Add(characterPreviewEntity, new DeleteEntityIntention());
             }
 
+            StopEmotes();
             characterPreviewContainerPool.Release(characterPreviewAvatarContainer);
             cameraController.Dispose();
         }
 
-        public UniTask UpdateAvatar(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
+        public UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
@@ -104,6 +105,12 @@ namespace DCL.CharacterPreview
         public void PlayEmote(string emoteId)
         {
             globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId });
+        }
+
+        public void StopEmotes()
+        {
+            ref CharacterEmoteComponent emoteComponent = ref globalWorld.Get<CharacterEmoteComponent>(characterPreviewEntity);
+            emoteComponent.StopEmote = true;
         }
     }
 }
