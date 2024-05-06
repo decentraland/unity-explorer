@@ -55,17 +55,23 @@ namespace CRDT.Memory
         {
             try
             {
+                if (length > originalStream.Length)
+                    throw new Exception($"Length is too big: {length}, originalStreamSize: {originalStream.Length}");
+
                 byte[] byteArray = arrayPool.Rent(length)!;
-                int copyLength = Mathf.Min(originalStream.Length, length);
-                originalStream.Span.Slice(shift, copyLength).CopyTo(byteArray.AsSpan());
+                originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
                 MemoryOwner memoryOwner = memoryOwnerPool.Get()!;
                 memoryOwner.Set(byteArray, length);
                 return memoryOwner;
             }
-            catch (Exception e)
-            {
-                throw new Exception($"Cannot provide MemoryBuffer originalStreamSize: {originalStream.Length} with shift: {shift} with length: {length}", e);
-            }
+            catch (Exception e) { throw new Exception($"Cannot provide MemoryBuffer originalStreamSize: {originalStream.Length} with shift: {shift} with length: {length}", e); }
+        }
+
+        public IMemoryOwner<byte> GetMemoryBuffer(int length)
+        {
+            MemoryOwner memoryOwner = memoryOwnerPool.Get()!;
+            memoryOwner.Set(arrayPool.Rent(length)!, length);
+            return memoryOwner;
         }
 
         private class MemoryOwner : IMemoryOwner<byte>

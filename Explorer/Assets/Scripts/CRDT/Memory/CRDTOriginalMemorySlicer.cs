@@ -42,6 +42,13 @@ namespace CRDT.Memory
             return sliceOwner;
         }
 
+        public IMemoryOwner<byte> GetMemoryBuffer(int length)
+        {
+            SliceOwner sliceOwner = memoryOwnerPool.Get()!;
+            sliceOwner.Set(new byte[length]);
+            return sliceOwner;
+        }
+
         private class SliceOwner : IMemoryOwner<byte>
         {
             private readonly CRDTOriginalMemorySlicer memorySlicer;
