@@ -237,6 +237,11 @@
         public const string PLAYER_AVATAR_EMOTE_COMMAND = nameof(PLAYER_AVATAR_EMOTE_COMMAND);
 
         /// <summary>
+        ///     RealmData 'IsDirty' flag reset system
+        /// </summary>
+        public const string REALM_DATA_DIRTY_RESET_SYSTEM = nameof(REALM_DATA_DIRTY_RESET_SYSTEM);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);
