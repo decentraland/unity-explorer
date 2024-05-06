@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.TextShape.System
         }
 
         [Query]
-        [None(typeof(TextShapeRendererComponent))]
+        [None(typeof(TextShapeComponent))]
         private void InstantiateRemaining(in Entity entity, in TransformComponent transform, in PBTextShape textShape)
         {
             if (instantiationFrameTimeBudget.TrySpendBudget() == false)
@@ -47,7 +47,7 @@ namespace DCL.SDKComponents.TextShape.System
 
             textMeshPro.Apply(textShape, fontsStorage, materialPropertyBlock);
 
-            World.Add(entity, new TextShapeRendererComponent(textMeshPro));
+            World.Add(entity, new TextShapeComponent(textMeshPro));
         }
     }
 }

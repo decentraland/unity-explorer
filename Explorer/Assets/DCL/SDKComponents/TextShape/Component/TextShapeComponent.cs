@@ -4,14 +4,14 @@ using TMPro;
 
 namespace DCL.SDKComponents.TextShape.Component
 {
-    public readonly struct TextShapeRendererComponent : IPoolableComponentProvider<TextMeshPro>
+    public readonly struct TextShapeComponent : IPoolableComponentProvider<TextMeshPro>
     {
         public readonly TextMeshPro TextMeshPro;
 
         public TextMeshPro PoolableComponent => TextMeshPro;
         public Type PoolableComponentType => typeof(TextMeshPro);
 
-        public TextShapeRendererComponent(TextMeshPro textShape)
+        public TextShapeComponent(TextMeshPro textShape)
         {
             TextMeshPro = textShape;
         }

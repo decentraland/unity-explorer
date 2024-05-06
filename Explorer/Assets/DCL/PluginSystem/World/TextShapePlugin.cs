@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.World
             UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
 
-            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeRendererComponent>(ref builder, componentPoolsRegistry);
+            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeComponent>(ref builder, componentPoolsRegistry);
         }
     }
 }

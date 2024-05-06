@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.TextShape.System
         }
 
         [Query]
-        private void UpdateTexts(in TextShapeRendererComponent textShapeComponent, in PBTextShape textShape)
+        private void UpdateTexts(in TextShapeComponent textShapeComponent, in PBTextShape textShape)
         {
             if (textShape.IsDirty)
             {
