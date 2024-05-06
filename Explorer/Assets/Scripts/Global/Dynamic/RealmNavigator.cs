@@ -108,7 +108,7 @@ namespace Global.Dynamic
                         // Re-add on exception?
                         world.Remove<CameraSamplingData>(cameraEntity.Object);
 
-                        await ChangeRealm(realm, ct);
+                        await ChangeRealmAsync(realm, ct);
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
 
                         var landscapeLoadReport
@@ -142,7 +142,7 @@ namespace Global.Dynamic
             if (isGenesis)
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             else
-                waitForSceneReadiness = await TeleportToWorldSpawnPoint(teleportLoadReport, ct);
+                waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(teleportLoadReport, ct);
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
@@ -209,7 +209,7 @@ namespace Global.Dynamic
         }
 
 
-        private async UniTask<UniTask> TeleportToWorldSpawnPoint(AsyncLoadProcessReport processReport, CancellationToken ct)
+        private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(AsyncLoadProcessReport processReport, CancellationToken ct)
         {
             await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Has<FixedScenePointers>(realmController.RealmEntity), cancellationToken: ct);
             await UniTask.WaitUntil(() => realmController.GlobalWorld.EcsWorld.Get<FixedScenePointers>(realmController.RealmEntity).AllPromisesResolved, cancellationToken: ct);
@@ -218,7 +218,7 @@ namespace Global.Dynamic
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
-        private async UniTask ChangeRealm(URLDomain realm, CancellationToken ct)
+        private async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             await realmController.SetRealmAsync(realm, ct);
             SwitchMiscVisibilityAsync();
