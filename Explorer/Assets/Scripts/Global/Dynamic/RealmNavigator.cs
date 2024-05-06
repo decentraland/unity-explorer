@@ -99,7 +99,7 @@ namespace Global.Dynamic
 
             try
             {
-                await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
+                await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
                         loadingStatus = new RealFlowLoadingStatus();
                         ct.ThrowIfCancellationRequested();
@@ -109,20 +109,22 @@ namespace Global.Dynamic
                         //TODO (JUANI): Remove Camera sampling to avoid partitioning
                         // Re-add on exception?
                         world.Remove<CameraSamplingData>(cameraEntity.Object);
-                        
-                        await ChangeRealm(realm, loadReport, ct);
-                        loadReport.ProgressCounter.Value = loadingStatus.SetStage(ProfileLoaded);
-                        await LoadTerrainAsync(loadReport, ct);
-                        loadReport.ProgressCounter.Value = loadingStatus.SetStage(LandscapeLoaded);
-                        await InitializeTeleportToSpawnPointAsync(loadReport, ct, parcelToTeleport);
-                        loadReport.ProgressCounter.Value = loadingStatus.SetStage(PlayerTeleported);
-                        await roomHub.StartAsync();
-                        loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
-                        loadReport.CompletionSource.TrySetResult();
 
-                        //TODO (JUANI): One extra frame needed to allow initialization of cached objects 
-                        // (IE: Genesis Plaza LOD_0)
-                        await UniTask.Yield();
+                        await ChangeRealm(realm, ct);
+                        parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
+
+                        var landscapeLoadReport
+                            = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+                        await LoadTerrainAsync(landscapeLoadReport, ct);
+                        parentLoadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
+
+                        var teleportLoadReport
+                            = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+                        await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport);
+                        parentLoadReport.SetProgress(loadingStatus.SetStage(PlayerTeleported));
+                        
+                        await roomHub.StartAsync();
+                        parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
                     },
                     ct
                 );
@@ -132,15 +134,15 @@ namespace Global.Dynamic
             return true;
         }
 
-        public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport loadReport, CancellationToken ct, Vector2Int parcelToTeleport)
+        public async UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport)
         {
             var world = globalWorldProxy.Object.EnsureNotNull();
             bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
             UniTask? waitForSceneReadiness = null;
             if (isGenesis)
-                waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, loadReport, ct);
+                waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             else
-                waitForSceneReadiness = await TeleportToWorldSpawnPoint(loadReport, ct);
+                waitForSceneReadiness = await TeleportToWorldSpawnPoint(teleportLoadReport, ct);
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
@@ -166,29 +168,27 @@ namespace Global.Dynamic
                         ct.ThrowIfCancellationRequested();
                         loadingStatus = new RealFlowLoadingStatus();
 
-                        loadReport.ProgressCounter.Value = loadingStatus.SetStage(LandscapeLoaded);
+                        loadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
                         var waitForSceneReadiness = await TeleportToParcelAsync(parcel, loadReport, ct);
                         await waitForSceneReadiness;
-                        
-                        loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
+
+                        loadReport.SetProgress(loadingStatus.SetStage(Completed));
                         loadReport.CompletionSource.TrySetResult();
                     }, ct);
                 }
             }
             catch (TimeoutException) { }
         }
-        
-        public async UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
+
+        public async UniTask LoadTerrainAsync(AsyncLoadProcessReport landscapeLoadReport, CancellationToken ct)
         {
             if (landscapeEnabled)
             {
                 bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
-                var postRealmLoadReport = AsyncLoadProcessReport.Create();
-                await UniTask.WhenAll(
-                    postRealmLoadReport.PropagateAsync(loadReport, ct, loadReport.ProgressCounter.Value, timeout: TimeSpan.FromSeconds(30)),
-                    isGenesis
-                        ? GenerateGenesisTerrainAsync(ct, postRealmLoadReport)
-                        : GenerateWorldTerrainAsync((uint)realmController.GetRealm().GetHashCode(), postRealmLoadReport, ct));
+                if (isGenesis)
+                    await GenerateGenesisTerrainAsync(ct, landscapeLoadReport);
+                else
+                    await GenerateWorldTerrainAsync((uint)realmController.GetRealm().GetHashCode(), landscapeLoadReport, ct);
             }
         }
 
@@ -213,7 +213,7 @@ namespace Global.Dynamic
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
-        private async UniTask ChangeRealm(URLDomain realm, AsyncLoadProcessReport loadReport, CancellationToken ct)
+        private async UniTask ChangeRealm(URLDomain realm, CancellationToken ct)
         {
             await realmController.SetRealmAsync(realm, ct);
             SwitchMiscVisibilityAsync();

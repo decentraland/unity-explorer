@@ -269,7 +269,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.StartParcel,
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
-                realmNavigator
+                realmNavigator,
+                loadingScreen
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
