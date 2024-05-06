@@ -11,6 +11,7 @@ namespace DCL.CharacterTriggerArea.Components
     public struct CharacterTriggerAreaComponent : IDirtyMarker
     {
         private static readonly IReadOnlyCollection<Transform> EMPTY_COLLECTION = Array.Empty<Transform>();
+        private readonly List<Transform> disposedCollection;
         public Vector3 AreaSize;
         private CharacterTriggerArea? monoBehaviour;
         private readonly bool targetOnlyMainPlayer;
@@ -24,8 +25,8 @@ namespace DCL.CharacterTriggerArea.Components
             : EMPTY_COLLECTION;
 
         public readonly IReadOnlyCollection<Transform> CurrentAvatarsInside => monoBehaviour != null
-            ? monoBehaviour.CurrentAvatarsInside
-            : EMPTY_COLLECTION;
+            ? monoBehaviour.CurrentAvatarsInside :
+            disposedCollection.Count > 0 ? disposedCollection : EMPTY_COLLECTION;
 
         public CharacterTriggerAreaComponent(Vector3 areaSize, bool targetOnlyMainPlayer = false, CharacterTriggerArea? monoBehaviour = null)
         {
@@ -35,6 +36,7 @@ namespace DCL.CharacterTriggerArea.Components
             this.monoBehaviour = monoBehaviour;
 
             IsDirty = true;
+            disposedCollection = new List<Transform>();
         }
 
         public void ForceAssignArea(CharacterTriggerArea characterTriggerArea)
@@ -80,6 +82,9 @@ namespace DCL.CharacterTriggerArea.Components
         {
             if (monoBehaviour != null)
             {
+                if (CurrentAvatarsInside.Count > 0)
+                    disposedCollection.AddRange(CurrentAvatarsInside);
+
                 pool.Release(monoBehaviour);
                 monoBehaviour = null;
             }
@@ -89,6 +94,8 @@ namespace DCL.CharacterTriggerArea.Components
         {
             if (monoBehaviour != null)
                 monoBehaviour.Clear();
+
+            disposedCollection.Clear();
         }
 
         public bool TryDispose(ISceneStateProvider sceneStateProvider)

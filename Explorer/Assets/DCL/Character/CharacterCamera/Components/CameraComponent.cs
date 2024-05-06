@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.CharacterCamera
 {
@@ -15,18 +16,21 @@ namespace DCL.CharacterCamera
         public CameraComponent(Camera camera) : this()
         {
             Camera = camera;
-            CameraInputLocks = 0;
+            cameraInputLocks = new HashSet<object>();
         }
 
-        public int CameraInputLocks { get; private set; }
-
-        public bool CameraInputChangeEnabled => CameraInputLocks == 0;
+        private readonly HashSet<object> cameraInputLocks;
+        public bool CameraInputChangeEnabled => cameraInputLocks.Count == 0;
         public Transform PlayerFocus { get; set; }
 
-        public void AddCameraInputLock() =>
-            CameraInputLocks++;
+        public void AddCameraInputLock(object context)
+        {
+            cameraInputLocks.Add(context);
+        }
 
-        public void RemoveCameraInputLock() =>
-            CameraInputLocks = CameraInputLocks - 1 < 0 ? 0 : CameraInputLocks - 1;
+        public void RemoveCameraInputLock(object context)
+        {
+            cameraInputLocks.Remove(context);
+        }
     }
 }
