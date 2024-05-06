@@ -186,15 +186,20 @@ namespace Global.Dynamic
             {
                 bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
                 if (isGenesis)
-                    await GenerateGenesisTerrainAsync(ct, landscapeLoadReport);
+                {
+                    //TODO (Juani): The world terrain would be hidden. We need to implement the re-usage when going back
+                    worldsTerrain.SwitchVisibility(false);
+                    if (!genesisTerrain.IsTerrainGenerated)
+                        await genesisTerrain.GenerateTerrainAsync(cancellationToken: ct);
+                    else
+                        await genesisTerrain.ShowAsync(landscapeLoadReport);
+                }
                 else
+                {
+                    genesisTerrain.Hide();
                     await GenerateWorldTerrainAsync((uint)realmController.GetRealm().GetHashCode(), landscapeLoadReport, ct);
+                }
             }
-        }
-
-        private UniTask GenerateGenesisTerrainAsync(CancellationToken ct, AsyncLoadProcessReport postRealmLoadReport)
-        {
-            return genesisTerrain.IsTerrainGenerated ? genesisTerrain.ShowAsync(postRealmLoadReport) : genesisTerrain.GenerateTerrainAsync(cancellationToken: ct);
         }
 
         private async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
@@ -248,7 +253,6 @@ namespace Global.Dynamic
                         ownedParcels.Add(parcel.ToInt2());
                 }
 
-
                 await worldsTerrain.GenerateTerrainAsync(ownedParcels, worldSeed, processReport, cancellationToken: ct);
             }
         }
@@ -256,15 +260,10 @@ namespace Global.Dynamic
         public void SwitchMiscVisibilityAsync()
         {
             bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
-
-            //TODO(Juani): This two methods looks quite similar....
-            //if (!isGenesis) genesisTerrain.Hide();
             // is NOT visible
-            worldsTerrain.SwitchVisibility(!isGenesis);
 
             // isVisible
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            //TODO (JUANI) : Crashes game if clicking too fast on the 'Go To World' button on login screen
             satelliteFloor.SwitchVisibility(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }

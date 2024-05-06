@@ -68,6 +68,8 @@ namespace DCL.Landscape
         public IReadOnlyList<Terrain> Terrains => terrains;
 
         public bool IsTerrainGenerated { get; private set; }
+        public bool IsTerrainShown { get; private set; }
+
 
         public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -117,9 +119,10 @@ namespace DCL.Landscape
 
             UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
+            ReEnableChunksDetails();
             grassRenderer.Render();
             await ReEnableTerrainAsync(postRealmLoadReport);
-            IsTerrainGenerated = true;
+            IsTerrainShown = true;
 
             postRealmLoadReport.SetProgress(1f);
         }
@@ -131,8 +134,7 @@ namespace DCL.Landscape
             if (rootGo != null && rootGo.gameObject.activeSelf)
             {
                 rootGo.gameObject.SetActive(false);
-                ReEnableChunksDetails();
-                IsTerrainGenerated = false;
+                IsTerrainShown = false;
             }
         }
 
