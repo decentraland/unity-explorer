@@ -1,5 +1,6 @@
 ﻿using DCL.Diagnostics;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -20,11 +21,12 @@ namespace DCL.Rendering.Highlight
 
     public partial class HighlightRendererFeature : ScriptableRendererFeature
     {
-        private const string k_ShaderName_HighlightInput = "DCL/Highlight";
-        private const string k_ShaderName_HighlightOutput = "DCL/Highlight";
+        private const string k_ShaderName_HighlightInput = "DCL/HighlightInput_Override";
+        private const string k_ShaderName_HighlightOutput = "DCL/HighlightOutput";
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private HighlightRendererFeature_Settings m_Settings;
+        public static List<Renderer> m_HighLightRenderers;
 
         // Input Pass Data
         private HighlightInputRenderPass highlightInputRenderPass;
@@ -39,21 +41,20 @@ namespace DCL.Rendering.Highlight
         private HighlightOutputRenderPass highlightOutputRenderPass;
         private Material highlightOutputMaterial;
         private Shader m_ShaderHighlightOutput;
-        // private RTHandle outlineRTHandle;
-        // private RenderTextureDescriptor outlineRTDescriptor;
 
         public HighlightRendererFeature()
         {
             m_Settings = new HighlightRendererFeature_Settings();
+            m_HighLightRenderers = new List<Renderer>();
         }
 
         public override void Create()
         {
-            highlightInputRenderPass = new HighlightInputRenderPass();
+            highlightInputRenderPass = new HighlightInputRenderPass(m_HighLightRenderers);
             highlightInputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
 
             highlightOutputRenderPass = new HighlightOutputRenderPass();
-            highlightOutputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
+            highlightOutputRenderPass.renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
         }
 
         public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData)

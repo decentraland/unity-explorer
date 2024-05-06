@@ -2,6 +2,10 @@ Shader "DCL/DCL_Toon"
 {
     Properties
     {
+        [HideInInspector] [PerRendererData] _HighlightObjectOffset ("Highlight Object Offset", Vector) = (0.0, 100.0, 0.0, 0.0)
+        [HideInInspector] [PerRendererData] _HighlightColour ("Highlight Colour", Color) = (1,0,0,1)
+        [HideInInspector] [PerRendererData] _HighlightWidth ("Highlight Width", Float) = 1.0
+        
         [HideInInspector] [PerRendererData] _MainTexArr_ID ("MainTex Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _1st_ShadeMapArr_ID ("1st Shade Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _2nd_ShadeMapArr_ID ("2nd Shader Map Array ID", Integer) = -1
@@ -537,6 +541,7 @@ Shader "DCL/DCL_Toon"
             #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag
+            #pragma enable_d3d11_debug_symbols
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
@@ -564,9 +569,10 @@ Shader "DCL/DCL_Toon"
             Tags {
                 "LightMode" = "Highlight"
             }
+            ZWrite Off
             Cull [_SRPDefaultUnlitColMode]
             ColorMask [_SPRDefaultUnlitColorMask]
-            Blend SrcAlpha OneMinusSrcAlpha
+            //Blend SrcAlpha OneMinusSrcAlpha
             Stencil
             {
                 Ref[_StencilNo]
@@ -581,6 +587,7 @@ Shader "DCL/DCL_Toon"
             #pragma target 4.5
             #pragma vertex vert_highlight
             #pragma fragment frag_highlight
+            #pragma enable_d3d11_debug_symbols
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS

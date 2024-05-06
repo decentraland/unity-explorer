@@ -2,9 +2,9 @@
 #define DCL_HIGHLIGHT_VERTEX_INCLUDED
 
 // Includes
-#include "Assets/DCL/Rendering/Highlight/Highlight_Data.hlsl"
+#include "HighlightOutput_Data.hlsl"
 
-hl_v2f hl_vert(hl_appdata IN)
+hl_v2f hl_Output_vert(hl_appdata IN)
 {
     hl_v2f OUT;
 

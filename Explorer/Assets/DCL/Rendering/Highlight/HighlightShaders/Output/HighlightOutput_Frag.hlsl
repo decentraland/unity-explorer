@@ -2,7 +2,7 @@
 #define DCL_HIGHLIGHT_RENDER_FRAGMENT_INCLUDED
 
 // Includes
-#include "Assets/DCL/Rendering/Highlight/Highlight_Data.hlsl"
+#include "HighlightOutput_Data.hlsl"
 
 UNITY_DECLARE_TEX2D(_HighlightTexture);
 

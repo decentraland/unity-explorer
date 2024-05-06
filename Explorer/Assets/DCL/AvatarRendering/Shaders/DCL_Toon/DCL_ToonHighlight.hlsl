@@ -73,11 +73,13 @@ VertexOutput vert_highlight (VertexInput v)
         _Offset_Z = _Offset_Z * 0.01;
     #endif
     
-    Set_Outline_Width = Set_Outline_Width*2;
+    Set_Outline_Width = Set_Outline_Width*50;
     float signVar = dot(normalize(v.vertex.xyz),normalize(v.normal))<0 ? -1 : 1;
+    float4 vertOffset = _HighlightObjectOffset;
+    //vertOffset = float4(0.0f, 0.0f, 0.0f, 0.0f);
     #ifdef _DCL_COMPUTE_SKINNING
         float4 vVert = float4(_GlobalAvatarBuffer[_lastAvatarVertCount + _lastWearableVertCount + v.index].position.xyz, 1.0f);
-        o.pos = UnityObjectToClipPos(float4(vVert.xyz + signVar*normalize(vVert)*Set_Outline_Width, 1));
+        o.pos = UnityObjectToClipPos(float4(vVert.xyz + signVar*normalize(vVert - vertOffset)*Set_Outline_Width, 1));
     #else
         o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + signVar*normalize(v.vertex)*Set_Outline_Width, 1));
     #endif
@@ -88,5 +90,5 @@ VertexOutput vert_highlight (VertexInput v)
 
 float4 frag_highlight(VertexOutput i) : SV_Target
 {
-    return float4(1.0f, 0.0f, 0.0f, 1.0f);
+    return _HighlightColour + float4(1.0f, 1.0f, 1.0f, 0.0f);
 }
