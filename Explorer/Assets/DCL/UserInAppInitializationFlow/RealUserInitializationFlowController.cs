@@ -6,16 +6,12 @@ using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.SceneLoadingScreens;
 using DCL.Utilities;
 using MVC;
-using System;
 using System.Threading;
-using Codice.CM.WorkspaceServer.DataStore.Merge;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
-using UnityEngine.Assertions;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
 namespace DCL.UserInAppInitializationFlow
