@@ -82,8 +82,8 @@ namespace DCL.UserInAppInitializationFlow
         {
             Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
             parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
-                    
-            realmNavigator.SwitchMiscVisibilityAsync();
+
+            await realmNavigator.SwitchMiscVisibilityAsync();
             await LoadPlayerAvatar(world, playerEntity, ownProfile, ct);
 
             var landscapeLoadReport

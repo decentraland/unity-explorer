@@ -104,8 +104,7 @@ namespace Global.Dynamic
 
                         remoteEntities.ForceRemoveAll(world);
                         await roomHub.StopIfNotAsync();
-                        //TODO (JUANI): Remove Camera sampling to avoid partitioning
-                        // Re-add on exception?
+                        // Re-add on exception? If there is timeout
                         world.Remove<CameraSamplingData>(cameraEntity.Object);
 
                         await ChangeRealmAsync(realm, ct);
@@ -120,7 +119,7 @@ namespace Global.Dynamic
                             = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
                         await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport);
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
-                        
+
                         await roomHub.StartAsync();
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
 
@@ -129,7 +128,15 @@ namespace Global.Dynamic
                 );
 
             }
-            catch (TimeoutException) { }
+            catch (TimeoutException)
+            {
+                if (!world.Has<CameraSamplingData>(cameraEntity.Object))
+                {
+                    world.Add(cameraEntity.Object, cameraSamplingData);
+                }
+
+                ;
+            }
 
             return true;
         }
@@ -221,7 +228,7 @@ namespace Global.Dynamic
         private async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             await realmController.SetRealmAsync(realm, ct);
-            SwitchMiscVisibilityAsync();
+            await SwitchMiscVisibilityAsync();
         }
         
         private async UniTask GenerateWorldTerrainAsync(uint worldSeed, AsyncLoadProcessReport processReport, CancellationToken ct)
@@ -257,14 +264,14 @@ namespace Global.Dynamic
             }
         }
 
-        public void SwitchMiscVisibilityAsync()
+        public async UniTask SwitchMiscVisibilityAsync()
         {
             bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
             // is NOT visible
 
             // isVisible
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            satelliteFloor.SwitchVisibility(isGenesis);
+            await satelliteFloor.SwitchVisibility(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
     }

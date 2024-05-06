@@ -28,6 +28,6 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
 
-        void SwitchMiscVisibilityAsync();
+        UniTask SwitchMiscVisibilityAsync();
     }
 }
