@@ -31,26 +31,16 @@ namespace CRDT.Memory
         }
 
         public static CRDTOriginalMemorySlicer Create() =>
-            POOL.Get();
+            POOL.Get()!;
 
         public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
         {
             var byteArray = new byte[length];
             originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
-            SliceOwner sliceOwner = memoryOwnerPool.Get();
+            SliceOwner sliceOwner = memoryOwnerPool.Get()!;
             sliceOwner.Set(byteArray);
             return sliceOwner;
         }
-
-        public IMemoryOwner<byte> GetMemoryBuffer(int length)
-        {
-            SliceOwner sliceOwner = memoryOwnerPool.Get();
-            sliceOwner.Set(new byte[length]);
-            return sliceOwner;
-        }
-
-        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
-            GetMemoryBuffer(originalStream, 0, originalStream.Length);
 
         private class SliceOwner : IMemoryOwner<byte>
         {

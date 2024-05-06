@@ -1,5 +1,6 @@
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using DCL.Utilities.Extensions;
 using System;
 using System.Buffers;
 using UnityEngine.Pool;
@@ -31,7 +32,7 @@ namespace CRDT.Memory
 
             // 1024 similar sized components (probably the same components)
             // TODO add analytics that will signal if our assumptions are wrong
-            arrayPool = ArrayPool<byte>.Create(1024 * 1024, 1024);
+            arrayPool = ArrayPool<byte>.Create(1024 * 1024, 1024)!;
 
             memoryOwnerPool = new ThreadSafeObjectPool<MemoryOwner>(
                 () => new MemoryOwner(this),
@@ -47,31 +48,25 @@ namespace CRDT.Memory
         }
 
         public static CRDTPooledMemoryAllocator Create() =>
-            POOL.Get();
+            POOL.Get()!;
 
         public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream, int shift, int length)
         {
-            byte[] byteArray = arrayPool.Rent(length);
-            originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
-            MemoryOwner memoryOwner = memoryOwnerPool.Get();
-            memoryOwner.Set(byteArray, length);
-            return memoryOwner;
+            try
+            {
+                byte[] byteArray = arrayPool.Rent(length)!;
+                originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
+                MemoryOwner memoryOwner = memoryOwnerPool.Get()!;
+                memoryOwner.Set(byteArray, length);
+                return memoryOwner;
+            }
+            catch (Exception e) { throw new Exception($"Cannot provide MemoryBuffer originalStreamSize: {originalStream.Length} with shift: {shift} with length: {length}", e); }
         }
-
-        public IMemoryOwner<byte> GetMemoryBuffer(int length)
-        {
-            MemoryOwner memoryOwner = memoryOwnerPool.Get();
-            memoryOwner.Set(arrayPool.Rent(length), length);
-            return memoryOwner;
-        }
-
-        public IMemoryOwner<byte> GetMemoryBuffer(in ReadOnlyMemory<byte> originalStream) =>
-            GetMemoryBuffer(originalStream, 0, originalStream.Length);
 
         private class MemoryOwner : IMemoryOwner<byte>
         {
             private readonly CRDTPooledMemoryAllocator crdtPooledMemoryAllocator;
-            private byte[] array;
+            private byte[]? array;
 
             private bool disposed;
 
@@ -86,16 +81,16 @@ namespace CRDT.Memory
 
             public void Dispose()
             {
-                if (!disposed)
-                {
-                    // it is mandatory to have two-level pool as the size of the array
-                    // on every rent can be absolutely different
-                    crdtPooledMemoryAllocator.arrayPool.Return(array);
-                    crdtPooledMemoryAllocator.memoryOwnerPool.Release(this);
-                    array = null;
-                    slicedMemory = Memory<byte>.Empty;
-                    disposed = true;
-                }
+                if (disposed)
+                    return;
+
+                // it is mandatory to have two-level pool as the size of the array
+                // on every rent can be absolutely different
+                crdtPooledMemoryAllocator.arrayPool.Return(array.EnsureNotNull("MemoryOwner array has not been set"));
+                crdtPooledMemoryAllocator.memoryOwnerPool.Release(this);
+                array = null;
+                slicedMemory = Memory<byte>.Empty;
+                disposed = true;
             }
 
             internal void Set(byte[] array, int size)
