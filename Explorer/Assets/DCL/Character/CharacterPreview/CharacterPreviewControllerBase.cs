@@ -179,8 +179,7 @@ namespace DCL.CharacterPreview
         {
             GameObject spinner = EnableSpinner();
 
-            try { await (previewController?.UpdateAvatarAsync(previewAvatarModel, ct) ?? UniTask.CompletedTask); }
-            catch (OperationCanceledException) { }
+            await UpdateAvatarAsync(previewAvatarModel, ct);
 
             DisableSpinner(spinner);
         }
@@ -202,10 +201,14 @@ namespace DCL.CharacterPreview
             return spinner;
         }
 
-        public void StopEmotes()
+        protected async UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel model, CancellationToken ct)
         {
-            previewController?.StopEmotes();
+            try { await (previewController?.UpdateAvatarAsync(model, ct) ?? UniTask.CompletedTask); }
+            catch (OperationCanceledException) { }
         }
+
+        protected void StopEmotes() =>
+            previewController?.StopEmotes();
 
         protected void PlayEmote(string emoteId) =>
             previewController?.PlayEmote(emoteId);
