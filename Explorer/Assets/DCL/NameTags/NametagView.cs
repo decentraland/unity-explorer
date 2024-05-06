@@ -11,8 +11,10 @@ namespace DCL.Nametags
 {
     public class NametagView : MonoBehaviour
     {
+        private const int EMOJI_LENGTH = 10;
         private const float DISTANCE_THRESHOLD = 0.1f;
         private const float DEFAULT_HEIGHT = 0.3f;
+        private const float MESSAGE_CONTENT_FONT_SIZE = 1.3f;
 
         [field: SerializeField]
         public TMP_Text Username { get; private set; }
@@ -157,9 +159,11 @@ namespace DCL.Nametags
         private int AdditionalMessageVisibilityTimeMs(string chatMessage) =>
             chatMessage.Length * chatBubbleConfiguration.additionalMsPerCharacter;
 
+        private float additionalHeight;
         //TODO: jobify this to improve the performance
         private async UniTask AnimateInAsync(string messageContent)
         {
+            SetHeightAndTextStyle(messageContent);
             isAnimatingIn = true;
             MessageContent.gameObject.SetActive(true);
             BubblePeak.gameObject.SetActive(true);
@@ -173,6 +177,7 @@ namespace DCL.Nametags
             //Calculate message content preferred size with fixed width
             preferredSize = MessageContent.GetPreferredValues(messageContent, MaxWidth, 0);
             preferredSize.x =  CalculatePreferredWidth(messageContent);
+            preferredSize.y += additionalHeight;
             MessageContentRectTransform.sizeDelta = preferredSize;
 
             //Calculate the initial message content position to animate after
@@ -201,6 +206,22 @@ namespace DCL.Nametags
                 MessageContent.rectTransform.DOAnchorPos(messageContentAnchoredPosition, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token),
                 DOTween.To(() => Background.size, x=> Background.size = x, preferredSize, chatBubbleConfiguration.animationInDuration).SetEase(backgroundEaseAnimationCurve).ToUniTask(cancellationToken: cts.Token)
                 );
+        }
+
+        private void SetHeightAndTextStyle(string messageContent)
+        {
+            if (messageContent.Contains("\\U") && messageContent.Length == EMOJI_LENGTH)
+            {
+                additionalHeight = chatBubbleConfiguration.singleEmojiExtraHeight;
+                MessageContent.fontSize = chatBubbleConfiguration.singleEmojiSize;
+                MessageContent.alignment = TextAlignmentOptions.Center;
+            }
+            else
+            {
+                additionalHeight = 0;
+                MessageContent.fontSize = MESSAGE_CONTENT_FONT_SIZE;
+                MessageContent.alignment = TextAlignmentOptions.Left;
+            }
         }
 
         private async UniTask AnimateOutAsync()

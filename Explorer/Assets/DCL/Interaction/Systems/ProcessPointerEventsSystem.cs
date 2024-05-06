@@ -11,6 +11,7 @@ using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -29,7 +30,6 @@ namespace DCL.Interaction.Systems
         internal ProcessPointerEventsSystem(World world,
             IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
-
             IEventSystem eventSystem) : base(world)
         {
             this.sdkInputActionsMap = sdkInputActionsMap;
@@ -67,23 +67,25 @@ namespace DCL.Interaction.Systems
             hoverStateComponent.IsAtDistance = false;
 
             bool canHover = !eventSystem.IsPointerOverGameObject();
+            GlobalColliderEntityInfo? entityInfo = raycastResult.GetEntityInfo();
 
-            if (raycastResult.IsValidHit && canHover)
+            if (raycastResult.IsValidHit && canHover && entityInfo != null)
             {
-                GlobalColliderEntityInfo entityInfo = raycastResult.EntityInfo.Value;
+                SceneEcsExecutor ecsExecutor = entityInfo.Value.EcsExecutor;
+                ColliderEntityInfo colliderInfo = entityInfo.Value.ColliderEntityInfo;
 
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
                 // External world access should be always synchronized (Global World calls into Scene World)
-                using (entityInfo.EcsExecutor.Sync.GetScope())
+                using (ecsExecutor.Sync.GetScope())
                 {
-                    World world = entityInfo.EcsExecutor.World;
-                    EntityReference entityRef = entityInfo.ColliderEntityInfo.EntityReference;
+                    World world = ecsExecutor.World;
+                    EntityReference entityRef = colliderInfo.EntityReference;
 
                     // Entity should be alive and contain PBPointerEvents component to be qualified
                     if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
                     {
-                        hoverStateComponent.LastHitCollider = raycastResult.UnityRaycastHit.collider;
+                        hoverStateComponent.LastHitCollider = raycastResult.GetCollider();
                         hoverStateComponent.HasCollider = true;
 
                         bool newEntityWasHovered = !candidateForHoverLeaveIsValid
@@ -93,7 +95,7 @@ namespace DCL.Interaction.Systems
                         if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
                             candidateForHoverLeaveIsValid = false;
 
-                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.UnityRaycastHit, raycastResult.OriginRay);
+                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.GetRaycastHit(), raycastResult.GetOriginRay());
 
                         bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
 
@@ -101,10 +103,7 @@ namespace DCL.Interaction.Systems
 
                         int count = world.CountEntities(highlightQuery);
 
-                        if (count > 0)
-                        {
-                            SetupHighlightComponentQuery(world, isAtDistance, entityRef);
-                        }
+                        if (count > 0) { SetupHighlightComponentQuery(world, isAtDistance, entityRef); }
                         else
                         {
                             world.Create(

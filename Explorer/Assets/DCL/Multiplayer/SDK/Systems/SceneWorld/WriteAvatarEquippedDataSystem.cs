@@ -28,23 +28,32 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
+        public override void Initialize()
+        {
+            UpdateAvatarEquippedDataQuery(World, true);
+        }
+
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
-            UpdateAvatarEquippedDataQuery(World);
+            UpdateAvatarEquippedDataQuery(World, false);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEquippedData(ref PlayerCRDTEntity playerCRDTEntity, ref Profile profile)
+        private void UpdateAvatarEquippedData([Data] bool force, ref PlayerCRDTEntity playerCRDTEntity, ref Profile profile)
         {
-            if (!profile.IsDirty) return;
+            if (!force && !profile.IsDirty) return;
 
             ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, Profile>(static (pbComponent, profile) =>
             {
                 foreach (URN urn in profile.Avatar.Wearables) { pbComponent.WearableUrns.Add(urn); }
 
-                foreach (URN urn in profile.Avatar.Emotes) { pbComponent.EmoteUrns.Add(urn); }
+                foreach (URN urn in profile.Avatar.Emotes)
+                {
+                    if (!urn.IsNullOrEmpty())
+                        pbComponent.EmoteUrns.Add(urn);
+                }
             }, playerCRDTEntity.CRDTEntity, profile);
         }
 

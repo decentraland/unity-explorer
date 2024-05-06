@@ -170,7 +170,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
             }
 
-            ref StreamableLoadingState state = ref World.Get<StreamableLoadingState>(entity);
+            ref StreamableLoadingState state = ref World.TryGetRef<StreamableLoadingState>(entity, out bool exists);
+
+            if (!exists)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
+                // it could be already disposed of, but it's safe to call it again
+                acquiredBudget.Dispose();
+                return;
+            }
 
             state.DisposeBudget();
 

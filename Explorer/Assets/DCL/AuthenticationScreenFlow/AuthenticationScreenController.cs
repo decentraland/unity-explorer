@@ -19,7 +19,6 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
-        private const int STARTING_VIEW_SIBLING_INDEX = 2;
         private const int ANIMATION_DELAY = 300;
 
         private static readonly int IN = Animator.StringToHash("In");
@@ -119,7 +118,6 @@ namespace DCL.AuthenticationScreenFlow
         {
             base.OnBeforeViewShow();
 
-            viewInstance.gameObject.transform.SetSiblingIndex(STARTING_VIEW_SIBLING_INDEX);
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
         }
 
@@ -257,6 +255,7 @@ namespace DCL.AuthenticationScreenFlow
                     break;
                 case ViewState.Finalize:
                     ResetAnimator(viewInstance.FinalizeAnimator);
+                    viewInstance.Slides.SetActive(false);
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);

@@ -25,7 +25,6 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
-using DCL.Multiplayer.Emotes.Interfaces;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
@@ -129,6 +128,7 @@ namespace Global.Dynamic
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
+            AudioClipConfig backgroundMusic,
             CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
@@ -211,7 +211,8 @@ namespace Global.Dynamic
                 staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
                 exposedGlobalDataContainer.CameraSamplingData,
                 dynamicWorldParams.EnableLandscape,
-                landscapePlugin
+                landscapePlugin,
+                backgroundMusic
             );
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(realmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
@@ -284,13 +285,13 @@ namespace Global.Dynamic
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
-                    new ProfileBroadcast(container.MessagePipesHub),
+                    new ProfileBroadcast(container.MessagePipesHub, selfProfile),
                     selfProfile,
                     realmData
                 )
             );
 
-            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub, entityParticipantTable, identityCache);
+            var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
             var remotePoses = new DebounceRemotePoses(
                 new RemotePoses(container.RoomHub)
@@ -315,12 +316,12 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache,
                     emotesCache
                 ),
-                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder),
+                new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, container.DebugContainer.Builder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dclInput),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, realmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
-                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData, multiplayerEmotesMessageBus, debugBuilder, staticContainer.AssetsProvisioner, selfProfile, container.MvcManager, dclInput),
+                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, realmData, multiplayerEmotesMessageBus, debugBuilder, staticContainer.AssetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,

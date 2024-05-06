@@ -23,7 +23,6 @@ namespace DCL.Navmap
         private static readonly int OUT = Animator.StringToHash("Out");
         private static readonly int IN = Animator.StringToHash("In");
         private static readonly int LOADED = Animator.StringToHash("Loaded");
-        private static readonly int LOADING = Animator.StringToHash("Loading");
         private static readonly int TO_LEFT = Animator.StringToHash("ToLeft");
         private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
 
@@ -62,9 +61,20 @@ namespace DCL.Navmap
             view.gameObject.SetActive(true);
             view.CanvasGroup.interactable = true;
             view.CanvasGroup.blocksRaycasts = true;
+            ResetAnimator();
+            view.panelAnimator.SetTrigger(IN);
+        }
+
+        public void Reset()
+        {
+            ResetAnimator();
+            view.gameObject.SetActive(false);
+        }
+
+        public void ResetAnimator()
+        {
             view.panelAnimator.Rebind();
             view.panelAnimator.Update(0f);
-            view.panelAnimator.SetTrigger(IN);
         }
 
         public void Hide()
