@@ -21,7 +21,6 @@ namespace DCL.Audio
         [SerializeField]
         private AudioSettings audioSettings;
 
-
         private Tweener loopingAudioTweener;
 
         public void Dispose()
@@ -85,13 +84,9 @@ namespace DCL.Audio
                 ReportHub.Log(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
-
-
 
         private bool CheckAudioCategory(AudioClipConfig audioClipConfig)
         {

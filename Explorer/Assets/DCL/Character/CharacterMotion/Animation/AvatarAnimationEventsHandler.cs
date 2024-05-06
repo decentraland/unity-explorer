@@ -1,41 +1,16 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using DCL.Audio.Avatar;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
-using DCL.Diagnostics;
 using JetBrains.Annotations;
 using UnityEngine;
-using System.Threading;
-using Utility;
 
-namespace DCL.Audio
+namespace DCL.DCL.CharacterMotion.Animation
 {
-    public class AvatarAudioPlaybackController : MonoBehaviour
+    public class AvatarAnimationEventsHandler : MonoBehaviour
     {
-        [SerializeField] private AudioSource AvatarAudioSource;
-        [SerializeField] private AudioSource ContinuousAudioAvatarAudioSource;
+        [SerializeField] private AvatarAudioPlaybackController AudioPlaybackController;
         [SerializeField] private Animator AvatarAnimator;
-        [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
-
-        private CancellationTokenSource? cancellationTokenSource;
-        private bool playingContinuousAudio;
-
-        private void Start()
-        {
-            AvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
-            ContinuousAudioAvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
-            cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        private void OnDisable()
-        {
-            ContinuousAudioAvatarAudioSource.Stop();
-            cancellationTokenSource?.SafeCancelAndDispose();
-        }
-
-        private void OnDestroy()
-        {
-            cancellationTokenSource?.SafeCancelAndDispose();
-        }
+        [SerializeField] private float MovementBlendThreshold;
 
         [PublicAPI("Used by Animation Events")]
         public void PlayJumpSound()
@@ -77,7 +52,6 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayLandSound()
         {
-            //We stop the looping sounds of the audioSource in case there was any.
             switch (GetMovementState())
             {
                 case MovementKind.None:
@@ -93,10 +67,9 @@ namespace DCL.Audio
             }
         }
 
-
         [PublicAPI("Used by Animation Events")]
         public void PlayLongFallSound() =>
-           PlayContinuousAudio(AvatarAudioSettings.AvatarAudioClipType.LongFall);
+            PlayContinuousAudio(AvatarAudioSettings.AvatarAudioClipType.LongFall);
 
         [PublicAPI("Used by Animation Events")]
         public void PlayHardLandingSound() =>
@@ -119,6 +92,10 @@ namespace DCL.Audio
             PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepLight);
 
         [PublicAPI("Used by Animation Events")]
+        public void AnimEvent_FootstepSlide() =>
+            PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepSlide);
+
+        [PublicAPI("Used by Animation Events")]
         public void AnimEvent_FootstepWalkRight() =>
             PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.FootstepWalkRight);
 
@@ -130,7 +107,6 @@ namespace DCL.Audio
         public void AnimEvent_Hohoho()
         {
             //In old renderer we would play some sticker animations here,
-            //we would need to add an animation controller before this that sends either audio events here or shows stickers and whatnot
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -149,56 +125,12 @@ namespace DCL.Audio
 
         private void PlayContinuousAudio(AvatarAudioSettings.AvatarAudioClipType clipType)
         {
-            if (!AvatarAudioSettings.AudioEnabled) return;
-
-            if (!playingContinuousAudio)
-            {
-                AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
-                int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
-                ContinuousAudioAvatarAudioSource.volume = clipConfig.RelativeVolume;
-                ContinuousAudioAvatarAudioSource.clip = clipConfig.AudioClips[clipIndex];
-                ContinuousAudioAvatarAudioSource.Play();
-                playingContinuousAudio = true;
-
-                cancellationTokenSource = new CancellationTokenSource();
-                var ct = cancellationTokenSource.Token;
-                AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, clipConfig, ContinuousAudioAvatarAudioSource.clip.length, ContinuousAudioAvatarAudioSource).Forget();
-            }
+            AudioPlaybackController.PlayContinuousAudio(clipType);
         }
-
 
         private void PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType clipType)
         {
-            if (playingContinuousAudio)
-            {
-                playingContinuousAudio = false;
-                ContinuousAudioAvatarAudioSource.Stop();
-                cancellationTokenSource?.SafeCancelAndDispose();
-                cancellationTokenSource = null;
-            }
-
-            if (!AvatarAudioSettings.AudioEnabled) return;
-
-            AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
-
-            if (clipConfig == null)
-            {
-                ReportHub.LogError(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no AudioClipConfig Assigned");
-                return;
-            }
-
-            if (clipConfig.AudioClips.Length == 0)
-            {
-                ReportHub.LogWarning(new ReportData(ReportCategory.AUDIO), $"Cannot Play Avatar Audio for {clipType} as it has no Audio Clips Assigned");
-                return;
-            }
-
-            if (clipConfig.RelativeVolume == 0)
-                return;
-
-            AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
-            int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
-            AvatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex], clipConfig.RelativeVolume);
+            AudioPlaybackController.PlayAudioForType(clipType);
         }
 
         private MovementKind GetMovementState()
@@ -209,7 +141,7 @@ namespace DCL.Audio
             if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Walk)
                 return MovementKind.Jog;
 
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > AvatarAudioSettings.MovementBlendThreshold)
+            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > MovementBlendThreshold)
                 return MovementKind.Walk;
 
             return MovementKind.None;
