@@ -193,15 +193,15 @@ Material:
     - _SrcBlendAlpha: 1
     - _Stars_Brightness: 4.62
     - _SunOpacity: 1
-    - _SunSize: 0.27131903
+    - _SunSize: 0.13939542
     - _Sun_Flare: 0.3
     - _Sun_Flare_Distance: -0.21
     - _Sun_Flare_Intensity: 1
     - _Sun_Flare_Opacity: 1.1
     - _Sun_Flare_Radius: 0.19
     - _Sun_Opacity: 1
-    - _Sun_Radiance: -0.039500967
-    - _Sun_Radiance_Intensity: 0.8652358
+    - _Sun_Radiance: 0.10497564
+    - _Sun_Radiance_Intensity: 0.80093426
     - _Sun_Smooth: -0.19
     - _Surface: 0
     - _Twist: 0.15
@@ -215,21 +215,21 @@ Material:
     m_Colors:
     - LightDirection: {r: 10, g: 15, b: 120, a: 0}
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _CloudsColor: {r: 0.98614717, g: 0.57709074, b: 0.3765248, a: 1}
+    - _CloudsColor: {r: 0.8140406, g: 0.77854574, b: 0.76696825, a: 1}
     - _Clouds_Color: {r: 0.9811321, g: 0.9811321, b: 0.9811321, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _HorizonColor: {r: 0.80518746, g: 0.46245232, b: 0.41237676, a: 1}
+    - _HorizonColor: {r: 0.7234726, g: 0.6945221, b: 0.76102877, a: 1}
     - _Horizon_Line_Color: {r: 0.56981134, g: 0.8824903, b: 1, a: 0}
     - _LightDirection: {r: 0, g: -0.39794862, b: 0.9174077, a: 0}
     - _Moon_Mask_Position: {r: 0.01, g: -0.01, b: 0, a: 0}
-    - _NadirColor: {r: 0.8570531, g: 0.3669205, b: 0.94799036, a: 1}
-    - _RimColor: {r: 1.6592014, g: 0.6288576, b: 0.21149239, a: 1}
+    - _NadirColor: {r: 0.48272297, g: 0.6380409, b: 0.88648194, a: 1}
+    - _RimColor: {r: 0.9060408, g: 0.71003854, b: 0.46090215, a: 1}
     - _Rim_Color: {r: 0.9622642, g: 0.9540234, b: 0.539231, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _SunColor: {r: 19.99391, g: 8.26748, b: 5.852206, a: 1}
+    - _SunColor: {r: 14.854951, g: 18.944164, b: 10.859926, a: 1}
     - _Vector2: {r: 14.34, g: 1.57, b: 0, a: 0}
-    - _ZenitColor: {r: 0.5881958, g: 0.318375, b: 0.82079756, a: 1}
+    - _ZenitColor: {r: 0.34509307, g: 0.52230275, b: 0.93302083, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &3268039623660159980
 MonoBehaviour:
