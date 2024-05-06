@@ -7,7 +7,7 @@ using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.Input;
-using DCL.Multiplayer.Emotes.Interfaces;
+using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
 using MVC;

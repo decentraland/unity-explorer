@@ -8,8 +8,10 @@ using DCL.Backpack;
 using DCL.DebugUtilities;
 using DCL.EmotesWheel;
 using DCL.Input;
-using DCL.Multiplayer.Emotes.Interfaces;
+using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
+using DCL.Web3.Identities;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
 using ECS;
@@ -37,6 +39,8 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
         private readonly DCLInput dclInput;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
         private readonly AudioClipsCache audioClipsCache;
@@ -50,7 +54,9 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
             DCLInput dclInput,
-            CacheCleaner cacheCleaner)
+            CacheCleaner cacheCleaner,
+            IWeb3IdentityCache web3IdentityCache,
+            IReadOnlyEntityParticipantTable entityParticipantTable)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -58,6 +64,8 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.mvcManager = mvcManager;
             this.dclInput = dclInput;
+            this.web3IdentityCache = web3IdentityCache;
+            this.entityParticipantTable = entityParticipantTable;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
@@ -90,6 +98,8 @@ namespace DCL.PluginSystem.Global
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 
             LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, mutexSync);
+
+            RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)

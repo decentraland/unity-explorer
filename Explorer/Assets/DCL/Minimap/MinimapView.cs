@@ -1,6 +1,7 @@
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI.Buttons;
 using MVC;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -50,6 +51,21 @@ namespace DCL.Minimap
 
         [field: SerializeField]
         internal Animator minimapAnimator  { get; private set; }
+
+        [field: SerializeField]
+        internal Button goToGenesisCityButton { get; private set; }
+
+        [field: SerializeField]
+        internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; }
+
+        [field: SerializeField]
+        internal RuntimeAnimatorController worldsAnimatorController { get; private set; }
+
+        [field: SerializeField]
+        internal List<GameObject> objectsToActivateForGenesis { get; private set; }
+
+        [field: SerializeField]
+        internal List<GameObject> objectsToActivateForWorlds { get; private set; }
 
         private void Start()
         {

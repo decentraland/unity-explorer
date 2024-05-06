@@ -237,6 +237,11 @@
         public const string PLAYER_AVATAR_EMOTE_COMMAND = nameof(PLAYER_AVATAR_EMOTE_COMMAND);
 
         /// <summary>
+        ///     RealmData 'IsDirty' flag reset system
+        /// </summary>
+        public const string REALM_DATA_DIRTY_RESET_SYSTEM = nameof(REALM_DATA_DIRTY_RESET_SYSTEM);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);
@@ -255,6 +260,11 @@
         public const string MVC = nameof(MVC);
 
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
+
+        /// <summary>
+        ///     Whatever is coming from external pure C# plugins
+        /// </summary>
+        public const string PLUGINS = nameof(PLUGINS);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

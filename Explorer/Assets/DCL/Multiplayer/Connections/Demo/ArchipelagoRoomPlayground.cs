@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             while (this)
             {
-                system.Update(Time.deltaTime);
+                system.Update(UnityEngine.Time.deltaTime);
                 await UniTask.Yield();
             }
         }

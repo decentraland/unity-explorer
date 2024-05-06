@@ -97,6 +97,12 @@ namespace DCL.Navmap
             SearchAndShowAsync(searchText).Forget();
         }
 
+        public void ResetSearch()
+        {
+            searchResultPanelController.Reset();
+            ClearSearch();
+        }
+
         private void OnSelectedSearchbarChange(bool isSelected)
         {
             if (isSelected == isAlreadySelected)

@@ -128,12 +128,14 @@ namespace DCL.Chat
         {
             base.OnViewShow();
             dclInput.UI.Click.performed += OnClick;
+            dclInput.Shortcuts.ToggleNametags.performed += ToggleNametagsFromShortcut;
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
             dclInput.UI.Click.performed -= OnClick;
+            dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
         }
 
         private void OnClick(InputAction.CallbackContext obj)
@@ -141,9 +143,9 @@ namespace DCL.Chat
             raycastResults = eventSystem.RaycastAll(device.position.value);
             var clickedOnPanel = false;
             foreach (RaycastResult raycasted in raycastResults)
-                if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.gameObject)
+                if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.ScrollView.gameObject)
                     clickedOnPanel = true;
-
+            
             if (!clickedOnPanel)
             {
                 viewInstance.EmojiPanelButton.SetState(false);
@@ -171,8 +173,27 @@ namespace DCL.Chat
                 emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
+        private void ToggleNametagsFromShortcut(InputAction.CallbackContext obj)
+        {
+            nametagsData.showNameTags = !nametagsData.showNameTags;
+
+            if (!nametagsData.showNameTags)
+            {
+                viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(true);
+                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(false);
+            }
+            else
+            {
+                viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!nametagsData.showChatBubbles);
+                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(nametagsData.showChatBubbles);
+            }
+        }
+
         private void OnToggleChatBubblesValueChanged(bool isToggled)
         {
+            if(!nametagsData.showNameTags)
+                return;
+
             viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
             viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
             nametagsData.showChatBubbles = isToggled;
@@ -295,14 +316,6 @@ namespace DCL.Chat
             {
                 item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
-
-                if (entityParticipantTable.Has(itemData.WalletAddress))
-                {
-                    var entity = entityParticipantTable.Entity(itemData.WalletAddress);
-                    Profile profile = world.Get<Profile>(entity);
-                    if(profile.ProfilePicture != null)
-                        itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
-                }
 
                 //temporary approach to extract the username without the walledId, will be refactored
                 //once we have the proper integration of the profile retrieval

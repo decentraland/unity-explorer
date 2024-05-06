@@ -7,7 +7,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
     /// <summary>
     ///     Exception that suspended the scene
     /// </summary>
-    public class SceneExecutionException : AggregateException, IManagedEcsException
+    public class SceneExecutionException : AggregateException, IDecentralandException
     {
         private readonly ReportData reportData;
         private string messagePrefix;
@@ -16,7 +16,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         public ref readonly ReportData ReportData => ref reportData;
 
-        string IManagedEcsException.MessagePrefix
+        string IDecentralandException.MessagePrefix
         {
             set => messagePrefix = value;
         }
