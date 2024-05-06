@@ -21,6 +21,8 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
+        public event Action OnJumpIn;
+
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
@@ -40,7 +42,7 @@ namespace DCL.Navmap
         private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
-           IWebRequestController webRequestController, IRealmNavigator realmNavigator)
+            IWebRequestController webRequestController, IRealmNavigator realmNavigator)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
@@ -121,17 +123,27 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(() => realmNavigator.TeleportToParcelAsync(parcel, cts.Token).Forget());
-                PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
+                view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
+                PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
-                SetFloatingPanelInfo(placeInfo);
+
+                if (placeInfo == null)
+                    SetEmptyParcelInfo(parcel);
+                else
+                    SetFloatingPanelInfo(placeInfo);
             }
-            catch (Exception ex) { SetEmptyParcelInfo(parcel); }
+            catch (Exception) { SetEmptyParcelInfo(parcel); }
             finally
             {
-                if(animationTrigger != -1)
+                if (animationTrigger != -1)
                     view.panelAnimator.SetTrigger(animationTrigger);
             }
+        }
+
+        private void JumpIn(Vector2Int parcel)
+        {
+            OnJumpIn?.Invoke();
+            realmNavigator.TeleportToParcelAsync(parcel, cts.Token).Forget();
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)

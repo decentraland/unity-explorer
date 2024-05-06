@@ -126,18 +126,19 @@ namespace DCL.ExplorePanel
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, ExploreSections shownSection, bool animate)
         {
-            if(isOn && animate && shownSection != lastShownSection)
+            if (isOn && animate && shownSection != lastShownSection)
                 sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
 
             animationCts.SafeCancelAndDispose();
             animationCts = new CancellationTokenSource();
             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
 
-            if (shownSection == lastShownSection)
-                exploreSections[lastShownSection].Activate();
-
             if (isOn)
+            {
+                if (shownSection == lastShownSection)
+                    exploreSections[lastShownSection].Activate();
                 lastShownSection = shownSection;
+            }
         }
 
         private void RegisterHotkeys()

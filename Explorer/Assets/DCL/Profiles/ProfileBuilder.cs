@@ -111,6 +111,12 @@ namespace DCL.Profiles
             this.bodyShape = bodyShape;
             return this;
         }
+        
+        public ProfileBuilder WithVersion(int version)
+        {
+            this.version = version;
+            return this;
+        }
 
         public Profile Build()
         {

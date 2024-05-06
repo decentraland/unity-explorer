@@ -103,7 +103,8 @@ namespace Global
                .Add(SDKComponentBuilder<PBPlayerIdentityData>.Create(ComponentID.PLAYER_IDENTITY_DATA).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarBase>.Create(ComponentID.AVATAR_BASE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarEquippedData>.Create(ComponentID.AVATAR_EQUIPPED_DATA).AsProtobufComponent())
-               .Add(SDKComponentBuilder<PBAvatarEmoteCommand>.Create(ComponentID.AVATAR_EMOTE_COMMAND).AsProtobufComponent());
+               .Add(SDKComponentBuilder<PBAvatarEmoteCommand>.Create(ComponentID.AVATAR_EMOTE_COMMAND).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBRealmInfo>.Create(ComponentID.REALM_INFO).AsProtobufResult());
 
             Transform rootContainer = new GameObject("ROOT_POOL_CONTAINER").transform;
 

@@ -85,7 +85,9 @@ namespace DCL.UI
             for (var i = 0; i < Math.Min(totalPages, MAX_CONCURRENT_SHOWN_PAGES); i++)
             {
                 int pageIndex = startingPage + i;
-                ConfigurePageButton(selectedPage, pageIndex);
+
+                if (pageIndex <= totalPages) //This fixes an issue when clicking on the pages themselves really quick which would basically load non-existent pages
+                    ConfigurePageButton(selectedPage, pageIndex);
             }
         }
 

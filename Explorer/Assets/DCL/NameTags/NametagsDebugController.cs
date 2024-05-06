@@ -1,11 +1,4 @@
-using Arch.Core;
-using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
-using DCL.DebugUtilities.UIBindings;
-using DCL.Diagnostics;
-using ECS.Abstract;
-using System;
 using UnityEngine.UIElements;
 
 namespace DCL.Nametags
@@ -14,7 +7,7 @@ namespace DCL.Nametags
     {
         private readonly NametagsData nametagsData;
 
-        public NametagsDebugController(IDebugContainerBuilder debugBuilder,NametagsData nametagsData)
+        public NametagsDebugController(IDebugContainerBuilder debugBuilder, NametagsData nametagsData)
         {
             this.nametagsData = nametagsData;
 

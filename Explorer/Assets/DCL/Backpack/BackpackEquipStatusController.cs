@@ -73,9 +73,7 @@ namespace DCL.Backpack
         {
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
-                await selfProfile.PublishAsync(ct);
-                var profile = await selfProfile.ProfileAsync(ct);
-
+                var profile = await selfProfile.PublishAsync(ct);
                 // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
                 UpdateAvatarInWorld(profile!);
             }

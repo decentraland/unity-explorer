@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
+using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
@@ -15,6 +16,7 @@ using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DG.Tweening;
+using ECS;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -33,14 +35,19 @@ namespace DCL.Minimap
         private readonly IMapRenderer mapRenderer;
         private readonly IMVCManager mvcManager;
         private readonly IPlacesAPIService placesAPIService;
+        private readonly IRealmData realmData;
+        private readonly IChatMessagesBus chatMessagesBus;
         private CancellationTokenSource cts;
+        private bool isWorld;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
+
         private static readonly int EXPAND = Animator.StringToHash("Expand");
         private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -51,13 +58,17 @@ namespace DCL.Minimap
             IMapRenderer mapRenderer,
             IMVCManager mvcManager,
             IPlacesAPIService placesAPIService,
-            TrackPlayerPositionSystem system
+            TrackPlayerPositionSystem system,
+            IRealmData realmData,
+            IChatMessagesBus chatMessagesBus
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
             this.mvcManager = mvcManager;
             this.placesAPIService = placesAPIService;
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
+            this.realmData = realmData;
+            this.chatMessagesBus = chatMessagesBus;
         }
 
         protected override void OnViewInstantiated()
@@ -66,9 +77,11 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.onClick.AddListener(CollapseMinimap);
             viewInstance.minimapRendererButton.Button.onClick.AddListener(() => mvcManager.ShowAsync(ExplorePanelController.IssueCommand(new ExplorePanelParameter(ExploreSections.Navmap))).Forget());
             viewInstance.sideMenuButton.onClick.AddListener(OpenSideMenu);
+            viewInstance.goToGenesisCityButton.onClick.AddListener(() => chatMessagesBus.Send("/goto 0,0"));
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
+            SetWorldMode(false);
         }
 
         private void ExpandMinimap()
@@ -157,10 +170,23 @@ namespace DCL.Minimap
 
             async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
             {
+                await realmData.WaitConfiguredAsync();
+
                 try
                 {
-                    PlacesData.PlaceInfo placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
-                    viewInstance.placeNameText.text = placeInfo.title;
+                    if (isWorld != realmData.ScenesAreFixed)
+                    {
+                        isWorld = realmData.ScenesAreFixed;
+                        SetWorldMode(realmData.ScenesAreFixed);
+                    }
+
+                    if (realmData.ScenesAreFixed)
+                        viewInstance.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
+                    else
+                    {
+                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
+                        viewInstance.placeNameText.text = placeInfo?.title ?? "Unknown place";
+                    }
                 }
                 catch (NotAPlaceException notAPlaceException)
                 {
@@ -168,8 +194,24 @@ namespace DCL.Minimap
                     ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
-                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
+                finally
+                {
+                    viewInstance.placeCoordinatesText.text = realmData.ScenesAreFixed ?
+                        realmData.RealmName :
+                        playerParcelPosition.ToString().Replace("(", "").Replace(")", "");
+                }
             }
+        }
+
+        private void SetWorldMode(bool isWorldModeActivated)
+        {
+            foreach (GameObject go in viewInstance.objectsToActivateForGenesis)
+                go.SetActive(!isWorldModeActivated);
+
+            foreach (GameObject go in viewInstance.objectsToActivateForWorlds)
+                go.SetActive(isWorldModeActivated);
+
+            viewInstance.minimapAnimator.runtimeAnimatorController = isWorldModeActivated ? viewInstance.worldsAnimatorController : viewInstance.genesisCityAnimatorController;
         }
 
         public override void Dispose()
