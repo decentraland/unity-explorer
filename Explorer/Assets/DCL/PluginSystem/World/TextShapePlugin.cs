@@ -5,55 +5,65 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
-using DCL.SDKComponents.TextShape.Renderer;
-using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
-using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
+using UnityEngine;
 
 namespace DCL.PluginSystem.World
 {
     public class TextShapePlugin : IDCLWorldPlugin
     {
-        private readonly ITextShapeRendererFactory textShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IFontsStorage fontsStorage;
 
-        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
-            instantiationFrameTimeBudgetProvider,
-            componentPoolsRegistry,
-            settingsContainer.GetSettings<FontsSettings>().AsCached()
-        ) { }
+        private readonly MaterialPropertyBlock materialPropertyBlock = new ();
 
-        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
-            new PoolTextShapeRendererFactory(componentPoolsRegistry, fontsStorage),
-            instantiationFrameTimeBudgetProvider,
-            componentPoolsRegistry
-        ) { }
+        // private readonly IComponentPool<ITextShapeRenderer> componentPool;
 
-        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry)
+        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer)
         {
-            this.textShapeRendererFactory = textShapeRendererFactory;
+            fontsStorage = settingsContainer.GetSettings<FontsSettings>().AsCached();
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
+
+            componentPoolsRegistry.AddGameObjectPool<TextMeshPro>();
+
+            // cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<TextMeshPro>());
+            // TextMeshPro CreationHandler()
+            // {
+            //     return GameObjectPool<TextMeshPro>.HandleCreation();
+            //     //
+            //     // var text = new GameObject($"text component: {HashCode.Combine(parent.GetHashCode(), parent.childCount)}");
+            //     // text.transform.SetParent(parent);
+            //     // var tmp = text.AddComponent<TextMeshPro>()!;
+            //     // var renderer = new TMPTextShapeRenderer(tmp, fontsStorage);
+            //     // renderer.Apply(textShape);
+            //     // return renderer;
+            // }
+
         }
+
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
+            UniTask.CompletedTask;
 
         public void Dispose()
         {
             //ignore
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
-
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
-            UpdateTextShapeSystem.InjectToWorld(ref builder);
+            IComponentPool<TextMeshPro> textMeshProPool = componentPoolsRegistry.GetReferenceTypePool<TextMeshPro>();
+
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider);
+            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock);
             VisibilityTextShapeSystem.InjectToWorld(ref builder);
-            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<ITextShapeRenderer, TextShapeRendererComponent>(ref builder, componentPoolsRegistry);
+
+            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
     }
 }

@@ -4,10 +4,10 @@ using DCL.Utilities.Extensions;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Fonts;
-using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.Demo
@@ -27,8 +27,8 @@ namespace DCL.SDKComponents.TextShape.Demo
                     foreach ((PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
                         w.Create(textShape, visibility, billboard, NewTransform());
                 },
-                w => new InstantiateTextShapeSystem(w, new PoolTextShapeRendererFactory(new ComponentPoolsRegistry(), fontsStorage)),
-                w => new UpdateTextShapeSystem(w),
+                // w => new InstantiateTextShapeSystem(w, new GameObjectPool<TextMeshPro>(null)),
+                // w => new UpdateTextShapeSystem(w),
                 w => new VisibilityTextShapeSystem(w));
         }
 

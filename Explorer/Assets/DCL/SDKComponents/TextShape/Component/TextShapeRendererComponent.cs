@@ -1,36 +1,21 @@
-using DCL.ECSComponents;
 using DCL.Optimization.Pools;
-using DCL.SDKComponents.TextShape.Renderer;
 using System;
+using TMPro;
 
 namespace DCL.SDKComponents.TextShape.Component
 {
-    public readonly struct TextShapeRendererComponent : IPoolableComponentProvider<ITextShapeRenderer>
+    public readonly struct TextShapeRendererComponent : IPoolableComponentProvider<TextMeshPro>
     {
-        private readonly ITextShapeRenderer textShape;
+        public readonly TextMeshPro TextMeshPro;
 
-        public TextShapeRendererComponent(ITextShapeRenderer textShape)
-        {
-            this.textShape = textShape;
-        }
+        public TextMeshPro PoolableComponent => TextMeshPro;
+        public Type PoolableComponentType => typeof(TextMeshPro);
 
-        public void Apply(PBTextShape textShape)
+        public TextShapeRendererComponent(TextMeshPro textShape)
         {
-            this.textShape.Apply(textShape);
-        }
-
-        public void ApplyVisibility(bool visibility)
-        {
-            if (visibility)
-                textShape.Show();
-            else
-                textShape.Hide();
+            TextMeshPro = textShape;
         }
 
         public void Dispose() { }
-
-        public ITextShapeRenderer PoolableComponent => textShape;
-
-        public Type PoolableComponentType => typeof(ITextShapeRenderer);
     }
 }

@@ -24,11 +24,11 @@ namespace DCL.SDKComponents.TextShape.System
         }
 
         [Query]
-        private void UpdateVisibility(in TextShapeRendererComponent textShapeRenderer, in PBVisibilityComponent visibility)
+        private void UpdateVisibility(in TextShapeRendererComponent textComponent, in PBVisibilityComponent visibility)
         {
             if (visibility.IsDirty)
             {
-                textShapeRenderer.ApplyVisibility(visibility.GetVisible());
+                textComponent.TextMeshPro.enabled = visibility.GetVisible();
                 visibility.IsDirty = false;
             }
         }
