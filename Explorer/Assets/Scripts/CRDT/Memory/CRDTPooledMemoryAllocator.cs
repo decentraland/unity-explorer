@@ -3,6 +3,7 @@ using DCL.Optimization.ThreadSafePool;
 using DCL.Utilities.Extensions;
 using System;
 using System.Buffers;
+using UnityEngine;
 using UnityEngine.Pool;
 
 namespace CRDT.Memory
@@ -55,12 +56,16 @@ namespace CRDT.Memory
             try
             {
                 byte[] byteArray = arrayPool.Rent(length)!;
-                originalStream.Span.Slice(shift, length).CopyTo(byteArray.AsSpan());
+                int copyLength = Mathf.Min(originalStream.Length, length);
+                originalStream.Span.Slice(shift, copyLength).CopyTo(byteArray.AsSpan());
                 MemoryOwner memoryOwner = memoryOwnerPool.Get()!;
                 memoryOwner.Set(byteArray, length);
                 return memoryOwner;
             }
-            catch (Exception e) { throw new Exception($"Cannot provide MemoryBuffer originalStreamSize: {originalStream.Length} with shift: {shift} with length: {length}", e); }
+            catch (Exception e)
+            {
+                throw new Exception($"Cannot provide MemoryBuffer originalStreamSize: {originalStream.Length} with shift: {shift} with length: {length}", e);
+            }
         }
 
         private class MemoryOwner : IMemoryOwner<byte>
