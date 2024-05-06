@@ -153,7 +153,7 @@ namespace DCL.PluginSystem.Global
                     sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes, thumbnailProvider);
 
                 var emotesController = new EmotesController(emoteView,
-                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityInfoPanelBackgroundsMapping));
+                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping));
 
                 var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
                     characterPreviewFactory, backpackEventBus, world, equippedEmotes);
@@ -161,7 +161,7 @@ namespace DCL.PluginSystem.Global
                 backpackController = new BackpackController(
                     view,
                     avatarView,
-                    rarityInfoPanelBackgroundsMapping,
+                    rarityBackgroundsMapping,
                     backpackCommandBus,
                     backpackEventBus,
                     gridController,

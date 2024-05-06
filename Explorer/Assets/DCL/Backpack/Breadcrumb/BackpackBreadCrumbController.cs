@@ -1,3 +1,4 @@
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using System;
 using UnityEngine;
@@ -67,7 +68,7 @@ namespace DCL.Backpack.Breadcrumb
             {
                 view.FilterButton.gameObject.SetActive(true);
                 view.FilterButton.Icon.sprite = categoryIcons.GetTypeImage(category.ToLower());
-                view.FilterButton.CategoryName.text = category;
+                view.FilterButton.CategoryName.text = WearablesConstants.READABLE_CATEGORIES[category.ToLower()];
                 SetAllButtonColor(false);
             }
         }
