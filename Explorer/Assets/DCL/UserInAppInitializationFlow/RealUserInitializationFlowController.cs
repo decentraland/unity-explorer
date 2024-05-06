@@ -81,7 +81,7 @@ namespace DCL.UserInAppInitializationFlow
 
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
         }
-
+        
         private async UniTask LoadCharacterAndWorldAsync(AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
         {
             Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
@@ -99,9 +99,8 @@ namespace DCL.UserInAppInitializationFlow
                 = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             parentLoadReport.SetProgress(loadingStatus.SetStage(PlayerTeleported));
-
+                    
             parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
-            parentLoadReport.CompletionSource.TrySetResult();
         }
 
         /// <summary>

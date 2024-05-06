@@ -51,7 +51,6 @@ namespace Global.Dynamic
 
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
-        private RealFlowLoadingStatus loadingStatus;
 
 
         public RealmNavigator(
@@ -101,7 +100,6 @@ namespace Global.Dynamic
             {
                 await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
-                        loadingStatus = new RealFlowLoadingStatus();
                         ct.ThrowIfCancellationRequested();
 
                         remoteEntities.ForceRemoveAll(world);
@@ -111,20 +109,20 @@ namespace Global.Dynamic
                         world.Remove<CameraSamplingData>(cameraEntity.Object);
 
                         await ChangeRealm(realm, ct);
-                        parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
+                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
 
                         var landscapeLoadReport
                             = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
                         await LoadTerrainAsync(landscapeLoadReport, ct);
-                        parentLoadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
+                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
 
                         var teleportLoadReport
                             = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
                         await InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, parcelToTeleport);
-                        parentLoadReport.SetProgress(loadingStatus.SetStage(PlayerTeleported));
+                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
                         
                         await roomHub.StartAsync();
-                        parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
+                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
                     },
                     ct
                 );
@@ -163,17 +161,17 @@ namespace Global.Dynamic
                 }
                 else
                 {
-                    await loadingScreen.ShowWhileExecuteTaskAsync(async loadReport =>
+                    await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
                         ct.ThrowIfCancellationRequested();
-                        loadingStatus = new RealFlowLoadingStatus();
+                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
 
-                        loadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
-                        var waitForSceneReadiness = await TeleportToParcelAsync(parcel, loadReport, ct);
+                        var teleportLoadReport
+                            = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+                        var waitForSceneReadiness = await TeleportToParcelAsync(parcel, teleportLoadReport, ct);
                         await waitForSceneReadiness;
 
-                        loadReport.SetProgress(loadingStatus.SetStage(Completed));
-                        loadReport.CompletionSource.TrySetResult();
+                        parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[Completed]);
                     }, ct);
                 }
             }

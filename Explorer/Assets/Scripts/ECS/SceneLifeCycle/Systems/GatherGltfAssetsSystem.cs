@@ -113,7 +113,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (concluded)
                 {
                     for (var i = 0; i < reports.Value.Count; i++)
-                        reports.Value[i].CompletionSource.TrySetResult();
+                        reports.Value[i].SetProgress(1f);
 
                     reports.Value.Dispose();
                     reports = null;
