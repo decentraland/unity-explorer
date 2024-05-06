@@ -87,14 +87,14 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
             cameraModeBeforeLastAreaEnter = camera.Mode;
             camera.Mode = targetCameraMode;
-            camera.AddCameraInputLock(this);
+            camera.AddCameraInputLock();
         }
 
         internal void OnExitedCameraModeArea()
         {
             ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
 
-            camera.RemoveCameraInputLock(this);
+            camera.RemoveCameraInputLock();
 
             // If there are more locks then there is another newer camera mode area in place
             if (camera.CameraInputChangeEnabled)

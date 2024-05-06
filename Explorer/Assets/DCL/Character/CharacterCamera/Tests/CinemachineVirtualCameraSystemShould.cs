@@ -186,7 +186,7 @@ namespace DCL.CharacterCamera.Tests
 
             // lock camera mode input
             CameraComponent component = world.Get<CameraComponent>(entity);
-            component.AddCameraInputLock(system);
+            component.AddCameraInputLock();
             world.Set(entity, component);
 
             system.Update(1);
@@ -194,7 +194,7 @@ namespace DCL.CharacterCamera.Tests
             Assert.That(world.Get<CinemachineCameraState>(entity).CurrentCamera, Is.EqualTo(thirdPersonCameraData.Camera));
 
             // unlock camera mode input
-            component.RemoveCameraInputLock(system);
+            component.RemoveCameraInputLock();
             world.Set(entity, component);
 
             system.Update(1);
@@ -216,7 +216,7 @@ namespace DCL.CharacterCamera.Tests
             {
                 // Input that would take it to 'First Person'
                 world.Set(entity, new CameraInput { ZoomIn = true });
-                component.AddCameraInputLock(system);
+                component.AddCameraInputLock();
             }
 
             world.Set(entity, component);
