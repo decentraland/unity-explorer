@@ -22,8 +22,6 @@ namespace DCL.PluginSystem.World
 
         private readonly MaterialPropertyBlock materialPropertyBlock = new ();
 
-        // private readonly IComponentPool<ITextShapeRenderer> componentPool;
-
         public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer)
         {
             fontsStorage = settingsContainer.GetSettings<FontsSettings>().AsCached();
@@ -31,20 +29,6 @@ namespace DCL.PluginSystem.World
             this.componentPoolsRegistry = componentPoolsRegistry;
 
             componentPoolsRegistry.AddGameObjectPool<TextMeshPro>();
-
-            // cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<TextMeshPro>());
-            // TextMeshPro CreationHandler()
-            // {
-            //     return GameObjectPool<TextMeshPro>.HandleCreation();
-            //     //
-            //     // var text = new GameObject($"text component: {HashCode.Combine(parent.GetHashCode(), parent.childCount)}");
-            //     // text.transform.SetParent(parent);
-            //     // var tmp = text.AddComponent<TextMeshPro>()!;
-            //     // var renderer = new TMPTextShapeRenderer(tmp, fontsStorage);
-            //     // renderer.Apply(textShape);
-            //     // return renderer;
-            // }
-
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
