@@ -3,6 +3,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
+using System;
 using UnityEngine;
 using System.Threading;
 using Utility;
@@ -203,14 +204,19 @@ namespace DCL.Audio
 
         private MovementKind GetMovementState()
         {
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Jog)
-                return MovementKind.Run;
+            int movementType = AvatarAnimator.GetInteger(AnimationHashes.MOVEMENT_TYPE);
+            float movementBlend = AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND);
 
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > (int)MovementKind.Walk)
-                return MovementKind.Jog;
-
-            if (AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND) > AvatarAudioSettings.MovementBlendThreshold)
-                return MovementKind.Walk;
+            if (movementBlend > AvatarAudioSettings.MovementBlendThreshold)
+            {
+                return movementType switch
+                       {
+                           (int)MovementKind.Run => MovementKind.Run,
+                           (int)MovementKind.Jog => MovementKind.Jog,
+                           (int)MovementKind.Walk => MovementKind.Walk,
+                           _ => MovementKind.None
+                       };
+            }
 
             return MovementKind.None;
         }
