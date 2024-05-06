@@ -140,12 +140,6 @@ namespace DCL.Minimap
                 mapRendererTrackPlayerPosition.OnPlayerPositionChanged(position);
                 GetPlaceInfoAsync(position);
             }
-
-            if (realmData.Configured && isWorld != realmData.ScenesAreFixed)
-            {
-                isWorld = realmData.ScenesAreFixed;
-                SetWorldMode(realmData.ScenesAreFixed);
-            }
         }
 
         protected override void OnBlur()
@@ -176,10 +170,23 @@ namespace DCL.Minimap
 
             async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
             {
+                await realmData.WaitConfiguredAsync();
+
                 try
                 {
-                    PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
-                    viewInstance.placeNameText.text = placeInfo?.title ?? "Unknown place";
+                    if (isWorld != realmData.ScenesAreFixed)
+                    {
+                        isWorld = realmData.ScenesAreFixed;
+                        SetWorldMode(realmData.ScenesAreFixed);
+                    }
+
+                    if (realmData.ScenesAreFixed)
+                        viewInstance.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
+                    else
+                    {
+                        PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
+                        viewInstance.placeNameText.text = placeInfo?.title ?? "Unknown place";
+                    }
                 }
                 catch (NotAPlaceException notAPlaceException)
                 {
@@ -187,7 +194,12 @@ namespace DCL.Minimap
                     ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
-                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
+                finally
+                {
+                    viewInstance.placeCoordinatesText.text = realmData.ScenesAreFixed ?
+                        realmData.RealmName :
+                        playerParcelPosition.ToString().Replace("(", "").Replace(")", "");
+                }
             }
         }
 
