@@ -43,9 +43,6 @@
             "m_Id": "8e4b3bc980134c59b5c5bb6ac151d926"
         },
         {
-            "m_Id": "fa57b8f6a2c147dca313f4137658221e"
-        },
-        {
             "m_Id": "e899f40836bb44a0814135edd780807d"
         },
         {
@@ -8495,9 +8492,6 @@
             "m_Id": "741cbf96ba9a47b38e07b38285792afe"
         },
         {
-            "m_Id": "fa57b8f6a2c147dca313f4137658221e"
-        },
-        {
             "m_Id": "8e4b3bc980134c59b5c5bb6ac151d926"
         },
         {
@@ -10016,7 +10010,7 @@
     "m_Type": "UnityEditor.ShaderGraph.CubemapMaterialSlot",
     "m_ObjectId": "7170bd228fec4b5a8cc1f1e428a0eff7",
     "m_Id": 0,
-    "m_DisplayName": "FarCloudsCubemap",
+    "m_DisplayName": "Clouds Cubemap",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -11901,10 +11895,10 @@
     "m_Guid": {
         "m_GuidSerialized": "3802cf45-c7b8-4e84-8284-671bdfc7f19a"
     },
-    "m_Name": "FarCloudsCubemap",
+    "m_Name": "Clouds Cubemap",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "FarCloudsCubemap",
-    "m_DefaultReferenceName": "_FarCloudsCubemap",
+    "m_RefNameGeneratedByDisplayName": "Clouds Cubemap",
+    "m_DefaultReferenceName": "_Clouds_Cubemap",
     "m_OverrideReferenceName": "",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -19847,33 +19841,6 @@
     "m_Value": 30.0,
     "m_DefaultValue": 500.0,
     "m_Labels": []
-}
-
-{
-    "m_SGVersion": 0,
-    "m_Type": "UnityEditor.ShaderGraph.Internal.CubemapShaderProperty",
-    "m_ObjectId": "fa57b8f6a2c147dca313f4137658221e",
-    "m_Guid": {
-        "m_GuidSerialized": "495a696e-6a31-44ff-83e8-090d6de1cde0"
-    },
-    "m_Name": "NearCloudsCubemap",
-    "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "NearCloudsCubemap",
-    "m_DefaultReferenceName": "_NearCloudsCubemap",
-    "m_OverrideReferenceName": "",
-    "m_GeneratePropertyBlock": true,
-    "m_UseCustomSlotLabel": false,
-    "m_CustomSlotLabel": "",
-    "m_DismissedVersion": 0,
-    "m_Precision": 0,
-    "overrideHLSLDeclaration": false,
-    "hlslDeclarationOverride": 0,
-    "m_Hidden": false,
-    "m_Value": {
-        "m_SerializedCubemap": "{\"cubemap\":{\"fileID\":8900000,\"guid\":\"2ce54c3d253997e4e85dc6ccdc723631\",\"type\":3}}",
-        "m_Guid": ""
-    },
-    "m_Modifiable": true
 }
 
 {
