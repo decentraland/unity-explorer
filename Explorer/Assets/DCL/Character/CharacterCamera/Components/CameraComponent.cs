@@ -12,6 +12,7 @@ namespace DCL.CharacterCamera
         public CameraMode Mode;
         public ThirdPersonCameraShoulder Shoulder;
         public readonly Camera Camera;
+        private readonly HashSet<object> cameraInputLocks;
 
         public CameraComponent(Camera camera) : this()
         {
@@ -19,9 +20,12 @@ namespace DCL.CharacterCamera
             cameraInputLocks = new HashSet<object>();
         }
 
-        private readonly HashSet<object> cameraInputLocks;
-        public bool CameraInputChangeEnabled => cameraInputLocks.Count == 0;
         public Transform PlayerFocus { get; set; }
+
+        public bool CameraInputChangeEnabled => GetInputLocks().Count == 0;
+
+        private HashSet<object> GetInputLocks() =>
+            cameraInputLocks ?? new HashSet<object>();
 
         public void AddCameraInputLock(object context)
         {
