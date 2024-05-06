@@ -15,24 +15,27 @@ namespace DCL.SDKComponents.RealmInfo
     public partial class WriteRealmInfoSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ObjectProxy<IRealmData> realmDataProxy;
+        private readonly IRealmData realmData;
         private readonly ObjectProxy<IRoomHub> roomHubProxy;
+        private bool initialized = false;
 
-        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, ObjectProxy<IRealmData> realmDataProxy, ObjectProxy<IRoomHub> roomHubProxy) : base(world)
+        internal WriteRealmInfoSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, IRealmData realmData, ObjectProxy<IRoomHub> roomHubProxy) : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
-            this.realmDataProxy = realmDataProxy;
+            this.realmData = realmData;
             this.roomHubProxy = roomHubProxy;
         }
 
         public override void Initialize()
         {
+            if (!realmData.Configured) return;
+
             PropagateToScene();
         }
 
         protected override void Update(float t)
         {
-            if (!realmDataProxy.Object!.IsDirty)
+            if (initialized && !realmData.IsDirty)
                 return;
 
             PropagateToScene();
@@ -40,6 +43,8 @@ namespace DCL.SDKComponents.RealmInfo
 
         private void PropagateToScene()
         {
+            initialized = true;
+
             ecsToCRDTWriter.PutMessage<PBRealmInfo, (IRealmData realmData, IRoomHub roomHub)>(static (component, data) =>
             {
                 component.BaseUrl = data.realmData.Ipfs.CatalystBaseUrl.Value;
@@ -51,7 +56,7 @@ namespace DCL.SDKComponents.RealmInfo
                 component.Room = string.IsNullOrEmpty(room) ? string.Empty : room;
                 // component.IsPreview // TODO: when E@ supports running in preview mode
 
-            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (realmDataProxy.Object, roomHubProxy.Object));
+            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, (realmData, roomHubProxy.Object));
         }
     }
 }

@@ -39,9 +39,6 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             ipfsRealm.CatalystBaseUrl.Returns(URLDomain.FromString("https://yog/sothot/content/"));
             realmData.Ipfs.Returns(ipfsRealm);
 
-            ObjectProxy<IRealmData> realmDataProxy = new ObjectProxy<IRealmData>();
-            realmDataProxy.SetObject(realmData);
-
             roomHub = Substitute.For<IRoomHub>();
             IRoom islandRoom = Substitute.For<IRoom>();
             IRoomInfo roomInfo = Substitute.For<IRoomInfo>();
@@ -52,7 +49,7 @@ namespace DCL.SDKComponents.RealmInfo.Tests
             ObjectProxy<IRoomHub> roomHubProxy = new ObjectProxy<IRoomHub>();
             roomHubProxy.SetObject(roomHub);
 
-            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmDataProxy, roomHubProxy);
+            system = new WriteRealmInfoSystem(world, ecsToCRDTWriter, realmData, roomHubProxy);
         }
 
         [TearDown]
