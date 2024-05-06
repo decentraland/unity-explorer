@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.Animator.Components
 
         public SDKAnimationState(PBAnimationState pbAnimationState)
         {
-            Clip = pbAnimationState.Clip;
+            Clip = pbAnimationState.Clip!;
             Playing = pbAnimationState.Playing;
             Weight = pbAnimationState.GetWeight();
             Speed = pbAnimationState.GetSpeed();

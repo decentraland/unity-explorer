@@ -9,10 +9,8 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Groups;
-using Google.Protobuf.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Animator.Systems
 {
@@ -39,7 +37,6 @@ namespace DCL.SDKComponents.Animator.Systems
             World.Remove<SDKAnimatorComponent>(in HandleComponentRemoval_QueryDescription);
         }
 
-
         [Query]
         [None(typeof(SDKAnimatorComponent))]
         private void LoadAnimator(in Entity entity, ref PBAnimator pbAnimator, ref GltfContainerComponent gltfContainerComponent)
@@ -49,49 +46,33 @@ namespace DCL.SDKComponents.Animator.Systems
             if (gltfContainerComponent.Promise is not { Result: { } }) return;
             if (gltfContainerComponent.Promise.Result.Value.Asset.Animations.Count == 0) return;
 
-            foreach (Animation animation in gltfContainerComponent.Promise.Result.Value.Asset.Animations) { InitializeAnimation(animation); }
+            foreach (Animation animation in gltfContainerComponent.Promise.Result.Value.Asset.Animations)
+                InitializeAnimation(animation);
 
-            List<SDKAnimationState> sdkAnimationStates = ListPool<SDKAnimationState>.Get();
-
-            for (var i = 0; i < pbAnimator.States.Count; i++)
-            {
-                PBAnimationState pbAnimationState = pbAnimator.States[i];
-                var sdkAnimationState = new SDKAnimationState(pbAnimationState);
-                sdkAnimationStates.Add(sdkAnimationState);
-            }
-
-            var sdkAnimatorComponent = new SDKAnimatorComponent(sdkAnimationStates)
-                {
-                    IsDirty = true,
-                };
+            var sdkAnimatorComponent = new SDKAnimatorComponent(pbAnimator);
 
             World.Add(entity, sdkAnimatorComponent);
+
             //The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
             //or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
             pbAnimator.IsDirty = false;
         }
 
         [Query]
-        private void UpdateAnimator(ref PBAnimator pbAnimator, ref SDKAnimatorComponent sdkAnimatorComponent)
+        //TODO remove entity passing
+        private void UpdateAnimator(in Entity entity, ref PBAnimator pbAnimator, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
             if (!pbAnimator.IsDirty) return;
 
             sdkAnimatorComponent.IsDirty = true;
             pbAnimator.IsDirty = false;
-            List<SDKAnimationState> sdkAnimationStates = sdkAnimatorComponent.SDKAnimationStates;
-            sdkAnimationStates.Clear();
+            sdkAnimatorComponent.ClearStateAndApply(pbAnimator.States);
 
-            RepeatedField<PBAnimationState> pbAnimatorStates = pbAnimator.States;
-
-            for (var i = 0; i < pbAnimatorStates.Count; i++)
-            {
-                var sdkAnimationState = new SDKAnimationState(pbAnimatorStates[i]);
-                sdkAnimationStates.Add(sdkAnimationState);
-            }
+            //error with wrong data parsing to sdkAnimatorComponent
         }
 
         [Query]
-        private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
+        private void UpdateAnimationState(in Entity entity, ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (sdkAnimatorComponent.IsDirty)
             {
@@ -101,7 +82,7 @@ namespace DCL.SDKComponents.Animator.Systems
                 for (var i = 0; i < gltfAnimations.Count; i++)
                 {
                     Animation animation = gltfAnimations[i];
-                    SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animation);
+                    SetAnimationState(entity.Id, sdkAnimatorComponent.SDKAnimationStates, animation);
                 }
             }
         }
@@ -110,7 +91,7 @@ namespace DCL.SDKComponents.Animator.Systems
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDeletion(ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
+            sdkAnimatorComponent.Dispose();
         }
 
         [Query]
@@ -119,11 +100,11 @@ namespace DCL.SDKComponents.Animator.Systems
         {
             //If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
 
-            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
+            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset!.Animations;
 
             foreach (Animation animation in gltfAnimations) { InitializeAnimation(animation); }
 
-            ListPool<SDKAnimationState>.Release(sdkAnimatorComponent.SDKAnimationStates);
+            sdkAnimatorComponent.Dispose();
         }
 
         private static void InitializeAnimation(Animation animation)
@@ -147,7 +128,8 @@ namespace DCL.SDKComponents.Animator.Systems
             }
         }
 
-        private static void SetAnimationState(IList<SDKAnimationState> sdkAnimationStates, Animation animation)
+        //TODO remove entity passing
+        private static void SetAnimationState(int entityId, IReadOnlyList<SDKAnimationState> sdkAnimationStates, Animation animation)
         {
             if (sdkAnimationStates.Count == 0)
                 return;
@@ -174,6 +156,8 @@ namespace DCL.SDKComponents.Animator.Systems
                     //Manually sample the animation. If the reset is not played again the frame 0 wont be applied
                     animationState.clip.SampleAnimation(animation.gameObject, 0);
                 }
+
+                ReportHub.Log(ReportData.UNSPECIFIED, $"Entity animation update: id {entityId}, clip {sdkAnimationState.Clip}");
 
                 if (sdkAnimationState.Playing && !animation.IsPlaying(sdkAnimationState.Clip))
                     animation.Play(sdkAnimationState.Clip);
