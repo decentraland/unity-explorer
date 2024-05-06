@@ -5,15 +5,13 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
-using ECS.Groups;
-using ECS.Unity.Transforms.Systems;
+using ECS.Unity.Groups;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.System
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(InstantiateTextShapeSystem))]
-    [UpdateBefore(typeof(ParentingTransformSystem))]
     public partial class UpdateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly IFontsStorage fontsStorage;

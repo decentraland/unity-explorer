@@ -29,17 +29,17 @@ namespace DCL.SDKComponents.TextShape
             // to fix textWrapping and avoid backwards compatibility issues as result of the size being properly set (like text alignment) we only set it if textWrapping is enabled.
             float width = textShape.HasWidth ? textShape.Width : 1f;
             float height = textShape.HasHeight ? textShape.Height : 0.2f;
-            // rectTransform.rect.Set(0, 0, width, height);
+            tmpText.rectTransform.rect.Set(0, 0, width, height);
 
             tmpText.rectTransform.sizeDelta = textShape.TextWrapping ? new Vector2(width, height) : Vector2.zero;
 
             tmpText.text = textShape.Text;
 
             tmpText.color = textShape.TextColor?.ToUnityColor() ?? Color.white;
-            if (textShape.HasFontSize) tmpText.fontSize = (int)textShape.FontSize; // in unity-renderer the default font size is 100
+            tmpText.fontSize = textShape.HasFontSize? (int)textShape.FontSize : 10; // in unity-renderer the default font size is 100
             tmpText.richText = true;
             tmpText.overflowMode = TextOverflowModes.Overflow;
-            tmpText.enableAutoSizing = textShape.HasFontSize ? textShape.FontAutoSize : tmpText.fontSize == 0;
+            tmpText.enableAutoSizing = textShape.HasFontAutoSize ? textShape.FontAutoSize : tmpText.fontSize == 0;
 
             tmpText.margin = new Vector4(
                 (int)textShape.PaddingLeft,
@@ -48,7 +48,7 @@ namespace DCL.SDKComponents.TextShape
                 (int)textShape.PaddingBottom
             );
 
-            tmpText.alignment = textShape.HasTextAlign ? TextAlignmentOptions(textShape.TextAlign) : TMPro.TextAlignmentOptions.BottomLeft;
+            tmpText.alignment = textShape.HasTextAlign ? TextAlignmentOptions(textShape.TextAlign) : TMPro.TextAlignmentOptions.Center;
             tmpText.lineSpacing = textShape.HasLineSpacing ? textShape.LineSpacing : 0f;
 
             tmpText.maxVisibleLines = textShape.HasLineCount && textShape.LineCount != 0 ? Mathf.Max(textShape.LineCount, 1) : int.MaxValue;

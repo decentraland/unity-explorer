@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using ECS.Abstract;
@@ -11,7 +10,7 @@ using ECS.Unity.Visibility;
 namespace DCL.SDKComponents.TextShape.System
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [ThrottlingEnabled]
+    [UpdateAfter(typeof(UpdateTextShapeSystem))]
     public partial class VisibilityTextShapeSystem : BaseUnityLoopSystem
     {
         public VisibilityTextShapeSystem(World world) : base(world)

@@ -7,16 +7,14 @@ using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
-using ECS.Groups;
+using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
-using ECS.Unity.Transforms.Systems;
 using TMPro;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.System
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateAfter(typeof(ParentingTransformSystem))]
+    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     public partial class InstantiateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
@@ -41,7 +39,8 @@ namespace DCL.SDKComponents.TextShape.System
         [None(typeof(TextShapeRendererComponent))]
         private void InstantiateRemaining(in Entity entity, in TransformComponent transform, in PBTextShape textShape)
         {
-            if (instantiationFrameTimeBudget.TrySpendBudget() == false) return;
+            if (instantiationFrameTimeBudget.TrySpendBudget() == false)
+                return;
 
             var textMeshPro = textMeshProPool.Get();
             textMeshPro.transform.SetParent(transform.Transform, worldPositionStays: false);
