@@ -35,11 +35,6 @@ namespace DCL.AvatarRendering.Emotes
         public bool Play(GameObject mainAsset, AudioClip? audioAsset, bool isLooping, bool isSpatial, in IAvatarView view,
             ref CharacterEmoteComponent emoteComponent)
         {
-            Animator animator = mainAsset.GetComponent<Animator>();
-
-            if (animator == null)
-                return false;
-
             EmoteReferences? emoteInUse = emoteComponent.CurrentEmoteReference;
 
             if (emoteInUse != null)

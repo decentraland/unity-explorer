@@ -23,7 +23,6 @@ namespace DCL.Backpack
     {
         private readonly BackpackView view;
         private readonly BackpackCommandBus backpackCommandBus;
-        private readonly BackpackEventBus backpackEventBus;
         private readonly BackpackInfoPanelController emoteInfoPanelController;
         private readonly RectTransform rectTransform;
         private readonly AvatarController avatarController;
@@ -35,6 +34,7 @@ namespace DCL.Backpack
         private readonly Dictionary<BackpackSections, ISection> backpackSections;
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
+        private readonly BackpackEventBus backpackEventBus;
         private BackpackSections lastShownSection;
 
         private CancellationTokenSource? animationCts;
@@ -102,7 +102,7 @@ namespace DCL.Backpack
 
                         if (isOn)
                         {
-                            backpackEventBus.SendChangedBackpackSectionEvent(currentSection);
+                            backpackEventBus.SendChangedBackpackSectionEvent(section);
                         }
                     }
                 );
@@ -123,7 +123,10 @@ namespace DCL.Backpack
             sectionSelectorController.OnTabSelectorToggleValueChangedAsync(isOn, tabSelectorView, shownSection, animationCts.Token, animate).Forget();
 
             if (isOn)
+            {
                 lastShownSection = shownSection;
+                backpackEventBus.SendChangedBackpackSectionEvent(shownSection);
+            }
         }
 
         public void Dispose()
@@ -205,6 +208,8 @@ namespace DCL.Backpack
 
             view.gameObject.SetActive(false);
             backpackCharacterPreviewController.OnHide();
+
+            backpackEventBus.SendBackpackDeactivateEvent();
         }
 
         public void Animate(int triggerId)

@@ -163,6 +163,7 @@ namespace DCL.CharacterPreview
                 previewController?.Dispose();
                 previewController = null;
                 initialized = false;
+
             }
         }
 
@@ -195,6 +196,11 @@ namespace DCL.CharacterPreview
             var spinner = view.Spinner;
             spinner.SetActive(true);
             return spinner;
+        }
+
+        public void StopEmotes()
+        {
+            previewController?.StopEmotes();
         }
 
         protected void PlayEmote(string emoteId) =>
