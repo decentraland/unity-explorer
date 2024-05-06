@@ -9,6 +9,7 @@ using DCL.CharacterPreview;
 using DCL.UI;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace DCL.Backpack.CharacterPreview
 {
@@ -16,6 +17,7 @@ namespace DCL.Backpack.CharacterPreview
     {
         private readonly BackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
+        private CancellationTokenSource? emotePreviewCancellationToken;
 
         public BackpackCharacterPreviewController(CharacterPreviewView view,
             ICharacterPreviewFactory previewFactory,
@@ -41,6 +43,8 @@ namespace DCL.Backpack.CharacterPreview
         private void OnDeactivate()
         {
             StopEmotes();
+
+            emotePreviewCancellationToken.SafeCancelAndDispose();
         }
 
         private void OnBackpackSectionChanged(BackpackSections backpackSection)
@@ -75,6 +79,8 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.FilterCategoryByEnumEvent -= OnChangeCategory;
             backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
+
+            emotePreviewCancellationToken.SafeCancelAndDispose();
         }
 
         private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
@@ -153,7 +159,8 @@ namespace DCL.Backpack.CharacterPreview
                 PlayEmote(urn);
             }
 
-            EnsureEmoteAndPlayItAsync(CancellationToken.None).Forget();
+            emotePreviewCancellationToken = emotePreviewCancellationToken.SafeRestart();
+            EnsureEmoteAndPlayItAsync(emotePreviewCancellationToken.Token).Forget();
         }
     }
 }
