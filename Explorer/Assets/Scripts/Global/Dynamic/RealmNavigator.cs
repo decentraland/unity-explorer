@@ -118,6 +118,7 @@ namespace Global.Dynamic
                         loadReport.ProgressCounter.Value = loadingStatus.SetStage(PlayerTeleported);
                         await roomHub.StartAsync();
                         loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
+                        loadReport.CompletionSource.TrySetResult();
 
                         //TODO (JUANI): One extra frame needed to allow initialization of cached objects 
                         // (IE: Genesis Plaza LOD_0)
@@ -168,7 +169,9 @@ namespace Global.Dynamic
                         loadReport.ProgressCounter.Value = loadingStatus.SetStage(LandscapeLoaded);
                         var waitForSceneReadiness = await TeleportToParcelAsync(parcel, loadReport, ct);
                         await waitForSceneReadiness;
+                        
                         loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
+                        loadReport.CompletionSource.TrySetResult();
                     }, ct);
                 }
             }
