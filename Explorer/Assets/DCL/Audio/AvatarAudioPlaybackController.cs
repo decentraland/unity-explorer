@@ -3,7 +3,6 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using JetBrains.Annotations;
-using System;
 using UnityEngine;
 using System.Threading;
 using Utility;
@@ -19,6 +18,7 @@ namespace DCL.Audio
 
         private CancellationTokenSource? cancellationTokenSource;
         private bool playingContinuousAudio;
+        private bool hasJumped;
 
         private void Start()
         {
@@ -41,19 +41,26 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayJumpSound()
         {
+            if (hasJumped) return;
+
             switch (GetMovementState())
             {
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play JUMP Sound type {MovementKind.Walk}");
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartJog);
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play JUMP Sound type {MovementKind.Jog}");
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartRun);
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play JUMP Sound type {MovementKind.Run}");
                     break;
             }
+
+            hasJumped = true;
         }
 
         [PublicAPI("Used by Animation Events")]
@@ -61,15 +68,20 @@ namespace DCL.Audio
         {
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
 
+            hasJumped = false;
+
             switch (GetMovementState())
             {
                 case MovementKind.Walk:
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play Step Sound type {MovementKind.Walk}");
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
                     break;
                 case MovementKind.Jog:
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play Step Sound type {MovementKind.Jog}");
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
                     break;
                 case MovementKind.Run:
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play Step Sound type {MovementKind.Run}");
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
                     break;
             }
@@ -78,18 +90,25 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayLandSound()
         {
+            if (!hasJumped) return;
+
+            hasJumped = false;
+
             //We stop the looping sounds of the audioSource in case there was any.
             switch (GetMovementState())
             {
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play LAND Sound type {MovementKind.Walk}");
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandJog);
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play LAND Sound type {MovementKind.Jog}");
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
+                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play LAND Sound type {MovementKind.Run}");
                     break;
             }
         }
