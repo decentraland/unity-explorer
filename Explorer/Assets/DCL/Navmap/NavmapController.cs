@@ -113,7 +113,7 @@ namespace DCL.Navmap
             lastParcelHovered = Vector2.zero;
 
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
-            navmapView.WorldsWarningNotificationView.gameObject.SetActive(false);
+            navmapView.WorldsWarningNotificationView.Hide();
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, NavmapSections shownSection, bool animate)
@@ -178,12 +178,17 @@ namespace DCL.Navmap
             sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
 
             if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
-                navmapView.WorldsWarningNotificationView.gameObject.SetActive(realmData is { Configured: true, ScenesAreFixed: true });
+            {
+                if (realmData.Configured && realmData.ScenesAreFixed)
+                    navmapView.WorldsWarningNotificationView.Show();
+                else
+                    navmapView.WorldsWarningNotificationView.Hide();
+            }
         }
 
         public void Deactivate()
         {
-            navmapView.WorldsWarningNotificationView.gameObject.SetActive(false);
+            navmapView.WorldsWarningNotificationView.Hide();
 
             foreach (ISection mapSectionsValue in mapSections.Values)
                 mapSectionsValue.Deactivate();
