@@ -11,7 +11,7 @@ namespace ECS.StreamableLoading.AssetBundles
 {
     public abstract class PrepareAssetBundleLoadingParametersSystemBase : BaseUnityLoopSystem
     {
-        private static readonly string[] COMMON_SHADERS = { "dcl/scene_ignore_windows" };
+        private static readonly string[] COMMON_SHADERS = { "dcl/scene_ignore_windows", "dcl/scene_ignore_mac" };
 
         private readonly URLDomain streamingAssetURL;
 
