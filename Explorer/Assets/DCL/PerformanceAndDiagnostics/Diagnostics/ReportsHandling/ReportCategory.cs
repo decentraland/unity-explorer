@@ -267,6 +267,8 @@
         /// </summary>
         public const string PLUGINS = nameof(PLUGINS);
 
+        public const string POOLS = nameof(POOLS);
+
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>

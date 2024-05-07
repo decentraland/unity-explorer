@@ -1,4 +1,5 @@
 ﻿using Arch.SystemGroups;
+using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling.Systems;
@@ -19,10 +20,14 @@ namespace DCL.PluginSystem.World
         public TransformsPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
+
             componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
             {
                 transform.ResetLocalTRS();
                 transform.gameObject.layer = 0;
+
+                if (transform.childCount != 0)
+                    ReportHub.LogError(ReportCategory.POOLS, $"Returned a transform with {transform.childCount} children to the pool. GameObject name: {transform.name}");
             });
         }
 
