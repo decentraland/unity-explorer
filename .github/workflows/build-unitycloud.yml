@@ -53,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r cloudbuild/requirements.txt
+          pip install -r scripts/cloudbuild/requirements.txt
 
       - name: Execute Unity Cloud build
         env:
@@ -61,7 +61,7 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           TARGET: windows64
-        run: python cloudbuild/build.py
+        run: python scripts/cloudbuild/build.py
 
 #      - name: Build with Unity Cloud Build
 #        uses: condensereality/UnityCloudBuildAction@main
