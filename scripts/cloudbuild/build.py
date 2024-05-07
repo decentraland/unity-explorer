@@ -8,8 +8,6 @@ URL_TARGET = f'{URL}/buildtargets/{os.getenv('TARGET')}'
 URL_BUILD = f'{URL_TARGET}/builds'
 URL_ENVVARS = f'{URL_TARGET}/envvars'
 
-headers = create_headers(os.getenv('API_KEY'))
-
 def create_headers(api_key):
     # Encoding API key in Base64 format
     credentials = f"{api_key}:"
@@ -19,6 +17,8 @@ def create_headers(api_key):
         'Authorization': f'Basic {encoded_credentials}',
         'Content-Type': 'application/json'
     }
+
+headers = create_headers(os.getenv('API_KEY'))
 
 def get_param_env_variables():
     param_variables = {}
