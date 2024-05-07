@@ -57,7 +57,7 @@ namespace DCL.Chat.MessageBus
 
         private void SendFromSystem(string message)
         {
-            OnMessageAdded?.Invoke(new ChatMessage(message, "DCL System", string.Empty, true, false, true));
+            OnMessageAdded?.Invoke(ChatMessage.NewFromSystem(message));
         }
 
         private void OriginOnOnMessageAdded(ChatMessage obj)

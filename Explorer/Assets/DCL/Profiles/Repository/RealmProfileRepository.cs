@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Networking;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles

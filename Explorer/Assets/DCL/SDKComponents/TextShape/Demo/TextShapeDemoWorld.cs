@@ -2,12 +2,13 @@ using Arch.Core;
 using DCL.DemoWorlds;
 using DCL.Utilities.Extensions;
 using DCL.ECSComponents;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.TextShape.Fonts;
-using DCL.SDKComponents.TextShape.Renderer.Factory;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.Demo
@@ -20,6 +21,8 @@ namespace DCL.SDKComponents.TextShape.Demo
 
         public TextShapeDemoWorld(World world, IFontsStorage fontsStorage, IReadOnlyList<(PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
+            var pool = new GameObjectPool<TextMeshPro>(null, () => new GameObject().AddComponent<TextMeshPro>());
+
             origin = new DemoWorld(
                 world,
                 w =>
@@ -27,8 +30,8 @@ namespace DCL.SDKComponents.TextShape.Demo
                     foreach ((PBTextShape textShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
                         w.Create(textShape, visibility, billboard, NewTransform());
                 },
-                w => new InstantiateTextShapeSystem(w, new PoolTextShapeRendererFactory(new ComponentPoolsRegistry(), fontsStorage)),
-                w => new UpdateTextShapeSystem(w),
+                w => new InstantiateTextShapeSystem(w, pool, fontsStorage, new MaterialPropertyBlock(), new NullPerformanceBudget()),
+                w => new UpdateTextShapeSystem(w,  fontsStorage, new MaterialPropertyBlock()),
                 w => new VisibilityTextShapeSystem(w));
         }
 

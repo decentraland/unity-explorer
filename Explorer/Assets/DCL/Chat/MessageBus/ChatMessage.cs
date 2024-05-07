@@ -31,5 +31,8 @@ namespace DCL.Chat
             HasToAnimate = true;
             SystemMessage = false;
         }
+
+        public static ChatMessage NewFromSystem(string message) =>
+            new (message, "DCL System", string.Empty, true, false, true);
     }
 }
