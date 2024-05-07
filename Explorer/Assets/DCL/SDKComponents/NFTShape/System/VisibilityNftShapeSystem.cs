@@ -1,17 +1,17 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.Unity.Groups;
 using ECS.Unity.Visibility;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [ThrottlingEnabled]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(ComponentInstantiationGroup))]
     public partial class VisibilityNftShapeSystem : BaseUnityLoopSystem
     {
         public VisibilityNftShapeSystem(World world) : base(world)
@@ -27,10 +27,7 @@ namespace DCL.SDKComponents.NFTShape.System
         private void UpdateVisibility(in NftShapeRendererComponent nftShapeRenderer, in PBVisibilityComponent visibility)
         {
             if (visibility.IsDirty)
-            {
                 nftShapeRenderer.ApplyVisibility(visibility.GetVisible());
-                visibility.IsDirty = false;
-            }
         }
     }
 }

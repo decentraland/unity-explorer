@@ -1,27 +1,24 @@
 using DCL.ECSComponents;
-using DCL.SDKComponents.TextShape.Fonts;
-using DCL.SDKComponents.TextShape.Renderer.Factory;
 using ECS.Unity.ColorComponent;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
+using DCL.SDKComponents.TextShape.Fonts;
 
 namespace DCL.SDKComponents.TextShape.Tests
 {
     public class TextShapeTest
     {
         [Test]
-        public void TMPTextRendererColoring()
+        public void RendererShouldApplyColor()
         {
             var props = new PBTextShape
             {
                 TextColor = Color.white.ToColor4(),
             };
-            var parent = new GameObject().transform;
-            var renderer = new TextShapeRendererFactory(new IFontsStorage.Fake()).New(parent);
-            var tmp = parent.GetComponentInChildren<TMP_Text>()!;
-
-            renderer.Apply(props);
+            var parent = new GameObject().AddComponent<TextMeshPro>();
+            TMP_Text tmp = parent.GetComponentInChildren<TMP_Text>()!;
+            parent.Apply(props, new IFontsStorage.Fake(), new MaterialPropertyBlock());
 
             Assert.AreEqual(tmp.color, props.TextColor.ToUnityColor());
         }

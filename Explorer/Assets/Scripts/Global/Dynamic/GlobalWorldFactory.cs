@@ -132,7 +132,8 @@ namespace Global.Dynamic
                 partitionSettings);
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
-            CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            //Removed, since we now have landscape surrounding the world
+            //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             UnloadSceneSystem.InjectToWorld(ref builder, scenesCache);
