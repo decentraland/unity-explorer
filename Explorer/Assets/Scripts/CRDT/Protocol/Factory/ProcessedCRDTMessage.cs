@@ -26,16 +26,34 @@ namespace CRDT.Protocol.Factory
             INTERNAL_LOG.Log($"from place {fromPlace}: {ToString()}");
         }
 
-        private static readonly InternalLog INTERNAL_LOG = new (
-            new StreamWriter(
-                new FileStream(
-                    "/Users/nickkhalow/Projects/unity-explorer/Explorer/Assets/Scripts/CRDT/Serializer/log.txt",
-                    FileMode.Create
+        private static readonly IInternalLog INTERNAL_LOG =
+#if UNITY_EDITOR
+            new InternalLog(
+                new StreamWriter(
+                    new FileStream(
+                        Path.Combine(Directory.GetCurrentDirectory(), "Assets/Scripts/CRDT/Serializer/log.txt"),
+                        FileMode.Create
+                    )
                 )
-            )
-        );
+            );
+#else
+            new IInternalLog.Null();
+#endif
 
-        private class InternalLog
+        private interface IInternalLog
+        {
+            void Log(string message);
+
+            public class Null : IInternalLog
+            {
+                public void Log(string message)
+                {
+                    //ignore
+                }
+            }
+        }
+
+        private class InternalLog : IInternalLog
         {
             private readonly StreamWriter writer;
 
