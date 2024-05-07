@@ -23,7 +23,7 @@ namespace ECS.LifeCycle.Systems
 
         protected override void Update(float t)
         {
-            mutexSync.Mutex.WaitOne();
+            mutexSync.Acquire();
         }
     }
 }

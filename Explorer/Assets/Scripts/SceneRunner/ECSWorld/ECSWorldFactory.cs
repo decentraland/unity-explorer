@@ -67,7 +67,7 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
-            var mutex = new MutexSync(); //sharedDependencies.MutexSync;
+            var mutex = sharedDependencies.MutexSync; //sharedDependencies.MutexSync;
 
             builder
                .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
@@ -93,8 +93,8 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
             // These system will prevent changes from the JS scenes to squeeze in between different stages of the PlayerLoop at the same frame
-            LockECSSystem.InjectToWorld(ref builder, sharedDependencies.MutexSync);
-            UnlockECSSystem.InjectToWorld(ref builder, sharedDependencies.MutexSync);
+            LockECSSystem.InjectToWorld(ref builder, mutex);
+            UnlockECSSystem.InjectToWorld(ref builder, mutex);
 
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 

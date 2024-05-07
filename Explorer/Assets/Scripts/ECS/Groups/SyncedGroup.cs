@@ -23,7 +23,7 @@ namespace ECS.Groups
         public SyncedPresentationSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
     }
 
-    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     public partial class SyncedPostRenderingSystemGroup : SyncedGroup
     {
         public SyncedPostRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
@@ -47,7 +47,6 @@ namespace ECS.Groups
 
         public override void Initialize()
         {
-            // using MutexSync.Scope scope = mutexSync.GetScope();
             InitializeInternal();
         }
 
@@ -56,7 +55,9 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            // using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (!mutexSync.Acquired) return;
+
             BeforeUpdateInternal(in t, throttle);
         }
 
@@ -65,7 +66,9 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            // using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (!mutexSync.Acquired) return;
+
             UpdateInternal(in t, throttle);
         }
 
@@ -74,13 +77,17 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            // using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (!mutexSync.Acquired) return;
+
             AfterUpdateInternal(in t, throttle);
         }
 
         public override void Dispose()
         {
-            // using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (!mutexSync.Acquired) return;
+
             DisposeInternal();
         }
     }

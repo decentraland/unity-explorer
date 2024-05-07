@@ -16,7 +16,7 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
-        private const int FRAMES_COUNT = 20;
+        private const int FRAMES_COUNT = 60;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
