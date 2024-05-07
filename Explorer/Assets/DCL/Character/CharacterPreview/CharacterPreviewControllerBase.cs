@@ -172,10 +172,10 @@ namespace DCL.CharacterPreview
         protected void OnModelUpdated()
         {
             updateModelCancellationToken = updateModelCancellationToken.SafeRestart();
-            ShowLoadingSpinnerAndUpdateAvatar(updateModelCancellationToken.Token).Forget();
+            ShowLoadingSpinnerAndUpdateAvatarAsync(updateModelCancellationToken.Token).Forget();
         }
 
-        protected async UniTask ShowLoadingSpinnerAndUpdateAvatar(CancellationToken ct)
+        protected async UniTask ShowLoadingSpinnerAndUpdateAvatarAsync(CancellationToken ct)
         {
             GameObject spinner = EnableSpinner();
 

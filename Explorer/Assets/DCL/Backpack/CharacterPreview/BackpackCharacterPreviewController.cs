@@ -151,7 +151,7 @@ namespace DCL.Backpack.CharacterPreview
                 if (!previewAvatarModel.Emotes?.Contains(urn) ?? true)
                 {
                     previewAvatarModel.Emotes!.Add(urn);
-                    await ShowLoadingSpinnerAndUpdateAvatar(ct);
+                    await ShowLoadingSpinnerAndUpdateAvatarAsync(ct);
                     // Remove the emote so it stays original
                     previewAvatarModel.Emotes!.Remove(urn);
                 }
