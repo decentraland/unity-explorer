@@ -85,6 +85,9 @@ namespace DCL.Rendering.Highlight
                         if (renderer == null)
                             continue;
 
+                        if (!renderer.enabled || renderer.forceRenderingOff)
+                            continue;
+
                         GameObject gameObject = renderer.gameObject;
 
                         // Ignore disabled or culled by camera avatars
