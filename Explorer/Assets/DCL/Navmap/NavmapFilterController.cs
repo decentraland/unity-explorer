@@ -25,6 +25,7 @@ namespace DCL.Navmap
         {
             filterView.FilterContent.SetActive(false);
             filterView.infoContent.SetActive(false);
+            filterView.CloseButtonArea.gameObject.SetActive(false);
         }
 
         private void ToggleInfoContent() =>

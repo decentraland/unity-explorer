@@ -188,6 +188,7 @@ namespace DCL.Navmap
 
         public void Deactivate()
         {
+            filterController.CloseFilterContent();
             navmapView.WorldsWarningNotificationView.Hide();
 
             foreach (ISection mapSectionsValue in mapSections.Values)
@@ -199,13 +200,13 @@ namespace DCL.Navmap
 
         public void Animate(int triggerId)
         {
+            filterController.CloseFilterContent();
             navmapView.PanelAnimator.SetTrigger(triggerId);
             navmapView.HeaderAnimator.SetTrigger(triggerId);
         }
 
         public void ResetAnimator()
         {
-            filterController.CloseFilterContent();
             navmapView.PanelAnimator.Rebind();
             navmapView.HeaderAnimator.Rebind();
             navmapView.PanelAnimator.Update(0);
