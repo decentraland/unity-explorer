@@ -16,6 +16,7 @@ namespace DCL.Chat.MessageBus
             //strange ping pong messages from the previous client
             '␐',
             '␆',
+            '␑'
         }) { }
 
         public IgnoreWithSymbolsChatMessageBus(IChatMessagesBus origin, ISet<char> forbiddenChars)
