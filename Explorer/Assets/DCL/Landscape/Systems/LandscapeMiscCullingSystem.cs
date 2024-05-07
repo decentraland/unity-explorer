@@ -72,7 +72,7 @@ namespace DCL.Landscape.Systems
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainGenerated) return;
+            if (!terrainGenerator.IsTerrainShown) return;
 
             if (!isSetupDone)
             {
