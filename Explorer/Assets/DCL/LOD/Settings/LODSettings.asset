@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b0b2609fd084bb696d6821c99c000c1, type: 3}
   m_Name: LODSettings
   m_EditorClassIdentifier: 
-  <LodPartitionBucketThresholds>k__BackingField: 01000000
+  <LodPartitionBucketThresholds>k__BackingField: 05000000
   <DefaultTextureArrayResolutionDescriptors>k__BackingField:
   - Resolution: 256
     ArraySize: 500

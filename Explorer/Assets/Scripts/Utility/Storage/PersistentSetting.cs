@@ -106,6 +106,7 @@ namespace Utility.Storage
         {
             this.key = key;
             this.defaultValue = defaultValue;
+            setValue!(key, defaultValue);
             Value = getValue!(key, defaultValue);
         }
 
