@@ -156,7 +156,7 @@ namespace CRDT.Deserializer
             ReadOnlySpan<byte> memorySpan, int shift)
         {
             if (dataLength < 0)
-                return false;
+                throw new Exception($"Number is negative in the data length: {dataLength}");
 
             if (dataLength > memorySpan.Length)
             {
