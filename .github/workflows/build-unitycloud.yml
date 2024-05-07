@@ -61,6 +61,7 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           TARGET: windows64
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: python scripts/cloudbuild/build.py
 
 #      - name: Build with Unity Cloud Build
