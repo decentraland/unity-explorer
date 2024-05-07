@@ -8,7 +8,6 @@ using DCL.Profiles;
 using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.Common.Components;
 using System.Threading;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<
     DCL.Profiles.Profile,
@@ -24,7 +23,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         private readonly IRealmData realmData;
         private readonly DebugWidgetVisibilityBinding widgetVisibility;
 
-        private CancellationTokenSource fetchProfileCancellationToken;
+        private CancellationTokenSource? fetchProfileCancellationToken;
 
         public OwnAvatarLoaderFromDebugMenuSystem(
             World world,

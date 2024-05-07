@@ -8,6 +8,7 @@ using ECS.Unity.Transforms.Components;
 using ECS.Unity.Transforms.Systems;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PluginSystem.World
 {
@@ -18,7 +19,11 @@ namespace DCL.PluginSystem.World
         public TransformsPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            componentPoolsRegistry.AddGameObjectPool<Transform>();
+            componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
+            {
+                transform.ResetLocalTRS();
+                transform.gameObject.layer = 0;
+            });
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)

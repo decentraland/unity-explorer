@@ -14,7 +14,7 @@ namespace DCL.Web3.Authenticators
             this.authenticator = authenticator;
         }
 
-        public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
-            authenticator.AddVerificationListener(callback);
+        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
+            authenticator.SetVerificationListener(callback);
     }
 }

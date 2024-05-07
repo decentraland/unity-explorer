@@ -9,6 +9,7 @@ using DCL.Character.Plugin;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem;
@@ -24,6 +25,7 @@ using DCL.Utilities;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
+using ECS;
 using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -43,6 +45,9 @@ namespace Global
     {
         public readonly ObjectProxy<World> GlobalWorldProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
+        public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
+        public readonly RealmData RealmData = new ();
+
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
@@ -207,6 +212,7 @@ namespace Global
                 new AvatarModifierAreaPlugin(container.GlobalWorldProxy),
                 new InteractionsAudioPlugin(addressablesProvisioner),
                 new MultiplayerPlugin(),
+                new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
 
 #if UNITY_EDITOR
                 new GizmosWorldPlugin(),
