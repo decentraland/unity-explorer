@@ -47,7 +47,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 emoteCommandComponent.LoopingEmote = emote.IsLooping();
 
                 // External world access should be always synchronized (Global World calls into Scene World)
-                using (sceneEcsExecutor.Sync.GetScope())
+                // using (sceneEcsExecutor.Sync.GetScope())
                 {
                     if (componentFound)
                         sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);

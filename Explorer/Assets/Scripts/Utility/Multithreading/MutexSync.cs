@@ -35,7 +35,7 @@ namespace Utility.Multithreading
             public Scope(Mutex mutex)
             {
                 this.mutex = mutex;
-                mutex.WaitOne();
+                mutex.WaitOne(10000);
             }
 
             public void Dispose()

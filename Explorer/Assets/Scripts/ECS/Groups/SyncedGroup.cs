@@ -29,12 +29,6 @@ namespace ECS.Groups
         public SyncedPostRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
     }
 
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
-    public partial class SyncedPostPhysicsSystemGroup : SyncedGroup
-    {
-        public SyncedPostPhysicsSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
-    }
-
     /// <summary>
     ///     <para>Group is:</para>
     ///     <para>Synchronized by mutex so no changes to the ECS World can be made from Systems and CRDT Bridge simultaneously;</para>
@@ -53,7 +47,7 @@ namespace ECS.Groups
 
         public override void Initialize()
         {
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // using MutexSync.Scope scope = mutexSync.GetScope();
             InitializeInternal();
         }
 
@@ -62,7 +56,7 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // using MutexSync.Scope scope = mutexSync.GetScope();
             BeforeUpdateInternal(in t, throttle);
         }
 
@@ -71,7 +65,7 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // using MutexSync.Scope scope = mutexSync.GetScope();
             UpdateInternal(in t, throttle);
         }
 
@@ -80,13 +74,13 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // using MutexSync.Scope scope = mutexSync.GetScope();
             AfterUpdateInternal(in t, throttle);
         }
 
         public override void Dispose()
         {
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // using MutexSync.Scope scope = mutexSync.GetScope();
             DisposeInternal();
         }
     }

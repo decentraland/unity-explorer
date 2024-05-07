@@ -10,7 +10,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
     {
         public static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResult raycastResult, in GlobalColliderEntityInfo previousEntityInfo)
         {
-            using (previousEntityInfo.EcsExecutor.Sync.GetScope())
+            // using (previousEntityInfo.EcsExecutor.Sync.GetScope())
             {
                 World world = previousEntityInfo.EcsExecutor.World;
 

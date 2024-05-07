@@ -35,7 +35,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 profile.IsDirty = true;
 
                 // External world access should be always synchronized (Global World calls into Scene World)
-                using (sceneEcsExecutor.Sync.GetScope())
+                // using (sceneEcsExecutor.Sync.GetScope())
                     sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, profile);
 
                 return;
@@ -44,7 +44,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             if (!profile.IsDirty) return;
 
             // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
+            // using (sceneEcsExecutor.Sync.GetScope())
                 sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, profile);
         }
     }

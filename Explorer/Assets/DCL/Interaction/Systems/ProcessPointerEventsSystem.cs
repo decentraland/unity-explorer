@@ -77,7 +77,7 @@ namespace DCL.Interaction.Systems
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
                 // External world access should be always synchronized (Global World calls into Scene World)
-                using (ecsExecutor.Sync.GetScope())
+                // using (ecsExecutor.Sync.GetScope())
                 {
                     World world = ecsExecutor.World;
                     EntityReference entityRef = colliderInfo.EntityReference;
@@ -125,7 +125,7 @@ namespace DCL.Interaction.Systems
 
                 World world = previousEntityInfo.EcsExecutor.World;
 
-                using (previousEntityInfo.EcsExecutor.Sync.GetScope())
+                // using (previousEntityInfo.EcsExecutor.Sync.GetScope())
                     ResetHighlightComponentQuery(world);
 
                 HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousEntityInfo);

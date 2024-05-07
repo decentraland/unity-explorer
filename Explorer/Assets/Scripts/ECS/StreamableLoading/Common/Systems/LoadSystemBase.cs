@@ -33,7 +33,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         // asynchronous operations run independently on Update that is already synchronized
         // so they require explicit synchronisation
-        private readonly MutexSync mutexSync;
+        // private readonly MutexSync mutexSync;
 
         private readonly Query query;
 
@@ -44,7 +44,7 @@ namespace ECS.StreamableLoading.Common.Systems
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
         {
             this.cache = cache;
-            this.mutexSync = mutexSync;
+            // this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedInternalFlowDelegate = FlowInternalAsync;
@@ -160,7 +160,7 @@ namespace ECS.StreamableLoading.Common.Systems
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget acquiredBudget)
         {
-            using MutexSync.Scope sync = mutexSync.GetScope();
+            // using MutexSync.Scope sync = mutexSync.GetScope();
 
             if (systemIsDisposed || !World.IsAlive(entity))
             {

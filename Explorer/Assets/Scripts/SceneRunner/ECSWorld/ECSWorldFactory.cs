@@ -19,6 +19,7 @@ using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
+using Utility.Multithreading;
 using GatherGltfAssetsSystem = ECS.SceneLifeCycle.Systems.GatherGltfAssetsSystem;
 
 namespace SceneRunner.ECSWorld
@@ -66,12 +67,13 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
+            var mutex = new MutexSync(); //sharedDependencies.MutexSync;
+
             builder
-               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostPhysicsSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider));
+               .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedSimulationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPresentationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, sharedDependencies.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
@@ -90,7 +92,10 @@ namespace SceneRunner.ECSWorld
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
-            // Add other systems here
+            // These system will prevent changes from the JS scenes to squeeze in between different stages of the PlayerLoop at the same frame
+            LockECSSystem.InjectToWorld(ref builder, sharedDependencies.MutexSync);
+            UnlockECSSystem.InjectToWorld(ref builder, sharedDependencies.MutexSync);
+
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 
             SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
