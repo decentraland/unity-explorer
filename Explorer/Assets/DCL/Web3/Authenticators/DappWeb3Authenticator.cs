@@ -149,7 +149,7 @@ namespace DCL.Web3.Authenticators
             await DisconnectFromServerAsync();
         }
 
-        public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
+        public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
             loginVerificationCallback = callback;
 
         public void AddVerificationListener(IVerifiedEthereumApi.VerificationDelegate callback) =>
@@ -312,8 +312,8 @@ namespace DCL.Web3.Authenticators
             public UniTask LogoutAsync(CancellationToken cancellationToken) =>
                 originAuth.LogoutAsync(cancellationToken);
 
-            public void AddVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate callback) =>
-                originAuth.AddVerificationListener(callback);
+            public void SetVerificationListener(IWeb3VerifiedAuthenticator.VerificationDelegate? callback) =>
+                originAuth.SetVerificationListener(callback);
         }
     }
 }

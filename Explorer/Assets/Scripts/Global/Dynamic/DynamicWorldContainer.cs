@@ -336,7 +336,8 @@ namespace Global.Dynamic
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     entityParticipantTable,
                     nametagsData,
-                    container.DefaultTexturesContainer.TextureArrayContainerFactory
+                    container.DefaultTexturesContainer.TextureArrayContainerFactory,
+                    wearableCatalog
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),

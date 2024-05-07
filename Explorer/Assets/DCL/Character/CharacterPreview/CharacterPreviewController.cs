@@ -68,7 +68,7 @@ namespace DCL.CharacterPreview
             cameraController.Dispose();
         }
 
-        public UniTask UpdateAvatar(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
+        public UniTask UpdateAvatarAsync(CharacterPreviewAvatarModel avatarModel, CancellationToken ct)
         {
             ref AvatarShapeComponent avatarShape = ref globalWorld.Get<AvatarShapeComponent>(characterPreviewEntity);
 
