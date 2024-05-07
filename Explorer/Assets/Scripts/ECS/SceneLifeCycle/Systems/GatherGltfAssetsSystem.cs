@@ -104,7 +104,7 @@ namespace ECS.SceneLifeCycle.Systems
                 for (var i = 0; i < reports!.Value.Count; i++)
                 {
                     AsyncLoadProcessReport report = reports.Value[i];
-                    report.ProgressCounter.Value = progress;
+                    report.SetProgress(progress);
                 }
 
                 entitiesUnderObservation.ExceptWith(toDelete);
@@ -113,7 +113,7 @@ namespace ECS.SceneLifeCycle.Systems
                 if (concluded)
                 {
                     for (var i = 0; i < reports.Value.Count; i++)
-                        reports.Value[i].CompletionSource.TrySetResult();
+                        reports.Value[i].SetProgress(1f);
 
                     reports.Value.Dispose();
                     reports = null;

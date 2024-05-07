@@ -150,13 +150,13 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.9
+    m_Value: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 1.3
   scatter:
     m_OverrideState: 1
-    m_Value: 0.2
+    m_Value: 0.3
   clamp:
     m_OverrideState: 1
     m_Value: 65472
@@ -195,7 +195,7 @@ MonoBehaviour:
   - volumeProfile: {fileID: -6825687089074993261}
     fogSettings:
       m_Fog: 1
-    lensFlareEnabled: 1
+    lensFlareEnabled: 0
     lensFlareComponent: {fileID: 8521501152378314052, guid: cfb1111e6759c9046956190dd1f2b0bf, type: 3}
     environmentSettings:
       sceneLoadRadius: 20
@@ -276,13 +276,13 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.9
+    m_Value: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 1.3
   scatter:
     m_OverrideState: 1
-    m_Value: 0.2
+    m_Value: 0.3
   clamp:
     m_OverrideState: 1
     m_Value: 65472
@@ -351,13 +351,13 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.9
+    m_Value: 1
   intensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 1.3
   scatter:
     m_OverrideState: 1
-    m_Value: 0.2
+    m_Value: 0.3
   clamp:
     m_OverrideState: 1
     m_Value: 65472
