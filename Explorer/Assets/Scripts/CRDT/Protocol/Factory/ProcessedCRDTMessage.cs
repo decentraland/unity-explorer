@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace CRDT.Protocol.Factory
@@ -15,6 +16,38 @@ namespace CRDT.Protocol.Factory
         {
             this.message = message;
             CRDTMessageDataLength = crdtMessageDataLength;
+        }
+
+        public override string ToString() =>
+            $"Message: entity {message.EntityId} component {message.ComponentId} type {message.Type} CRDTMessageDataLength: {CRDTMessageDataLength}";
+
+        public void LogSelf(string fromPlace)
+        {
+            INTERNAL_LOG.Log($"from place {fromPlace}: {ToString()}");
+        }
+
+        private static readonly InternalLog INTERNAL_LOG = new (
+            new StreamWriter(
+                new FileStream(
+                    "/Users/nickkhalow/Projects/unity-explorer/Explorer/Assets/Scripts/CRDT/Serializer/log.txt",
+                    FileMode.Create
+                )
+            )
+        );
+
+        private class InternalLog
+        {
+            private readonly StreamWriter writer;
+
+            public InternalLog(StreamWriter writer)
+            {
+                this.writer = writer;
+            }
+
+            public void Log(string message)
+            {
+                writer.WriteLine(message);
+            }
         }
     }
 }

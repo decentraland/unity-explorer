@@ -154,7 +154,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 // Serialize the current state
 
                 for (var i = 0; i < messagesCount; i++)
+                {
                     crdtSerializer.Serialize(ref currentStateSpan, in processedMessages[i]);
+                    processedMessages[i].LogSelf(nameof(CrdtGetState));
+                }
 
                 // Messages are serialized, we no longer need them in the managed form
                 sharedPoolsProvider.ReleaseSerializationCrdtMessagesPool(processedMessages);
@@ -255,8 +258,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             if (outgoingMessages.Count == 0) return;
 
+
             foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
+            {
                 crdtSerializer.Serialize(ref span, in processedCRDTMessage);
+                processedCRDTMessage.LogSelf(nameof(SerializeOutgoingCRDTMessages));
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Systems;
+using UnityEngine;
 
 namespace DCL.SDKComponents.Animator.Components
 {
@@ -7,19 +8,30 @@ namespace DCL.SDKComponents.Animator.Components
     {
         public readonly string Clip;
         public readonly bool Playing;
-        public readonly float Weight;
-        public readonly float Speed;
-        public readonly bool Loop;
         public readonly bool ShouldReset;
+        private readonly float weight;
+        private readonly float speed;
+        private readonly bool loop;
 
         public SDKAnimationState(PBAnimationState pbAnimationState)
         {
             Clip = pbAnimationState.Clip!;
             Playing = pbAnimationState.Playing;
-            Weight = pbAnimationState.GetWeight();
-            Speed = pbAnimationState.GetSpeed();
-            Loop = pbAnimationState.GetLoop();
+            weight = pbAnimationState.GetWeight();
+            speed = pbAnimationState.GetSpeed();
+            loop = pbAnimationState.GetLoop();
             ShouldReset = pbAnimationState.GetShouldReset();
+        }
+
+        public void ApplyOn(AnimationState animationState)
+        {
+            animationState.weight = weight;
+
+            animationState.wrapMode = loop ? WrapMode.Loop : WrapMode.Default;
+
+            animationState.clip!.wrapMode = animationState.wrapMode;
+            animationState.speed = speed;
+            animationState.enabled = Playing;
         }
     }
 }

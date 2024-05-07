@@ -9,6 +9,7 @@ namespace CRDT.Serializer
     {
         public void Serialize(ref Span<byte> destination, in ProcessedCRDTMessage processedMessage)
         {
+            processedMessage.LogSelf(nameof(CRDTSerializer));
             CRDTMessage crdtMessage = processedMessage.message;
 
             destination.Write(processedMessage.CRDTMessageDataLength);

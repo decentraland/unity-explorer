@@ -39,13 +39,7 @@ namespace DCL.SDKComponents.Animator.Extensions
 
                 if (!animationState) continue;
 
-                animationState.weight = sdkAnimationState.Weight;
-
-                animationState.wrapMode = sdkAnimationState.Loop ? WrapMode.Loop : WrapMode.Default;
-
-                animationState.clip!.wrapMode = animationState.wrapMode;
-                animationState.speed = sdkAnimationState.Speed;
-                animationState.enabled = sdkAnimationState.Playing;
+                sdkAnimationState.ApplyOn(animationState);
 
                 if (sdkAnimationState.ShouldReset && animation.IsPlaying(sdkAnimationState.Clip))
                 {
