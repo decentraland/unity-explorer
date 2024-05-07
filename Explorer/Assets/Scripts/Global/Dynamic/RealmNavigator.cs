@@ -236,8 +236,6 @@ namespace Global.Dynamic
 
             foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
             {
-                //TODO (JUANI) : Shouldnt be possible, but some promises result are null
-                if (promise.Result == null) continue;
                 decodedParcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
             }
 
@@ -245,9 +243,6 @@ namespace Global.Dynamic
             {
                 foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
                 {
-                    //TODO (JUANI) : Shouldnt be possible, but some promises result are null
-                    if (promise.Result == null) continue;
-
                     foreach (Vector2Int parcel in promise.Result!.Value.Asset!.metadata.scene.DecodedParcels)
                         ownedParcels.Add(parcel.ToInt2());
                 }
