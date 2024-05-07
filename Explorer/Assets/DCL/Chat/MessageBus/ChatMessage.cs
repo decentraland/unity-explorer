@@ -28,5 +28,8 @@ namespace DCL.Chat
             SentByOwnUser = false;
             HasToAnimate = true;
         }
+
+        public static ChatMessage NewFromSystem(string message) =>
+            new (message, "System", string.Empty, true, false);
     }
 }
