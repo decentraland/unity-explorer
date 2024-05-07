@@ -224,7 +224,7 @@ MonoBehaviour:
     lensFlareEnabled: 0
     lensFlareComponent: {fileID: 2726953631672280614, guid: 91fed6d77ceea8246b3d136a8e67a12c, type: 3}
     environmentSettings:
-      sceneLoadRadius: 150
+      sceneLoadRadius: 80
       lod1Threshold: 2
       lod2Threshold: 4
       terrainLODBias: 250
