@@ -5,11 +5,13 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Unity.Groups;
 using ECS.Unity.Visibility;
 
 namespace DCL.SDKComponents.TextShape.System
 {
-    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(ComponentInstantiationGroup))]
     public partial class VisibilityTextShapeSystem : BaseUnityLoopSystem
     {
         public VisibilityTextShapeSystem(World world) : base(world)

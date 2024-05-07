@@ -6,11 +6,13 @@ using DCL.ECSComponents;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.Unity.Groups;
 using ECS.Unity.PrimitiveRenderer.Components;
 
 namespace ECS.Unity.Visibility.Systems
 {
-    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(ComponentInstantiationGroup))]
     [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     public partial class PrimitivesVisibilitySystem : BaseUnityLoopSystem
     {
@@ -26,10 +28,8 @@ namespace ECS.Unity.Visibility.Systems
         private void UpdateVisibility(ref PBVisibilityComponent visibilityComponent,
             ref PBMeshRenderer meshRendererComponent, ref PrimitiveMeshRendererComponent primitiveMeshRendererComponent)
         {
-            if (!meshRendererComponent.IsDirty && !visibilityComponent.IsDirty)
-                return;
-
-            primitiveMeshRendererComponent.MeshRenderer.enabled = visibilityComponent.GetVisible();
+            if (meshRendererComponent.IsDirty || visibilityComponent.IsDirty)
+                primitiveMeshRendererComponent.MeshRenderer.enabled = visibilityComponent.GetVisible();
         }
 
         [Query]

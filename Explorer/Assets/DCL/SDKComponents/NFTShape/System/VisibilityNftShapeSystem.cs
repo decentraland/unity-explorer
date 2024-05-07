@@ -5,11 +5,13 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.Unity.Groups;
 using ECS.Unity.Visibility;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
-    [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(ComponentInstantiationGroup))]
     public partial class VisibilityNftShapeSystem : BaseUnityLoopSystem
     {
         public VisibilityNftShapeSystem(World world) : base(world)
