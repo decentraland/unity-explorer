@@ -31,6 +31,9 @@ namespace DCL.Profiles
 
         public void Remove(string id)
         {
+            if (profiles.TryGetValue(id, out Profile existingProfile))
+                existingProfile.Dispose();
+
             profiles.Remove(id);
 
             UpdateProfilingCounter();
@@ -39,7 +42,7 @@ namespace DCL.Profiles
         private void UpdateProfilingCounter()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.ProfileIntentionsInCache.Value = profiles.Count;
+            ProfilingCounters.ProfilesInCache.Value = profiles.Count;
 #endif
         }
     }
