@@ -61,7 +61,12 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           TARGET: windows64
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
+          # (The "PARAM_" prefix exists to allow any future values config-free)
+          # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
+          # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
+          PARAM_TEST_VALUE: "value exists"
         run: python scripts/cloudbuild/build.py
 
 #      - name: Build with Unity Cloud Build
