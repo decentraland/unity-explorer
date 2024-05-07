@@ -11,19 +11,19 @@ namespace DCL.SDKComponents.Animator.Extensions
 
         public static void Initialize(this Animation animation)
         {
-            var layerIndex = INITIAL_LAYER_INDEX;
-
             animation.playAutomatically = true;
             animation.enabled = true;
             animation.Stop();
 
             //putting the component in play state if playAutomatically was true at that point.
             if (animation.clip)
-                animation.clip.SampleAnimation(animation.gameObject, 0);
+                animation.clip!.SampleAnimation(animation.gameObject, 0);
+
+            int layerIndex = INITIAL_LAYER_INDEX;
 
             foreach (AnimationState animationState in animation)
             {
-                animationState.clip.wrapMode = WrapMode.Loop;
+                animationState.clip!.wrapMode = WrapMode.Loop;
                 animationState.layer = layerIndex;
                 animationState.blendMode = AnimationBlendMode.Blend;
                 layerIndex++;
@@ -32,9 +32,6 @@ namespace DCL.SDKComponents.Animator.Extensions
 
         public static void SetAnimationState(this Animation animation, IReadOnlyList<PBAnimationState> sdkAnimationStates)
         {
-            if (sdkAnimationStates.Count == 0)
-                return;
-
             for (var i = 0; i < sdkAnimationStates.Count; i++)
             {
                 var sdkAnimationState = new SDKAnimationState(sdkAnimationStates[i]!);
