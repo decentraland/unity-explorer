@@ -1,5 +1,6 @@
 ﻿using CRDT.Memory;
 using CRDT.Protocol;
+using DCL.Diagnostics;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -155,6 +156,7 @@ namespace CRDT.Deserializer
             }
             catch (Exception e)
             {
+                ReportHub.WithReport(ReportData.UNSPECIFIED).Log($"Data is invalid: {BitConverter.ToString(memory.Span.ToArray()!)}");
                 throw new Exception(
                     $"Cannot Deserialize Put Component with entityId: {entityId.Id}, with componentId: {componentId}, with timestamp: {timestamp}, with dataLength: {dataLength}, with shift: {shift}, with memory length: {memory.Length}",
                     e
