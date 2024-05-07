@@ -196,6 +196,8 @@ namespace Global.Dynamic
                     if (!genesisTerrain.IsTerrainGenerated)
                         await genesisTerrain.GenerateTerrainAsync(cancellationToken: ct);
 
+                    if (ct.IsCancellationRequested) return;
+
                     await genesisTerrain.ShowAsync(landscapeLoadReport);
                 }
                 else
