@@ -23,5 +23,5 @@ headers = create_headers(os.getenv('API_KEY'))
 # print("Response:", response.json())
 
 # Run Build
-response = requests.get(URL_TARGET_BUILD, headers=headers)
+response = requests.put(URL_TARGET_BUILD, headers=headers)
 print("Response:", response.json())
