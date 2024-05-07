@@ -77,6 +77,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             characterPreviewController?.Dispose();
+            web3Authenticator.SetVerificationListener(null);
         }
 
         protected override void OnViewInstantiated()
@@ -96,20 +97,6 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.VersionText.text = "editor-version";
 #endif
 
-            web3Authenticator.AddVerificationListener((code, expiration) =>
-            {
-                viewInstance.VerificationCodeLabel.text = code.ToString();
-
-                CancelVerificationCountdown();
-                verificationCountdownCancellationToken = new CancellationTokenSource();
-
-                viewInstance.StartVerificationCountdownAsync(expiration,
-                                 verificationCountdownCancellationToken.Token)
-                            .Forget();
-
-                SwitchState(ViewState.LoginInProgress);
-            });
-
             Assert.IsNotNull(world);
             characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
         }
@@ -128,6 +115,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             CancelVerificationCountdown();
             viewInstance.FinalizeContainer.SetActive(false);
+            web3Authenticator.SetVerificationListener(null);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
@@ -160,13 +148,21 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.ConnectingToServerContainer.SetActive(true);
                     viewInstance.LoginButton.interactable = false;
 
-                    IWeb3Identity web3Identity = await web3Authenticator.LoginAsync(ct);
+                    web3Authenticator.SetVerificationListener(ShowVerification);
+
+                    await web3Authenticator.LoginAsync(ct);
+
+                    web3Authenticator.SetVerificationListener(null);
 
                     SwitchState(ViewState.Loading);
 
                     await FetchProfileAsync(ct);
 
                     SwitchState(ViewState.Finalize);
+                }
+                catch (OperationCanceledException)
+                {
+                    SwitchState(ViewState.Login);
                 }
                 catch (Exception e)
                 {
@@ -178,6 +174,20 @@ namespace DCL.AuthenticationScreenFlow
             CancelLoginProcess();
             loginCancellationToken = new CancellationTokenSource();
             StartLoginFlowUntilEndAsync(loginCancellationToken.Token).Forget();
+        }
+
+        private void ShowVerification(int code, DateTime expiration)
+        {
+            viewInstance.VerificationCodeLabel.text = code.ToString();
+
+            CancelVerificationCountdown();
+            verificationCountdownCancellationToken = new CancellationTokenSource();
+
+            viewInstance.StartVerificationCountdownAsync(expiration,
+                             verificationCountdownCancellationToken.Token)
+                        .Forget();
+
+            SwitchState(ViewState.LoginInProgress);
         }
 
         private async UniTask FetchProfileAsync(CancellationToken ct)

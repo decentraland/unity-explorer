@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Profiles.Entities
     {
         void Initialize();
 
-        void TryCreate(IReadOnlyCollection<RemoteProfile> list, World world);
+        void TryCreateOrUpdate(IReadOnlyCollection<RemoteProfile> list, World world);
 
         void Remove(IReadOnlyCollection<RemoveIntention> list, World world);
 
@@ -26,7 +26,7 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             using Bunch<RemoteProfile> bunch = remoteProfiles.Bunch();
             IReadOnlyCollection<RemoteProfile> collection = bunch.Collection();
-            remoteEntities.TryCreate(collection, world);
+            remoteEntities.TryCreateOrUpdate(collection, world);
         }
 
         public static void Remove(this IRemoteEntities remoteEntities, IRemoveIntentions removeIntentions, World world)

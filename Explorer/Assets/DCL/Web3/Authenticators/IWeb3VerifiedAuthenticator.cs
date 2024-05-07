@@ -6,6 +6,6 @@ namespace DCL.Web3.Authenticators
     {
         public delegate void VerificationDelegate(int code, DateTime expiration);
 
-        void AddVerificationListener(VerificationDelegate callback);
+        void SetVerificationListener(VerificationDelegate? callback);
     }
 }

@@ -86,6 +86,13 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeLoadingProgressAsync(AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
+            if (terrainGenerator.IsTerrainGenerated)
+            {
+                loadReport.ProgressCounter.Value = 1f;
+                loadReport.CompletionSource.TrySetResult();
+                return;
+            }
+
             await terrainGenerator.GenerateTerrainAsync(processReport: loadReport, cancellationToken: ct);
 
             emptyParcels.Dispose();
