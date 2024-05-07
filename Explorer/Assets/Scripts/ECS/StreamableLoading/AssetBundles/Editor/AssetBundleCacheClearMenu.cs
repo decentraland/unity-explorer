@@ -9,7 +9,7 @@ namespace ECS.StreamableLoading.AssetBundles.Editor
         public static void ClearAssetBundles()
         {
             if (!Caching.ClearCache())
-                Debug.LogError("BEWARE, THE CACHE HAS NOT BEEN DELETED. TRY RESETTING UNITY AND CALLING IT AGAIN");
+                EditorUtility.DisplayDialog("WARNING", "Failed to clear cache, try resetting Unity and run the action again", "Ok");
         }
     }
 }
