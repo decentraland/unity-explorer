@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.Animator.Systems
             var tuple = LoadedAnimation.RequiredAnimations(pbAnimator.States!);
 
             //TODO not elegant solution, the root of the problem goes from the incorrect Dirty flag of PBAnimator
-            if (loadedAnimations.playingAnimationClipName != tuple.playingAnimation?.Clip)
+            if (loadedAnimations.PlayingAnimationClipName != tuple.playingAnimation?.Clip)
             {
                 loadedAnimations.Apply(tuple.playingAnimation, tuple.stoppedAnimation);
                 pbAnimator.IsDirty = false;
@@ -59,6 +59,8 @@ namespace DCL.SDKComponents.Animator.Systems
             //If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
             foreach (var animation in loadedAnimations.List)
                 animation.Initialize();
+
+            loadedAnimations.Dispose();
         }
 
         private static bool GltfReady(GltfContainerComponent gltfContainerComponent)
