@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: EmoteWheel_Open
   m_EditorClassIdentifier: 
   audioClips:
-  - {fileID: 8300000, guid: 17351ce041126dd4ca65b0d15117be67, type: 3}
-  relativeVolume: 1
+  - {fileID: 8300000, guid: 2a053469cb239544aa6b5f1c934bd031, type: 3}
+  relativeVolume: 0.6
   audioCategory: 0
   pitchVariation: 0.05
   clipSelectionMode: 0
