@@ -16,6 +16,9 @@ namespace DCL.SDKComponents.Animator.Components
             couple = new Couple();
         }
 
+        public string? PlayingClip() =>
+            couple.PlayingAnimation?.Clip;
+
         public void Initialize()
         {
             animation.Initialize();

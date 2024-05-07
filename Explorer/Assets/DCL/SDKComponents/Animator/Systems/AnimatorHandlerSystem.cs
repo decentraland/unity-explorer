@@ -40,22 +40,16 @@ namespace DCL.SDKComponents.Animator.Systems
 
         //Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
         [Query]
-        private void UpdateAnimationState(in Entity entity, ref PBAnimator pbAnimator, ref LoadedAnimationsComponent loadedAnimations)
+        private void UpdateAnimationState(ref PBAnimator pbAnimator, ref LoadedAnimationsComponent loadedAnimations)
         {
-            //if PBAnimator is dirty, we need to update the SDKAnimatorComponent
+            var tuple = LoadedAnimation.RequiredAnimations(pbAnimator.States!);
 
-            if (pbAnimator.IsDirty)
+            //TODO not elegant solution, the root of the problem goes from the incorrect Dirty flag of PBAnimator
+            if (loadedAnimations.playingAnimationClipName != tuple.playingAnimation?.Clip)
             {
-                var tuple = LoadedAnimation.RequiredAnimations(pbAnimator.States!);
-
-                foreach (var animation in loadedAnimations.List)
-                    animation.Apply(tuple.playingAnimation, tuple.stoppedAnimation);
-
+                loadedAnimations.Apply(tuple.playingAnimation, tuple.stoppedAnimation);
                 pbAnimator.IsDirty = false;
             }
-
-            foreach (LoadedAnimation loadedAnimation in loadedAnimations.List)
-                loadedAnimation.Update();
         }
 
         [Query]
