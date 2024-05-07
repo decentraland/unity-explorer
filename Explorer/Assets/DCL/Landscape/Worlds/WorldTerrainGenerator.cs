@@ -105,7 +105,7 @@ namespace DCL.Landscape
                 await UniTask.Yield(cancellationToken);
             }
 
-            if (processReport != null) processReport.ProgressCounter.Value = 0.5f;
+            if (processReport != null) processReport.SetProgress(0.5f);
 
             // Generate Terrain GameObjects
             terrains.Clear();
@@ -117,7 +117,7 @@ namespace DCL.Landscape
             await ReEnableTerrainAsync();
 
             FreeMemory();
-            if (processReport != null) processReport.ProgressCounter.Value = 1f;
+            if (processReport != null) processReport.SetProgress(1f); 
         }
 
         // waiting a frame to create the color map renderer created a new bug where some stones do not render properly, this should fix it
