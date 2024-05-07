@@ -68,7 +68,7 @@ namespace DCL.Landscape.Systems
 
         protected override void Update(float t)
         {
-            if (!terrainGenerator.IsTerrainGenerated) return;
+            if (!terrainGenerator.IsTerrainShown) return;
 
             if (!isTerrainViewInitialized)
             {
@@ -104,7 +104,7 @@ namespace DCL.Landscape.Systems
         [Query]
         private void UpdateTerrainVisibility(in Entity _, in CameraComponent cameraComponent)
         {
-            if (!terrainGenerator.IsTerrainGenerated) return;
+            if (!terrainGenerator.IsTerrainShown) return;
 
             // Update Renderers
             if (jobHandle.IsCompleted && !jobHandle.Equals(default(JobHandle)))
