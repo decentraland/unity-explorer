@@ -54,7 +54,7 @@ namespace DCL.Rendering.Highlight
             highlightInputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
 
             highlightOutputRenderPass = new HighlightOutputRenderPass();
-            highlightOutputRenderPass.renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
+            highlightOutputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
         }
 
         public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData)
