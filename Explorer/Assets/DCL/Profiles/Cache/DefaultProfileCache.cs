@@ -13,6 +13,10 @@ namespace DCL.Profiles
 
         public void Set(string id, Profile profile)
         {
+            if (profiles.TryGetValue(id, out Profile existingProfile))
+                if (existingProfile != profile)
+                    existingProfile.Dispose();
+
             profiles[id] = profile;
 
             UpdateProfilingCounter();

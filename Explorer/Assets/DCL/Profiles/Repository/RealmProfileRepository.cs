@@ -88,7 +88,7 @@ namespace DCL.Profiles
         public async UniTask<Profile?> GetAsync(string id, int version, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(id)) return null;
-            if (TryProfileFromCache(id, version, out var profileInCache)) return profileInCache;
+            if (TryProfileFromCache(id, version, out Profile? profileInCache)) return profileInCache;
 
             Assert.IsTrue(realm.Configured, "Can't get profile if the realm is not configured");
 
@@ -109,11 +109,11 @@ namespace DCL.Profiles
                 // Reusing the profile in cache does not allow other systems to properly update.
                 // It impacts on the object state and does not allow to make comparisons on change.
                 // For example the multiplayer system, whenever a remote profile update comes in,
-                // it compares the version of the profile to check if it has changed
-                // By overriding the version here, the check always fails
-                // Profile profile = profileInCache ?? new Profile();
-                Profile profile = new Profile();
+                // it compares the version of the profile to check if it has changed. By overriding the version here,
+                // the check always fails. So its necessary to get a new instance each time
+                Profile profile = Profile.Create();
                 profileDto.CopyTo(profile);
+
                 profileCache.Set(id, profile);
 
                 return profile;
