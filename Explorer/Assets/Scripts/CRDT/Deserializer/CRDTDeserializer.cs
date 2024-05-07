@@ -155,6 +155,9 @@ namespace CRDT.Deserializer
         private static bool TryReturnInvalidDataLength(ref ReadOnlyMemory<byte> memory, int dataLength,
             ReadOnlySpan<byte> memorySpan, int shift)
         {
+            if (dataLength < 0)
+                return false;
+
             if (dataLength > memorySpan.Length)
             {
                 memory = memory.Slice(shift);
