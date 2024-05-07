@@ -37,7 +37,8 @@ namespace DCL.CharacterTriggerArea
         {
             BoxCollider.enabled = false;
 
-            foreach (Transform avatarTransform in currentAvatarsInside) { exitedThisFrame.Add(avatarTransform); }
+            foreach (Transform avatarTransform in currentAvatarsInside)
+                exitedThisFrame.Add(avatarTransform);
 
             currentAvatarsInside.Clear();
         }
