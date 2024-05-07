@@ -19,7 +19,7 @@ namespace CRDT.Protocol.Factory
         }
 
         public override string ToString() =>
-            $"Message: entity {message.EntityId} component {message.ComponentId} type {message.Type} CRDTMessageDataLength: {CRDTMessageDataLength}";
+            $"Message: {message} CRDTMessageDataLength: {CRDTMessageDataLength}";
 
         public void LogSelf(string fromPlace)
         {
