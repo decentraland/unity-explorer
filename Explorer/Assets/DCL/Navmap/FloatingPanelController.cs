@@ -143,7 +143,7 @@ namespace DCL.Navmap
         private void JumpIn(Vector2Int parcel)
         {
             OnJumpIn?.Invoke();
-            realmNavigator.TeleportToParcelAsync(parcel, cts.Token).Forget();
+            realmNavigator.TryInitializeTeleportToParcelAsync(parcel, cts.Token).Forget();
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)
