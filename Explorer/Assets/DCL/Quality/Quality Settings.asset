@@ -211,7 +211,7 @@ MonoBehaviour:
     lensFlareComponent: {fileID: 4642727729545981125, guid: 771c68288bf78564cb5301f95b69811d, type: 3}
     environmentSettings:
       sceneLoadRadius: 50
-      lod1Threshold: 1
+      lod1Threshold: 5
       terrainLODBias: 150
       detailDensity: 70
       grassDistance: 150
