@@ -40,8 +40,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         ///     Visible meshes colliders are created on demand and then become a part of cached data.
         ///     They are decoded from <see cref="VisibleColliderMeshes" /> that are prepared beforehand.
         /// </summary>
-        public List<SDKCollider> VisibleMeshesColliders;
-        private AssetBundleData assetBundleReference;
+        public List<SDKCollider>? VisibleMeshesColliders;
+        private AssetBundleData? assetBundleReference;
 
         private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations)
         {
@@ -58,7 +58,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public void Dispose()
         {
-            assetBundleReference.Dereference();
+            assetBundleReference?.Dereference();
             assetBundleReference = null;
 
             COLLIDERS_POOL.Release(InvisibleColliders);
@@ -73,6 +73,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         }
 
         public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>
-            new (root, assetBundleReference, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get());
+            new (root, assetBundleReference, COLLIDERS_POOL.Get()!, MESH_FILTERS_POOL.Get()!, RENDERERS_POOL.Get()!, ANIMATIONS_POOL.Get()!);
     }
 }
