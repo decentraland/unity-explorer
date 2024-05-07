@@ -42,7 +42,7 @@ namespace Global.Dynamic.ChatCommands
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
 
-            await realmNavigator.TeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+            await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
 
             return ct.IsCancellationRequested
                 ? "🔴 Error. The operation was canceled!"

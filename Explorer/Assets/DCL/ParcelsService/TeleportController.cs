@@ -45,8 +45,7 @@ namespace DCL.ParcelsService
             if (retrieveScene == null)
             {
                 AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
-                loadReport.ProgressCounter.Value = 1f;
-                loadReport.CompletionSource.TrySetResult();
+                loadReport.SetProgress(1f);
                 return null;
             }
 
@@ -96,8 +95,7 @@ namespace DCL.ParcelsService
             if (sceneDef == null)
             {
                 // Instant completion for empty parcels
-                loadReport.ProgressCounter.Value = 1;
-                loadReport.CompletionSource.TrySetResult();
+                loadReport.SetProgress(1f);
 
                 return null;
             }
@@ -110,8 +108,7 @@ namespace DCL.ParcelsService
             if (retrieveScene == null)
             {
                 AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
-                loadReport.ProgressCounter.Value = 1f;
-                loadReport.CompletionSource.TrySetResult();
+                loadReport.SetProgress(1f);
                 return;
             }
 
@@ -133,9 +130,7 @@ namespace DCL.ParcelsService
             if (sceneDef == null)
             {
                 // Instant completion for empty parcels
-                loadReport.ProgressCounter.Value = 1;
-                loadReport.CompletionSource.TrySetResult();
-
+                loadReport.SetProgress(1f);
                 return;
             }
 

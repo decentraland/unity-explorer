@@ -201,19 +201,7 @@ namespace Global.Dynamic
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
 
-            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
-                realFlowLoadingStatus,
-                parcelServiceContainer.TeleportController,
-                container.MvcManager,
-                selfProfile,
-                dynamicWorldParams.StartParcel,
-                staticContainer.MainPlayerAvatarBaseProxy,
-                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                exposedGlobalDataContainer.CameraSamplingData,
-                dynamicWorldParams.EnableLandscape,
-                landscapePlugin,
-                backgroundMusic
-            );
+            
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
@@ -268,7 +256,21 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 genesisTerrain,
                 worldsTerrain,
-                satelliteView
+                satelliteView,
+                dynamicWorldParams.EnableLandscape,
+                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                exposedGlobalDataContainer.CameraSamplingData
+            );
+
+            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
+                realFlowLoadingStatus,
+                container.MvcManager,
+                selfProfile,
+                dynamicWorldParams.StartParcel,
+                staticContainer.MainPlayerAvatarBaseProxy,
+                backgroundMusic,
+                realmNavigator,
+                loadingScreen
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
