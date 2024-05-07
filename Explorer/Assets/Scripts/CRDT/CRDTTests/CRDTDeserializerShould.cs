@@ -34,11 +34,11 @@ namespace CRDT.CRDTTests
         {
             byte[] bytes =
             {
-                64, 0, 0, 0,
-                1, 0, 0, 0,
-                154, 2, 0, 0,
-                1, 0, 0, 0,
-                242, 29, 0, 0,
+                64, 0, 0, 0, //entity
+                1, 0, 0, 0, //component
+                154, 2, 0, 0, //timestamp
+                1, 0, 0, 0, //data-length
+                242, 29, 0, 0, //data
                 40, 0, 0, 0,
             };
 
