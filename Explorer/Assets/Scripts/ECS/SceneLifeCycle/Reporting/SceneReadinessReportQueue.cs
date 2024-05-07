@@ -24,7 +24,7 @@ namespace ECS.SceneLifeCycle.Reporting
             if (scenesCache.Contains(parcel))
             {
                 // conclude immediately
-                report.CompletionSource.TrySetResult();
+                report.SetProgress(1f);
             }
 
             if (!queue.TryGetValue(parcel, out PooledLoadReportList queuedReport))
