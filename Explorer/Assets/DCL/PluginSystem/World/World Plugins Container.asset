@@ -22,6 +22,7 @@ MonoBehaviour:
   - rid: 1045841258647388162
   - rid: 758312499805421571
   - rid: 758312842344792066
+  - rid: 857448814398406659
   references:
     version: 2
     RefIds:
@@ -45,6 +46,10 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 857448814398406659
+      type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <FontList>k__BackingField: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}
     - rid: 1045841226745774107
       type: {class: DefaultTexturesContainer/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
