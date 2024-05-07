@@ -30,7 +30,6 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
 
-
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
@@ -57,27 +56,18 @@ namespace DCL.UserInAppInitializationFlow
             CancellationToken ct)
         {
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
-            
 
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
 
-
             if (showLoading)
-            {
-                await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
-                {
-                    await LoadCharacterAndWorldAsync(parentLoadReport, world, playerEntity, ct);
-                }, ct);
-            }
+                await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(parentLoadReport, world, playerEntity, ct), ct);
             else
-            {
                 await LoadCharacterAndWorldAsync(AsyncLoadProcessReport.Create(), world, playerEntity, ct);
-            }
 
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
         }
-        
+
         private async UniTask LoadCharacterAndWorldAsync(AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
         {
             Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
@@ -86,16 +76,18 @@ namespace DCL.UserInAppInitializationFlow
             await realmNavigator.SwitchMiscVisibilityAsync();
             await LoadPlayerAvatar(world, playerEntity, ownProfile, ct);
 
-            var landscapeLoadReport
+            AsyncLoadProcessReport? landscapeLoadReport
                 = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+
             await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
             parentLoadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
 
-            var teleportLoadReport
+            AsyncLoadProcessReport? teleportLoadReport
                 = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             parentLoadReport.SetProgress(loadingStatus.SetStage(PlayerTeleported));
-                    
+
             parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
         }
 

@@ -8,35 +8,21 @@ namespace DCL.AsyncLoadReporting
     /// </summary>
     public class AsyncLoadProcessReport
     {
-        public UniTaskCompletionSource CompletionSource { get; }
-        public IAsyncReactiveProperty<float> ProgressCounter { get; }
-
         [CanBeNull] private readonly AsyncLoadProcessReport parent;
+
         private readonly float offset;
         private readonly float until;
 
+        private readonly IAsyncReactiveProperty<float> progressCounter;
 
-        public void SetProgress(float progress)
-        {
-            ProgressCounter.Value = progress;
-            if (parent != null)
-                parent?.SetProgress(offset + ProgressCounter.Value * (until - offset));
+        public UniTaskCompletionSource CompletionSource { get; }
+        public IReadOnlyAsyncReactiveProperty<float> ProgressCounter => progressCounter;
 
-            if (ProgressCounter.Value >= 1f)
-                CompletionSource.TrySetResult();
-        }
-
-        public AsyncLoadProcessReport CreateChildReport(float until)
-        {
-            return new AsyncLoadProcessReport(this, ProgressCounter.Value, until);
-        }
-
-        
-        public AsyncLoadProcessReport(UniTaskCompletionSource completionSource,
+        private AsyncLoadProcessReport(UniTaskCompletionSource completionSource,
             IAsyncReactiveProperty<float> progressCounter)
         {
             CompletionSource = completionSource;
-            ProgressCounter = progressCounter;
+            this.progressCounter = progressCounter;
             offset = 0;
             until = 1;
         }
@@ -44,11 +30,24 @@ namespace DCL.AsyncLoadReporting
         private AsyncLoadProcessReport(AsyncLoadProcessReport parent, float offset, float until)
         {
             CompletionSource = new UniTaskCompletionSource();
-            ProgressCounter = new AsyncReactiveProperty<float>(0f);
+            progressCounter = new AsyncReactiveProperty<float>(0f);
             this.parent = parent;
             this.offset = offset;
             this.until = until;
         }
+
+        public void SetProgress(float progress)
+        {
+            progressCounter.Value = progress;
+
+            parent?.SetProgress(offset + (progressCounter.Value * (until - offset)));
+
+            if (progressCounter.Value >= 1f)
+                CompletionSource.TrySetResult();
+        }
+
+        public AsyncLoadProcessReport CreateChildReport(float until) =>
+            new (this, ProgressCounter.Value, until);
 
         public static AsyncLoadProcessReport Create() =>
             new (new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0f));
