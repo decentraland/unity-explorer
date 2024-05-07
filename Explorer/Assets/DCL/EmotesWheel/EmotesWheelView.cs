@@ -1,6 +1,8 @@
+using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using MVC;
 using System;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,6 +11,8 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelView : ViewBase, IView
     {
+        private static readonly int OUT = Animator.StringToHash("Out");
+
         public event Action? OnClose;
 
         [SerializeField]
@@ -22,6 +26,9 @@ namespace DCL.EmotesWheel
 
         [field: SerializeField]
         public TMP_Text CurrentEmoteName { get; set; } = null!;
+
+        [field: SerializeField]
+        public Animator EmotesWheelAnimator { get; set; } = null!;
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -47,6 +54,19 @@ namespace DCL.EmotesWheel
         private void OnDisable()
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
+        }
+
+        protected override UniTask PlayShowAnimation(CancellationToken ct)
+        {
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
+                cancellationToken: ct);
+        }
+
+        protected override UniTask PlayHideAnimation(CancellationToken ct)
+        {
+            EmotesWheelAnimator.SetTrigger(OUT);
+            return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
+                cancellationToken: ct);
         }
     }
 }
