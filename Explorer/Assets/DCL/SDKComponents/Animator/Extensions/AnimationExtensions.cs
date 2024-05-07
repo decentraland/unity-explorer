@@ -30,28 +30,23 @@ namespace DCL.SDKComponents.Animator.Extensions
             }
         }
 
-        public static void SetAnimationState(this Animation animation, IReadOnlyList<PBAnimationState> sdkAnimationStates)
+        public static void TryStop(this Animation animation, string clipName)
         {
-            for (var i = 0; i < sdkAnimationStates.Count; i++)
-            {
-                var sdkAnimationState = new SDKAnimationState(sdkAnimationStates[i]!);
-                AnimationState animationState = animation[sdkAnimationState.Clip]!;
+            if (animation.IsPlaying(clipName))
+                animation.Stop(clipName);
+        }
 
-                if (!animationState) continue;
+        public static void TryPlay(this Animation animation, string clipName)
+        {
+            if (animation.IsPlaying(clipName) == false)
+                animation.Play(clipName);
+        }
 
-                sdkAnimationState.ApplyOn(animationState);
-
-                if (sdkAnimationState.ShouldReset && animation.IsPlaying(sdkAnimationState.Clip))
-                {
-                    animation.Stop(sdkAnimationState.Clip);
-
-                    //Manually sample the animation. If the reset is not played again the frame 0 wont be applied
-                    animationState.clip.SampleAnimation(animation.gameObject, 0);
-                }
-
-                if (sdkAnimationState.Playing && !animation.IsPlaying(sdkAnimationState.Clip))
-                    animation.Play(sdkAnimationState.Clip);
-            }
+        public static void ApplySettings(this Animation animation, PBAnimationState state)
+        {
+            AnimationState animationState = animation[state.Clip!]!;
+            if (!animationState) return;
+            new SDKAnimationState(state).ApplyOn(animationState);
         }
     }
 }

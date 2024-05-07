@@ -5,12 +5,10 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Animator.Components;
-using DCL.SDKComponents.Animator.Extensions;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Groups;
-using UnityEngine;
 
 namespace DCL.SDKComponents.Animator.Systems
 {
@@ -42,17 +40,22 @@ namespace DCL.SDKComponents.Animator.Systems
 
         //Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
         [Query]
-        private void UpdateAnimationState(ref PBAnimator pbAnimator, ref LoadedAnimationsComponent loadedAnimations)
+        private void UpdateAnimationState(in Entity entity, ref PBAnimator pbAnimator, ref LoadedAnimationsComponent loadedAnimations)
         {
             //if PBAnimator is dirty, we need to update the SDKAnimatorComponent
 
             if (pbAnimator.IsDirty)
             {
+                var tuple = LoadedAnimation.RequiredAnimations(pbAnimator.States!);
+
                 foreach (var animation in loadedAnimations.List)
-                    animation!.SetAnimationState(pbAnimator.States!);
+                    animation.Apply(tuple.playingAnimation, tuple.stoppedAnimation);
 
                 pbAnimator.IsDirty = false;
             }
+
+            foreach (LoadedAnimation loadedAnimation in loadedAnimations.List)
+                loadedAnimation.Update();
         }
 
         [Query]
@@ -60,7 +63,7 @@ namespace DCL.SDKComponents.Animator.Systems
         private void HandleComponentRemoval(ref LoadedAnimationsComponent loadedAnimations)
         {
             //If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
-            foreach (Animation animation in loadedAnimations.List)
+            foreach (var animation in loadedAnimations.List)
                 animation.Initialize();
         }
 

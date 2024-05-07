@@ -1,19 +1,26 @@
 using DCL.SDKComponents.Animator.Extensions;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Animator.Components
 {
+    //TODO dispose
     public readonly struct LoadedAnimationsComponent
     {
-        public readonly IReadOnlyList<Animation> List;
+        public readonly List<LoadedAnimation> List;
 
         public LoadedAnimationsComponent(IReadOnlyList<Animation> list)
         {
-            foreach (Animation animation in list)
-                animation.Initialize();
+            var mutableList = ListPool<LoadedAnimation>.Get()!;
 
-            this.List = list;
+            foreach (Animation animation in list)
+            {
+                animation.Initialize();
+                mutableList.Add(new LoadedAnimation(animation));
+            }
+
+            this.List = mutableList;
         }
     }
 }
