@@ -79,8 +79,13 @@ namespace DCL.Interaction.Systems
 
             foreach (Renderer renderer in renderers)
             {
-                if (!HighlightRendererFeature.m_HighLightRenderers.Contains(renderer))
-                    HighlightRendererFeature.m_HighLightRenderers.Add(renderer);
+                if (!HighlightRendererFeature.m_HighLightRenderers.ContainsKey(renderer))
+                    HighlightRendererFeature.m_HighLightRenderers.Add(renderer, new HighlightSettings
+                    {
+                        // TODO: extract this into a setting
+                        Color = highlightComponent.IsAtDistance() ? Color.green : Color.red,
+                        Width = 2f,
+                    });
             }
 
             ListPool<Renderer>.Release(renderers);
@@ -95,10 +100,8 @@ namespace DCL.Interaction.Systems
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
-            {
-                if (HighlightRendererFeature.m_HighLightRenderers.Contains(renderer))
+                if (HighlightRendererFeature.m_HighLightRenderers.ContainsKey(renderer))
                     HighlightRendererFeature.m_HighLightRenderers.Remove(renderer);
-            }
 
             ListPool<Renderer>.Release(renderers);
         }

@@ -8,6 +8,13 @@ using UnityEngine.Rendering.Universal;
 
 namespace DCL.Rendering.Highlight
 {
+    public struct HighlightSettings
+    {
+        public Color Color;
+        public float Width;
+        public Vector3 Offset;
+    }
+
     [Serializable]
     internal class HighlightRendererFeature_Settings
     {
@@ -26,7 +33,7 @@ namespace DCL.Rendering.Highlight
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private HighlightRendererFeature_Settings m_Settings;
-        public static List<Renderer> m_HighLightRenderers;
+        public static Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
 
         // Input Pass Data
         private HighlightInputRenderPass highlightInputRenderPass;
@@ -45,7 +52,7 @@ namespace DCL.Rendering.Highlight
         public HighlightRendererFeature()
         {
             m_Settings = new HighlightRendererFeature_Settings();
-            m_HighLightRenderers = new List<Renderer>();
+            m_HighLightRenderers = new Dictionary<Renderer, HighlightSettings>();
         }
 
         public override void Create()
