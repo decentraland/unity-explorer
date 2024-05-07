@@ -205,6 +205,7 @@ namespace DCL.Navmap
 
         public void ResetAnimator()
         {
+            filterController.SetFilterContentStatus(false);
             navmapView.PanelAnimator.Rebind();
             navmapView.HeaderAnimator.Rebind();
             navmapView.PanelAnimator.Update(0);
