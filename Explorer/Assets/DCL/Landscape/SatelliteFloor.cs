@@ -68,11 +68,11 @@ namespace DCL.Landscape
             }
 
             Initialized = true;
-            SwitchVisibility(landscapeData.showSatelliteView);
+            SwitchVisibilityAsync(landscapeData.showSatelliteView);
         }
 
 
-        public async UniTask SwitchVisibility(bool isVisible)
+        public async UniTask SwitchVisibilityAsync(bool isVisible)
         {
             if (satelliteRenderersEnabled == isVisible) return;
 

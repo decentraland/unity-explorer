@@ -271,7 +271,7 @@ namespace Global.Dynamic
 
             // isVisible
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            await satelliteFloor.SwitchVisibility(isGenesis);
+            await satelliteFloor.SwitchVisibilityAsync(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
     }
