@@ -64,6 +64,7 @@ namespace CRDT.Deserializer
 
                         break;
 
+                    case CRDTMessageType.NONE:
                     default:
                         memory = memory.Slice(remainingBytesToRead);
                         break;
@@ -139,16 +140,26 @@ namespace CRDT.Deserializer
 
             DeserializerParameters(ref memorySpan, out CRDTEntity entityId, out int componentId, out int timestamp, out int dataLength, ref shift);
 
-            if (TryReturnInvalidDataLength(ref memory, dataLength, memorySpan, shift))
-                return false;
+            try
+            {
+                if (TryReturnInvalidDataLength(ref memory, dataLength, memorySpan, shift))
+                    return false;
 
-            IMemoryOwner<byte> memoryOwner = crdtPooledMemoryAllocator.GetMemoryBuffer(memory, shift, dataLength);
+                IMemoryOwner<byte> memoryOwner = crdtPooledMemoryAllocator.GetMemoryBuffer(memory, shift, dataLength);
 
-            //Forwarding the memory to the next message
-            memory = memory.Slice(shift + dataLength);
+                //Forwarding the memory to the next message
+                memory = memory.Slice(shift + dataLength);
 
-            crdtMessage = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, timestamp, memoryOwner);
-            return true;
+                crdtMessage = new CRDTMessage(CRDTMessageType.PUT_COMPONENT, entityId, componentId, timestamp, memoryOwner);
+                return true;
+            }
+            catch (Exception e)
+            {
+                throw new Exception(
+                    $"Cannot Deserialize Put Component with entityId: {entityId.Id}, with componentId: {componentId}, with timestamp: {timestamp}, with dataLength: {dataLength}, with shift: {shift}, with memory length: {memory.Length}",
+                    e
+                );
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
