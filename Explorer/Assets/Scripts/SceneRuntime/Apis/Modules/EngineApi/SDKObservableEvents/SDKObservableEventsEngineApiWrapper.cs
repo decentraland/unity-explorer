@@ -17,10 +17,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
     public class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
     {
+        private static List<SDKObservableEvent> EMPTY_EVENTS_LIST = new ();
+
         private readonly PBAvatarEmoteCommand avatarEmoteCommand = new ();
         private readonly ProtobufSerializer<PBAvatarEmoteCommand> avatarEmoteCommandSerializer = new ();
         private readonly PBPlayerIdentityData playerIdentityData = new ();
         private readonly ProtobufSerializer<PBPlayerIdentityData> playerIdentityDataSerializer = new ();
+        private readonly PBRealmInfo realmInfo = new ();
+        private readonly ProtobufSerializer<PBRealmInfo> realmInfoSerializer = new ();
         private readonly List<SDKObservableEvent> sdkObservableEvents = new ();
         private readonly HashSet<string> sdkObservableEventSubscriptions = new ();
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
@@ -59,7 +63,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             {
                 // Report an uncategorized MANAGED exception (don't propagate it further)
                 exceptionsHandler.OnEngineException(e);
-                return new List<SDKObservableEvent>();
+                return EMPTY_EVENTS_LIST;
             }
         }
 
@@ -133,11 +137,21 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                 }
 
                                 break;
-
-                            // case ComponentID.POINTER_EVENTS_RESULT: // playerClicked observable
-                            //     break;
-                            // case ComponentID.REALM_INFO: // onRealmChanged observables
-                            //     break;
+                            case ComponentID.REALM_INFO: // onRealmChanged observables
+                                if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.RealmChanged))
+                                {
+                                    realmInfoSerializer.DeserializeInto(realmInfo, message.Data.Memory.Span);
+                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload()
+                                    {
+                                        domain = realmInfo.BaseUrl,
+                                        room = realmInfo.Room,
+                                        displayName = realmInfo.RealmName,
+                                        serverName = realmInfo.RealmName
+                                    }));
+                                }
+                                break;
+                            /*case ComponentID.POINTER_EVENTS_RESULT: // playerClicked observable
+                                break;*/
                         }
 
                         break;
@@ -212,8 +226,11 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             sdkObservableEventSubscriptions.Remove(eventId);
         }
 
-        private SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct =>
-            new ()
+        private SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct
+        {
+            UnityEngine.Debug.Log($"PRAVS - JAVA - GenerateSDKObservableEvent for {eventId}...");
+
+            return new ()
             {
                 generic = new SDKObservableEvent.Generic
                 {
@@ -221,5 +238,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                     eventData = JsonConvert.SerializeObject(eventData)
                 },
             };
+        }
     }
 }
