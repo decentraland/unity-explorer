@@ -242,6 +242,11 @@
         public const string REALM_DATA_DIRTY_RESET_SYSTEM = nameof(REALM_DATA_DIRTY_RESET_SYSTEM);
 
         /// <summary>
+        ///     SDK Observables layer
+        /// </summary>
+        public const string SDK_OBSERVABLES = nameof(SDK_OBSERVABLES);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);

@@ -3,6 +3,7 @@ using CRDT.Protocol;
 using CRDT.Protocol.Factory;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.Serialization;
+using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using JetBrains.Annotations;
@@ -226,6 +227,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         public void SubscribeToSDKObservableEvent(string eventId)
         {
             sdkObservableEventSubscriptions.Add(eventId);
+
+            if (eventId == SDKObservableEventIds.PlayerClicked)
+                ReportHub.LogWarning(new ReportData(ReportCategory.SDK_OBSERVABLES), "Scene subscribed to unsupported SDK Observable 'PlayerClicked'");
         }
 
         [UsedImplicitly]
