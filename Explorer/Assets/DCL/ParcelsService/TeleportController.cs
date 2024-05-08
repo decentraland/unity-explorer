@@ -3,6 +3,7 @@ using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.Reporting;
@@ -49,9 +50,10 @@ namespace DCL.ParcelsService
                 return null;
             }
 
-            SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+            SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
             Vector3 targetPosition;
+            Vector3? cameraTarget = null;
 
             if (sceneDef != null)
             {
@@ -60,29 +62,20 @@ namespace DCL.ParcelsService
 
                 targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
 
-                List<SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
+                List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
 
                 if (spawnPoints is { Count: > 0 })
                 {
-                    // TODO transfer obscure logic of how to pick the desired spawn point from the array
-                    // For now just pick default/first
-
-                    SceneMetadata.SpawnPoint spawnPoint = spawnPoints[0];
-
-                    for (var i = 0; i < spawnPoints.Count; i++)
-                    {
-                        SceneMetadata.SpawnPoint sp = spawnPoints[i];
-                        if (!sp.@default) continue;
-
-                        spawnPoint = sp;
-                        break;
-                    }
+                    SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints);
 
                     Vector3 offset = GetOffsetFromSpawnPoint(spawnPoint);
 
                     // TODO validate offset position is within bounds of one of scene parcels
 
                     targetPosition += offset;
+
+                    if (spawnPoint.cameraTarget != null)
+                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3();
                 }
             }
             else
@@ -91,6 +84,9 @@ namespace DCL.ParcelsService
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
             AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
+
+            if (cameraTarget != null)
+                AddCameraLookAtIntentQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
 
             if (sceneDef == null)
             {
@@ -113,7 +109,7 @@ namespace DCL.ParcelsService
             }
 
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+            SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
             if (sceneDef != null)
 
@@ -140,6 +136,24 @@ namespace DCL.ParcelsService
                 await loadReport.CompletionSource.Task.Timeout(TimeSpan.FromSeconds(30));
             }
             catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
+        }
+
+        private SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints)
+        {
+            // TODO transfer obscure logic of how to pick the desired spawn point from the array
+            // For now just pick default/first
+            SceneMetadata.SpawnPoint spawnPoint = spawnPoints[0];
+
+            for (var i = 0; i < spawnPoints.Count; i++)
+            {
+                SceneMetadata.SpawnPoint sp = spawnPoints[i];
+                if (!sp.@default) continue;
+
+                spawnPoint = sp;
+                break;
+            }
+
+            return spawnPoint;
         }
 
         private static Vector3 GetOffsetFromSpawnPoint(SceneMetadata.SpawnPoint spawnPoint)
@@ -174,6 +188,13 @@ namespace DCL.ParcelsService
         [Query]
         [All(typeof(PlayerComponent))]
         private void AddTeleportIntent([Data] PlayerTeleportIntent intent, in Entity entity)
+        {
+            world?.Add(entity, intent);
+        }
+
+        [Query]
+        [All(typeof(CameraComponent))]
+        private void AddCameraLookAtIntent([Data] CameraLookAtIntent intent, in Entity entity)
         {
             world?.Add(entity, intent);
         }
