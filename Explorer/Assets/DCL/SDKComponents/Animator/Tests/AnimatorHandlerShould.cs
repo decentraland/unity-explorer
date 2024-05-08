@@ -1,7 +1,6 @@
 using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.Components.Special;
-using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
@@ -20,7 +19,6 @@ using ECS.Unity.GLTFContainer.Systems;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -37,7 +35,6 @@ namespace DCL.SDKComponents.Animator.Tests
         private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
         private FinalizeGltfContainerLoadingSystem finalizeGltfContainerLoadingSystem;
         private readonly GltfContainerTestResources resources = new ();
-
 
         [SetUp]
         public void SetUp()
@@ -79,12 +76,11 @@ namespace DCL.SDKComponents.Animator.Tests
                     }
                 }
             };
+
             entity = world.Create(PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(entity);
             world.Add(entity, pbAnimator);
         }
-
-
 
         [TearDown]
         public void TearDown()
@@ -94,7 +90,6 @@ namespace DCL.SDKComponents.Animator.Tests
             finalizeGltfContainerLoadingSystem.Dispose();
             resources.UnloadBundle();
         }
-
 
         private async Task InitializeGlftContainerComponent()
         {
@@ -113,6 +108,36 @@ namespace DCL.SDKComponents.Animator.Tests
             world.Add(entity, component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.ANIMATION });
 
             finalizeGltfContainerLoadingSystem.Update(0);
+        }
+
+        [Test]
+        public void LoadedAnimationsShould()
+        {
+            var world = World.Create();
+            var system = new AnimatorHandlerSystem(world);
+
+            var pbAnimator = new PBAnimator();
+            var gltf = new GltfContainerComponent();
+            gltf.State.Set(LoadingState.Finished);
+
+            var gm = new GameObject();
+            var container = GltfContainerAsset.Create(new GameObject(), null!);
+            var animation = gm.AddComponent<Animation>();
+
+            var loadingResult = new StreamableLoadingResult<GltfContainerAsset>(container);
+
+            gltf.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.CreateFinalized(
+                new GetGltfContainerAssetIntention(),
+                loadingResult
+            );
+
+            loadingResult.Asset!.Animations.Add(animation);
+
+            var entity = world.Create(pbAnimator, gltf);
+
+            system.Update(0);
+
+            Assert.IsTrue(world.Has<LoadedAnimationsComponent>(entity));
         }
     }
 }
