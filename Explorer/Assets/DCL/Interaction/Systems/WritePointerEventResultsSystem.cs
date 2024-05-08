@@ -37,6 +37,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         private readonly IComponentPool<RaycastHit> raycastHitPool;
 
+        private bool messageSent;
+
         internal WritePointerEventResultsSystem(World world, ISceneData sceneData, IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents, IComponentPool<RaycastHit> raycastHitPool) : base(world)
         {
@@ -50,8 +52,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
+            messageSent = false;
             WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
-            WriteGlobalEvents();
+
+            if (!messageSent)
+                WriteGlobalEvents();
         }
 
         private void WriteGlobalEvents()
@@ -81,6 +86,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
+
+                messageSent = true;
             }
 
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
