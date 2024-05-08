@@ -107,7 +107,6 @@ namespace DCL.Chat
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
-            viewInstance.InputField.onSubmit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
             emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
@@ -120,8 +119,8 @@ namespace DCL.Chat
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
-            dclInput.UI.Submit.performed += OnSubmitAction;
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
+            OnFocus();
         }
 
         protected override void OnViewShow()
@@ -388,6 +387,20 @@ namespace DCL.Chat
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
+        }
+
+        protected override void OnBlur()
+        {
+            viewInstance.InputField.onSubmit.RemoveAllListeners();
+            dclInput.UI.Submit.performed -= OnSubmitAction;
+            viewInstance.InputField.DeactivateInputField();
+
+        }
+
+        protected override void OnFocus()
+        {
+            viewInstance.InputField.onSubmit.AddListener(OnSubmit);
+            dclInput.UI.Submit.performed += OnSubmitAction;
         }
 
         private void HandleEmojiSearch(string inputText)
