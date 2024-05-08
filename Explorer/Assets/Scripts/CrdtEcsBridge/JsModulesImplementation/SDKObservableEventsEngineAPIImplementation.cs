@@ -9,8 +9,6 @@ using CrdtEcsBridge.WorldSynchronizer;
 using DCL.ECS7;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
-using System;
-using System.Buffers;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -24,14 +22,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
         }
 
-        protected override void SerializeProcessedMessage(ref Span<byte> span, in ProcessedCRDTMessage processedCRDTMessage)
-        {
-            OutgoingCRDTMessages.Add(processedCRDTMessage);
-            base.SerializeProcessedMessage(ref span, in processedCRDTMessage);
-        }
-
         protected override void SyncCRDTMessage(ProcessedCRDTMessage message)
         {
+            OutgoingCRDTMessages.Add(message);
+
             if (message.message.Type == CRDTMessageType.APPEND_COMPONENT
                 && message.message.ComponentId == ComponentID.AVATAR_EMOTE_COMMAND)
             {
@@ -40,6 +34,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
 
             base.SyncCRDTMessage(message);
+        }
+
+        public void ClearOutgoingCRDTMessages()
+        {
+            OutgoingCRDTMessages.Clear();
         }
     }
 }

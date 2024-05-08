@@ -260,13 +260,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
             {
-                SerializeProcessedMessage(ref span, in processedCRDTMessage);
+                crdtSerializer.Serialize(ref span, in processedCRDTMessage);
             }
-        }
-
-        protected virtual void SerializeProcessedMessage(ref Span<byte> span, in ProcessedCRDTMessage processedCRDTMessage)
-        {
-            crdtSerializer.Serialize(ref span, in processedCRDTMessage);
         }
     }
 }

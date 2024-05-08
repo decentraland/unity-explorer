@@ -123,6 +123,19 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                 }
 
                                 break;
+                            case ComponentID.REALM_INFO: // onRealmChanged observables
+                                if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.RealmChanged))
+                                {
+                                    realmInfoSerializer.DeserializeInto(realmInfo, message.Data.Memory.Span);
+                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload()
+                                    {
+                                        domain = realmInfo.BaseUrl,
+                                        room = realmInfo.Room,
+                                        displayName = realmInfo.RealmName,
+                                        serverName = realmInfo.RealmName
+                                    }));
+                                }
+                                break;
                             case ComponentID.AVATAR_EQUIPPED_DATA: // profileChanged observable
                             case ComponentID.AVATAR_BASE: // profileChanged observable
                                 if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.ProfileChanged))
@@ -136,19 +149,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                     }));
                                 }
 
-                                break;
-                            case ComponentID.REALM_INFO: // onRealmChanged observables
-                                if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.RealmChanged))
-                                {
-                                    realmInfoSerializer.DeserializeInto(realmInfo, message.Data.Memory.Span);
-                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload()
-                                    {
-                                        domain = realmInfo.BaseUrl,
-                                        room = realmInfo.Room,
-                                        displayName = realmInfo.RealmName,
-                                        serverName = realmInfo.RealmName
-                                    }));
-                                }
                                 break;
                             /*case ComponentID.POINTER_EVENTS_RESULT: // playerClicked observable
                                 break;*/
@@ -199,7 +199,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                         break;
                 }
             }
-            engineApi.OutgoingCRDTMessages.Clear();
+
+            engineApi.ClearOutgoingCRDTMessages();
         }
 
         private void DetectSceneMessageBusCommsObservableEvent()
@@ -228,8 +229,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         private SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct
         {
-            UnityEngine.Debug.Log($"PRAVS - JAVA - GenerateSDKObservableEvent for {eventId}...");
-
             return new ()
             {
                 generic = new SDKObservableEvent.Generic
