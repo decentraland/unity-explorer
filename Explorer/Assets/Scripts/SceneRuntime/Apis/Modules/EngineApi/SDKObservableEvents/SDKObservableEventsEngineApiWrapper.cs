@@ -45,9 +45,16 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             base.Dispose();
         }
 
+        // Used for SDK Observables + SDK Comms MessageBus
         [UsedImplicitly]
         public List<SDKObservableEvent> SendBatch()
         {
+            if (sdkObservableEventSubscriptions.Count == 0)
+            {
+                engineApi.ClearOutgoingCRDTMessages();
+                return EMPTY_EVENTS_LIST;
+            }
+
             try
             {
                 sdkObservableEvents.Clear();
