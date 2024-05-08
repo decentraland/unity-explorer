@@ -76,6 +76,8 @@ namespace DCL.UserInAppInitializationFlow
             await realmNavigator.SwitchMiscVisibilityAsync();
             await LoadPlayerAvatar(world, playerEntity, ownProfile, ct);
 
+            //
+
             AsyncLoadProcessReport? landscapeLoadReport
                 = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
 
