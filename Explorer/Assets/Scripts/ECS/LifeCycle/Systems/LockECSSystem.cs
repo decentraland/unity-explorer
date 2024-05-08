@@ -8,7 +8,7 @@ using Utility.Multithreading;
 namespace ECS.LifeCycle.Systems
 {
     /// <summary>
-    /// Locks ECS from modification while the whole cycle of the Unity systems is running
+    ///     Locks ECS from modification while the whole cycle of the Unity systems is running
     /// </summary>
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     [UpdateBefore(typeof(SyncedInitializationSystemGroup))] // Before any other scene system

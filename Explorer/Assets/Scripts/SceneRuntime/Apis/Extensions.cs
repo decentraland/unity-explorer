@@ -36,15 +36,6 @@ namespace SceneRuntime.Apis
                    .Forget();
 
             return completionSource.Task.ToPromise();
-
-            // return Task.Run(async () =>
-            // {
-            //     var result = await uniTask;
-            //     await UniTask.SwitchToThreadPool();
-            //     return result;
-            // }).ToPromise();
-
-            // return uniTask.ContinueWith(static _ => UniTask.SwitchToThreadPool()).ToPromise();
         }
 
         /// <summary>
@@ -71,17 +62,6 @@ namespace SceneRuntime.Apis
                    .Forget();
 
             return completionSource.Task.AsTask().ToPromise();
-
-            // return Task.Run(async () =>
-            // {
-            //     await uniTask;
-            //     await UniTask.SwitchToThreadPool();
-            // }).ToPromise();
-
-            // if (!PlayerLoopHelper.IsMainThread)
-            //     return uniTask.AsTask().ToPromise();
-            //
-            // return uniTask.ContinueWith(static () => UniTask.SwitchToThreadPool()).AsTask().ToPromise();
         }
     }
 }

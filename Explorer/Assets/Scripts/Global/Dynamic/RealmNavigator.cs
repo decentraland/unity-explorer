@@ -22,6 +22,7 @@ using System;
 using System.Threading;
 using DCL.UserInAppInitializationFlow;
 using ECS.Prioritization.Components;
+using System.Linq;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -145,7 +146,7 @@ namespace Global.Dynamic
             if (isGenesis)
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             else
-                waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(teleportLoadReport, ct);
+                waitForSceneReadiness = await TeleportToWorldSpawnPointAsync(parcelToTeleport, teleportLoadReport, ct);
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
@@ -212,10 +213,14 @@ namespace Global.Dynamic
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
-        private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(AsyncLoadProcessReport processReport, CancellationToken ct)
+        private async UniTask<UniTask> TeleportToWorldSpawnPointAsync(Vector2Int parcelToTeleport, AsyncLoadProcessReport processReport, CancellationToken ct)
         {
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] promises = await WaitForFixedScenePromisesAsync(ct);
-            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase, processReport, ct);
+
+            if (!promises.Any(p => p.Result!.Value.Asset!.metadata.scene.DecodedParcels.Contains(parcelToTeleport)))
+                parcelToTeleport = promises[0].Result!.Value.Asset!.metadata.scene.DecodedBase;
+
+            WaitForSceneReadiness? waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(parcelToTeleport, processReport, ct);
             return waitForSceneReadiness.ToUniTask(ct);
         }
 

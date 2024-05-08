@@ -6,6 +6,7 @@ using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using ECS.Abstract;
 using ECS.Unity.Groups;
+using TMPro;
 using UnityEngine;
 
 namespace DCL.SDKComponents.TextShape.System
@@ -17,10 +18,14 @@ namespace DCL.SDKComponents.TextShape.System
         private readonly IFontsStorage fontsStorage;
         private readonly MaterialPropertyBlock materialPropertyBlock;
 
-        public UpdateTextShapeSystem(World world, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock) : base(world)
+        private readonly EntityEventBuffer<TextMeshPro> changedTextMeshes;
+
+        public UpdateTextShapeSystem(World world, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock,
+            EntityEventBuffer<TextMeshPro> changedTextMeshes) : base(world)
         {
             this.fontsStorage = fontsStorage;
             this.materialPropertyBlock = materialPropertyBlock;
+            this.changedTextMeshes = changedTextMeshes;
         }
 
         protected override void Update(float t)
@@ -29,11 +34,12 @@ namespace DCL.SDKComponents.TextShape.System
         }
 
         [Query]
-        private void UpdateTexts(in TextShapeComponent textShapeComponent, in PBTextShape textShape)
+        private void UpdateTexts(Entity entity, in TextShapeComponent textShapeComponent, in PBTextShape textShape)
         {
             if (textShape.IsDirty)
             {
                 textShapeComponent.TextMeshPro.Apply(textShape, fontsStorage, materialPropertyBlock);
+                changedTextMeshes.Add(entity, textShapeComponent.TextMeshPro);
                 textShape.IsDirty = false;
             }
         }

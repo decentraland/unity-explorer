@@ -7,6 +7,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Utilities.Extensions;
+using ECS.Abstract;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
@@ -88,7 +89,9 @@ namespace SceneRunner.ECSWorld
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, args.SceneData);
 
+            ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);
+
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 

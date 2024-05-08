@@ -22,9 +22,13 @@ namespace DCL.SDKComponents.TextShape.System
         private readonly IFontsStorage fontsStorage;
         private readonly MaterialPropertyBlock materialPropertyBlock;
 
-        public InstantiateTextShapeSystem(World world, IComponentPool<TextMeshPro> textMeshProPool, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock, IPerformanceBudget instantiationFrameTimeBudget) : base(world)
+        private readonly EntityEventBuffer<TextMeshPro> changedTextMeshes;
+
+        public InstantiateTextShapeSystem(World world, IComponentPool<TextMeshPro> textMeshProPool, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock, IPerformanceBudget instantiationFrameTimeBudget,
+            EntityEventBuffer<TextMeshPro> changedTextMeshes) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
+            this.changedTextMeshes = changedTextMeshes;
             this.textMeshProPool = textMeshProPool;
             this.fontsStorage = fontsStorage;
             this.materialPropertyBlock = materialPropertyBlock;
@@ -37,7 +41,7 @@ namespace DCL.SDKComponents.TextShape.System
 
         [Query]
         [None(typeof(TextShapeComponent))]
-        private void InstantiateRemaining(in Entity entity, in TransformComponent transform, in PBTextShape textShape)
+        private void InstantiateRemaining(Entity entity, in TransformComponent transform, in PBTextShape textShape)
         {
             if (instantiationFrameTimeBudget.TrySpendBudget() == false)
                 return;
@@ -48,6 +52,9 @@ namespace DCL.SDKComponents.TextShape.System
             textMeshPro.Apply(textShape, fontsStorage, materialPropertyBlock);
 
             World.Add(entity, new TextShapeComponent(textMeshPro));
+
+            // Issue an event so it will be grabbed by visibility system
+            changedTextMeshes.Add(entity, textMeshPro);
         }
     }
 }

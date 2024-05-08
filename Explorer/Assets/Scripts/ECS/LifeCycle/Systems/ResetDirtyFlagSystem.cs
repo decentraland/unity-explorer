@@ -15,6 +15,7 @@ namespace ECS.LifeCycle.Systems
 
     // Update survived components only
     [UpdateAfter(typeof(CleanUpGroup))]
+    [ThrottlingEnabled] // Reacts on the SDK update only
     public partial class ResetDirtyFlagSystem<T> : BaseUnityLoopSystem where T: IDirtyMarker
     {
         internal ResetDirtyFlagSystem(World world) : base(world) { }

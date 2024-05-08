@@ -116,6 +116,7 @@ namespace DCL.Nametags
         }
 
         [Query]
+        [None(typeof(DeleteEntityIntention))]
         private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
             if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform))
