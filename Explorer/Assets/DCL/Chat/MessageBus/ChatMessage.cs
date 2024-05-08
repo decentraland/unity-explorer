@@ -7,9 +7,10 @@ namespace DCL.Chat
         public readonly string Sender;
         public readonly string WalletAddress;
         public readonly bool SentByOwnUser;
+        public readonly bool SystemMessage;
         public bool HasToAnimate;
 
-        public ChatMessage(string message, string sender, string walletAddress, bool sentByOwnUser, bool hasToAnimate)
+        public ChatMessage(string message, string sender, string walletAddress, bool sentByOwnUser, bool hasToAnimate, bool systemMessage = false)
         {
             Message = message;
             Sender = sender;
@@ -17,6 +18,7 @@ namespace DCL.Chat
             SentByOwnUser = sentByOwnUser;
             IsPaddingElement = false;
             HasToAnimate = hasToAnimate;
+            SystemMessage = systemMessage;
         }
 
         public ChatMessage(bool isPaddingElement)
@@ -27,9 +29,10 @@ namespace DCL.Chat
             WalletAddress = string.Empty;
             SentByOwnUser = false;
             HasToAnimate = true;
+            SystemMessage = false;
         }
 
         public static ChatMessage NewFromSystem(string message) =>
-            new (message, "System", string.Empty, true, false);
+            new (message, "DCL System", string.Empty, true, false, true);
     }
 }
