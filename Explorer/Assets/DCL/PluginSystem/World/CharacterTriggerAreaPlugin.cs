@@ -1,15 +1,20 @@
+using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.CharacterTriggerArea.Systems;
+using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.ResourcesUnloading;
+using DCL.SDKComponents.AvatarModifierArea.Systems;
+using DCL.SDKComponents.CameraModeArea.Systems;
 using DCL.Utilities;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -19,20 +24,31 @@ namespace DCL.PluginSystem.World
 {
     public class CharacterTriggerAreaPlugin : IDCLWorldPlugin<CharacterTriggerAreaSettings>
     {
+        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly CacheCleaner cacheCleaner;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
+        private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly ICharacterObject characterObject;
 
         private IComponentPool<CharacterTriggerArea.CharacterTriggerArea>? characterTriggerAreaPoolRegistry;
 
-        public CharacterTriggerAreaPlugin(ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy, ICharacterObject characterObject, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner, CacheCleaner cacheCleaner)
+        public CharacterTriggerAreaPlugin(
+            ObjectProxy<Arch.Core.World> globalWorldProxy,
+            ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
+            ObjectProxy<Entity> cameraEntityProxy,
+            ICharacterObject characterObject,
+            IComponentPoolsRegistry poolsRegistry,
+            IAssetsProvisioner assetsProvisioner,
+            CacheCleaner cacheCleaner)
         {
+            this.globalWorldProxy = globalWorldProxy;
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = poolsRegistry;
             this.cacheCleaner = cacheCleaner;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
+            this.cameraEntityProxy = cameraEntityProxy;
             this.characterObject = characterObject;
         }
 
@@ -48,11 +64,14 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
+            ResetDirtyFlagSystem<PBCameraModeArea>.InjectToWorld(ref builder);
+
             CharacterTriggerAreaHandlerSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!, mainPlayerAvatarBaseProxy, sharedDependencies.SceneStateProvider, characterObject);
             CharacterTriggerAreaCleanUpRegisteredCollisionsSystem.InjectToWorld(ref builder);
 
-            var cleanupSystem = CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!);
-            finalizeWorldSystems.Add(cleanupSystem);
+            finalizeWorldSystems.Add(AvatarModifierAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy));
+            finalizeWorldSystems.Add(CameraModeAreaHandlerSystem.InjectToWorld(ref builder, globalWorldProxy, cameraEntityProxy));
+            finalizeWorldSystems.Add(CharacterTriggerAreaCleanupSystem.InjectToWorld(ref builder, characterTriggerAreaPoolRegistry!));
         }
 
         private async UniTask CreateCharacterTriggerAreaPoolAsync(CharacterTriggerAreaSettings settings, CancellationToken ct)

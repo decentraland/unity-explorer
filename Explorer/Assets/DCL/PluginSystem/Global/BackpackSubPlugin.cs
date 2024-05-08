@@ -34,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
         private readonly IRealmData realmData;
+        private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackEventBus backpackEventBus;
@@ -57,7 +58,8 @@ namespace DCL.PluginSystem.Global
             IEmoteCache emoteCache,
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
-            IRealmData realmData
+            IRealmData realmData,
+            DCLInput dclInput
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -69,6 +71,7 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
             this.embeddedEmotes = embeddedEmotes;
             this.realmData = realmData;
+            this.dclInput = dclInput;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -153,7 +156,7 @@ namespace DCL.PluginSystem.Global
                     sortController, pageButtonView, emoteGridPool, args.EmoteProvider, embeddedEmotes, thumbnailProvider);
 
                 var emotesController = new EmotesController(emoteView,
-                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityInfoPanelBackgroundsMapping));
+                    new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping));
 
                 var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
                     characterPreviewFactory, backpackEventBus, world, equippedEmotes);
@@ -161,7 +164,7 @@ namespace DCL.PluginSystem.Global
                 backpackController = new BackpackController(
                     view,
                     avatarView,
-                    rarityInfoPanelBackgroundsMapping,
+                    rarityBackgroundsMapping,
                     backpackCommandBus,
                     backpackEventBus,
                     gridController,
@@ -173,7 +176,8 @@ namespace DCL.PluginSystem.Global
                     avatarView.GetComponentsInChildren<AvatarSlotView>().EnsureNotNull(),
                     emotesController,
                     backpackCharacterPreviewController,
-                    thumbnailProvider
+                    thumbnailProvider,
+                    dclInput
                 );
             };
         }

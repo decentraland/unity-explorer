@@ -70,8 +70,7 @@ namespace DCL.LOD
                 for (int i = 0; i < reports!.Value.Count; i++)
                 {
                     var report = reports.Value[i];
-                    report.ProgressCounter.Value = 1f;
-                    report.CompletionSource.TrySetResult();
+                    report.SetProgress(1f);
                 }
             }
         }
