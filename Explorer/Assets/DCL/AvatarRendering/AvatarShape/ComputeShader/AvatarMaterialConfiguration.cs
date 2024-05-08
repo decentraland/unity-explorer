@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
-using Utility.Primitives;
 
 namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 {
@@ -46,9 +45,6 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
             TextureArraySlot?[] slots;
             Material avatarMaterial;
             int shaderId;
-
-            if (originalMaterial == null)
-                originalMaterial = DefaultMaterial.New();
 
             (avatarMaterial, slots, shaderId) = TrySetupFacialFeature(meshRenderer, poolHandler, avatarShapeComponent, facialFeatures, out bool isFacialFeature);
 
