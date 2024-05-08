@@ -148,6 +148,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                             case ComponentID.AVATAR_BASE: // profileChanged observable
                                 if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.ProfileChanged))
                                 {
+                                    if (!userIdEntitiesMap.ContainsKey(message.EntityId)) break;
+
                                     playerIdentityDataSerializer.DeserializeInto(playerIdentityData, message.Data.Memory.Span);
 
                                     sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
@@ -185,6 +187,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                         // onLeaveScene + playerDisconnected observables
                         if (message.ComponentId == ComponentID.PLAYER_IDENTITY_DATA)
                         {
+                            if (!userIdEntitiesMap.ContainsKey(message.EntityId)) break;
+
                             if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
                             {
                                 sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.LeaveScene, new UserIdPayload
