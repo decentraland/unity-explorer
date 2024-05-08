@@ -138,7 +138,7 @@ namespace DCL.Landscape
             }
         }
 
-        public async UniTask GenerateTerrainAsync(
+        public async UniTask GenerateTerrainAndShowAsync(
             uint worldSeed = 1,
             bool withHoles = true,
             bool hideTrees = false,
@@ -221,6 +221,7 @@ namespace DCL.Landscape
                     localCache.Save();
 
                 IsTerrainGenerated = true;
+                IsTerrainShown = true;
 
                 emptyParcels.Dispose();
                 ownedParcels.Dispose();
