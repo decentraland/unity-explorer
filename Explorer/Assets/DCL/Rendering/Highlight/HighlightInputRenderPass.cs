@@ -14,6 +14,12 @@ namespace DCL.Rendering.Highlight
 
         public class HighlightInputRenderPass : ScriptableRenderPass
         {
+            private enum ShaderPasses_Blur
+            {
+                HighlightInput_Blur_Horizontal = 0,
+                HighlightInput_Blur_Vertical = 1
+            }
+
             private const string profilerTagInput = "Custom Pass: Highlight Additive";
             private const string profilerTagOutput = "Custom Pass: Highlight Subtractive";
 
@@ -22,10 +28,13 @@ namespace DCL.Rendering.Highlight
             private ReportData m_ReportData = new ("DCL_RenderFeature_Highlight_InputPass", ReportHint.SessionStatic);
 
             private Material highLightInputMaterial;
+            private Material highlightInputBlurMaterial;
             private RTHandle highLightRTHandle_Colour;
             private RTHandle highLightRTHandle_Depth;
+            private RTHandle highLightRTHandle_Colour_Blur;
             private RenderTextureDescriptor highLightRTDescriptor_Colour;
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
+            private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
 
             private readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
 
@@ -38,16 +47,22 @@ namespace DCL.Rendering.Highlight
             }
 
             public void Setup(Material _highLightInputMaterial,
-                RTHandle _highLightRTHandle_Colour,
-                RenderTextureDescriptor _highLightRTDescriptor_Colour,
-                RTHandle _highLightRTHandle_Depth,
-                RenderTextureDescriptor _highLightRTDescriptor_Depth)
+                                Material _highlightInputBlurMaterial,
+                                RTHandle _highLightRTHandle_Colour,
+                                RenderTextureDescriptor _highLightRTDescriptor_Colour,
+                                RTHandle _highLightRTHandle_Depth,
+                                RenderTextureDescriptor _highLightRTDescriptor_Depth,
+                                RTHandle _highLightRTHandle_Colour_Blur,
+                                RenderTextureDescriptor _highLightRTDescriptor_Colour_Blur)
             {
                 highLightInputMaterial = _highLightInputMaterial;
+                highlightInputBlurMaterial = _highlightInputBlurMaterial;
                 highLightRTHandle_Colour = _highLightRTHandle_Colour;
                 highLightRTDescriptor_Colour = _highLightRTDescriptor_Colour;
                 highLightRTHandle_Depth = _highLightRTHandle_Depth;
                 highLightRTDescriptor_Depth = _highLightRTDescriptor_Depth;
+                highLightRTHandle_Colour_Blur = _highLightRTHandle_Colour_Blur;
+                highLightRTDescriptor_Colour_Blur = _highLightRTDescriptor_Colour_Blur;
             }
 
             // Configure the pass by creating a temporary render texture and
@@ -66,14 +81,24 @@ namespace DCL.Rendering.Highlight
                     return;
 
                 CommandBuffer cmdAdditive = CommandBufferPool.Get("_HighlightInputPass_Additive");
-
                 using (new ProfilingScope(cmdAdditive, new ProfilingSampler(profilerTagInput)))
                     ExecuteCommand(context, renderingData, cmdAdditive, false);
 
                 CommandBuffer cmdSubtractive = CommandBufferPool.Get("_HighlightInputPass_Subtractive");
-
                 using (new ProfilingScope(cmdSubtractive, new ProfilingSampler(profilerTagInput)))
                     ExecuteCommand(context, renderingData, cmdSubtractive, true);
+
+                CommandBuffer cmd_blur = CommandBufferPool.Get("_HighlightInputPass_Blur");
+                using (new ProfilingScope(cmd_blur, new ProfilingSampler(profilerTagOutput)))
+                {
+                    cmd_blur.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour);
+                    cmd_blur.SetRenderTarget(highLightRTHandle_Colour_Blur, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+                    CoreUtils.DrawFullScreen(cmd_blur, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Horizontal);
+                    CoreUtils.DrawFullScreen(cmd_blur, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Vertical);
+
+                    context.ExecuteCommandBuffer(cmd_blur);
+                    CommandBufferPool.Release(cmd_blur);
+                }
             }
 
             private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, CommandBuffer commandBuffer, bool clear)
@@ -113,7 +138,7 @@ namespace DCL.Rendering.Highlight
                         {
                             var materialToUse = new Material(highLightInputMaterial);
                             materialToUse.SetColor(highlightColour, !clear ? settings.Color : Color.clear);
-                            materialToUse.SetFloat(outlineWidth, !clear ? settings.Width : 0);
+                            materialToUse.SetFloat(outlineWidth, !clear ? 6 : 0);
                             materialToUse.SetVector(highlightObjectOffset, !clear ? settings.Offset : Vector3.zero);
                             commandBuffer.DrawRenderer(renderer, materialToUse, 0, 0);
                         }

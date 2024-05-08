@@ -17,6 +17,7 @@
         Tags { "RenderType"="Opaque" }
         Pass
         {
+            Cull Off
             ZWrite Off
             
             CGPROGRAM
@@ -33,6 +34,20 @@
             float _Nearest_Distance;
             float _ZOverDrawMode;
             float _Offset_Z;
+
+            #define IDENTITY_MATRIX float4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+
+            float4x4 m_scale(float4x4 m, float3 v)
+            {
+                float x = v.x, y = v.y, z = v.z;
+
+                m[0][0] *= x; m[1][0] *= y; m[2][0] *= z;
+                m[0][1] *= x; m[1][1] *= y; m[2][1] *= z;
+                m[0][2] *= x; m[1][2] *= y; m[2][2] *= z;
+                m[0][3] *= x; m[1][3] *= y; m[2][3] *= z;
+
+                return m;
+            }
             
             struct v2f
             {
@@ -44,11 +59,27 @@
                 v2f o;
                 UNITY_SETUP_INSTANCE_ID(v);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+
+                //float4 clipPosition = UnityObjectToClipPos(v.vertex);
+                float4x4 scaledModel = IDENTITY_MATRIX;
+                //scaledModel = m_scale(scaledModel, float3(1.1f, 1.1f, 1.1f));
+                float4 clipPosition = mul(UNITY_MATRIX_VP, mul(unity_ObjectToWorld, mul(scaledModel, float4(v.vertex.xyz + _HighlightObjectOffset, 1.0))));
+                float3 clipNormal = mul((float3x3) UNITY_MATRIX_VP, mul((float3x3) UNITY_MATRIX_M, v.normal));
+
+                float _OutlineWidth = _Outline_Width;
+                //_OutlineWidth = 6.0f;
+                //float2 offset = normalize(clipNormal.xy) * _OutlineWidth * clipPosition.w;
+                float2 offset = normalize(clipNormal.xy) / _ScreenParams.xy * _OutlineWidth * clipPosition.w * 2.0f;
+                clipPosition.xy += offset;
+
+                o.pos = clipPosition;
+                return o;
+                
                 // o.pos = UnityObjectToClipPos(v.vertex);
                 // return o;
                 
-
-                float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
+                float4x4 scaleMat = unity_ObjectToWorld;
+                float4 objPos = mul ( scaleMat, float4(0,0,0,1) );
                 float Set_Outline_Width = (_Outline_Width*0.001*smoothstep( _Farthest_Distance, _Nearest_Distance, distance(objPos.rgb,_WorldSpaceCameraPos) )).r;
                 Set_Outline_Width *= (1.0f - _ZOverDrawMode);
 
@@ -60,7 +91,7 @@
                     _Offset_Z = _Offset_Z * 0.01;
                 #endif
                 
-                Set_Outline_Width = Set_Outline_Width*50;
+                Set_Outline_Width = _Outline_Width * 0.1f;//Set_Outline_Width*50;
                 float signVar = dot(normalize(v.vertex.xyz),normalize(v.normal))<0 ? -1 : 1;
                 float4 vertOffset = _HighlightObjectOffset;
                 //vertOffset = float4(0.0f, 0.0f, 0.0f, 0.0f);

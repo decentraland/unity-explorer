@@ -29,6 +29,7 @@ namespace DCL.Rendering.Highlight
     public partial class HighlightRendererFeature : ScriptableRendererFeature
     {
         private const string k_ShaderName_HighlightInput = "DCL/HighlightInput_Override";
+        private const string k_ShaderName_HighlightInputBlur = "DCL/HighlightInput_Blur";
         private const string k_ShaderName_HighlightOutput = "DCL/HighlightOutput";
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
@@ -38,11 +39,15 @@ namespace DCL.Rendering.Highlight
         // Input Pass Data
         private HighlightInputRenderPass highlightInputRenderPass;
         private Material highlightInputMaterial;
+        private Material highlightInputBlurMaterial;
         private Shader m_ShaderHighlightInput;
+        private Shader m_ShaderHighlightInputBlur;
         private RTHandle highlightRTHandle_Colour;
         private RTHandle highlightRTHandle_Depth;
+        private RTHandle highlightRTHandle_Colour_Blur;
         private RenderTextureDescriptor highlightRTDescriptor_Colour;
         private RenderTextureDescriptor highlightRTDescriptor_Depth;
+        private RenderTextureDescriptor highlightRTDescriptor_Colour_Blur;
 
         // Output Pass Data
         private HighlightOutputRenderPass highlightOutputRenderPass;
@@ -60,13 +65,13 @@ namespace DCL.Rendering.Highlight
             highlightInputRenderPass = new HighlightInputRenderPass(m_HighLightRenderers);
             highlightInputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
 
-            highlightOutputRenderPass = new HighlightOutputRenderPass();
+            highlightOutputRenderPass = new HighlightOutputRenderPass(m_HighLightRenderers);
             highlightOutputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
         }
 
         public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData)
         {
-            // DepthNormals Material, Shader, RenderTarget and pass setups
+            // Highlight Input - Override Material & Shader, Colour & Depth Render Targets and pass setups
             {
                 if (highlightInputMaterial == null)
                 {
@@ -83,6 +88,25 @@ namespace DCL.Rendering.Highlight
                     if (highlightInputMaterial == null)
                     {
                         ReportHub.LogError(m_ReportData, "highlightInputMaterial not found.");
+                        return;
+                    }
+                }
+
+                if (highlightInputBlurMaterial == null)
+                {
+                    m_ShaderHighlightInputBlur = Shader.Find(k_ShaderName_HighlightInputBlur);
+
+                    if (m_ShaderHighlightInputBlur == null)
+                    {
+                        ReportHub.LogError(m_ReportData, "m_ShaderHighlightInputBlur not found.");
+                        return;
+                    }
+
+                    highlightInputBlurMaterial = CoreUtils.CreateEngineMaterial(m_ShaderHighlightInputBlur);
+
+                    if (highlightInputBlurMaterial == null)
+                    {
+                        ReportHub.LogError(m_ReportData, "highlightInputBlurMaterial not found.");
                         return;
                     }
                 }
@@ -141,10 +165,37 @@ namespace DCL.Rendering.Highlight
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Depth, highlightRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_DepthTexture");
                 }
 
-                highlightInputRenderPass.Setup(highlightInputMaterial, highlightRTHandle_Colour, highlightRTDescriptor_Colour, highlightRTHandle_Depth, highlightRTDescriptor_Depth);
+                // Highlight - Blur Texture
+                {
+                    var desc = new RenderTextureDescriptor();
+                    desc.autoGenerateMips = false;
+                    desc.bindMS = false;
+                    desc.colorFormat = RenderTextureFormat.ARGB32;
+                    desc.depthBufferBits = 0;
+                    desc.depthStencilFormat = GraphicsFormat.None;
+                    desc.dimension = TextureDimension.Tex2D;
+                    desc.enableRandomWrite = false;
+                    desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+                    desc.height = _renderingData.cameraData.cameraTargetDescriptor.height;
+                    desc.memoryless = RenderTextureMemoryless.None;
+                    desc.mipCount = 0;
+                    desc.msaaSamples = 1;
+                    desc.shadowSamplingMode = ShadowSamplingMode.None;
+                    desc.sRGB = false;
+                    desc.stencilFormat = GraphicsFormat.None;
+                    desc.useDynamicScale = false;
+                    desc.useMipMap = false;
+                    desc.volumeDepth = 0;
+                    desc.vrUsage = VRTextureUsage.None;
+                    desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
+                    highlightRTDescriptor_Colour_Blur = desc;
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur");
+                }
+
+                highlightInputRenderPass.Setup(highlightInputMaterial, highlightInputBlurMaterial, highlightRTHandle_Colour, highlightRTDescriptor_Colour, highlightRTHandle_Depth, highlightRTDescriptor_Depth, highlightRTHandle_Colour_Blur, highlightRTDescriptor_Colour_Blur);
             }
 
-            // Outline Material, Shader, RenderTarget and pass setups
+            // Highlight Output Material, Shader, RenderTarget and pass setups
             {
                 if (highlightOutputMaterial == null)
                 {
@@ -165,7 +216,7 @@ namespace DCL.Rendering.Highlight
                     }
                 }
 
-                highlightOutputRenderPass.Setup(m_Settings, highlightOutputMaterial, highlightRTHandle_Colour, highlightRTDescriptor_Colour);
+                highlightOutputRenderPass.Setup(m_Settings, highlightOutputMaterial, highlightRTHandle_Colour_Blur, highlightRTDescriptor_Colour_Blur);
             }
         }
 

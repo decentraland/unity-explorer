@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -20,6 +21,7 @@ namespace DCL.Rendering.Highlight
             private const string HIGHLIGHT_TEXTURE_NAME = "_HighlightTexture";
             private static readonly int s_HighlightTextureID = Shader.PropertyToID(HIGHLIGHT_TEXTURE_NAME);
 
+            private readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
 
             // Debug
             private ReportData m_ReportData = new ("DCL_RenderFeature_Highlight_OutputPass", ReportHint.SessionStatic);
@@ -29,6 +31,12 @@ namespace DCL.Rendering.Highlight
             private Material highlightOutputMaterial;
             private RTHandle highlightRTHandle;
             private RenderTextureDescriptor highlightRTDescriptor;
+
+            public HighlightOutputRenderPass(Dictionary<Renderer, HighlightSettings> _HighLightRenderers)
+            {
+                m_HighLightRenderers = _HighLightRenderers;
+            }
+
 
             public void Setup(HighlightRendererFeature_Settings _Settings, Material _highlightOutputMaterial, RTHandle _highlightRTHandle, RenderTextureDescriptor _highlightRTDescriptor)
             {
@@ -54,8 +62,10 @@ namespace DCL.Rendering.Highlight
             // You don't have to call ScriptableRenderContext.submit, the render pipeline will call it at specific points in the pipeline.
             public override void Execute(ScriptableRenderContext _context, ref RenderingData _renderingData)
             {
-                CommandBuffer cmd = CommandBufferPool.Get("_HighlightOutputPass");
+                if (m_HighLightRenderers is not { Count: > 0 })
+                    return;
 
+                CommandBuffer cmd = CommandBufferPool.Get("_HighlightOutputPass");
                 using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
                     cmd.SetGlobalTexture(s_HighlightTextureID, highlightRTHandle);
