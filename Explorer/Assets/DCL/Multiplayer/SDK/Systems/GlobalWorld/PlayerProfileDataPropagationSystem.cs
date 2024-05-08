@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
@@ -10,13 +9,9 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    // [UpdateInGroup(typeof(PresentationSystemGroup))]
-    // [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
-    // [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
