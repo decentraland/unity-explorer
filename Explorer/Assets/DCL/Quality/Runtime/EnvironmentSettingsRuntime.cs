@@ -68,12 +68,12 @@ namespace DCL.Quality.Runtime
 
         public void RestoreState(QualitySettingsAsset.QualityCustomLevel currentPreset)
         {
-            sceneLoadRadius = PersistentSetting.CreateInt("SceneLoadRadius", currentPreset.environmentSettings.sceneLoadRadius);
-            lod1Threshold = PersistentSetting.CreateInt("LOD1Threshold", currentPreset.environmentSettings.lod1Threshold);
-            terrainLODBias = PersistentSetting.CreateFloat("TerrainLODBias", currentPreset.environmentSettings.terrainLODBias);
-            detailDensity = PersistentSetting.CreateFloat("DetailDensity", currentPreset.environmentSettings.detailDensity);
-            grassDistance = PersistentSetting.CreateFloat("GrassDistance", currentPreset.environmentSettings.grassDistance);
-            chunkCullDistance = PersistentSetting.CreateFloat("ChunkCullDistance", currentPreset.environmentSettings.chunkCullDistance);
+            sceneLoadRadius = PersistentSetting.CreateInt("SceneLoadRadius", currentPreset.environmentSettings.sceneLoadRadius).WithSetForceDefaultValue();
+            lod1Threshold = PersistentSetting.CreateInt("LOD1Threshold", currentPreset.environmentSettings.lod1Threshold).WithSetForceDefaultValue();
+            terrainLODBias = PersistentSetting.CreateFloat("TerrainLODBias", currentPreset.environmentSettings.terrainLODBias).WithSetForceDefaultValue();
+            detailDensity = PersistentSetting.CreateFloat("DetailDensity", currentPreset.environmentSettings.detailDensity).WithSetForceDefaultValue();
+            grassDistance = PersistentSetting.CreateFloat("GrassDistance", currentPreset.environmentSettings.grassDistance).WithSetForceDefaultValue();
+            chunkCullDistance = PersistentSetting.CreateFloat("ChunkCullDistance", currentPreset.environmentSettings.chunkCullDistance).WithSetForceDefaultValue();
 
             // Apply settings
             SetSceneLoadRadius(sceneLoadRadius.Value);
