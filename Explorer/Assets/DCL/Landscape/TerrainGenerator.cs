@@ -112,7 +112,7 @@ namespace DCL.Landscape
 
         public async UniTask ShowAsync(AsyncLoadProcessReport postRealmLoadReport)
         {
-            if (!isInitialized) return;
+            if (!isInitialized && !IsTerrainShown) return;
 
             if (rootGo != null)
                 rootGo.gameObject.SetActive(true);
