@@ -13,7 +13,6 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.Unity.Transforms;
 using ECS.Unity.Transforms.Components;
-using ECS.Unity.Transforms.Systems;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,8 +22,7 @@ namespace DCL.SDKComponents.CameraTransform.Systems
     ///     This system creates a new entity using the reserved SpecialEntitiesID.CAMERA_ENTITY in order to create a TransformComponent to be on sync with the camera
     ///     This allows using engine.CameraEntity as a parent target in the SDK
     /// </summary>
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(UpdateTransformSystem))]
+    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
     [LogCategory(ReportCategory.CAMERA_TRANSFORM)]
     public partial class SDKCameraTransformSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
