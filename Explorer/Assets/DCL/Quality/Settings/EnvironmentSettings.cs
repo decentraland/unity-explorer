@@ -7,7 +7,6 @@ namespace DCL.Quality
     {
         public int sceneLoadRadius;
         public int lod1Threshold;
-        public int lod2Threshold;
         public float terrainLODBias;
         public float detailDensity;
         public float grassDistance;

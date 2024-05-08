@@ -282,6 +282,7 @@ namespace Global.Dynamic
 
             container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
                                        .WithSelfResend(identityCache, container.ProfileRepository)
+                                       .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
 
