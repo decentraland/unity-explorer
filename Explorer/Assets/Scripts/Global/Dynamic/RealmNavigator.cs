@@ -196,7 +196,7 @@ namespace Global.Dynamic
                     worldsTerrain.SwitchVisibility(false);
 
                     if (!genesisTerrain.IsTerrainGenerated)
-                        await genesisTerrain.GenerateTerrainAndShowAsync(cancellationToken: ct);
+                        await genesisTerrain.GenerateTerrainAndShowAsync(processReport : landscapeLoadReport, cancellationToken: ct);
                     else
                         await genesisTerrain.ShowAsync(landscapeLoadReport);
                 }
