@@ -145,7 +145,7 @@ namespace DCL.Chat
             foreach (RaycastResult raycasted in raycastResults)
                 if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.ScrollView.gameObject)
                     clickedOnPanel = true;
-            
+
             if (!clickedOnPanel)
             {
                 viewInstance.EmojiPanelButton.SetState(false);
@@ -314,33 +314,41 @@ namespace DCL.Chat
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
             else
             {
-                item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
+                item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[3].mItemPrefab.name : (itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name));
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+                SetItemData(index, itemData, itemScript);
+            }
 
-                //temporary approach to extract the username without the walledId, will be refactored
-                //once we have the proper integration of the profile retrieval
-                Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
-                    ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
-                    : itemData.Sender);
+            return item;
+        }
 
-                itemScript.playerName.color = playerNameColor;
+        private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemScript)
+        {
+            //temporary approach to extract the username without the walledId, will be refactored
+            //once we have the proper integration of the profile retrieval
+            Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
+                ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
+                : itemData.Sender);
+
+            itemScript.playerName.color = playerNameColor;
+
+            if (!itemData.SystemMessage)
+            {
                 itemScript.ProfileBackground.color = playerNameColor;
                 playerNameColor.r += 0.3f;
                 playerNameColor.g += 0.3f;
                 playerNameColor.b += 0.3f;
                 itemScript.ProfileOutline.color = playerNameColor;
-
-                itemScript.SetItemData(itemData);
-
-                //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
-                if (itemData.HasToAnimate)
-                {
-                    itemScript.AnimateChatEntry();
-                    chatMessages[index] = new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false);
-                }
             }
 
-            return item;
+            itemScript.SetItemData(itemData);
+
+            //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
+            if (itemData.HasToAnimate)
+            {
+                itemScript.AnimateChatEntry();
+                chatMessages[index] = new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false);
+            }
         }
 
         private void CloseChat()
@@ -422,7 +430,7 @@ namespace DCL.Chat
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatReceiveMessageAudio);
             }
-            else
+            else if(!chatMessage.SystemMessage)
             {
                 world.AddOrGet(playerEntity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             }

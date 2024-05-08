@@ -39,6 +39,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
@@ -200,19 +201,7 @@ namespace Global.Dynamic
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
 
-            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
-                realFlowLoadingStatus,
-                parcelServiceContainer.TeleportController,
-                container.MvcManager,
-                selfProfile,
-                dynamicWorldParams.StartParcel,
-                staticContainer.MainPlayerAvatarBaseProxy,
-                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
-                exposedGlobalDataContainer.CameraSamplingData,
-                dynamicWorldParams.EnableLandscape,
-                landscapePlugin,
-                backgroundMusic
-            );
+            
 
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
@@ -267,7 +256,21 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 genesisTerrain,
                 worldsTerrain,
-                satelliteView
+                satelliteView,
+                dynamicWorldParams.EnableLandscape,
+                staticContainer.ExposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy,
+                exposedGlobalDataContainer.CameraSamplingData
+            );
+
+            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
+                realFlowLoadingStatus,
+                container.MvcManager,
+                selfProfile,
+                dynamicWorldParams.StartParcel,
+                staticContainer.MainPlayerAvatarBaseProxy,
+                backgroundMusic,
+                realmNavigator,
+                loadingScreen
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
@@ -279,6 +282,7 @@ namespace Global.Dynamic
 
             container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
                                        .WithSelfResend(identityCache, container.ProfileRepository)
+                                       .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
 
@@ -335,11 +339,12 @@ namespace Global.Dynamic
                     new DefaultFaceFeaturesHandler(wearableCatalog),
                     entityParticipantTable,
                     nametagsData,
-                    container.DefaultTexturesContainer.TextureArrayContainerFactory
+                    container.DefaultTexturesContainer.TextureArrayContainerFactory,
+                    wearableCatalog
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService),
+                new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus),
                 new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, unityEventSystem),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,

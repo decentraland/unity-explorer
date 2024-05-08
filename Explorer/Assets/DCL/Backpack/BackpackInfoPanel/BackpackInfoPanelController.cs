@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
@@ -65,7 +66,7 @@ namespace DCL.Backpack
             view.LoadingSpinner.SetActive(true);
             view.Name.text = wearable.GetName();
             view.Description.text = string.IsNullOrEmpty(wearable.GetDescription()) ? DEFAULT_DESCRIPTION : wearable.GetDescription();
-            view.CategoryImage.sprite = categoryIcons.GetTypeImage(string.IsNullOrEmpty(wearable.GetCategory()) ? EMOTE_CATEGORY : wearable.GetCategory());
+            view.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetType() == typeof(Emote) ? EMOTE_CATEGORY : wearable.GetCategory());
             view.RarityBackground.sprite = rarityInfoPanelBackgrounds.GetTypeImage(wearable.GetRarity());
             view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
             view.RarityName.text = wearable.GetRarity();

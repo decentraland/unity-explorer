@@ -21,10 +21,15 @@ namespace DCL.Navmap
             filterView.daoButton.onClick.AddListener(()=>webBrowser.OpenUrl(DAO_URL));
         }
 
-        private void ToggleInfoContent()
+        public void CloseFilterContent()
         {
-            filterView.infoContent.SetActive(!filterView.infoContent.activeSelf);
+            filterView.FilterContent.SetActive(false);
+            filterView.infoContent.SetActive(false);
+            filterView.CloseButtonArea.gameObject.SetActive(false);
         }
+
+        private void ToggleInfoContent() =>
+            filterView.infoContent.SetActive(!filterView.infoContent.activeSelf);
 
         private void ToggleLayer(MapLayer layerName, bool isActive) =>
             mapRenderer.SetSharedLayer(layerName, isActive);
