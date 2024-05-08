@@ -126,9 +126,17 @@ namespace DCL.AuthenticationScreenFlow
             {
                 CancelLoginProcess();
                 loginCancellationToken = new CancellationTokenSource();
-                await FetchProfileAsync(loginCancellationToken.Token);
 
-                SwitchState(ViewState.Finalize);
+                try
+                {
+                    await FetchProfileAsync(loginCancellationToken.Token);
+                    SwitchState(ViewState.Finalize);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
             }
             else
                 SwitchState(ViewState.Login);
