@@ -55,8 +55,10 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out Profile sceneEntityProfile));
+            Assert.AreNotSame(profile, sceneEntityProfile);
             Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
-            Assert.AreEqual(profile, sceneEntityProfile);
+            Assert.AreEqual(profile.UserId, sceneEntityProfile.UserId);
+            Assert.AreEqual(profile.Avatar, sceneEntityProfile.Avatar);
 
             playerCRDTEntity.IsDirty = false;
             profile.IsDirty = true;
@@ -66,8 +68,10 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEntityProfile));
+            Assert.AreNotSame(profile, sceneEntityProfile);
             Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
-            Assert.AreEqual(profile, sceneEntityProfile);
+            Assert.AreEqual(profile.UserId, sceneEntityProfile.UserId);
+            Assert.AreEqual(profile.Avatar, sceneEntityProfile.Avatar);
         }
     }
 }

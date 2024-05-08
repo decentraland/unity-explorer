@@ -29,5 +29,8 @@ namespace ECS.SceneLifeCycle.Realm
         UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
 
         UniTask SwitchMiscVisibilityAsync();
+
+        //True if the realm has changed to genesis
+        Action<bool> OnRealmChanged { get; set; }
     }
 }

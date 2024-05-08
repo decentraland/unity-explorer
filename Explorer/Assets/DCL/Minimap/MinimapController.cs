@@ -21,6 +21,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
 
@@ -38,16 +39,16 @@ namespace DCL.Minimap
         private readonly IRealmData realmData;
         private readonly IChatMessagesBus chatMessagesBus;
         private CancellationTokenSource cts;
-        private bool isWorld;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
-
+        private readonly IRealmNavigator realmNavigator;
+        
         private static readonly int EXPAND = Animator.StringToHash("Expand");
         private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
-
+        
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -60,7 +61,8 @@ namespace DCL.Minimap
             IPlacesAPIService placesAPIService,
             TrackPlayerPositionSystem system,
             IRealmData realmData,
-            IChatMessagesBus chatMessagesBus
+            IChatMessagesBus chatMessagesBus,
+            IRealmNavigator realmNavigator
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -69,6 +71,13 @@ namespace DCL.Minimap
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
+            this.realmNavigator = realmNavigator;
+        }
+
+        private void OnRealmChanged(bool isGenesis)
+        {
+            SetWorldMode(!isGenesis);
+            previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
         protected override void OnViewInstantiated()
@@ -81,7 +90,8 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
-            SetWorldMode(false);
+            SetWorldMode(realmData.ScenesAreFixed);
+            realmNavigator.OnRealmChanged += OnRealmChanged;
         }
 
         private void ExpandMinimap()
@@ -174,12 +184,6 @@ namespace DCL.Minimap
 
                 try
                 {
-                    if (isWorld != realmData.ScenesAreFixed)
-                    {
-                        isWorld = realmData.ScenesAreFixed;
-                        SetWorldMode(realmData.ScenesAreFixed);
-                    }
-
                     if (realmData.ScenesAreFixed)
                         viewInstance.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
                     else
@@ -217,6 +221,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
+            realmNavigator.OnRealmChanged -= OnRealmChanged;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
