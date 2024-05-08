@@ -22,8 +22,10 @@ namespace DCL.Audio
         private const float WALK_INTERVAL_SEC = 0.37f;
         private const float JOG_INTERVAL_SEC = 0.31f;
         private const float RUN_INTERVAL_SEC = 0.25f;
+        private const float JUMP_INTERVAL_SEC = 0.25f;
 
         private float lastFootstepTime;
+        private float lastJumpTime;
 
 
         private CancellationTokenSource? cancellationTokenSource;
@@ -50,20 +52,23 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayJumpSound()
         {
+            float currentTime = Time.time;
+
+            if (currentTime - lastJumpTime < JUMP_INTERVAL_SEC) return;
+
+            lastJumpTime = currentTime;
+
             switch (GetMovementState())
             {
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
-                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play JUMP Sound type {MovementKind.Walk}");
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartJog);
-                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play JUMP Sound type {MovementKind.Jog}");
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartRun);
-                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play JUMP Sound type {MovementKind.Run}");
                     break;
             }
         }
@@ -109,15 +114,12 @@ namespace DCL.Audio
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
-                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play LAND Sound type {MovementKind.Walk}");
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandJog);
-                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play LAND Sound type {MovementKind.Jog}");
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
-                    ReportHub.LogError(new ReportData(ReportCategory.AUDIO),$"Play LAND Sound type {MovementKind.Run}");
                     break;
             }
         }
