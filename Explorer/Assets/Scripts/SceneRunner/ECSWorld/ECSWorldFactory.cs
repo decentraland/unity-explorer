@@ -19,8 +19,6 @@ using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
-using Utility.Multithreading;
-using GatherGltfAssetsSystem = ECS.SceneLifeCycle.Systems.GatherGltfAssetsSystem;
 
 namespace SceneRunner.ECSWorld
 {
@@ -70,7 +68,7 @@ namespace SceneRunner.ECSWorld
                .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
                .InjectCustomGroup(new SyncedSimulationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
                .InjectCustomGroup(new SyncedPresentationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, sharedDependencies.SceneStateProvider));
+               .InjectCustomGroup(new SyncedPreRenderingSystemGroup(mutex, sharedDependencies.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);

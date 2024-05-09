@@ -11,7 +11,7 @@ namespace ECS.LifeCycle.Systems
     ///     Unlocks ECS when the whole cycle of the player loop has processed
     /// </summary>
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
-    [UpdateAfter(typeof(SyncedPostRenderingSystemGroup))] // After all other systems
+    [UpdateAfter(typeof(SyncedPreRenderingSystemGroup))] // After all other systems
     public partial class UnlockECSSystem : BaseUnityLoopSystem
     {
         private readonly MutexSync mutexSync;

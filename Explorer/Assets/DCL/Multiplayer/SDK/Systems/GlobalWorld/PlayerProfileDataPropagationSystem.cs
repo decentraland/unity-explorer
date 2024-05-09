@@ -13,7 +13,7 @@ using SceneRunner.Scene;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {

@@ -11,7 +11,7 @@ namespace ECS.LifeCycle.Systems
     /// <summary>
     ///     Destroys all entities marked for deletion
     /// </summary>
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(CleanUpGroup))]
     [ThrottlingEnabled]
     public partial class DestroyEntitiesSystem : BaseUnityLoopSystem

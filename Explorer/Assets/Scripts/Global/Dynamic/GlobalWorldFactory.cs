@@ -105,7 +105,7 @@ namespace Global.Dynamic
             globalSceneStateProvider.State = SceneState.Running;
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
+            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(mutex, globalSceneStateProvider));
 
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 

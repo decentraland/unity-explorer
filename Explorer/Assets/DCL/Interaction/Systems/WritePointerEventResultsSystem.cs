@@ -25,7 +25,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     ///         root system groups as we can't make dependencies between them directly
     ///     </para>
     /// </summary>
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
     public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
     {

@@ -24,9 +24,9 @@ namespace ECS.Groups
     }
 
     [UpdateInGroup(typeof(PreRenderingSystemGroup))]
-    public partial class SyncedPostRenderingSystemGroup : SyncedGroup
+    public partial class SyncedPreRenderingSystemGroup : SyncedGroup
     {
-        public SyncedPostRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
+        public SyncedPreRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
     }
 
     /// <summary>
