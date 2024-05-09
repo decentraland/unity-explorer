@@ -55,6 +55,8 @@ namespace DCL.CharacterMotion.Systems
         }
 
         [Query]
+        // We have to wait until the player teleport is resolved in case there is any, so the direction calculation is correct
+        [None(typeof(PlayerTeleportIntent))]
         private void ForceLookAt(in Entity entity, ref CharacterRigidTransform rigidTransform, ref CharacterTransform transform, in PlayerLookAtIntent lookAtIntent)
         {
             // Rotate player to look at camera target

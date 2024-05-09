@@ -45,7 +45,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                TeleportCharacterQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.SetProgress(1f);
                 return null;
             }
@@ -80,12 +80,12 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
+            TeleportCharacterQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
 
             if (cameraTarget != null)
             {
-                AddCameraLookAtIntentQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
-                AddCharacterLookAtIntentQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value));
+                ForceCameraLookAtQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
+                ForceCharacterLookAtQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value));
             }
 
             if (sceneDef == null)
@@ -104,7 +104,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                TeleportCharacterQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.SetProgress(1f);
                 return;
             }
@@ -122,7 +122,7 @@ namespace DCL.ParcelsService
             // Add report to the queue so it will be grabbed by the actual scene
             sceneReadinessReportQueue.Enqueue(parcel, loadReport);
 
-            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel, loadReport));
+            TeleportCharacterQuery(world, new PlayerTeleportIntent(characterPos, parcel, loadReport));
 
             if (sceneDef == null)
             {
@@ -194,21 +194,21 @@ namespace DCL.ParcelsService
 
         [Query]
         [All(typeof(PlayerComponent))]
-        private void AddTeleportIntent([Data] PlayerTeleportIntent intent, in Entity entity)
+        private void TeleportCharacter([Data] PlayerTeleportIntent intent, in Entity entity)
         {
             world?.Add(entity, intent);
         }
 
         [Query]
         [All(typeof(CameraComponent))]
-        private void AddCameraLookAtIntent([Data] CameraLookAtIntent intent, in Entity entity)
+        private void ForceCameraLookAt([Data] CameraLookAtIntent intent, in Entity entity)
         {
             world?.Add(entity, intent);
         }
 
         [Query]
         [All(typeof(CharacterRigidTransform), typeof(CharacterTransform))]
-        private void AddCharacterLookAtIntent([Data] PlayerLookAtIntent intent, in Entity entity)
+        private void ForceCharacterLookAt([Data] PlayerLookAtIntent intent, in Entity entity)
         {
             world?.Add(entity, intent);
         }
