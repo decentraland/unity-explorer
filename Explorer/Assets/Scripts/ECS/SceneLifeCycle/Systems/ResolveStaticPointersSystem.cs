@@ -47,6 +47,7 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
+                    Debug.Log($"VVV creating scene facade promise for static scene pointer: {parcel}");
                     CreateSceneFacadePromise.Execute(World, entity, realm, in definition, partitionComponent);
                     return;
                 }

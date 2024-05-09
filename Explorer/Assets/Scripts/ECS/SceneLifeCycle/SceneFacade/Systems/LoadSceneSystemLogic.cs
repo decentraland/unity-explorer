@@ -47,15 +47,20 @@ namespace ECS.SceneLifeCycle.Systems
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, ipfsPath.EntityId, reportCategory, ct);
             UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
+            Debug.Log($"VVV 0 MANIFEST and METADATA loading START {definition.metadata.scene.DecodedBase}");
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
+            Debug.Log($"VVV 1 MANIFEST and METADATA loading END {definition.metadata.scene.DecodedBase}");
 
             // Create scene data
             Vector2Int baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
                 definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
+            Debug.Log($"VVV 2 scene GEOMETRY {definition.metadata.scene.DecodedBase}");
+
             await UniTask.SwitchToMainThread();
 
+            Debug.Log($"VVV 3 Creating scene from FACTORY START {definition.metadata.scene.DecodedBase}");
             return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
         }
 

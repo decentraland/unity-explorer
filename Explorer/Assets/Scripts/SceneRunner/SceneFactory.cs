@@ -136,7 +136,9 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            SceneInstanceDeps deps = new SceneInstanceDeps(
+            Debug.Log($"VVV Factory 0 {sceneData.SceneShortInfo.BaseParcel}");
+
+            var deps = new SceneInstanceDeps(
                 sdkComponentsRegistry,
                 entityCollidersGlobalCache,
                 sceneData,
@@ -144,42 +146,68 @@ namespace SceneRunner
                 ecsWorldFactory,
                 entityFactory);
 
+            Debug.Log($"VVV Factory 1 {sceneData.SceneShortInfo.BaseParcel}");
+
             SceneRuntimeImpl sceneRuntime;
-            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.poolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
+
+            try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
             {
                 // ScriptEngineException.ErrorDetails is ignored through the logging process which is vital in the reporting information
-                if(e is ScriptEngineException scriptEngineException)
+                if (e is ScriptEngineException scriptEngineException)
                     deps.ExceptionsHandler.OnJavaScriptException(new ScriptEngineException(scriptEngineException.ErrorDetails));
 
                 await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
                 deps.Dispose();
+                Debug.LogWarning($"VVV Factory 11 {sceneData.SceneShortInfo.BaseParcel}");
 
                 throw;
             }
 
+            Debug.Log($"VVV Factory 2 {sceneData.SceneShortInfo.BaseParcel}");
+
             ct.ThrowIfCancellationRequested();
+            Debug.Log($"VVV Factory 3 {sceneData.SceneShortInfo.BaseParcel}");
 
             var runtimeDeps = new SceneInstanceDeps.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager,
                 globalWorldActions, realmData!, messagePipesHub);
+            Debug.Log($"VVV Factory 4 {sceneData.SceneShortInfo.BaseParcel}");
 
-            sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
-            sceneRuntime.RegisterAll(
-                deps.ExceptionsHandler,
-                roomHub,
-                profileRepository,
-                runtimeDeps.SceneApiImplementation,
-                webRequestController,
-                runtimeDeps.RestrictedActionsAPI,
-                runtimeDeps.RuntimeImplementation,
-                ethereumApi,
-                runtimeDeps.WebSocketAipImplementation,
-                identityCache,
-                runtimeDeps.CommunicationsControllerAPI,
-                deps.poolsProvider,
-                runtimeDeps.SimpleFetchApi);
+            try
+            {
 
-            sceneRuntime.ExecuteSceneJson();
+                sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
+
+                sceneRuntime.RegisterAll(
+                    deps.ExceptionsHandler,
+                    roomHub,
+                    profileRepository,
+                    runtimeDeps.SceneApiImplementation,
+                    webRequestController,
+                    runtimeDeps.RestrictedActionsAPI,
+                    runtimeDeps.RuntimeImplementation,
+                    ethereumApi,
+                    runtimeDeps.WebSocketAipImplementation,
+                    identityCache,
+                    runtimeDeps.CommunicationsControllerAPI,
+                    deps.PoolsProvider,
+                    runtimeDeps.SimpleFetchApi);
+
+                sceneRuntime.ExecuteSceneJson();
+            }
+            catch (Exception)
+            {
+                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+                runtimeDeps.Dispose();
+                deps.Dispose();
+                sceneRuntime.Dispose();
+                Debug.LogWarning($"VVV Factory 44 {sceneData.SceneShortInfo.BaseParcel}");
+
+                throw;
+            }
+            ct.ThrowIfCancellationRequested();
+
+            Debug.Log($"VVV Factory 5 {sceneData.SceneShortInfo.BaseParcel}");
 
             return new SceneFacade(
                 sceneRuntime,
@@ -187,7 +215,7 @@ namespace SceneRunner
                 deps.CRDTProtocol,
                 deps.OutgoingCRDTMessagesProvider,
                 deps.CRDTWorldSynchronizer,
-                deps.poolsProvider,
+                deps.PoolsProvider,
                 deps.CRDTMemoryAllocator,
                 deps.ExceptionsHandler,
                 deps.SceneStateProvider,

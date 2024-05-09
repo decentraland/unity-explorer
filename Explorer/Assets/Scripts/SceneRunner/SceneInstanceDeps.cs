@@ -45,64 +45,63 @@ namespace SceneRunner
     /// </summary>
     internal class SceneInstanceDeps : IDisposable
     {
-        private readonly ISceneData sceneData;
-
-        public readonly Dictionary<CRDTEntity, Entity> EntitiesMap = new (1000, CRDTEntityComparer.INSTANCE);
-
-        public readonly MutexSync EcsMutexSync;
         public readonly CRDTProtocol CRDTProtocol;
-        public readonly IInstancePoolsProvider poolsProvider;
+        public readonly IInstancePoolsProvider PoolsProvider;
         public readonly ICRDTMemoryAllocator CRDTMemoryAllocator;
-        public readonly ICRDTDeserializer CRDTDeserializer;
         public readonly IOutgoingCRDTMessagesProvider OutgoingCRDTMessagesProvider;
-        public readonly IECSToCRDTWriter ECSToCRDTWriter;
-        public readonly ISystemGroupsUpdateGate SystemGroupThrottler;
         public readonly IEntityCollidersSceneCache EntityCollidersCache;
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly ISceneExceptionsHandler ExceptionsHandler;
-        public readonly IWorldTimeProvider WorldTimeProvider;
-
-        public readonly ECSWorldInstanceSharedDependencies ECSWorldSharedDependencies;
         public readonly ECSWorldFacade ECSWorldFacade;
 
         public readonly ICRDTWorldSynchronizer CRDTWorldSynchronizer;
         public readonly URLAddress SceneCodeUrl;
         public readonly SceneEcsExecutor EcsExecutor;
+        private readonly ISceneData sceneData;
+
+        private readonly MutexSync ecsMutexSync;
+        private readonly ICRDTDeserializer crdtDeserializer;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly ISystemGroupsUpdateGate systemGroupThrottler;
+        private readonly IWorldTimeProvider worldTimeProvider;
+        private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
+
+        private readonly Dictionary<CRDTEntity, Entity> entitiesMap = new (1000, CRDTEntityComparer.INSTANCE);
 
         public SceneInstanceDeps(ISDKComponentsRegistry sdkComponentsRegistry, IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneData sceneData, IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory, ISceneEntityFactory entityFactory)
         {
             this.sceneData = sceneData;
-            EcsMutexSync = new MutexSync();
+            ecsMutexSync = new MutexSync();
             CRDTProtocol = new CRDTProtocol();
-            WorldTimeProvider = new WorldTimeProvider();
+            worldTimeProvider = new WorldTimeProvider();
             SceneStateProvider = new SceneStateProvider();
-            SystemGroupThrottler = new SystemGroupsUpdateGate();
+            systemGroupThrottler = new SystemGroupsUpdateGate();
 
-            poolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
+            PoolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
             CRDTMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
-            CRDTDeserializer = new CRDTDeserializer(CRDTMemoryAllocator);
+            crdtDeserializer = new CRDTDeserializer(CRDTMemoryAllocator);
             OutgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, CRDTProtocol, CRDTMemoryAllocator);
-            ECSToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
+            ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
             EntityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo, CRDTProtocol).EnsureNotNull();
 
             /* Pass dependencies here if they are needed by the systems */
-            ECSWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ECSToCRDTWriter, EntitiesMap,
-                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, EcsMutexSync, WorldTimeProvider);
+            ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
+                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, ecsMutexSync, worldTimeProvider);
 
-            ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ECSWorldSharedDependencies, SystemGroupThrottler, sceneData));
+            ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             ECSWorldFacade.Initialize();
-            CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, EntitiesMap);
+            CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
 
-            EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld, EcsMutexSync);
+            EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld, ecsMutexSync);
             entityCollidersGlobalCache.AddSceneInfo(EntityCollidersCache, EcsExecutor);
 
-            if (!sceneData.IsSdk7())
-                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
-            else // Create an instance of Scene Runtime on the thread pool
+            if (sceneData.IsSdk7()) // Create an instance of Scene Runtime on the thread pool
                 sceneData.TryGetMainScriptUrl(out SceneCodeUrl);
+            else
+                SceneCodeUrl = URLAddress.FromString("https://renderer-artifacts.decentraland.org/sdk7-adaption-layer/main/index.js");
         }
 
         public void Dispose()
@@ -112,21 +111,18 @@ namespace SceneRunner
             CRDTProtocol.Dispose();
             OutgoingCRDTMessagesProvider.Dispose();
             CRDTWorldSynchronizer.Dispose();
-            poolsProvider.Dispose();
+            PoolsProvider.Dispose();
             CRDTMemoryAllocator.Dispose();
 
-            SystemGroupThrottler.Dispose();
+            systemGroupThrottler.Dispose();
             EntityCollidersCache.Dispose();
-            WorldTimeProvider.Dispose();
-            EcsMutexSync.Dispose();
+            worldTimeProvider.Dispose();
+            ecsMutexSync.Dispose();
             ExceptionsHandler.Dispose();
         }
 
         internal class WithRuntimeAndEngineAPI : IDisposable
         {
-            private readonly SceneInstanceDeps deps;
-
-            private readonly ISceneRuntime runtime;
             public readonly IEngineApi EngineAPI;
             public readonly IRestrictedActionsAPI RestrictedActionsAPI;
             public readonly IRuntime RuntimeImplementation;
@@ -134,6 +130,9 @@ namespace SceneRunner
             public readonly IWebSocketApi WebSocketAipImplementation = new WebSocketApiImplementation();
             public readonly ICommunicationsControllerAPI CommunicationsControllerAPI;
             public readonly ISimpleFetchApi SimpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
+
+            private readonly SceneInstanceDeps deps;
+            private readonly ISceneRuntime runtime;
 
             public WithRuntimeAndEngineAPI
             (SceneInstanceDeps sceneInstanceDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
@@ -144,26 +143,31 @@ namespace SceneRunner
 
                 EngineAPI = new EngineAPIImplementation(
                     sharedPoolsProvider,
-                    deps.poolsProvider,
+                    deps.PoolsProvider,
                     deps.CRDTProtocol,
-                    deps.CRDTDeserializer,
+                    deps.crdtDeserializer,
                     crdtSerializer,
                     deps.CRDTWorldSynchronizer,
                     deps.OutgoingCRDTMessagesProvider,
-                    deps.SystemGroupThrottler,
+                    deps.systemGroupThrottler,
                     deps.ExceptionsHandler,
-                    deps.EcsMutexSync);
+                    deps.ecsMutexSync);
 
-                RestrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, deps.ECSWorldSharedDependencies.SceneStateProvider, globalWorldActions, deps.sceneData);
-                RuntimeImplementation = new RuntimeImplementation(sceneRuntime, deps.sceneData, deps.WorldTimeProvider, realmData);
+                RestrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, deps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, deps.sceneData);
+                RuntimeImplementation = new RuntimeImplementation(sceneRuntime, deps.sceneData, deps.worldTimeProvider, realmData);
                 SceneApiImplementation = new SceneApiImplementation(deps.sceneData);
-                CommunicationsControllerAPI = new CommunicationsControllerAPIImplementation(deps.sceneData, messagePipesHub, sceneRuntime, deps.CRDTMemoryAllocator, deps.ECSWorldSharedDependencies.SceneStateProvider);
+                CommunicationsControllerAPI = new CommunicationsControllerAPIImplementation(deps.sceneData, messagePipesHub, sceneRuntime, deps.CRDTMemoryAllocator, deps.ecsWorldSharedDependencies.SceneStateProvider);
             }
 
             public void Dispose()
             {
-                runtime.Dispose();
+                CommunicationsControllerAPI.Dispose();
+                SceneApiImplementation.Dispose();
+                RuntimeImplementation.Dispose();
+                RestrictedActionsAPI.Dispose();
                 EngineAPI.Dispose();
+
+                runtime.Dispose();
                 deps.Dispose();
             }
         }

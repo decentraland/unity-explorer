@@ -8,6 +8,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
+using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -28,6 +29,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             UnloadLoadedSceneQuery(World);
             AbortLoadingScenesQuery(World);
+            AbortLoadingScenes2Query(World);
         }
 
         [Query]
@@ -35,17 +37,28 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             // Keep definition so it won't be downloaded again = Cache in ECS itself
+            Debug.Log($"VVV DISPOSE scene FACADE {sceneFacade.Info.BaseParcel} - {sceneFacade.Info.Name}, on entity {entity.Id}");
             sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
-            World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
+            World.Remove<ISceneFacade, VisualSceneState>(entity);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void AbortLoadingScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
+            Debug.Log($"VVV FORGOT scene PROMISE loading {promise.Entity.Entity.Id} - {promise.LoadingIntention.DefinitionComponent.Definition.metadata.scene.DecodedBase}");
+
             promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState, DeleteEntityIntention>(
-                entity);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState>(entity);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void AbortLoadingScenes2(in Entity entity, ref GetSceneFacadeIntention intention)
+        {
+            Debug.Log($"VVV CANCEL scene loading {intention.DefinitionComponent.Definition.metadata.scene.DecodedBase}");
+            intention.CancellationTokenSource.Cancel();
+            World.Remove<GetSceneFacadeIntention>(entity);
         }
     }
 }

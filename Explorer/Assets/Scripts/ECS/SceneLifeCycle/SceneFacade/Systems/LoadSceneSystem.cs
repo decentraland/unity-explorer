@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Common.Systems;
 using SceneRunner;
 using SceneRunner.Scene;
 using System.Threading;
+using UnityEngine;
 using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -39,8 +40,12 @@ namespace ECS.SceneLifeCycle.Systems
         protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternalAsync(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             if (intention.DefinitionComponent.IsEmpty)
+            {
+                Debug.Log($"VVV -1 empty scene LOGIC flow START {intention.DefinitionComponent.Definition.metadata.scene.DecodedBase}");
                 return new StreamableLoadingResult<ISceneFacade>(loadEmptySceneSystemLogic.Flow(intention));
+            }
 
+            Debug.Log($"VVV -1 scene LOGIC flow START {intention.DefinitionComponent.Definition.metadata.scene.DecodedBase}");
             return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
         }
 

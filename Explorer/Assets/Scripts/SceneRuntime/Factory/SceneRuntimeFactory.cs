@@ -109,9 +109,17 @@ namespace SceneRuntime.Factory
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             AssertCalledOnTheMainThread();
+            Debug.Log($"VVV Factory 1 - 0 | {sceneShortInfo.BaseParcel}");
 
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+            Debug.Log($"VVV Factory 1 - 1 | {sceneShortInfo.BaseParcel}");
+
+            var a =
+             await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
+
+            Debug.Log($"VVV Factory 1 - 2 | {sceneShortInfo.BaseParcel}");
+
+            return a;
         }
 
         private void AssertCalledOnTheMainThread()
