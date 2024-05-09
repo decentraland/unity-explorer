@@ -10,7 +10,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -35,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         public void FinalizeComponents(in Query query)
         {
-            AbortAllLoadingScenesQuery(World);
+            AbortSucceededScenesPromisesQuery(World);
         }
 
         [Query]
@@ -56,7 +55,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void AbortAllLoadingScenes(ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        private void AbortSucceededScenesPromises(ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             if (!promise.IsConsumed && promise.TryConsume(World, out var result) && result.Succeeded)
                 result.Asset!.DisposeAsync().Forget();

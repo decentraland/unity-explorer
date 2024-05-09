@@ -1,5 +1,4 @@
 ﻿using Arch.SystemGroups;
-using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using ECS.ComponentsPooling.Systems;
@@ -25,9 +24,6 @@ namespace DCL.PluginSystem.World
             {
                 transform.ResetLocalTRS();
                 transform.gameObject.layer = 0;
-
-                if (transform.childCount != 0)
-                    ReportHub.LogError(ReportCategory.POOLS, $"Returned a transform with {transform.childCount} children to the pool. GameObject name: {transform.name}");
             });
         }
 
