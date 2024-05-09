@@ -27,10 +27,10 @@ namespace DCL.SDKComponents.CameraTransform.Systems
     public partial class SDKCameraTransformSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
-        private readonly SingleInstanceEntity cameraEntityProxy;
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> transformPool;
         private readonly CRDTEntity sdkCameraEntity;
+        private SingleInstanceEntity cameraEntityProxy;
         private Entity cameraEntityMirror;
 
         private SDKCameraTransformSystem(World world,
