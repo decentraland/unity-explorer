@@ -1,5 +1,4 @@
 using DCL.ECSComponents;
-using ECS.Abstract;
 using ECS.StreamableLoading.Common;
 using ECS.Unity.GLTFContainer.Asset.Components;
 
@@ -14,14 +13,14 @@ namespace ECS.Unity.GLTFContainer.Components
 
         public AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> Promise;
 
-        public EnumState<LoadingState> State;
+        public LoadingState State;
 
         public GltfContainerComponent(ColliderLayer visibleMeshesCollisionMask, ColliderLayer invisibleMeshesCollisionMask, AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> promise)
         {
             VisibleMeshesCollisionMask = visibleMeshesCollisionMask;
             InvisibleMeshesCollisionMask = invisibleMeshesCollisionMask;
             Promise = promise;
-            State = new EnumState<LoadingState>(LoadingState.Unknown);
+            State = LoadingState.Unknown;
         }
     }
 }

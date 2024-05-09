@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
@@ -13,15 +14,16 @@ namespace DCL.SDKComponents.TextShape.System
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
     [UpdateAfter(typeof(InstantiateTextShapeSystem))]
+    [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     public partial class UpdateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly IFontsStorage fontsStorage;
         private readonly MaterialPropertyBlock materialPropertyBlock;
 
-        private readonly EntityEventBuffer<TextMeshPro> changedTextMeshes;
+        private readonly EntityEventBuffer<TextShapeComponent> changedTextMeshes;
 
         public UpdateTextShapeSystem(World world, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock,
-            EntityEventBuffer<TextMeshPro> changedTextMeshes) : base(world)
+            EntityEventBuffer<TextShapeComponent> changedTextMeshes) : base(world)
         {
             this.fontsStorage = fontsStorage;
             this.materialPropertyBlock = materialPropertyBlock;
@@ -39,7 +41,7 @@ namespace DCL.SDKComponents.TextShape.System
             if (textShape.IsDirty)
             {
                 textShapeComponent.TextMeshPro.Apply(textShape, fontsStorage, materialPropertyBlock);
-                changedTextMeshes.Add(entity, textShapeComponent.TextMeshPro);
+                changedTextMeshes.Add(entity, textShapeComponent);
                 textShape.IsDirty = false;
             }
         }

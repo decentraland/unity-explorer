@@ -15,6 +15,7 @@ using DCL.SDKComponents.NFTShape.System;
 using DCL.WebRequests;
 using DCL.WebRequests.WebContentSizes;
 using DCL.WebRequests.WebContentSizes.Sizes.Lazy;
+using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
@@ -37,6 +38,11 @@ namespace DCL.PluginSystem.World
         private readonly IFramePrefabs framePrefabs;
         private readonly ILazyMaxSize lazyMaxSize;
         private readonly IStreamableCache<Texture2D, GetNFTShapeIntention> cache = new NftShapeCache();
+
+        static NFTShapePlugin()
+        {
+            EntityEventBuffer<NftShapeRendererComponent>.Register(100);
+        }
 
         public NFTShapePlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -117,16 +123,19 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            Inject(ref builder, sharedDependencies.MutexSync);
+            var buffer = sharedDependencies.EntityEventsBuilder.Rent<NftShapeRendererComponent>();
+
+            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, webContentSizes);
+            LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource());
+            InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, buffer);
+            VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
+
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
 
         private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, MutexSync mutexSync)
         {
-            LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, mutexSync, webContentSizes);
-            LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource());
-            InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider);
-            VisibilityNftShapeSystem.InjectToWorld(ref builder);
+
         }
 
         private static IFramePrefabs NewFramePrefabs(IAssetsProvisioner assetsProvisioner, out IFramePrefabs framePrefabs)

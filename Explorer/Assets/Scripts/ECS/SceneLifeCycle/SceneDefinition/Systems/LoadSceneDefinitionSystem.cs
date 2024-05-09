@@ -25,7 +25,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         private readonly IWebRequestController webRequestController;
 
         internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
-            : base(world, cache, mutexSync)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }

@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -15,6 +16,7 @@ using UnityEngine;
 namespace DCL.SDKComponents.TextShape.System
 {
     [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
     public partial class InstantiateTextShapeSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
@@ -22,10 +24,10 @@ namespace DCL.SDKComponents.TextShape.System
         private readonly IFontsStorage fontsStorage;
         private readonly MaterialPropertyBlock materialPropertyBlock;
 
-        private readonly EntityEventBuffer<TextMeshPro> changedTextMeshes;
+        private readonly EntityEventBuffer<TextShapeComponent> changedTextMeshes;
 
         public InstantiateTextShapeSystem(World world, IComponentPool<TextMeshPro> textMeshProPool, IFontsStorage fontsStorage, MaterialPropertyBlock materialPropertyBlock, IPerformanceBudget instantiationFrameTimeBudget,
-            EntityEventBuffer<TextMeshPro> changedTextMeshes) : base(world)
+            EntityEventBuffer<TextShapeComponent> changedTextMeshes) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.changedTextMeshes = changedTextMeshes;
@@ -50,11 +52,12 @@ namespace DCL.SDKComponents.TextShape.System
             textMeshPro.transform.SetParent(transform.Transform, worldPositionStays: false);
 
             textMeshPro.Apply(textShape, fontsStorage, materialPropertyBlock);
+            var component = new TextShapeComponent(textMeshPro);
 
-            World.Add(entity, new TextShapeComponent(textMeshPro));
+            World.Add(entity, component);
 
             // Issue an event so it will be grabbed by visibility system
-            changedTextMeshes.Add(entity, textMeshPro);
+            changedTextMeshes.Add(entity, component);
         }
     }
 }

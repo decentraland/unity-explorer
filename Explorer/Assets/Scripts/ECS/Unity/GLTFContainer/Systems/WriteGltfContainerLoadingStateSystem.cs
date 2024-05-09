@@ -19,29 +19,32 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public WriteGltfContainerLoadingStateSystem(World world, IECSToCRDTWriter ecsToCRDTWriter)
+        private readonly EntityEventBuffer<GltfContainerComponent> changedGltfs;
+        private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate eventHandler;
+
+        public WriteGltfContainerLoadingStateSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, EntityEventBuffer<GltfContainerComponent> changedGltfs)
             : base(world)
         {
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.changedGltfs = changedGltfs;
+            eventHandler = PropagateChangedState;
         }
 
         protected override void Update(float t)
         {
-            ExecuteQuery(World!);
-            RemoveQuery(World!);
+            changedGltfs.ForEach(eventHandler);
+
+            RemoveQuery(World);
         }
 
-        [Query]
-        [All(typeof(PBGltfContainer))]
-        private void Execute(ref CRDTEntity sdkEntity, ref GltfContainerComponent component)
+        private void PropagateChangedState(Entity entity, GltfContainerComponent component)
         {
-            if (!component.State.ChangedThisFrame())
-                return;
+            if (!World.TryGet(entity, out CRDTEntity sdkEntity)) return;
 
             ecsToCRDTWriter.PutMessage<PBGltfContainerLoadingState, LoadingState>(
                 static (component, loadingState) => component.CurrentState = loadingState,
                 sdkEntity,
-                component.State.Value
+                component.State
             );
         }
 

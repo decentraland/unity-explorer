@@ -30,10 +30,16 @@ namespace ECS.SceneLifeCycle.Systems
         private int assetsResolved;
         private int totalAssetsToResolve = -1;
 
-        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData) : base(world)
+        private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
+        private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
+
+        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
+            this.eventsBuffer = eventsBuffer;
+
+            forEachEvent = GatherEntities;
         }
 
         public override void Initialize()
@@ -51,8 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (framesLeft > 0)
             {
-                GatherEntitiesQuery(World);
-
+                eventsBuffer.ForEach(forEachEvent);
                 framesLeft--;
             }
             else if (!concluded)
@@ -86,7 +91,7 @@ namespace ECS.SceneLifeCycle.Systems
                     }
 
                     // if Gltf Container Component has finished loading at least once (it can be reconfigured, we don't care)
-                    if (gltfContainerComponent.State.Value == LoadingState.Loading)
+                    if (gltfContainerComponent.State == LoadingState.Loading)
                     {
                         concluded = false;
 
@@ -121,10 +126,10 @@ namespace ECS.SceneLifeCycle.Systems
             }
         }
 
-        [Query]
-        [All(typeof(GltfContainerComponent))]
-        private void GatherEntities(in Entity entity)
+        private void GatherEntities(Entity entity, GltfContainerComponent component)
         {
+            // No matter to which state component has changed
+
             EntityReference entityRef = World.Reference(entity);
             entitiesUnderObservation!.Add(entityRef);
         }

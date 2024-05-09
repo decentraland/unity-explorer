@@ -1,33 +1,24 @@
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
-using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Groups;
-using ECS.Unity.Visibility;
+using ECS.Unity.Visibility.Systems;
 
 namespace DCL.SDKComponents.NFTShape.System
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(ComponentInstantiationGroup))]
-    public partial class VisibilityNftShapeSystem : BaseUnityLoopSystem
+    public partial class VisibilityNftShapeSystem : VisibilitySystemBase<NftShapeRendererComponent>
     {
-        public VisibilityNftShapeSystem(World world) : base(world)
+        public VisibilityNftShapeSystem(World world, EntityEventBuffer<NftShapeRendererComponent> eventsBuffer) : base(world, eventsBuffer)
         {
         }
 
-        protected override void Update(float t)
+        protected override void UpdateVisibilityInternal(in NftShapeRendererComponent component, bool visible)
         {
-            UpdateVisibilityQuery(World!);
-        }
-
-        [Query]
-        private void UpdateVisibility(in NftShapeRendererComponent nftShapeRenderer, in PBVisibilityComponent visibility)
-        {
-            if (visibility.IsDirty)
-                nftShapeRenderer.ApplyVisibility(visibility.GetVisible());
+            component.ApplyVisibility(visible);
         }
     }
 }

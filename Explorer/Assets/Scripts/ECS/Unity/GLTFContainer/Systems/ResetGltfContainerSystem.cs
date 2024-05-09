@@ -24,11 +24,13 @@ namespace ECS.Unity.GLTFContainer.Systems
     {
         private readonly IDereferencableCache<GltfContainerAsset, string> cache;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
+        private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
 
-        internal ResetGltfContainerSystem(World world, IDereferencableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+        internal ResetGltfContainerSystem(World world, IDereferencableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
         {
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.eventsBuffer = eventsBuffer;
         }
 
         protected override void Update(float t)
@@ -57,15 +59,16 @@ namespace ECS.Unity.GLTFContainer.Systems
         }
 
         [Query]
-        private void InvalidatePromise(ref PBGltfContainer sdkComponent, ref GltfContainerComponent component)
+        private void InvalidatePromise(Entity entity, ref PBGltfContainer sdkComponent, ref GltfContainerComponent component)
         {
             if (sdkComponent.IsDirty && !string.Equals(sdkComponent.Src, component.Source, StringComparison.OrdinalIgnoreCase))
             {
                 TryReleaseAsset(ref component);
 
                 // It will be a signal to create a new promise
-                component.State.Set(LoadingState.Unknown);
+                component.State = LoadingState.Unknown;
                 component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
+                eventsBuffer.Add(entity, component);
             }
         }
     }

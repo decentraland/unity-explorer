@@ -31,7 +31,7 @@ namespace DCL.PluginSystem.World
 
         static TextShapePlugin()
         {
-            EntityEventBuffer<TextMeshPro>.Register(1000);
+            EntityEventBuffer<TextShapeComponent>.Register(1000);
         }
 
         public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, CacheCleaner cacheCleaner, IComponentPoolsRegistry componentPoolsRegistry)
@@ -56,7 +56,7 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            var buffer = sharedDependencies.EntityEventsBuilder.Rent<TextMeshPro>();
+            var buffer = sharedDependencies.EntityEventsBuilder.Rent<TextShapeComponent>();
 
             InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider, buffer);
             UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer);

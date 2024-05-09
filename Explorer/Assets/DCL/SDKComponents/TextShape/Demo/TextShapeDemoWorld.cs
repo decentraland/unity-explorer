@@ -4,6 +4,7 @@ using DCL.Utilities.Extensions;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using DCL.SDKComponents.TextShape.System;
 using ECS.Abstract;
@@ -24,7 +25,7 @@ namespace DCL.SDKComponents.TextShape.Demo
         {
             var pool = new GameObjectPool<TextMeshPro>(null, () => new GameObject().AddComponent<TextMeshPro>());
 
-            var buffer = new EntityEventBuffer<TextMeshPro>(10);
+            var buffer = new EntityEventBuffer<TextShapeComponent>(10);
 
             origin = new DemoWorld(
                 world,
