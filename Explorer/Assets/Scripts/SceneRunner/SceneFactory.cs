@@ -170,72 +170,38 @@ namespace SceneRunner
                 deps.Dispose();
                 sceneRuntime?.Dispose();
                 Debug.LogWarning($"VVV Factory 1 Canceled {sceneData.SceneShortInfo.BaseParcel}");
-                return null;
+
+                throw new OperationCanceledException();
             }
-
-            Debug.Log($"VVV Factory 2 {sceneData.SceneShortInfo.BaseParcel}");
-
-            ct.ThrowIfCancellationRequested();
-            Debug.Log($"VVV Factory 3 {sceneData.SceneShortInfo.BaseParcel}");
 
             var runtimeDeps = new SceneInstanceDeps.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager,
                 globalWorldActions, realmData!, messagePipesHub);
+
             Debug.Log($"VVV Factory 4 {sceneData.SceneShortInfo.BaseParcel}");
 
-            try
-            {
+            sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
 
-                sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
-                Debug.Log($"VVV Factory 4 -1 {sceneData.SceneShortInfo.BaseParcel}");
+            sceneRuntime.RegisterAll(
+                deps.ExceptionsHandler,
+                roomHub,
+                profileRepository,
+                runtimeDeps.SceneApiImplementation,
+                webRequestController,
+                runtimeDeps.RestrictedActionsAPI,
+                runtimeDeps.RuntimeImplementation,
+                ethereumApi,
+                runtimeDeps.WebSocketAipImplementation,
+                identityCache,
+                runtimeDeps.CommunicationsControllerAPI,
+                deps.PoolsProvider,
+                runtimeDeps.SimpleFetchApi);
 
-                sceneRuntime.RegisterAll(
-                    deps.ExceptionsHandler,
-                    roomHub,
-                    profileRepository,
-                    runtimeDeps.SceneApiImplementation,
-                    webRequestController,
-                    runtimeDeps.RestrictedActionsAPI,
-                    runtimeDeps.RuntimeImplementation,
-                    ethereumApi,
-                    runtimeDeps.WebSocketAipImplementation,
-                    identityCache,
-                    runtimeDeps.CommunicationsControllerAPI,
-                    deps.PoolsProvider,
-                    runtimeDeps.SimpleFetchApi);
-
-                Debug.Log($"VVV Factory 4 -2 {sceneData.SceneShortInfo.BaseParcel}");
-
-                sceneRuntime.ExecuteSceneJson();
-                Debug.Log($"VVV Factory 4 -3 {sceneData.SceneShortInfo.BaseParcel}");
-            }
-            catch (Exception)
-            {
-                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-                runtimeDeps.Dispose();
-                deps.Dispose();
-                sceneRuntime.Dispose();
-                Debug.LogWarning($"VVV Factory 4 Exception {sceneData.SceneShortInfo.BaseParcel}");
-
-                throw;
-            }
-
-            if (ct.IsCancellationRequested)
-            {
-                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
-                runtimeDeps.Dispose();
-                deps.Dispose();
-                sceneRuntime.Dispose();
-                Debug.LogWarning($"VVV Factory 4 Canceled {sceneData.SceneShortInfo.BaseParcel}");
-                return null;
-            }
+            sceneRuntime.ExecuteSceneJson();
 
             Debug.Log($"VVV Factory 5 {sceneData.SceneShortInfo.BaseParcel}");
 
-            ct.ThrowIfCancellationRequested();
-
-            Debug.Log($"VVV Factory 6 {sceneData.SceneShortInfo.BaseParcel}");
-
-            return new SceneFacade(
+            var a =
+             new SceneFacade(
                 sceneRuntime,
                 deps.ECSWorldFacade,
                 deps.CRDTProtocol,
@@ -248,6 +214,8 @@ namespace SceneRunner
                 deps.EntityCollidersCache,
                 sceneData,
                 deps.EcsExecutor);
+
+            return a;
         }
     }
 }

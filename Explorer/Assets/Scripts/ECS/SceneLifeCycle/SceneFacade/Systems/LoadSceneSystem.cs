@@ -46,7 +46,15 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             Debug.Log($"VVV -1 scene LOGIC flow START {intention.DefinitionComponent.Definition.metadata.scene.DecodedBase}");
-            return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
+            var a = new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
+            Debug.Log($"VVV 10 END scene LOGIC flow {intention.DefinitionComponent.Definition.metadata.scene.DecodedBase}");
+
+            return a;
+        }
+
+        protected override void DisposeAbandonedResult(ISceneFacade asset)
+        {
+            asset.DisposeAsync().Forget();
         }
 
         public override void Dispose()

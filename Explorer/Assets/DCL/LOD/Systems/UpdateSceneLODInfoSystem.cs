@@ -36,7 +36,7 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-        private readonly ILODSettingsAsset lodSettingsAsset; 
+        private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
@@ -241,6 +241,6 @@ namespace DCL.LOD.Systems
 
             currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
         }
-        
+
     }
 }

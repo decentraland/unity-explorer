@@ -136,7 +136,6 @@ namespace Global.Dynamic
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            UnloadSceneSystem.InjectToWorld(ref builder, scenesCache);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
@@ -162,7 +161,11 @@ namespace Global.Dynamic
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
-            var finalizeWorldSystems = new IFinalizeWorldSystem[] { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
+            var finalizeWorldSystems = new IFinalizeWorldSystem[]
+            {
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache),
+                new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
+            };
 
             SystemGroupWorld worldSystems = builder.Finish();
             worldSystems.Initialize();
