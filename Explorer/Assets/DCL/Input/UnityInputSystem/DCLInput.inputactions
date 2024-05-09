@@ -2082,6 +2082,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "ToggleNametags",
+                    "type": "Button",
+                    "id": "b8f2b72d-26f2-4431-8dde-aa86ce5406ed",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -2170,6 +2179,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "ShowHideUI",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "0d9071d2-b121-4b8e-8d40-80fefd17661c",
+                    "path": "<Keyboard>/n",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "ToggleNametags",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

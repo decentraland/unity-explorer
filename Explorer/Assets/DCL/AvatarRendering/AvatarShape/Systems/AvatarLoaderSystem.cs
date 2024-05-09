@@ -1,8 +1,6 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.AvatarShape.Helpers;
 using DCL.AvatarRendering.Emotes;
@@ -11,10 +9,10 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Profiles;
 using ECS.Abstract;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
-using System.Collections.Generic;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -25,7 +23,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
     /// <summary>
     ///     Start loading the avatar shape for the entity from <see cref="Profile" /> or <see cref="PBAvatarShape" /> components.
     /// </summary>
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     [LogCategory(ReportCategory.AVATAR)]
     public partial class AvatarLoaderSystem : BaseUnityLoopSystem
     {
@@ -62,12 +60,11 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
             EmotePromise emotePromise = CreateEmotePromise(profile, partition);
-            profile.IsDirty = false;
             World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, emotePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
         }
 
         [Query]
-        [None(typeof(Profile))]
+        [None(typeof(Profile), typeof(DeleteEntityIntention))]
         private void UpdateAvatarFromSDKComponent(ref PBAvatarShape pbAvatarShape, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             if (!pbAvatarShape.IsDirty)
@@ -91,7 +88,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         }
 
         [Query]
-        [None(typeof(PBAvatarShape))]
+        [None(typeof(PBAvatarShape), typeof(DeleteEntityIntention))]
         private void UpdateAvatarFromProfile(ref Profile profile, ref AvatarShapeComponent avatarShapeComponent, ref PartitionComponent partition)
         {
             if (!profile.IsDirty)
@@ -108,7 +105,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
             avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
             avatarShapeComponent.IsDirty = true;
-            profile.IsDirty = false;
         }
 
         private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>

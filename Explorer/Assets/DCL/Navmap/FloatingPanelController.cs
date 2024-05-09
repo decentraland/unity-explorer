@@ -21,6 +21,8 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
+        public event Action OnJumpIn;
+
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
@@ -121,7 +123,7 @@ namespace DCL.Navmap
             try
             {
                 view.jumpInButton.onClick.RemoveAllListeners();
-                view.jumpInButton.onClick.AddListener(() => realmNavigator.TeleportToParcelAsync(parcel, cts.Token).Forget());
+                view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
                 PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
 
@@ -136,6 +138,12 @@ namespace DCL.Navmap
                 if (animationTrigger != -1)
                     view.panelAnimator.SetTrigger(animationTrigger);
             }
+        }
+
+        private void JumpIn(Vector2Int parcel)
+        {
+            OnJumpIn?.Invoke();
+            realmNavigator.TryInitializeTeleportToParcelAsync(parcel, cts.Token).Forget();
         }
 
         private void SetEmptyParcelInfo(Vector2Int parcel)

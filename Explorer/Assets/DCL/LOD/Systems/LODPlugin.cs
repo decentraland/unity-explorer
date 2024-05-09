@@ -90,7 +90,7 @@ namespace DCL.PluginSystem.Global
             }
             else
             {
-                UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue);
+                UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);
             }
            
         }

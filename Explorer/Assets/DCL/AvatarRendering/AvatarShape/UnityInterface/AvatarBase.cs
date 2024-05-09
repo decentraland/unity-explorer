@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -85,6 +86,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             avatarAnimator.SetFloat(hash, value);
         }
 
+        public void SetAnimatorInt(int hash, int value)
+        {
+            avatarAnimator.SetInteger(hash, value);
+        }
+
         public void SetAnimatorTrigger(int hash)
         {
             avatarAnimator.SetTrigger(hash);
@@ -95,6 +101,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
         public int GetAnimatorCurrentStateTag() =>
             avatarAnimator.GetCurrentAnimatorStateInfo(0).tagHash;
+
+        public void ResetTrigger(int hash)
+        {
+            avatarAnimator.ResetTrigger(hash);
+        }
 
         public bool GetAnimatorBool(int hash) =>
             avatarAnimator.GetBool(hash);
@@ -120,6 +131,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     {
         Transform GetTransform();
         void SetAnimatorFloat(int hash, float value);
+        void SetAnimatorInt(int hash, int value);
 
         void SetAnimatorTrigger(int hash);
 
@@ -134,5 +146,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         bool IsAnimatorInTag(int hashTag);
 
         int GetAnimatorCurrentStateTag();
+
+        void ResetTrigger(int hash);
     }
 }
