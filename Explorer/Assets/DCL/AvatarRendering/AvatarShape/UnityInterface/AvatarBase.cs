@@ -86,6 +86,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             avatarAnimator.SetFloat(hash, value);
         }
 
+        public void SetAnimatorInt(int hash, int value)
+        {
+            avatarAnimator.SetInteger(hash, value);
+        }
+
         public void SetAnimatorTrigger(int hash)
         {
             avatarAnimator.SetTrigger(hash);
@@ -126,6 +131,7 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     {
         Transform GetTransform();
         void SetAnimatorFloat(int hash, float value);
+        void SetAnimatorInt(int hash, int value);
 
         void SetAnimatorTrigger(int hash);
 
