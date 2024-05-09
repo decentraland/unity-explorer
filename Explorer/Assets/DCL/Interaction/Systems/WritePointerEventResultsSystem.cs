@@ -37,7 +37,6 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         private readonly IComponentPool<RaycastHit> raycastHitPool;
 
-        private bool messageSent;
 
         internal WritePointerEventResultsSystem(World world, ISceneData sceneData, IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents, IComponentPool<RaycastHit> raycastHitPool) : base(world)
@@ -52,8 +51,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
-            messageSent = false;
-            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
+            var messageSent = false;
+            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition, ref messageSent);
 
             if (!messageSent)
                 WriteGlobalEvents();
@@ -71,7 +70,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void WriteResults([Data] Vector3 scenePosition, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        private void WriteResults([Data] Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
 

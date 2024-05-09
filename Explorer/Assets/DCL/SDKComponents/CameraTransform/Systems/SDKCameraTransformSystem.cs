@@ -27,17 +27,20 @@ namespace DCL.SDKComponents.CameraTransform.Systems
     public partial class SDKCameraTransformSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
-        private readonly ObjectProxy<Entity> cameraEntityProxy;
+        private readonly SingleInstanceEntity cameraEntityProxy;
         private readonly World globalWorld;
         private readonly IComponentPool<Transform> transformPool;
         private readonly CRDTEntity sdkCameraEntity;
         private Entity cameraEntityMirror;
 
-        private SDKCameraTransformSystem(World world, Dictionary<CRDTEntity, Entity> entitiesMap, ObjectProxy<Entity> cameraEntityProxy, ObjectProxy<World> globalWorldProxy, IComponentPool<Transform> transformPool) : base(world)
+        private SDKCameraTransformSystem(World world,
+            Dictionary<CRDTEntity, Entity> entitiesMap,
+            ObjectProxy<World> globalWorldProxy,
+            IComponentPool<Transform> transformPool) : base(world)
         {
             this.entitiesMap = entitiesMap;
-            this.cameraEntityProxy = cameraEntityProxy;
             globalWorld = globalWorldProxy.Object;
+            cameraEntityProxy = globalWorld.CacheCamera();
             this.transformPool = transformPool;
             sdkCameraEntity = new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY);
         }
@@ -53,7 +56,6 @@ namespace DCL.SDKComponents.CameraTransform.Systems
 
         protected override void Update(float t)
         {
-            if (!cameraEntityProxy.Configured) return;
             UpdateCameraTransformQuery(World);
         }
 
@@ -61,7 +63,7 @@ namespace DCL.SDKComponents.CameraTransform.Systems
         [All(typeof(SDKCameraComponent))]
         private void UpdateCameraTransform(ref TransformComponent transformComponent)
         {
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy.Object!);
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy);
             Transform cameraTransform = camera.Camera.transform;
             transformComponent.SetTransform(cameraTransform.position, cameraTransform.rotation, cameraTransform.localScale);
         }

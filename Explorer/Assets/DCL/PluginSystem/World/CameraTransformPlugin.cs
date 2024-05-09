@@ -1,4 +1,3 @@
-using Arch.Core;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
@@ -14,13 +13,11 @@ namespace DCL.PluginSystem.World
 {
     public class CameraTransformPlugin : IDCLWorldPlugin
     {
-        private readonly ObjectProxy<Entity> cameraEntityProxy;
         private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public CameraTransformPlugin(ObjectProxy<Entity> cameraEntityProxy, ObjectProxy<Arch.Core.World> globalWorldProxy, IComponentPoolsRegistry componentPoolsRegistry)
+        public CameraTransformPlugin(ObjectProxy<Arch.Core.World> globalWorldProxy, IComponentPoolsRegistry componentPoolsRegistry)
         {
-            this.cameraEntityProxy = cameraEntityProxy;
             this.globalWorldProxy = globalWorldProxy;
             this.componentPoolsRegistry = componentPoolsRegistry;
         }
@@ -39,7 +36,6 @@ namespace DCL.PluginSystem.World
                 SDKCameraTransformSystem.InjectToWorld(
                     ref builder,
                     sharedDependencies.EntitiesMap,
-                    cameraEntityProxy,
                     globalWorldProxy,
                     componentPoolsRegistry.GetReferenceTypePool<Transform>())
             );
