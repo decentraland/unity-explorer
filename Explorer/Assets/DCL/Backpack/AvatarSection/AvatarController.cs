@@ -24,13 +24,14 @@ namespace DCL.Backpack
             BackpackEventBus backpackEventBus,
             BackpackGridController backpackGridController,
             BackpackInfoPanelController backpackInfoPanelController,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            DCLInput dclInput)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
-            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
+            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus, dclInput);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds, thumbnailProvider);
 
             rectTransform = view.GetComponent<RectTransform>();

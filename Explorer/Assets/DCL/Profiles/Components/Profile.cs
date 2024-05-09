@@ -79,7 +79,7 @@ namespace DCL.Profiles
         /// <summary>
         ///     This flag can be moved elsewhere when the final flow is established
         /// </summary>
-        public bool IsDirty { get; set; }
+        public bool IsDirty { get; set; } = true;
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
