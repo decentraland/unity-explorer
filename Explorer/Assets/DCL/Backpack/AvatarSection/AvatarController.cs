@@ -47,10 +47,14 @@ namespace DCL.Backpack
             backpackGridController.RequestTotalNumber();
         }
 
-        public void Activate() { }
+        public void Activate()
+        {
+            backpackGridController.Activate();
+        }
 
         public void Deactivate()
         {
+            backpackGridController.Deactivate();
             backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
         }
 

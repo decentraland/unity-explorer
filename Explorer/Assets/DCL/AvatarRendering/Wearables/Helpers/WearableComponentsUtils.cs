@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System.Collections.Generic;
@@ -49,14 +50,14 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static void CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent)
+        public static Promise? CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent)
         {
             URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
                 attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
-                return;
+                return null;
             }
 
             URL_BUILDER.Clear();
@@ -70,6 +71,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
+            return promise;
         }
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)

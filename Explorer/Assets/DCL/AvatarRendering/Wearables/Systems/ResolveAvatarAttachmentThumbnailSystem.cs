@@ -27,6 +27,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
         [Query]
         private void CompleteWearableThumbnailDownload(in Entity entity, ref IAvatarAttachment wearable, ref Promise promise)
         {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                World.Destroy(entity);
+                return;
+            }
+
             if (promise.TryConsume(World, out StreamableLoadingResult<Texture2D> result))
             {
                 wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(
