@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
@@ -25,6 +26,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         private IDereferencableCache<GltfContainerAsset, string> cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
         private EntityEventBuffer<GltfContainerComponent> eventBuffer;
+        private IECSToCRDTWriter ecsToCRDTWriter;
 
         [SetUp]
         public void SetUp()
@@ -33,7 +35,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                 cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>(),
                 entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(),
                 eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1),
-                Substitute.For<IECSToCRDTWriter>());
+                ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>());
         }
 
         [Test]
@@ -72,13 +74,14 @@ namespace ECS.Unity.GLTFContainer.Tests
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State = LoadingState.Finished;
 
-            Entity entity = world.Create(c);
+            Entity entity = world.Create(c, new CRDTEntity(100));
 
             system.Update(0);
 
             Assert.That(world.Has<GltfContainerComponent>(entity), Is.False);
             Assert.That(c.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
+            ecsToCRDTWriter.Received().DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
         }
     }
 }

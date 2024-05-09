@@ -51,7 +51,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         [Query]
         [None(typeof(PBGltfContainer))]
-        private void HandleComponentRemoval(ref GltfContainerComponent component, in CRDTEntity sdkEntity)
+        private void HandleComponentRemoval(ref GltfContainerComponent component, CRDTEntity sdkEntity)
         {
             TryReleaseAsset(ref component);
             component.Promise.ForgetLoading(World);

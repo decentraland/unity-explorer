@@ -49,18 +49,5 @@ namespace ECS.Unity.GLTFContainer.Tests
                        Arg.Is<CRDTEntity>(c => c.Id == 100),
                        Arg.Is<LoadingState>(c => c == LoadingState.Finished));
         }
-
-        [Test]
-        public void WriteRemove()
-        {
-            var rc = RemovedComponents.CreateDefault();
-            rc.Set.Add(typeof(PBGltfContainer));
-
-            world.Create(new CRDTEntity(100), rc);
-
-            system.Update(0);
-
-            writer.Received(1).DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
-        }
     }
 }
