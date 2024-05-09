@@ -17,14 +17,20 @@ namespace ECS.Abstract
 
         public override void Dispose()
         {
-            foreach (EntityEventBuffer entityEventBuffer in eventBuffers)
+            for (var index = 0; index < eventBuffers.Count; index++)
+            {
+                EntityEventBuffer entityEventBuffer = eventBuffers[index];
                 entityEventBuffer.Dispose();
+            }
         }
 
         protected override void Update(float t)
         {
-            foreach (EntityEventBuffer entityEventBuffer in eventBuffers)
+            for (var index = 0; index < eventBuffers.Count; index++)
+            {
+                EntityEventBuffer entityEventBuffer = eventBuffers[index];
                 entityEventBuffer.Clear();
+            }
         }
     }
 }
