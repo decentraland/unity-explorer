@@ -50,7 +50,7 @@ namespace ECS.Unity.Visibility.Systems
         [None(typeof(PBVisibilityComponent))]
         private void HandleComponentRemoval(ref RemovedComponents removedComponents, ref TComponent primitiveMeshRendererComponent)
         {
-            if (removedComponents.Set.Remove(typeof(PBVisibilityComponent)))
+            if (removedComponents.Remove<PBVisibilityComponent>())
                 UpdateVisibilityInternal(in primitiveMeshRendererComponent, true);
         }
 

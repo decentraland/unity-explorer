@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
@@ -31,7 +32,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             system = new ResetGltfContainerSystem(world,
                 cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>(),
                 entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(),
-                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
+                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1),
+                Substitute.For<IECSToCRDTWriter>());
         }
 
         [Test]
