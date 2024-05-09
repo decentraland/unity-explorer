@@ -89,7 +89,6 @@ namespace DCL.Backpack.EmotesSection
 
         public void Activate()
         {
-            Debug.Log("BackpackEmoteGridController activated");
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
@@ -98,7 +97,6 @@ namespace DCL.Backpack.EmotesSection
 
         public void Deactivate()
         {
-            Debug.Log("BackpackEmoteGridController deactivated");
             eventBus.FilterCategoryEvent -= OnFilterCategory;
             eventBus.SearchEvent -= OnSearch;
             backpackSortController.OnSortChanged -= OnSortChanged;

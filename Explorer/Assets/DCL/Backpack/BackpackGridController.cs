@@ -106,7 +106,6 @@ namespace DCL.Backpack
 
         public void Activate()
         {
-            Debug.Log("BackpackWearablesGridController activated");
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
@@ -115,7 +114,6 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
-            Debug.Log("BackpackWearablesGridController deactivated");
             eventBus.FilterCategoryEvent -= OnFilterCategory;
             eventBus.SearchEvent -= OnSearch;
             backpackSortController.OnSortChanged -= OnSortChanged;
