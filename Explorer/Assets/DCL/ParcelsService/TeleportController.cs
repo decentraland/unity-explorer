@@ -68,17 +68,13 @@ namespace DCL.ParcelsService
                 {
                     SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints);
 
-                    Vector3 offset = GetOffsetFromSpawnPoint(spawnPoint);
+                    Vector3 offset = GetSpawnPositionOffset(spawnPoint);
 
                     // TODO validate offset position is within bounds of one of scene parcels
                     targetPosition += offset;
 
                     if (spawnPoint.cameraTarget != null)
-                    {
-                        Vector2 baseParcel = sceneDef.metadata.scene.DecodedBase;
-                        Vector3 cameraTargetOffset = new Vector3(baseParcel.x * ParcelMathHelper.PARCEL_SIZE, 0, baseParcel.y * ParcelMathHelper.PARCEL_SIZE);
-                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + cameraTargetOffset;
-                    }
+                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + GetSpawnCameraOffset(sceneDef);
                 }
             }
             else
@@ -159,7 +155,13 @@ namespace DCL.ParcelsService
             return spawnPoint;
         }
 
-        private static Vector3 GetOffsetFromSpawnPoint(SceneMetadata.SpawnPoint spawnPoint)
+        private Vector3 GetSpawnCameraOffset(SceneEntityDefinition sceneDef)
+        {
+            Vector2 baseParcel = sceneDef.metadata.scene.DecodedBase;
+            return new Vector3(baseParcel.x * ParcelMathHelper.PARCEL_SIZE, 0, baseParcel.y * ParcelMathHelper.PARCEL_SIZE);
+        }
+
+        private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint)
         {
             static float GetMidPoint(float[] coordArray)
             {
