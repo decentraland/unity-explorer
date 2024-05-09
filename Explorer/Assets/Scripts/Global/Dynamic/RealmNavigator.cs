@@ -52,6 +52,8 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
+        public Action<bool> OnRealmChanged { get; set; }
+        
         public RealmNavigator(
             ILoadingScreen loadingScreen,
             IMapRenderer mapRenderer,
@@ -195,7 +197,7 @@ namespace Global.Dynamic
                     worldsTerrain.SwitchVisibility(false);
 
                     if (!genesisTerrain.IsTerrainGenerated)
-                        await genesisTerrain.GenerateTerrainAsync(cancellationToken: ct);
+                        await genesisTerrain.GenerateTerrainAndShowAsync(processReport : landscapeLoadReport, cancellationToken: ct);
                     else
                         await genesisTerrain.ShowAsync(landscapeLoadReport);
                 }
@@ -270,12 +272,11 @@ namespace Global.Dynamic
         {
             bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
 
-            // is NOT visible
-
-            // isVisible
+            OnRealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
             await satelliteFloor.SwitchVisibilityAsync(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
+
     }
 }

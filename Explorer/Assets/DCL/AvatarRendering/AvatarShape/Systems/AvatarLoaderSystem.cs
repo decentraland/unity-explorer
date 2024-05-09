@@ -60,7 +60,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
         {
             WearablePromise wearablePromise = CreateWearablePromise(profile, partition);
             EmotePromise emotePromise = CreateEmotePromise(profile, partition);
-            profile.IsDirty = false;
             World.Add(entity, new AvatarShapeComponent(profile.Name, profile.UserId, profile.Avatar.BodyShape, wearablePromise, emotePromise, profile.Avatar.SkinColor, profile.Avatar.HairColor, profile.Avatar.EyesColor));
         }
 
@@ -106,7 +105,6 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
             avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
             avatarShapeComponent.IsDirty = true;
-            profile.IsDirty = false;
         }
 
         private WearablePromise CreateWearablePromise(PBAvatarShape pbAvatarShape, PartitionComponent partition) =>

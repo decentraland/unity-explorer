@@ -76,7 +76,7 @@ namespace DCL.Nametags
         [None(typeof(NametagView))]
         private void AddTag([Data] in CameraComponent camera, Entity e, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in PartitionComponent partitionComponent, in Profile profile)
         {
-            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform)) return;
+            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e))) return;
 
             NametagView nametagView = nametagViewPool.Get();
             nametagView.Id = avatarShape.ID;
@@ -119,7 +119,7 @@ namespace DCL.Nametags
         [None(typeof(DeleteEntityIntention))]
         private void UpdateTag([Data] in CameraComponent camera, Entity e, NametagView nametagView, in CharacterTransform characterTransform, in PartitionComponent partitionComponent)
         {
-            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform))
+            if (partitionComponent.IsBehind || IsOutOfRenderRange(camera, characterTransform) || (camera.Mode == CameraMode.FirstPerson && World.Has<PlayerComponent>(e)))
             {
                 nametagViewPool.Release(nametagView);
                 World.Remove<NametagView>(e);

@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Profiles;
 using DCL.ResourcesUnloading;
+using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using System.Threading;
 using Utility.Multithreading;
@@ -40,6 +41,7 @@ namespace DCL.PluginSystem.Global
 
             LoadProfileSystem.InjectToWorld(ref builder, profileIntentionCache, mutexSync, profileRepository);
             ResolveProfilePictureSystem.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<Profile>.InjectToWorld(ref builder);
         }
     }
 }
