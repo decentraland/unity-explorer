@@ -30,22 +30,27 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         {
             if (playerCRDTEntity.IsDirty)
             {
-                SetSceneProfile(ref profile, ref playerCRDTEntity);
+                PropagateComponent(ref profile, ref playerCRDTEntity);
                 return;
             }
 
             if (!profile.IsDirty) return;
 
-            SetSceneProfile(ref profile, ref playerCRDTEntity);
+            PropagateComponent(ref profile, ref playerCRDTEntity, true);
         }
 
-        private void SetSceneProfile(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        private void PropagateComponent(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity, bool useSet = false)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
             // External world access should be always synchronized (Global World calls into Scene World)
             using (sceneEcsExecutor.Sync.GetScope())
-                sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+            {
+                if (useSet)
+                    sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+                else
+                    sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+            }
         }
     }
 }
