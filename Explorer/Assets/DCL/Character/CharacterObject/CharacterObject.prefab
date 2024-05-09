@@ -236,13 +236,13 @@ ReflectionProbe:
   m_Mode: 1
   m_RefreshMode: 2
   m_TimeSlicingMode: 0
-  m_Resolution: 128
+  m_Resolution: 32
   m_UpdateFrequency: 0
   m_BoxSize: {x: 10, y: 10, z: 10}
   m_BoxOffset: {x: 0, y: 0, z: 0}
   m_NearClip: 0.3
   m_FarClip: 1000
-  m_ShadowDistance: 100
+  m_ShadowDistance: 0
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_CullingMask:
@@ -250,7 +250,7 @@ ReflectionProbe:
     m_Bits: 0
   m_IntensityMultiplier: 1
   m_BlendDistance: 1
-  m_HDR: 1
+  m_HDR: 0
   m_BoxProjection: 0
   m_RenderDynamicObjects: 0
   m_UseOcclusionCulling: 1
@@ -268,4 +268,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b39110867ba2546479c85da75acc969d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  intervalInSeconds: 1
+  IntervalInSeconds: 0.1
