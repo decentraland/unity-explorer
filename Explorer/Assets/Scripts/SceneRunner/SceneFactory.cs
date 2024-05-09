@@ -1,7 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
-using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
@@ -20,7 +19,6 @@ using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
-using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Factory;
 using System;
 using System.Threading;
@@ -136,8 +134,6 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            Debug.Log($"VVV Factory 0 {sceneData.SceneShortInfo.BaseParcel}");
-
             var deps = new SceneInstanceDeps(
                 sdkComponentsRegistry,
                 entityCollidersGlobalCache,
@@ -145,8 +141,6 @@ namespace SceneRunner
                 partitionProvider,
                 ecsWorldFactory,
                 entityFactory);
-
-            Debug.Log($"VVV Factory 1 {sceneData.SceneShortInfo.BaseParcel}");
 
             SceneRuntimeImpl sceneRuntime;
 
@@ -159,7 +153,6 @@ namespace SceneRunner
 
                 await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
                 deps.Dispose();
-                Debug.LogWarning($"VVV Factory 1 Exception {sceneData.SceneShortInfo.BaseParcel}");
 
                 throw;
             }
@@ -169,7 +162,6 @@ namespace SceneRunner
                 await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
                 deps.Dispose();
                 sceneRuntime?.Dispose();
-                Debug.LogWarning($"VVV Factory 1 Canceled {sceneData.SceneShortInfo.BaseParcel}");
 
                 throw new OperationCanceledException();
             }
@@ -177,10 +169,7 @@ namespace SceneRunner
             var runtimeDeps = new SceneInstanceDeps.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager,
                 globalWorldActions, realmData!, messagePipesHub);
 
-            Debug.Log($"VVV Factory 4 {sceneData.SceneShortInfo.BaseParcel}");
-
             sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
-
             sceneRuntime.RegisterAll(
                 deps.ExceptionsHandler,
                 roomHub,
@@ -195,13 +184,9 @@ namespace SceneRunner
                 runtimeDeps.CommunicationsControllerAPI,
                 deps.PoolsProvider,
                 runtimeDeps.SimpleFetchApi);
-
             sceneRuntime.ExecuteSceneJson();
 
-            Debug.Log($"VVV Factory 5 {sceneData.SceneShortInfo.BaseParcel}");
-
-            var a =
-             new SceneFacade(
+            return new SceneFacade(
                 sceneRuntime,
                 deps.ECSWorldFacade,
                 deps.CRDTProtocol,
@@ -214,8 +199,6 @@ namespace SceneRunner
                 deps.EntityCollidersCache,
                 sceneData,
                 deps.EcsExecutor);
-
-            return a;
         }
     }
 }
