@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS;
 using ECS.Prioritization.Components;
+using System.Net;
 using System.Threading;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -29,26 +30,23 @@ namespace DCL.AvatarRendering.Wearables
             if (avatarAttachment.ThumbnailAssetResult != null)
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
-            var alreadyRunningPromise = false;
-
             world.Query(in new QueryDescription().WithAll<IAvatarAttachment, ThumbnailPromise, IPartitionComponent>(),
-                (ref IAvatarAttachment a) =>
+                (ref IAvatarAttachment attachment, ref ThumbnailPromise promise) =>
                 {
-                    if (a.GetThumbnail().Equals(avatarAttachment.GetThumbnail()))
-                        alreadyRunningPromise = true;
+                    if (attachment.GetThumbnail().Equals(avatarAttachment.GetThumbnail()))
+                    {
+                        wearableThumbnailPromise = promise;
+                    }
                 });
 
-            if (!alreadyRunningPromise)
-            {
-                wearableThumbnailPromise = WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, avatarAttachment, world, PartitionComponent.TOP_PRIORITY);
-            }
+            wearableThumbnailPromise ??= WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, avatarAttachment, world, PartitionComponent.TOP_PRIORITY);
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment
             await UniTask.WaitWhile(() => avatarAttachment.ThumbnailAssetResult == null, cancellationToken: ct);
 
             if(ct.IsCancellationRequested)
-                wearableThumbnailPromise.Value.ForgetLoading(world);
+                wearableThumbnailPromise?.ForgetLoading(world);
 
             return avatarAttachment.ThumbnailAssetResult!.Value.Asset;
         }
