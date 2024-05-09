@@ -71,11 +71,14 @@ namespace DCL.ParcelsService
                     Vector3 offset = GetOffsetFromSpawnPoint(spawnPoint);
 
                     // TODO validate offset position is within bounds of one of scene parcels
-
                     targetPosition += offset;
 
                     if (spawnPoint.cameraTarget != null)
-                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3();
+                    {
+                        Vector2 baseParcel = sceneDef.metadata.scene.DecodedBase;
+                        Vector3 cameraTargetOffset = new Vector3(baseParcel.x * ParcelMathHelper.PARCEL_SIZE, 0, baseParcel.y * ParcelMathHelper.PARCEL_SIZE);
+                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + cameraTargetOffset;
+                    }
                 }
             }
             else
