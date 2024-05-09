@@ -23,9 +23,11 @@ namespace DCL.Audio
         private const float JOG_INTERVAL_SEC = 0.31f;
         private const float RUN_INTERVAL_SEC = 0.25f;
         private const float JUMP_INTERVAL_SEC = 0.25f;
+        private const float LAND_INTERVAL_SEC = 0.25f;
 
         private float lastFootstepTime;
         private float lastJumpTime;
+        private float lastLandTime;
 
 
         private CancellationTokenSource? cancellationTokenSource;
@@ -53,9 +55,7 @@ namespace DCL.Audio
         public void PlayJumpSound()
         {
             float currentTime = Time.time;
-
             if (currentTime - lastJumpTime < JUMP_INTERVAL_SEC) return;
-
             lastJumpTime = currentTime;
 
             switch (GetMovementState())
@@ -109,6 +109,10 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayLandSound()
         {
+            float currentTime = Time.time;
+            if (currentTime - lastLandTime < LAND_INTERVAL_SEC) return;
+            lastLandTime = currentTime;
+
             switch (GetMovementState())
             {
                 case MovementKind.None:
