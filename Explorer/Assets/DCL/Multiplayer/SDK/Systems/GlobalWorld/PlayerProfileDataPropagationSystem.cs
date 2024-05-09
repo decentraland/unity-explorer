@@ -42,10 +42,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void SetSceneProfile(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-                sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+            sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
         }
     }
 }
