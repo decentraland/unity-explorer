@@ -57,7 +57,8 @@ namespace DCL.Backpack
             AvatarSlotView[] avatarSlotViews,
             EmotesController emotesController,
             BackpackCharacterPreviewController backpackCharacterPreviewController,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            DCLInput dclInput)
         {
             this.view = view;
             this.backpackCommandBus = backpackCommandBus;
@@ -78,7 +79,8 @@ namespace DCL.Backpack
                 backpackEventBus,
                 gridController,
                 wearableInfoPanelController,
-                thumbnailProvider);
+                thumbnailProvider,
+                dclInput);
 
             backpackSections = new Dictionary<BackpackSections, ISection>
             {
