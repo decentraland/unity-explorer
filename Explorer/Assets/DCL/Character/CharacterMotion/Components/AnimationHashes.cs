@@ -10,6 +10,7 @@ namespace DCL.Character.CharacterMotion.Components
         public static readonly int EMOTE_RESET = Animator.StringToHash("EmoteForceRestart");
         public static readonly int EMOTE_STOP = Animator.StringToHash("EmoteStop");
         public static readonly int MOVEMENT_BLEND = Animator.StringToHash("MovementBlend");
+        public static readonly int MOVEMENT_TYPE = Animator.StringToHash("MovementType"); //We use this for sounds playback, to know exactly which expected movement type we are doing independently from blend value
         public static readonly int GROUNDED = Animator.StringToHash("IsGrounded");
         public static readonly int JUMPING = Animator.StringToHash("IsJumping");
         public static readonly int FALLING = Animator.StringToHash("IsFalling");
