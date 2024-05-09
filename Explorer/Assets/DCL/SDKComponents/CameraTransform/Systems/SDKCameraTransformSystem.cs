@@ -27,7 +27,7 @@ namespace DCL.SDKComponents.CameraTransform.Systems
     public partial class SDKCameraTransformSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap;
-        private readonly World globalWorld;
+        private readonly ObjectProxy<World> globalWorldProxy;
         private readonly IComponentPool<Transform> transformPool;
         private readonly CRDTEntity sdkCameraEntity;
         private SingleInstanceEntity cameraEntityProxy;
@@ -39,14 +39,15 @@ namespace DCL.SDKComponents.CameraTransform.Systems
             IComponentPool<Transform> transformPool) : base(world)
         {
             this.entitiesMap = entitiesMap;
-            globalWorld = globalWorldProxy.Object;
+            this.globalWorldProxy = globalWorldProxy;
             this.transformPool = transformPool;
             sdkCameraEntity = new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY);
         }
 
         public override void Initialize()
         {
-            cameraEntityProxy = globalWorld.CacheCamera();
+            if (!globalWorldProxy.Configured) return;
+            cameraEntityProxy = globalWorldProxy.Object.CacheCamera();
             cameraEntityMirror = World.Create(sdkCameraEntity, new SDKCameraComponent());
             TransformComponent transform = transformPool.CreateTransformComponent(cameraEntityMirror, sdkCameraEntity);
             transform.Transform.SetParent(null);
@@ -63,7 +64,7 @@ namespace DCL.SDKComponents.CameraTransform.Systems
         [All(typeof(SDKCameraComponent))]
         private void UpdateCameraTransform(ref TransformComponent transformComponent)
         {
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(cameraEntityProxy);
+            ref CameraComponent camera = ref globalWorldProxy.Object.Get<CameraComponent>(cameraEntityProxy);
             Transform cameraTransform = camera.Camera.transform;
             transformComponent.SetTransform(cameraTransform.position, cameraTransform.rotation, cameraTransform.localScale);
         }
