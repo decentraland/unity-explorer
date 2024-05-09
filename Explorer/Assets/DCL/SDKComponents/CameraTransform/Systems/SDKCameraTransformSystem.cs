@@ -40,13 +40,13 @@ namespace DCL.SDKComponents.CameraTransform.Systems
         {
             this.entitiesMap = entitiesMap;
             globalWorld = globalWorldProxy.Object;
-            cameraEntityProxy = globalWorld.CacheCamera();
             this.transformPool = transformPool;
             sdkCameraEntity = new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY);
         }
 
         public override void Initialize()
         {
+            cameraEntityProxy = globalWorld.CacheCamera();
             cameraEntityMirror = World.Create(sdkCameraEntity, new SDKCameraComponent());
             TransformComponent transform = transformPool.CreateTransformComponent(cameraEntityMirror, sdkCameraEntity);
             transform.Transform.SetParent(null);
