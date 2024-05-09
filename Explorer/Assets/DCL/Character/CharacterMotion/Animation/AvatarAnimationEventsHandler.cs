@@ -1,15 +1,9 @@
 ﻿using DCL.Audio.Avatar;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
-using DCL.Diagnostics;
-using DCL.Optimization.Pools;
 using JetBrains.Annotations;
-using System;
 using UnityEngine;
 using System.Threading;
-using System.Threading.Tasks;
-using Unity.Mathematics;
-using Utility;
 
 namespace DCL.CharacterMotion.Animation
 {
@@ -29,16 +23,13 @@ namespace DCL.CharacterMotion.Animation
         [SerializeField] private float walkIntervalSeconds = 0.37f;
         [SerializeField] private float jobIntervalSeconds = 0.31f;
         [SerializeField] private float runIntervalSeconds = 0.25f;
+        [SerializeField] private float jumpIntervalSeconds = 0.25f;
+        [SerializeField] private float landIntervalSeconds = 0.25f;
 
         [Header("Feet FX Data")]
         [SerializeField] private Transform leftFootTransform;
         [SerializeField] private Transform rightFootTransform;
 
-        private const float WALK_INTERVAL_SEC = 0.37f;
-        private const float JOG_INTERVAL_SEC = 0.31f;
-        private const float RUN_INTERVAL_SEC = 0.25f;
-        private const float JUMP_INTERVAL_SEC = 0.25f;
-        private const float LAND_INTERVAL_SEC = 0.25f;
 
         private float lastFootstepTime;
         private float lastJumpTime;
@@ -53,8 +44,8 @@ namespace DCL.CharacterMotion.Animation
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Jump()
         {
-            currentTime = Time.time;
-            if (currentTime - lastJumpTime < JUMP_INTERVAL_SEC) return;
+            currentTime = UnityEngine.Time.time;
+            if (currentTime - lastJumpTime < jumpIntervalSeconds) return;
             lastJumpTime = currentTime;
 
             switch (GetMovementState())
@@ -94,7 +85,7 @@ namespace DCL.CharacterMotion.Animation
         {
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
 
-            currentTime = Time.time;
+            currentTime = UnityEngine.Time.time;
 
             switch (GetMovementState())
             {
@@ -129,8 +120,10 @@ namespace DCL.CharacterMotion.Animation
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Land()
         {
-            currentTime = Time.time;
-            if (currentTime - lastLandTime < LAND_INTERVAL_SEC) return;
+            currentTime = UnityEngine.Time.time;
+
+            if (currentTime - lastLandTime < landIntervalSeconds) return;
+
             lastLandTime = currentTime;
 
             switch (GetMovementState())
@@ -222,7 +215,7 @@ namespace DCL.CharacterMotion.Animation
             int movementType = AvatarAnimator.GetInteger(AnimationHashes.MOVEMENT_TYPE);
             float movementBlend = AvatarAnimator.GetFloat(AnimationHashes.MOVEMENT_BLEND);
 
-            if (movementBlend > AvatarAudioSettings.MovementBlendThreshold)
+            if (movementBlend > MovementBlendThreshold)
             {
                 return movementType switch
                        {

@@ -35,7 +35,7 @@ namespace DCL.CharacterMotion.Animation
 
             switch (eventType)
             {
-                case AvatarAnimationEventType.Step: 
+                case AvatarAnimationEventType.Step:
                     dustPool = stepDustPool;
                     break;
                 case AvatarAnimationEventType.Jump:
@@ -55,7 +55,7 @@ namespace DCL.CharacterMotion.Animation
 
         private async UniTask ScheduleReturnDustToPoolAsync(ParticleSystem newDust, IObjectPool<ParticleSystem> dustPool, CancellationToken ct)
         {
-            await UniTask.Delay(2000, cancellationToken: ct);
+            await UniTask.Delay(1000, cancellationToken: ct);
 
             if (ct.IsCancellationRequested) return;
 
