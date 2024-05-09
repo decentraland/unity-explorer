@@ -28,6 +28,7 @@ namespace DCL.Audio
         private float lastFootstepTime;
         private float lastJumpTime;
         private float lastLandTime;
+        private float currentTime;
 
 
         private CancellationTokenSource? cancellationTokenSource;
@@ -54,7 +55,7 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayJumpSound()
         {
-            float currentTime = Time.time;
+            currentTime = Time.time;
             if (currentTime - lastJumpTime < JUMP_INTERVAL_SEC) return;
             lastJumpTime = currentTime;
 
@@ -78,7 +79,7 @@ namespace DCL.Audio
         public void PlayStepSound()
         {
             if (!AvatarAnimator.GetBool(AnimationHashes.GROUNDED)) return;
-            float currentTime = Time.time;
+            currentTime = Time.time;
 
             switch (GetMovementState())
             {
@@ -109,7 +110,7 @@ namespace DCL.Audio
         [PublicAPI("Used by Animation Events")]
         public void PlayLandSound()
         {
-            float currentTime = Time.time;
+            currentTime = Time.time;
             if (currentTime - lastLandTime < LAND_INTERVAL_SEC) return;
             lastLandTime = currentTime;
 
