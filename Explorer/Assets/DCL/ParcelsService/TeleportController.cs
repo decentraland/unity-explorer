@@ -68,10 +68,8 @@ namespace DCL.ParcelsService
                 {
                     SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints);
 
-                    Vector3 offset = GetSpawnPositionOffset(spawnPoint);
-
                     // TODO validate offset position is within bounds of one of scene parcels
-                    targetPosition += offset;
+                    targetPosition += GetSpawnPositionOffset(spawnPoint);
 
                     if (spawnPoint.cameraTarget != null)
                         cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + GetSpawnCameraOffset(sceneDef);
@@ -85,7 +83,10 @@ namespace DCL.ParcelsService
             AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
 
             if (cameraTarget != null)
+            {
                 AddCameraLookAtIntentQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
+                AddCharacterLookAtIntentQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value));
+            }
 
             if (sceneDef == null)
             {
@@ -98,6 +99,7 @@ namespace DCL.ParcelsService
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
         }
 
+        // TODO: this method should be removed, implies possible mantainance efforts and its only for debugging purposes
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             if (retrieveScene == null)
@@ -200,6 +202,13 @@ namespace DCL.ParcelsService
         [Query]
         [All(typeof(CameraComponent))]
         private void AddCameraLookAtIntent([Data] CameraLookAtIntent intent, in Entity entity)
+        {
+            world?.Add(entity, intent);
+        }
+
+        [Query]
+        [All(typeof(CharacterRigidTransform), typeof(CharacterTransform))]
+        private void AddCharacterLookAtIntent([Data] PlayerLookAtIntent intent, in Entity entity)
         {
             world?.Add(entity, intent);
         }
