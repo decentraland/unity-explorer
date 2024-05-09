@@ -199,8 +199,7 @@ MonoBehaviour:
     lensFlareComponent: {fileID: 8521501152378314052, guid: cfb1111e6759c9046956190dd1f2b0bf, type: 3}
     environmentSettings:
       sceneLoadRadius: 20
-      lod1Threshold: 1
-      lod2Threshold: 1
+      lod1Threshold: 5
       terrainLODBias: 50
       detailDensity: 30
       grassDistance: 75
@@ -212,8 +211,7 @@ MonoBehaviour:
     lensFlareComponent: {fileID: 4642727729545981125, guid: 771c68288bf78564cb5301f95b69811d, type: 3}
     environmentSettings:
       sceneLoadRadius: 50
-      lod1Threshold: 1
-      lod2Threshold: 3
+      lod1Threshold: 5
       terrainLODBias: 150
       detailDensity: 70
       grassDistance: 150
@@ -225,8 +223,7 @@ MonoBehaviour:
     lensFlareComponent: {fileID: 2726953631672280614, guid: 91fed6d77ceea8246b3d136a8e67a12c, type: 3}
     environmentSettings:
       sceneLoadRadius: 80
-      lod1Threshold: 2
-      lod2Threshold: 4
+      lod1Threshold: 5
       terrainLODBias: 250
       detailDensity: 100
       grassDistance: 300

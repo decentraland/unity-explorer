@@ -3,7 +3,7 @@
 function require(moduleName) {
     const wrapped = UnityOpsApi.LoadAndEvaluateCode(moduleName);
 
-    if (!wrapped) return { };
+    if (!wrapped) return {};
 
     // create minimal context for the execution
     var module = {
@@ -19,28 +19,28 @@ function require(moduleName) {
         moduleName.substring(1),    // __filename
         moduleName.substring(0, 1)   // __dirname
     );
-	
+
     const logger = {
         error: (m) => console.error(m),
         warning: (m) => console.warning(m),
         log: (m) => console.log(m),
     }
-    
+
     Validates.registerBundle(module.exports, logger)
     Validates.registerLogs(module.exports, logger)
     //TODO implement later
     // Validates.registerIntegrationTests(module.exports, logger)
-    
+
     return module.exports;
 }
 
 const console = {
-    log: function (...args) { UnityOpsApi.Log("SceneLog: " + args.join(' ')) },
-    info: function (...args) { UnityOpsApi.Log("SceneInfo: " + args.join(' ')) },
-    debug: function (...args) { UnityOpsApi.Log("SceneDebug: " + args.join(' ')) },
-    trace: function (...args) { UnityOpsApi.Log("SceneTrace: " + args.join(' ')) },
-    warning: function (...args) { UnityOpsApi.Warning("SceneWarning: " + args.join(' ')) },
-    error: function (...args) { UnityOpsApi.Error("SceneError: " + args.join(' ')) },
+    log: function (...args) { UnityOpsApi.Log("SceneLog: " + JSON.stringify(args)) },
+    info: function (...args) { UnityOpsApi.Log("SceneInfo: " + JSON.stringify(args)) },
+    debug: function (...args) { UnityOpsApi.Log("SceneDebug: " + JSON.stringify(args)) },
+    trace: function (...args) { UnityOpsApi.Log("SceneTrace: " + JSON.stringify(args)) },
+    warning: function (...args) { UnityOpsApi.Warning("SceneWarning: " + JSON.stringify(args)) },
+    error: function (...args) { UnityOpsApi.Error("SceneError: " + JSON.stringify(args)) },
 }
 
 // NOTE: MetadyneLabs.dcl.eth introduced a dependency on Cannon.js, this library
