@@ -56,7 +56,7 @@ namespace DCL.Rendering.Avatar
                     // Create the draw settings, which configures a new draw call to the GPU
                     //CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle, renderingData.cameraData.renderer.cameraDepthTargetHandle, clearFlag: ClearFlag.None, clearColor: Color.black, miplevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: -1);
                     DrawingSettings drawSettings = CreateDrawingSettings(m_ShaderTagId, ref renderingData, renderingData.cameraData.defaultOpaqueSortFlags);
-                    m_FilteringSettings.renderQueueRange = new RenderQueueRange(0, 2449);
+                    m_FilteringSettings.renderQueueRange = new RenderQueueRange(0, 2000);
                     context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref m_FilteringSettings);
                 }
 
