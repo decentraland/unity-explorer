@@ -1187,12 +1187,6 @@ MonoBehaviour:
   ContinuousAudioAvatarAudioSource: {fileID: 2728865850287729609}
   AvatarAnimator: {fileID: 6654053651110562472}
   AvatarAudioSettings: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
-  WALK_INTERVAL_SEC: 0.37
-  JOG_INTERVAL_SEC: 0.31
-  RUN_INTERVAL_SEC: 0.25
-  leftFeetTransform: {fileID: 4332106098282305372}
-  rightFeetTransform: {fileID: 3392771611989602023}
-  dust: {fileID: 7027690908109731583, guid: 6e41327ee49cf2a48b6081727ff9d296, type: 3}
 --- !u!82 &2728865850287729609
 AudioSource:
   m_ObjectHideFlags: 0
@@ -3181,7 +3175,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7810235523801447118
 Transform:
   m_ObjectHideFlags: 0
