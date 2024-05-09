@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using Utility.Multithreading;
 
@@ -36,10 +37,10 @@ namespace ECS.Groups
     /// </summary>
     public abstract class SyncedGroup : CustomGroupBase<float>
     {
-        private readonly MutexSync mutexSync;
+        [CanBeNull] private readonly MutexSync mutexSync;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        protected SyncedGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider)
+        protected SyncedGroup([CanBeNull] MutexSync mutexSync, ISceneStateProvider sceneStateProvider)
         {
             this.mutexSync = mutexSync;
             this.sceneStateProvider = sceneStateProvider;
@@ -56,7 +57,7 @@ namespace ECS.Groups
                 return;
 
             // If Mutex is not acquired throttle the system
-            if (!mutexSync.Acquired) return;
+            if (mutexSync is not null && !mutexSync.Acquired) return;
 
             BeforeUpdateInternal(in t, throttle);
         }
@@ -67,7 +68,7 @@ namespace ECS.Groups
                 return;
 
             // If Mutex is not acquired throttle the system
-            if (!mutexSync.Acquired) return;
+            if (mutexSync is not null && !mutexSync.Acquired) return;
 
             UpdateInternal(in t, throttle);
         }
@@ -78,7 +79,7 @@ namespace ECS.Groups
                 return;
 
             // If Mutex is not acquired throttle the system
-            if (!mutexSync.Acquired) return;
+            if (mutexSync is not null && !mutexSync.Acquired) return;
 
             AfterUpdateInternal(in t, throttle);
         }
@@ -86,7 +87,7 @@ namespace ECS.Groups
         public override void Dispose()
         {
             // If Mutex is not acquired throttle the system
-            if (!mutexSync.Acquired) return;
+            if (mutexSync is not null && !mutexSync.Acquired) return;
 
             DisposeInternal();
         }
