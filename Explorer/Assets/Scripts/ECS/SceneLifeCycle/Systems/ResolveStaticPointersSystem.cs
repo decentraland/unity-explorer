@@ -8,7 +8,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
 using ECS.StreamableLoading.Common;
-using Ipfs;
 using SceneRunner.Scene;
 using System.Linq;
 using UnityEngine;
@@ -47,7 +46,6 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (staticScenePointers.Value.Contains(parcel.ToInt2()))
                 {
-                    Debug.Log($"VVV creating scene facade promise for static scene pointer: {parcel}");
                     CreateSceneFacadePromise.Execute(World, entity, realm, in definition, partitionComponent);
                     return;
                 }

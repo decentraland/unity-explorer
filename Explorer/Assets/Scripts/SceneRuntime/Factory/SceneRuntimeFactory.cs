@@ -109,20 +109,13 @@ namespace SceneRuntime.Factory
             InstantiationBehavior instantiationBehavior = InstantiationBehavior.StayOnMainThread)
         {
             AssertCalledOnTheMainThread();
-            Debug.Log($"VVV Factory 1 - 0 | {sceneShortInfo.BaseParcel}");
 
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
-            Debug.Log($"VVV Factory 1 - 1 | {sceneShortInfo.BaseParcel}");
 
-            var a =
-             await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
-
-            Debug.Log($"VVV Factory 1 - 2 | {sceneShortInfo.BaseParcel}");
-
-            return a;
+            return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
-        private void AssertCalledOnTheMainThread()
+        private static void AssertCalledOnTheMainThread()
         {
             if (!PlayerLoopHelper.IsMainThread)
                 throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");

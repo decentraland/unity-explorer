@@ -1,6 +1,5 @@
 ﻿using DCL.Optimization.Pools;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using DCL.LOD.Components;
 using UnityEngine;
@@ -55,7 +54,6 @@ namespace ECS.SceneLifeCycle
             {
                 if (scenesByParcels.TryGetValue(parcels[i], out var sceneFacade))
                 {
-                    Debug.Log($"VVV removing scene facade from cache:  {sceneFacade.Info.BaseParcel} - {sceneFacade.Info.Name}");
                     scenes.Remove(sceneFacade);
                     scenesByParcels.Remove(parcels[i]);
                 }
