@@ -2,6 +2,8 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
@@ -25,12 +27,18 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly IDereferencableCache<GltfContainerAsset, string> cache;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
+        private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        internal ResetGltfContainerSystem(World world, IDereferencableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+        internal ResetGltfContainerSystem(World world,
+            IDereferencableCache<GltfContainerAsset, string> cache,
+            IEntityCollidersSceneCache entityCollidersSceneCache,
+            EntityEventBuffer<GltfContainerComponent> eventsBuffer,
+            IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             this.eventsBuffer = eventsBuffer;
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
@@ -43,10 +51,11 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         [Query]
         [None(typeof(PBGltfContainer))]
-        private void HandleComponentRemoval(ref GltfContainerComponent component)
+        private void HandleComponentRemoval(ref GltfContainerComponent component, in CRDTEntity sdkEntity)
         {
             TryReleaseAsset(ref component);
             component.Promise.ForgetLoading(World);
+            ecsToCRDTWriter.DeleteMessage<PBGltfContainerLoadingState>(sdkEntity);
         }
 
         private void TryReleaseAsset(ref GltfContainerComponent component)
