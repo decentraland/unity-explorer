@@ -1,20 +1,23 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Audio.Avatar;
+﻿using DCL.Audio.Avatar;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
-using DCL.Optimization.Pools;
 using JetBrains.Annotations;
-using System.Threading;
+using System;
 using UnityEngine;
-using UnityEngine.Pool;
-using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.CharacterMotion.Animation
 {
+    public enum AvatarAnimationEventType
+    {
+        Step,
+        Jump,
+        Land,
+    }
+
     public class AvatarAnimationEventsHandler : MonoBehaviour
     {
         [SerializeField] private AvatarAudioPlaybackController AudioPlaybackController;
+        [SerializeField] private AvatarAnimationParticlesController ParticlesController;
         [SerializeField] private Animator AvatarAnimator;
         [SerializeField] private float MovementBlendThreshold;
         [SerializeField] private float walkIntervalSeconds = 0.37f;
@@ -24,51 +27,26 @@ namespace DCL.CharacterMotion.Animation
         [Header("Feet FX Data")]
         [SerializeField] private Transform leftFootTransform;
         [SerializeField] private Transform rightFootTransform;
-        [SerializeField] private ParticleSystem feetDustParticles;
-        [SerializeField] private ParticleSystem jumpDustParticles;
-        [SerializeField] private ParticleSystem landDustParticles;
-
-        private GameObjectPool<ParticleSystem> feetDustPool = null!;
-        private GameObjectPool<ParticleSystem> jumpDustPool = null!;
-        private GameObjectPool<ParticleSystem> landDustPool = null!;
-        private CancellationTokenSource cancellationTokenSource = null!;
 
         private float lastFootstepTime;
 
-        private void Start()
-        {
-            var thisTransform = this.transform;
-            feetDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Object.Instantiate(feetDustParticles));
-            jumpDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Object.Instantiate(landDustParticles));
-            landDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Object.Instantiate(jumpDustParticles));
-            cancellationTokenSource = new CancellationTokenSource();
-        }
-
-        private void OnDestroy()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
-            feetDustPool.Dispose();
-            jumpDustPool.Dispose();
-            landDustPool.Dispose();
-        }
-
         [PublicAPI("Used by Animation Events")]
-        public void PlayJumpSound()
+        public void AnimEvent_Jump()
         {
             switch (GetMovementState())
             {
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
-                    ShowDust(rightFootTransform, jumpDustPool);
+                    ParticlesController.ShowDust(rightFootTransform, AvatarAnimationEventType.Jump);
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartJog);
-                    ShowDust(rightFootTransform, jumpDustPool);
+                    ParticlesController.ShowDust(rightFootTransform, AvatarAnimationEventType.Jump);
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartRun);
-                    ShowDust(rightFootTransform, jumpDustPool);
+                    ParticlesController.ShowDust(rightFootTransform, AvatarAnimationEventType.Jump);
                     break;
             }
         }
@@ -100,7 +78,7 @@ namespace DCL.CharacterMotion.Animation
                     {
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
                         lastFootstepTime = currentTime;
-                        ShowDust(footTransform, feetDustPool);
+                        ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
                     }
                     break;
                 case MovementKind.Jog:
@@ -108,7 +86,7 @@ namespace DCL.CharacterMotion.Animation
                     {
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
                         lastFootstepTime = currentTime;
-                        ShowDust(footTransform, feetDustPool);
+                        ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
                     }
                     break;
                 case MovementKind.Run:
@@ -116,63 +94,44 @@ namespace DCL.CharacterMotion.Animation
                     {
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
                         lastFootstepTime = currentTime;
-                        ShowDust(footTransform, feetDustPool);
+                        ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
                     }
                     break;
             }
         }
 
-        private void ShowDust(Transform footTransform, IObjectPool<ParticleSystem> dustPool)
-        {
-            var newDust = dustPool.Get();
-            newDust.transform.position = footTransform.position;
-            var ct = cancellationTokenSource.Token;
-            ReturnDustToPool(newDust, dustPool, ct).Forget();
-        }
-
-        private async UniTask ReturnDustToPool(ParticleSystem newDust, IObjectPool<ParticleSystem> dustPool, CancellationToken ct)
-        {
-            await UniTask.Delay(2000, cancellationToken: ct);
-
-            if (ct.IsCancellationRequested) return;
-
-            newDust.Stop();
-            newDust.time = 0;
-            dustPool.Release(newDust);
-        }
-
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayLandSound()
+        public void AnimEvent_Land()
         {
             switch (GetMovementState())
             {
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
-                    ShowDust(rightFootTransform, landDustPool);
+                    ParticlesController.ShowDust(rightFootTransform, AvatarAnimationEventType.Land);
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandJog);
-                    ShowDust(rightFootTransform, landDustPool);
+                    ParticlesController.ShowDust(rightFootTransform, AvatarAnimationEventType.Land);
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
-                    ShowDust(rightFootTransform, landDustPool);
+                    ParticlesController.ShowDust(rightFootTransform, AvatarAnimationEventType.Land);
                     break;
             }
         }
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayLongFallSound() =>
+        public void AnimEvent_LongFall() =>
             PlayContinuousAudio(AvatarAudioSettings.AvatarAudioClipType.LongFall);
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayHardLandingSound() =>
+        public void AnimEvent_HardLanding() =>
             PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
 
         [PublicAPI("Used by Animation Events")]
-        public void PlayShortFallSound() =>
+        public void AnimEvent_ShortFall() =>
             PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.ShortFall);
 
         [PublicAPI("Used by Animation Events")]
