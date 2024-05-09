@@ -167,6 +167,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // World is no longer valid, can't call World.Get
                 // Just Free the budget
                 acquiredBudget.Dispose();
+                intention.CancellationTokenSource.Cancel();
                 return;
             }
 

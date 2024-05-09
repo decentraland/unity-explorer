@@ -159,9 +159,18 @@ namespace SceneRunner
 
                 await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
                 deps.Dispose();
-                Debug.LogWarning($"VVV Factory 11 {sceneData.SceneShortInfo.BaseParcel}");
+                Debug.LogWarning($"VVV Factory 1 Exception {sceneData.SceneShortInfo.BaseParcel}");
 
                 throw;
+            }
+
+            if (ct.IsCancellationRequested)
+            {
+                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+                deps.Dispose();
+                sceneRuntime?.Dispose();
+                Debug.LogWarning($"VVV Factory 1 Canceled {sceneData.SceneShortInfo.BaseParcel}");
+                return null;
             }
 
             Debug.Log($"VVV Factory 2 {sceneData.SceneShortInfo.BaseParcel}");
@@ -177,6 +186,7 @@ namespace SceneRunner
             {
 
                 sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
+                Debug.Log($"VVV Factory 4 -1 {sceneData.SceneShortInfo.BaseParcel}");
 
                 sceneRuntime.RegisterAll(
                     deps.ExceptionsHandler,
@@ -193,7 +203,10 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi);
 
+                Debug.Log($"VVV Factory 4 -2 {sceneData.SceneShortInfo.BaseParcel}");
+
                 sceneRuntime.ExecuteSceneJson();
+                Debug.Log($"VVV Factory 4 -3 {sceneData.SceneShortInfo.BaseParcel}");
             }
             catch (Exception)
             {
@@ -201,13 +214,26 @@ namespace SceneRunner
                 runtimeDeps.Dispose();
                 deps.Dispose();
                 sceneRuntime.Dispose();
-                Debug.LogWarning($"VVV Factory 44 {sceneData.SceneShortInfo.BaseParcel}");
+                Debug.LogWarning($"VVV Factory 4 Exception {sceneData.SceneShortInfo.BaseParcel}");
 
                 throw;
             }
-            ct.ThrowIfCancellationRequested();
+
+            if (ct.IsCancellationRequested)
+            {
+                await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
+                runtimeDeps.Dispose();
+                deps.Dispose();
+                sceneRuntime.Dispose();
+                Debug.LogWarning($"VVV Factory 4 Canceled {sceneData.SceneShortInfo.BaseParcel}");
+                return null;
+            }
 
             Debug.Log($"VVV Factory 5 {sceneData.SceneShortInfo.BaseParcel}");
+
+            ct.ThrowIfCancellationRequested();
+
+            Debug.Log($"VVV Factory 6 {sceneData.SceneShortInfo.BaseParcel}");
 
             return new SceneFacade(
                 sceneRuntime,

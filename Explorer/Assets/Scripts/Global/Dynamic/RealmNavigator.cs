@@ -52,7 +52,7 @@ namespace Global.Dynamic
         private readonly CameraSamplingData cameraSamplingData;
 
         public Action<bool> OnRealmChanged { get; set; }
-        
+
         public RealmNavigator(
             ILoadingScreen loadingScreen,
             IMapRenderer mapRenderer,
@@ -144,6 +144,7 @@ namespace Global.Dynamic
             bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
             UniTask waitForSceneReadiness;
 
+            // parcelToTeleport = new Vector2Int(50, 0);
             if (isGenesis)
                 waitForSceneReadiness = await TeleportToParcelAsync(parcelToTeleport, teleportLoadReport, ct);
             else
