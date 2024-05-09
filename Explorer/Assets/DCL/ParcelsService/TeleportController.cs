@@ -85,7 +85,7 @@ namespace DCL.ParcelsService
             if (cameraTarget != null)
             {
                 ForceCameraLookAtQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
-                ForceCharacterLookAtQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value));
+                ForceCharacterLookAtQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value, targetPosition));
             }
 
             if (sceneDef == null)
