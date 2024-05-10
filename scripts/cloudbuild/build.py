@@ -114,23 +114,22 @@ def poll_build(id):
         sys.exit(1)
 
     response_json = response.json()
+
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
     status = response_json['buildStatus']
-    time = response_json['totalTimeInSeconds']
-
     match status:
         case 'created' | 'queued' | 'sentToBuilder' | 'started' | 'restarted':
-            print(f'Build status: {status} | Elapsed time: {time}')
+            print(f'Build status: {status}')
             return True
         case 'success':
-            print(f'Build finished! | Elapsed time: {time}')
+            print(f'Build finished successfully! | Elapsed (Unity) time: {response_json['totalTimeInSeconds']}')
             return False
         case 'failure' | 'canceled' | 'unknown':
-            print(f'Build error! Last known status: "{status}" - Failing...')
+            print(f'Build error! Last known status: "{status}"')
             sys.exit(1)
             return False
         case _:
-            print(f'Build status is not known: "{status}" - Failing...')
+            print(f'Build status is not known!: "{status}"')
             sys.exit(1)
             return False
 
@@ -151,9 +150,14 @@ set_parameters(get_param_env_variables())
 # Run Build
 id = run_build(os.getenv('BRANCH_NAME'))
 
+print(f'For more info and live logs, go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+
 # Poll the build stats every {POLL_TIME}s
+start_time = time.time()
 while True:
     if poll_build(id):
+        print(f'Runner elapsed time: {time.time() - start_time} | Polling again in {POLL_TIME}s [...]')
         time.sleep(POLL_TIME)
     else:
+        print(f'Runner FINAL elapsed time: {time.time() - start_time}')
         break
