@@ -10,6 +10,7 @@ using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
 using System.Threading;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
 
@@ -20,7 +21,7 @@ namespace DCL.TeleportPrompt
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
-        private readonly ITeleportController teleportController;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
@@ -31,13 +32,13 @@ namespace DCL.TeleportPrompt
         public TeleportPromptController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
-            ITeleportController teleportController,
+            IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService) : base(viewFactory)
         {
             this.cursor = cursor;
-            this.teleportController = teleportController;
+            this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
@@ -59,7 +60,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                TeleportToInputCoordsAsync().Forget();
+                realmNavigator.TryInitializeTeleportToParcelAsync(inputData.Coords, new CancellationToken()).Forget();
             });
         }
 
@@ -84,16 +85,6 @@ namespace DCL.TeleportPrompt
 
         private void Approve() =>
             resultCallback?.Invoke(TeleportPromptResultType.Approved);
-
-        private async UniTaskVoid TeleportToInputCoordsAsync()
-        {
-            var loadReport = AsyncLoadProcessReport.Create();
-            var timeout = TimeSpan.FromSeconds(30);
-
-            await UniTask.WhenAll(
-                mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport, timeout))),
-                teleportController.TeleportToSceneSpawnPointAsync(inputData.Coords, loadReport, CancellationToken.None).ContinueWith(w => w.ToUniTask(CancellationToken.None)));
-        }
 
         private async UniTaskVoid GetPlaceInfoAsync(Vector2Int parcel, CancellationToken ct)
         {
