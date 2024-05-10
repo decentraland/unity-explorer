@@ -8,22 +8,21 @@ using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Minimap;
+using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.PerformanceAndDiagnostics.DotNetLogging;
-using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.UIElements;
-using UnityEngine.Video;
 using Utility;
 
 namespace Global.Dynamic

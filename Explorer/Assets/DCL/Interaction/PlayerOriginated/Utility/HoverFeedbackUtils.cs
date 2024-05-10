@@ -54,8 +54,8 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             {
                 switch (anyButtonIsDown)
                 {
-                    case true when pointerEventEntry.EventType == PointerEventType.PetDown:
-                    case false when pointerEventEntry.EventType == PointerEventType.PetUp:
+                    case false when pointerEventEntry.EventType != PointerEventType.PetDown:
+                    case true when pointerEventEntry.EventType != PointerEventType.PetUp:
                         return false;
                 }
             }
@@ -65,8 +65,8 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             {
                 switch (unityInputAction.IsPressed())
                 {
-                    case true when pointerEventEntry.EventType == PointerEventType.PetDown:
-                    case false when pointerEventEntry.EventType == PointerEventType.PetUp:
+                    case true when pointerEventEntry.EventType != PointerEventType.PetUp:
+                    case false when pointerEventEntry.EventType != PointerEventType.PetDown:
                         return false;
                 }
             }
