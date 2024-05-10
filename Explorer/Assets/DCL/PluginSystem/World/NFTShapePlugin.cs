@@ -133,11 +133,6 @@ namespace DCL.PluginSystem.World
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
 
-        private void Inject(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, MutexSync mutexSync)
-        {
-
-        }
-
         private static IFramePrefabs NewFramePrefabs(IAssetsProvisioner assetsProvisioner, out IFramePrefabs framePrefabs)
         {
             return framePrefabs = new AssetProvisionerFramePrefabs(assetsProvisioner);
