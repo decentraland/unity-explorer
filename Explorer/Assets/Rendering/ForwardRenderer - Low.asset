@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 605e074de0654fb4838e725ec2818444, type: 3}
   m_Name: OutlineRendererFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_Settings:
     OutlineThickness: 1
     DepthSensitivity: 0.05
