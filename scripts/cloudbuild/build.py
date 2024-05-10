@@ -4,6 +4,7 @@ import sys
 import json
 import base64
 import requests
+from random import randint
 
 URL = f'https://build-api.cloud.unity3d.com/api/v1/orgs/{os.getenv('ORG_ID')}/projects/{os.getenv('PROJECT_ID')}'
 POLL_TIME = os.getenv('POLL_TIME') # Seconds
@@ -35,10 +36,16 @@ def get_target(target):
         print("Response body:", response.text)
         sys.exit(1)
 
+# Some of the code in here won't be used
+# Unity does not allow more than 1 item in queue by target
+# So we *always* create a new target, no matter what
+# by appending a random value at the end
 def clone_current_target():
     body = get_target(os.getenv('TARGET'))
     # Set target name based on branch
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
+    # Ensure a new target:
+    new_target_name = f'{new_target_name}_{randint(100000, 999999)}'
 
     body['name'] = new_target_name
     body['settings']['scm']['branch'] = os.getenv('BRANCH_NAME')
@@ -90,8 +97,7 @@ def run_build(branch):
     if response.status_code == 202:
         response_json = response.json()
         print("Build started successfully. Response:", response_json)
-        data = json.loads(response_json)
-        build_id = int(data['build'])
+        build_id = int(response_json[0]['build'])
     else:
         print("Build failed to start with status code:", response.status_code)
         print("Response body:", response.text)
@@ -109,10 +115,10 @@ def poll_build():
         print("Response body:", response.text)
         sys.exit(1)
 
-    data = json.loads(response.json())
+    response_json = response.json()
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
-    status = data['buildStatus']
-    time = data['totalTimeInSeconds']
+    status = response_json[0]['buildStatus']
+    time = response_json[0]['totalTimeInSeconds']
 
     match status:
         case 'created' | 'queued' | 'sentToBuilder' | 'started' | 'restarted':
