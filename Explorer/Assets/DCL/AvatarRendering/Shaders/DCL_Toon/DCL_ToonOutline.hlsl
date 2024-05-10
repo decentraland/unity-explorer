@@ -97,10 +97,10 @@ VertexOutput vert (VertexInput v)
 float4 frag(VertexOutput i) : SV_Target
 {
     //v.2.0.5
-    if (_ZOverDrawMode > 0.99f)
-    {
-        return float4(1.0f, 1.0f, 1.0f, 1.0f);  // but nothing should be drawn except Z value as colormask is set to 0
-    }
+    // if (_ZOverDrawMode > 0.99f)
+    // {
+    //     return float4(1.0f, 1.0f, 1.0f, 1.0f);  // but nothing should be drawn except Z value as colormask is set to 0
+    // }
     _Color = _BaseColor;
     float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
     //v.2.0.9
@@ -133,7 +133,7 @@ float4 frag(VertexOutput i) : SV_Target
         float _IsBaseMapAlphaAsClippingMask_var = lerp( _ClippingMask_var.r, Set_MainTexAlpha, _IsBaseMapAlphaAsClippingMask );
         float _Inverse_Clipping_var = lerp( _IsBaseMapAlphaAsClippingMask_var, (1.0 - _IsBaseMapAlphaAsClippingMask_var), _Inverse_Clipping );
         float Set_Clipping = saturate((_Inverse_Clipping_var+_Clipping_Level));
-        clip(Set_Clipping - 0.5);
+        clip(Set_MainTexAlpha - 0.5);
         float4 Set_Outline_Color = lerp( float4(_Is_BlendBaseColor_var,Set_Clipping), float4((_OutlineTex_var.rgb*_Outline_Color.rgb*lightColor),Set_Clipping), _Is_OutlineTex );
         return Set_Outline_Color;
     #endif

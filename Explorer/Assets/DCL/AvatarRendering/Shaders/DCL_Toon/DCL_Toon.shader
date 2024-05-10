@@ -525,7 +525,6 @@ Shader "DCL/DCL_Toon"
                 Comp[_StencilComp]
                 Pass[_StencilOpPass]
                 Fail[_StencilOpFail]
-
             }
 
             HLSLPROGRAM
@@ -533,6 +532,7 @@ Shader "DCL/DCL_Toon"
             #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag
+            #pragma enable_d3d11_debug_symbols
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
