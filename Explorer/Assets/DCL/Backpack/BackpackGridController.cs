@@ -350,7 +350,7 @@ namespace DCL.Backpack
 
         private void UpdateBodyShapeCompatibility(IReadOnlyList<IWearable> wearables, IAvatarAttachment bodyShape)
         {
-            for (int i = wearables.Count - 1; i >= 0; i--)
+            for (int i = Math.Min(wearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
                 IWearable wearable = wearables[i];
                 BackpackItemView? itemView = loadingResults[i];
