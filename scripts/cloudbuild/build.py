@@ -89,7 +89,8 @@ def run_build(branch):
     if response.status_code == 202:
         response_json = response.json()
         print("Build started successfully. Response:", response_json)
-        build_id = int(response_json['build'])
+        data = json.loads(response_json)
+        build_id = int(data['build'])
     else:
         print("Build failed to start with status code:", response.status_code)
         print("Response body:", response.text)
@@ -107,10 +108,10 @@ def poll_build():
         print("Response body:", response.text)
         sys.exit(1)
 
-    response_json = response.json()
+    data = json.loads(response.json())
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
-    status = response_json['buildStatus']
-    time = response_json['totalTimeInSeconds']
+    status = data['buildStatus']
+    time = data['totalTimeInSeconds']
 
     match status:
         case 'created' | 'queued' | 'sentToBuilder' | 'started' | 'restarted':
