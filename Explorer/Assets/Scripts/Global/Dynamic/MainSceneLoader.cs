@@ -41,7 +41,7 @@ namespace Global.Dynamic
 
 
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
-        private bool useRemoteAssetBundles  ;
+        private bool useRemoteAssetBundles;
 
         [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)] [ShowIfCondition("useRemoteAssetBundles")]
         private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
@@ -187,7 +187,7 @@ namespace Global.Dynamic
                 bool shouldEnableLandscape = enableLandscape;
 
                 var hybridSceneParams = new HybridSceneParams();
-                if (useRemoteAssetBundles)
+                if (useRemoteAssetBundles && initialRealm == InitialRealm.Localhost)
                 {
                     hybridSceneParams.EnableHybridScene = true;
                     hybridSceneParams.HybridSceneID = remoteSceneID;
