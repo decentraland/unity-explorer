@@ -14,19 +14,32 @@ namespace DCL.CharacterMotion.Animation
         [SerializeField] private ParticleSystem stepDustParticles;
         [SerializeField] private ParticleSystem jumpDustParticles;
         [SerializeField] private ParticleSystem landDustParticles;
-
-        private GameObjectPool<ParticleSystem> stepDustPool = null!;
+        private CancellationTokenSource cancellationTokenSource = null!;
         private GameObjectPool<ParticleSystem> jumpDustPool = null!;
         private GameObjectPool<ParticleSystem> landDustPool = null!;
-        private CancellationTokenSource cancellationTokenSource = null!;
+
+        private GameObjectPool<ParticleSystem> stepDustPool = null!;
 
         private void Start()
         {
-            var thisTransform = this.transform;
-            stepDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Object.Instantiate(stepDustParticles));
-            jumpDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Object.Instantiate(landDustParticles));
-            landDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Object.Instantiate(jumpDustParticles));
+            Transform thisTransform = transform;
+            stepDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(stepDustParticles));
+            jumpDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(landDustParticles));
+            landDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(jumpDustParticles));
             cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        private void OnDestroy()
+        {
+            Dispose();
+        }
+
+        public void Dispose()
+        {
+            cancellationTokenSource.SafeCancelAndDispose();
+            stepDustPool.Dispose();
+            jumpDustPool.Dispose();
+            landDustPool.Dispose();
         }
 
         public void ShowDust(Transform footTransform, AvatarAnimationEventType eventType)
@@ -47,9 +60,9 @@ namespace DCL.CharacterMotion.Animation
                 default: return;
             }
 
-            var newDust = dustPool.Get();
+            ParticleSystem? newDust = dustPool.Get();
             newDust.transform.position = footTransform.position;
-            var ct = cancellationTokenSource.Token;
+            CancellationToken ct = cancellationTokenSource.Token;
             ScheduleReturnDustToPoolAsync(newDust, dustPool, ct).Forget();
         }
 
@@ -62,20 +75,6 @@ namespace DCL.CharacterMotion.Animation
             newDust.Stop();
             newDust.time = 0;
             dustPool.Release(newDust);
-        }
-
-
-        private void OnDestroy()
-        {
-            Dispose();
-        }
-
-        public void Dispose()
-        {
-            cancellationTokenSource.SafeCancelAndDispose();
-            stepDustPool.Dispose();
-            jumpDustPool.Dispose();
-            landDustPool.Dispose();
         }
     }
 }

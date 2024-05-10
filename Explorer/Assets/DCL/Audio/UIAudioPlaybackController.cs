@@ -15,21 +15,6 @@ namespace DCL.Audio
 {
     public class UIAudioPlaybackController : MonoBehaviour, IDisposable
     {
-        private struct ContinuousPlaybackAudioData
-        {
-            public AudioSource AudioSource { get; private set; }
-            public Tweener FadeTweener { get; set; }
-            public CancellationTokenSource CancellationTokenSource { get; private set; }
-
-            public ContinuousPlaybackAudioData(AudioSource audioSource, Tweener fadeTweener, CancellationTokenSource cancellationTokenSource)
-            {
-                AudioSource = audioSource;
-                FadeTweener = fadeTweener;
-                CancellationTokenSource = cancellationTokenSource;
-            }
-        }
-
-
         //We need different Audio Sources to handle the different volume configurations each category can have.
         //So we could have for example silenced UI audio, max out music and 50% on Chat sounds.
 
@@ -48,7 +33,6 @@ namespace DCL.Audio
 
         private readonly Dictionary<AudioClipConfig, ContinuousPlaybackAudioData> audioDataPerAudioClipConfig = new ();
 
-
         private GameObjectPool<AudioSource> audioSourcePool;
         private CancellationTokenSource mainCancellationTokenSource;
 
@@ -58,11 +42,13 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent -= OnStopContinuousUIAudioEvent;
             mainCancellationTokenSource.SafeCancelAndDispose();
-            foreach (var audioData in audioDataPerAudioClipConfig)
+
+            foreach (KeyValuePair<AudioClipConfig, ContinuousPlaybackAudioData> audioData in audioDataPerAudioClipConfig)
             {
                 //We do this in case a fadeout is being carried out when we Dispose
                 audioData.Value.FadeTweener.Kill();
             }
+
             UiAudioSource.Stop();
             MusicAudioSource.Stop();
             ChatAudioSource.Stop();
@@ -91,25 +77,27 @@ namespace DCL.Audio
 
         private void OnStopContinuousUIAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if (audioDataPerAudioClipConfig.TryGetValue(audioClipConfig, out var audioData))
+            if (audioDataPerAudioClipConfig.TryGetValue(audioClipConfig, out ContinuousPlaybackAudioData audioData))
             {
                 audioData.FadeTweener.Kill();
                 audioData.CancellationTokenSource.SafeCancelAndDispose();
-                audioData.FadeTweener = audioData.AudioSource.DOFade(0, fadeDuration).SetAutoKill().OnComplete(() =>
-                {
-                    if (!mainCancellationTokenSource.IsCancellationRequested)
-                        ReleaseOnFadeOut(audioData, audioClipConfig);
-                });
+
+                audioData.FadeTweener = audioData.AudioSource.DOFade(0, fadeDuration)
+                                                 .SetAutoKill()
+                                                 .OnComplete(() =>
+                                                  {
+                                                      if (!mainCancellationTokenSource.IsCancellationRequested)
+                                                          ReleaseOnFadeOut(audioData, audioClipConfig);
+                                                  });
             }
         }
 
-        private void ReleaseOnFadeOut(ContinuousPlaybackAudioData audioData,AudioClipConfig audioClipConfig)
+        private void ReleaseOnFadeOut(ContinuousPlaybackAudioData audioData, AudioClipConfig audioClipConfig)
         {
             audioData.AudioSource.Stop();
             audioSourcePool.Release(audioData.AudioSource);
             audioDataPerAudioClipConfig.Remove(audioClipConfig);
         }
-
 
         private void OnPlayContinuousUIAudioEvent(AudioClipConfig audioClipConfig)
         {
@@ -129,26 +117,24 @@ namespace DCL.Audio
             audioSource.clip = audioClipConfig.AudioClips[clipIndex];
             audioSource.Play();
 
-            Tweener fadeTween = audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration).
-                                            OnComplete(() => StartPlayingContinuousUIAudio(audioSource, audioClipConfig, cts.Token));
+            Tweener fadeTween = audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration).OnComplete(() => StartPlayingContinuousUIAudio(audioSource, audioClipConfig, cts.Token));
 
-            ContinuousPlaybackAudioData audioData = new ContinuousPlaybackAudioData(audioSource, fadeTween, cts);
+            var audioData = new ContinuousPlaybackAudioData(audioSource, fadeTween, cts);
             audioDataPerAudioClipConfig.Add(audioClipConfig, audioData);
         }
 
         private void StartPlayingContinuousUIAudio(AudioSource audioSource, AudioClipConfig audioClipConfig, CancellationToken ct)
         {
             if (ct.IsCancellationRequested) return;
+
             if (audioClipConfig.AudioClips.Length == 1)
             {
                 audioSource.loop = true;
                 return;
             }
 
-            AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, audioClipConfig,audioSource.clip.length, audioSource).Forget();
+            AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, audioClipConfig, audioSource.clip.length, audioSource).Forget();
         }
-
-
 
         private void OnPlayUIAudioEvent(AudioClipConfig audioClipConfig)
         {
@@ -227,7 +213,7 @@ namespace DCL.Audio
                     return ChatAudioSource;
                 case AudioCategory.Music:
                     return MusicAudioSource;
-                 case AudioCategory.World:
+                case AudioCategory.World:
                 case AudioCategory.Avatar:
                 case AudioCategory.None:
                 default: throw new ArgumentOutOfRangeException(nameof(audioCategory), audioCategory, null);
@@ -242,6 +228,20 @@ namespace DCL.Audio
             audioSource.outputAudioMixerGroup = settings.MixerGroup;
             audioSource.spatialBlend = 0;
             return audioSource;
+        }
+
+        private struct ContinuousPlaybackAudioData
+        {
+            public AudioSource AudioSource { get; }
+            public Tweener FadeTweener { get; set; }
+            public CancellationTokenSource CancellationTokenSource { get; }
+
+            public ContinuousPlaybackAudioData(AudioSource audioSource, Tweener fadeTweener, CancellationTokenSource cancellationTokenSource)
+            {
+                AudioSource = audioSource;
+                FadeTweener = fadeTweener;
+                CancellationTokenSource = cancellationTokenSource;
+            }
         }
     }
 }

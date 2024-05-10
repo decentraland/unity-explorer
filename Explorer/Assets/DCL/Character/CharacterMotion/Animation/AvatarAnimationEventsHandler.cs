@@ -31,16 +31,13 @@ namespace DCL.CharacterMotion.Animation
         [SerializeField] private Transform rightFootTransform;
         [SerializeField] private Transform centerBottomTransform;
 
+        private CancellationTokenSource? cancellationTokenSource;
+        private float currentTime;
 
         private float lastFootstepTime;
         private float lastJumpTime;
         private float lastLandTime;
-        private float currentTime;
-
-
-        private CancellationTokenSource? cancellationTokenSource;
         private bool playingContinuousAudio;
-
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Jump()
@@ -67,20 +64,17 @@ namespace DCL.CharacterMotion.Animation
             }
         }
 
-
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_RightStep()
         {
             PlayStepSoundForFoot(rightFootTransform);
         }
 
-
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_LeftStep()
         {
             PlayStepSoundForFoot(leftFootTransform);
         }
-
 
         private void PlayStepSoundForFoot(Transform footTransform)
         {
@@ -97,6 +91,7 @@ namespace DCL.CharacterMotion.Animation
                         lastFootstepTime = currentTime;
                         ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
                     }
+
                     break;
                 case MovementKind.Jog:
                     if (currentTime - lastFootstepTime > jobIntervalSeconds)
@@ -105,6 +100,7 @@ namespace DCL.CharacterMotion.Animation
                         lastFootstepTime = currentTime;
                         ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
                     }
+
                     break;
                 case MovementKind.Run:
                     if (currentTime - lastFootstepTime > runIntervalSeconds)
@@ -113,10 +109,10 @@ namespace DCL.CharacterMotion.Animation
                         lastFootstepTime = currentTime;
                         ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
                     }
+
                     break;
             }
         }
-
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Land()
@@ -226,7 +222,7 @@ namespace DCL.CharacterMotion.Animation
                            (int)MovementKind.Run => MovementKind.Run,
                            (int)MovementKind.Jog => MovementKind.Jog,
                            (int)MovementKind.Walk => MovementKind.Walk,
-                           _ => MovementKind.None
+                           _ => MovementKind.None,
                        };
             }
 

@@ -15,20 +15,6 @@ namespace DCL.Audio
 {
     public class WorldAudioPlaybackController : MonoBehaviour, IDisposable
     {
-        private struct WorldPlaybackAudioData
-        {
-            public AudioSource AudioSource { get; private set; }
-            public CancellationTokenSource CancellationTokenSource { get; private set; }
-
-            public WorldPlaybackAudioData(AudioSource audioSource, CancellationTokenSource cancellationTokenSource)
-            {
-                AudioSource = audioSource;
-                CancellationTokenSource = cancellationTokenSource;
-            }
-        }
-
-
-
         [SerializeField]
         private WorldAudioSettings audioSettings;
         [SerializeField]
@@ -127,7 +113,7 @@ namespace DCL.Audio
                 }
             }
 
-            foreach (var audioData in audioSourceList)
+            foreach (WorldPlaybackAudioData audioData in audioSourceList)
             {
                 if (!audioData.AudioSource.isPlaying) SetupAudioClip(audioData, audioClipConfig);
             }
@@ -143,7 +129,7 @@ namespace DCL.Audio
                 return;
             }
 
-            foreach (var audioData in audioSourceList)
+            foreach (WorldPlaybackAudioData audioData in audioSourceList)
             {
                 audioData.AudioSource.Stop();
                 audioData.CancellationTokenSource.Cancel();
@@ -173,6 +159,18 @@ namespace DCL.Audio
             }
 
             return true;
+        }
+
+        private struct WorldPlaybackAudioData
+        {
+            public AudioSource AudioSource { get; }
+            public CancellationTokenSource CancellationTokenSource { get; }
+
+            public WorldPlaybackAudioData(AudioSource audioSource, CancellationTokenSource cancellationTokenSource)
+            {
+                AudioSource = audioSource;
+                CancellationTokenSource = cancellationTokenSource;
+            }
         }
     }
 }

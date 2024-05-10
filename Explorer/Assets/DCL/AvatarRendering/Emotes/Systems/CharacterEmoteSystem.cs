@@ -164,7 +164,7 @@ namespace DCL.AvatarRendering.Emotes
                         return;
                     }
 
-                    var streamableAssetValue = streamableAsset.Value;
+                    StreamableLoadingResult<WearableRegularAsset> streamableAssetValue = streamableAsset.Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -183,10 +183,7 @@ namespace DCL.AvatarRendering.Emotes
                     emoteComponent.EmoteUrn = emoteId;
                 }
             }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, reportCategory);
-            }
+            catch (Exception e) { ReportHub.LogException(e, reportCategory); }
 
             World.Remove<CharacterEmoteIntent>(entity);
         }
