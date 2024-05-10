@@ -7,19 +7,18 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Utilities.Extensions;
+using ECS.Abstract;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Reporting;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
-using GatherGltfAssetsSystem = ECS.SceneLifeCycle.Systems.GatherGltfAssetsSystem;
 
 namespace SceneRunner.ECSWorld
 {
@@ -29,13 +28,11 @@ namespace SceneRunner.ECSWorld
         private readonly IPartitionSettings partitionSettings;
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
-        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         public ECSWorldFactory(
             ECSWorldSingletonSharedDependencies sharedDependencies,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData cameraSamplingData,
-            ISceneReadinessReportQueue sceneReadinessReportQueue,
             IReadOnlyList<IDCLWorldPlugin> plugins
         )
         {
@@ -43,7 +40,6 @@ namespace SceneRunner.ECSWorld
             singletonDependencies = sharedDependencies;
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
-            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args)
@@ -66,12 +62,13 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
+            var mutex = sharedDependencies.MutexSync;
+
             builder
-               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostPhysicsSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider));
+               .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedSimulationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPresentationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPreRenderingSystemGroup(mutex, sharedDependencies.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
@@ -84,13 +81,16 @@ namespace SceneRunner.ECSWorld
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
-            GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, args.SceneData);
-
+            ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);
+
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
-            // Add other systems here
+            // These system will prevent changes from the JS scenes to squeeze in between different stages of the PlayerLoop at the same frame
+            LockECSSystem.InjectToWorld(ref builder, mutex);
+            UnlockECSSystem.InjectToWorld(ref builder, mutex);
+
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 
             SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);

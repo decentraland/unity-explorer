@@ -8,7 +8,6 @@ using ECS.StreamableLoading.Tests;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Tests
 {
@@ -29,7 +28,7 @@ namespace ECS.SceneLifeCycle.Tests
             new (new CommonLoadingArguments(wrongTypePath), new IpfsPath());
 
         protected override LoadSceneDefinitionSystem CreateSystem() =>
-            new (world, TestSuite.TestWebRequestController.INSTANCE, cache, new MutexSync());
+            new (world, TestSuite.TestWebRequestController.INSTANCE, cache);
 
         protected override void AssertSuccess(SceneEntityDefinition asset)
         {
