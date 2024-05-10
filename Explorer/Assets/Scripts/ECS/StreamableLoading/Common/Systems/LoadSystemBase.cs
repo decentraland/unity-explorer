@@ -234,16 +234,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
             var ongoingRequestRemoved = false;
 
-            void TryRemoveOngoingRequest()
-            {
-                if (!ongoingRequestRemoved)
-                {
-                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
-                    ongoingRequestRemoved = true;
-                }
-            }
-
             StreamableLoadingResult<TAsset>? result = null;
 
             try
@@ -287,6 +277,16 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // We need to remove the request the same frame to prevent de-sync with new requests
                 TryRemoveOngoingRequest();
+            }
+
+            void TryRemoveOngoingRequest()
+            {
+                if (!ongoingRequestRemoved)
+                {
+                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                    ongoingRequestRemoved = true;
+                }
             }
         }
 
