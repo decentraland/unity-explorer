@@ -18,7 +18,18 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
     public class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
     {
-        private static List<SDKObservableEvent> EMPTY_EVENTS_LIST = new ();
+        private static List<SDKObservableEvent> EMPTY_EVENTS_LIST = new ()
+        {
+            new ()
+            {
+                generic = new SDKObservableEvent.Generic
+                {
+                    eventId = string.Empty,
+                    eventData = string.Empty
+
+                }
+            }
+        };
 
         private readonly PBAvatarEmoteCommand avatarEmoteCommand = new ();
         private readonly ProtobufSerializer<PBAvatarEmoteCommand> avatarEmoteCommandSerializer = new ();
