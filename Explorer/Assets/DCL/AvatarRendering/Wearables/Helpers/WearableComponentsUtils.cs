@@ -7,6 +7,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -27,7 +28,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2());
 
-        private static readonly URLBuilder URL_BUILDER = new ();
+        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() =>
+        {
+            var urlBuilder = new URLBuilder();
+            return urlBuilder;
+        }, defaultCapacity:2);
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
@@ -59,17 +64,19 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return;
             }
 
-            URL_BUILDER.Clear();
-            URL_BUILDER.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
+            var urlBuilder = URL_BUILDER_POOL.Get();
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
 
             var promise = Promise.Create(world,
                 new GetTextureIntention
                 {
-                    CommonArguments = new CommonLoadingArguments(URL_BUILDER.Build()),
+                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build()),
                 },
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
+            URL_BUILDER_POOL.Release(urlBuilder);
         }
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)
