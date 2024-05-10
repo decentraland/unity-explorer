@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cc9f7ae930048b5956ebc9ad72940b2, type: 3}
   m_Name: InteractionSettingsData
   m_EditorClassIdentifier: 
-  <ValidColor>k__BackingField: {r: 0.84705883, g: 0.46666667, b: 0.788495, a: 1}
-  <InvalidColor>k__BackingField: {r: 0.8154035, g: 0.84705883, b: 0.29411763, a: 1}
-  <Thickness>k__BackingField: 6.66
+  <ValidColor>k__BackingField: {r: 0.23843002, g: 0.8867924, b: 0.45072904, a: 1}
+  <InvalidColor>k__BackingField: {r: 1, g: 0.17647058, b: 0.49867108, a: 1}
+  <Thickness>k__BackingField: 4
