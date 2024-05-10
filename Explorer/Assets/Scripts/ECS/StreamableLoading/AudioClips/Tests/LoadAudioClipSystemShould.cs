@@ -9,7 +9,6 @@ using ECS.StreamableLoading.Tests;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AudioClips.Tests
 {
@@ -34,10 +33,10 @@ namespace ECS.StreamableLoading.AudioClips.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadAudioClipSystem CreateSystem() =>
-            new (world, cache, TestSuite.TestWebRequestController.INSTANCE, new MutexSync());
+            new (world, cache, TestSuite.TestWebRequestController.INSTANCE);
 
         public static LoadAudioClipSystem CreateSystem(World world) =>
-            new (world, Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>(), TestSuite.TestWebRequestController.INSTANCE, new MutexSync());
+            new (world, Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>(), TestSuite.TestWebRequestController.INSTANCE);
 
         protected override void AssertSuccess(AudioClip asset)
         {

@@ -52,8 +52,8 @@ namespace ECS.SceneLifeCycle.Systems
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
                 definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
-            // Calculate partition immediately
-            await UniTask.SwitchToMainThread();
+            // Launch at the end of the frame
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
             return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Assertions;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
@@ -9,7 +10,6 @@ namespace CrdtEcsBridge.PoolsProviders
         public static readonly PoolableByteArray EMPTY = new (System.Array.Empty<byte>(), 0, null);
 
         public readonly byte[] Array;
-        public readonly int Length;
         public readonly Action<byte[]> ReleaseFunc;
 
         public PoolableByteArray(byte[] array, int length, Action<byte[]> releaseFunc)
@@ -20,6 +20,8 @@ namespace CrdtEcsBridge.PoolsProviders
             IsDisposed = false;
         }
 
+        public int Length { get; private set; }
+
         public Span<byte> Span => new(Array, 0, Length);
 
         public Memory<byte> Memory => Array.AsMemory(0, Length);
@@ -27,6 +29,14 @@ namespace CrdtEcsBridge.PoolsProviders
         public bool IsDisposed { get; private set; }
 
         public bool IsEmpty => Length == 0;
+
+        public void SetLength(int length)
+        {
+            if (length > Array.Length)
+                throw new ArgumentOutOfRangeException(nameof(length), $"Rented Array Size {Array.Length} is lower than the requested {length}");
+
+            Length = length;
+        }
 
         public void Dispose()
         {

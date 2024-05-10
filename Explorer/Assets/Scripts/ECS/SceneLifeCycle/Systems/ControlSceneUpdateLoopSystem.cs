@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
-                var scene = result.Asset;
+                var scene = result.Asset!;
 
                 var fps = realmPartitionSettings.GetSceneUpdateFrequency(in partition);
 

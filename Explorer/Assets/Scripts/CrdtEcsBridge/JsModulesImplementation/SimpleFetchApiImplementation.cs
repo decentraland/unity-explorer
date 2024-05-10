@@ -99,8 +99,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 var requestStatusText = unityWebRequest.responseCode.ToString();
                 string requestUrl = unityWebRequest.url.EnsureNotNull();
 
-                unityWebRequest.Dispose();
-
                 object result = new
                 {
                     headers = responseHeadersDictionary,
