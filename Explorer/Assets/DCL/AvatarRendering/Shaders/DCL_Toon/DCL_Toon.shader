@@ -516,16 +516,16 @@ Shader "DCL/DCL_Toon"
             Tags {
                 "LightMode" = "Outline"
             }
-            Cull [_SRPDefaultUnlitColMode]
-            ColorMask [_SPRDefaultUnlitColorMask]
-            Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref[_StencilNo]
-                Comp[_StencilComp]
-                Pass[_StencilOpPass]
-                Fail[_StencilOpFail]
-            }
+            Cull Front
+            //ColorMask [_SPRDefaultUnlitColorMask]
+            //Blend SrcAlpha OneMinusSrcAlpha
+//            Stencil
+//            {
+//                Ref[_StencilNo]
+//                Comp[_StencilComp]
+//                Pass[_StencilOpPass]
+//                Fail[_StencilOpFail]
+//            }
 
             HLSLPROGRAM
             //#pragma exclude_renderers gles gles3 glcore
