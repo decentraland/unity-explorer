@@ -5,12 +5,7 @@ import base64
 import requests
 
 URL = f'https://build-api.cloud.unity3d.com/api/v1/orgs/{os.getenv('ORG_ID')}/projects/{os.getenv('PROJECT_ID')}'
-URL_BUILD_TARGETS = f'{URL}/buildtargets'
-URL_TARGET = f'{URL_BUILD_TARGETS}/{os.getenv('TARGET')}'
-URL_BUILD = f'{URL_TARGET}/builds'
-URL_ENVVARS = f'{URL_TARGET}/envvars'
-URL_BUILD_ID = f'{URL_BUILD}/{build_id}'
-POLL_TIME = 30 # Seconds
+POLL_TIME = os.getenv('POLL_TIME') # Seconds
 
 build_id = -1;
 
@@ -27,7 +22,7 @@ def create_headers(api_key):
 headers = create_headers(os.getenv('API_KEY'))
 
 def get_target_data():
-    response = requests.get(URL_TARGET, headers=headers)
+    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=headers)
 
     if response.status_code == 200:
         return response.json()
@@ -43,7 +38,7 @@ def clone_current_target():
     body['name'] = clone_target
     body['settings']['scm']['branch'] = os.getenv('BRANCH_NAME')
 
-    response = requests.post(URL_BUILD_TARGETS, headers=headers, json=body)
+    response = requests.post(f'{URL}/buildtargets', headers=headers, json=body)
 
     if response.status_code == 201:
         os.environ['TARGET'] = clone_target
@@ -65,7 +60,7 @@ def set_parameters(params):
         'TEST_ENV_GIT': 'workflowDefault'
     }
     body = hardcoded_params | params
-    response = requests.put(URL_ENVVARS, headers=headers, json=body)
+    response = requests.put(f'{URL}/buildtargets/{os.getenv('TARGET')}/envvars', headers=headers, json=body)
 
     if response.status_code == 200:
         print("Parameters set successfully. Response:", response.json())
@@ -79,7 +74,7 @@ def run_build(branch):
         'branch': branch,
         # 'commit': '7d6423555eb96a1e7208adec2b8b7e2f74f1a18f'
     }
-    response = requests.post(URL_BUILD, headers=headers, json=body)
+    response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=headers, json=body)
 
     if response.status_code == 202:
         response_json = response.json()
@@ -95,7 +90,7 @@ def poll_build():
         print('Error: No build ID known (-1)')
         return
 
-    response = requests.get(URL_BUILD_ID, headers=headers)
+    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{build_id}', headers=headers)
 
     if response.status_code != 200:
         print(f'Failed to poll build with ID {build_id} with status code: {response.status_code}')
