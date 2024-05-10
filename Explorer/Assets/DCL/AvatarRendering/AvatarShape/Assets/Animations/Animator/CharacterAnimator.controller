@@ -286,7 +286,7 @@ AnimatorStateMachine:
     m_Position: {x: 600, y: 240, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 6383020052979447455}
-    m_Position: {x: 320, y: 200, z: 0}
+    m_Position: {x: 370, y: 310, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 6626008193833255465}
     m_Position: {x: 70, y: 200, z: 0}
@@ -1101,6 +1101,12 @@ AnimatorController:
     m_Controller: {fileID: 9100000}
   - m_Name: EmoteStop
     m_Type: 9
+    m_DefaultFloat: 0
+    m_DefaultInt: 0
+    m_DefaultBool: 0
+    m_Controller: {fileID: 9100000}
+  - m_Name: MovementType
+    m_Type: 3
     m_DefaultFloat: 0
     m_DefaultInt: 0
     m_DefaultBool: 0
