@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import json
 import base64
 import requests
 from random import randint
@@ -45,7 +44,8 @@ def clone_current_target():
     # Set target name based on branch
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
     # Ensure a new target:
-    new_target_name = f'{new_target_name}_{randint(100000, 999999)}'
+    #new_target_name = f'{new_target_name}_{randint(100000, 999999)}'
+    new_target_name = f'{new_target_name}_{os.getenv('COMMIT_SHA')}'
 
     body['name'] = new_target_name
     body['settings']['scm']['branch'] = os.getenv('BRANCH_NAME')
@@ -117,8 +117,8 @@ def poll_build():
 
     response_json = response.json()
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
-    status = response_json[0]['buildStatus']
-    time = response_json[0]['totalTimeInSeconds']
+    status = response_json['buildStatus']
+    time = response_json['totalTimeInSeconds']
 
     match status:
         case 'created' | 'queued' | 'sentToBuilder' | 'started' | 'restarted':

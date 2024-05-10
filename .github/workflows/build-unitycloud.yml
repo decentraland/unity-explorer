@@ -63,6 +63,7 @@ jobs:
           POLL_TIME: 30 # Seconds
           TARGET: t_windows64
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          COMMIT_SHA: ${{ git rev-parse --short "$GITHUB_SHA" }}
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
