@@ -20,8 +20,9 @@ namespace DCL.Rendering.Highlight
                 HighlightInput_Blur_Vertical = 1
             }
 
-            private const string profilerTagInput = "Custom Pass: Highlight Additive";
-            private const string profilerTagOutput = "Custom Pass: Highlight Subtractive";
+            private const string PROFILER_TAG_ADDITIVE = "Custom Pass: Highlight Additive";
+            private const string PROFILER_TAG_SUBTRACTIVE = "Custom Pass: Highlight Subtractive";
+            private const string PROFILER_TAG_BLUR = "Custom Pass: Highlight Blur";
 
             //private RTHandle destinationHandle;
             private readonly ShaderTagId m_ShaderTagId = new ("Highlight");
@@ -47,13 +48,13 @@ namespace DCL.Rendering.Highlight
             }
 
             public void Setup(Material _highLightInputMaterial,
-                                Material _highlightInputBlurMaterial,
-                                RTHandle _highLightRTHandle_Colour,
-                                RenderTextureDescriptor _highLightRTDescriptor_Colour,
-                                RTHandle _highLightRTHandle_Depth,
-                                RenderTextureDescriptor _highLightRTDescriptor_Depth,
-                                RTHandle _highLightRTHandle_Colour_Blur,
-                                RenderTextureDescriptor _highLightRTDescriptor_Colour_Blur)
+                Material _highlightInputBlurMaterial,
+                RTHandle _highLightRTHandle_Colour,
+                RenderTextureDescriptor _highLightRTDescriptor_Colour,
+                RTHandle _highLightRTHandle_Depth,
+                RenderTextureDescriptor _highLightRTDescriptor_Depth,
+                RTHandle _highLightRTHandle_Colour_Blur,
+                RenderTextureDescriptor _highLightRTDescriptor_Colour_Blur)
             {
                 highLightInputMaterial = _highLightInputMaterial;
                 highlightInputBlurMaterial = _highlightInputBlurMaterial;
@@ -80,16 +81,12 @@ namespace DCL.Rendering.Highlight
                 if (m_HighLightRenderers is not { Count: > 0 })
                     return;
 
-                CommandBuffer cmdAdditive = CommandBufferPool.Get("_HighlightInputPass_Additive");
-                using (new ProfilingScope(cmdAdditive, new ProfilingSampler(profilerTagInput)))
-                    ExecuteCommand(context, renderingData, cmdAdditive, false);
-
-                CommandBuffer cmdSubtractive = CommandBufferPool.Get("_HighlightInputPass_Subtractive");
-                using (new ProfilingScope(cmdSubtractive, new ProfilingSampler(profilerTagInput)))
-                    ExecuteCommand(context, renderingData, cmdSubtractive, true);
+                ExecuteCommand(context, renderingData, false, "_HighlightInputPass_Additive", PROFILER_TAG_ADDITIVE);
+                ExecuteCommand(context, renderingData, true, "_HighlightInputPass_Subtractive", PROFILER_TAG_SUBTRACTIVE);
 
                 CommandBuffer cmd_blur = CommandBufferPool.Get("_HighlightInputPass_Blur");
-                using (new ProfilingScope(cmd_blur, new ProfilingSampler(profilerTagOutput)))
+
+                using (new ProfilingScope(null, new ProfilingSampler(PROFILER_TAG_BLUR)))
                 {
                     cmd_blur.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour);
                     cmd_blur.SetRenderTarget(highLightRTHandle_Colour_Blur, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
@@ -101,9 +98,11 @@ namespace DCL.Rendering.Highlight
                 }
             }
 
-            private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, CommandBuffer commandBuffer, bool clear)
+            private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, string profilerTag)
             {
-                using (new ProfilingScope(commandBuffer, new ProfilingSampler(profilerTagInput)))
+                CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName);
+
+                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
                 {
                     foreach ((Renderer renderer, HighlightSettings settings) in m_HighLightRenderers)
                     {
@@ -138,7 +137,7 @@ namespace DCL.Rendering.Highlight
                         {
                             var materialToUse = new Material(highLightInputMaterial);
                             materialToUse.SetColor(highlightColour, !clear ? settings.Color : Color.clear);
-                            materialToUse.SetFloat(outlineWidth, !clear ? 6 : 0);
+                            materialToUse.SetFloat(outlineWidth, !clear ? settings.Width : 0);
                             materialToUse.SetVector(highlightObjectOffset, !clear ? settings.Offset : Vector3.zero);
                             commandBuffer.DrawRenderer(renderer, materialToUse, 0, 0);
                         }
