@@ -34,8 +34,6 @@ namespace DCL.Audio
             int clipIndex = GetClipIndex(clipConfig);
             AudioClip clip = clipConfig.AudioClips[clipIndex];
 
-            if (ct.IsCancellationRequested) return;
-
             await UniTask.Delay(TimeSpan.FromSeconds(waitTime), cancellationToken: ct);
 
             if (ct.IsCancellationRequested) return;

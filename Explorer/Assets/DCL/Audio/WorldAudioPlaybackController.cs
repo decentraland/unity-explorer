@@ -22,16 +22,12 @@ namespace DCL.Audio
 
         public void Dispose()
         {
-            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent -= OnPlayLandscapeAudioEvent;
-            WorldAudioEventsBus.Instance.StopWorldAudioEvent -= StopAndReleaseAudioSources;
             audioSourcesPerIndexDictionary.Clear();
             audioSourcePool?.Dispose();
         }
 
         public void Initialize()
         {
-            WorldAudioEventsBus.Instance.PlayLandscapeAudioEvent += OnPlayLandscapeAudioEvent;
-            WorldAudioEventsBus.Instance.StopWorldAudioEvent += StopAndReleaseAudioSources;
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
         }
 
@@ -64,7 +60,12 @@ namespace DCL.Audio
             audioSource.Play();
         }
 
-        private void OnPlayLandscapeAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType)
+        public void StopAudioEvent(int index, WorldAudioClipType clipType)
+        {
+            StopAndReleaseAudioSources(index, clipType);
+        }
+
+        public void PlayAudioEvent(int index, NativeArray<int2> audioSourcesPositions, WorldAudioClipType clipType)
         {
             AudioClipConfig audioClipConfig = audioSettings.GetAudioClipConfigForType(clipType).DayClip; //We can switch this depending on the time of day for example
 

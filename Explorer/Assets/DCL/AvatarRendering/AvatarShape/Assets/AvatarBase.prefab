@@ -1053,6 +1053,7 @@ MonoBehaviour:
   landIntervalSeconds: 0.25
   leftFootTransform: {fileID: 4360311299621958882}
   rightFootTransform: {fileID: 7739112277832749632}
+  centerBottomTransform: {fileID: 5392123658557924511}
 --- !u!1 &2579945317508973258
 GameObject:
   m_ObjectHideFlags: 0

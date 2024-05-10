@@ -9,7 +9,8 @@ namespace DCL.Audio
         public static UIAudioEventsBus Instance => instance ??= new UIAudioEventsBus();
 
         public event Action<AudioClipConfig>? PlayUIAudioEvent;
-        public event Action<AudioClipConfig, bool>? PlayLoopingUIAudioEvent;
+        public event Action<AudioClipConfig>? PlayContinuousUIAudioEvent;
+        public event Action<AudioClipConfig>? StopContinuousUIAudioEvent;
 
         public void Dispose() { }
 
@@ -19,16 +20,16 @@ namespace DCL.Audio
                 PlayUIAudioEvent?.Invoke(audioClipConfig);
         }
 
-        public void SendPlayLoopingAudioEvent(AudioClipConfig? audioClipConfig)
+        public void SendPlayContinuousAudioEvent(AudioClipConfig? audioClipConfig)
         {
             if (audioClipConfig != null)
-                PlayLoopingUIAudioEvent?.Invoke(audioClipConfig, true);
+                PlayContinuousUIAudioEvent?.Invoke(audioClipConfig);
         }
 
-        public void SendStopPlayingLoopingAudioEvent(AudioClipConfig? audioClipConfig)
+        public void SendStopPlayingContinuousAudioEvent(AudioClipConfig? audioClipConfig)
         {
             if (audioClipConfig != null)
-                PlayLoopingUIAudioEvent?.Invoke(audioClipConfig, false);
+                StopContinuousUIAudioEvent?.Invoke(audioClipConfig);
         }
     }
 }

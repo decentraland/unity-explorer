@@ -12,7 +12,7 @@ namespace DCL.Audio.Avatar
         [SerializeField] private AudioSource ContinuousAudioAvatarAudioSource;
         [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
 
-        private CancellationTokenSource? cancellationTokenSource;
+        private CancellationTokenSource cancellationTokenSource;
         private bool playingContinuousAudio;
 
         private void Start()
