@@ -4,6 +4,7 @@ import sys
 import time
 import base64
 import requests
+import datetime
 
 URL = f'https://build-api.cloud.unity3d.com/api/v1/orgs/{os.getenv('ORG_ID')}/projects/{os.getenv('PROJECT_ID')}'
 POLL_TIME = int(os.getenv('POLL_TIME')) # Seconds
@@ -156,7 +157,7 @@ print(f'For more info and live logs, go to https://cloud.unity.com/ and search f
 start_time = time.time()
 while True:
     if poll_build(id):
-        print(f'Runner elapsed time: {time.time() - start_time} | Polling again in {POLL_TIME}s [...]')
+        print(f'Runner elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))} | Polling again in {POLL_TIME}s [...]')
         time.sleep(POLL_TIME)
     else:
         print(f'Runner FINAL elapsed time: {time.time() - start_time}')
