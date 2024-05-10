@@ -8,8 +8,6 @@ from random import randint
 URL = f'https://build-api.cloud.unity3d.com/api/v1/orgs/{os.getenv('ORG_ID')}/projects/{os.getenv('PROJECT_ID')}'
 POLL_TIME = os.getenv('POLL_TIME') # Seconds
 
-build_id = -1;
-
 def create_headers(api_key):
     # Encoding API key in Base64 format
     credentials = f"{api_key}:"
@@ -97,21 +95,22 @@ def run_build(branch):
     if response.status_code == 202:
         response_json = response.json()
         print("Build started successfully. Response:", response_json)
-        build_id = int(response_json[0]['build'])
+        return int(response_json[0]['build'])
     else:
         print("Build failed to start with status code:", response.status_code)
         print("Response body:", response.text)
         sys.exit(1)
+        return -1
 
-def poll_build():
-    if build_id == -1:
+def poll_build(id):
+    if id == -1:
         print('Error: No build ID known (-1)')
         return
 
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{build_id}', headers=headers)
+    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=headers)
 
     if response.status_code != 200:
-        print(f'Failed to poll build with ID {build_id} with status code: {response.status_code}')
+        print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
         print("Response body:", response.text)
         sys.exit(1)
 
@@ -151,11 +150,11 @@ clone_current_target()
 set_parameters(get_param_env_variables())
 
 # Run Build
-run_build(os.getenv('BRANCH_NAME'))
+id = run_build(os.getenv('BRANCH_NAME'))
 
 # Poll the build stats every {POLL_TIME}s
 while True:
-    if poll_build():
+    if poll_build(id):
         time.sleep(POLL_TIME)
     else:
         break
