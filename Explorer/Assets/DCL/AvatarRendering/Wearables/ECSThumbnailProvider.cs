@@ -4,10 +4,8 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using ECS;
 using ECS.Prioritization.Components;
-using System.Net;
 using System.Threading;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using ThumbnailPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace DCL.AvatarRendering.Wearables
@@ -26,27 +24,29 @@ namespace DCL.AvatarRendering.Wearables
 
         public async UniTask<Sprite?> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct)
         {
-            Promise? wearableThumbnailPromise = null;
             if (avatarAttachment.ThumbnailAssetResult != null)
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
+            ThumbnailPromise? wearableThumbnailPromise = null;
             world.Query(in new QueryDescription().WithAll<IAvatarAttachment, ThumbnailPromise, IPartitionComponent>(),
                 (ref IAvatarAttachment attachment, ref ThumbnailPromise promise) =>
                 {
                     if (attachment.GetThumbnail().Equals(avatarAttachment.GetThumbnail()))
-                    {
                         wearableThumbnailPromise = promise;
-                    }
                 });
 
-            wearableThumbnailPromise ??= WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, avatarAttachment, world, PartitionComponent.TOP_PRIORITY);
+            // Create a new promise bound to the current cancellation token
+            // if the promise was created before, we should not override its cancellation
+            wearableThumbnailPromise ??= WearableComponentsUtils.CreateWearableThumbnailPromise(
+                realmData,
+                avatarAttachment,
+                world,
+                PartitionComponent.TOP_PRIORITY,
+                CancellationTokenSource.CreateLinkedTokenSource(ct));
 
             // We dont create an async task from the promise since it needs to be consumed at the proper system, not here
             // The promise's result will eventually get replicated into the avatar attachment
             await UniTask.WaitWhile(() => avatarAttachment.ThumbnailAssetResult == null, cancellationToken: ct);
-
-            if(ct.IsCancellationRequested)
-                wearableThumbnailPromise?.ForgetLoading(world);
 
             return avatarAttachment.ThumbnailAssetResult!.Value.Asset;
         }
