@@ -43,11 +43,11 @@ namespace Global.Dynamic
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
         private bool useRemoteAssetBundles  ;
 
-        [SerializeField] [ShowIfCondition("useRemoteAssetBundles")]
-        private string remoteSceneID = "";
+        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)] [ShowIfCondition("useRemoteAssetBundles")]
+        private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
 
-        [SerializeField] [ShowIfCondition("useRemoteAssetBundles")]
-        private string remoteSceneContentServer = "";
+        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)] [ShowIfCondition("useRemoteAssetBundles")]
+        private string remoteSceneContentServer = "https://worlds-content-server.decentraland.org/contents/";
         
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
@@ -186,6 +186,14 @@ namespace Global.Dynamic
 
                 bool shouldEnableLandscape = enableLandscape;
 
+                var hybridSceneParams = new HybridSceneParams();
+                if (useRemoteAssetBundles)
+                {
+                    hybridSceneParams.EnableHybridScene = true;
+                    hybridSceneParams.HybridSceneID = remoteSceneID;
+                    hybridSceneParams.HybridSceneContent = remoteSceneContentServer;
+                }
+
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
                     {
@@ -202,8 +210,7 @@ namespace Global.Dynamic
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
-                        StartParcel = startingParcel,
-                        EnableLandscape = shouldEnableLandscape, EnableLOD = enableLOD
+                        StartParcel = startingParcel, EnableLandscape = shouldEnableLandscape, EnableLOD = enableLOD, HybridSceneParams = hybridSceneParams
                     }, backgroundMusic, ct
                 );
 

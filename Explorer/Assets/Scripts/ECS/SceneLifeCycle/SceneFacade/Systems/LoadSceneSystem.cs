@@ -26,11 +26,11 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class LoadSceneSystem : LoadSystemBase<ISceneFacade, GetSceneFacadeIntention>
     {
         private readonly ISceneFactory sceneFactory;
-        private readonly LoadSceneSystemLogic loadSceneSystemLogic;
+        private readonly LoadSceneSystemLogicBase loadSceneSystemLogic;
         private readonly LoadEmptySceneSystemLogic loadEmptySceneSystemLogic;
 
         internal LoadSceneSystem(World world,
-            LoadSceneSystemLogic loadSceneSystemLogic, LoadEmptySceneSystemLogic loadEmptySceneSystemLogic,
+            LoadSceneSystemLogicBase loadSceneSystemLogic, LoadEmptySceneSystemLogic loadEmptySceneSystemLogic,
             ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
         {
             this.sceneFactory = sceneFactory;

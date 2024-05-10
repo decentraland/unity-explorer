@@ -16,18 +16,16 @@ using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    public class LoadSceneSystemLogic
+    public class LoadSceneSystemLogic : LoadSceneSystemLogicBase
     {
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
 
-        public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL)
+        public LoadSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL) : base(webRequestController, assetBundleURL)
         {
-            this.assetBundleURL = assetBundleURL;
-            this.webRequestController = webRequestController;
         }
 
-        public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, string reportCategory, IPartitionComponent partition, CancellationToken ct)
+        public override async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, string reportCategory, IPartitionComponent partition, CancellationToken ct)
         {
             SceneDefinitionComponent definitionComponent = intention.DefinitionComponent;
             IpfsPath ipfsPath = definitionComponent.IpfsPath;
@@ -40,23 +38,15 @@ namespace ECS.SceneLifeCycle.Systems
                 ? intention.IpfsRealm.ContentBaseUrl
                 : ipfsPath.BaseUrl;
 
-            ISceneContent hashedContent = new SceneHashedContent(definition.content, contentBaseUrl);
+            var hashedContent = new SceneHashedContent(definition.content, contentBaseUrl);
 
-            string hibridSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
-            
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
-            var loadAssetBundleManifest = LoadAssetBundleManifestAsync(hibridSceneID, reportCategory, ct);
+            var loadAssetBundleManifest = LoadAssetBundleManifestAsync(ipfsPath.EntityId, reportCategory, ct);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, ipfsPath.EntityId, reportCategory, ct);
             UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
 
-            // Calculate partition immediately
-            await UniTask.SwitchToMainThread();
-
-            hashedContent = new HibridSceneHashedContent(definition.content, contentBaseUrl, webRequestController, hibridSceneID);
-            await ((HibridSceneHashedContent)hashedContent).GetRemoteSceneDefinition(new CancellationToken(), reportCategory);
-            
             // Create scene data
             Vector2Int baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
@@ -68,63 +58,6 @@ namespace ECS.SceneLifeCycle.Systems
             return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
         }
 
-        private async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, string reportCategory, CancellationToken ct)
-        {
-            const string NAME = "main.crdt";
-
-            // if scene does not contain main.crdt, do nothing
-            if (!sceneContent.TryGetContentUrl(NAME, out URLAddress url))
-                return ReadOnlyMemory<byte>.Empty;
-
-            return await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory).GetDataCopyAsync();
-        }
-
-        private async UniTask<SceneAssetBundleManifest> LoadAssetBundleManifestAsync(string sceneId, string reportCategory, CancellationToken ct)
-        {
-            URLAddress url = assetBundleURL.Append(URLPath.FromString($"manifest/{sceneId}{PlatformUtils.GetPlatform()}.json"));
-
-            try
-            {
-                SceneAbDto sceneAbDto = await (webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory))
-                   .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
-
-                if (sceneAbDto.ValidateVersion())
-                    return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.files);
-
-                ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundle Version Mismatch for {sceneId}");
-                return SceneAssetBundleManifest.NULL;
-            }
-            catch
-            {
-                // Don't block the scene if the loading manifest failed, just use NULL
-                ReportHub.LogError(new ReportData(reportCategory, ReportHint.SessionStatic), $"Asset Bundles Manifest is not loaded for scene {sceneId}");
-                return SceneAssetBundleManifest.NULL;
-            }
-        }
-
-        /// <summary>
-        ///     Loads scene metadata from a separate endpoint to ensure it contains "baseUrl" and overrides the existing metadata
-        ///     with new one
-        /// </summary>
-        private async UniTask<UniTaskVoid> OverrideSceneMetadataAsync(ISceneContent sceneContent, GetSceneFacadeIntention intention, string reportCategory, string sceneID, CancellationToken ct)
-        {
-            const string NAME = "scene.json";
-
-            if (!sceneContent.TryGetContentUrl(NAME, out URLAddress sceneJsonUrl))
-            {
-                //What happens if we dont have a scene.json file? Will the default one work?
-                ReportHub.LogWarning(new ReportData(reportCategory, ReportHint.SessionStatic), $"scene.json does not exist for scene {sceneID}, no override is possible");
-                return default(UniTaskVoid);
-            }
-
-            SceneMetadata target = intention.DefinitionComponent.Definition.metadata;
-
-            await webRequestController.GetAsync(new CommonArguments(sceneJsonUrl), ct, reportCategory)
-               .OverwriteFromJsonAsync(target, WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
-
-            intention.DefinitionComponent.Definition.id = intention.DefinitionComponent.IpfsPath.EntityId;
-
-            return default(UniTaskVoid);
-        }
+        
     }
 }

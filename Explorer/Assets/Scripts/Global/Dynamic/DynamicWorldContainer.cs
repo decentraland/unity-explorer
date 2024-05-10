@@ -402,7 +402,8 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 multiplayerEmotesMessageBus,
-                container.MessagePipesHub);
+                container.MessagePipesHub,
+                dynamicWorldParams.HybridSceneParams);
 
             container.GlobalPlugins = globalPlugins;
 

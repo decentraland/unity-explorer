@@ -65,11 +65,14 @@ namespace Global.Dynamic
         private readonly CharacterContainer characterContainer;
         private readonly IMessagePipesHub messagePipesHub;
 
+        private readonly HybridSceneParams hybridSceneParams;
+
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus, IMessagePipesHub messagePipesHub)
+            IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus, IMessagePipesHub messagePipesHub,
+            HybridSceneParams hybridSceneParams)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -88,6 +91,7 @@ namespace Global.Dynamic
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
             this.messagePipesHub = messagePipesHub;
+            this.hybridSceneParams = hybridSceneParams;
             this.emotesMessageBus = emotesMessageBus;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -114,8 +118,16 @@ namespace Global.Dynamic
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
 
+            LoadSceneSystemLogicBase loadSceneSystemLogic = null;
+
+            if (hybridSceneParams.EnableHybridScene)
+                loadSceneSystemLogic = new LoadHibridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams.HybridSceneID, hybridSceneParams.HybridSceneContent);
+            else
+                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
+
+            
             LoadSceneSystem.InjectToWorld(ref builder,
-                new LoadSceneSystemLogic(webRequestController, assetBundlesURL),
+                loadSceneSystemLogic,
                 new LoadEmptySceneSystemLogic(),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
 
