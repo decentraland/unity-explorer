@@ -81,16 +81,24 @@ namespace SceneRunner.Scene
 
         public async UniTask GetRemoteSceneDefinition(CancellationToken ct, string reportCategory)
         {
-            var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID)); 
+            var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
-            var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
-                .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
-
-            foreach (var contentDefinition in sceneEntityDefinition.content)
+            try
             {
-                if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file))
-                    fileToHash[contentDefinition.file] = contentDefinition.hash;
+                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
+                    .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+
+                foreach (var contentDefinition in sceneEntityDefinition.content)
+                {
+                    if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file))
+                        fileToHash[contentDefinition.file] = contentDefinition.hash;
+                }
             }
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles");
+            }
+
         }
     }
 }
