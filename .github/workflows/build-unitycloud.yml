@@ -39,7 +39,7 @@ jobs:
 
     name: Build
     runs-on: ubuntu-latest
-#    timeout-minutes: 120
+    timeout-minutes: 120
 #    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft) || ${{ github.event.label.name == 'force-build' }}
     steps:
       - name: Checkout code
@@ -60,7 +60,7 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          TARGET: windows64
+          TARGET: t_windows64
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
@@ -68,20 +68,6 @@ jobs:
           # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
           PARAM_TEST_VALUE: "value exists"
         run: python scripts/cloudbuild/build.py
-
-#      - name: Build with Unity Cloud Build
-#        uses: condensereality/UnityCloudBuildAction@main
-#        id: build
-#        with:
-#          unity_cloud_build_api_key: ${{ secrets.UNITY_CLOUD_API_KEY }}
-#          unity_cloud_build_org_id: ${{ secrets.UNITY_CLOUD_ORG_ID }}
-#          unity_cloud_build_project_id: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-#          unity_cloud_build_polling_interval: 60
-#          unity_cloud_build_primary_target: windows64
-#          unity_cloud_build_download_binary: true
-#          unity_cloud_build_create_share: true
-#          unity_cloud_build_github_branch_ref: ${{ github.ref }} # Full path branch
-#          unity_cloud_build_github_head_ref: ${{ github.head_ref }} # Pull request only, source branch
                                                                                          
 #      - name: Set SHA env variable
 #        run: |
@@ -123,11 +109,6 @@ jobs:
 #          }
 #          Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
 #          Write-Output $uploadSymbols
-
-#      - name: Checkout code
-#        uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
           
 #      - name: Extract branch name
 #        shell: bash
