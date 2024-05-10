@@ -55,6 +55,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r scripts/cloudbuild/requirements.txt
 
+      - name: Get commit SHA
+        id: get_commit_sha
+        run: echo "::set-output name=commit_sha::$(git rev-parse --short $GITHUB_SHA)"
+
       - name: Execute Unity Cloud build
         env:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
@@ -63,7 +67,7 @@ jobs:
           POLL_TIME: 30 # Seconds
           TARGET: t_windows64
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          COMMIT_SHA: ${{ git rev-parse --short "$GITHUB_SHA" }}
+          COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
