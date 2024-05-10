@@ -21,10 +21,13 @@ def create_headers(api_key):
 
 headers = create_headers(os.getenv('API_KEY'))
 
-def get_target_data():
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=headers)
+def get_target(target):
+    response = requests.get(f'{URL}/buildtargets/{target}', headers=headers)
 
     if response.status_code == 200:
+        return response.json()
+    elif response.status_code == 404:
+        print(f'Target "{target}" not found')
         return response.json()
     else:
         print("Failed to get target data with status code:", response.status_code)
@@ -32,18 +35,25 @@ def get_target_data():
         sys.exit(1)
 
 def clone_current_target():
-    body = get_target_data()
+    body = get_target(os.getenv('TARGET'))
     # Set target name based on branch
-    clone_target = f'{re.sub(r'^@T_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '', os.getenv('BRANCH_NAME'))}'
-    body['name'] = clone_target
+    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
+
+    body['name'] = new_target_name
     body['settings']['scm']['branch'] = os.getenv('BRANCH_NAME')
 
-    response = requests.post(f'{URL}/buildtargets', headers=headers, json=body)
-
-    if response.status_code == 201:
-        os.environ['TARGET'] = clone_target
+    # Check if the target already exists (re-use of a branch)
+    if 'error' in get_target(new_target_name):
+        # Create new
+        response = requests.post(f'{URL}/buildtargets', headers=headers, json=body)
     else:
-        print('Target failed to start with status code:', response.status_code)
+        # Update existing
+        response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=headers, json=body)
+
+    if response.status_code == 200 or response.status_code == 201:
+        os.environ['TARGET'] = new_target_name
+    else:
+        print('Target failed to clone with status code:', response.status_code)
         print('Response body:', response.text)
         sys.exit(1)
 
