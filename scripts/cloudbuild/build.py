@@ -6,7 +6,7 @@ import base64
 import requests
 
 URL = f'https://build-api.cloud.unity3d.com/api/v1/orgs/{os.getenv('ORG_ID')}/projects/{os.getenv('PROJECT_ID')}'
-POLL_TIME = os.getenv('POLL_TIME') # Seconds
+POLL_TIME = int(os.getenv('POLL_TIME')) # Seconds
 
 def create_headers(api_key):
     # Encoding API key in Base64 format
@@ -26,7 +26,7 @@ def get_target(target):
     if response.status_code == 200:
         return response.json()
     elif response.status_code == 404:
-        print(f'Target "{target}" not found')
+        print(f'Target "{target}" does not exist (yet?)')
         return response.json()
     else:
         print("Failed to get target data with status code:", response.status_code)

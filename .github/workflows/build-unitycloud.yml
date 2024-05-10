@@ -64,7 +64,7 @@ jobs:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
-          POLL_TIME: 30 # Seconds
+          POLL_TIME: 30 # In seconds (int)
           TARGET: t_windows64
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
