@@ -5,16 +5,14 @@ using Google.Protobuf;
 using Ipfs;
 using System;
 using System.Collections.Generic;
-using Enumerable = System.Linq.Enumerable;
 
 namespace SceneRunner.Scene
 {
     public class SceneHashedContent : ISceneContent
     {
         private readonly URLDomain contentBaseUrl;
-        private Dictionary<string, string> fileToHash;
+        private readonly Dictionary<string, string> fileToHash;
         private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
-        
 
         public URLDomain ContentBaseUrl => contentBaseUrl;
 
@@ -36,18 +34,9 @@ namespace SceneRunner.Scene
 
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
-                if (contentPath.Contains("index.js") || contentPath.Contains("scene.json"))
-                {
-                    result = contentBaseUrl.Append(URLPath.FromString(hash));
-                    resolvedContentURLs[contentPath] = (true, result);
-                    return true;
-                }
-
-                var abDomain = URLDomain.FromString("https://ab-cdn.decentraland.org/");
-                result = abDomain.Append(URLPath.FromString(hash));
+                result = contentBaseUrl.Append(URLPath.FromString(hash));
                 resolvedContentURLs[contentPath] = (true, result);
                 return true;
-
             }
 
             ReportHub.LogWarning(ReportCategory.SCENE_LOADING, $"{nameof(SceneHashedContent)}: {contentPath} not found in {nameof(fileToHash)}");
@@ -59,16 +48,5 @@ namespace SceneRunner.Scene
 
         public bool TryGetHash(string name, out string hash) =>
             fileToHash.TryGetValue(name, out hash);
-
-        public void OverrideWithRemote(List<ContentDefinition>? sceneMetadataContent)
-        {
-            foreach (var contentDefinition in sceneMetadataContent)
-            {
-                if (fileToHash.ContainsKey(contentDefinition.file) && !contentDefinition.file.Contains("index.js"))
-                {
-                    fileToHash[contentDefinition.file] = contentDefinition.hash;
-                }
-            }
-        }
     }
 }

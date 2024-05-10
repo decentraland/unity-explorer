@@ -38,6 +38,17 @@ namespace Global.Dynamic
 
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)]
         private string customRealm = IRealmNavigator.GOERLI_URL;
+
+
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
+        private bool useRemoteAssetBundles  ;
+
+        [SerializeField] [ShowIfCondition("useRemoteAssetBundles")]
+        private string remoteSceneID = "";
+
+        [SerializeField] [ShowIfCondition("useRemoteAssetBundles")]
+        private string remoteSceneContentServer = "";
+        
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
