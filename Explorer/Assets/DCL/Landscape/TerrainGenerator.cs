@@ -23,7 +23,7 @@ namespace DCL.Landscape
     public class TerrainGenerator : IDisposable
     {
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
-        private const float ROOT_VERTICAL_SHIFT = -0.001f; // fix for not clipping with scene (potential) floor
+        private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
         private const int CACHE_VERSION = 4;
