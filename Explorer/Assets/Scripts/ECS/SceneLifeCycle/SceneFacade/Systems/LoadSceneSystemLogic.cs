@@ -43,12 +43,18 @@ namespace ECS.SceneLifeCycle.Systems
             var hashedContent = new SceneHashedContent(definition.content, contentBaseUrl);
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
-            UniTask<SceneAssetBundleManifest> loadAssetBundleManifest = LoadAssetBundleManifestAsync(ipfsPath.EntityId, reportCategory, ct);
+            var loadAssetBundleManifest = LoadAssetBundleManifestAsync("bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q", reportCategory, ct);
             UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, ipfsPath.EntityId, reportCategory, ct);
             UniTask<ReadOnlyMemory<byte>> loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
 
+            // Calculate partition immediately
+            await UniTask.SwitchToMainThread();
+
+            var sceneMetadata = JsonUtility.FromJson<SceneEntityDefinition>(Resources.Load<TextAsset>("JSON/hardcoded").text);
+            definitionComponent.Definition.content = sceneMetadata.content;
+            hashedContent.OverrideWithRemote(sceneMetadata.content);
             // Create scene data
             Vector2Int baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
