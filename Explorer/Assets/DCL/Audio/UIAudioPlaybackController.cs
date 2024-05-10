@@ -18,7 +18,7 @@ namespace DCL.Audio
         private struct ContinuousPlaybackAudioData
         {
             public AudioSource AudioSource { get; private set; }
-            public Tweener FadeTweener { get; private set; }
+            public Tweener FadeTweener { get; set; }
             public CancellationTokenSource CancellationTokenSource { get; private set; }
 
             public ContinuousPlaybackAudioData(AudioSource audioSource, Tweener fadeTweener, CancellationTokenSource cancellationTokenSource)
@@ -28,7 +28,6 @@ namespace DCL.Audio
                 CancellationTokenSource = cancellationTokenSource;
             }
         }
-
 
 
         //We need different Audio Sources to handle the different volume configurations each category can have.
@@ -49,8 +48,6 @@ namespace DCL.Audio
 
         private readonly Dictionary<AudioClipConfig, ContinuousPlaybackAudioData> audioDataPerAudioClipConfig = new ();
 
-        private readonly Dictionary<float, List<AudioSource>> audioSourcesPerPitchDictionary = new ();
-
 
         private GameObjectPool<AudioSource> audioSourcePool;
         private CancellationTokenSource mainCancellationTokenSource;
@@ -61,10 +58,14 @@ namespace DCL.Audio
             UIAudioEventsBus.Instance.PlayContinuousUIAudioEvent -= OnPlayContinuousUIAudioEvent;
             UIAudioEventsBus.Instance.StopContinuousUIAudioEvent -= OnStopContinuousUIAudioEvent;
             mainCancellationTokenSource.SafeCancelAndDispose();
+            foreach (var audioData in audioDataPerAudioClipConfig)
+            {
+                //In case a fadeout is being carried out when we Dispose
+                audioData.Value.FadeTweener.Kill();
+            }
             UiAudioSource.Stop();
             MusicAudioSource.Stop();
             ChatAudioSource.Stop();
-            audioSourcesPerPitchDictionary.Clear();
             audioDataPerAudioClipConfig.Clear();
             audioSourcePool?.Dispose();
         }
@@ -94,7 +95,7 @@ namespace DCL.Audio
             {
                 audioData.FadeTweener.Kill();
                 audioData.CancellationTokenSource.SafeCancelAndDispose();
-                audioData.AudioSource.DOFade(0, fadeDuration).SetAutoKill().OnComplete(() =>
+                audioData.FadeTweener = audioData.AudioSource.DOFade(0, fadeDuration).SetAutoKill().OnComplete(() =>
                 {
                     if (!mainCancellationTokenSource.IsCancellationRequested)
                         ReleaseOnFadeOut(audioData, audioClipConfig);
@@ -122,23 +123,22 @@ namespace DCL.Audio
             if (audioDataPerAudioClipConfig.ContainsKey(audioClipConfig)) return;
 
             CancellationTokenSource cts = CreateLinkedCancellationTokenSource();
-            AudioSource audioSource = GetAudioSourceForCategory(audioClipConfig.Category, true, audioClipConfig.PitchVariation);
+
+            AudioSource audioSource = GetAudioSourceFromPoolForCategory(audioClipConfig.Category);
+            int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+            audioSource.clip = audioClipConfig.AudioClips[clipIndex];
+            audioSource.Play();
+
             Tweener fadeTween = audioSource.DOFade(audioClipConfig.RelativeVolume, fadeDuration).
                                             OnComplete(() => StartPlayingContinuousUIAudio(audioSource, audioClipConfig, cts.Token));
 
-
             ContinuousPlaybackAudioData audioData = new ContinuousPlaybackAudioData(audioSource, fadeTween, cts);
-
             audioDataPerAudioClipConfig.Add(audioClipConfig, audioData);
         }
 
         private void StartPlayingContinuousUIAudio(AudioSource audioSource, AudioClipConfig audioClipConfig, CancellationToken ct)
         {
             if (ct.IsCancellationRequested) return;
-
-            int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
-            audioSource.clip = audioClipConfig.AudioClips[clipIndex];
-            audioSource.Play();
 
             AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, audioClipConfig,audioSource.clip.length, audioSource).Forget();
         }
@@ -182,37 +182,59 @@ namespace DCL.Audio
         private void PlaySingleAudio(AudioClipConfig audioClipConfig)
         {
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(audioClipConfig);
+            if (audioClipConfig.AudioClips[clipIndex] == null) return;
+
             float pitch = AudioPlaybackUtilities.GetPitchWithVariation(audioClipConfig);
-            AudioSource audioSource = GetAudioSourceForCategory(audioClipConfig.Category);
-            audioSource.pitch = pitch;
-            audioSource.PlayOneShot(audioClipConfig.AudioClips[clipIndex], audioClipConfig.RelativeVolume);
+            AudioSource audioSource;
+
+            if (pitch == 0)
+            {
+                audioSource = GetDefaultAudioSourceForCategory(audioClipConfig.Category);
+                audioSource.PlayOneShot(audioClipConfig.AudioClips[clipIndex], audioClipConfig.RelativeVolume);
+            }
+            else
+            {
+                audioSource = GetAudioSourceFromPoolForCategory(audioClipConfig.Category);
+                audioSource.clip = audioClipConfig.AudioClips[clipIndex];
+                audioSource.pitch = pitch;
+                audioSource.Play();
+                ScheduleAudioSourceReleaseAsync(audioSource).Forget();
+            }
         }
 
-        private AudioSource GetAudioSourceForCategory(AudioCategory audioCategory, bool requestNew = false, float pitchVariation = 0)
+        private async UniTask ScheduleAudioSourceReleaseAsync(AudioSource audioSource)
         {
-            AudioSource audioSource;
-            if (pitchVariation != 0)
-            {
-                audioSource = audioSourcePool.Get();
-            }
+            await UniTask.Delay(TimeSpan.FromSeconds(audioSource.clip.length * audioSource.pitch), cancellationToken: mainCancellationTokenSource.Token);
+            if (mainCancellationTokenSource.IsCancellationRequested) return;
+            audioSource.Stop();
+            audioSource.time = 0;
+            audioSourcePool.Release(audioSource);
+        }
 
+        private AudioSource GetDefaultAudioSourceForCategory(AudioCategory audioCategory)
+        {
             switch (audioCategory)
             {
                 case AudioCategory.UI:
-                    audioSource =  UiAudioSource;
-                    break;
+                    return UiAudioSource;
                 case AudioCategory.Chat:
-                    audioSource = ChatAudioSource;
-                    break;
+                    return ChatAudioSource;
                 case AudioCategory.Music:
-                    audioSource = MusicAudioSource;
-                    break;
-                case AudioCategory.World:
+                    return MusicAudioSource;
+                 case AudioCategory.World:
                 case AudioCategory.Avatar:
                 case AudioCategory.None:
                 default: throw new ArgumentOutOfRangeException(nameof(audioCategory), audioCategory, null);
             }
+        }
 
+        private AudioSource GetAudioSourceFromPoolForCategory(AudioCategory audioCategory)
+        {
+            AudioSource audioSource = audioSourcePool.Get();
+            AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioCategory);
+            audioSource.priority = settings.AudioPriority;
+            audioSource.outputAudioMixerGroup = settings.MixerGroup;
+            audioSource.spatialBlend = 0;
             return audioSource;
         }
     }
