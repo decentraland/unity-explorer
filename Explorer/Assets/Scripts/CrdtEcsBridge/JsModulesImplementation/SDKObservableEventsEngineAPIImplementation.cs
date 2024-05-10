@@ -6,9 +6,9 @@ using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
-using DCL.ECS7;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -16,7 +16,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class SDKObservableEventsEngineAPIImplementation : EngineAPIImplementation, ISDKObservableEventsEngineApi
     {
-        public HashSet<ProcessedCRDTMessage> OutgoingCRDTMessages { get; } = new ();
+        public bool EnableSDKObservableMessagesDetection { get; set; } = false; // TODO: make internal ??
+        public List<ProcessedCRDTMessage> OutgoingCRDTMessages { get; } = new ();
 
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer, ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider, ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler, MutexSync mutexSync) : base(poolsProvider, instancePoolsProvider, crdtProtocol, crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider, systemGroupsUpdateGate, exceptionsHandler, mutexSync)
         {
@@ -24,20 +25,22 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         protected override void SyncCRDTMessage(ProcessedCRDTMessage message)
         {
-            OutgoingCRDTMessages.Add(message);
-
-            if (message.message.Type == CRDTMessageType.APPEND_COMPONENT
-                && message.message.ComponentId == ComponentID.AVATAR_EMOTE_COMMAND)
+            if (EnableSDKObservableMessagesDetection && ObservableComponentIDs.Ids.Contains(message.message.ComponentId))
             {
-                // SDKObservableEventsEngineApiWrapper will dispose of the message after reading it
-                return;
+                // Copy message to handle its lifecycle separately
+                OutgoingCRDTMessages.Add(new ProcessedCRDTMessage(message.message, message.CRDTMessageDataLength));
             }
 
             base.SyncCRDTMessage(message);
         }
 
-        public void ClearOutgoingCRDTMessages()
+        public void ClearMessages()
         {
+            foreach (ProcessedCRDTMessage message in OutgoingCRDTMessages)
+            {
+                message.message.Data.Dispose();
+            }
+
             OutgoingCRDTMessages.Clear();
         }
     }

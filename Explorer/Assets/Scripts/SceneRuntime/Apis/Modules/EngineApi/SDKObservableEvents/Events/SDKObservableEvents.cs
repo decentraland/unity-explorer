@@ -1,3 +1,5 @@
+using DCL.ECS7;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
@@ -14,6 +16,19 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
         public static string RealmChanged => "onRealmChanged";
         public static string PlayerClicked => "playerClicked";
         public static string Comms => "comms";
+    }
+
+    public static class ObservableComponentIDs
+    {
+        public static readonly List<int> Ids = new List<int>()
+        {
+            ComponentID.ENGINE_INFO,
+            ComponentID.REALM_INFO,
+            ComponentID.PLAYER_IDENTITY_DATA,
+            ComponentID.AVATAR_BASE,
+            ComponentID.AVATAR_EQUIPPED_DATA,
+            ComponentID.AVATAR_EMOTE_COMMAND
+        };
     }
 
     public struct SDKObservableEvent

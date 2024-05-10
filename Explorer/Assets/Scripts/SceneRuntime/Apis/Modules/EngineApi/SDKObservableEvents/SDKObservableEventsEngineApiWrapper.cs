@@ -63,7 +63,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         {
             if (sdkObservableEventSubscriptions.Count == 0)
             {
-                engineApi.ClearOutgoingCRDTMessages();
+                engineApi.ClearMessages();
                 return EMPTY_EVENTS_LIST;
             }
 
@@ -190,7 +190,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                             }
 
                             // Release message memory as it's not needed anymore
-                            message.Data.Dispose();
+                            // message.Data.Dispose(); // NOW SHOULD BE HAPPENING AT ClearMessages()
                         }
 
                         break;
@@ -223,7 +223,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 }
             }
 
-            engineApi.ClearOutgoingCRDTMessages();
+            engineApi.ClearMessages();
         }
 
         private void DetectSceneMessageBusCommsObservableEvent()
@@ -245,12 +245,17 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
             if (eventId == SDKObservableEventIds.PlayerClicked)
                 ReportHub.LogWarning(new ReportData(ReportCategory.SDK_OBSERVABLES), "Scene subscribed to unsupported SDK Observable 'PlayerClicked'");
+            else
+                engineApi.EnableSDKObservableMessagesDetection = true;
         }
 
         [UsedImplicitly]
         public void UnsubscribeFromSDKObservableEvent(string eventId)
         {
             sdkObservableEventSubscriptions.Remove(eventId);
+
+            if (sdkObservableEventSubscriptions.Count == 0)
+                engineApi.EnableSDKObservableMessagesDetection = false;
         }
 
         private SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct
