@@ -51,15 +51,15 @@ namespace DCL.CharacterMotion.Animation
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartWalk);
-                    ParticlesController.ShowDust(centerBottomTransform, AvatarAnimationEventType.Jump);
+                    ParticlesController.ShowParticles(centerBottomTransform, AvatarAnimationEventType.Jump);
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartJog);
-                    ParticlesController.ShowDust(centerBottomTransform, AvatarAnimationEventType.Jump);
+                    ParticlesController.ShowParticles(centerBottomTransform, AvatarAnimationEventType.Jump);
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpStartRun);
-                    ParticlesController.ShowDust(centerBottomTransform, AvatarAnimationEventType.Jump);
+                    ParticlesController.ShowParticles(centerBottomTransform, AvatarAnimationEventType.Jump);
                     break;
             }
         }
@@ -89,7 +89,7 @@ namespace DCL.CharacterMotion.Animation
                     {
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
                         lastFootstepTime = currentTime;
-                        ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
+                        ParticlesController.ShowParticles(footTransform, AvatarAnimationEventType.Step);
                     }
 
                     break;
@@ -98,7 +98,7 @@ namespace DCL.CharacterMotion.Animation
                     {
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
                         lastFootstepTime = currentTime;
-                        ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
+                        ParticlesController.ShowParticles(footTransform, AvatarAnimationEventType.Step);
                     }
 
                     break;
@@ -107,7 +107,7 @@ namespace DCL.CharacterMotion.Animation
                     {
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
                         lastFootstepTime = currentTime;
-                        ParticlesController.ShowDust(footTransform, AvatarAnimationEventType.Step);
+                        ParticlesController.ShowParticles(footTransform, AvatarAnimationEventType.Step);
                     }
 
                     break;
@@ -128,15 +128,15 @@ namespace DCL.CharacterMotion.Animation
                 case MovementKind.None:
                 case MovementKind.Walk:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandWalk);
-                    ParticlesController.ShowDust(centerBottomTransform, AvatarAnimationEventType.Land);
+                    ParticlesController.ShowParticles(centerBottomTransform, AvatarAnimationEventType.Land);
                     break;
                 case MovementKind.Jog:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandJog);
-                    ParticlesController.ShowDust(centerBottomTransform, AvatarAnimationEventType.Land);
+                    ParticlesController.ShowParticles(centerBottomTransform, AvatarAnimationEventType.Land);
                     break;
                 case MovementKind.Run:
                     PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.JumpLandRun);
-                    ParticlesController.ShowDust(centerBottomTransform, AvatarAnimationEventType.Land);
+                    ParticlesController.ShowParticles(centerBottomTransform, AvatarAnimationEventType.Land);
                     break;
             }
         }
@@ -149,7 +149,7 @@ namespace DCL.CharacterMotion.Animation
         public void AnimEvent_HardLanding()
         {
             PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.HardLanding);
-            ParticlesController.ShowDust(centerBottomTransform, AvatarAnimationEventType.Land);
+            ParticlesController.ShowParticles(centerBottomTransform, AvatarAnimationEventType.Land);
         }
 
         [PublicAPI("Used by Animation Events")]

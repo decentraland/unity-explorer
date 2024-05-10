@@ -1,31 +1,28 @@
 using Cysharp.Threading.Tasks;
 using DCL.Optimization.Pools;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.CharacterMotion.Animation
 {
     public class AvatarAnimationParticlesController : MonoBehaviour, IDisposable
     {
-        [SerializeField] private ParticleSystem stepDustParticles;
-        [SerializeField] private ParticleSystem jumpDustParticles;
-        [SerializeField] private ParticleSystem landDustParticles;
-        private CancellationTokenSource cancellationTokenSource = null!;
-        private GameObjectPool<ParticleSystem> jumpDustPool = null!;
-        private GameObjectPool<ParticleSystem> landDustPool = null!;
+        [SerializeField] private List<AnimationParticlesData> particleSystemPerAnimationTypeList = new ();
 
-        private GameObjectPool<ParticleSystem> stepDustPool = null!;
+        private readonly Dictionary<AvatarAnimationEventType, GameObjectPool<ParticleSystem>> particlePoolsPerAnimationType = new ();
+
+        private CancellationTokenSource cancellationTokenSource = null!;
 
         private void Start()
         {
             Transform thisTransform = transform;
-            stepDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(stepDustParticles));
-            jumpDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(landDustParticles));
-            landDustPool = new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(jumpDustParticles));
+
+            foreach (AnimationParticlesData pair in particleSystemPerAnimationTypeList) { particlePoolsPerAnimationType.Add(pair.Type, new GameObjectPool<ParticleSystem>(thisTransform, () => Instantiate(pair.ParticleSystem))); }
+
             cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -37,44 +34,39 @@ namespace DCL.CharacterMotion.Animation
         public void Dispose()
         {
             cancellationTokenSource.SafeCancelAndDispose();
-            stepDustPool.Dispose();
-            jumpDustPool.Dispose();
-            landDustPool.Dispose();
+
+            foreach (KeyValuePair<AvatarAnimationEventType, GameObjectPool<ParticleSystem>> pair in particlePoolsPerAnimationType) { pair.Value.Dispose(); }
+
+            particleSystemPerAnimationTypeList.Clear();
+            particlePoolsPerAnimationType.Clear();
         }
 
-        public void ShowDust(Transform footTransform, AvatarAnimationEventType eventType)
+        public void ShowParticles(Transform position, AvatarAnimationEventType animationType)
         {
-            GameObjectPool<ParticleSystem> dustPool;
+            if (!particlePoolsPerAnimationType.TryGetValue(animationType, out GameObjectPool<ParticleSystem> particlesPool)) return;
 
-            switch (eventType)
-            {
-                case AvatarAnimationEventType.Step:
-                    dustPool = stepDustPool;
-                    break;
-                case AvatarAnimationEventType.Jump:
-                    dustPool = jumpDustPool;
-                    break;
-                case AvatarAnimationEventType.Land:
-                    dustPool = landDustPool;
-                    break;
-                default: return;
-            }
-
-            ParticleSystem? newDust = dustPool.Get();
-            newDust.transform.position = footTransform.position;
+            ParticleSystem? particles = particlesPool.Get();
+            particles.transform.position = position.position;
             CancellationToken ct = cancellationTokenSource.Token;
-            ScheduleReturnDustToPoolAsync(newDust, dustPool, ct).Forget();
+            ScheduleReturnParticlesToPoolAsync(particles, particlesPool, ct).Forget();
         }
 
-        private async UniTask ScheduleReturnDustToPoolAsync(ParticleSystem newDust, IObjectPool<ParticleSystem> dustPool, CancellationToken ct)
+        private async UniTask ScheduleReturnParticlesToPoolAsync(ParticleSystem particles, IObjectPool<ParticleSystem> particlesPool, CancellationToken ct)
         {
             await UniTask.Delay(1000, cancellationToken: ct);
 
             if (ct.IsCancellationRequested) return;
 
-            newDust.Stop();
-            newDust.time = 0;
-            dustPool.Release(newDust);
+            particles.Stop();
+            particles.time = 0;
+            particlesPool.Release(particles);
+        }
+
+        [Serializable]
+        private struct AnimationParticlesData
+        {
+            public AvatarAnimationEventType Type;
+            public ParticleSystem ParticleSystem;
         }
     }
 }
