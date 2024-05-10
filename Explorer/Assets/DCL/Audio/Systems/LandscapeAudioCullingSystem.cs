@@ -194,14 +194,14 @@ namespace DCL.Audio.Systems
                         audioState.IsHeard = true;
                         landscapeAudioState.AudioState = audioState;
                         landscapeAudioStates[i] = landscapeAudioState;
-                        worldAudioPlaybackController.PlayAudioEvent(i, landscapeAudioSourcesPositions[i], WorldAudioClipType.Landscape);
+                        worldAudioPlaybackController.SetupAudioSourcesOnTerrain(i, landscapeAudioSourcesPositions[i], WorldAudioClipType.Landscape);
                     }
                     else if (audioState is { ShouldBeSilent: true, IsSilent: false })
                     {
                         audioState.IsSilent = true;
                         landscapeAudioState.AudioState = audioState;
                         landscapeAudioStates[i] = landscapeAudioState;
-                        worldAudioPlaybackController.StopAudioEvent(i, WorldAudioClipType.Landscape);
+                        worldAudioPlaybackController.ReleaseAudioSourcesFromTerrain(i, WorldAudioClipType.Landscape);
                     }
                 }
 
@@ -243,14 +243,14 @@ namespace DCL.Audio.Systems
                         oceanAudioStates[i] = oceanAudioState;
                         var closestPointArray = new NativeArray<int2>(1, Allocator.Temp);
                         closestPointArray[0] = (int2)oceanAudioState.CenterOfTerrain;
-                        worldAudioPlaybackController.PlayAudioEvent(i, closestPointArray, WorldAudioClipType.Ocean);
+                        worldAudioPlaybackController.SetupAudioSourcesOnTerrain(i, closestPointArray, WorldAudioClipType.Ocean);
                     }
                     else if (audioState is { ShouldBeSilent: true, IsSilent: false })
                     {
                         audioState.IsSilent = true;
                         oceanAudioState.AudioState = audioState;
                         oceanAudioStates[i] = oceanAudioState;
-                        worldAudioPlaybackController.StopAudioEvent(i, WorldAudioClipType.Ocean);
+                        worldAudioPlaybackController.ReleaseAudioSourcesFromTerrain(i, WorldAudioClipType.Ocean);
                     }
                 }
 

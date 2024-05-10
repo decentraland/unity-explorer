@@ -60,7 +60,7 @@ namespace DCL.Audio
             mainCancellationTokenSource.SafeCancelAndDispose();
             foreach (var audioData in audioDataPerAudioClipConfig)
             {
-                //In case a fadeout is being carried out when we Dispose
+                //We do this in case a fadeout is being carried out when we Dispose
                 audioData.Value.FadeTweener.Kill();
             }
             UiAudioSource.Stop();
@@ -139,6 +139,11 @@ namespace DCL.Audio
         private void StartPlayingContinuousUIAudio(AudioSource audioSource, AudioClipConfig audioClipConfig, CancellationToken ct)
         {
             if (ct.IsCancellationRequested) return;
+            if (audioClipConfig.AudioClips.Length == 1)
+            {
+                audioSource.loop = true;
+                return;
+            }
 
             AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, audioClipConfig,audioSource.clip.length, audioSource).Forget();
         }
@@ -197,6 +202,7 @@ namespace DCL.Audio
                 audioSource = GetAudioSourceFromPoolForCategory(audioClipConfig.Category);
                 audioSource.clip = audioClipConfig.AudioClips[clipIndex];
                 audioSource.pitch = pitch;
+                audioSource.loop = false;
                 audioSource.Play();
                 ScheduleAudioSourceReleaseAsync(audioSource).Forget();
             }
