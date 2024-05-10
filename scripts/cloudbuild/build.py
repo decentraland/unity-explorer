@@ -1,9 +1,9 @@
 import os
 import re
 import sys
+import time
 import base64
 import requests
-from random import randint
 
 URL = f'https://build-api.cloud.unity3d.com/api/v1/orgs/{os.getenv('ORG_ID')}/projects/{os.getenv('PROJECT_ID')}'
 POLL_TIME = os.getenv('POLL_TIME') # Seconds
@@ -36,13 +36,12 @@ def get_target(target):
 # Some of the code in here won't be used
 # Unity does not allow more than 1 item in queue by target
 # So we *always* create a new target, no matter what
-# by appending a random value at the end
+# by appending the commit's SHA
 def clone_current_target():
     body = get_target(os.getenv('TARGET'))
     # Set target name based on branch
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
     # Ensure a new target:
-    #new_target_name = f'{new_target_name}_{randint(100000, 999999)}'
     new_target_name = f'{new_target_name}_{os.getenv('COMMIT_SHA')}'
 
     body['name'] = new_target_name
