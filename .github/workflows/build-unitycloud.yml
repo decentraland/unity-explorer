@@ -73,7 +73,7 @@ jobs:
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
           # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
           PARAM_TEST_VALUE: "value exists"
-        run: python scripts/cloudbuild/build.py
+        run: python -u scripts/cloudbuild/build.py
                                                                                          
 #      - name: Set SHA env variable
 #        run: |
