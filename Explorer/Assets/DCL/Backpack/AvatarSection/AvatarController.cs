@@ -55,8 +55,8 @@ namespace DCL.Backpack
 
         public void Deactivate()
         {
-            backpackGridController.Deactivate();
             backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
+            backpackGridController.Deactivate();
         }
 
         public void Animate(int triggerId)
