@@ -69,7 +69,7 @@ namespace DCL.AvatarRendering.Emotes
             IEmoteCache emoteCache,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory)
-            : base(world, cache, mutexSync)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
