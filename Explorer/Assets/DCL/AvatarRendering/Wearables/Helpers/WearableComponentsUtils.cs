@@ -5,10 +5,12 @@ using DCL.AvatarRendering.Wearables.Components.Intentions;
 using DCL.Optimization.Pools;
 using ECS;
 using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
@@ -28,11 +30,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal static readonly Sprite DEFAULT_THUMBNAIL = Sprite.Create(Texture2D.grayTexture, new Rect(0, 0, 1, 1), new Vector2());
 
-        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() =>
-        {
-            var urlBuilder = new URLBuilder();
-            return urlBuilder;
-        }, defaultCapacity:2);
+        private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity:2);
 
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
@@ -54,29 +52,32 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static void CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent)
+        public static Promise? CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+            CancellationTokenSource? cancellationTokenSource = null)
         {
             URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
                 attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
-                return;
+                return null;
             }
 
-            var urlBuilder = URL_BUILDER_POOL.Get();
+            using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();
+            var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
             urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
 
             var promise = Promise.Create(world,
                 new GetTextureIntention
                 {
-                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build()),
+                    // If cancellation token source was not provided a new one will be created
+                    CommonArguments = new CommonLoadingArguments(urlBuilder.Build(), cancellationTokenSource: cancellationTokenSource),
                 },
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
-            URL_BUILDER_POOL.Release(urlBuilder);
+            return promise;
         }
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)
