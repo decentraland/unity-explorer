@@ -47,7 +47,7 @@ namespace DCL.PluginSystem.World
             ReportAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, sharedDependencies.MutexSync, assetBundleLoadingMutex);
+            LoadAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, assetBundleLoadingMutex);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -57,7 +57,7 @@ namespace DCL.PluginSystem.World
             ReportGlobalAssetBundleErrorSystem.InjectToWorld(ref builder, reportsHandlingSettings);
 
             // TODO create a runtime ref-counting cache
-            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, new MutexSync(), assetBundleLoadingMutex);
+            LoadGlobalAssetBundleSystem.InjectToWorld(ref builder, assetBundleCache, assetBundleLoadingMutex);
         }
 
 #region Interface Ambiguity
