@@ -17,17 +17,16 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
     public class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
     {
-        private static List<SDKObservableEvent> EMPTY_EVENTS_LIST = new ()
+        private static readonly List<SDKObservableEvent> EMPTY_EVENTS_LIST = new ()
         {
-            new ()
+            new SDKObservableEvent
             {
                 generic = new SDKObservableEvent.Generic
                 {
                     eventId = string.Empty,
-                    eventData = string.Empty
-
-                }
-            }
+                    eventData = string.Empty,
+                },
+            },
         };
 
         private readonly PBAvatarEmoteCommand avatarEmoteCommand = new ();
@@ -45,7 +44,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         public SDKObservableEventsEngineApiWrapper(ISDKObservableEventsEngineApi api, ISDKMessageBusCommsControllerAPI commsApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler exceptionsHandler) : base(api, instancePoolsProvider, exceptionsHandler)
         {
-            this.engineApi = api;
+            engineApi = api;
             this.commsApi = commsApi;
         }
 
@@ -87,12 +86,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         private void DetectObservableEventsFromComponents()
         {
-            // 1. Due to uncertainty in CRDT messages order we have to first check those which populate the userIdEntitiesMap
-            foreach (CRDTMessage message in engineApi.OutgoingCRDTMessages)
+            // 1. Traverse priority messages first (PUT_COMPONENT + PLAYER_IDENTITY_DATA Component) to update userIdEntitiesMap
+            foreach (CRDTMessage message in engineApi.PriorityOutgoingCRDTMessages)
             {
-                if (message.ComponentId != ComponentID.PLAYER_IDENTITY_DATA || message.Type != CRDTMessageType.PUT_COMPONENT)
-                    continue;
-
                 // onEnterScene + playerConnected observables
                 bool onEnterSceneSubscribed = sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene);
                 bool onPlayerConnectedSubscribed = sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected);
@@ -119,9 +115,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 userIdEntitiesMap[message.EntityId] = playerIdentityData.Address;
             }
 
-            // 2. then all the other messages are checked
+            // 2. Traverse next filtered outgoing messages
             foreach (CRDTMessage message in engineApi.OutgoingCRDTMessages)
-            {
                 switch (message.Type)
                 {
                     case CRDTMessageType.PUT_COMPONENT:
@@ -141,14 +136,16 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                 if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.RealmChanged))
                                 {
                                     realmInfoSerializer.DeserializeInto(realmInfo, message.Data.Memory.Span);
-                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload()
+
+                                    sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload
                                     {
                                         domain = realmInfo.BaseUrl,
                                         room = realmInfo.Room,
                                         displayName = realmInfo.RealmName,
-                                        serverName = realmInfo.RealmName
+                                        serverName = realmInfo.RealmName,
                                     }));
                                 }
+
                                 break;
                             case ComponentID.AVATAR_EQUIPPED_DATA: // profileChanged observable
                             case ComponentID.AVATAR_BASE: // profileChanged observable
@@ -173,7 +170,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                         break;
                     case CRDTMessageType.APPEND_COMPONENT:
                         if (message.ComponentId == ComponentID.AVATAR_EMOTE_COMMAND)
-                        {
                             if (sdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerExpression))
                             {
                                 avatarEmoteCommandSerializer.DeserializeInto(avatarEmoteCommand, message.Data.Memory.Span);
@@ -183,7 +179,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                     expressionId = avatarEmoteCommand.EmoteUrn,
                                 }));
                             }
-                        }
 
                         break;
                     case CRDTMessageType.DELETE_COMPONENT:
@@ -213,7 +208,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
                         break;
                 }
-            }
 
             engineApi.ClearMessages();
         }
@@ -224,9 +218,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 return;
 
             foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
-            {
                 sdkObservableEvents.Add(GenerateSDKObservableEvent(SDKObservableEventIds.Comms, currentPayload));
-            }
+
             commsApi.SceneCommsMessages.Clear();
         }
 
@@ -250,16 +243,14 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 engineApi.EnableSDKObservableMessagesDetection = false;
         }
 
-        private SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct
-        {
-            return new ()
+        private SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct =>
+            new()
             {
                 generic = new SDKObservableEvent.Generic
                 {
                     eventId = eventId,
-                    eventData = JsonConvert.SerializeObject(eventData)
+                    eventData = JsonConvert.SerializeObject(eventData),
                 },
             };
-        }
     }
 }
