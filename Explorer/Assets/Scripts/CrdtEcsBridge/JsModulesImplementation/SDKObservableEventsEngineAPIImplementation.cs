@@ -10,7 +10,6 @@ using CrdtEcsBridge.WorldSynchronizer;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
-using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 

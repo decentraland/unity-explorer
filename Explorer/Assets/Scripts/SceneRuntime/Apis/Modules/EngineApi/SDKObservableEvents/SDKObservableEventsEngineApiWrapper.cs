@@ -1,6 +1,5 @@
 ﻿using CRDT;
 using CRDT.Protocol;
-using CRDT.Protocol.Factory;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.Serialization;
 using DCL.Diagnostics;
@@ -184,9 +183,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                                     expressionId = avatarEmoteCommand.EmoteUrn,
                                 }));
                             }
-
-                            // Release message memory as it's not needed anymore
-                            // message.Data.Dispose(); // NOW SHOULD BE HAPPENING AT ClearMessages()
                         }
 
                         break;
