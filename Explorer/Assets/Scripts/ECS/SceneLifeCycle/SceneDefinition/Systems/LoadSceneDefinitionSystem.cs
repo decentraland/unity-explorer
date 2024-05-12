@@ -11,7 +11,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -24,8 +23,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache, MutexSync mutexSync)
-            : base(world, cache, mutexSync)
+        internal LoadSceneDefinitionSystem(World world, IWebRequestController webRequestController, IStreamableCache<SceneEntityDefinition, GetSceneDefinition> cache)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }

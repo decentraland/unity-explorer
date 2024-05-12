@@ -18,7 +18,7 @@ namespace DCL.Multiplayer.SDK.Tests
             sceneFacade.Info.Returns(sceneShortInfo);
             ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneFacade.SceneStateProvider.Returns(sceneStateProvider);
-            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld, new MutexSync());
+            var sceneEcsExecutor = new SceneEcsExecutor(sceneWorld);
             sceneFacade.EcsExecutor.Returns(sceneEcsExecutor);
             return sceneFacade;
         }
