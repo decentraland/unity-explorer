@@ -2,15 +2,17 @@ using UnityEngine;
 
 public class ReflectionProbeRenderer : MonoBehaviour
 {
-    public float IntervalInSeconds = 5f;
-    private ReflectionProbe reflectionProbe;
+
+    [SerializeField] private float intervalInSeconds = 5f;
+    [SerializeField] private ReflectionProbe reflectionProbe;
     private float timer;
+    private int renderId;
 
     private void Start()
     {
         RenderSettings.defaultReflectionMode = UnityEngine.Rendering.DefaultReflectionMode.Custom;
-        reflectionProbe = GetComponent<ReflectionProbe>();
-        timer = IntervalInSeconds;
+        reflectionProbe.timeSlicingMode = UnityEngine.Rendering.ReflectionProbeTimeSlicingMode.AllFacesAtOnce;
+        timer = intervalInSeconds;
     }
 
     private void Update()
@@ -18,11 +20,19 @@ public class ReflectionProbeRenderer : MonoBehaviour
         timer += Time.deltaTime;
 
         // Update the reflection probe after timer
-        if (timer >= IntervalInSeconds)
+        if (timer >= intervalInSeconds)
         {
-            _ = reflectionProbe.RenderProbe();
-            RenderSettings.customReflectionTexture = reflectionProbe.texture;
-            timer = 0f;
+            if(renderId == 0)
+            {
+                renderId = reflectionProbe.RenderProbe();
+            }
+
+            if(reflectionProbe.IsFinishedRendering(renderId))
+            {
+                RenderSettings.customReflectionTexture = reflectionProbe.texture;
+                timer = 0f;
+                renderId = 0;
+            }
         }
     }
 }
