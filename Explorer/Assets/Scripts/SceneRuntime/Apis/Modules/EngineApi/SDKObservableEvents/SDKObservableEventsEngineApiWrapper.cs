@@ -89,10 +89,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         private void DetectObservableEventsFromComponents()
         {
             // 1. Due to uncertainty in CRDT messages order we have to first check those which populate the userIdEntitiesMap
-            foreach (ProcessedCRDTMessage outgoingCRDTMessage in engineApi.OutgoingCRDTMessages)
+            foreach (CRDTMessage message in engineApi.OutgoingCRDTMessages)
             {
-                CRDTMessage message = outgoingCRDTMessage.message;
-
                 if (message.ComponentId != ComponentID.PLAYER_IDENTITY_DATA || message.Type != CRDTMessageType.PUT_COMPONENT)
                     continue;
 
@@ -123,10 +121,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             }
 
             // 2. then all the other messages are checked
-            foreach (ProcessedCRDTMessage outgoingCRDTMessage in engineApi.OutgoingCRDTMessages)
+            foreach (CRDTMessage message in engineApi.OutgoingCRDTMessages)
             {
-                CRDTMessage message = outgoingCRDTMessage.message;
-
                 switch (message.Type)
                 {
                     case CRDTMessageType.PUT_COMPONENT:
