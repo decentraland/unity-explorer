@@ -6,7 +6,6 @@ using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;
@@ -54,8 +53,8 @@ namespace ECS.SceneLifeCycle.Systems
             var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
                 definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
 
-            // Calculate partition immediately
-            await UniTask.SwitchToMainThread();
+            // Launch at the end of the frame
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
             return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
         }

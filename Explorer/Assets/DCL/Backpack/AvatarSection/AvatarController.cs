@@ -14,6 +14,7 @@ namespace DCL.Backpack
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
         private readonly AvatarView view;
+        private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
 
         public AvatarController(AvatarView view,
@@ -27,6 +28,7 @@ namespace DCL.Backpack
             DCLInput dclInput)
         {
             this.view = view;
+            this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
             new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus, dclInput);
@@ -41,19 +43,20 @@ namespace DCL.Backpack
             backpackInfoPanelController?.Dispose();
         }
 
-        public void RequestInitialWearablesPage()
+        public void RequestInitialWearablesPage() =>
+            backpackGridController.RequestPage(1, true);
+
+        public void Activate() =>
+            backpackGridController.Activate();
+
+        public void Deactivate()
         {
-            backpackGridController.RequestTotalNumber();
+            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
+            backpackGridController.Deactivate();
         }
 
-        public void Activate() { }
-
-        public void Deactivate() { }
-
-        public void Animate(int triggerId)
-        {
+        public void Animate(int triggerId) =>
             view.gameObject.SetActive(triggerId == IN);
-        }
 
         public void ResetAnimator() { }
 

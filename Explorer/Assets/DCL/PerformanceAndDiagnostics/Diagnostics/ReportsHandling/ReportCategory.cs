@@ -197,6 +197,11 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
+        ///     CameraTransform SDK System
+        /// </summary>
+        public const string CAMERA_TRANSFORM = nameof(CAMERA_TRANSFORM);
+
+        /// <summary>
         ///     AvatarModifierArea SDK component
         /// </summary>
         public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);

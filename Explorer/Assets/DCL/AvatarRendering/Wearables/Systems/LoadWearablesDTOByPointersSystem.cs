@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private readonly IWebRequestController webRequestController;
 
-        internal LoadWearablesDTOByPointersSystem(World world, IWebRequestController webRequestController, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
+        internal LoadWearablesDTOByPointersSystem(World world, IWebRequestController webRequestController, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }

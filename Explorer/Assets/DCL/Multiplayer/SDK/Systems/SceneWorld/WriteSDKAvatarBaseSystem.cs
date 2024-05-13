@@ -14,7 +14,7 @@ using ECS.Unity.ColorComponent;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
     [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]

@@ -11,10 +11,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using SceneRunner;
 using SceneRunner.Scene;
-using System;
 using System.Threading;
-using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -31,19 +28,21 @@ namespace ECS.SceneLifeCycle.Systems
 
         internal LoadSceneSystem(World world,
             LoadSceneSystemLogic loadSceneSystemLogic, LoadEmptySceneSystemLogic loadEmptySceneSystemLogic,
-            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
+            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache) : base(world, cache)
         {
             this.sceneFactory = sceneFactory;
             this.loadSceneSystemLogic = loadSceneSystemLogic;
             this.loadEmptySceneSystemLogic = loadEmptySceneSystemLogic;
         }
 
-        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternalAsync(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
-        {
-            if (intention.DefinitionComponent.IsEmpty)
-                return new StreamableLoadingResult<ISceneFacade>(loadEmptySceneSystemLogic.Flow(intention));
+        protected override async UniTask<StreamableLoadingResult<ISceneFacade>> FlowInternalAsync(GetSceneFacadeIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct) =>
+            intention.DefinitionComponent.IsEmpty
+                ? new StreamableLoadingResult<ISceneFacade>(loadEmptySceneSystemLogic.Flow(intention))
+                : new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
 
-            return new StreamableLoadingResult<ISceneFacade>(await loadSceneSystemLogic.FlowAsync(sceneFactory, intention, GetReportCategory(), partition, ct));
+        protected override void DisposeAbandonedResult(ISceneFacade asset)
+        {
+            asset.DisposeAsync().Forget();
         }
 
         public override void Dispose()

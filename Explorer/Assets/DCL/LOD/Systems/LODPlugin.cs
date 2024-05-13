@@ -36,7 +36,7 @@ namespace DCL.PluginSystem.Global
         private readonly VisualSceneStateResolver visualSceneStateResolver;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
         private readonly bool lodEnabled;
-        
+
         private IExtendedObjectPool<Material> lodMaterialPool;
         private ILODSettingsAsset lodSettingsAsset;
         private TextureArrayContainer lodTextureArrayContainer;
@@ -77,7 +77,7 @@ namespace DCL.PluginSystem.Global
 
             lodTextureArrayContainer = textureArrayContainerFactory.CreateSceneLOD(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
-            
+
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
             UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver);
 
@@ -85,21 +85,21 @@ namespace DCL.PluginSystem.Global
             {
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, memoryBudget,
                     frameCapBudget, scenesCache, sceneReadinessReportQueue, lodContainer.transform, lodTextureArrayContainer);
-                UnloadSceneLODSystem.InjectToWorld(ref builder, lodAssetsPool, scenesCache);
+                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
             }
             else
             {
                 UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);
             }
-           
+
         }
 
         public void Dispose()
         {
             lodAssetsPool.Unload(frameCapBudget, 3);
         }
-      
+
     }
 
 }

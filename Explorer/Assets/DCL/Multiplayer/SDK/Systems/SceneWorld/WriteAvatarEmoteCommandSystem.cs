@@ -13,7 +13,7 @@ using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
     [UpdateBefore(typeof(ResetDirtyFlagSystem<AvatarEmoteCommandComponent>))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EMOTE_COMMAND)]

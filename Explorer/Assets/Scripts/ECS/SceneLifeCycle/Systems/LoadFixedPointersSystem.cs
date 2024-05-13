@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void ResolvePromises(ref FixedScenePointers fixedScenePointers, ref ProcessesScenePointers processesScenePointers)
+        private void ResolvePromises(ref FixedScenePointers fixedScenePointers, ref ProcessedScenePointers processedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved) return;
 
@@ -75,7 +75,7 @@ namespace ECS.SceneLifeCycle.Systems
                         IReadOnlyList<Vector2Int> parcels = result.Asset.metadata.scene.DecodedParcels;
 
                         for (var j = 0; j < parcels.Count; j++)
-                            processesScenePointers.Value.Add(parcels[j].ToInt2());
+                            processedScenePointers.Value.Add(parcels[j].ToInt2());
                     }
                 }
                 else

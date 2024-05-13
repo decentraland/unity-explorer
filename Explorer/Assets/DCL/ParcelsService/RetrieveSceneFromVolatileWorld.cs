@@ -8,7 +8,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using Ipfs;
 using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
@@ -24,17 +23,17 @@ namespace DCL.ParcelsService
 
         private readonly IRealmData realmData;
 
-        public World World { get; set; }
+        public World? World { get; set; }
 
         public RetrieveSceneFromVolatileWorld(IRealmData realmData)
         {
             this.realmData = realmData;
         }
 
-        public async UniTask<SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask<SceneEntityDefinition?> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
-            if (!realmData.Configured)
-                return null;
+            if (!realmData.Configured) return null;
+            if (World == null) return null;
 
             IIpfsRealm realmIpfs = realmData.Ipfs;
 

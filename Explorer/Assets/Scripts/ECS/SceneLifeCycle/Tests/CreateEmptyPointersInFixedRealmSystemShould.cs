@@ -54,7 +54,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             mathJobifiedHelper.StartParcelsRingSplit(int2.zero, 1, processed);
 
-            Entity e = world.Create(new RealmComponent(), new FixedScenePointers { AllPromisesResolved = true }, new ProcessesScenePointers { Value = processed });
+            Entity e = world.Create(new RealmComponent(), new FixedScenePointers { AllPromisesResolved = true }, new ProcessedScenePointers { Value = processed });
             system.Update(0);
 
             var result = new List<int2>();

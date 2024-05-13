@@ -73,7 +73,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public virtual void Dispose()
         {
-            systemGroupsUpdateGate.Dispose();
         }
 
         public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
