@@ -43,15 +43,11 @@ namespace DCL.Backpack
             backpackInfoPanelController?.Dispose();
         }
 
-        public void RequestInitialWearablesPage()
-        {
-            backpackGridController.RequestTotalNumber();
-        }
+        public void RequestInitialWearablesPage() =>
+            backpackGridController.RequestPage(1, true);
 
-        public void Activate()
-        {
+        public void Activate() =>
             backpackGridController.Activate();
-        }
 
         public void Deactivate()
         {
@@ -59,10 +55,8 @@ namespace DCL.Backpack
             backpackGridController.Deactivate();
         }
 
-        public void Animate(int triggerId)
-        {
+        public void Animate(int triggerId) =>
             view.gameObject.SetActive(triggerId == IN);
-        }
 
         public void ResetAnimator() { }
 
