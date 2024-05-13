@@ -52,7 +52,7 @@ namespace ECS.SceneLifeCycle.Systems
             await UniTask.SwitchToMainThread();
 
             hashedContent = new HibridSceneHashedContent(webRequestController, definition.content, contentBaseUrl, assetBundleURL , URLDomain.FromString(hibridSceneContentServer), hibridSceneID);
-            await ((HibridSceneHashedContent)hashedContent).GetRemoteSceneDefinition(new CancellationToken(), reportCategory);
+            await ((HibridSceneHashedContent)hashedContent).GetRemoteSceneDefinitionAsync(new CancellationToken(), reportCategory);
 
             // Create scene data
             var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;

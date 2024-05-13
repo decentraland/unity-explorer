@@ -79,7 +79,7 @@ namespace SceneRunner.Scene
             return fileToHash.TryGetValue(name, out hash);
         }
 
-        public async UniTask GetRemoteSceneDefinition(CancellationToken ct, string reportCategory)
+        public async UniTask GetRemoteSceneDefinitionAsync(CancellationToken ct, string reportCategory)
         {
             var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
