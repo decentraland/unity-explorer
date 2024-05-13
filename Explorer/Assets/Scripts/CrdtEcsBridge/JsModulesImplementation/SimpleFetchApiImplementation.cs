@@ -92,6 +92,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
 
                 var responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
+                var responseHeadersPropertyBag = new PropertyBag();
+                foreach (var header in responseHeadersDictionary)
+                    responseHeadersPropertyBag.Add(header.Key, header.Value);
 
                 bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
                 bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
@@ -101,7 +104,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                 object result = new
                 {
-                    headers = responseHeadersDictionary,
+                    headers = responseHeadersPropertyBag,
                     ok = requestOk,
                     redirected = requestRedirected,
                     status = requestStatus,
