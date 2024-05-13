@@ -155,5 +155,4 @@ class WebSocket {
     }
 }
 
- 
- module.exports.WebSocket = WebSocket
+module.exports.WebSocket = url => new WebSocket(url)
