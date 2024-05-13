@@ -32,14 +32,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         public SDKObservableEventsEngineAPIImplementation(ISharedPoolsProvider poolsProvider, IInstancePoolsProvider instancePoolsProvider, ICRDTProtocol crdtProtocol, ICRDTDeserializer crdtDeserializer, ICRDTSerializer crdtSerializer,
             ICRDTWorldSynchronizer crdtWorldSynchronizer, IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider, ISystemGroupsUpdateGate systemGroupsUpdateGate, ISceneExceptionsHandler exceptionsHandler, MutexSync mutexSync) : base(poolsProvider, instancePoolsProvider, crdtProtocol, crdtDeserializer, crdtSerializer, crdtWorldSynchronizer, outgoingCrtdMessagesProvider, systemGroupsUpdateGate, exceptionsHandler, mutexSync) { }
 
-        public List<CRDTMessage> PriorityOutgoingCRDTMessages { get; } = new ();
-        public List<CRDTMessage> OutgoingCRDTMessages { get; } = new ();
         public bool EnableSDKObservableMessagesDetection { get; set; } = false;
         public List<SDKObservableEvent> SdkObservableEvents { get; } = new ();
         public HashSet<string> SdkObservableEventSubscriptions { get; } = new ();
 
         public override void Dispose()
         {
+            userIdEntitiesMap.Clear();
             SdkObservableEvents.Clear();
             SdkObservableEventSubscriptions.Clear();
             base.Dispose();
@@ -62,7 +61,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         private void DetectObservableEventsFromComponents(CRDTMessage message)
         {
-            // We must always detect PlayerIdentityData messages always to have the entities map updated
+            // We must always detect PlayerIdentityData messages to have the entities map updated
             // for scenes that may subscribe to observables later in their execution
             DetectPlayerIdentityDataComponent(message);
 
