@@ -9,7 +9,7 @@ using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Emotes.Interfaces;
+using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -99,27 +99,24 @@ namespace Global.Dynamic
             var world = World.Create();
 
             // not synced by mutex, for compatibility only
-            var mutex = new MutexSync();
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
             globalSceneStateProvider.State = SceneState.Running;
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
+            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
 
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 
-            emotesMessageBus.InjectWorld(world, playerEntity);
-
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 new LoadSceneSystemLogic(webRequestController, assetBundlesURL),
                 new LoadEmptySceneSystemLogic(),
-                sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
+                sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 
@@ -134,7 +131,8 @@ namespace Global.Dynamic
                 partitionSettings);
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
-            CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
+            //Removed, since we now have landscape surrounding the world
+            //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
             UnloadSceneSystem.InjectToWorld(ref builder, scenesCache);

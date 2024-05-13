@@ -4,64 +4,49 @@ using DCL.AsyncLoadReporting;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
-using DCL.Landscape.Interface;
-using DCL.ParcelsService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.SceneLoadingScreens;
 using DCL.Utilities;
-using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Reporting;
 using MVC;
-using System;
 using System.Threading;
+using DCL.SceneLoadingScreens.LoadingScreen;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
-using UnityEngine.Assertions;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
 namespace DCL.UserInAppInitializationFlow
 {
     public class RealUserInitializationFlowController : IUserInAppInitializationFlow
     {
-        private readonly ITeleportController teleportController;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly Vector2Int startParcel;
-        private readonly bool enableLandscape;
-        private readonly ILandscapeInitialization landscapeInitialization;
         private readonly RealFlowLoadingStatus loadingStatus;
 
-        private readonly CameraSamplingData cameraSamplingData;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-        private readonly ObjectProxy<Entity> cameraEntity;
 
         private readonly AudioClipConfig backgroundMusic;
 
-        private AsyncLoadProcessReport? loadReport;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly ILoadingScreen loadingScreen;
 
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
-            ITeleportController teleportController,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
-            ObjectProxy<Entity> cameraEntity,
-            CameraSamplingData cameraSamplingData,
-            bool enableLandscape,
-            ILandscapeInitialization landscapeInitialization,
-            AudioClipConfig backgroundMusic)
+            AudioClipConfig backgroundMusic,
+            IRealmNavigator realmNavigator,
+            ILoadingScreen loadingScreen)
         {
-            this.teleportController = teleportController;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.startParcel = startParcel;
-            this.enableLandscape = enableLandscape;
-            this.landscapeInitialization = landscapeInitialization;
             this.loadingStatus = loadingStatus;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
-            this.cameraEntity = cameraEntity;
-            this.cameraSamplingData = cameraSamplingData;
             this.backgroundMusic = backgroundMusic;
+            this.realmNavigator = realmNavigator;
+            this.loadingScreen = loadingScreen;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -71,49 +56,37 @@ namespace DCL.UserInAppInitializationFlow
             CancellationToken ct)
         {
             UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
-            loadReport = AsyncLoadProcessReport.Create();
 
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
 
-            UniTask showLoadingScreenAsyncTask = LoadCharacterAndWorldAsync(world, playerEntity, ct);
-
             if (showLoading)
-                await UniTask.WhenAll(ShowLoadingScreenAsync(ct), showLoadingScreenAsyncTask);
+                await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(parentLoadReport, world, playerEntity, ct), ct);
             else
-                await showLoadingScreenAsyncTask;
+                await LoadCharacterAndWorldAsync(AsyncLoadProcessReport.Create(), world, playerEntity, ct);
 
             UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
         }
 
-        private async UniTask LoadCharacterAndWorldAsync(World world, Entity ownPlayerEntity, CancellationToken ct)
+        private async UniTask LoadCharacterAndWorldAsync(AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
         {
             Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
 
-            loadReport!.ProgressCounter.Value = loadingStatus.SetStage(ProfileLoaded);
+            await realmNavigator.SwitchMiscVisibilityAsync();
+            await LoadPlayerAvatar(world, playerEntity, ownProfile, ct);
 
-            await LoadPlayerAvatar(world, ownPlayerEntity, ownProfile, ct);
+            AsyncLoadProcessReport? landscapeLoadReport
+                = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
 
-            await LoadLandscapeAsync(ct);
+            await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
+            parentLoadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
 
-            await TeleportToSpawnPointAsync(world, ct);
+            AsyncLoadProcessReport? teleportLoadReport
+                = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
 
-            loadReport.ProgressCounter.Value = loadingStatus.SetStage(Completed);
-            loadReport.CompletionSource.TrySetResult();
-        }
-
-        private async UniTask LoadLandscapeAsync(CancellationToken ct)
-        {
-            if (enableLandscape)
-            {
-                var landscapeLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-                await UniTask.WhenAny(
-                    landscapeLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]),
-                    landscapeInitialization.InitializeLoadingProgressAsync(landscapeLoadReport, ct));
-            }
-
-            loadReport!.ProgressCounter.Value = loadingStatus.SetStage(LandscapeLoaded);
+            await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
+            parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
         }
 
         /// <summary>
@@ -131,35 +104,6 @@ namespace DCL.UserInAppInitializationFlow
             // Eventually it will lead to the Avatar Resolution or the entity destruction
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately
             return UniTask.WaitWhile(() => !mainPlayerAvatarBaseProxy.Configured && world.IsAlive(playerEntity), PlayerLoopTiming.LastPostLateUpdate, ct);
-        }
-
-        private async UniTask TeleportToSpawnPointAsync(World world, CancellationToken ct)
-        {
-            var teleportLoadReport = new AsyncLoadProcessReport(new UniTaskCompletionSource(), new AsyncReactiveProperty<float>(0));
-
-            await UniTask.WhenAny(teleportLoadReport.PropagateProgressCounterAsync(loadReport, ct, loadReport!.ProgressCounter.Value, RealFlowLoadingStatus.PROGRESS[PlayerTeleported]),
-                WaitForTeleportAndStartPartitioningAsync());
-
-            loadingStatus.SetStage(PlayerTeleported);
-
-            async UniTask WaitForTeleportAndStartPartitioningAsync()
-            {
-                var waitForSceneReadiness = await teleportController.TeleportToSceneSpawnPointAsync(startParcel, teleportLoadReport, ct);
-
-                // add camera sampling data to the camera entity to start partitioning
-                Assert.IsTrue(cameraEntity.Configured);
-                world.Add(cameraEntity.Object, cameraSamplingData);
-
-                // Wait for the scene to fire scene readiness
-                await waitForSceneReadiness.ToUniTask(ct);
-            }
-        }
-
-        private async UniTask ShowLoadingScreenAsync(CancellationToken ct)
-        {
-            var timeout = TimeSpan.FromMinutes(2);
-
-            await mvcManager.ShowAsync(SceneLoadingScreenController.IssueCommand(new SceneLoadingScreenController.Params(loadReport!, timeout)), ct);
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)

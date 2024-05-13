@@ -68,6 +68,8 @@ namespace DCL.Landscape
         public IReadOnlyList<Terrain> Terrains => terrains;
 
         public bool IsTerrainGenerated { get; private set; }
+        public bool IsTerrainShown { get; private set; }
+
 
         public TerrainGenerator(bool measureTime = false, bool forceCacheRegen = false)
         {
@@ -117,11 +119,12 @@ namespace DCL.Landscape
 
             UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
+            ReEnableChunksDetails();
             grassRenderer.Render();
             await ReEnableTerrainAsync(postRealmLoadReport);
-            IsTerrainGenerated = true;
+            IsTerrainShown = true;
 
-            postRealmLoadReport.ProgressCounter.Value = 1f;
+            postRealmLoadReport.SetProgress(1f);
         }
 
         public void Hide()
@@ -131,12 +134,11 @@ namespace DCL.Landscape
             if (rootGo != null && rootGo.gameObject.activeSelf)
             {
                 rootGo.gameObject.SetActive(false);
-                ReEnableChunksDetails();
-                IsTerrainGenerated = false;
+                IsTerrainShown = false;
             }
         }
 
-        public async UniTask GenerateTerrainAsync(
+        public async UniTask GenerateTerrainAndShowAsync(
             uint worldSeed = 1,
             bool withHoles = true,
             bool hideTrees = false,
@@ -176,7 +178,7 @@ namespace DCL.Landscape
                         await SetupEmptyParcelDataAsync(terrainModel, cancellationToken);
                     }
 
-                    if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA;
+                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA);
 
                     terrainDataCount = Mathf.Pow(Mathf.CeilToInt(terrainGenData.terrainSize / (float)terrainGenData.chunkSize), 2);
                     processedTerrainDataCount = 0;
@@ -193,7 +195,7 @@ namespace DCL.Landscape
                         await UniTask.Yield(cancellationToken);
                     }
 
-                    if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES;
+                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES);
 
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Chunks")))
                         await SpawnTerrainObjectsAsync(terrainModel, processReport, cancellationToken);
@@ -202,7 +204,7 @@ namespace DCL.Landscape
 
                     await ReEnableTerrainAsync(processReport);
 
-                    if (processReport != null) processReport.ProgressCounter.Value = 1f;
+                    if (processReport != null) processReport.SetProgress(1f);
                 }
             }
             catch (OperationCanceledException)
@@ -219,6 +221,11 @@ namespace DCL.Landscape
                     localCache.Save();
 
                 IsTerrainGenerated = true;
+                IsTerrainShown = true;
+
+                emptyParcels.Dispose();
+                ownedParcels.Dispose();
+
             }
         }
 
@@ -238,7 +245,7 @@ namespace DCL.Landscape
                 for (int j = i; j < Math.Min(i + batch, terrains.Count); j++)
                 {
                     terrains[j].enabled = true;
-                    if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + (j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
+                    if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + PROGRESS_SPAWN_TERRAIN + j / terrainDataCount * PROGRESS_SPAWN_RE_ENABLE_TERRAIN);
                 }
 
                 i += batch;
@@ -289,7 +296,7 @@ namespace DCL.Landscape
 
                 await UniTask.Yield();
                 spawnedTerrainDataCount++;
-                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_DIG_HOLES + (spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);
+                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_DIG_HOLES + spawnedTerrainDataCount / terrainDataCount * PROGRESS_SPAWN_TERRAIN);
             }
         }
 
@@ -335,7 +342,7 @@ namespace DCL.Landscape
                 await UniTask.WhenAll(tasks).AttachExternalCancellation(cancellationToken);
 
                 processedTerrainDataCount++;
-                if (processReport != null) processReport.ProgressCounter.Value = PROGRESS_COUNTER_EMPTY_PARCEL_DATA + (processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
+                if (processReport != null) processReport.SetProgress(PROGRESS_COUNTER_EMPTY_PARCEL_DATA + processedTerrainDataCount / terrainDataCount * PROGRESS_COUNTER_TERRAIN_DATA);
             }
         }
 

@@ -17,6 +17,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(RotateCharacterSystem))]
     public partial class CharacterPlatformSystem : BaseUnityLoopSystem
     {
+        private const int UNGROUNDED_FRAMES = 2;
         public CharacterPlatformSystem(World world) : base(world) { }
 
         protected override void Update(float t)
@@ -34,11 +35,22 @@ namespace DCL.CharacterMotion.Systems
         {
             rigidTransform.PlatformDelta = Vector3.zero;
 
-            if (!rigidTransform.IsGrounded)
+            if (rigidTransform.JustJumped)
             {
                 platformComponent.CurrentPlatform = null;
                 return;
             }
+
+            if (!rigidTransform.IsGrounded)
+            {
+                platformComponent.FramesUngrounded++;
+
+                if (platformComponent.FramesUngrounded > UNGROUNDED_FRAMES)
+                    platformComponent.CurrentPlatform = null;
+                return;
+            }
+
+            platformComponent.FramesUngrounded = 0;
 
             Transform transform = characterController.transform;
 
@@ -48,10 +60,13 @@ namespace DCL.CharacterMotion.Systems
 
             Transform platformTransform = platformComponent.CurrentPlatform.transform;
 
-            Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastPosition);
-            Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastRotation);
+            Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastAvatarRelativePosition);
+            Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastAvatarRelativeRotation);
 
             rigidTransform.PlatformDelta = newGroundWorldPos - transform.position;
+
+            Vector3 rotationDelta = newCharacterForward - transform.forward;
+            rigidTransform.LookDirection += rotationDelta;
             transform.forward = newCharacterForward;
         }
     }

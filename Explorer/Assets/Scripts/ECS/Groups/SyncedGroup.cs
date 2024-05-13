@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using JetBrains.Annotations;
 using SceneRunner.Scene;
 using Utility.Multithreading;
 
@@ -23,16 +24,10 @@ namespace ECS.Groups
         public SyncedPresentationSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
     }
 
-    [UpdateInGroup(typeof(PostRenderingSystemGroup))]
-    public partial class SyncedPostRenderingSystemGroup : SyncedGroup
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
+    public partial class SyncedPreRenderingSystemGroup : SyncedGroup
     {
-        public SyncedPostRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
-    }
-
-    [UpdateInGroup(typeof(PostPhysicsSystemGroup))]
-    public partial class SyncedPostPhysicsSystemGroup : SyncedGroup
-    {
-        public SyncedPostPhysicsSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
+        public SyncedPreRenderingSystemGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider) : base(mutexSync, sceneStateProvider) { }
     }
 
     /// <summary>
@@ -42,10 +37,10 @@ namespace ECS.Groups
     /// </summary>
     public abstract class SyncedGroup : CustomGroupBase<float>
     {
-        private readonly MutexSync mutexSync;
+        [CanBeNull] private readonly MutexSync mutexSync;
         private readonly ISceneStateProvider sceneStateProvider;
 
-        protected SyncedGroup(MutexSync mutexSync, ISceneStateProvider sceneStateProvider)
+        protected SyncedGroup([CanBeNull] MutexSync mutexSync, ISceneStateProvider sceneStateProvider)
         {
             this.mutexSync = mutexSync;
             this.sceneStateProvider = sceneStateProvider;
@@ -53,7 +48,6 @@ namespace ECS.Groups
 
         public override void Initialize()
         {
-            using MutexSync.Scope scope = mutexSync.GetScope();
             InitializeInternal();
         }
 
@@ -62,7 +56,9 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (mutexSync is not null && !mutexSync.Acquired) return;
+
             BeforeUpdateInternal(in t, throttle);
         }
 
@@ -71,7 +67,9 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (mutexSync is not null && !mutexSync.Acquired) return;
+
             UpdateInternal(in t, throttle);
         }
 
@@ -80,13 +78,17 @@ namespace ECS.Groups
             if (sceneStateProvider.State != SceneState.Running)
                 return;
 
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (mutexSync is not null && !mutexSync.Acquired) return;
+
             AfterUpdateInternal(in t, throttle);
         }
 
         public override void Dispose()
         {
-            using MutexSync.Scope scope = mutexSync.GetScope();
+            // If Mutex is not acquired throttle the system
+            if (mutexSync is not null && !mutexSync.Acquired) return;
+
             DisposeInternal();
         }
     }

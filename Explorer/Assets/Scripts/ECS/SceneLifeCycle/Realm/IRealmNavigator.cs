@@ -1,6 +1,8 @@
-﻿using CommunicationData.URLHelpers;
+﻿using System;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using DCL.AsyncLoadReporting;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Realm
@@ -18,8 +20,17 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
-        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct);
+        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
-        UniTask TeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+        UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
+
+        UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
+
+        UniTask LoadTerrainAsync(AsyncLoadProcessReport loadReport, CancellationToken ct);
+
+        UniTask SwitchMiscVisibilityAsync();
+
+        //True if the realm has changed to genesis
+        Action<bool> OnRealmChanged { get; set; }
     }
 }

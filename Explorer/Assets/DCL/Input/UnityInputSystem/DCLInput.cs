@@ -1027,6 +1027,33 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Panning"",
+                    ""type"": ""Value"",
+                    ""id"": ""5d690287-862a-41a8-96b3-9907813defa7"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""FOV"",
+                    ""type"": ""Value"",
+                    ""id"": ""c69e1ec7-455b-4f39-b07e-51dc890f598d"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Slow"",
+                    ""type"": ""Button"",
+                    ""id"": ""8b3b7cd8-9f1b-4397-8992-56f285ae5032"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1159,6 +1186,193 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Sprint"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""75281c4f-7bf6-4e36-a9c0-3e81203f5d84"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""52fc5587-657d-4d0e-a1f6-5d8ecf87502f"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""35adb478-f22e-4d3b-9c68-eaea76683b05"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""510f5e43-3724-4640-af50-067de076fe0c"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""e597ccbe-2a1f-4306-9cf7-68684ceba1a7"",
+                    ""path"": ""<Gamepad>/dpad/up"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""02d67432-d521-49dc-9ed6-2d2f2a413833"",
+                    ""path"": ""<Gamepad>/dpad/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Panning"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""9af35ee2-92f8-48cf-b7f2-a26f906167e5"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""3abcccc5-6b2c-41fc-99f0-10eb3bb4df3d"",
+                    ""path"": ""<Keyboard>/numpadMinus"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""ac05092f-000c-4336-a53e-553dd0a3cd0a"",
+                    ""path"": ""<Keyboard>/numpadPlus"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""f8e2336a-28ec-4d70-96db-ab34a96107d8"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""9628e45f-f82a-4e0b-bea8-c91de24efc22"",
+                    ""path"": ""<Mouse>/scroll/down"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""80318e68-fc10-4e27-8e74-b612a986aeca"",
+                    ""path"": ""<Mouse>/scroll/up"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""c68323f1-fa67-4d73-99e4-aa4dc472c619"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""37ab3b82-e6e5-4ddc-912c-a0072b12e629"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""20061e19-180a-4463-a335-647b0ec0a6b7"",
+                    ""path"": ""<Gamepad>/rightShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FOV"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""aea3bf7f-9e95-4130-b27a-4531b0081f13"",
+                    ""path"": ""<Keyboard>/ctrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slow"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1efdb934-6aea-4bf4-bb6b-553c98611355"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Slow"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1890,6 +2104,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleNametags"",
+                    ""type"": ""Button"",
+                    ""id"": ""b8f2b72d-26f2-4431-8dde-aa86ce5406ed"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -1978,6 +2201,17 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""ShowHideUI"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""0d9071d2-b121-4b8e-8d40-80fefd17661c"",
+                    ""path"": ""<Keyboard>/n"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleNametags"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -2704,6 +2938,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_FreeCamera_Movement = m_FreeCamera.FindAction("Movement", throwIfNotFound: true);
         m_FreeCamera_DropPlayer = m_FreeCamera.FindAction("DropPlayer", throwIfNotFound: true);
         m_FreeCamera_Sprint = m_FreeCamera.FindAction("Sprint", throwIfNotFound: true);
+        m_FreeCamera_Panning = m_FreeCamera.FindAction("Panning", throwIfNotFound: true);
+        m_FreeCamera_FOV = m_FreeCamera.FindAction("FOV", throwIfNotFound: true);
+        m_FreeCamera_Slow = m_FreeCamera.FindAction("Slow", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -2730,6 +2967,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         m_Shortcuts_EmoteWheel = m_Shortcuts.FindAction("EmoteWheel", throwIfNotFound: true);
         m_Shortcuts_ToggleAvatarBubbles = m_Shortcuts.FindAction("ToggleAvatarBubbles", throwIfNotFound: true);
         m_Shortcuts_ShowHideUI = m_Shortcuts.FindAction("ShowHideUI", throwIfNotFound: true);
+        m_Shortcuts_ToggleNametags = m_Shortcuts.FindAction("ToggleNametags", throwIfNotFound: true);
         // Emotes
         m_Emotes = asset.FindActionMap("Emotes", throwIfNotFound: true);
         m_Emotes_Slot1 = m_Emotes.FindAction("Slot 1", throwIfNotFound: true);
@@ -3112,6 +3350,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_FreeCamera_Movement;
     private readonly InputAction m_FreeCamera_DropPlayer;
     private readonly InputAction m_FreeCamera_Sprint;
+    private readonly InputAction m_FreeCamera_Panning;
+    private readonly InputAction m_FreeCamera_FOV;
+    private readonly InputAction m_FreeCamera_Slow;
     public struct FreeCameraActions
     {
         private @DCLInput m_Wrapper;
@@ -3119,6 +3360,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @Movement => m_Wrapper.m_FreeCamera_Movement;
         public InputAction @DropPlayer => m_Wrapper.m_FreeCamera_DropPlayer;
         public InputAction @Sprint => m_Wrapper.m_FreeCamera_Sprint;
+        public InputAction @Panning => m_Wrapper.m_FreeCamera_Panning;
+        public InputAction @FOV => m_Wrapper.m_FreeCamera_FOV;
+        public InputAction @Slow => m_Wrapper.m_FreeCamera_Slow;
         public InputActionMap Get() { return m_Wrapper.m_FreeCamera; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3137,6 +3381,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Sprint.started += instance.OnSprint;
             @Sprint.performed += instance.OnSprint;
             @Sprint.canceled += instance.OnSprint;
+            @Panning.started += instance.OnPanning;
+            @Panning.performed += instance.OnPanning;
+            @Panning.canceled += instance.OnPanning;
+            @FOV.started += instance.OnFOV;
+            @FOV.performed += instance.OnFOV;
+            @FOV.canceled += instance.OnFOV;
+            @Slow.started += instance.OnSlow;
+            @Slow.performed += instance.OnSlow;
+            @Slow.canceled += instance.OnSlow;
         }
 
         private void UnregisterCallbacks(IFreeCameraActions instance)
@@ -3150,6 +3403,15 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @Sprint.started -= instance.OnSprint;
             @Sprint.performed -= instance.OnSprint;
             @Sprint.canceled -= instance.OnSprint;
+            @Panning.started -= instance.OnPanning;
+            @Panning.performed -= instance.OnPanning;
+            @Panning.canceled -= instance.OnPanning;
+            @FOV.started -= instance.OnFOV;
+            @FOV.performed -= instance.OnFOV;
+            @FOV.canceled -= instance.OnFOV;
+            @Slow.started -= instance.OnSlow;
+            @Slow.performed -= instance.OnSlow;
+            @Slow.canceled -= instance.OnSlow;
         }
 
         public void RemoveCallbacks(IFreeCameraActions instance)
@@ -3329,6 +3591,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Shortcuts_EmoteWheel;
     private readonly InputAction m_Shortcuts_ToggleAvatarBubbles;
     private readonly InputAction m_Shortcuts_ShowHideUI;
+    private readonly InputAction m_Shortcuts_ToggleNametags;
     public struct ShortcutsActions
     {
         private @DCLInput m_Wrapper;
@@ -3341,6 +3604,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         public InputAction @EmoteWheel => m_Wrapper.m_Shortcuts_EmoteWheel;
         public InputAction @ToggleAvatarBubbles => m_Wrapper.m_Shortcuts_ToggleAvatarBubbles;
         public InputAction @ShowHideUI => m_Wrapper.m_Shortcuts_ShowHideUI;
+        public InputAction @ToggleNametags => m_Wrapper.m_Shortcuts_ToggleNametags;
         public InputActionMap Get() { return m_Wrapper.m_Shortcuts; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -3374,6 +3638,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ShowHideUI.started += instance.OnShowHideUI;
             @ShowHideUI.performed += instance.OnShowHideUI;
             @ShowHideUI.canceled += instance.OnShowHideUI;
+            @ToggleNametags.started += instance.OnToggleNametags;
+            @ToggleNametags.performed += instance.OnToggleNametags;
+            @ToggleNametags.canceled += instance.OnToggleNametags;
         }
 
         private void UnregisterCallbacks(IShortcutsActions instance)
@@ -3402,6 +3669,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
             @ShowHideUI.started -= instance.OnShowHideUI;
             @ShowHideUI.performed -= instance.OnShowHideUI;
             @ShowHideUI.canceled -= instance.OnShowHideUI;
+            @ToggleNametags.started -= instance.OnToggleNametags;
+            @ToggleNametags.performed -= instance.OnToggleNametags;
+            @ToggleNametags.canceled -= instance.OnToggleNametags;
         }
 
         public void RemoveCallbacks(IShortcutsActions instance)
@@ -3718,6 +3988,9 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnMovement(InputAction.CallbackContext context);
         void OnDropPlayer(InputAction.CallbackContext context);
         void OnSprint(InputAction.CallbackContext context);
+        void OnPanning(InputAction.CallbackContext context);
+        void OnFOV(InputAction.CallbackContext context);
+        void OnSlow(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
@@ -3746,6 +4019,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         void OnEmoteWheel(InputAction.CallbackContext context);
         void OnToggleAvatarBubbles(InputAction.CallbackContext context);
         void OnShowHideUI(InputAction.CallbackContext context);
+        void OnToggleNametags(InputAction.CallbackContext context);
     }
     public interface IEmotesActions
     {

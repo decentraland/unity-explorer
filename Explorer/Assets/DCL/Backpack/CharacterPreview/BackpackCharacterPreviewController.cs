@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
@@ -7,6 +8,8 @@ using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
 using System.Collections.Generic;
+using System.Threading;
+using Utility;
 
 namespace DCL.Backpack.CharacterPreview
 {
@@ -14,9 +17,12 @@ namespace DCL.Backpack.CharacterPreview
     {
         private readonly BackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
+        private CancellationTokenSource? emotePreviewCancellationToken;
 
-        public BackpackCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory,
-            BackpackEventBus backpackEventBus, World world,
+        public BackpackCharacterPreviewController(CharacterPreviewView view,
+            ICharacterPreviewFactory previewFactory,
+            BackpackEventBus backpackEventBus,
+            World world,
             IEquippedEmotes equippedEmotes)
             : base(view, previewFactory, world)
         {
@@ -31,6 +37,14 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.FilterCategoryByEnumEvent += OnChangeCategory;
             backpackEventBus.ForceRenderEvent += OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent += OnBackpackSectionChanged;
+            backpackEventBus.DeactivateEvent += OnDeactivate;
+        }
+
+        private void OnDeactivate()
+        {
+            StopEmotes();
+
+            emotePreviewCancellationToken.SafeCancelAndDispose();
         }
 
         private void OnBackpackSectionChanged(BackpackSections backpackSection)
@@ -41,6 +55,7 @@ namespace DCL.Backpack.CharacterPreview
                     rotateEnabled = true;
                     panEnabled = true;
                     zoomEnabled = true;
+                    StopEmotes();
                     break;
                 case BackpackSections.Emotes:
                     inputEventBus.OnChangePreviewFocus(AvatarWearableCategoryEnum.Body);
@@ -64,6 +79,8 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.FilterCategoryByEnumEvent -= OnChangeCategory;
             backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
+
+            emotePreviewCancellationToken.SafeCancelAndDispose();
         }
 
         private void OnChangeCategory(AvatarWearableCategoryEnum categoryEnum)
@@ -125,7 +142,25 @@ namespace DCL.Backpack.CharacterPreview
 
         private void OnEmoteSelected(IEmote emote)
         {
-            PlayEmote(emote.GetUrn().Shorten());
+            async UniTaskVoid EnsureEmoteAndPlayItAsync(CancellationToken ct)
+            {
+                URN urn = emote.GetUrn().Shorten();
+
+                // In case you want to preview an emote, it might happen that the asset bundles are not loaded
+                // By adding the emote we force to fetch them if missing
+                if (!previewAvatarModel.Emotes?.Contains(urn) ?? true)
+                {
+                    previewAvatarModel.Emotes!.Add(urn);
+                    await ShowLoadingSpinnerAndUpdateAvatarAsync(ct);
+                    // Remove the emote so it stays original
+                    previewAvatarModel.Emotes!.Remove(urn);
+                }
+
+                PlayEmote(urn);
+            }
+
+            emotePreviewCancellationToken = emotePreviewCancellationToken.SafeRestart();
+            EnsureEmoteAndPlayItAsync(emotePreviewCancellationToken.Token).Forget();
         }
     }
 }

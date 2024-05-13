@@ -11,7 +11,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -31,20 +30,16 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
-        // asynchronous operations run independently on Update that is already synchronized
-        // so they require explicit synchronisation
-        private readonly MutexSync mutexSync;
-
         private readonly Query query;
 
         private CancellationTokenSource cancellationTokenSource;
 
         private bool systemIsDisposed;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
         {
             this.cache = cache;
-            this.mutexSync = mutexSync;
+            // this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedInternalFlowDelegate = FlowInternalAsync;
@@ -160,7 +155,7 @@ namespace ECS.StreamableLoading.Common.Systems
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget acquiredBudget)
         {
-            using MutexSync.Scope sync = mutexSync.GetScope();
+            // using MutexSync.Scope sync = mutexSync.GetScope();
 
             if (systemIsDisposed || !World.IsAlive(entity))
             {
@@ -170,7 +165,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 return;
             }
 
-            ref StreamableLoadingState state = ref World.Get<StreamableLoadingState>(entity);
+            ref StreamableLoadingState state = ref World.TryGetRef<StreamableLoadingState>(entity, out bool exists);
+
+            if (!exists)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
+                // it could be already disposed of, but it's safe to call it again
+                acquiredBudget.Dispose();
+                return;
+            }
 
             state.DisposeBudget();
 

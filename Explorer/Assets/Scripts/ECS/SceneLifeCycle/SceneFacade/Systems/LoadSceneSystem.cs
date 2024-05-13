@@ -14,7 +14,6 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -31,7 +30,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         internal LoadSceneSystem(World world,
             LoadSceneSystemLogic loadSceneSystemLogic, LoadEmptySceneSystemLogic loadEmptySceneSystemLogic,
-            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
+            ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache) : base(world, cache)
         {
             this.sceneFactory = sceneFactory;
             this.loadSceneSystemLogic = loadSceneSystemLogic;

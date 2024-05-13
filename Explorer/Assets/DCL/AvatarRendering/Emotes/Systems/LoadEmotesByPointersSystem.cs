@@ -13,6 +13,7 @@ using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS;
 using ECS.Prioritization.Components;
@@ -21,6 +22,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using Global.Dynamic;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -36,6 +38,7 @@ using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.Ava
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -57,6 +60,7 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
+        private readonly URLBuilder urlBuilder;
 
         public LoadEmotesByPointersSystem(World world,
             IWebRequestController webRequestController,
@@ -65,12 +69,13 @@ namespace DCL.AvatarRendering.Emotes
             IEmoteCache emoteCache,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory)
-            : base(world, cache, mutexSync)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            urlBuilder = new URLBuilder();
         }
 
         protected override void Update(float t)
@@ -81,6 +86,7 @@ namespace DCL.AvatarRendering.Emotes
             FinalizeEmoteDTOQuery(World);
             FinalizeAssetBundleManifestLoadingQuery(World);
             FinalizeAssetBundleLoadingQuery(World);
+            FinalizeAudioClipPromiseQuery(World);
         }
 
         protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(
@@ -130,7 +136,7 @@ namespace DCL.AvatarRendering.Emotes
             using PoolExtensions.Scope<List<EmoteDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
             await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
-               .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             lock (results) { results.AddRange(dtoPooledList.Value); }
         }
@@ -228,7 +234,7 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             bool isTimeout = intention.ElapsedTime >= intention.Timeout;
-            bool isSucceeded = emotesWithResponse == resolvedEmotesTmp.Count;
+            bool isSucceeded = emotesWithResponse == intention.Pointers.Count;
 
             if (isSucceeded || isTimeout)
             {
@@ -300,8 +306,7 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise,
-            ref IEmote emote, ref BodyShape bodyShape)
+        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -357,12 +362,55 @@ namespace DCL.AvatarRendering.Emotes
                         manifest: manifest, cancellationTokenSource: intention.CancellationTokenSource),
                     partitionComponent);
 
+                TryCreateAudioClipPromise(component, intention.BodyShape, partitionComponent);
+
                 component.IsLoading = true;
                 World.Create(promise, component, intention.BodyShape);
                 return true;
             }
 
             return false;
+        }
+
+        private void TryCreateAudioClipPromise(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
+        {
+            AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
+
+            foreach (AvatarAttachmentDTO.Content item in content)
+            {
+                var audioType = item.file.ToAudioType();
+
+                if (audioType == AudioType.UNKNOWN)
+                    continue;
+
+                urlBuilder.Clear();
+                urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
+                URLAddress url = urlBuilder.Build();
+
+                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, partitionComponent);
+                World.Create(promise, component, bodyShape);
+            }
+        }
+
+        [Query]
+        private void FinalizeAudioClipPromise(in Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
+        {
+            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
+            {
+                promise.ForgetLoading(World);
+                World.Destroy(entity);
+                return;
+            }
+
+            if (promise.IsConsumed) return;
+
+            if (!promise.TryConsume(World, out StreamableLoadingResult<AudioClip> result))
+                return;
+
+            if (result.Succeeded)
+                emote.AudioAssetResults[bodyShape] = result;
+
+            World.Destroy(entity);
         }
 
         private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)

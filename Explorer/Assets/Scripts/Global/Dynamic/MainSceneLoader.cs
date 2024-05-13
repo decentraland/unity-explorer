@@ -35,7 +35,9 @@ namespace Global.Dynamic
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK)] [SDKParcelPositionHelper]
         private Vector2Int targetScene;
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = IRealmNavigator.GENESIS_URL;
+
+        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)]
+        private string customRealm = IRealmNavigator.GOERLI_URL;
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -171,7 +173,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                bool shouldEnableLandscape = initialRealm == InitialRealm.GenesisCity && enableLandscape;
+                bool shouldEnableLandscape = enableLandscape;
 
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
