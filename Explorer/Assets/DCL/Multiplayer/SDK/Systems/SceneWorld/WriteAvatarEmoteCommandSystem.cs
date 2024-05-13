@@ -8,13 +8,12 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<AvatarEmoteCommandComponent>))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EMOTE_COMMAND)]
     public partial class WriteAvatarEmoteCommandSystem : BaseUnityLoopSystem
     {

@@ -9,12 +9,11 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem
     {
@@ -33,9 +32,10 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CreatePlayerIdentityData(PlayerCRDTEntity playerCRDTEntity, Profile profile)
+        private void CreatePlayerIdentityData(ref PlayerCRDTEntity playerCRDTEntity, Profile profile)
         {
             if (!playerCRDTEntity.IsDirty) return;
+            playerCRDTEntity.IsDirty = false;
 
             ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, (string address, bool isGuest)>(static (pbComponent, data) =>
             {

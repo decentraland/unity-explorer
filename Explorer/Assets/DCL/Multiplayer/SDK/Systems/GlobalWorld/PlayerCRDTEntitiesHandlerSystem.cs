@@ -65,17 +65,14 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor;
 
-            // External world access should be always synchronized (Global World calls into Scene World)
-            {
-                Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
-                var crdtEntity = new CRDTEntity(crdtEntityId);
+            Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
+            var crdtEntity = new CRDTEntity(crdtEntityId);
 
-                var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity);
+            var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity);
 
-                sceneEcsExecutor.World.Add(sceneWorldEntity, playerCRDTEntity);
+            sceneEcsExecutor.World.Add(sceneWorldEntity, playerCRDTEntity);
 
-                World.Add(entity, playerCRDTEntity);
-            }
+            World.Add(entity, playerCRDTEntity);
         }
 
         [Query]
@@ -105,12 +102,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
-            // External world access should be always synchronized (Global World calls into Scene World)
-            {
-                // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
-                // as the scene-level Writer systems need it to know which CRDT Entity to affect
-                sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
-            }
+            // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
+            // as the scene-level Writer systems need it to know which CRDT Entity to affect
+            sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
 
             FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
 
