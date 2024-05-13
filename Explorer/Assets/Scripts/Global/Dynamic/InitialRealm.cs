@@ -4,6 +4,9 @@ namespace Global.Dynamic
     {
         GenesisCity,
         SDK,
+        Goerli,
+        StreamingWorld,
+        TestScenes,
         World,
         Localhost,
         Custom,
