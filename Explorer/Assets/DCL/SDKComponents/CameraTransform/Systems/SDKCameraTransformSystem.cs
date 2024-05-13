@@ -22,7 +22,7 @@ namespace DCL.SDKComponents.CameraTransform.Systems
     ///     This system creates a new entity using the reserved SpecialEntitiesID.CAMERA_ENTITY in order to create a TransformComponent to be on sync with the camera
     ///     This allows using engine.CameraEntity as a parent target in the SDK
     /// </summary>
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.CAMERA_TRANSFORM)]
     public partial class SDKCameraTransformSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {

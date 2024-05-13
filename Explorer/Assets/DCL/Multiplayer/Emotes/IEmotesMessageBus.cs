@@ -10,5 +10,7 @@ namespace DCL.Multiplayer.Emotes
         void Send(URN urn, bool loopCyclePassed, bool sendToSelfReplica);
 
         void OnPlayerRemoved(string walletId);
+
+        void SaveForRetry(RemoteEmoteIntention intention);
     }
 }
