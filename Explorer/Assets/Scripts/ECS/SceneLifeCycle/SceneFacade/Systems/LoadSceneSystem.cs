@@ -29,7 +29,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly LoadEmptySceneSystemLogic loadEmptySceneSystemLogic;
 
         internal LoadSceneSystem(World world,
-            LoadSceneSystemLogic loadSceneSystemLogic, LoadEmptySceneSystemLogic loadEmptySceneSystemLogic,
+            LoadSceneSystemLogicBase loadSceneSystemLogic, LoadEmptySceneSystemLogic loadEmptySceneSystemLogic,
             ISceneFactory sceneFactory, IStreamableCache<ISceneFacade, GetSceneFacadeIntention> cache) : base(world, cache)
         {
             this.sceneFactory = sceneFactory;
