@@ -33,7 +33,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         {
             try
             {
-                return api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).ToPromise();
+                return api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).ToDisconnectedPromise();
             }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }

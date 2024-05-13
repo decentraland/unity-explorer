@@ -32,7 +32,7 @@ namespace ECS.StreamableLoading.Textures.Tests
             new () { CommonArguments = new CommonLoadingArguments(wrongTypePath) };
 
         protected override LoadTextureSystem CreateSystem() =>
-            new (world, cache, TestSuite.TestWebRequestController.INSTANCE, new MutexSync());
+            new (world, cache, TestSuite.TestWebRequestController.INSTANCE);
 
         protected override void AssertSuccess(Texture2D asset)
         {

@@ -10,7 +10,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.AudioClips
 {
@@ -20,7 +19,7 @@ namespace ECS.StreamableLoading.AudioClips
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
+        internal LoadAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController) : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }

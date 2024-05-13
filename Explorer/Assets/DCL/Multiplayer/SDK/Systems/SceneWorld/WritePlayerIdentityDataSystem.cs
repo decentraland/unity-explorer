@@ -13,7 +13,7 @@ using ECS.LifeCycle.Systems;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [LogCategory(ReportCategory.PLAYER_IDENTITY_DATA)]
     public partial class WritePlayerIdentityDataSystem : BaseUnityLoopSystem

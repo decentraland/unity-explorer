@@ -99,25 +99,24 @@ namespace Global.Dynamic
             var world = World.Create();
 
             // not synced by mutex, for compatibility only
-            var mutex = new MutexSync();
 
             ISceneStateProvider globalSceneStateProvider = new SceneStateProvider();
             globalSceneStateProvider.State = SceneState.Running;
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
-            builder.InjectCustomGroup(new SyncedPostRenderingSystemGroup(mutex, globalSceneStateProvider));
+            builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
 
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
 
-            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE, mutex);
-            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE, mutex);
+            LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE);
+            LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
             LoadSceneSystem.InjectToWorld(ref builder,
                 new LoadSceneSystemLogic(webRequestController, assetBundlesURL),
                 new LoadEmptySceneSystemLogic(),
-                sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE, mutex);
+                sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
             GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
 

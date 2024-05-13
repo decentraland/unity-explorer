@@ -82,7 +82,8 @@ namespace DCL.CharacterMotion.Systems
             in CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings,
             in StunComponent stunComponent,
-            in CharacterEmoteComponent emoteComponent
+            in CharacterEmoteComponent emoteComponent,
+            in CharacterPlatformComponent platformComponent
         )
         {
             // Debug stuff and enable/disable mechanic
@@ -95,12 +96,13 @@ namespace DCL.CharacterMotion.Systems
             Transform leftLegConstraint = avatarBase.LeftLegConstraint;
 
             // Enable flags: when disabled we lerp the IK weight towards 0
-            bool isEnabled = rigidTransform.IsGrounded
-                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck)
-                             && !stunComponent.IsStunned
-                             && emoteComponent.CurrentEmoteReference == null;
+            bool disableByPlatform = platformComponent.IsMovingPlatform;
 
-            // && !emotes?
+            bool isEnabled = rigidTransform.IsGrounded
+                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck) // disable IK while stuck or sliding
+                             && !stunComponent.IsStunned // disable IK while stunned
+                             && emoteComponent.CurrentEmoteReference == null // disable IK while doing an emote
+                             && !disableByPlatform; // disable IK on moving platforms
 
             // First: Raycast down from right/left constraints and update IK targets
             ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt, settings.FeetIKVerticalAngleLimits, settings.FeetIKTwistAngleLimits);

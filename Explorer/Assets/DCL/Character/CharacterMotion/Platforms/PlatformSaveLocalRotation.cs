@@ -10,7 +10,7 @@ namespace DCL.CharacterMotion.Platforms
         public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 forward)
         {
             if (platformComponent.CurrentPlatform != null)
-                platformComponent.LastRotation =
+                platformComponent.LastAvatarRelativeRotation =
                     platformComponent.CurrentPlatform.transform.InverseTransformDirection(forward);
         }
     }

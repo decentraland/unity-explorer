@@ -35,15 +35,17 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         private readonly IComponentPoolsRegistry poolRegistry;
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly ISceneData sceneData;
+        private readonly EntityEventBuffer<PrimitiveMeshRendererComponent> changedMeshes;
 
         private readonly Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases;
 
         public InstantiatePrimitiveRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry,
-            IPerformanceBudget instantiationFrameTimeBudget, ISceneData sceneData, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh> setupMeshCases = null) : base(world)
+            IPerformanceBudget instantiationFrameTimeBudget, ISceneData sceneData, EntityEventBuffer<PrimitiveMeshRendererComponent> changedMeshes, Dictionary<PBMeshRenderer.MeshOneofCase, ISetupMesh>? setupMeshCases = null) : base(world)
         {
             this.setupMeshCases = setupMeshCases ?? SETUP_MESH_LOGIC;
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.sceneData = sceneData;
+            this.changedMeshes = changedMeshes;
             poolRegistry = poolsRegistry;
 
             rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
@@ -68,7 +70,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
             MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
-            Instantiate(setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
+            Instantiate(entity, setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
             World.Add(entity, meshRendererComponent);
         }
 
@@ -94,7 +96,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
             // The model has changed entirely, so we need to reinstall the renderer
             if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))
-                Instantiate(setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
+                Instantiate(entity, setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
                     ref transform);
             else
 
@@ -105,7 +107,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
         /// <summary>
         ///     It is either called when there is no mesh or mesh was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(ISetupMesh meshSetup, ref MeshRenderer meshRendererGo,
+        private void Instantiate(Entity entity, ISetupMesh meshSetup, ref MeshRenderer meshRendererGo,
             ref PrimitiveMeshRendererComponent rendererComponent,
             PBMeshRenderer sdkComponent, ref TransformComponent transformComponent)
         {
@@ -123,6 +125,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             rendererTransform.ResetLocalTRS();
 
             rendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes);
+
+            changedMeshes.Add(entity, rendererComponent);
         }
     }
 }
