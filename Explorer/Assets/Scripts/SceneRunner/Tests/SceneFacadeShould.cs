@@ -239,11 +239,11 @@ namespace SceneRunner.Tests
                 sceneRuntime.Dispose();
 
                 // World facade is not mockable
-                sceneFacade.crdtProtocol.Dispose();
-                sceneFacade.outgoingCrtdMessagesProvider.Dispose();
-                sceneFacade.crdtWorldSynchronizer.Dispose();
-                sceneFacade.instancePoolsProvider.Dispose();
-                sceneFacade.crdtMemoryAllocator.Dispose();
+                sceneFacade.dependencies.CRDTProtocol.Dispose();
+                sceneFacade.dependencies.OutgoingCRDTMessagesProvider.Dispose();
+                sceneFacade.dependencies.CRDTWorldSynchronizer.Dispose();
+                sceneFacade.dependencies.PoolsProvider.Dispose();
+                sceneFacade.dependencies.CRDTMemoryAllocator.Dispose();
             });
         }
     }

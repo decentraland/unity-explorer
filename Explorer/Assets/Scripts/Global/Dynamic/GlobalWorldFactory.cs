@@ -8,8 +8,6 @@ using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -31,14 +29,11 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using SceneRunner;
-using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using SystemGroups.Visualiser;
-using UnityEngine;
 using Utility;
-using Utility.Multithreading;
 
 namespace Global.Dynamic
 {
@@ -61,15 +56,13 @@ namespace Global.Dynamic
         private readonly StaticSettings staticSettings;
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
-        private readonly IEmotesMessageBus emotesMessageBus;
         private readonly CharacterContainer characterContainer;
-        private readonly IMessagePipesHub messagePipesHub;
 
         public GlobalWorldFactory(in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus, IMessagePipesHub messagePipesHub)
+            IScenesCache scenesCache)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -87,8 +80,6 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
-            this.messagePipesHub = messagePipesHub;
-            this.emotesMessageBus = emotesMessageBus;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;

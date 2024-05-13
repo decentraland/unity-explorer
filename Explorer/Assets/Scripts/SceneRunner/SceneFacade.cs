@@ -15,7 +15,7 @@ namespace SceneRunner
     public class SceneFacade : ISceneFacade
     {
         internal readonly ISceneRuntime runtimeInstance;
-        private readonly SceneInstanceDependencies dependencies;
+        internal readonly SceneInstanceDependencies dependencies;
 
         public ISceneStateProvider SceneStateProvider => dependencies.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => dependencies.EcsExecutor;
