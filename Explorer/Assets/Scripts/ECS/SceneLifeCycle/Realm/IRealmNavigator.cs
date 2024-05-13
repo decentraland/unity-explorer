@@ -19,7 +19,7 @@ namespace ECS.SceneLifeCycle.Realm
         public const string STREAM_WORLD_URL = "https://sdk-team-cdn.decentraland.org/ipfs/streaming-world-main";
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
-        
+
         URLDomain CurrentRealm { get; }
 
         UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
@@ -32,6 +32,6 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask SwitchMiscVisibilityAsync();
 
-        event Action<bool> OnRealmChangedToGenesis;
+        event Action<bool> RealmChangedToGenesis;
     }
 }

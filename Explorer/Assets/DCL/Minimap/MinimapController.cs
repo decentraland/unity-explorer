@@ -91,7 +91,7 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
             SetWorldMode(realmData.ScenesAreFixed);
-            realmNavigator.OnRealmChangedToGenesis += OnRealmChangedToGenesis;
+            realmNavigator.RealmChangedToGenesis += OnRealmChangedToGenesis;
         }
 
         private void ExpandMinimap()
@@ -221,7 +221,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
-            realmNavigator.OnRealmChangedToGenesis -= OnRealmChangedToGenesis;
+            realmNavigator.RealmChangedToGenesis -= OnRealmChangedToGenesis;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
