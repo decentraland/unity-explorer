@@ -2,6 +2,7 @@
 using DCL.Roads.Components;
 using DCL.Roads.Systems;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.TestSuite;
 using NSubstitute;
@@ -18,7 +19,8 @@ namespace DCL.Roads.Tests
         public void Setup()
         {
             roadAssetPool =  Substitute.For<IRoadAssetPool>();
-            system = new UnloadRoadSystem(world, roadAssetPool);
+            var scenesCache = Substitute.For<IScenesCache>();
+            system = new UnloadRoadSystem(world, roadAssetPool, scenesCache);
         }
 
         [Test]

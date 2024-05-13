@@ -156,7 +156,7 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.CurrentLOD.LodKey.Level == 0)
             {
-                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
                 LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
             sceneLODInfo.IsDirty = false;
