@@ -45,10 +45,10 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
         private readonly IRealmNavigator realmNavigator;
-        
+
         private static readonly int EXPAND = Animator.StringToHash("Expand");
         private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
-        
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -74,7 +74,7 @@ namespace DCL.Minimap
             this.realmNavigator = realmNavigator;
         }
 
-        private void OnRealmChanged(bool isGenesis)
+        private void OnRealmChangedToGenesis(bool isGenesis)
         {
             SetWorldMode(!isGenesis);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
@@ -91,7 +91,7 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
             SetWorldMode(realmData.ScenesAreFixed);
-            realmNavigator.OnRealmChanged += OnRealmChanged;
+            realmNavigator.OnRealmChangedToGenesis += OnRealmChangedToGenesis;
         }
 
         private void ExpandMinimap()
@@ -221,7 +221,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
-            realmNavigator.OnRealmChanged -= OnRealmChanged;
+            realmNavigator.OnRealmChangedToGenesis -= OnRealmChangedToGenesis;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

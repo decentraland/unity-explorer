@@ -52,8 +52,10 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
-        public Action<bool> OnRealmChanged { get; set; }
-        
+        public event Action<bool> OnRealmChangedToGenesis;
+
+        public URLDomain CurrentRealm { get; private set; }
+
         public RealmNavigator(
             ILoadingScreen loadingScreen,
             IMapRenderer mapRenderer,
@@ -88,6 +90,12 @@ namespace Global.Dynamic
 
         public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default)
         {
+            if (realm == CurrentRealm || realm == realmController.GetRealm().Ipfs.CatalystBaseUrl)
+            {
+                CurrentRealm = realm;
+                return false;
+            }
+
             World world = globalWorldProxy.Object.EnsureNotNull();
 
             ct.ThrowIfCancellationRequested();
@@ -197,7 +205,7 @@ namespace Global.Dynamic
                     worldsTerrain.SwitchVisibility(false);
 
                     if (!genesisTerrain.IsTerrainGenerated)
-                        await genesisTerrain.GenerateTerrainAndShowAsync(processReport : landscapeLoadReport, cancellationToken: ct);
+                        await genesisTerrain.GenerateTerrainAndShowAsync(processReport: landscapeLoadReport, cancellationToken: ct);
                     else
                         await genesisTerrain.ShowAsync(landscapeLoadReport);
                 }
@@ -207,6 +215,16 @@ namespace Global.Dynamic
                     await GenerateWorldTerrainAsync((uint)realmController.GetRealm().GetHashCode(), landscapeLoadReport, ct);
                 }
             }
+        }
+
+        public async UniTask SwitchMiscVisibilityAsync()
+        {
+            bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
+
+            OnRealmChangedToGenesis?.Invoke(isGenesis);
+            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
+            await satelliteFloor.SwitchVisibilityAsync(isGenesis);
+            roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
 
         private async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)
@@ -229,6 +247,8 @@ namespace Global.Dynamic
         private async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
         {
             await realmController.SetRealmAsync(realm, ct);
+            CurrentRealm = realm;
+
             await SwitchMiscVisibilityAsync();
         }
 
@@ -242,9 +262,7 @@ namespace Global.Dynamic
             var decodedParcelsAmount = 0;
 
             foreach (AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise in promises)
-            {
                 decodedParcelsAmount += promise.Result!.Value.Asset!.metadata.scene.DecodedParcels.Count;
-            }
 
             using (var ownedParcels = new NativeParallelHashSet<int2>(decodedParcelsAmount, AllocatorManager.Persistent))
             {
@@ -267,16 +285,5 @@ namespace Global.Dynamic
 
             return fixedScenePointers.Promises!;
         }
-
-        public async UniTask SwitchMiscVisibilityAsync()
-        {
-            bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
-
-            OnRealmChanged?.Invoke(isGenesis);
-            mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
-            await satelliteFloor.SwitchVisibilityAsync(isGenesis);
-            roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
-        }
-
     }
 }
