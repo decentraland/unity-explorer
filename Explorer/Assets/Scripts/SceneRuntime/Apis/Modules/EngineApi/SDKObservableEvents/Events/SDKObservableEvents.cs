@@ -1,4 +1,5 @@
 using DCL.ECS7;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
         public static string Comms => "comms";
     }
 
-    public static class ObservableComponentIDs
+    public static class SDKObservableComponentIDs
     {
         public static readonly List<int> Ids = new List<int>()
         {
@@ -29,6 +30,19 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
             ComponentID.AVATAR_EQUIPPED_DATA,
             ComponentID.AVATAR_EMOTE_COMMAND
         };
+    }
+
+    public static class SDKObservableUtils
+    {
+        public static SDKObservableEvent GenerateSDKObservableEvent<T>(string eventId, T eventData) where T: struct =>
+            new()
+            {
+                generic = new SDKObservableEvent.Generic
+                {
+                    eventId = eventId,
+                    eventData = JsonConvert.SerializeObject(eventData),
+                },
+            };
     }
 
     public struct SDKObservableEvent

@@ -71,7 +71,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
         }
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             systemGroupsUpdateGate.Dispose();
         }

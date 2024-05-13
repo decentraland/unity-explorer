@@ -23,7 +23,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
             this.exceptionsHandler = exceptionsHandler;
         }
 
-        public virtual void Dispose()
+        public void Dispose()
         {
             // Dispose the last input buffer
             lastInput.ReleaseAndDispose();

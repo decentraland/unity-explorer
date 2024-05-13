@@ -236,8 +236,7 @@ namespace SceneRunner
                     outgoingCRDTMessagesProvider,
                     systemGroupThrottler,
                     exceptionsHandler,
-                    ecsMutexSync,
-                    crdtMemoryAllocator);
+                    ecsMutexSync);
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, instanceDependencies.SceneStateProvider);
 
                 sceneRuntime.RegisterSDKObservablesEngineApi((engineAPI as ISDKObservableEventsEngineApi)!, sdkCommsControllerAPI, exceptionsHandler);
