@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CRDT;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
@@ -53,10 +54,8 @@ namespace SceneRunner.ECSWorld
 
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
-            Entity sceneRootEntity = world.Create(new SceneRootComponent(), world);
-            var persistentEntities = new PersistentEntities(sceneRootEntity);
-
-            sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
+            var persistentEntities = new PersistentEntities();
+            Entity sceneRootEntity = CreateReservedEntities(world, sharedDependencies, ref persistentEntities);
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
@@ -96,6 +95,20 @@ namespace SceneRunner.ECSWorld
             SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems, isCurrentListeners);
+        }
+
+        private static Entity CreateReservedEntities(World world, ECSWorldInstanceSharedDependencies sharedDependencies, ref PersistentEntities persistentEntities)
+        {
+            Entity sceneRootEntity = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), new SceneRootComponent(), world);
+            Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+            Entity cameraEntity = world.Create(new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY));
+
+            persistentEntities.Setup(sceneRootEntity, playerEntity, cameraEntity);
+            sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
+            sharedDependencies.EntitiesMap[SpecialEntitiesID.PLAYER_ENTITY] = playerEntity;
+            sharedDependencies.EntitiesMap[SpecialEntitiesID.CAMERA_ENTITY] = cameraEntity;
+
+            return sceneRootEntity;
         }
     }
 }

@@ -5,13 +5,17 @@ namespace DCL.PluginSystem.World
     /// <summary>
     ///     Entities that are created in a world factory and never destroyed while the ECS World is alive
     /// </summary>
-    public readonly struct PersistentEntities
+    public struct PersistentEntities
     {
-        public readonly Entity SceneRoot;
+        public Entity Player { get; private set; }
+        public Entity Camera { get; private set; }
+        public Entity SceneRoot { get; private set; }
 
-        public PersistentEntities(Entity sceneRoot)
+        public void Setup(Entity sceneRootEntity, Entity playerEntity, Entity cameraEntity)
         {
-            SceneRoot = sceneRoot;
+            Camera = cameraEntity;
+            Player = playerEntity;
+            SceneRoot = sceneRootEntity;
         }
     }
 }

@@ -187,9 +187,7 @@ namespace Global
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
-                new TransformsPlugin(sharedDependencies),
-
-                //new CameraTransformPlugin(container.GlobalWorldProxy, componentsContainer.ComponentPoolsRegistry),
+                new TransformsPlugin(sharedDependencies, container.GlobalWorldProxy),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
