@@ -20,6 +20,7 @@ using DCL.PluginSystem.World.Dependencies;
 using DCL.Time;
 using DCL.Utilities.Extensions;
 using ECS;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using MVC;
 using SceneRunner.ECSWorld;
@@ -43,7 +44,7 @@ namespace SceneRunner
     ///     Dependencies that are unique for each instance of the scene,
     ///     this class itself contains the first stage of dependencies
     /// </summary>
-    internal class SceneInstanceDeps : IDisposable
+    public class SceneInstanceDeps : IDisposable
     {
         public readonly CRDTProtocol CRDTProtocol;
         public readonly IInstancePoolsProvider PoolsProvider;
@@ -86,16 +87,17 @@ namespace SceneRunner
             ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
             EntityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
             ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo, CRDTProtocol).EnsureNotNull();
+            var entityEventsBuilder = new EntityEventsBuilder();
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
-                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, ecsMutexSync, worldTimeProvider);
+                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMutexSync, worldTimeProvider);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             ECSWorldFacade.Initialize();
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
 
-            EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld, ecsMutexSync);
+            EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld);
             entityCollidersGlobalCache.AddSceneInfo(EntityCollidersCache, EcsExecutor);
 
             if (sceneData.IsSdk7()) // Create an instance of Scene Runtime on the thread pool

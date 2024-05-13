@@ -134,16 +134,10 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDeps(
-                sdkComponentsRegistry,
-                entityCollidersGlobalCache,
-                sceneData,
-                partitionProvider,
-                ecsWorldFactory,
-                entityFactory);
+            var deps = new SceneInstanceDeps(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory);
 
+            // Try create scene runtime
             SceneRuntimeImpl sceneRuntime;
-
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
             {
@@ -166,8 +160,7 @@ namespace SceneRunner
                 throw new OperationCanceledException();
             }
 
-            var runtimeDeps = new SceneInstanceDeps.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager,
-                globalWorldActions, realmData!, messagePipesHub);
+            var runtimeDeps = new SceneInstanceDeps.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
 
             sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
             sceneRuntime.RegisterAll(
@@ -186,19 +179,7 @@ namespace SceneRunner
                 runtimeDeps.SimpleFetchApi);
             sceneRuntime.ExecuteSceneJson();
 
-            return new SceneFacade(
-                sceneRuntime,
-                deps.ECSWorldFacade,
-                deps.CRDTProtocol,
-                deps.OutgoingCRDTMessagesProvider,
-                deps.CRDTWorldSynchronizer,
-                deps.PoolsProvider,
-                deps.CRDTMemoryAllocator,
-                deps.ExceptionsHandler,
-                deps.SceneStateProvider,
-                deps.EntityCollidersCache,
-                sceneData,
-                deps.EcsExecutor);
+            return new SceneFacade(sceneRuntime, deps, sceneData);
         }
     }
 }
