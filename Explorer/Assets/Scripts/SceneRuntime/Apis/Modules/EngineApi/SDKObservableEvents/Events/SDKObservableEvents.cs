@@ -21,7 +21,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
 
     public static class SDKObservableComponentIDs
     {
-        public static readonly List<int> Ids = new List<int>()
+        public static readonly HashSet<int> Ids = new HashSet<int>()
         {
             ComponentID.ENGINE_INFO,
             ComponentID.REALM_INFO,

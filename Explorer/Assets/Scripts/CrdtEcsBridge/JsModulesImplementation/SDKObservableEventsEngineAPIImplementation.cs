@@ -70,6 +70,63 @@ namespace CrdtEcsBridge.JsModulesImplementation
             DetectOtherObservableComponents(message);
         }
 
+        private void DetectPlayerIdentityDataComponent(CRDTMessage message)
+        {
+            if (message.ComponentId != ComponentID.PLAYER_IDENTITY_DATA) return;
+
+            switch (message.Type)
+            {
+                case CRDTMessageType.PUT_COMPONENT:
+                    // onEnterScene + playerConnected observables
+                    if (EnableSDKObservableMessagesDetection)
+                    {
+                        bool onEnterSceneSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene);
+                        bool onPlayerConnectedSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected);
+
+                        if (onEnterSceneSubscribed || onPlayerConnectedSubscribed)
+                            playerIdentityDataSerializer.DeserializeInto(playerIdentityData, message.Data.Memory.Span);
+
+                        if (onEnterSceneSubscribed)
+                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.EnterScene, new UserIdPayload
+                            {
+                                userId = playerIdentityData.Address,
+                            }));
+
+                        if (onPlayerConnectedSubscribed)
+                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerConnected, new UserIdPayload
+                            {
+                                userId = playerIdentityData.Address,
+                            }));
+                    }
+
+                    userIdEntitiesMap[message.EntityId] = playerIdentityData.Address;
+                    break;
+                case CRDTMessageType.DELETE_COMPONENT:
+                    if (userIdEntitiesMap.ContainsKey(message.EntityId)) // we may get more than 1 DELETE_COMPONENT of the same component
+                    {
+                        // onLeaveScene + playerDisconnected observables
+                        if (EnableSDKObservableMessagesDetection)
+                        {
+                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
+                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.LeaveScene, new UserIdPayload
+                                {
+                                    userId = userIdEntitiesMap[message.EntityId],
+                                }));
+
+                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
+                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
+                                {
+                                    userId = userIdEntitiesMap[message.EntityId],
+                                }));
+                        }
+
+                        userIdEntitiesMap.Remove(message.EntityId);
+                    }
+
+                    break;
+            }
+        }
+
         private void DetectOtherObservableComponents(CRDTMessage message)
         {
             switch (message.Type)
@@ -134,63 +191,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
                                 expressionId = avatarEmoteCommand.EmoteUrn,
                             }));
                         }
-
-                    break;
-            }
-        }
-
-        private void DetectPlayerIdentityDataComponent(CRDTMessage message)
-        {
-            if (message.ComponentId != ComponentID.PLAYER_IDENTITY_DATA) return;
-
-            switch (message.Type)
-            {
-                case CRDTMessageType.PUT_COMPONENT:
-                    // onEnterScene + playerConnected observables
-                    if (EnableSDKObservableMessagesDetection)
-                    {
-                        bool onEnterSceneSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene);
-                        bool onPlayerConnectedSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected);
-
-                        if (onEnterSceneSubscribed || onPlayerConnectedSubscribed)
-                            playerIdentityDataSerializer.DeserializeInto(playerIdentityData, message.Data.Memory.Span);
-
-                        if (onEnterSceneSubscribed)
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.EnterScene, new UserIdPayload
-                            {
-                                userId = playerIdentityData.Address,
-                            }));
-
-                        if (onPlayerConnectedSubscribed)
-                            SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerConnected, new UserIdPayload
-                            {
-                                userId = playerIdentityData.Address,
-                            }));
-                    }
-
-                    userIdEntitiesMap[message.EntityId] = playerIdentityData.Address;
-                    break;
-                case CRDTMessageType.DELETE_COMPONENT:
-                    if (userIdEntitiesMap.ContainsKey(message.EntityId)) // we may get more than 1 DELETE_COMPONENT of the same component
-                    {
-                        // onLeaveScene + playerDisconnected observables
-                        if (EnableSDKObservableMessagesDetection)
-                        {
-                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.LeaveScene, new UserIdPayload
-                                {
-                                    userId = userIdEntitiesMap[message.EntityId],
-                                }));
-
-                            if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
-                                SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
-                                {
-                                    userId = userIdEntitiesMap[message.EntityId],
-                                }));
-                        }
-
-                        userIdEntitiesMap.Remove(message.EntityId);
-                    }
 
                     break;
             }
