@@ -32,25 +32,25 @@ namespace SceneRunner
         internal readonly ISceneRuntime runtimeInstance;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
-        private readonly SceneInstanceDeps deps;
+        private readonly SceneInstanceDependencies dependencies;
 
         private int intervalMS;
 
-        public SceneFacade(ISceneRuntime runtimeInstance, SceneInstanceDeps deps, ISceneData sceneData)
+        public SceneFacade(ISceneRuntime runtimeInstance, SceneInstanceDependencies dependencies, ISceneData sceneData)
         {
             this.runtimeInstance = runtimeInstance;
-            this.deps = deps;
-            this.ecsWorldFacade = deps.ECSWorldFacade;
-            this.crdtProtocol = deps.CRDTProtocol;
-            this.outgoingCrtdMessagesProvider = deps.OutgoingCRDTMessagesProvider;
-            this.crdtWorldSynchronizer =  deps.CRDTWorldSynchronizer;
-            this.instancePoolsProvider =  deps.PoolsProvider;
-            this.crdtMemoryAllocator = deps.CRDTMemoryAllocator;
-            this.sceneExceptionsHandler = deps.ExceptionsHandler;
-            this.entityCollidersSceneCache = deps.EntityCollidersCache;
+            this.dependencies = dependencies;
+            this.ecsWorldFacade = dependencies.ECSWorldFacade;
+            this.crdtProtocol = dependencies.CRDTProtocol;
+            this.outgoingCrtdMessagesProvider = dependencies.OutgoingCRDTMessagesProvider;
+            this.crdtWorldSynchronizer =  dependencies.CRDTWorldSynchronizer;
+            this.instancePoolsProvider =  dependencies.PoolsProvider;
+            this.crdtMemoryAllocator = dependencies.CRDTMemoryAllocator;
+            this.sceneExceptionsHandler = dependencies.ExceptionsHandler;
+            this.entityCollidersSceneCache = dependencies.EntityCollidersCache;
             SceneData = sceneData;
-            EcsExecutor = deps.EcsExecutor;
-            SceneStateProvider = deps.SceneStateProvider;
+            EcsExecutor = dependencies.EcsExecutor;
+            SceneStateProvider = dependencies.SceneStateProvider;
         }
 
         public ISceneData SceneData { get; }
@@ -231,7 +231,7 @@ namespace SceneRunner
         private void DisposeInternal()
         {
             runtimeInstance.Dispose();
-            deps.Dispose();
+            dependencies.Dispose();
         }
     }
 }

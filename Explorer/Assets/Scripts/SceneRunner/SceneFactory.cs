@@ -134,7 +134,7 @@ namespace SceneRunner
 
         private async UniTask<ISceneFacade> CreateSceneAsync(ISceneData sceneData, IPartitionComponent partitionProvider, CancellationToken ct)
         {
-            var deps = new SceneInstanceDeps(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory);
+            var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory);
 
             // Try create scene runtime
             SceneRuntimeImpl sceneRuntime;
@@ -160,7 +160,7 @@ namespace SceneRunner
                 throw new OperationCanceledException();
             }
 
-            var runtimeDeps = new SceneInstanceDeps.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+            var runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
 
             sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
             sceneRuntime.RegisterAll(
