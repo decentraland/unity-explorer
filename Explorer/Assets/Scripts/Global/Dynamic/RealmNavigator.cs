@@ -53,7 +53,7 @@ namespace Global.Dynamic
         private readonly CameraSamplingData cameraSamplingData;
 
         public Action<bool> OnRealmChanged { get; set; }
-        
+
         public RealmNavigator(
             ILoadingScreen loadingScreen,
             IMapRenderer mapRenderer,

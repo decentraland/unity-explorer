@@ -43,6 +43,5 @@ namespace ECS.SceneLifeCycle.Systems
             visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);
         }
-
     }
 }

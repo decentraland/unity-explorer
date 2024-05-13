@@ -211,20 +211,13 @@ namespace SceneRunner.Tests
             const int DURATION = 1000;
 
             ISceneRuntime sceneRuntime = Substitute.For<ISceneRuntime>();
+            var deps = new SceneInstanceDeps(Substitute.For<ISDKComponentsRegistry>(), Substitute.For<IEntityCollidersGlobalCache>(),
+                Substitute.For<ISceneData>(), Substitute.For<IPartitionComponent>(), ecsWorldFactory, Substitute.For<ISceneEntityFactory>());
 
             var sceneFacade = new SceneFacade(
                 sceneRuntime,
-                TestSystemsWorld.Create(),
-                Substitute.For<ICRDTProtocol>(),
-                Substitute.For<IOutgoingCRDTMessagesProvider>(),
-                Substitute.For<ICRDTWorldSynchronizer>(),
-                Substitute.For<IInstancePoolsProvider>(),
-                Substitute.For<ICRDTMemoryAllocator>(),
-                Substitute.For<ISceneExceptionsHandler>(),
-                new SceneStateProvider(),
-                Substitute.For<IEntityCollidersSceneCache>(),
-                Substitute.For<ISceneData>(),
-                new SceneEcsExecutor()
+                deps,
+                Substitute.For<ISceneData>()
             );
 
             await UniTask.SwitchToThreadPool();
