@@ -33,6 +33,7 @@ namespace DCL.Audio
 
         public void Initialize()
         {
+            mainCancellationTokenSource = new CancellationTokenSource();
             audioSourcePool = new GameObjectPool<AudioSource>(transform, OnCreateAudioSource);
         }
 
