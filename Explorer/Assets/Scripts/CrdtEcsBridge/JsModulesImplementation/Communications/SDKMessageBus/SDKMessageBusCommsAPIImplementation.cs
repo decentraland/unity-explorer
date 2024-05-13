@@ -1,4 +1,3 @@
-using CRDT.Memory;
 using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
@@ -11,11 +10,11 @@ using System.Text;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus
 {
-    public class SDKMessageBusCommsAPIImplementation : CommunicationsControllerAPIImplementation, ISDKMessageBusCommsControllerAPI
+    public class SDKMessageBusCommsAPIImplementation : CommunicationsControllerAPIImplementationBase, ISDKMessageBusCommsControllerAPI
     {
         public List<CommsPayload> SceneCommsMessages { get; } = new List<CommsPayload>();
 
-        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ICRDTMemoryAllocator crdtMemoryAllocator, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, crdtMemoryAllocator, sceneStateProvider)
+        public SDKMessageBusCommsAPIImplementation(ISceneData sceneData, ICommunicationControllerHub messagePipesHub, IJsOperations jsOperations, ISceneStateProvider sceneStateProvider) : base(sceneData, messagePipesHub, jsOperations, sceneStateProvider)
         {
         }
 
