@@ -56,7 +56,7 @@ namespace ECS.Unity.Transforms.Systems
             if (!globalWorldProxy.Configured) return;
             ref CameraComponent camera = ref globalWorldProxy.Object!.Get<CameraComponent>(cameraEntityProxy);
             Transform cameraTransform = camera.Camera.transform;
-            transformComponent.SetTransform(cameraTransform.position, cameraTransform.rotation, cameraTransform.localScale);
+            transformComponent.SetWorldTransform(cameraTransform.position, cameraTransform.rotation, cameraTransform.localScale);
         }
 
         [Query]
@@ -66,7 +66,7 @@ namespace ECS.Unity.Transforms.Systems
             if (!globalWorldProxy.Configured) return;
             ref CharacterTransform characterTransform = ref globalWorldProxy.Object!.Get<CharacterTransform>(playerEntityProxy);
             Transform transform = characterTransform.Transform;
-            transformComponent.SetTransform(transform.position, transform.rotation, transform.localScale);
+            transformComponent.SetWorldTransform(transform.position, transform.rotation, transform.localScale);
         }
 
         public void FinalizeComponents(in Query query)
