@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5269277411466337069}
   - component: {fileID: 9041747563325808690}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CliifCornerCollider1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -63,7 +63,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3061367277733943166}
   - component: {fileID: 826257924585515266}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CliifCornerCollider2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -116,7 +116,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8326474700448206459}
   - component: {fileID: 3490759420474402742}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: CliifCornerCollider3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -207,9 +207,25 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -6770208465073641923, guid: f75ba278d35f95c46900da753beb0801, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}
       propertyPath: m_Name
       value: CliffCorner01
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f75ba278d35f95c46900da753beb0801, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 2072665671247181702, guid: f75ba278d35f95c46900da753beb0801, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 3559932644224978066, guid: f75ba278d35f95c46900da753beb0801, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

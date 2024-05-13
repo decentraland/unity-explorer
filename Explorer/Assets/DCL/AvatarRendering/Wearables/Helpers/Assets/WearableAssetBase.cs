@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
+using Utility.Primitives;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -67,7 +68,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public RendererInfo(SkinnedMeshRenderer skinnedMeshRenderer, Material material)
             {
                 SkinnedMeshRenderer = skinnedMeshRenderer;
-                Material = material;
+                Material = material != null ? material : DefaultMaterial.New();
             }
         }
     }
