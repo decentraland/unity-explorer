@@ -26,6 +26,7 @@ namespace DCL.CharacterMotion.Systems
     [UpdateBefore(typeof(CameraGroup))]
     public partial class InterpolateCharacterSystem : BaseUnityLoopSystem
     {
+        private const float ALMOST_ZERO = 0.00001f;
         private bool playerHasJustTeleported;
 
         private InterpolateCharacterSystem(World world) : base(world) { }
@@ -99,7 +100,7 @@ namespace DCL.CharacterMotion.Systems
             PlatformSaveLocalPosition.Execute(ref platformComponent, transform.position);
 
             // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
-            if (rigidTransform.IsOnASteepSlope && Mathf.Approximately(deltaMovement.sqrMagnitude, 0f))
+            if (rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= ALMOST_ZERO)
                 rigidTransform.IsStuck = true;
             else
                 rigidTransform.IsStuck = false;
