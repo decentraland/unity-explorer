@@ -8,6 +8,7 @@ using DCL.Multiplayer.Connections.Systems.Debug;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
+using System;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
@@ -38,7 +39,7 @@ namespace DCL.Multiplayer.Connections.Systems
                 debugBuilder
             );
 
-            var infoWidget = debugBuilder.AddWidget("Room: Info")!;
+            var infoWidget = debugBuilder.AddWidget("Room: Info");
 
             var avatarsRoomDisplay = new AvatarsRoomDisplay(
                 entityParticipantTable,
@@ -50,11 +51,14 @@ namespace DCL.Multiplayer.Connections.Systems
                 infoWidget
             );
 
-            roomDisplay = new SeveralRoomDisplay(
-                gateKeeperRoomDisplay,
-                archipelagoRoomDisplay,
-                avatarsRoomDisplay,
-                remotePosesRoomDisplay
+            roomDisplay = new DebounceRoomDisplay(
+                new SeveralRoomDisplay(
+                    gateKeeperRoomDisplay,
+                    archipelagoRoomDisplay,
+                    avatarsRoomDisplay,
+                    remotePosesRoomDisplay
+                ),
+                TimeSpan.FromSeconds(1)
             );
         }
 
