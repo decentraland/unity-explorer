@@ -53,7 +53,7 @@ namespace ECS.StreamableLoading.Common
         /// <summary>
         ///     Returns the asset if the loading is finished
         /// </summary>
-        public bool TryGetResult(World world, out StreamableLoadingResult<TAsset> result)
+        public  bool TryGetResult(World world, out StreamableLoadingResult<TAsset> result)
         {
             if (Result.HasValue)
             {

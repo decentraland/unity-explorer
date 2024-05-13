@@ -28,6 +28,7 @@ using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using Microsoft.ClearScript;
 using MVC;
@@ -168,14 +169,16 @@ namespace SceneRunner
             var sceneStateProvider = new SceneStateProvider();
             SceneExceptionsHandler exceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider, sceneData.SceneShortInfo, crdtProtocol).EnsureNotNull();
             var worldTimeProvider = new WorldTimeProvider();
+            var entityEventsBuilder = new EntityEventsBuilder();
 
             /* Pass dependencies here if they are needed by the systems */
-            var instanceDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, ecsMutexSync, worldTimeProvider);
+            var instanceDependencies = new ECSWorldInstanceSharedDependencies(
+                sceneData, partitionProvider, ecsToCrdtWriter, entitiesMap, exceptionsHandler, entityCollidersCache, sceneStateProvider, entityEventsBuilder, ecsMutexSync, worldTimeProvider);
 
             ECSWorldFacade ecsWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(instanceDependencies, systemGroupThrottler, sceneData));
             ecsWorldFacade.Initialize();
 
-            var ecsExecutor = new SceneEcsExecutor(ecsWorldFacade.EcsWorld, ecsMutexSync);
+            var ecsExecutor = new SceneEcsExecutor(ecsWorldFacade.EcsWorld);
             entityCollidersGlobalCache.AddSceneInfo(entityCollidersCache, ecsExecutor);
 
             URLAddress sceneCodeUrl;

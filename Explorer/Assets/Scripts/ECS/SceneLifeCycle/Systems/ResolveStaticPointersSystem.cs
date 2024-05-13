@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.CharacterCamera;
 using DCL.Ipfs;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
@@ -23,10 +24,19 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateAfter(typeof(LoadStaticPointersSystem))]
     public partial class ResolveStaticPointersSystem : BaseUnityLoopSystem
     {
+        private SingleInstanceEntity cameraEntity;
+
         internal ResolveStaticPointersSystem(World world) : base(world) { }
+
+        public override void Initialize()
+        {
+            cameraEntity = World.CacheCamera();
+        }
 
         protected override void Update(float t)
         {
+            if (!World.Has<CameraSamplingData>(cameraEntity)) return;
+
             ForEachRealmQuery(World);
         }
 

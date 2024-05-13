@@ -8,17 +8,14 @@ namespace SceneRunner.Scene
     /// </summary>
     public readonly struct SceneEcsExecutor
     {
-        public SceneEcsExecutor(World world, MutexSync sync)
+        public SceneEcsExecutor(World world)
         {
             World = world;
-            Sync = sync;
         }
 
         /// <summary>
         ///     World must be accessed via Sync to keep state in sync with the state of the scene that is being updated from the background thread
         /// </summary>
         public readonly World World;
-
-        public readonly MutexSync Sync;
     }
 }

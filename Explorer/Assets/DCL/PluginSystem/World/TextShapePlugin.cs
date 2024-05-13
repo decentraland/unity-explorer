@@ -8,6 +8,7 @@ using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
 using DCL.SDKComponents.TextShape.Fonts.Settings;
 using DCL.SDKComponents.TextShape.System;
+using ECS.Abstract;
 using ECS.LifeCycle;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,11 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPool<TextMeshPro> textMeshProPool;
 
         private IFontsStorage fontsStorage;
+
+        static TextShapePlugin()
+        {
+            EntityEventBuffer<TextShapeComponent>.Register(1000);
+        }
 
         public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, CacheCleaner cacheCleaner, IComponentPoolsRegistry componentPoolsRegistry)
         {
@@ -50,9 +56,11 @@ namespace DCL.PluginSystem.World
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider);
-            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock);
-            VisibilityTextShapeSystem.InjectToWorld(ref builder);
+            var buffer = sharedDependencies.EntityEventsBuilder.Rent<TextShapeComponent>();
+
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider, buffer);
+            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer);
+            VisibilityTextShapeSystem.InjectToWorld(ref builder, buffer);
 
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeComponent>(ref builder, componentPoolsRegistry);
         }
