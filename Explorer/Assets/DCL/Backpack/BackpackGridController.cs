@@ -42,11 +42,13 @@ namespace DCL.Backpack
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
+        private readonly BackpackEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IReadOnlyEquippedWearables equippedWearables;
+        private readonly BackpackSortController backpackSortController;
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
         private readonly List<(string, string)> requestParameters;
@@ -82,26 +84,40 @@ namespace DCL.Backpack
         {
             this.view = view;
             this.commandBus = commandBus;
+            this.eventBus = eventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.equippedWearables = equippedWearables;
+            this.backpackSortController = backpackSortController;
             this.world = world;
             this.thumbnailProvider = thumbnailProvider;
             this.gridItemsPool = gridItemsPool;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
+            pageSelectorController.OnSetPage += RequestPage;
+            requestParameters = new List<(string, string)>();
+            new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
+        }
+
+        public void Activate()
+        {
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
-            pageSelectorController.OnSetPage += RequestPage;
-            requestParameters = new List<(string, string)>();
-            new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
+        }
+
+        public void Deactivate()
+        {
+            eventBus.FilterCategoryEvent -= OnFilterCategory;
+            eventBus.SearchEvent -= OnSearch;
+            backpackSortController.OnSortChanged -= OnSortChanged;
+            backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
         }
 
         public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)

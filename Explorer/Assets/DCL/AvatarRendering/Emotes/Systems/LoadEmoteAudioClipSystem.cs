@@ -22,7 +22,7 @@ namespace DCL.AvatarRendering.Emotes
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadEmoteAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
+        internal LoadEmoteAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }

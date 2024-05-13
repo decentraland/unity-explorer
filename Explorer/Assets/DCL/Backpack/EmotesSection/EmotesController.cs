@@ -12,12 +12,15 @@ namespace DCL.Backpack
         private readonly RectTransform rectTransform;
         private readonly EmotesView view;
         private readonly BackpackEmoteSlotsController slotsController;
+        private readonly BackpackEmoteGridController gridController;
 
         public EmotesController(EmotesView view,
-            BackpackEmoteSlotsController slotsController)
+            BackpackEmoteSlotsController slotsController,
+            BackpackEmoteGridController gridController)
         {
             this.view = view;
             this.slotsController = slotsController;
+            this.gridController = gridController;
 
             rectTransform = view.GetComponent<RectTransform>();
         }
@@ -30,11 +33,13 @@ namespace DCL.Backpack
         public void Activate()
         {
             view.gameObject.SetActive(true);
+            gridController.Activate();
         }
 
         public void Deactivate()
         {
             view.gameObject.SetActive(false);
+            gridController.Deactivate();
         }
 
         public void Animate(int triggerId)

@@ -14,6 +14,6 @@ namespace ECS.StreamableLoading.AssetBundles
     [LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadGlobalAssetBundleSystem : LoadAssetBundleSystem
     {
-        internal LoadGlobalAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, MutexSync mutexSync, AssetBundleLoadingMutex loadingMutex) : base(world, cache, mutexSync, loadingMutex) { }
+        internal LoadGlobalAssetBundleSystem(World world, IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache, AssetBundleLoadingMutex loadingMutex) : base(world, cache, loadingMutex) { }
     }
 }

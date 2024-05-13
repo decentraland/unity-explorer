@@ -27,8 +27,8 @@ namespace DCL.CharacterMotion.Platforms
                 if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
                 {
                     platformComponent.CurrentPlatform = hitInfo.collider.transform;
-                    platformComponent.LastPosition = platformComponent.CurrentPlatform.InverseTransformPoint(transform.position);
-                    platformComponent.LastRotation = platformComponent.CurrentPlatform.InverseTransformDirection(transform.forward);
+                    platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.InverseTransformPoint(transform.position);
+                    platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.InverseTransformDirection(transform.forward);
                 }
             }
             else
