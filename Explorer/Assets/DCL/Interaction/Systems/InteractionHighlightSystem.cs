@@ -20,7 +20,7 @@ namespace DCL.Interaction.Systems
     /// <summary>
     ///     Uses the HighlightComponent singleton component to highlight game objects
     /// </summary>
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
     public partial class InteractionHighlightSystem : BaseUnityLoopSystem
     {

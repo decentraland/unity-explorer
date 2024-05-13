@@ -100,7 +100,7 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            RealmEntity = world.Create(realmComp, ProcessesScenePointers.Create());
+            RealmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
 
             if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, RealmEntity);
@@ -169,7 +169,6 @@ namespace Global.Dynamic
                 World world = globalWorld.EcsWorld;
                 FindLoadedScenes();
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
-                world.Query(new QueryDescription().WithAll<ProcessesScenePointers>(), (ref ProcessesScenePointers scenePointers) => scenePointers.Value.Dispose());
 
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.Dispose();

@@ -10,17 +10,14 @@ namespace DCL.Interaction.PlayerOriginated.Utility
     {
         public static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResult raycastResult, in GlobalColliderEntityInfo previousEntityInfo)
         {
-            using (previousEntityInfo.EcsExecutor.Sync.GetScope())
-            {
-                World world = previousEntityInfo.EcsExecutor.World;
+            World world = previousEntityInfo.EcsExecutor.World;
 
-                // Entity died or PointerEvents component was removed, nothing to do
-                if (!previousEntityInfo.ColliderEntityInfo.EntityReference.IsAlive(world) ||
-                    !world.TryGet(previousEntityInfo.ColliderEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
-                    return;
+            // Entity died or PointerEvents component was removed, nothing to do
+            if (!previousEntityInfo.ColliderEntityInfo.EntityReference.IsAlive(world) ||
+                !world.TryGet(previousEntityInfo.ColliderEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
+                return;
 
-                TryAppendHoverInput(ref pbPointerEvents, in raycastResult, PointerEventType.PetHoverLeave);
-            }
+            TryAppendHoverInput(ref pbPointerEvents, in raycastResult, PointerEventType.PetHoverLeave);
         }
 
         private static void TryAppendHoverInput(ref PBPointerEvents pbPointerEvents, in PlayerOriginRaycastResult raycastResult, PointerEventType type)
