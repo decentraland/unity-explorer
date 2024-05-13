@@ -44,7 +44,8 @@ namespace DCL.Rendering.Highlight
         private Shader m_ShaderHighlightInputBlur;
         private RTHandle highlightRTHandle_Colour;
         private RTHandle highlightRTHandle_Depth;
-        private RTHandle highlightRTHandle_Colour_Blur;
+        private RTHandle highlightRTHandle_Colour_Blur_Ping;
+        private RTHandle highlightRTHandle_Colour_Blur_Pong;
         private RenderTextureDescriptor highlightRTDescriptor_Colour;
         private RenderTextureDescriptor highlightRTDescriptor_Depth;
         private RenderTextureDescriptor highlightRTDescriptor_Colour_Blur;
@@ -165,7 +166,7 @@ namespace DCL.Rendering.Highlight
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Depth, highlightRTDescriptor_Depth, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_DepthTexture");
                 }
 
-                // Highlight - Blur Texture
+                // Highlight - Blur Texture (PING & PONG)
                 {
                     var desc = new RenderTextureDescriptor();
                     desc.autoGenerateMips = false;
@@ -189,10 +190,14 @@ namespace DCL.Rendering.Highlight
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Colour_Blur = desc;
-                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Ping, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Ping");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Pong");
                 }
 
-                highlightInputRenderPass.Setup(highlightInputMaterial, highlightInputBlurMaterial, highlightRTHandle_Colour, highlightRTDescriptor_Colour, highlightRTHandle_Depth, highlightRTDescriptor_Depth, highlightRTHandle_Colour_Blur, highlightRTDescriptor_Colour_Blur);
+                highlightInputRenderPass.Setup(highlightInputMaterial, highlightInputBlurMaterial,
+                                            highlightRTHandle_Colour, highlightRTDescriptor_Colour,
+                                            highlightRTHandle_Depth, highlightRTDescriptor_Depth,
+                                            highlightRTHandle_Colour_Blur_Ping, highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur);
             }
 
             // Highlight Output Material, Shader, RenderTarget and pass setups
@@ -216,7 +221,7 @@ namespace DCL.Rendering.Highlight
                     }
                 }
 
-                highlightOutputRenderPass.Setup(m_Settings, highlightOutputMaterial, highlightRTHandle_Colour_Blur, highlightRTDescriptor_Colour_Blur);
+                highlightOutputRenderPass.Setup(m_Settings, highlightOutputMaterial, highlightRTHandle_Colour, highlightRTDescriptor_Colour);
             }
         }
 

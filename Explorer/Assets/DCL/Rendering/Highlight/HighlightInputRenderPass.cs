@@ -32,7 +32,8 @@ namespace DCL.Rendering.Highlight
             private Material highlightInputBlurMaterial;
             private RTHandle highLightRTHandle_Colour;
             private RTHandle highLightRTHandle_Depth;
-            private RTHandle highLightRTHandle_Colour_Blur;
+            private RTHandle highLightRTHandle_Colour_Blur_Ping;
+            private RTHandle highLightRTHandle_Colour_Blur_Pong;
             private RenderTextureDescriptor highLightRTDescriptor_Colour;
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
             private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
@@ -53,7 +54,8 @@ namespace DCL.Rendering.Highlight
                 RenderTextureDescriptor _highLightRTDescriptor_Colour,
                 RTHandle _highLightRTHandle_Depth,
                 RenderTextureDescriptor _highLightRTDescriptor_Depth,
-                RTHandle _highLightRTHandle_Colour_Blur,
+                RTHandle _highLightRTHandle_Colour_Blur_Ping,
+                RTHandle _highLightRTHandle_Colour_Blur_Pong,
                 RenderTextureDescriptor _highLightRTDescriptor_Colour_Blur)
             {
                 highLightInputMaterial = _highLightInputMaterial;
@@ -62,7 +64,8 @@ namespace DCL.Rendering.Highlight
                 highLightRTDescriptor_Colour = _highLightRTDescriptor_Colour;
                 highLightRTHandle_Depth = _highLightRTHandle_Depth;
                 highLightRTDescriptor_Depth = _highLightRTDescriptor_Depth;
-                highLightRTHandle_Colour_Blur = _highLightRTHandle_Colour_Blur;
+                highLightRTHandle_Colour_Blur_Ping = _highLightRTHandle_Colour_Blur_Ping;
+                highLightRTHandle_Colour_Blur_Pong = _highLightRTHandle_Colour_Blur_Pong;
                 highLightRTDescriptor_Colour_Blur = _highLightRTDescriptor_Colour_Blur;
             }
 
@@ -82,20 +85,14 @@ namespace DCL.Rendering.Highlight
                     return;
 
                 ExecuteCommand(context, renderingData, false, "_HighlightInputPass_Additive", PROFILER_TAG_ADDITIVE);
+
+                ExecuteCommandCopy(context, renderingData, highLightRTHandle_Colour, highLightRTHandle_Colour_Blur_Ping, "_copyBuffer0", "firstCopy");
+                uint nBlurCount = 4;
+                int nBlurRT = ExecuteCommandBlur(context, renderingData, nBlurCount, "_HighlightInputPass_Blur", PROFILER_TAG_BLUR);
+
+                ExecuteCommandCopy(context, renderingData, (nBlurRT % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, highLightRTHandle_Colour, "_copyBuffer1", "secondCopy");
+
                 ExecuteCommand(context, renderingData, true, "_HighlightInputPass_Subtractive", PROFILER_TAG_SUBTRACTIVE);
-
-                CommandBuffer cmd_blur = CommandBufferPool.Get("_HighlightInputPass_Blur");
-
-                using (new ProfilingScope(null, new ProfilingSampler(PROFILER_TAG_BLUR)))
-                {
-                    cmd_blur.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour);
-                    cmd_blur.SetRenderTarget(highLightRTHandle_Colour_Blur, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
-                    CoreUtils.DrawFullScreen(cmd_blur, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Horizontal);
-                    CoreUtils.DrawFullScreen(cmd_blur, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Vertical);
-
-                    context.ExecuteCommandBuffer(cmd_blur);
-                    CommandBufferPool.Release(cmd_blur);
-                }
             }
 
             private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, string profilerTag)
@@ -145,6 +142,41 @@ namespace DCL.Rendering.Highlight
 
                     context.ExecuteCommandBuffer(commandBuffer);
                     CommandBufferPool.Release(commandBuffer);
+                }
+            }
+
+            private int ExecuteCommandBlur(ScriptableRenderContext context, RenderingData renderingData, uint _nBlurCount, string bufferName, string profilerTag)
+            {
+                int nOutputTexture = -1;
+                if (_nBlurCount == 0)
+                    return nOutputTexture;
+
+                CommandBuffer cmd = CommandBufferPool.Get(bufferName);
+                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                {
+                    for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
+                    {
+                        ++nOutputTexture;
+                        cmd.SetGlobalTexture("_HighlightTexture", (nBlurPass % 2) < 1 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong);
+                        cmd.SetRenderTarget((nBlurPass % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store);
+                        CoreUtils.DrawFullScreen(cmd, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Horizontal);
+                        CoreUtils.DrawFullScreen(cmd, highlightInputBlurMaterial, properties: null, (int)ShaderPasses_Blur.HighlightInput_Blur_Vertical);
+                    }
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
+                }
+
+                return nOutputTexture;
+            }
+
+            private void ExecuteCommandCopy(ScriptableRenderContext context, RenderingData renderingData, RTHandle sourceRT, RTHandle destinationRT, string bufferName, string profilerTag)
+            {
+                CommandBuffer cmd = CommandBufferPool.Get(bufferName);
+                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                {
+                    Blit(cmd, sourceRT, destinationRT);
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
                 }
             }
 
