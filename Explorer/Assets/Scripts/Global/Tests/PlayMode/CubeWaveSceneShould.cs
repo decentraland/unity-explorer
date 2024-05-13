@@ -108,7 +108,7 @@ namespace Global.Tests
 
             // Check ECS world
 
-            World world = sceneFacadeImpl.dependencies.ECSWorldFacade.EcsWorld;
+            World world = sceneFacadeImpl.ecsWorldFacade.EcsWorld;
 
             QueryDescription cubes = new QueryDescription().WithAll<SDKTransform, PBMeshRenderer>(); // 256 cubes
             Assert.AreEqual(256, world.CountEntities(in cubes));

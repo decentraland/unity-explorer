@@ -1,7 +1,15 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CRDT.Memory;
+using CRDT.Protocol;
+using CrdtEcsBridge.OutgoingMessages;
+using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.WorldSynchronizer;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Interaction.Utility;
 using Microsoft.ClearScript;
+using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
+using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using System;
 using System.Diagnostics;
@@ -15,35 +23,64 @@ namespace SceneRunner
     public class SceneFacade : ISceneFacade
     {
         internal readonly ISceneRuntime runtimeInstance;
-        internal readonly SceneInstanceDependencies dependencies;
+        internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
+        internal readonly ICRDTProtocol crdtProtocol;
+        internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
+        internal readonly ECSWorldFacade ecsWorldFacade;
+        internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
+        internal readonly IInstancePoolsProvider instancePoolsProvider;
+        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
+        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
-        public ISceneStateProvider SceneStateProvider => dependencies.SceneStateProvider;
-        public SceneEcsExecutor EcsExecutor => dependencies.EcsExecutor;
+        public ISceneStateProvider SceneStateProvider { get; }
+        public SceneEcsExecutor EcsExecutor { get; }
+
+        public ISceneData SceneData { get; }
+
+        public bool IsEmpty { get; } = false;
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        public ISceneData SceneData { get; }
-        public bool IsEmpty { get; } = false;
-
         private int intervalMS;
 
-        public SceneFacade(ISceneRuntime runtimeInstance, SceneInstanceDependencies dependencies, ISceneData sceneData)
+        public SceneFacade(
+            ISceneRuntime runtimeInstance,
+            ECSWorldFacade ecsWorldFacade,
+            ICRDTProtocol crdtProtocol,
+            IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
+            ICRDTWorldSynchronizer crdtWorldSynchronizer,
+            IInstancePoolsProvider instancePoolsProvider,
+            ICRDTMemoryAllocator crdtMemoryAllocator,
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            ISceneStateProvider sceneStateProvider,
+            IEntityCollidersSceneCache entityCollidersSceneCache,
+            ISceneData sceneData,
+            SceneEcsExecutor ecsExecutor)
         {
             this.runtimeInstance = runtimeInstance;
-            this.dependencies = dependencies;
+            this.ecsWorldFacade = ecsWorldFacade;
+            this.crdtProtocol = crdtProtocol;
+            this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
+            this.crdtWorldSynchronizer = crdtWorldSynchronizer;
+            this.instancePoolsProvider = instancePoolsProvider;
+            this.crdtMemoryAllocator = crdtMemoryAllocator;
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
             SceneData = sceneData;
+            EcsExecutor = ecsExecutor;
+            SceneStateProvider = sceneStateProvider;
         }
 
         public void Dispose()
         {
             AssertMainThread(nameof(Dispose), true);
 
-            dependencies.SceneStateProvider.State = SceneState.Disposing;
+            SceneStateProvider.State = SceneState.Disposing;
             runtimeInstance.SetIsDisposing();
 
             DisposeInternal();
 
-            dependencies.SceneStateProvider.State = SceneState.Disposed;
+            SceneStateProvider.State = SceneState.Disposed;
         }
 
         public void SetTargetFPS(int fps)
@@ -90,7 +127,7 @@ namespace SceneRunner
             }
             catch (ScriptEngineException e)
             {
-                dependencies.ExceptionsHandler.OnJavaScriptException(e);
+                sceneExceptionsHandler.OnJavaScriptException(e);
                 return;
             }
 
@@ -117,7 +154,7 @@ namespace SceneRunner
                     }
                     catch (ScriptEngineException e)
                     {
-                        dependencies.ExceptionsHandler.OnJavaScriptException(e);
+                        sceneExceptionsHandler.OnJavaScriptException(e);
                         break;
                     }
 
@@ -184,7 +221,7 @@ namespace SceneRunner
         {
             SceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
-            dependencies.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+            ecsWorldFacade.OnSceneIsCurrentChanged(isCurrent);
         }
 
         public async UniTask DisposeAsync()
@@ -205,7 +242,14 @@ namespace SceneRunner
         private void DisposeInternal()
         {
             runtimeInstance.Dispose();
-            dependencies.Dispose();
+            ecsWorldFacade.Dispose();
+            crdtProtocol.Dispose();
+            outgoingCrtdMessagesProvider.Dispose();
+            crdtWorldSynchronizer.Dispose();
+            instancePoolsProvider.Dispose();
+            crdtMemoryAllocator.Dispose();
+            sceneExceptionsHandler.Dispose();
+            entityCollidersSceneCache.Dispose();
         }
     }
 }

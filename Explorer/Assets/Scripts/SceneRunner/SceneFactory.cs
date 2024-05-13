@@ -179,7 +179,20 @@ namespace SceneRunner
                 runtimeDeps.SimpleFetchApi);
             sceneRuntime.ExecuteSceneJson();
 
-            return new SceneFacade(sceneRuntime, deps, sceneData);
+            return new SceneFacade(
+                sceneRuntime,
+                deps.ECSWorldFacade,
+                deps.CRDTProtocol,
+                deps.OutgoingCRDTMessagesProvider,
+                deps.CRDTWorldSynchronizer,
+                deps.PoolsProvider,
+                deps.CRDTMemoryAllocator,
+                deps.ExceptionsHandler,
+                deps.SceneStateProvider,
+                deps.EntityCollidersCache,
+                sceneData,
+                deps.EcsExecutor
+            );
         }
     }
 }

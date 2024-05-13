@@ -211,13 +211,20 @@ namespace SceneRunner.Tests
             const int DURATION = 1000;
 
             ISceneRuntime sceneRuntime = Substitute.For<ISceneRuntime>();
-            var deps = new SceneInstanceDependencies(Substitute.For<ISDKComponentsRegistry>(), Substitute.For<IEntityCollidersGlobalCache>(),
-                Substitute.For<ISceneData>(), Substitute.For<IPartitionComponent>(), ecsWorldFactory, Substitute.For<ISceneEntityFactory>());
 
             var sceneFacade = new SceneFacade(
                 sceneRuntime,
-                deps,
-                Substitute.For<ISceneData>()
+                TestSystemsWorld.Create(),
+                Substitute.For<ICRDTProtocol>(),
+                Substitute.For<IOutgoingCRDTMessagesProvider>(),
+                Substitute.For<ICRDTWorldSynchronizer>(),
+                Substitute.For<IInstancePoolsProvider>(),
+                Substitute.For<ICRDTMemoryAllocator>(),
+                Substitute.For<ISceneExceptionsHandler>(),
+                new SceneStateProvider(),
+                Substitute.For<IEntityCollidersSceneCache>(),
+                Substitute.For<ISceneData>(),
+                new SceneEcsExecutor()
             );
 
             await UniTask.SwitchToThreadPool();
@@ -239,11 +246,11 @@ namespace SceneRunner.Tests
                 sceneRuntime.Dispose();
 
                 // World facade is not mockable
-                sceneFacade.dependencies.CRDTProtocol.Dispose();
-                sceneFacade.dependencies.OutgoingCRDTMessagesProvider.Dispose();
-                sceneFacade.dependencies.CRDTWorldSynchronizer.Dispose();
-                sceneFacade.dependencies.PoolsProvider.Dispose();
-                sceneFacade.dependencies.CRDTMemoryAllocator.Dispose();
+                sceneFacade.crdtProtocol.Dispose();
+                sceneFacade.outgoingCrtdMessagesProvider.Dispose();
+                sceneFacade.crdtWorldSynchronizer.Dispose();
+                sceneFacade.instancePoolsProvider.Dispose();
+                sceneFacade.crdtMemoryAllocator.Dispose();
             });
         }
     }
