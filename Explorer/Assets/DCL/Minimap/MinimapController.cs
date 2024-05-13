@@ -74,7 +74,7 @@ namespace DCL.Minimap
             this.realmNavigator = realmNavigator;
         }
 
-        private void OnRealmChangedToGenesis(bool isGenesis)
+        private void OnRealmChanged(bool isGenesis)
         {
             SetWorldMode(!isGenesis);
             previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
@@ -91,7 +91,7 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
             SetWorldMode(realmData.ScenesAreFixed);
-            realmNavigator.RealmChangedToGenesis += OnRealmChangedToGenesis;
+            realmNavigator.RealmChanged += OnRealmChanged;
         }
 
         private void ExpandMinimap()
@@ -221,7 +221,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
-            realmNavigator.RealmChangedToGenesis -= OnRealmChangedToGenesis;
+            realmNavigator.RealmChanged -= OnRealmChanged;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

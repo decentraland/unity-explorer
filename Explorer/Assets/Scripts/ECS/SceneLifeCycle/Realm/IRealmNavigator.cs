@@ -32,6 +32,7 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask SwitchMiscVisibilityAsync();
 
-        event Action<bool> RealmChangedToGenesis;
+        // True if changed to GenesisCity, False - when changed to any other realm
+        event Action<bool> RealmChanged;
     }
 }

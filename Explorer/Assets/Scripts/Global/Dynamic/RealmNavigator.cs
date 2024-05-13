@@ -52,7 +52,7 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
-        public event Action<bool> RealmChangedToGenesis;
+        public event Action<bool> RealmChanged;
 
         public URLDomain CurrentRealm { get; private set; }
 
@@ -221,7 +221,7 @@ namespace Global.Dynamic
         {
             bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
 
-            RealmChangedToGenesis?.Invoke(isGenesis);
+            RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
             await satelliteFloor.SwitchVisibilityAsync(isGenesis);
             roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
