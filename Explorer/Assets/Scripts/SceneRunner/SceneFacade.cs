@@ -1,15 +1,7 @@
-﻿using CRDT.Memory;
-using CRDT.Protocol;
-using CrdtEcsBridge.OutgoingMessages;
-using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.WorldSynchronizer;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Interaction.Utility;
 using Microsoft.ClearScript;
-using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
-using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
 using System;
 using System.Diagnostics;
@@ -22,17 +14,16 @@ namespace SceneRunner
 {
     public class SceneFacade : ISceneFacade
     {
-        internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
-        internal readonly ICRDTProtocol crdtProtocol;
-        internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        internal readonly ECSWorldFacade ecsWorldFacade;
-        internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-        internal readonly IInstancePoolsProvider instancePoolsProvider;
-        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         internal readonly ISceneRuntime runtimeInstance;
-        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
-
         private readonly SceneInstanceDependencies dependencies;
+
+        public ISceneStateProvider SceneStateProvider => dependencies.SceneStateProvider;
+        public SceneEcsExecutor EcsExecutor => dependencies.EcsExecutor;
+
+        public SceneShortInfo Info => SceneData.SceneShortInfo;
+
+        public ISceneData SceneData { get; }
+        public bool IsEmpty { get; } = false;
 
         private int intervalMS;
 
@@ -40,36 +31,19 @@ namespace SceneRunner
         {
             this.runtimeInstance = runtimeInstance;
             this.dependencies = dependencies;
-            this.ecsWorldFacade = dependencies.ECSWorldFacade;
-            this.crdtProtocol = dependencies.CRDTProtocol;
-            this.outgoingCrtdMessagesProvider = dependencies.OutgoingCRDTMessagesProvider;
-            this.crdtWorldSynchronizer =  dependencies.CRDTWorldSynchronizer;
-            this.instancePoolsProvider =  dependencies.PoolsProvider;
-            this.crdtMemoryAllocator = dependencies.CRDTMemoryAllocator;
-            this.sceneExceptionsHandler = dependencies.ExceptionsHandler;
-            this.entityCollidersSceneCache = dependencies.EntityCollidersCache;
             SceneData = sceneData;
-            EcsExecutor = dependencies.EcsExecutor;
-            SceneStateProvider = dependencies.SceneStateProvider;
         }
-
-        public ISceneData SceneData { get; }
-        public ISceneStateProvider SceneStateProvider { get; }
-        public SceneEcsExecutor EcsExecutor { get; }
-
-        public SceneShortInfo Info => SceneData.SceneShortInfo;
-        public bool IsEmpty { get; } = false;
 
         public void Dispose()
         {
             AssertMainThread(nameof(Dispose), true);
 
-            SceneStateProvider.State = SceneState.Disposing;
+            dependencies.SceneStateProvider.State = SceneState.Disposing;
             runtimeInstance.SetIsDisposing();
 
             DisposeInternal();
 
-            SceneStateProvider.State = SceneState.Disposed;
+            dependencies.SceneStateProvider.State = SceneState.Disposed;
         }
 
         public void SetTargetFPS(int fps)
@@ -116,7 +90,7 @@ namespace SceneRunner
             }
             catch (ScriptEngineException e)
             {
-                sceneExceptionsHandler.OnJavaScriptException(e);
+                dependencies.ExceptionsHandler.OnJavaScriptException(e);
                 return;
             }
 
@@ -143,7 +117,7 @@ namespace SceneRunner
                     }
                     catch (ScriptEngineException e)
                     {
-                        sceneExceptionsHandler.OnJavaScriptException(e);
+                        dependencies.ExceptionsHandler.OnJavaScriptException(e);
                         break;
                     }
 
@@ -210,7 +184,7 @@ namespace SceneRunner
         {
             SceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
-            ecsWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+            dependencies.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
         }
 
         public async UniTask DisposeAsync()
