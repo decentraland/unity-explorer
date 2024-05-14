@@ -211,7 +211,7 @@ namespace SceneRunner.Tests
             const int DURATION = 1000;
 
             ISceneRuntime sceneRuntime = Substitute.For<ISceneRuntime>();
-            var deps = new SceneInstanceDeps(Substitute.For<ISDKComponentsRegistry>(), Substitute.For<IEntityCollidersGlobalCache>(),
+            var deps = new SceneInstanceDependencies(Substitute.For<ISDKComponentsRegistry>(), Substitute.For<IEntityCollidersGlobalCache>(),
                 Substitute.For<ISceneData>(), Substitute.For<IPartitionComponent>(), ecsWorldFactory, Substitute.For<ISceneEntityFactory>());
 
             var sceneFacade = new SceneFacade(
