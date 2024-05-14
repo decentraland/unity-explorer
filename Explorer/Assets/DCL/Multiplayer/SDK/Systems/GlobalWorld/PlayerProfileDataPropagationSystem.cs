@@ -7,13 +7,12 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
@@ -30,6 +29,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         {
             if (playerCRDTEntity.IsDirty)
             {
+                playerCRDTEntity.IsDirty = false;
                 SetSceneProfile(ref profile, ref playerCRDTEntity);
                 return;
             }

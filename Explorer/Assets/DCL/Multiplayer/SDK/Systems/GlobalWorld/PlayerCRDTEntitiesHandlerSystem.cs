@@ -68,11 +68,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
             var crdtEntity = new CRDTEntity(crdtEntityId);
 
-            var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity);
+            sceneEcsExecutor.World.Add(sceneWorldEntity, new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity));
 
-            sceneEcsExecutor.World.Add(sceneWorldEntity, playerCRDTEntity);
-
-            World.Add(entity, playerCRDTEntity);
+            World.Add(entity, new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity));
         }
 
         [Query]
