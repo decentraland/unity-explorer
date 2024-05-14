@@ -94,10 +94,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Repartition if camera transform is qualified and the last job has already been completed
             if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && partitionDataContainer.currentPartitionIndex > 0)
             {
-                partitionDataContainer.partitionJob.CameraForward = readOnlyCameraSamplingData.Forward;
-                partitionDataContainer.partitionJob.CameraPosition = readOnlyCameraSamplingData.Position;
-                partitionDataContainer.partitionJob.ParcelCorners = parcelCorners;
-                partitionJobHandle = partitionDataContainer.partitionJob.Schedule(partitionDataContainer.currentPartitionIndex, 8);
+                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, parcelCorners);
                 isRunningJob = true;
             }
         }
@@ -158,11 +155,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.InternalJobIndex < 0) return;
-            var partition = partitionDataContainer.partitions[definition.InternalJobIndex];
-            partitionComponent.IsDirty = partition.IsDirty;
-            partitionComponent.IsBehind = partition.IsBehind;
-            partitionComponent.Bucket = partition.Bucket;
-            partitionComponent.RawSqrDistance = partition.RawSqrDistance;
+            partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
         }
 
     }
