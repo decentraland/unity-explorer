@@ -1,7 +1,9 @@
 using DCL.ECS7;
+using JetBrains.Annotations;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
+// ReSharper disable InconsistentNaming
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
 {
@@ -45,10 +47,12 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
             };
     }
 
+    [PublicAPI]
     public struct SDKObservableEvent
     {
         public Generic generic;
 
+        [PublicAPI]
         public struct Generic
         {
             public string eventId;
@@ -58,28 +62,33 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
 
     public struct SceneReadyPayload { }
 
+    [PublicAPI]
     public struct CommsPayload
     {
         public string sender;
         public string message;
     }
 
+    [PublicAPI]
     public struct UserIdPayload
     {
         public string userId;
     }
 
+    [PublicAPI]
     public struct PlayerExpressionPayload
     {
         public string expressionId;
     }
 
+    [PublicAPI]
     public struct ProfileChangedPayload
     {
         public string ethAddress;
         public int version;
     }
 
+    [PublicAPI]
     public struct RealmChangedPayload
     {
         public string domain;
@@ -88,11 +97,13 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events
         public string displayName;
     }
 
+    [PublicAPI]
     public struct PlayerClickedPayload
     {
         public string userId;
         public Ray ray;
 
+        [PublicAPI]
         public struct Ray
         {
             public Vector3 origin;
