@@ -12,6 +12,7 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
     {
         private readonly IProfileRepository profileRepository;
         private readonly List<RemoteProfile> remoteProfiles = new ();
+        private readonly HashSet<string> pendingProfiles = new ();
 
         public RemoteProfiles(IProfileRepository profileRepository)
         {
@@ -33,16 +34,25 @@ namespace DCL.Multiplayer.Profiles.RemoteProfiles
 
         private async UniTaskVoid TryDownloadAsync(RemoteAnnouncement remoteAnnouncement)
         {
-            Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, CancellationToken.None);
+            if (!pendingProfiles.Add(remoteAnnouncement.WalletId)) return;
 
-            if (profile is null)
+            try
             {
-                //TODO (Nick): for some reason log error is not working
-                ReportHub.LogError(ReportCategory.PROFILE, $"Profile not found {remoteAnnouncement}");
-                return;
-            }
+                Profile? profile = await profileRepository.GetAsync(remoteAnnouncement.WalletId, remoteAnnouncement.Version, CancellationToken.None);
 
-            remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId));
+                if (profile is null)
+                {
+                    //TODO (Nick): for some reason log error is not working
+                    ReportHub.LogError(ReportCategory.PROFILE, $"Profile not found {remoteAnnouncement}");
+                    return;
+                }
+
+                remoteProfiles.Add(new RemoteProfile(profile, remoteAnnouncement.WalletId));
+            }
+            finally
+            {
+                pendingProfiles.Remove(remoteAnnouncement.WalletId);
+            }
         }
     }
 }
