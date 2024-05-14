@@ -22,6 +22,7 @@ namespace SceneRunner
 {
     public class SceneFacade : ISceneFacade
     {
+        internal readonly ISceneRuntime runtimeInstance;
         internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
         internal readonly ICRDTProtocol crdtProtocol;
         internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
@@ -29,8 +30,16 @@ namespace SceneRunner
         internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         internal readonly IInstancePoolsProvider instancePoolsProvider;
         internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        internal readonly ISceneRuntime runtimeInstance;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
+
+        public ISceneStateProvider SceneStateProvider { get; }
+        public SceneEcsExecutor EcsExecutor { get; }
+
+        public ISceneData SceneData { get; }
+
+        public bool IsEmpty { get; } = false;
+
+        public SceneShortInfo Info => SceneData.SceneShortInfo;
 
         private int intervalMS;
 
@@ -61,13 +70,6 @@ namespace SceneRunner
             EcsExecutor = ecsExecutor;
             SceneStateProvider = sceneStateProvider;
         }
-
-        public ISceneData SceneData { get; }
-        public ISceneStateProvider SceneStateProvider { get; }
-        public SceneEcsExecutor EcsExecutor { get; }
-
-        public SceneShortInfo Info => SceneData.SceneShortInfo;
-        public bool IsEmpty { get; } = false;
 
         public void Dispose()
         {

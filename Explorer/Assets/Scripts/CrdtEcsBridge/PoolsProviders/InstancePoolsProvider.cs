@@ -33,7 +33,7 @@ namespace CrdtEcsBridge.PoolsProviders
             POOL.Release(this);
         }
 
-        public static InstancePoolsProvider Create() =>
+        public static IInstancePoolsProvider Create() =>
             POOL.Get();
 
         public PoolableByteArray GetCrdtRawDataPool(int size) =>
