@@ -1,8 +1,8 @@
 ﻿using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
+using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
-using DCL.Utilities;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.Systems;
@@ -16,12 +16,18 @@ namespace DCL.PluginSystem.World
 {
     public class TransformsPlugin : IDCLWorldPluginWithoutSettings
     {
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
+        private readonly ExposedTransform exposedPlayerTransform;
+        private readonly ExposedCameraData exposedCameraData;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public TransformsPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, ObjectProxy<Arch.Core.World> globalWorldProxy)
+        public TransformsPlugin(
+            ECSWorldSingletonSharedDependencies singletonSharedDependencies,
+            ExposedTransform exposedPlayerTransform,
+            ExposedCameraData exposedCameraData)
         {
-            this.globalWorldProxy = globalWorldProxy;
+            this.exposedPlayerTransform = exposedPlayerTransform;
+            this.exposedCameraData = exposedCameraData;
+
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
             {
@@ -38,7 +44,7 @@ namespace DCL.PluginSystem.World
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot, sharedDependencies.SceneData.SceneShortInfo);
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);
-            SyncGlobalTransformSystem.InjectToWorld(ref builder, globalWorldProxy, in persistentEntities.Camera, in persistentEntities.Player);
+            SyncGlobalTransformSystem.InjectToWorld(ref builder, in persistentEntities.Camera, in persistentEntities.Player, exposedPlayerTransform, exposedCameraData);
 
             var releaseTransformSystem =
                 ReleasePoolableComponentSystem<Transform, TransformComponent>.InjectToWorld(ref builder, componentPoolsRegistry);

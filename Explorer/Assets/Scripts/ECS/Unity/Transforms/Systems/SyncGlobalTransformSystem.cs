@@ -1,14 +1,15 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.Throttling;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
-using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -16,53 +17,33 @@ namespace ECS.Unity.Transforms.Systems
     ///     This system syncs the Camera and Player transforms to specially created entities in each SDK scene
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [ThrottlingEnabled]
     public partial class SyncGlobalTransformSystem : BaseUnityLoopSystem
     {
-        private readonly ObjectProxy<World> globalWorldProxy;
         private readonly Entity cameraEntityProxy;
         private readonly Entity playerEntityProxy;
-        private Transform? cameraTransform;
-        private Transform? playerTransform;
+        private readonly ExposedTransform playerTransform;
+        private readonly IExposedCameraData cameraData;
 
         private SyncGlobalTransformSystem(World world,
-            ObjectProxy<World> globalWorldProxy,
             in Entity cameraEntityProxy,
-            in Entity playerEntityProxy) : base(world)
+            in Entity playerEntityProxy,
+            ExposedTransform playerTransform,
+            IExposedCameraData cameraData) : base(world)
         {
-            this.globalWorldProxy = globalWorldProxy;
             this.cameraEntityProxy = cameraEntityProxy;
             this.playerEntityProxy = playerEntityProxy;
-        }
-
-        public override void Initialize()
-        {
-            if (!globalWorldProxy.Configured)
-                return;
-
-            World globalWorld = globalWorldProxy.Object!;
-
-            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(globalWorld.CacheCamera());
-            ref CharacterTransform characterTransform = ref globalWorld.Get<CharacterTransform>(globalWorld.CachePlayer());
-
-            cameraTransform = camera.Camera.transform;
-            playerTransform = characterTransform.Transform;
+            this.playerTransform = playerTransform;
+            this.cameraData = cameraData;
         }
 
         protected override void Update(float t)
         {
-            UpdateTransform(cameraEntityProxy, cameraTransform);
-            UpdateTransform(playerEntityProxy, playerTransform);
-        }
+            ref TransformComponent cameraTransform = ref World.Get<TransformComponent>(cameraEntityProxy);
+            cameraTransform.SetWorldTransform(cameraData.WorldPosition.Value, cameraData.WorldRotation.Value, Vector3.one);
 
-        private void UpdateTransform(Entity entityProxy, Transform? transform)
-        {
-            if (transform == null)
-                return;
-
-            ref TransformComponent transformComponent = ref World.TryGetRef<TransformComponent>(entityProxy, out bool exists);
-
-            if (exists)
-                transformComponent.SetWorldTransform(transform.position, transform.rotation, transform.localScale);
+            ref TransformComponent playerTransformComponent = ref World.Get<TransformComponent>(playerEntityProxy);
+            playerTransformComponent.SetWorldTransform(playerTransform.Position.Value, playerTransform.Rotation.Value, Vector3.one);
         }
     }
 }
