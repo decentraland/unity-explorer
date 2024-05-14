@@ -55,11 +55,11 @@ namespace DCL.PluginSystem.World
 
             Transform playerTransform = GetNewTransform(sharedDependencies, sceneRootTransform);
             playerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel} PLAYER_ENTITY";
-            builder.World.Add(persistentEntities.Player, new TransformComponent(playerTransform), new PlayerTransformSync());
+            builder.World.Add(persistentEntities.Player, new TransformComponent(playerTransform));
 
             Transform cameraTransform = GetNewTransform(sharedDependencies, sceneRootTransform);
             cameraTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel} CAMERA_ENTITY";
-            builder.World.Add(persistentEntities.Camera, new TransformComponent(cameraTransform), new CameraTransformSync());
+            builder.World.Add(persistentEntities.Camera, new TransformComponent(cameraTransform));
         }
 
         private Transform GetNewTransform(ECSWorldInstanceSharedDependencies sharedDependencies, Transform? transform = null)
