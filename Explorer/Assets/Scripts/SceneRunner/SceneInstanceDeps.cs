@@ -44,7 +44,7 @@ namespace SceneRunner
     ///     Dependencies that are unique for each instance of the scene,
     ///     this class itself contains the first stage of dependencies
     /// </summary>
-    public class SceneInstanceDeps : IDisposable
+    public class SceneInstanceDependencies : IDisposable
     {
         public readonly CRDTProtocol CRDTProtocol;
         public readonly IInstancePoolsProvider PoolsProvider;
@@ -69,7 +69,7 @@ namespace SceneRunner
 
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap = new (1000, CRDTEntityComparer.INSTANCE);
 
-        public SceneInstanceDeps(ISDKComponentsRegistry sdkComponentsRegistry, IEntityCollidersGlobalCache entityCollidersGlobalCache,
+        public SceneInstanceDependencies(ISDKComponentsRegistry sdkComponentsRegistry, IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneData sceneData, IPartitionComponent partitionProvider,
             IECSWorldFactory ecsWorldFactory, ISceneEntityFactory entityFactory)
         {
@@ -133,32 +133,32 @@ namespace SceneRunner
             public readonly ICommunicationsControllerAPI CommunicationsControllerAPI;
             public readonly ISimpleFetchApi SimpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
 
-            private readonly SceneInstanceDeps deps;
+            private readonly SceneInstanceDependencies dependencies;
             private readonly ISceneRuntime runtime;
 
             public WithRuntimeAndEngineAPI
-            (SceneInstanceDeps sceneInstanceDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
+            (SceneInstanceDependencies sceneInstanceDependencies, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ICommunicationControllerHub messagePipesHub)
             {
-                deps = sceneInstanceDeps;
+                dependencies = sceneInstanceDependencies;
                 runtime = sceneRuntime;
 
                 EngineAPI = new EngineAPIImplementation(
                     sharedPoolsProvider,
-                    deps.PoolsProvider,
-                    deps.CRDTProtocol,
-                    deps.crdtDeserializer,
+                    dependencies.PoolsProvider,
+                    dependencies.CRDTProtocol,
+                    dependencies.crdtDeserializer,
                     crdtSerializer,
-                    deps.CRDTWorldSynchronizer,
-                    deps.OutgoingCRDTMessagesProvider,
-                    deps.systemGroupThrottler,
-                    deps.ExceptionsHandler,
-                    deps.ecsMutexSync);
+                    dependencies.CRDTWorldSynchronizer,
+                    dependencies.OutgoingCRDTMessagesProvider,
+                    dependencies.systemGroupThrottler,
+                    dependencies.ExceptionsHandler,
+                    dependencies.ecsMutexSync);
 
-                RestrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, deps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, deps.sceneData);
-                RuntimeImplementation = new RuntimeImplementation(sceneRuntime, deps.sceneData, deps.worldTimeProvider, realmData);
-                SceneApiImplementation = new SceneApiImplementation(deps.sceneData);
-                CommunicationsControllerAPI = new CommunicationsControllerAPIImplementation(deps.sceneData, messagePipesHub, sceneRuntime, deps.CRDTMemoryAllocator, deps.ecsWorldSharedDependencies.SceneStateProvider);
+                RestrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, dependencies.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, dependencies.sceneData);
+                RuntimeImplementation = new RuntimeImplementation(sceneRuntime, dependencies.sceneData, dependencies.worldTimeProvider, realmData);
+                SceneApiImplementation = new SceneApiImplementation(dependencies.sceneData);
+                CommunicationsControllerAPI = new CommunicationsControllerAPIImplementation(dependencies.sceneData, messagePipesHub, sceneRuntime, dependencies.CRDTMemoryAllocator, dependencies.ecsWorldSharedDependencies.SceneStateProvider);
             }
 
             public void Dispose()
@@ -170,7 +170,7 @@ namespace SceneRunner
                 EngineAPI.Dispose();
 
                 runtime.Dispose();
-                deps.Dispose();
+                dependencies.Dispose();
             }
         }
     }

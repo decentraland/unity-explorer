@@ -5,7 +5,10 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using DCL.WebRequests;
+using ECS.ComponentsPooling.Systems;
+using ECS.LifeCycle;
 using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
@@ -48,7 +51,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
 #endif
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
@@ -58,6 +61,8 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool);
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
+
+            finalizeWorldSystems.Add(ReleasePoolableComponentSystem<MediaPlayer, MediaPlayerComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
 #endif
         }
     }

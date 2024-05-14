@@ -159,10 +159,7 @@ namespace DCL.AvatarRendering.Emotes
 
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null)
-                    {
-                        World.Remove<CharacterEmoteIntent>(entity);
                         return;
-                    }
 
                     var streamableAssetValue = streamableAsset.Value;
                     GameObject? mainAsset;
@@ -181,14 +178,13 @@ namespace DCL.AvatarRendering.Emotes
                         ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                     emoteComponent.EmoteUrn = emoteId;
+                    World.Remove<CharacterEmoteIntent>(entity);
                 }
             }
             catch (Exception e)
             {
                 ReportHub.LogException(e, reportCategory);
             }
-
-            World.Remove<CharacterEmoteIntent>(entity);
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
