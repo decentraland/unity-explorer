@@ -165,8 +165,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             {
                                 if (!userIdEntitiesMap.ContainsKey(message.EntityId)) break;
 
-                                playerIdentityDataSerializer.DeserializeInto(playerIdentityData, message.Data.Memory.Span);
-
                                 SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
                                 {
                                     ethAddress = userIdEntitiesMap[message.EntityId],
