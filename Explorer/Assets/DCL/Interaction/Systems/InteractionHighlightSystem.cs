@@ -49,6 +49,9 @@ namespace DCL.Interaction.Systems
 
             if (highlightComponent.ReadyForMaterial())
             {
+                if (highlightComponent.HasToResetLastEntity())
+                    RemoveHighlight(highlightComponent.CurrentEntityOrNull());
+
                 highlightComponent.SwitchEntity();
                 AddOrUpdateHighlight(highlightComponent.CurrentEntityOrNull(), highlightComponent.IsAtDistance());
             }

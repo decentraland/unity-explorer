@@ -74,5 +74,9 @@ namespace DCL.Interaction.Raycast.Components
         {
             currentEntity = nextEntity;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasToResetLastEntity() =>
+            currentEntity != nextEntity && currentEntity != EntityReference.Null && isEnabled;
     }
 }
