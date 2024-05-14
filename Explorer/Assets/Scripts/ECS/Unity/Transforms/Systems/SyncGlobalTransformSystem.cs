@@ -4,7 +4,6 @@ using Arch.SystemGroups;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
-using DCL.SDKComponents.TransformSync.Components;
 using DCL.Utilities;
 using ECS.Abstract;
 using ECS.Groups;
@@ -20,12 +19,19 @@ namespace ECS.Unity.Transforms.Systems
     public partial class SyncGlobalTransformSystem : BaseUnityLoopSystem
     {
         private readonly ObjectProxy<World> globalWorldProxy;
-        private SingleInstanceEntity cameraEntityProxy;
-        private SingleInstanceEntity playerEntityProxy;
+        private readonly Entity cameraEntityProxy;
+        private readonly Entity playerEntityProxy;
+        private Transform? cameraTransform;
+        private Transform? playerTransform;
 
-        private SyncGlobalTransformSystem(World world, ObjectProxy<World> globalWorldProxy) : base(world)
+        private SyncGlobalTransformSystem(World world,
+            ObjectProxy<World> globalWorldProxy,
+            in Entity cameraEntityProxy,
+            in Entity playerEntityProxy) : base(world)
         {
             this.globalWorldProxy = globalWorldProxy;
+            this.cameraEntityProxy = cameraEntityProxy;
+            this.playerEntityProxy = playerEntityProxy;
         }
 
         public override void Initialize()
@@ -34,34 +40,29 @@ namespace ECS.Unity.Transforms.Systems
                 return;
 
             World globalWorld = globalWorldProxy.Object!;
-            cameraEntityProxy = globalWorld.CacheCamera();
-            playerEntityProxy = globalWorld.CachePlayer();
+
+            ref CameraComponent camera = ref globalWorld.Get<CameraComponent>(globalWorld.CacheCamera());
+            ref CharacterTransform characterTransform = ref globalWorld.Get<CharacterTransform>(globalWorld.CachePlayer());
+
+            cameraTransform = camera.Camera.transform;
+            playerTransform = characterTransform.Transform;
         }
 
         protected override void Update(float t)
         {
-            UpdateCameraTransformQuery(World);
-            UpdatePlayerTransformQuery(World);
+            UpdateTransform(cameraEntityProxy, cameraTransform);
+            UpdateTransform(playerEntityProxy, playerTransform);
         }
 
-        [Query]
-        [All(typeof(CameraTransformSync))]
-        private void UpdateCameraTransform(ref TransformComponent transformComponent)
+        private void UpdateTransform(Entity entityProxy, Transform? transform)
         {
-            if (!globalWorldProxy.Configured) return;
-            ref CameraComponent camera = ref globalWorldProxy.Object!.Get<CameraComponent>(cameraEntityProxy);
-            Transform cameraTransform = camera.Camera.transform;
-            transformComponent.SetWorldTransform(cameraTransform.position, cameraTransform.rotation, cameraTransform.localScale);
-        }
+            if (transform == null)
+                return;
 
-        [Query]
-        [All(typeof(PlayerTransformSync))]
-        private void UpdatePlayerTransform(ref TransformComponent transformComponent)
-        {
-            if (!globalWorldProxy.Configured) return;
-            ref CharacterTransform characterTransform = ref globalWorldProxy.Object!.Get<CharacterTransform>(playerEntityProxy);
-            Transform transform = characterTransform.Transform;
-            transformComponent.SetWorldTransform(transform.position, transform.rotation, transform.localScale);
+            ref TransformComponent transformComponent = ref World.TryGetRef<TransformComponent>(entityProxy, out bool exists);
+
+            if (exists)
+                transformComponent.SetWorldTransform(transform.position, transform.rotation, transform.localScale);
         }
     }
 }

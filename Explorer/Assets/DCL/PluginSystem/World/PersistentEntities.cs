@@ -7,15 +7,15 @@ namespace DCL.PluginSystem.World
     /// </summary>
     public struct PersistentEntities
     {
-        public Entity Player { get; private set; }
-        public Entity Camera { get; private set; }
-        public Entity SceneRoot { get; private set; }
+        public readonly Entity Player;
+        public readonly Entity Camera;
+        public readonly Entity SceneRoot;
 
-        public void Setup(Entity sceneRootEntity, Entity playerEntity, Entity cameraEntity)
+        public PersistentEntities(Entity player, Entity camera, Entity sceneRoot)
         {
-            Camera = cameraEntity;
-            Player = playerEntity;
-            SceneRoot = sceneRootEntity;
+            Player = player;
+            Camera = camera;
+            SceneRoot = sceneRoot;
         }
     }
 }

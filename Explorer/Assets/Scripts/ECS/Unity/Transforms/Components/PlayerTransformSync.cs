@@ -1,4 +1,4 @@
-namespace DCL.SDKComponents.TransformSync.Components
+namespace ECS.Unity.Transforms.Components
 {
     public struct PlayerTransformSync { }
 }
