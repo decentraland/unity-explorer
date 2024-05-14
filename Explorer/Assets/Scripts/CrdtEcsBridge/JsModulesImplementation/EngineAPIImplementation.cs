@@ -41,6 +41,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly CustomSampler worldSyncBufferSampler;
         private bool isDisposing;
 
+        private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
+
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
             IInstancePoolsProvider instancePoolsProvider,
@@ -69,6 +71,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
             crdtProcessMessagesSampler = CustomSampler.Create("CRDTProcessMessage");
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
+
+            processPendingMessage = ProcessPendingMessage;
         }
 
         public virtual void Dispose()
@@ -136,7 +140,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             try
             {
                 // Apply outgoing messages straight-away so they are reflected in the current CRDT state
-                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = GetSerializationSyncBlock())
                     SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
 
                 // Create CRDT Messages from the current state
@@ -174,6 +178,12 @@ namespace CrdtEcsBridge.JsModulesImplementation
             isDisposing = true;
         }
 
+        private OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock() => outgoingCrtdMessagesProvider.GetSerializationSyncBlock(processPendingMessage);
+
+        protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
+        {
+        }
+
         private PoolableByteArray SerializeOutgoingCRDTMessages()
         {
             try
@@ -182,7 +192,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                 PoolableByteArray serializationBufferPoolable;
 
-                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = GetSerializationSyncBlock())
                 {
                     serializationBufferPoolable =
                         sharedPoolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.PayloadLength);
@@ -214,7 +224,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
         }
 
-        protected virtual void SyncCRDTMessage(ProcessedCRDTMessage message)
+        private void SyncCRDTMessage(ProcessedCRDTMessage message)
         {
             // We are interested in LWW messages only,
             switch (message.message.Type)
@@ -233,6 +243,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
         }
 
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
+
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
             try

@@ -109,7 +109,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
             sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), sharedPoolsProvider.ReleaseSerializedStateBytesPool));
             sharedPoolsProvider.GetSerializationCrdtMessagesPool(Arg.Any<int>()).Returns(c => new ProcessedCRDTMessage[c.Arg<int>()]);
 
-            outgoingCrtdMessagesProvider.GetSerializationSyncBlock()
+            outgoingCrtdMessagesProvider.GetSerializationSyncBlock(null)
                                         .Returns(_ =>
                                          {
                                              mutex.WaitOne();
@@ -146,7 +146,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
                 worldSyncCommandBuffer.FinalizeAndDeserialize();
                 instancePoolsProvider.ReleaseDeserializationMessagesPool(Arg.Any<List<CRDTMessage>>());
 
-                outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
+                outgoingCrtdMessagesProvider.GetSerializationSyncBlock(null);
                 sharedPoolsProvider.GetSerializedStateBytesPool(Arg.Any<int>());
 
                 // can't check Serialize, can't mock `Span<byte>`
@@ -162,7 +162,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Tests
 
             Received.InOrder(() =>
             {
-                outgoingCrtdMessagesProvider.GetSerializationSyncBlock();
+                outgoingCrtdMessagesProvider.GetSerializationSyncBlock(null);
                 crdtProtocol.GetMessagesCount();
                 sharedPoolsProvider.GetSerializationCrdtMessagesPool(crdtStateMessages.Count + outgoingMessages.Count);
                 crdtProtocol.CreateMessagesFromTheCurrentState(Arg.Any<ProcessedCRDTMessage[]>());

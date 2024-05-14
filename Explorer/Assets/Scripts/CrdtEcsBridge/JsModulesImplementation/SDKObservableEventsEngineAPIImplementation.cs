@@ -20,11 +20,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class SDKObservableEventsEngineAPIImplementation : EngineAPIImplementation, ISDKObservableEventsEngineApi
     {
-        private readonly PBAvatarEmoteCommand avatarEmoteCommand = new ();
         private readonly ProtobufSerializer<PBAvatarEmoteCommand> avatarEmoteCommandSerializer = new ();
-        private readonly PBPlayerIdentityData playerIdentityData = new ();
         private readonly ProtobufSerializer<PBPlayerIdentityData> playerIdentityDataSerializer = new ();
-        private readonly PBRealmInfo realmInfo = new ();
         private readonly ProtobufSerializer<PBRealmInfo> realmInfoSerializer = new ();
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
         private bool reportedSceneReady;
@@ -51,30 +48,30 @@ namespace CrdtEcsBridge.JsModulesImplementation
             return eventsCopy;
         }
 
-        protected override void SyncCRDTMessage(ProcessedCRDTMessage processedMessage)
+        protected override void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
         {
-            if (SDKObservableComponentIDs.Ids.Contains(processedMessage.message.ComponentId))
-                DetectObservableEventsFromComponents(processedMessage.message);
-
-            base.SyncCRDTMessage(processedMessage);
+            if (SDKObservableComponentIDs.Ids.Contains(pendingMessage.Bridge.Id))
+                DetectObservableEventsFromComponents(pendingMessage);
         }
 
-        private void DetectObservableEventsFromComponents(CRDTMessage message)
+        private void DetectObservableEventsFromComponents(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
         {
             // We must always detect PlayerIdentityData messages to have the entities map updated
             // for scenes that may subscribe to observables later in their execution
-            DetectPlayerIdentityDataComponent(message);
+            DetectPlayerIdentityDataComponent(pendingMessage);
 
             if (!EnableSDKObservableMessagesDetection) return;
 
-            DetectOtherObservableComponents(message);
+            DetectOtherObservableComponents(pendingMessage);
         }
 
-        private void DetectPlayerIdentityDataComponent(CRDTMessage message)
+        private void DetectPlayerIdentityDataComponent(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
         {
-            if (message.ComponentId != ComponentID.PLAYER_IDENTITY_DATA) return;
+            if (pendingMessage.Bridge.Id != ComponentID.PLAYER_IDENTITY_DATA) return;
 
-            switch (message.Type)
+            var playerIdentityData = (PBPlayerIdentityData)pendingMessage.Message;
+
+            switch (pendingMessage.MessageType)
             {
                 case CRDTMessageType.PUT_COMPONENT:
                     // onEnterScene + playerConnected observables
@@ -82,9 +79,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
                     {
                         bool onEnterSceneSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.EnterScene);
                         bool onPlayerConnectedSubscribed = SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerConnected);
-
-                        if (onEnterSceneSubscribed || onPlayerConnectedSubscribed)
-                            playerIdentityDataSerializer.DeserializeInto(playerIdentityData, message.Data.Memory.Span);
 
                         if (onEnterSceneSubscribed)
                             SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.EnterScene, new UserIdPayload
@@ -99,10 +93,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             }));
                     }
 
-                    userIdEntitiesMap[message.EntityId] = playerIdentityData.Address;
+                    userIdEntitiesMap[pendingMessage.Entity] = playerIdentityData.Address;
                     break;
                 case CRDTMessageType.DELETE_COMPONENT:
-                    if (userIdEntitiesMap.ContainsKey(message.EntityId)) // we may get more than 1 DELETE_COMPONENT of the same component
+                    if (userIdEntitiesMap.ContainsKey(pendingMessage.Entity)) // we may get more than 1 DELETE_COMPONENT of the same component
                     {
                         // onLeaveScene + playerDisconnected observables
                         if (EnableSDKObservableMessagesDetection)
@@ -110,29 +104,29 @@ namespace CrdtEcsBridge.JsModulesImplementation
                             if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.LeaveScene))
                                 SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.LeaveScene, new UserIdPayload
                                 {
-                                    userId = userIdEntitiesMap[message.EntityId],
+                                    userId = userIdEntitiesMap[pendingMessage.Entity],
                                 }));
 
                             if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerDisconnected))
                                 SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerDisconnected, new UserIdPayload
                                 {
-                                    userId = userIdEntitiesMap[message.EntityId],
+                                    userId = userIdEntitiesMap[pendingMessage.Entity],
                                 }));
                         }
 
-                        userIdEntitiesMap.Remove(message.EntityId);
+                        userIdEntitiesMap.Remove(pendingMessage.Entity);
                     }
 
                     break;
             }
         }
 
-        private void DetectOtherObservableComponents(CRDTMessage message)
+        private void DetectOtherObservableComponents(OutgoingCRDTMessagesProvider.PendingMessage message)
         {
-            switch (message.Type)
+            switch (message.MessageType)
             {
                 case CRDTMessageType.PUT_COMPONENT:
-                    switch (message.ComponentId)
+                    switch (message.Bridge.Id)
                     {
                         case ComponentID.ENGINE_INFO: // onSceneReady observable
                             if (reportedSceneReady) break;
@@ -147,7 +141,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         case ComponentID.REALM_INFO: // onRealmChanged observables
                             if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.RealmChanged))
                             {
-                                realmInfoSerializer.DeserializeInto(realmInfo, message.Data.Memory.Span);
+                                var realmInfo = (PBRealmInfo)message.Message;
 
                                 SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.RealmChanged, new RealmChangedPayload
                                 {
@@ -163,11 +157,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         case ComponentID.AVATAR_BASE: // profileChanged observable
                             if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.ProfileChanged))
                             {
-                                if (!userIdEntitiesMap.ContainsKey(message.EntityId)) break;
+                                if (!userIdEntitiesMap.ContainsKey(message.Entity)) break;
 
                                 SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.ProfileChanged, new ProfileChangedPayload
                                 {
-                                    ethAddress = userIdEntitiesMap[message.EntityId],
+                                    ethAddress = userIdEntitiesMap[message.Entity],
                                     version = 0,
                                 }));
                             }
@@ -179,10 +173,10 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                     break;
                 case CRDTMessageType.APPEND_COMPONENT:
-                    if (message.ComponentId == ComponentID.AVATAR_EMOTE_COMMAND)
+                    if (message.Bridge.Id == ComponentID.AVATAR_EMOTE_COMMAND)
                         if (SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.PlayerExpression))
                         {
-                            avatarEmoteCommandSerializer.DeserializeInto(avatarEmoteCommand, message.Data.Memory.Span);
+                            var avatarEmoteCommand = (PBAvatarEmoteCommand) message.Message;
 
                             SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.PlayerExpression, new PlayerExpressionPayload
                             {
