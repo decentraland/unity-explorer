@@ -89,7 +89,10 @@ namespace ECS.SceneLifeCycle.Tests
             }, new IpfsPath()) { InternalJobIndex = 0 };
 
             Entity e = world.Create(new PartitionComponent { Bucket = 10, IsBehind = false }, sceneDefinitionComponent);
-            mockSystem.AddPartitionData(0, ref sceneDefinitionComponent, new ScenesPartitioningUtils.PartitionData { Bucket = 10, IsBehind = false, IsDirty = isDirty });
+            mockSystem.AddPartitionData(0, ref sceneDefinitionComponent, new ScenesPartitioningUtils.PartitionData
+            {
+                Bucket = 10, IsBehind = false, IsDirty = true
+            });
 
             system.Update(0);
 
