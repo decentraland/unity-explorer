@@ -52,10 +52,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         public override void Dispose()
         {
+            systemIsDisposed = true;
+
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
-
-            systemIsDisposed = true;
         }
 
         protected override void Update(float t)
@@ -151,6 +151,10 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
 
+        protected virtual void DisposeAbandonedResult(TAsset asset)
+        {
+        }
+
         private void FinalizeLoading(in Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget acquiredBudget)
@@ -225,19 +229,11 @@ namespace ECS.StreamableLoading.Common.Systems
 
             var ongoingRequestRemoved = false;
 
-            void TryRemoveOngoingRequest()
-            {
-                if (!ongoingRequestRemoved)
-                {
-                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
-                    ongoingRequestRemoved = true;
-                }
-            }
+            StreamableLoadingResult<TAsset>? result = null;
 
             try
             {
-                StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -261,6 +257,9 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             catch (OperationCanceledException operationCanceledException)
             {
+                if(result is { Succeeded: true })
+                    DisposeAbandonedResult(result.Value.Asset!);
+
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 TryRemoveOngoingRequest();
@@ -273,6 +272,16 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // We need to remove the request the same frame to prevent de-sync with new requests
                 TryRemoveOngoingRequest();
+            }
+
+            void TryRemoveOngoingRequest()
+            {
+                if (!ongoingRequestRemoved)
+                {
+                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                    ongoingRequestRemoved = true;
+                }
             }
         }
 

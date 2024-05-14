@@ -1,6 +1,5 @@
 ﻿using DCL.Optimization.Pools;
 using SceneRunner.Scene;
-using System;
 using System.Collections.Generic;
 using DCL.LOD.Components;
 using UnityEngine;

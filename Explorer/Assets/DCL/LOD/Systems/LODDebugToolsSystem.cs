@@ -43,6 +43,11 @@ namespace DCL.LOD.Systems
                 debugWidgetBuilder
                     .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[i], $"LOD {i + 1} Threshold",  newValue => SetLOD(newValue, index));
             }
+
+            debugWidgetBuilder.AddIntFieldWithConfirmation(lodSettingsAsset.SDK7LodThreshold, "SDK 7 Threshold",  newValue =>
+            {
+                lodSettingsAsset.SDK7LodThreshold = newValue;
+            });
         }
 
         private void SetLOD(int newValue, int i)
