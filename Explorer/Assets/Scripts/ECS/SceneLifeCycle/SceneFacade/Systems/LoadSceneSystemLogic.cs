@@ -6,7 +6,6 @@ using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using Ipfs;
 using SceneRunner;
 using SceneRunner.Scene;
 using System;

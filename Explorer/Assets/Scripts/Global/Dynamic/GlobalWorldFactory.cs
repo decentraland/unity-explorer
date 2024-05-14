@@ -8,8 +8,6 @@ using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
-using DCL.Multiplayer.Connections.Messaging.Hubs;
-using DCL.Multiplayer.Emotes;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -31,14 +29,11 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using SceneRunner;
-using SceneRunner.EmptyScene;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using SystemGroups.Visualiser;
-using UnityEngine;
 using Utility;
-using Utility.Multithreading;
 
 namespace Global.Dynamic
 {
@@ -61,9 +56,7 @@ namespace Global.Dynamic
         private readonly StaticSettings staticSettings;
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
-        private readonly IEmotesMessageBus emotesMessageBus;
         private readonly CharacterContainer characterContainer;
-        private readonly IMessagePipesHub messagePipesHub;
 
         private readonly HybridSceneParams hybridSceneParams;
 
@@ -71,8 +64,7 @@ namespace Global.Dynamic
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, IEmotesMessageBus emotesMessageBus, IMessagePipesHub messagePipesHub,
-            HybridSceneParams hybridSceneParams)
+            IScenesCache scenesCache, HybridSceneParams hybridSceneParams)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -90,9 +82,7 @@ namespace Global.Dynamic
             this.realmData = realmData;
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
-            this.messagePipesHub = messagePipesHub;
             this.hybridSceneParams = hybridSceneParams;
-            this.emotesMessageBus = emotesMessageBus;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -147,7 +137,6 @@ namespace Global.Dynamic
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
             ResolveStaticPointersSystem.InjectToWorld(ref builder);
-            UnloadSceneSystem.InjectToWorld(ref builder, scenesCache);
             ControlSceneUpdateLoopSystem.InjectToWorld(ref builder, realmPartitionSettings, destroyCancellationSource.Token, scenesCache);
 
             IComponentPool<PartitionComponent> partitionComponentPool = componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>();
@@ -173,7 +162,11 @@ namespace Global.Dynamic
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
 
-            var finalizeWorldSystems = new IFinalizeWorldSystem[] { new ReleaseRealmPooledComponentSystem(componentPoolsRegistry) };
+            var finalizeWorldSystems = new IFinalizeWorldSystem[]
+            {
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache),
+                new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
+            };
 
             SystemGroupWorld worldSystems = builder.Finish();
             worldSystems.Initialize();

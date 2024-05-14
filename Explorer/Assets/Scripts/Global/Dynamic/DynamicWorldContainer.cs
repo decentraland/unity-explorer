@@ -396,8 +396,6 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                multiplayerEmotesMessageBus,
-                container.MessagePipesHub,
                 dynamicWorldParams.HybridSceneParams);
 
             container.GlobalPlugins = globalPlugins;
