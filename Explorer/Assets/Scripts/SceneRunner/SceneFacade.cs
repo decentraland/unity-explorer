@@ -32,8 +32,6 @@ namespace SceneRunner
         internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
-        private readonly SceneInstanceDependencies deps;
-
         public ISceneStateProvider SceneStateProvider { get; }
         public SceneEcsExecutor EcsExecutor { get; }
 
@@ -45,21 +43,32 @@ namespace SceneRunner
 
         private int intervalMS;
 
-        public SceneFacade(ISceneRuntime runtimeInstance, SceneInstanceDependencies deps, ISceneData sceneData)
+        public SceneFacade(
+            ISceneRuntime runtimeInstance,
+            ECSWorldFacade ecsWorldFacade,
+            ICRDTProtocol crdtProtocol,
+            IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
+            ICRDTWorldSynchronizer crdtWorldSynchronizer,
+            IInstancePoolsProvider instancePoolsProvider,
+            ICRDTMemoryAllocator crdtMemoryAllocator,
+            ISceneExceptionsHandler sceneExceptionsHandler,
+            ISceneStateProvider sceneStateProvider,
+            IEntityCollidersSceneCache entityCollidersSceneCache,
+            ISceneData sceneData,
+            SceneEcsExecutor ecsExecutor)
         {
             this.runtimeInstance = runtimeInstance;
-            this.deps = deps;
-            this.ecsWorldFacade = deps.ECSWorldFacade;
-            this.crdtProtocol = deps.CRDTProtocol;
-            this.outgoingCrtdMessagesProvider = deps.OutgoingCRDTMessagesProvider;
-            this.crdtWorldSynchronizer =  deps.CRDTWorldSynchronizer;
-            this.instancePoolsProvider =  deps.PoolsProvider;
-            this.crdtMemoryAllocator = deps.CRDTMemoryAllocator;
-            this.sceneExceptionsHandler = deps.ExceptionsHandler;
-            this.entityCollidersSceneCache = deps.EntityCollidersCache;
+            this.ecsWorldFacade = ecsWorldFacade;
+            this.crdtProtocol = crdtProtocol;
+            this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
+            this.crdtWorldSynchronizer = crdtWorldSynchronizer;
+            this.instancePoolsProvider = instancePoolsProvider;
+            this.crdtMemoryAllocator = crdtMemoryAllocator;
+            this.sceneExceptionsHandler = sceneExceptionsHandler;
+            this.entityCollidersSceneCache = entityCollidersSceneCache;
             SceneData = sceneData;
-            EcsExecutor = deps.EcsExecutor;
-            SceneStateProvider = deps.SceneStateProvider;
+            EcsExecutor = ecsExecutor;
+            SceneStateProvider = sceneStateProvider;
         }
 
         public void Dispose()
@@ -233,7 +242,14 @@ namespace SceneRunner
         private void DisposeInternal()
         {
             runtimeInstance.Dispose();
-            deps.Dispose();
+            ecsWorldFacade.Dispose();
+            crdtProtocol.Dispose();
+            outgoingCrtdMessagesProvider.Dispose();
+            crdtWorldSynchronizer.Dispose();
+            instancePoolsProvider.Dispose();
+            crdtMemoryAllocator.Dispose();
+            sceneExceptionsHandler.Dispose();
+            entityCollidersSceneCache.Dispose();
         }
     }
 }
