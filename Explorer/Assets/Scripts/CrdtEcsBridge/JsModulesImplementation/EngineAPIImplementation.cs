@@ -36,12 +36,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly MutexSync mutexSync;
         private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
-        private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
         private bool isDisposing;
 
         private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
+
+        protected readonly ISharedPoolsProvider sharedPoolsProvider;
 
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,

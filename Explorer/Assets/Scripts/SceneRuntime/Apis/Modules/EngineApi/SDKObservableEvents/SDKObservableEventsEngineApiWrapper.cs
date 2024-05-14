@@ -5,7 +5,6 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System;
-using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
@@ -22,9 +21,10 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         // Used for SDK Observables + SDK Comms MessageBus
         [UsedImplicitly]
-        public override List<SDKObservableEvent> SendBatch()
+        public override ScriptableSDKObservableEventArray? SendBatch()
         {
-            if (engineApi.SdkObservableEventSubscriptions.Count == 0)
+            if (engineApi.SdkObservableEventSubscriptions.Count == 0
+                || engineApi.SdkObservableEvents.Count == 0)
             {
                 engineApi.SdkObservableEvents.Clear();
                 commsApi.SceneCommsMessages.Clear();
@@ -36,7 +36,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
                 // SDK 'comms' observable for scenes MessageBus
                 DetectSceneMessageBusCommsObservableEvent();
 
-                return engineApi.ConsumeSDKObservableEvents();
+                PoolableSDKObservableEventArray? result = engineApi.ConsumeSDKObservableEvents();
+
+                return result.HasValue ? new ScriptableSDKObservableEventArray(result.Value) : null;
             }
             catch (Exception e)
             {

@@ -1,11 +1,9 @@
 using CRDT;
 using CRDT.Deserializer;
 using CRDT.Protocol;
-using CRDT.Protocol.Factory;
 using CRDT.Serializer;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.Serialization;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.ECS7;
@@ -20,9 +18,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
 {
     public class SDKObservableEventsEngineAPIImplementation : EngineAPIImplementation, ISDKObservableEventsEngineApi
     {
-        private readonly ProtobufSerializer<PBAvatarEmoteCommand> avatarEmoteCommandSerializer = new ();
-        private readonly ProtobufSerializer<PBPlayerIdentityData> playerIdentityDataSerializer = new ();
-        private readonly ProtobufSerializer<PBRealmInfo> realmInfoSerializer = new ();
         private readonly Dictionary<CRDTEntity, string> userIdEntitiesMap = new ();
         private bool reportedSceneReady;
 
@@ -35,17 +30,26 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public override void Dispose()
         {
+            UnityEngine.Debug.Log($"PRAVS - SDKObservablesEngineApiImplementation.Dispose()!");
+
             userIdEntitiesMap.Clear();
             SdkObservableEvents.Clear();
             SdkObservableEventSubscriptions.Clear();
             base.Dispose();
         }
 
-        public List<SDKObservableEvent> ConsumeSDKObservableEvents()
+        public PoolableSDKObservableEventArray? ConsumeSDKObservableEvents()
         {
-            var eventsCopy = new List<SDKObservableEvent>(SdkObservableEvents);
+            if (SdkObservableEvents.Count == 0) return null;
+
+            PoolableSDKObservableEventArray serializationBufferPoolable = sharedPoolsProvider.GetSerializationSDKObservableEventsPool(SdkObservableEvents.Count);
+            for (var i = 0; i < SdkObservableEvents.Count; i++)
+            {
+                serializationBufferPoolable.Array[i] = SdkObservableEvents[i];
+            }
             SdkObservableEvents.Clear();
-            return eventsCopy;
+
+            return serializationBufferPoolable;
         }
 
         protected override void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
