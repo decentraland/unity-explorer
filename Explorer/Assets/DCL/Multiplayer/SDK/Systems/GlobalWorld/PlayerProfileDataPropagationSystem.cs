@@ -25,21 +25,20 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void PropagateProfileToScene(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        private void PropagateProfileToScene(Profile profile, PlayerCRDTEntity playerCRDTEntity)
         {
             if (playerCRDTEntity.IsDirty)
             {
-                playerCRDTEntity.IsDirty = false;
-                SetSceneProfile(ref profile, ref playerCRDTEntity);
+                SetSceneProfile(profile, playerCRDTEntity);
                 return;
             }
 
             if (!profile.IsDirty) return;
 
-            SetSceneProfile(ref profile, ref playerCRDTEntity);
+            SetSceneProfile(profile, playerCRDTEntity);
         }
 
-        private void SetSceneProfile(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        private void SetSceneProfile(Profile profile, PlayerCRDTEntity playerCRDTEntity)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
