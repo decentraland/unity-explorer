@@ -32,7 +32,7 @@ namespace SceneRunner
         internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
 
-        private readonly SceneInstanceDeps deps;
+        private readonly SceneInstanceDependencies deps;
 
         public ISceneStateProvider SceneStateProvider { get; }
         public SceneEcsExecutor EcsExecutor { get; }
@@ -45,7 +45,7 @@ namespace SceneRunner
 
         private int intervalMS;
 
-        public SceneFacade(ISceneRuntime runtimeInstance, SceneInstanceDeps deps, ISceneData sceneData)
+        public SceneFacade(ISceneRuntime runtimeInstance, SceneInstanceDependencies deps, ISceneData sceneData)
         {
             this.runtimeInstance = runtimeInstance;
             this.deps = deps;
