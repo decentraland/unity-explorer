@@ -129,7 +129,7 @@ namespace ECS.Prioritization
                 // mind that taking cosines is not cheap
                 // the same scene is counted as InFront
                 // If the bucket exceeds the maximum bucket array, we need to mark partition as dirty since we are out of range
-                partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length;
+                partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length || partition.RawSqrDistance == -1;
 
                 if (partition.IsDirty)
                     partition.RawSqrDistance = minSqrMagnitude;
