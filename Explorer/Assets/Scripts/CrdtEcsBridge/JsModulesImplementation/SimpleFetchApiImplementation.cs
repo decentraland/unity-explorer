@@ -104,9 +104,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 var requestStatusText = unityWebRequest.responseCode.ToString();
                 string requestUrl = unityWebRequest.url.EnsureNotNull();
 
-                object? jsonData = JsonConvert.DeserializeObject(responseData);
-                object reSerializedData = JsonConvert.SerializeObject(jsonData);
-
                 object result = new
                 {
                     headers = responseHeadersPropertyBag,
