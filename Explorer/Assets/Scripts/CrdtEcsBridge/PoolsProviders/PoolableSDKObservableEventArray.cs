@@ -20,10 +20,6 @@ namespace CrdtEcsBridge.PoolsProviders
 
         public int Length { get; private set; }
 
-        // public Span<SDKObservableEvent> Span => new(Array, 0, Length);
-        //
-        // public Memory<SDKObservableEvent> Memory => Array.AsMemory(0, Length);
-
         public bool IsDisposed { get; private set; }
 
         public bool IsEmpty => Length == 0;
