@@ -20,6 +20,8 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
+        URLDomain CurrentRealm { get; }
+
         UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
 
         UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false);
@@ -30,7 +32,7 @@ namespace ECS.SceneLifeCycle.Realm
 
         UniTask SwitchMiscVisibilityAsync();
 
-        //True if the realm has changed to genesis
-        Action<bool> OnRealmChanged { get; set; }
+        // True if changed to GenesisCity, False - when changed to any other realm
+        event Action<bool> RealmChanged;
     }
 }
