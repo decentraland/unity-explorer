@@ -42,7 +42,6 @@ namespace ECS.SceneLifeCycle.Systems
         private ScenePartitionParallelJob partitionJob;
         private JobHandle partitionJobHandle;
         private bool isRunningJob;
-        private bool forceJobRun;
         private int currentPartitionIndex;
         private NativeArray<int> sqrDistanceBuckets;
 
@@ -103,20 +102,16 @@ namespace ECS.SceneLifeCycle.Systems
             if (!isRunningJob)
             {
                 PartitionNewEntityQuery(World);
-
-                if (currentPartitionIndex > 0)
-                    forceJobRun = true;
             }
 
             // Repartition if camera transform is qualified and the last job has already been completed
-            if ((forceJobRun || readOnlyCameraSamplingData.IsDirty) && !isRunningJob && currentPartitionIndex > 0)
+            if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && currentPartitionIndex > 0)
             {
                 partitionJob.CameraForward = readOnlyCameraSamplingData.Forward;
                 partitionJob.CameraPosition = readOnlyCameraSamplingData.Position;
                 partitionJob.ParcelCorners = parcelCorners;
                 partitionJobHandle = partitionJob.Schedule(currentPartitionIndex, 8);
                 isRunningJob = true;
-                forceJobRun = false;
             }
         }
 
