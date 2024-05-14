@@ -2,29 +2,30 @@
 using DCL.Diagnostics;
 using UnityEngine;
 using System.Threading;
+using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.Audio.Avatar
 {
     public class AvatarAudioPlaybackController : MonoBehaviour
     {
-        [SerializeField] private AudioSource AvatarAudioSource;
-        [SerializeField] private AudioSource ContinuousAudioAvatarAudioSource;
-        [SerializeField] private AvatarAudioSettings AvatarAudioSettings;
+        [SerializeField] private AudioSource avatarAudioSource;
+        [SerializeField] private AudioSource continuousAudioAvatarAudioSource;
+        [SerializeField] private AvatarAudioSettings avatarAudioSettings;
 
         private CancellationTokenSource cancellationTokenSource;
         private bool playingContinuousAudio;
 
         private void Start()
         {
-            AvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
-            ContinuousAudioAvatarAudioSource.priority = AvatarAudioSettings.AudioPriority;
+            avatarAudioSource.priority = avatarAudioSettings.AudioPriority;
+            continuousAudioAvatarAudioSource.priority = avatarAudioSettings.AudioPriority;
             cancellationTokenSource = new CancellationTokenSource();
         }
 
         private void OnDisable()
         {
-            ContinuousAudioAvatarAudioSource.Stop();
+            continuousAudioAvatarAudioSource.Stop();
             cancellationTokenSource?.SafeCancelAndDispose();
         }
 
@@ -35,20 +36,23 @@ namespace DCL.Audio.Avatar
 
         public void PlayContinuousAudio(AvatarAudioSettings.AvatarAudioClipType clipType)
         {
-            if (!AvatarAudioSettings.AudioEnabled) return;
+            if (!avatarAudioSettings.AudioEnabled) return;
 
             if (!playingContinuousAudio)
             {
-                AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
+                AudioClipConfig clipConfig = avatarAudioSettings.GetAudioClipConfigForType(clipType);
+
+                if (clipConfig.RelativeVolume == 0) return;
+
                 int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
-                ContinuousAudioAvatarAudioSource.volume = clipConfig.RelativeVolume;
-                ContinuousAudioAvatarAudioSource.clip = clipConfig.AudioClips[clipIndex];
-                ContinuousAudioAvatarAudioSource.Play();
+                continuousAudioAvatarAudioSource.volume = clipConfig.RelativeVolume;
+                continuousAudioAvatarAudioSource.clip = clipConfig.AudioClips[clipIndex];
+                continuousAudioAvatarAudioSource.Play();
                 playingContinuousAudio = true;
 
                 cancellationTokenSource = new CancellationTokenSource();
                 CancellationToken ct = cancellationTokenSource.Token;
-                AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, clipConfig, ContinuousAudioAvatarAudioSource.clip.length, ContinuousAudioAvatarAudioSource).Forget();
+                AudioPlaybackUtilities.SchedulePlaySoundAsync(ct, clipConfig, continuousAudioAvatarAudioSource.clip.length, continuousAudioAvatarAudioSource).Forget();
             }
         }
 
@@ -57,14 +61,14 @@ namespace DCL.Audio.Avatar
             if (playingContinuousAudio)
             {
                 playingContinuousAudio = false;
-                ContinuousAudioAvatarAudioSource.Stop();
+                continuousAudioAvatarAudioSource.Stop();
                 cancellationTokenSource?.SafeCancelAndDispose();
                 cancellationTokenSource = null;
             }
 
-            if (!AvatarAudioSettings.AudioEnabled) return;
+            if (!avatarAudioSettings.AudioEnabled) return;
 
-            AudioClipConfig clipConfig = AvatarAudioSettings.GetAudioClipConfigForType(clipType);
+            AudioClipConfig clipConfig = avatarAudioSettings.GetAudioClipConfigForType(clipType);
 
             if (clipConfig == null)
             {
@@ -78,12 +82,11 @@ namespace DCL.Audio.Avatar
                 return;
             }
 
-            if (clipConfig.RelativeVolume == 0)
-                return;
+            if (clipConfig.RelativeVolume == 0) return;
 
-            AvatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
+            avatarAudioSource.pitch = AudioPlaybackUtilities.GetPitchWithVariation(clipConfig);
             int clipIndex = AudioPlaybackUtilities.GetClipIndex(clipConfig);
-            AvatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex], clipConfig.RelativeVolume);
+            avatarAudioSource.PlayOneShot(clipConfig.AudioClips[clipIndex], clipConfig.RelativeVolume);
         }
     }
 }

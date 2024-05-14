@@ -101,11 +101,11 @@ namespace DCL.Audio
 
         private void OnPlayContinuousUIAudioEvent(AudioClipConfig audioClipConfig)
         {
-            if (!CheckAudioCategory(audioClipConfig)) return;
+            if (!CheckAudioCategory(audioClipConfig) || !CheckAudioClips(audioClipConfig)) return;
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
 
-            if (settings == null || !settings.AudioEnabled || !CheckAudioClips(audioClipConfig)) return;
+            if (settings == null || !settings.AudioEnabled) return;
 
             //If the audioClipConfig is already in the dictionary, means its already being played, so we just skip this event
             if (audioDataPerAudioClipConfig.ContainsKey(audioClipConfig)) return;
@@ -142,7 +142,7 @@ namespace DCL.Audio
 
             AudioCategorySettings settings = audioSettings.GetSettingsForCategory(audioClipConfig.Category);
 
-            if (!settings.AudioEnabled) return;
+            if (settings == null || !settings.AudioEnabled) return;
 
             PlaySingleAudio(audioClipConfig);
         }
@@ -152,6 +152,12 @@ namespace DCL.Audio
             if (audioClipConfig.AudioClips.Length == 0)
             {
                 ReportHub.Log(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has no Audio Clips Assigned");
+                return false;
+            }
+
+            if (audioClipConfig.RelativeVolume == 0)
+            {
+                ReportHub.Log(new ReportData(ReportCategory.AUDIO), $"Cannot Play Audio {audioClipConfig.name} as it has a Relative Volume of 0");
                 return false;
             }
 

@@ -182,8 +182,6 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
             catch (Exception e) { ReportHub.LogException(e, reportCategory); }
-
-            World.Remove<CharacterEmoteIntent>(entity);
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet

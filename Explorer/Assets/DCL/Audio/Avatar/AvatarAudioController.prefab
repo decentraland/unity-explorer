@@ -46,9 +46,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c827273871df4621b8e81591ccf81391, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  AvatarAudioSource: {fileID: 3453289223106606855}
-  ContinuousAudioAvatarAudioSource: {fileID: 483491539069348023}
-  AvatarAudioSettings: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
+  avatarAudioSource: {fileID: 3453289223106606855}
+  continuousAudioAvatarAudioSource: {fileID: 483491539069348023}
+  avatarAudioSettings: {fileID: 11400000, guid: 6578400f95c457644a7e77726c1305a2, type: 2}
 --- !u!82 &3453289223106606855
 AudioSource:
   m_ObjectHideFlags: 0
