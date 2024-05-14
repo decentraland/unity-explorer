@@ -30,8 +30,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
         public override void Dispose()
         {
-            UnityEngine.Debug.Log($"PRAVS - SDKObservablesEngineApiImplementation.Dispose()!");
-
             userIdEntitiesMap.Clear();
             SdkObservableEvents.Clear();
             SdkObservableEventSubscriptions.Clear();
