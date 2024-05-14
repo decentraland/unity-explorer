@@ -1,9 +1,11 @@
 ﻿using DCL.CharacterCamera;
 using ECS.Prioritization.Components;
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 using static Utility.ParcelMathHelper;
 
@@ -56,10 +58,11 @@ namespace ECS.Prioritization
             }
         }
 
+        [BurstCompile]
         public struct ScenePartitionParallelJob : IJobParallelFor
         {
-            public Vector3 CameraPosition;
-            public Vector3 CameraForward;
+            public float3 CameraPosition;
+            public float3 CameraForward;
             [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
             [ReadOnly] public UnsafeList<ParcelCornersData> ParcelCorners;
             private NativeArray<PartitionData> partitions;
@@ -68,8 +71,8 @@ namespace ECS.Prioritization
             {
                 this.partitions = partitions;
                 ParcelCorners = default(UnsafeList<ParcelCornersData>);
-                CameraPosition = default(Vector3);
-                CameraForward = default(Vector3);
+                CameraPosition = default;
+                CameraForward = default;
                 SqrDistanceBuckets = default(NativeArray<int>);
             }
 
@@ -90,7 +93,7 @@ namespace ECS.Prioritization
 
                 for (var i = 0; i < corners.Corners.Length; i++)
                 {
-                    void ProcessCorners(Vector3 corner, ref PartitionData partitionData, ref Vector3 position, ref Vector3 forward)
+                    void ProcessCorners(float3 corner, ref PartitionData partitionData, ref float3 position, ref float3 forward)
                     {
                         Vector3 vectorToCamera = corner - position;
                         vectorToCamera.y = 0; // ignore Y
