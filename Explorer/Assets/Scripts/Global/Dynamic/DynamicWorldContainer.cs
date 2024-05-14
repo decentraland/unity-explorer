@@ -395,9 +395,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 globalPlugins,
                 debugBuilder,
-                staticContainer.ScenesCache,
-                multiplayerEmotesMessageBus,
-                container.MessagePipesHub);
+                staticContainer.ScenesCache);
 
             container.GlobalPlugins = globalPlugins;
 

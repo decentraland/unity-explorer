@@ -19,6 +19,7 @@ namespace DCL.PluginSystem.World
         public TransformsPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies)
         {
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
+
             componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
             {
                 transform.ResetLocalTRS();
