@@ -5,6 +5,7 @@ using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
@@ -36,52 +37,38 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly byte emptyScenePartition;
 
         // These lists are static because of a compile issue when passing the references to the Query as [Data], code-gen wont find Unity.Collections
-        protected static NativeArray<PartitionData> partitions;
         private static UnsafeList<ParcelCornersData> parcelCorners;
+        protected PartitionDataContainer partitionDataContainer;
 
-        private ScenePartitionParallelJob partitionJob;
         private JobHandle partitionJobHandle;
         private bool isRunningJob;
-        private int currentPartitionIndex;
-        private NativeArray<int> sqrDistanceBuckets;
 
         internal PartitionSceneEntitiesSystem(World world,
             IComponentPool<PartitionComponent> partitionComponentPool,
             IPartitionSettings partitionSettings,
-            IReadOnlyCameraSamplingData readOnlyCameraSamplingData) : base(world)
+            IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
+            PartitionDataContainer partitionDataContainer) : base(world)
         {
             this.partitionComponentPool = partitionComponentPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
+            this.partitionDataContainer = partitionDataContainer;
 
             // Hard limit of the real scenes that can exist
-            partitions = new NativeArray<PartitionData>(DEPLOYED_SCENES_LIMIT, Allocator.Persistent);
             parcelCorners = new UnsafeList<ParcelCornersData>(DEPLOYED_SCENES_LIMIT, Allocator.Persistent);
-
-            // TODO: This might change with quality settings, consider updating them
-            sqrDistanceBuckets = new NativeArray<int>(partitionSettings.SqrDistanceBuckets.Count, Allocator.Persistent);
-
-            for (var i = 0; i < partitionSettings.SqrDistanceBuckets.Count; i++)
-                sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
-
-            partitionJob = new ScenePartitionParallelJob(ref partitions)
-            {
-                SqrDistanceBuckets = sqrDistanceBuckets,
-            };
-
+            partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
             emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
         }
 
         public override void Dispose()
         {
             partitionJobHandle.Complete();
-            partitions.Dispose();
+            partitionDataContainer.Dispose();
 
             // not sure if the parcelCorners.Dispose() will dispose its children as well so we explicitly do so here
             foreach (ParcelCornersData cornersData in parcelCorners)
                 cornersData.Dispose();
 
             parcelCorners.Dispose();
-            sqrDistanceBuckets.Dispose();
         }
 
         internal void ForceCompleteJob()
@@ -105,12 +92,12 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // Repartition if camera transform is qualified and the last job has already been completed
-            if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && currentPartitionIndex > 0)
+            if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && partitionDataContainer.currentPartitionIndex > 0)
             {
-                partitionJob.CameraForward = readOnlyCameraSamplingData.Forward;
-                partitionJob.CameraPosition = readOnlyCameraSamplingData.Position;
-                partitionJob.ParcelCorners = parcelCorners;
-                partitionJobHandle = partitionJob.Schedule(currentPartitionIndex, 8);
+                partitionDataContainer.partitionJob.CameraForward = readOnlyCameraSamplingData.Forward;
+                partitionDataContainer.partitionJob.CameraPosition = readOnlyCameraSamplingData.Position;
+                partitionDataContainer.partitionJob.ParcelCorners = parcelCorners;
+                partitionJobHandle = partitionDataContainer.partitionJob.Schedule(partitionDataContainer.currentPartitionIndex, 8);
                 isRunningJob = true;
             }
         }
@@ -135,7 +122,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                PartitionData partition = partitions[definition.InternalJobIndex];
+                var partition = partitionDataContainer.partitions[definition.InternalJobIndex];
                 PartitionComponent partitionComponent = partitionComponentPool.Get();
                 partitionComponent.IsDirty = partition.IsDirty;
                 partitionComponent.IsBehind = partition.IsBehind;
@@ -149,13 +136,11 @@ namespace ECS.SceneLifeCycle.Systems
         {
             AddCorners(ref definition);
 
-            partitions[currentPartitionIndex] = new PartitionData
+            var partitionData = new PartitionData
             {
-                IsDirty = readOnlyCameraSamplingData.IsDirty,
-                RawSqrDistance = -1,
+                IsDirty = readOnlyCameraSamplingData.IsDirty, RawSqrDistance = -1
             };
-
-            currentPartitionIndex++;
+            partitionDataContainer.SetPartitionData(ref partitionData);
         }
 
         protected void AddCorners(ref SceneDefinitionComponent definition)
@@ -166,18 +151,19 @@ namespace ECS.SceneLifeCycle.Systems
                 corners[i] = definition.ParcelsCorners[i];
 
             parcelCorners.Add(new ParcelCornersData(in corners));
-            definition.InternalJobIndex = currentPartitionIndex;
+            definition.InternalJobIndex = partitionDataContainer.currentPartitionIndex;
         }
 
         [Query]
         private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.InternalJobIndex < 0) return;
-            PartitionData partition = partitions[definition.InternalJobIndex];
+            var partition = partitionDataContainer.partitions[definition.InternalJobIndex];
             partitionComponent.IsDirty = partition.IsDirty;
             partitionComponent.IsBehind = partition.IsBehind;
             partitionComponent.Bucket = partition.Bucket;
             partitionComponent.RawSqrDistance = partition.RawSqrDistance;
         }
+
     }
 }

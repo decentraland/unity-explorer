@@ -12,6 +12,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System;
 using System.Threading.Tasks;
+using ECS.SceneLifeCycle.Components;
 using UnityEngine;
 using Utility;
 
@@ -37,7 +38,7 @@ namespace ECS.SceneLifeCycle.Tests
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
             componentPool.Get().Returns(_ => new PartitionComponent());
 
-            system = new PartitionSceneEntitiesSystemMock(world, componentPool, partitionSettings, samplingData);
+            system = new PartitionSceneEntitiesSystemMock(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer());
             mockSystem = system as PartitionSceneEntitiesSystemMock;
         }
 
@@ -108,12 +109,15 @@ namespace ECS.SceneLifeCycle.Tests
         internal PartitionSceneEntitiesSystemMock([NotNull] World world,
             [NotNull] IComponentPool<PartitionComponent> partitionComponentPool,
             [NotNull] IPartitionSettings partitionSettings,
-            [NotNull] IReadOnlyCameraSamplingData readOnlyCameraSamplingData) : base(world, partitionComponentPool, partitionSettings, readOnlyCameraSamplingData) { }
+            [NotNull] IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
+            PartitionDataContainer partitionDataContainer) : base(world, partitionComponentPool, partitionSettings, readOnlyCameraSamplingData, partitionDataContainer)
+        {
+        }
 
         public void AddPartitionData(int index, ref SceneDefinitionComponent sceneDefinitionComponent, ScenesPartitioningUtils.PartitionData data)
         {
             ScheduleSceneDefinition(ref sceneDefinitionComponent);
-            partitions[index] = data;
+            partitionDataContainer.partitions[index] = data;
         }
     }
 }
