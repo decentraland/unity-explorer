@@ -4,6 +4,8 @@ using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.V8;
+using Newtonsoft.Json;
 using SceneRuntime.Apis.Modules.FetchApi;
 using System;
 using System.Collections.Generic;
@@ -66,15 +68,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 case RequestMethod.GET:
                     return await webController.GetAsync<GenerateResponseOp<GenericGetRequest>, object>(commonArguments, new GenerateResponseOp<GenericGetRequest>(), ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                 case RequestMethod.POST:
-                    string postContentType = webRequestHeaders.HeaderOrNull("content-type") ?? string.Empty;
+                    string postContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
                     var postArguments = GenericPostArguments.Create(body, postContentType);
                     return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, object>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                 case RequestMethod.PUT:
-                    string putContentType = webRequestHeaders.HeaderOrNull("content-type") ?? string.Empty;
+                    string putContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
                     var putArguments = GenericPutArguments.Create(body, putContentType);
                     return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, object>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                 case RequestMethod.PATCH:
-                    string patchContentType = webRequestHeaders.HeaderOrNull("content-type") ?? string.Empty;
+                    string patchContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
                     var patchArguments = GenericPatchArguments.Create(body, patchContentType);
                     return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, object>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
                 case RequestMethod.HEAD: throw new NotImplementedException();
@@ -92,6 +94,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 string responseData = unityWebRequest.downloadHandler?.text ?? string.Empty;
 
                 var responseHeadersDictionary = unityWebRequest.GetResponseHeaders();
+                var responseHeadersPropertyBag = new PropertyBag();
+                foreach (var header in responseHeadersDictionary)
+                    responseHeadersPropertyBag.Add(header.Key, header.Value);
 
                 bool requestOk = unityWebRequest.result == UnityWebRequest.Result.Success;
                 bool requestRedirected = unityWebRequest.result is UnityWebRequest.Result.ProtocolError or UnityWebRequest.Result.ConnectionError;
@@ -101,7 +106,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                 object result = new
                 {
-                    headers = responseHeadersDictionary,
+                    headers = responseHeadersPropertyBag,
                     ok = requestOk,
                     redirected = requestRedirected,
                     status = requestStatus,
