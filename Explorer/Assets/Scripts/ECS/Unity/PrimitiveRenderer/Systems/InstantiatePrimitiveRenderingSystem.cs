@@ -124,6 +124,10 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             rendererTransform.SetParent(transformComponent.Transform, false);
             rendererTransform.ResetLocalTRS();
 
+            // ensure that meshes that come from the pool are enabled
+            rendererComponent.MeshRenderer.enabled = true;
+            rendererComponent.MeshRenderer.forceRenderingOff = false;
+
             rendererComponent.SetDefaultMaterial(sceneData.Geometry.CircumscribedPlanes);
 
             changedMeshes.Add(entity, rendererComponent);
