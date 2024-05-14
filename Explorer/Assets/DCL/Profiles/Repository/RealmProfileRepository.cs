@@ -145,7 +145,7 @@ namespace DCL.Profiles
             if (profile == null)
                 return false;
 
-            return profile.Version > version;
+            return profile.Version >= version;
         }
     }
 }
