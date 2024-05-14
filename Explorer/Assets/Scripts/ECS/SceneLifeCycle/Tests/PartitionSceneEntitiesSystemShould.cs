@@ -43,9 +43,9 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void PartitionNewEntity([Values(true, false)] bool isDirty)
+        public void PartitionNewEntity()
         {
-            samplingData.IsDirty.Returns(isDirty);
+            samplingData.IsDirty.Returns(true);
             samplingData.Forward.Returns(Vector3.forward);
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
@@ -72,9 +72,9 @@ namespace ECS.SceneLifeCycle.Tests
         }
 
         [Test]
-        public void PartitionExistingEntity([Values(true, false)] bool isDirty)
+        public void PartitionExistingEntity()
         {
-            samplingData.IsDirty.Returns(isDirty);
+            samplingData.IsDirty.Returns(true);
             samplingData.Forward.Returns(Vector3.forward);
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));

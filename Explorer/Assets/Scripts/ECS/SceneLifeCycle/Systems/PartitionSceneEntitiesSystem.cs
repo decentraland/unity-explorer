@@ -8,7 +8,6 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Unity.Collections;
-using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using static ECS.Prioritization.ScenesPartitioningUtils;
 using static Utility.ParcelMathHelper;
@@ -36,8 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly byte emptyScenePartition;
 
-        // These lists are static because of a compile issue when passing the references to the Query as [Data], code-gen wont find Unity.Collections
-        private static UnsafeList<ParcelCornersData> parcelCorners;
+
         protected PartitionDataContainer partitionDataContainer;
 
         private JobHandle partitionJobHandle;
@@ -53,8 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
             this.partitionDataContainer = partitionDataContainer;
 
-            // Hard limit of the real scenes that can exist
-            parcelCorners = new UnsafeList<ParcelCornersData>(DEPLOYED_SCENES_LIMIT, Allocator.Persistent);
+
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
             emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
         }
@@ -64,11 +61,7 @@ namespace ECS.SceneLifeCycle.Systems
             partitionJobHandle.Complete();
             partitionDataContainer.Dispose();
 
-            // not sure if the parcelCorners.Dispose() will dispose its children as well so we explicitly do so here
-            foreach (ParcelCornersData cornersData in parcelCorners)
-                cornersData.Dispose();
 
-            parcelCorners.Dispose();
         }
 
         internal void ForceCompleteJob()
@@ -94,7 +87,7 @@ namespace ECS.SceneLifeCycle.Systems
             // Repartition if camera transform is qualified and the last job has already been completed
             if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && partitionDataContainer.currentPartitionIndex > 0)
             {
-                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, parcelCorners);
+                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData);
                 isRunningJob = true;
             }
         }
@@ -147,7 +140,7 @@ namespace ECS.SceneLifeCycle.Systems
             for (var i = 0; i < definition.ParcelsCorners.Count; i++)
                 corners[i] = definition.ParcelsCorners[i];
 
-            parcelCorners.Add(new ParcelCornersData(in corners));
+            partitionDataContainer.AddCorners(new ParcelCornersData(in corners));
             definition.InternalJobIndex = partitionDataContainer.currentPartitionIndex;
         }
 
