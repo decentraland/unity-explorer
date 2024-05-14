@@ -8,9 +8,15 @@ module.exports.crdtSendToRenderer = async function(messages) {
 
 module.exports.sendBatch = async function() {
     const data = UnityEngineApi.SendBatch()
-    return {
-        events: data
-    };
+    if(!data) {
+        return {
+            events: []
+        };
+    } else {
+        return {
+            events: data
+        };
+    }
 }
 
 module.exports.crdtGetState = async function() {

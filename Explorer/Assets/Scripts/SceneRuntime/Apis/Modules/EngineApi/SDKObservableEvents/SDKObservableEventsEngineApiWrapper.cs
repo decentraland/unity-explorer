@@ -11,18 +11,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 {
     public class SDKObservableEventsEngineApiWrapper : EngineApiWrapper
     {
-        private static readonly List<SDKObservableEvent> EMPTY_EVENTS_LIST = new ()
-        {
-            new SDKObservableEvent
-            {
-                generic = new SDKObservableEvent.Generic
-                {
-                    eventId = string.Empty,
-                    eventData = string.Empty,
-                },
-            },
-        };
-
         private readonly ISDKObservableEventsEngineApi engineApi;
         private readonly ISDKMessageBusCommsControllerAPI commsApi;
 
@@ -40,7 +28,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             {
                 engineApi.SdkObservableEvents.Clear();
                 commsApi.SceneCommsMessages.Clear();
-                return EMPTY_EVENTS_LIST;
+                return null;
             }
 
             try
@@ -54,7 +42,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
             {
                 // Report an uncategorized MANAGED exception (don't propagate it further)
                 exceptionsHandler.OnEngineException(e);
-                return EMPTY_EVENTS_LIST;
+                return null;
             }
         }
 
