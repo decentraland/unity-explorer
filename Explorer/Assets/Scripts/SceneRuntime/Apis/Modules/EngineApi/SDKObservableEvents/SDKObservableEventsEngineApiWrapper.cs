@@ -22,7 +22,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
 
         // Used for SDK Observables + SDK Comms MessageBus
         [UsedImplicitly]
-        public List<SDKObservableEvent> SendBatch()
+        public override List<SDKObservableEvent> SendBatch()
         {
             if (engineApi.SdkObservableEventSubscriptions.Count == 0)
             {

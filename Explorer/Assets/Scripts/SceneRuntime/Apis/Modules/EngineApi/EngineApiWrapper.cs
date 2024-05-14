@@ -2,7 +2,9 @@
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 using System;
+using System.Collections.Generic;
 using UnityEngine.Profiling;
 
 namespace SceneRuntime.Apis.Modules.EngineApi
@@ -71,6 +73,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                 return ScriptableByteArray.EMPTY;
             }
         }
+
+        [UsedImplicitly]
+        public virtual List<SDKObservableEvent> SendBatch() => null;
 
         public void SetIsDisposing()
         {
