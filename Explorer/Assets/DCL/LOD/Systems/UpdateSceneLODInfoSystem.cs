@@ -143,9 +143,9 @@ namespace DCL.LOD.Systems
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.CurrentLOD.LodKey.Level == 0)
+            if (IsLOD0(ref sceneLODInfo))
             {
-                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
                 LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
             sceneLODInfo.IsDirty = false;
@@ -231,5 +231,9 @@ namespace DCL.LOD.Systems
             currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
         }
 
+        private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
+        {
+            return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
+        }
     }
 }
