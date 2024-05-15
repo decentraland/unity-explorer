@@ -22,7 +22,7 @@ namespace ECS.SceneLifeCycle.Systems
             return ipfsPathEntityId;
         }
 
-        protected override async UniTask<ISceneContent> GetSceneHashedContent(List<ContentDefinition>? definition, URLDomain contentBaseUrl, string reportCategory)
+        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(List<ContentDefinition>? definition, URLDomain contentBaseUrl, string reportCategory)
         {
             return new SceneHashedContent(definition, contentBaseUrl);
         }
