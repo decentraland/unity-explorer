@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
@@ -7,8 +8,10 @@ using DCL.Ipfs;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner;
 using SceneRunner.Scene;
+using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -24,7 +27,42 @@ namespace ECS.SceneLifeCycle.Systems
             this.webRequestController = webRequestController;
         }
 
-        public abstract UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, string reportCategory, IPartitionComponent partition, CancellationToken ct);
+        public async UniTask<ISceneFacade> FlowAsync(ISceneFactory sceneFactory, GetSceneFacadeIntention intention, string reportCategory, IPartitionComponent partition, CancellationToken ct)
+        {
+            var definitionComponent = intention.DefinitionComponent;
+            var ipfsPath = definitionComponent.IpfsPath;
+            var definition = definitionComponent.Definition;
+
+            // Warning! Obscure Logic!
+            // Each scene can override the content base url, so we need to check if the scene definition has a base url
+            // and if it does, we use it, otherwise we use the realm's base url
+            var contentBaseUrl = ipfsPath.BaseUrl.IsEmpty
+                ? intention.IpfsRealm.ContentBaseUrl
+                : ipfsPath.BaseUrl;
+
+            var hashedContent = await GetSceneHashedContent(definition.content, contentBaseUrl, reportCategory);
+
+            // Before a scene can be ever loaded the asset bundle manifest should be retrieved
+            var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
+            var loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, ipfsPath.EntityId, reportCategory, ct);
+            var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
+
+            (var manifest, _, var mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
+
+            // Create scene data
+            var baseParcel = intention.DefinitionComponent.Definition.metadata.scene.DecodedBase;
+            var sceneData = new SceneData(hashedContent, definitionComponent.Definition, manifest, baseParcel,
+                definitionComponent.SceneGeometry, definitionComponent.Parcels, new StaticSceneMessages(mainCrdt));
+
+            // Launch at the end of the frame
+            await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
+
+            return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+        }
+
+        protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
+
+        protected abstract UniTask<ISceneContent> GetSceneHashedContent(List<ContentDefinition>? definition, URLDomain contentBaseUrl, string reportCategory);
 
         protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, string reportCategory, CancellationToken ct)
         {

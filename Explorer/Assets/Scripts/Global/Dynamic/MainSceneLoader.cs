@@ -39,9 +39,12 @@ namespace Global.Dynamic
         private Vector2Int targetScene;
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = IRealmNavigator.GOERLI_URL;
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)] private bool useRemoteAssetBundles;
-        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)] [ShowIfCondition("useRemoteAssetBundles")] private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
-        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)] [ShowIfCondition("useRemoteAssetBundles")] private string remoteSceneContentServer = "https://worlds-content-server.decentraland.org/contents/";
+
+        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
+        private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
+
+        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
+        private ContentServer remoteSceneContentServer = ContentServer.World;
         
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
@@ -180,11 +183,22 @@ namespace Global.Dynamic
                 bool shouldEnableLandscape = enableLandscape;
 
                 var hybridSceneParams = new HybridSceneParams();
-                if (useRemoteAssetBundles && initialRealm == InitialRealm.Localhost)
+                if (initialRealm == InitialRealm.Localhost)
                 {
                     hybridSceneParams.EnableHybridScene = true;
                     hybridSceneParams.HybridSceneID = remoteSceneID;
-                    hybridSceneParams.HybridSceneContent = remoteSceneContentServer;
+                    switch (remoteSceneContentServer)
+                    {
+                        case ContentServer.Genesis:
+                            hybridSceneParams.HybridSceneContent = IRealmNavigator.GENESIS_CONTENT_URL;
+                            break;
+                        case ContentServer.Goerli:
+                            hybridSceneParams.HybridSceneContent = IRealmNavigator.GOERLI_CONTENT_URL;
+                            break;
+                        case ContentServer.World:
+                            hybridSceneParams.HybridSceneContent = IRealmNavigator.WORLDS_CONTENT_URL;
+                            break;
+                    }
                 }
 
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
