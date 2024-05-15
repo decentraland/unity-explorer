@@ -34,6 +34,7 @@ namespace ECS.SceneLifeCycle.Tests
             componentPool.Get().Returns(_ => new PartitionComponent());
 
             system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer());
+            system.partitionDataContainer.Restart();
         }
 
         [Test]

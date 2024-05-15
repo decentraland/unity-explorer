@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly byte emptyScenePartition;
 
-        protected readonly PartitionDataContainer partitionDataContainer;
+        internal readonly PartitionDataContainer partitionDataContainer;
 
         private JobHandle partitionJobHandle;
         private bool isRunningJob;
