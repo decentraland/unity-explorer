@@ -62,8 +62,15 @@ namespace DCL.SDKComponents.AudioSources
                 return;
 
             if (!audioSourceComponent.AudioSourceAssigned)
-                audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
+            {
+                if (audioSourcesPool == null)
+                {
+                    var a = 1;
+                    return;
+                }
 
+                audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
+            }
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource

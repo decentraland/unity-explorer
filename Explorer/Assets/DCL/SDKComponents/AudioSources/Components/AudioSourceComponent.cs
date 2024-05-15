@@ -22,6 +22,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             ClipPromise = promise;
             AudioClipUrl = audioClipUrl;
+            Debug.LogError($"AUDIOCLIP - AudioSourceCreated - {promise} - {audioClipUrl}");
 
             AudioSource = null;
             AudioSourceAssigned = false;
@@ -30,6 +31,7 @@ namespace DCL.SDKComponents.AudioSources
         public void SetAudioSource(AudioSource audioSource, AudioMixerGroup audioMixerGroup)
         {
             AudioSource = audioSource;
+            Debug.LogError($"AUDIOCLIP - AudioSource Set {audioSource.clip}");
 
             if (audioMixerGroup != null) { audioSource.outputAudioMixerGroup = audioMixerGroup; }
 
