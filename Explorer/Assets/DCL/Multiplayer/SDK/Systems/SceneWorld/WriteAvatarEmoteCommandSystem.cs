@@ -8,14 +8,12 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<AvatarEmoteCommandComponent>))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_EMOTE_COMMAND)]
     public partial class WriteAvatarEmoteCommandSystem : BaseUnityLoopSystem
     {
@@ -36,7 +34,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEmoteCommand(ref PlayerCRDTEntity playerCRDTEntity, ref AvatarEmoteCommandComponent emoteCommand)
+        private void UpdateAvatarEmoteCommand(PlayerCRDTEntity playerCRDTEntity, AvatarEmoteCommandComponent emoteCommand)
         {
             if (!emoteCommand.IsDirty || emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
 
@@ -53,7 +51,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(AvatarEmoteCommandComponent))]
-        private void HandleComponentRemoval(in Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(in Entity entity, PlayerCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEmoteCommand>(playerCRDTEntity.CRDTEntity);
             World.Remove<AvatarEmoteCommandComponent>(entity);

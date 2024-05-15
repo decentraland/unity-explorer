@@ -11,4 +11,13 @@ namespace Global.Dynamic
         Localhost,
         Custom,
     }
+
+    public enum ContentServer
+    {
+        World,
+        Genesis,
+        Goerli
+    }
+    
+    
 }

@@ -9,14 +9,12 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using ECS.Unity.ColorComponent;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
     public partial class WriteSDKAvatarBaseSystem : BaseUnityLoopSystem
     {
@@ -35,7 +33,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBase(ref PlayerCRDTEntity playerCRDTEntity, ref Profile profile)
+        private void UpdateAvatarBase(PlayerCRDTEntity playerCRDTEntity, Profile profile)
         {
             if (!profile.IsDirty) return;
 
@@ -52,7 +50,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(PlayerCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarBase>(playerCRDTEntity.CRDTEntity);
         }

@@ -220,7 +220,8 @@ namespace Global.Dynamic
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
                 dynamicWorldParams.StaticLoadPositions,
                 staticContainer.RealmData,
-                staticContainer.ScenesCache);
+                staticContainer.ScenesCache,
+                staticContainer.PartitionDataContainer);
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
@@ -395,7 +396,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 globalPlugins,
                 debugBuilder,
-                staticContainer.ScenesCache);
+                staticContainer.ScenesCache,
+                dynamicWorldParams.HybridSceneParams);
 
             container.GlobalPlugins = globalPlugins;
 

@@ -41,6 +41,7 @@ namespace Global.Dynamic
         private readonly RetrieveSceneFromFixedRealm retrieveSceneFromFixedRealm;
         private readonly RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld;
         private readonly TeleportController teleportController;
+        private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
 
         private GlobalWorld? globalWorld;
@@ -64,7 +65,8 @@ namespace Global.Dynamic
             RetrieveSceneFromVolatileWorld retrieveSceneFromVolatileWorld,
             IReadOnlyList<int2> staticLoadPositions,
             RealmData realmData,
-            IScenesCache scenesCache)
+            IScenesCache scenesCache,
+            PartitionDataContainer partitionDataContainer)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -74,6 +76,7 @@ namespace Global.Dynamic
             this.retrieveSceneFromFixedRealm = retrieveSceneFromFixedRealm;
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
             this.scenesCache = scenesCache;
+            this.partitionDataContainer = partitionDataContainer;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -109,6 +112,7 @@ namespace Global.Dynamic
             sceneProviderStrategy.World = globalWorld.EcsWorld;
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
+            partitionDataContainer.Restart();
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
@@ -171,7 +175,7 @@ namespace Global.Dynamic
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
                 // Destroy everything without awaiting as it's Application Quit
-                globalWorld.Dispose();
+                globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
 
             foreach (ISceneFacade scene in allScenes)
