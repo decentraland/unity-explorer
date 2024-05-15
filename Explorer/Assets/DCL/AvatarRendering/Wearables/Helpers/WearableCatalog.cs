@@ -28,9 +28,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
         {
             wearablesCache.Add(loadingIntentionPointer, wearable);
+
             if (qualifiedForUnloading)
                 cacheKeysDictionary[loadingIntentionPointer] =
                     listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+
             return wearable;
         }
 
@@ -45,7 +47,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return false;
         }
 
-        public IWearable GetDefaultWearable(  BodyShape bodyShape, string category)
+        public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
         {
             var wearableURN =
                 WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
@@ -108,7 +110,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 for (var j = 0; j < assets.Results?.Length; j++)
                 {
-                    StreamableLoadingResult<WearableAssetBase>? result = assets.Results[i];
+                    StreamableLoadingResult<WearableAssetBase>? result = assets.Results[j];
 
                     if (result is not { Succeeded: true })
                     {
@@ -116,12 +118,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         continue;
                     }
 
-                    WearableAssetBase wearableAsset = result.Value.Asset!;
+                    WearableAssetBase? wearableAsset = result.Value.Asset;
 
-                    if (wearableAsset.ReferenceCount == 0)
+                    if (wearableAsset is { ReferenceCount: 0 })
                     {
-                        wearableAsset?.Dispose();
-                        assets.Results[i] = null;
+                        wearableAsset.Dispose();
+                        assets.Results[j] = null;
                     }
                 }
             }

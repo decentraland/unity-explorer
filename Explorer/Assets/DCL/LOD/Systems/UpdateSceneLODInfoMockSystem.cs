@@ -42,7 +42,7 @@ namespace DCL.LOD.Systems
             
             //If LODs are not enabled, we can consider the scene as ready,
             //and check scene readiness so not to block the loading screen
-            scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
             LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             sceneLODInfo.CurrentLODLevel = 0;
         }
