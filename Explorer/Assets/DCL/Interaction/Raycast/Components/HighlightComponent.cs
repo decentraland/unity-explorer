@@ -12,10 +12,6 @@ namespace DCL.Interaction.Raycast.Components
         private bool isAtDistance;
         private EntityReference currentEntity;
         private EntityReference nextEntity;
-        private Material? materialOnUse;
-
-        //Should be repooled
-        public readonly Dictionary<Renderer, Material[]> OriginalMaterials;
 
         public HighlightComponent(bool isEnabled, bool isAtDistance, EntityReference currentEntity, EntityReference nextEntity) : this()
         {
@@ -23,7 +19,6 @@ namespace DCL.Interaction.Raycast.Components
             this.isAtDistance = isAtDistance;
             this.currentEntity = currentEntity;
             this.nextEntity = nextEntity;
-            OriginalMaterials = new Dictionary<Renderer, Material[]>();
         }
 
         public void Setup(bool atDistance, EntityReference newNextEntity)
@@ -51,13 +46,8 @@ namespace DCL.Interaction.Raycast.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void MoveNextAndRemoveMaterial()
         {
-            materialOnUse = null;
             currentEntity = nextEntity;
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly Material MaterialOnUse() =>
-            materialOnUse.EnsureNotNull();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool IsAtDistance() =>
@@ -69,23 +59,24 @@ namespace DCL.Interaction.Raycast.Components
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool IsEmpty() =>
-            currentEntity == EntityReference.Null || materialOnUse == null;
+            currentEntity == EntityReference.Null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly bool CanPassAnUpdate(Material materialToUse) =>
-            materialOnUse == materialToUse
-            && currentEntity == nextEntity
-            && isEnabled;
+        public readonly bool CanPassAnUpdate() =>
+            currentEntity == nextEntity && isEnabled;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public readonly bool ReadyForMaterial() =>
-            materialOnUse == null && isEnabled && nextEntity != EntityReference.Null;
+            isEnabled && nextEntity != EntityReference.Null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateMaterialAndSwitchEntity(Material materialToUse)
+        public void SwitchEntity()
         {
             currentEntity = nextEntity;
-            materialOnUse = materialToUse;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool HasToResetLastEntity() =>
+            currentEntity != nextEntity && currentEntity != EntityReference.Null && isEnabled;
     }
 }
