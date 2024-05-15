@@ -15,7 +15,7 @@ using UnityEngine;
 namespace DCL.SDKComponents.AudioSources
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     [ThrottlingEnabled]
     public partial class CleanUpAudioSourceSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {

@@ -14,7 +14,7 @@ using UnityEngine;
 namespace ECS.StreamableLoading.AudioClips
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class LoadAudioClipSystem  : LoadSystemBase<AudioClip, GetAudioClipIntention>
     {
         private readonly IWebRequestController webRequestController;

@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
@@ -35,7 +36,11 @@ namespace ECS.StreamableLoading.AudioClips
                 clipData.AddReference();
             else
             {
-                cache[key] = new AudioClipData(asset);
+                //Starting the count of references on 0 because this is created during the asset loading, but it isn't necessarily referenced by a component yet
+                //left the adding of references to be done manually by components when they are finally initialized so when we do the cleanup it properly removes
+                //referenced clips
+                cache[key] = new AudioClipData(asset, 0);
+
                 listedCache.Add((key, cache[key]));
             }
 
@@ -47,8 +52,7 @@ namespace ECS.StreamableLoading.AudioClips
             if (cache.TryGetValue(key, out AudioClipData? value))
             {
                 asset = value.AudioClip;
-                value.AddReference();
-                return true;
+                 return true;
             }
 
             asset = null;

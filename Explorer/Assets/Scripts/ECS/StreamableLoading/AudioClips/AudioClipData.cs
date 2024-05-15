@@ -34,8 +34,8 @@ namespace ECS.StreamableLoading.AudioClips
             if (referencesCount == 0)
                 ProfilingCounters.AudioClipsReferenced.Value++;
 
-            Debug.LogError($"AUDIOCLIP - Added a reference to - {AudioClip} - {referencesCount}");
             referencesCount++;
+
             LastUsedFrame = MultithreadingUtility.FrameCount;
         }
 
@@ -45,16 +45,15 @@ namespace ECS.StreamableLoading.AudioClips
 
             if (referencesCount < 0)
             {
-                Debug.LogError($"AUDIOCLIP NEGATIVE REF!! {AudioClip} {referencesCount}");
+                ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.SDK_AUDIO_SOURCES);
+                //Assert.IsFalse(referencesCount < 0, "Reference count of AudioClip should never be negative!"); Leaving it commented for now :)
             }
-
-            //Assert.IsFalse(referencesCount < 0, "Reference count of AudioClip should never be negative!");
-                ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.AUDIO);
 
             LastUsedFrame = MultithreadingUtility.FrameCount;
 
             if (referencesCount == 0)
                 ProfilingCounters.AudioClipsReferenced.Value--;
+
         }
 
         public bool CanBeDisposed() =>

@@ -27,6 +27,11 @@ namespace DCL.SDKComponents.AudioSources
             cache.Dereference(component.ClipPromise.LoadingIntention, component.AudioSource.clip);
         }
 
+        public static void AddReferenceToAudioClip(this ref AudioSourceComponent component,IDereferencableCache<AudioClip, GetAudioClipIntention> cache)
+        {
+            cache.Add(component.ClipPromise.LoadingIntention, component.AudioSource.clip);
+        }
+
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)
         {
             if (!sceneData.TryGetContentUrl(pbAudioClipUrl, out URLAddress audioClipUrl))
@@ -55,7 +60,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (string.IsNullOrEmpty(url))
             {
-                ReportHub.LogError(ReportCategory.AUDIO_SOURCES, $"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
+                ReportHub.LogError(ReportCategory.SDK_AUDIO_SOURCES, $"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
                 return AudioType.UNKNOWN;
             }
 
