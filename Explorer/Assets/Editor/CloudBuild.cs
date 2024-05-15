@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 
 namespace Editor
@@ -24,6 +25,16 @@ namespace Editor
 
             // E.g. access like:
             Debug.Log(Parameters["TEST_VALUE"]);
+
+            //Unity suggestion: 1793168
+            //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
+            EditorApplication.ExecuteMenuItem("File/Save Project");
+
+            // Set version for this build
+            var buildVersion = Parameters["BUILD_VERSION"] as string;
+            PlayerSettings.bundleVersion = buildVersion;
+            PlayerSettings.macOS.buildNumber = buildVersion;
+            Debug.Log($"Build version set to: {buildVersion}");
         }
 
         [UsedImplicitly]

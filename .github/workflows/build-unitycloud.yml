@@ -1,29 +1,26 @@
 name: Unity Cloud Build
 
 on:
-#  pull_request:
-#    types:
-#      - opened
-#      - reopened
-#      - synchronize
-#      - ready_for_review
-#      - labeled
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - labeled
   merge_group: {}
-# [main]
-  push: { branches: [feat/unity-cloud-build] }
-#  workflow_dispatch:
-#    inputs:
-#      profile:
-#        description: 'Set to true, profiling will be enabled auto-connect profiler will be set to on'
-#        required: true
-#        default: 'false'
-#      deep_profile:
-#        description: 'Set to true, deep profiling will also be enabled'
-#        required: false
-#        default: 'false'
-
-#env:
-#  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  push: { branches: [feat/unity-cloud-build] } # [main]
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Controls profiling, auto-connect and deep profiling options'
+        required: true
+        default: 'none'
+        type: choice
+        options:
+          - none
+          - profile
+          - deep
 
 #concurrency:
 #  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -57,7 +54,53 @@ jobs:
 
       - name: Get commit SHA
         id: get_commit_sha
-        run: echo "::set-output name=commit_sha::$(git rev-parse --short $GITHUB_SHA)"
+        #run: echo "::set-output name=commit_sha::$(git rev-parse --short $GITHUB_SHA)"
+        run: echo "commit_sha=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
+
+      - name: Create Version
+        id: get_version
+        run: |
+          #!/bin/bash
+
+          # Get latest tag
+          latestTag=$(git describe --tags)
+
+          # Extract version components
+          if [[ $latestTag =~ ^v([0-9]+)\.([0-9]+)-([0-9]+)-(.+)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+            minorVersion="${BASH_REMATCH[2]}"
+            build="${BASH_REMATCH[3]}"
+            commit="${BASH_REMATCH[4]}"
+            echo "Version: $version"
+            echo "Minor Version: $minorVersion"
+            echo "Build: $build"
+            echo "Commit: $commit"
+          else
+            echo "String does not match expected pattern. No Version Added!"
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            branchName="$GITHUB_HEAD_REF"
+          else
+            branchName=$(echo "$GITHUB_REF" | cut -d'/' -f 3)
+          fi
+
+          semVer="v${version}.${minorVersion}.${build}-${commit}-${branchName}"
+          echo "Version: $semVer"
+          echo "version=$semVer" >> "$GITHUB_OUTPUT"
+
+      - name: Get Sentry parameters
+        id: get_sentry
+        run: |
+          #!/bin/bash
+
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> "$GITHUB_OUTPUT"
+            echo "upload_symbols=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "environment=development" >> "$GITHUB_OUTPUT"
+            echo "upload_symbols=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Execute Unity Cloud build
         env:
@@ -73,89 +116,17 @@ jobs:
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
           # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
           PARAM_TEST_VALUE: "value exists"
-        run: python -u scripts/cloudbuild/build.py
-                                                                                         
-#      - name: Set SHA env variable
-#        run: |
-#          $eventName = "${{ github.event_name }}"
-#          
-#          if ($eventName -eq "push") {
-#              $LONG_SHA = "${{ github.sha }}"
-#              $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
-#              Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
-#              Write-Output $SHORT_SHA
-#          }
-#          elseif ($eventName -eq "pull_request") {
-#              $LONG_SHA = "${{ github.event.pull_request.head.sha }}"
-#              $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
-#              Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
-#              Write-Output $SHORT_SHA
-#          }
-#
-#      - name: Set sentry env var
-#        run: |
-#          $branchName = "${{ github.ref }}"
-#          $SENTRY_ENVIRONMENT = "branch"
-#          
-#          if ($branchName -eq 'refs/heads/main') {
-#            $SENTRY_ENVIRONMENT = "production"
-#          } elseif ($branchName -eq 'refs/heads/dev') {
-#            $SENTRY_ENVIRONMENT = "development"
-#          }
-#          
-#          Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
-#          Write-Output $SENTRY_ENVIRONMENT
+          PARAM_BUILD_VERSION: ${{ steps.get_version.outputs.version }}
+          PARAM_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          PARAM_SENTRY_ENVIRONMENT: ${{ steps.get_sentry.outputs.environment }}
+          PARAM_SENTRY_CLI_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
+          PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ steps.get_sentry.outputs.upload_symbols }}
 
-#      - name: Enable or disable the upload of sentry debug symbols
-#        run: |
-#          $branchName = "${{ github.ref }}"
-#          $uploadSymbols = "false"
-#          if ($branchName -eq 'refs/heads/main') {
-#            $uploadSymbols = "true"
-#          }
-#          Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
-#          Write-Output $uploadSymbols
-          
-#      - name: Extract branch name
-#        shell: bash
-#        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-#        id: extract_branch
-          
-#      - name: Create Version
-#        id: create-version
-#        run: | 
-#          $latestTag = git describe --tags
-#          
-#          # Extract version components
-#          if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
-#          $version = $matches[1]
-#          $minorVersion = $matches[2]
-#          $build = $matches[3]
-#          $commit = $matches[4]
-#          
-#          Write-Output "Version: $version"
-#          Write-Output "Minor Version: $minorVersion"
-#          Write-Output "Build: $build"
-#          Write-Output "Commit: $commit"
-#          } else {
-#            Write-Output "String does not match expected pattern. No Version Added!"
-#          }
-#          
-#          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
-#            $branchName = $env:GITHUB_HEAD_REF
-#          } else {
-#            $branchName = ($env:GITHUB_REF -split '/')[2]
-#          }
-#          
-#          $semVer = "v$($version).$($minorVersion).$($build)-$($commit)-$($branchName)"
-#          Write-Output "Version: $semVer"
-#          Write-Output "version=$($semVer)" >> $env:GITHUB_OUTPUT
-#        shell: pwsh
-#          
-#      - name: 'Using Version'
-#        run: |
-#          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
-#          Write-Output "Version: ($env:SELECTED_COLOR)"
+          # Profiling and such
+          #customParameters: ${{ env.UNITY_CUSTOM_PARAMS }}
+
+        run: python -u scripts/cloudbuild/build.py
+
           
 #      - name: Manage custom input parameters
 #        run: |

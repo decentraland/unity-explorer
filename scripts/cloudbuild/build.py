@@ -160,5 +160,5 @@ while True:
         print(f'Runner elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))} | Polling again in {POLL_TIME}s [...]')
         time.sleep(POLL_TIME)
     else:
-        print(f'Runner FINAL elapsed time: {time.time() - start_time}')
+        print(f'Runner FINAL elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))}')
         break
