@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using DCL.LOD.Systems;
 using UnityEngine.Pool;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -25,19 +26,22 @@ namespace ECS.SceneLifeCycle.Systems
 
         private HashSet<EntityReference>? entitiesUnderObservation;
 
-        private int framesLeft = FRAMES_COUNT;
         private bool concluded;
         private int assetsResolved;
         private int totalAssetsToResolve = -1;
 
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
+        private readonly ISceneStateProvider sceneStateProvider;
+        private readonly LODGateway lodGateway;
 
-        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneStateProvider sceneStateProvider, LODGateway lodGateway) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
             this.eventsBuffer = eventsBuffer;
+            this.sceneStateProvider = sceneStateProvider;
+            this.lodGateway = lodGateway;
 
             forEachEvent = GatherEntities;
         }
@@ -55,10 +59,9 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected override void Update(float t)
         {
-            if (framesLeft > 0)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
             {
                 eventsBuffer.ForEach(forEachEvent);
-                framesLeft--;
             }
             else if (!concluded)
             {
@@ -119,6 +122,8 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     for (var i = 0; i < reports.Value.Count; i++)
                         reports.Value[i].SetProgress(1f);
+
+                    lodGateway.CanLoad = true;
 
                     reports.Value.Dispose();
                     reports = null;
