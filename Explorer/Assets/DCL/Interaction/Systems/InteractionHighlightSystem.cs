@@ -42,7 +42,6 @@ namespace DCL.Interaction.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
-
             if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
                 && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
                 highlightComponent.Disable();
@@ -70,7 +69,15 @@ namespace DCL.Interaction.Systems
             List<Renderer> renderers = ListPool<Renderer>.Get();
             AddRenderersFromEntity(entity, renderers);
 
-            TransformComponent entityTransform = World!.Get<TransformComponent>(entity);
+            ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
+
+            // Fixes a crash by trying to access the transform of an entity when is not available
+            if (!containsTransform)
+            {
+                ListPool<Renderer>.Release(renderers);
+                return;
+            }
+
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
@@ -104,7 +111,15 @@ namespace DCL.Interaction.Systems
             List<Renderer> renderers = ListPool<Renderer>.Get();
             AddRenderersFromEntity(entity, renderers);
 
-            TransformComponent entityTransform = World!.Get<TransformComponent>(entity);
+            ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
+
+            // Fixes a crash by trying to access the transform of an entity when is not available
+            if (!containsTransform)
+            {
+                ListPool<Renderer>.Release(renderers);
+                return;
+            }
+
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
@@ -120,7 +135,9 @@ namespace DCL.Interaction.Systems
             {
                 AddRenderersFromEntity(child, list);
 
-                TransformComponent childTransform = World!.Get<TransformComponent>(child);
+                ref TransformComponent childTransform = ref World.TryGetRef<TransformComponent>(child, out bool containsTransform);
+                if (!containsTransform) continue;
+
                 GetRenderersFromChildrenRecursive(ref childTransform, list);
             }
         }
