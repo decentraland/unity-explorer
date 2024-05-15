@@ -19,6 +19,7 @@ MonoBehaviour:
   - rid: 4555433133200637954
   - rid: 758312634468794373
   - rid: 758312881421549570
+  - rid: 857448817791336450
   references:
     version: 2
     RefIds:
@@ -34,6 +35,10 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 857448817791336450
+      type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        <FontList>k__BackingField: {fileID: 0}
     - rid: 1268264197252972545
       type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -41,13 +46,8 @@ MonoBehaviour:
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
-        <hoverMaterial>k__BackingField:
-          m_AssetGUID: 31f3cd961c052c84baf27b3938e5b0f4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <hoverOutOfRangeMaterial>k__BackingField:
-          m_AssetGUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
+        Data:
+          m_AssetGUID: ea1f7da7c78c3d74bac70064dcc265a7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

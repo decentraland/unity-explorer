@@ -30,7 +30,7 @@ namespace DCL.LOD
             else if (!sceneDefinitionComponent.IsSDK7) visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
             else
             {
-                VisualSceneStateEnum candidateState = partition.Bucket < lodSettingsAsset.LodPartitionBucketThresholds[0]
+                var candidateState = partition.Bucket < lodSettingsAsset.SDK7LodThreshold
                     ? VisualSceneStateEnum.SHOWING_SCENE
                     : VisualSceneStateEnum.SHOWING_LOD;
 

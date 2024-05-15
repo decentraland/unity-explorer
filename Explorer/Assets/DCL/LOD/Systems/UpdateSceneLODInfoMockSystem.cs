@@ -18,11 +18,13 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoMockSystem : BaseUnityLoopSystem
     {
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly IScenesCache scenesCache;
 
 
-        public UpdateSceneLODInfoMockSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+        public UpdateSceneLODInfoMockSystem(World world, ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
@@ -34,11 +36,15 @@ namespace DCL.LOD.Systems
         [Query]
         [All(typeof(SceneLODInfo), typeof(PartitionComponent))]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateLODLevel(SceneDefinitionComponent sceneDefinitionComponent)
+        private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
+            if (sceneLODInfo.CurrentLODLevel != byte.MaxValue) return;
+            
             //If LODs are not enabled, we can consider the scene as ready,
             //and check scene readiness so not to block the loading screen
+            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
             LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+            sceneLODInfo.CurrentLODLevel = 0;
         }
 
         [Query]

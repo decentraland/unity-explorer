@@ -11,7 +11,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -31,20 +30,16 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
-        // asynchronous operations run independently on Update that is already synchronized
-        // so they require explicit synchronisation
-        private readonly MutexSync mutexSync;
-
         private readonly Query query;
 
         private CancellationTokenSource cancellationTokenSource;
 
         private bool systemIsDisposed;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
         {
             this.cache = cache;
-            this.mutexSync = mutexSync;
+            // this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedInternalFlowDelegate = FlowInternalAsync;
@@ -57,10 +52,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         public override void Dispose()
         {
+            systemIsDisposed = true;
+
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
-
-            systemIsDisposed = true;
         }
 
         protected override void Update(float t)
@@ -156,11 +151,15 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
 
+        protected virtual void DisposeAbandonedResult(TAsset asset)
+        {
+        }
+
         private void FinalizeLoading(in Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget acquiredBudget)
         {
-            using MutexSync.Scope sync = mutexSync.GetScope();
+            // using MutexSync.Scope sync = mutexSync.GetScope();
 
             if (systemIsDisposed || !World.IsAlive(entity))
             {
@@ -230,19 +229,11 @@ namespace ECS.StreamableLoading.Common.Systems
 
             var ongoingRequestRemoved = false;
 
-            void TryRemoveOngoingRequest()
-            {
-                if (!ongoingRequestRemoved)
-                {
-                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
-                    ongoingRequestRemoved = true;
-                }
-            }
+            StreamableLoadingResult<TAsset>? result = null;
 
             try
             {
-                StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -266,6 +257,9 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             catch (OperationCanceledException operationCanceledException)
             {
+                if(result is { Succeeded: true })
+                    DisposeAbandonedResult(result.Value.Asset!);
+
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 TryRemoveOngoingRequest();
@@ -278,6 +272,16 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // We need to remove the request the same frame to prevent de-sync with new requests
                 TryRemoveOngoingRequest();
+            }
+
+            void TryRemoveOngoingRequest()
+            {
+                if (!ongoingRequestRemoved)
+                {
+                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
+                    ongoingRequestRemoved = true;
+                }
             }
         }
 

@@ -32,7 +32,7 @@ namespace DCL.AvatarRendering.Emotes
             IWebRequestController webRequestController,
             IStreamableCache<EmotesResolution, GetOwnedEmotesFromRealmIntention> cache,
             IEmoteCache emoteCache, MutexSync mutexSync)
-            : base(world, cache, mutexSync)
+            : base(world, cache)
         {
             this.realmData = realmData;
             this.emoteCache = emoteCache;
@@ -45,7 +45,10 @@ namespace DCL.AvatarRendering.Emotes
             LambdaOwnedEmoteElementList lambdaResponse =
                 await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
                         ct, GetReportCategory())
-                   .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                   .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
+
+            // The following logic is not thread-safe!
+            // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
 
             if (lambdaResponse.elements.Count == 0)
                 return new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(Array.Empty<IEmote>(), lambdaResponse.totalAmount));

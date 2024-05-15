@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Networking;
 using IpfsProfileEntity = DCL.Ipfs.EntityDefinitionGeneric<DCL.Profiles.GetProfileJsonRootDto>;
 
 namespace DCL.Profiles
@@ -98,11 +97,11 @@ namespace DCL.Profiles
                 URLAddress url = Url(id, version);
                 var response = webRequestController.GetAsync(new CommonArguments(url), ct, ignoreErrorCodes: IWebRequestController.IGNORE_NOT_FOUND);
 
-                using GetProfileJsonRootDto root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
+                using GetProfileJsonRootDto? root = await response.CreateFromNewtonsoftJsonAsync<GetProfileJsonRootDto>(
                     createCustomExceptionOnFailure: (exception, text) => new ProfileParseException(id, version, text, exception),
                     serializerSettings: SERIALIZER_SETTINGS);
 
-                var profileDto = root.FirstProfileDto();
+                var profileDto = root?.FirstProfileDto();
 
                 if (profileDto is null)
                     return null;
@@ -146,7 +145,7 @@ namespace DCL.Profiles
             if (profile == null)
                 return false;
 
-            return profile.Version > version;
+            return profile.Version >= version;
         }
     }
 }

@@ -13,7 +13,6 @@ using DCL.CharacterCamera.Settings;
 using DCL.CharacterCamera.Systems;
 using DCL.DebugUtilities;
 using ECS.Prioritization.Components;
-using System;
 using System.Threading;
 using UnityEngine;
 using ApplyCinemachineSettingsSystem = DCL.Character.CharacterCamera.Systems.ApplyCinemachineSettingsSystem;

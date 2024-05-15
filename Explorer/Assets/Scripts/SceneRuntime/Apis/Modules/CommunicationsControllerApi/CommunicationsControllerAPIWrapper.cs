@@ -47,7 +47,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 for (var i = 0; i < dataList.Count; i++)
                 {
                     var message = (ITypedArray<byte>)dataList[i];
-                    var messageLength = message.Length;
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)

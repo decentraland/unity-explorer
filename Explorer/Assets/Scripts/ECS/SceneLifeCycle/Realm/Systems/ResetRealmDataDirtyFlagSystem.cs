@@ -7,7 +7,7 @@ using ECS.Groups;
 namespace ECS.SceneLifeCycle.Realm.Systems
 {
     [LogCategory(ReportCategory.REALM_DATA_DIRTY_RESET_SYSTEM)]
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(CleanUpGroup))]
     public partial class ResetRealmDataDirtyFlagSystem : BaseUnityLoopSystem
     {

@@ -1,36 +1,24 @@
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
-using DCL.ECSComponents;
+using DCL.Diagnostics;
 using DCL.SDKComponents.TextShape.Component;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.Unity.Groups;
-using ECS.Unity.Visibility;
+using ECS.Unity.Visibility.Systems;
 
 namespace DCL.SDKComponents.TextShape.System
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [ThrottlingEnabled]
-    public partial class VisibilityTextShapeSystem : BaseUnityLoopSystem
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateAfter(typeof(ComponentInstantiationGroup))]
+    [LogCategory(ReportCategory.PRIMITIVE_MESHES)]
+    public partial class VisibilityTextShapeSystem : VisibilitySystemBase<TextShapeComponent>
     {
-        public VisibilityTextShapeSystem(World world) : base(world)
-        {
-        }
+        public VisibilityTextShapeSystem(World world, EntityEventBuffer<TextShapeComponent> changedTextMeshes) : base(world, changedTextMeshes) { }
 
-        protected override void Update(float t)
+        protected override void UpdateVisibilityInternal(in TextShapeComponent component, bool visible)
         {
-            UpdateVisibilityQuery(World!);
-        }
-
-        [Query]
-        private void UpdateVisibility(in TextShapeRendererComponent textShapeRenderer, in PBVisibilityComponent visibility)
-        {
-            if (visibility.IsDirty)
-            {
-                textShapeRenderer.ApplyVisibility(visibility.GetVisible());
-                visibility.IsDirty = false;
-            }
+            component.TextMeshPro.enabled = visible;
         }
     }
 }
