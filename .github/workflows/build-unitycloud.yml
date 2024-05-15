@@ -22,17 +22,8 @@ on:
           - profile
           - deep
 
-#concurrency:
-#  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-#  cancel-in-progress: true
-
 jobs:
   build:
-#    strategy:
-#      max-parallel: 1
-#      matrix:
-#        include:
-#          - targetPlatform: StandaloneWindows64
 
     name: Build
     runs-on: ubuntu-latest
@@ -56,7 +47,6 @@ jobs:
 
       - name: Get commit SHA
         id: get_commit_sha
-        #run: echo "::set-output name=commit_sha::$(git rev-parse --short $GITHUB_SHA)"
         run: echo "commit_sha=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
 
       - name: Create Version
@@ -149,21 +139,6 @@ jobs:
 #
 #          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
 #          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
-
-#      - uses: game-ci/unity-builder@v4.2.3
-#        id: build
-#        timeout-minutes: 120
-#        with:
-#          buildMethod: Editor.BuildScript.Build
-#          projectPath: Explorer
-#          buildTimeout: 120
-#          targetPlatform: ${{ matrix.targetPlatform }}
-#          buildName: Decentraland
-#          versioning: Custom
-#          version: ${{ steps.create-version.outputs.version }}
-#          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
-#          sshAgent: ${{ env.SSH_AUTH_SOCK }}
-#          allowDirtyBuild: true
 
       # Upload artifact
 #      - name: Upload windows artifact
