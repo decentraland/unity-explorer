@@ -20,6 +20,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private World globalWorld = null!;
+        private bool isDisposed;
 
         public MultiplayerMovementMessageBus(IMessagePipesHub messagePipesHub, IReadOnlyEntityParticipantTable entityParticipantTable)
         {
@@ -32,6 +33,12 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
         {
+            if (isDisposed)
+            {
+                ReportHub.LogError(ReportCategory.MULTIPLAYER, "Receiving a message while disposed is bad");
+                return;
+            }
+
             using (receivedMessage)
             {
                 if (cancellationTokenSource.Token.IsCancellationRequested)
@@ -132,6 +139,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void Dispose()
         {
+            isDisposed = true;
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
         }

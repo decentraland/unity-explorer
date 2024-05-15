@@ -175,7 +175,7 @@ namespace Global.Dynamic
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
                 // Destroy everything without awaiting as it's Application Quit
-                globalWorld.Dispose();
+                globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
 
             foreach (ISceneFacade scene in allScenes)
