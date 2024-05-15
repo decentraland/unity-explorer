@@ -395,7 +395,8 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 globalPlugins,
                 debugBuilder,
-                staticContainer.ScenesCache);
+                staticContainer.ScenesCache,
+                dynamicWorldParams.HybridSceneParams);
 
             container.GlobalPlugins = globalPlugins;
 
