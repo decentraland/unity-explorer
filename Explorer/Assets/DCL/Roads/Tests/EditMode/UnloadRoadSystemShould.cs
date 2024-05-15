@@ -2,7 +2,9 @@
 using DCL.Roads.Components;
 using DCL.Roads.Systems;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
@@ -18,7 +20,8 @@ namespace DCL.Roads.Tests
         public void Setup()
         {
             roadAssetPool =  Substitute.For<IRoadAssetPool>();
-            system = new UnloadRoadSystem(world, roadAssetPool);
+            var scenesCache = Substitute.For<IScenesCache>();
+            system = new UnloadRoadSystem(world, roadAssetPool, scenesCache);
         }
 
         [Test]
@@ -29,7 +32,7 @@ namespace DCL.Roads.Tests
             {
                 IsDirty = false, CurrentKey = "key", CurrentAsset = new GameObject().transform
             };
-            var entity = world.Create(roadInfo, new VisualSceneState(), new DeleteEntityIntention());
+            var entity = world.Create(roadInfo, new SceneDefinitionComponent(), new VisualSceneState(), new DeleteEntityIntention());
 
             // Act
             system.Update(0);
