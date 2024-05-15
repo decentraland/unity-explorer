@@ -161,7 +161,7 @@ namespace DCL.AvatarRendering.Emotes
                     if (streamableAsset == null)
                         return;
 
-                    var streamableAssetValue = streamableAsset.Value;
+                    StreamableLoadingResult<WearableRegularAsset> streamableAssetValue = streamableAsset.Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -181,10 +181,7 @@ namespace DCL.AvatarRendering.Emotes
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
             }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, reportCategory);
-            }
+            catch (Exception e) { ReportHub.LogException(e, reportCategory); }
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet

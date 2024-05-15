@@ -33,7 +33,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             if (enableLandscape)
-                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettings.Value);
+                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettings.Value, worldAudioPlaybackController.Value);
         }
 
         public async UniTask InitializeAsync(PluginSettings settings, CancellationToken ct)

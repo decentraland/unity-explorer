@@ -55,7 +55,7 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity,
             CancellationToken ct)
         {
-            UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(backgroundMusic);
+            UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(backgroundMusic);
 
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
@@ -65,7 +65,7 @@ namespace DCL.UserInAppInitializationFlow
             else
                 await LoadCharacterAndWorldAsync(AsyncLoadProcessReport.Create(), world, playerEntity, ct);
 
-            UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(backgroundMusic);
+            UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(backgroundMusic);
         }
 
         private async UniTask LoadCharacterAndWorldAsync(AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
