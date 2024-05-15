@@ -21,7 +21,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     [UpdateInGroup(typeof(SDKAudioSourceGroup))]
     [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget frameTimeBudgetProvider;
@@ -63,14 +63,10 @@ namespace DCL.SDKComponents.AudioSources
 
             if (!audioSourceComponent.AudioSourceAssigned)
             {
-                if (audioSourcesPool == null)
-                {
-                    var a = 1;
-                    return;
-                }
-
                 audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
             }
+
+            audioSourceComponent.AddReferenceToAudioClip(cache);
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource
@@ -109,7 +105,10 @@ namespace DCL.SDKComponents.AudioSources
                 component.AudioClipUrl = sdkComponent.AudioClipUrl;
 
                 if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise))
+                {
                     component.ClipPromise = clipPromise!.Value;
+                    component.AddReferenceToAudioClip(cache);
+                }
             }
 
             sdkComponent.IsDirty = false;
