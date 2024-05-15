@@ -43,7 +43,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
             foreach (EntityReference childEntity in children)
             {
-                ref var uiTransform = ref World.Get<UITransformComponent>(childEntity.Entity);
+                ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity.Entity, out bool exists);
+
+                if (!exists)
+                {
+                    ReportHub.LogError(GetReportCategory(), $"Trying to remove an ${nameof(UITransformComponent)}'s child but no component has been found on entity {childEntity.Entity}");
+                    continue;
+                }
+
                 uiTransformComponentToBeDeleted.RelationData.RemoveChild(ref uiTransform.RelationData);
                 SetNewChild(ref uiTransform, childEntity, sceneRoot);
             }
@@ -79,10 +86,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return;
             }
 
-            UITransformComponent parentComponent = World.Get<UITransformComponent>(parentEntity);
+            ref UITransformComponent parentComponent = ref World.TryGetRef<UITransformComponent>(parentEntity, out bool exists);
 
-            if (parentComponent == childComponent)
+            if (!exists)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntityReference.Entity} to a parent {parentEntity} that do not have ${nameof(UITransformComponent)} component");
                 return;
+            }
+
+            if (parentComponent == childComponent) return;
 
             parentComponent.RelationData.AddChild(World.Reference(parentEntity), childEntityReference, ref childComponent.RelationData);
             parentComponent.Transform.Add(childComponent.Transform);
@@ -90,8 +102,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         private void RemoveFromParent(UITransformComponent childComponent)
         {
-            if (childComponent.RelationData.parent.IsAlive(World))
-                World.Get<UITransformComponent>(childComponent.RelationData.parent.Entity).RelationData.RemoveChild(ref childComponent.RelationData);
+            if (!childComponent.RelationData.parent.IsAlive(World)) return;
+
+            ref UITransformComponent parentTransform = ref World.TryGetRef<UITransformComponent>(childComponent.RelationData.parent.Entity, out bool exists);
+
+            if (!exists)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Trying to remove a child from a parent {childComponent.RelationData.parent.Entity} that do not have ${nameof(UITransformComponent)} component");
+                return;
+            }
+
+            parentTransform.RelationData.RemoveChild(ref childComponent.RelationData);
         }
     }
 }
