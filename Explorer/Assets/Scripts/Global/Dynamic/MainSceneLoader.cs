@@ -105,6 +105,8 @@ namespace Global.Dynamic
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
             }
+
+            ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
         private void EnsureNotNull()
