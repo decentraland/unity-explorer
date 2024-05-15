@@ -40,34 +40,18 @@ namespace DCL.ExplorePanel
         public AudioClipConfig? OpenMenu { get; private set; }
         [field: SerializeField]
         public AudioClipConfig? CloseMenu { get; private set; }
-        [field: SerializeField]
-        public AudioMixerSnapshot? MuteSoundsSnapshot { get; private set; }
-        [field: SerializeField]
-        public AudioMixerSnapshot? RestoreSoundsSnapShot { get; private set; }
-
-
-        private bool snapshotsPresent;
-
-        private void Awake()
-        {
-            snapshotsPresent = MuteSoundsSnapshot != null && RestoreSoundsSnapShot != null;
-        }
 
         protected override UniTask PlayShowAnimation(CancellationToken ct)
         {
             CanvasGroup.alpha = 0;
-            if (snapshotsPresent) { MuteSoundsSnapshot.TransitionTo(2); }
-            // TODO (Fran): Uncomment this line after fixing the UIAudioPlaybackController for allowing multiple audio sources
-            //UIAudioEventsBus.Instance.SendPlayLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(OpenMenu);
             return CanvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
         protected override UniTask PlayHideAnimation(CancellationToken ct)
         {
-            if (snapshotsPresent) { RestoreSoundsSnapShot.TransitionTo(2); }
-            // TODO (Fran): Uncomment this line after fixing the UIAudioPlaybackController for allowing multiple audio sources
-            //UIAudioEventsBus.Instance.SendStopPlayingLoopingAudioEvent(BackgroundMusic);
+            UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);
             return CanvasGroup.DOFade(0, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }

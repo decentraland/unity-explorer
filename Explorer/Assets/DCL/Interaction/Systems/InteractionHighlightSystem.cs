@@ -3,6 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
+using DCL.Interaction.Settings;
+using DCL.Rendering.Highlight;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -24,15 +26,11 @@ namespace DCL.Interaction.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class InteractionHighlightSystem : BaseUnityLoopSystem
     {
-        private readonly Material hoverMaterial;
-        private readonly Material hoverOorMaterial;
+        private readonly InteractionSettingsData settingsData;
 
-        internal InteractionHighlightSystem(World world,
-            Material hoverMaterial,
-            Material hoverOorMaterial) : base(world)
+        internal InteractionHighlightSystem(World world, InteractionSettingsData settingsData) : base(world)
         {
-            this.hoverMaterial = hoverMaterial;
-            this.hoverOorMaterial = hoverOorMaterial;
+            this.settingsData = settingsData;
         }
 
         protected override void Update(float t)
@@ -44,31 +42,30 @@ namespace DCL.Interaction.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
-            Material materialToUse = highlightComponent.IsAtDistance() ? hoverMaterial : hoverOorMaterial;
 
             if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
                 && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
                 highlightComponent.Disable();
 
-            if (highlightComponent.CanPassAnUpdate(materialToUse))
-                return;
-
             if (highlightComponent.ReadyForMaterial())
             {
-                highlightComponent.UpdateMaterialAndSwitchEntity(materialToUse);
-                TryAddHoverMaterials(ref highlightComponent, highlightComponent.CurrentEntityOrNull());
+                if (highlightComponent.HasToResetLastEntity())
+                    RemoveHighlight(highlightComponent.CurrentEntityOrNull());
+
+                highlightComponent.SwitchEntity();
+                AddOrUpdateHighlight(highlightComponent.CurrentEntityOrNull(), highlightComponent.IsAtDistance());
             }
             else
             {
                 if (highlightComponent.IsEmpty())
                     return;
 
-                TryRemoveHoverMaterialFromComponentSiblings(ref highlightComponent, highlightComponent.CurrentEntityOrNull());
+                RemoveHighlight(highlightComponent.CurrentEntityOrNull());
                 highlightComponent.MoveNextAndRemoveMaterial();
             }
         }
 
-        private void TryAddHoverMaterials(ref HighlightComponent highlightComponent, in EntityReference entity)
+        private void AddOrUpdateHighlight(in EntityReference entity, bool isAtDistance)
         {
             List<Renderer> renderers = ListPool<Renderer>.Get();
             AddRenderersFromEntity(entity, renderers);
@@ -78,23 +75,31 @@ namespace DCL.Interaction.Systems
 
             foreach (Renderer renderer in renderers)
             {
-                if (highlightComponent.OriginalMaterials.ContainsKey(renderer))
-                    continue;
+                if (!HighlightRendererFeature.m_HighLightRenderers.ContainsKey(renderer))
+                {
+                    HighlightRendererFeature.m_HighLightRenderers.Add(renderer, new HighlightSettings
+                    {
+                        Color = GetColor(isAtDistance),
+                        Width = settingsData.Thickness,
+                    });
+                }
+                else
+                {
+                    HighlightSettings highlightSettings = HighlightRendererFeature.m_HighLightRenderers[renderer];
+                    highlightSettings.Color = GetColor(isAtDistance);
+                    highlightSettings.Width = settingsData.Thickness;
+                    HighlightRendererFeature.m_HighLightRenderers[renderer] = highlightSettings;
+                }
 
-                List<Material> materials = ListPool<Material>.Get();
-                highlightComponent.OriginalMaterials.Add(renderer, renderer.sharedMaterials);
-
-                renderer.GetMaterials(materials);
-                materials.Add(highlightComponent.MaterialOnUse());
-                renderer.SetMaterials(materials);
-
-                ListPool<Material>.Release(materials);
             }
 
             ListPool<Renderer>.Release(renderers);
         }
 
-        private void TryRemoveHoverMaterialFromComponentSiblings(ref HighlightComponent highlightComponent, in EntityReference entity)
+        private Color GetColor(bool isAtDistance) =>
+            isAtDistance ? settingsData.ValidColor : settingsData.InvalidColor;
+
+        private void RemoveHighlight(in EntityReference entity)
         {
             List<Renderer> renderers = ListPool<Renderer>.Get();
             AddRenderersFromEntity(entity, renderers);
@@ -103,13 +108,8 @@ namespace DCL.Interaction.Systems
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
-            {
-                if (!highlightComponent.OriginalMaterials.ContainsKey(renderer))
-                    continue;
-
-                renderer.sharedMaterials = highlightComponent.OriginalMaterials[renderer];
-                highlightComponent.OriginalMaterials.Remove(renderer);
-            }
+                if (HighlightRendererFeature.m_HighLightRenderers.ContainsKey(renderer))
+                    HighlightRendererFeature.m_HighLightRenderers.Remove(renderer);
 
             ListPool<Renderer>.Release(renderers);
         }
