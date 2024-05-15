@@ -31,12 +31,10 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
-        private readonly JobScheduler.JobScheduler jobScheduler;
 
         private readonly byte emptyScenePartition;
 
-
-        protected PartitionDataContainer partitionDataContainer;
+        protected readonly PartitionDataContainer partitionDataContainer;
 
         private JobHandle partitionJobHandle;
         private bool isRunningJob;
@@ -60,8 +58,6 @@ namespace ECS.SceneLifeCycle.Systems
         {
             partitionJobHandle.Complete();
             partitionDataContainer.Dispose();
-
-
         }
 
         internal void ForceCompleteJob()
@@ -85,7 +81,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
 
             // Repartition if camera transform is qualified and the last job has already been completed
-            if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && partitionDataContainer.currentPartitionIndex > 0)
+            if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && partitionDataContainer.CurrentPartitionIndex > 0)
             {
                 partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData);
                 isRunningJob = true;
@@ -112,7 +108,7 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                var partition = partitionDataContainer.partitions[definition.InternalJobIndex];
+                var partition = partitionDataContainer.Partitions[definition.InternalJobIndex];
                 PartitionComponent partitionComponent = partitionComponentPool.Get();
                 partitionComponent.IsDirty = partition.IsDirty;
                 partitionComponent.IsBehind = partition.IsBehind;
@@ -130,7 +126,7 @@ namespace ECS.SceneLifeCycle.Systems
             {
                 IsDirty = readOnlyCameraSamplingData.IsDirty, RawSqrDistance = -1
             };
-            partitionDataContainer.SetPartitionData(ref partitionData);
+            partitionDataContainer.SetPartitionData(partitionData);
         }
 
         protected void AddCorners(ref SceneDefinitionComponent definition)
@@ -141,7 +137,7 @@ namespace ECS.SceneLifeCycle.Systems
                 corners[i] = definition.ParcelsCorners[i];
 
             partitionDataContainer.AddCorners(new ParcelCornersData(in corners));
-            definition.InternalJobIndex = partitionDataContainer.currentPartitionIndex;
+            definition.InternalJobIndex = partitionDataContainer.CurrentPartitionIndex;
         }
 
         [Query]

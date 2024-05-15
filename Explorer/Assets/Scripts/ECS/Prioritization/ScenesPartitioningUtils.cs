@@ -67,7 +67,7 @@ namespace ECS.Prioritization
             [ReadOnly] public UnsafeList<ParcelCornersData> ParcelCorners;
             private NativeArray<PartitionData> partitions;
 
-            public ScenePartitionParallelJob(ref NativeArray<PartitionData> partitions)
+            public ScenePartitionParallelJob(NativeArray<PartitionData> partitions)
             {
                 this.partitions = partitions;
                 ParcelCorners = default(UnsafeList<ParcelCornersData>);

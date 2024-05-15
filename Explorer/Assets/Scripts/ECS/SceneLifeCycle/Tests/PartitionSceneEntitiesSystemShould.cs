@@ -1,5 +1,4 @@
 ﻿using Arch.Core;
-using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
 using ECS.Prioritization;
@@ -7,11 +6,8 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.TestSuite;
-using JetBrains.Annotations;
 using NSubstitute;
 using NUnit.Framework;
-using System;
-using System.Threading.Tasks;
 using ECS.SceneLifeCycle.Components;
 using UnityEngine;
 using Utility;
@@ -23,7 +19,6 @@ namespace ECS.SceneLifeCycle.Tests
         private IPartitionSettings partitionSettings;
         private IReadOnlyCameraSamplingData samplingData;
         private IComponentPool<PartitionComponent> componentPool;
-        private PartitionSceneEntitiesSystemMock mockSystem;
 
         [SetUp]
         public void SetUp()
@@ -38,8 +33,7 @@ namespace ECS.SceneLifeCycle.Tests
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
             componentPool.Get().Returns(_ => new PartitionComponent());
 
-            system = new PartitionSceneEntitiesSystemMock(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer());
-            mockSystem = system as PartitionSceneEntitiesSystemMock;
+            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer());
         }
 
         [Test]
@@ -76,51 +70,44 @@ namespace ECS.SceneLifeCycle.Tests
         {
             samplingData.IsDirty.Returns(true);
             samplingData.Forward.Returns(Vector3.forward);
-            samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
-            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
 
-            var sceneDefinitionComponent = new SceneDefinitionComponent(new SceneEntityDefinition
+            var coords = new Vector3(0, 0, 100);
+
+            samplingData.Position.Returns(coords); // Partition #3
+            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(coords));
+
+            // new entity without partition
+            Entity e = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
             {
-                    metadata = new SceneMetadata
+                metadata = new SceneMetadata
                 {
-                        scene = new SceneMetadataScene
+                    scene = new SceneMetadataScene
                         { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
                 },
-            }, new IpfsPath()) { InternalJobIndex = 0 };
+            }, new IpfsPath()));
 
-            Entity e = world.Create(new PartitionComponent { Bucket = 10, IsBehind = false }, sceneDefinitionComponent);
-            mockSystem.AddPartitionData(0, ref sceneDefinitionComponent, new ScenesPartitioningUtils.PartitionData
-            {
-                Bucket = 10, IsBehind = false, IsDirty = true
-            });
 
+            // Run for the first time so the internals of the system change
             system.Update(0);
-
             system.ForceCompleteJob();
 
+            // Move to another partition
+            coords = new Vector3(0, 0, 46);
+
+            samplingData.Position.Returns(coords); // Partition #1
+            samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(coords));
+
+            // Run for the second time
             system.Update(0);
+            system.ForceCompleteJob();
+            system.Update(0);
+
+            // Partition should be set to the proper values
 
             Assert.That(world.TryGet(e, out PartitionComponent partitionComponent), Is.True);
             Assert.That(partitionComponent.Bucket, Is.EqualTo(1));
             Assert.That(partitionComponent.IsBehind, Is.True);
             Assert.That(partitionComponent.IsDirty, Is.True);
-        }
-    }
-
-    public class PartitionSceneEntitiesSystemMock : PartitionSceneEntitiesSystem
-    {
-        internal PartitionSceneEntitiesSystemMock([NotNull] World world,
-            [NotNull] IComponentPool<PartitionComponent> partitionComponentPool,
-            [NotNull] IPartitionSettings partitionSettings,
-            [NotNull] IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
-            PartitionDataContainer partitionDataContainer) : base(world, partitionComponentPool, partitionSettings, readOnlyCameraSamplingData, partitionDataContainer)
-        {
-        }
-
-        public void AddPartitionData(int index, ref SceneDefinitionComponent sceneDefinitionComponent, ScenesPartitioningUtils.PartitionData data)
-        {
-            ScheduleSceneDefinition(ref sceneDefinitionComponent);
-            partitionDataContainer.partitions[index] = data;
         }
     }
 }
