@@ -107,7 +107,21 @@ def poll_build(id):
         print('Error: No build ID known (-1)')
         return
 
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=headers)
+    retries = 0
+    max_retries = 5
+    wait_time = 2
+    while retries < max_retries:
+        try:
+            response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=headers)
+        except Exception as e:
+            print(f"Request failed: {e}")
+            retries += 1
+            if retries < max_retries:
+                print(f"Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+                wait_time *= 2  # Increase wait time exponentially for each retry
+            else:
+                raise Exception(f"Failed after {max_retries} retries")
 
     if response.status_code != 200:
         print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
@@ -123,7 +137,7 @@ def poll_build(id):
             print(f'Build status: {status}')
             return True
         case 'success':
-            print(f'Build finished successfully! | Elapsed (Unity) time: {response_json['totalTimeInSeconds']}')
+            print(f'Build finished successfully! | Elapsed (Unity) time: {datetime.timedelta(seconds=(response_json['totalTimeInSeconds']))}')
             return False
         case 'failure' | 'canceled' | 'unknown':
             print(f'Build error! Last known status: "{status}"')
