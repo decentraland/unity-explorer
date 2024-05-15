@@ -108,12 +108,8 @@ namespace ECS.SceneLifeCycle.Systems
             }
             else
             {
-                var partition = partitionDataContainer.Partitions[definition.InternalJobIndex];
                 PartitionComponent partitionComponent = partitionComponentPool.Get();
-                partitionComponent.IsDirty = partition.IsDirty;
-                partitionComponent.IsBehind = partition.IsBehind;
-                partitionComponent.Bucket = partition.Bucket;
-                partitionComponent.RawSqrDistance = partition.RawSqrDistance;
+                partitionDataContainer.SetPartitionComponentData(definition.InternalJobIndex, ref partitionComponent);
                 World.Add(entity, partitionComponent);
             }
         }

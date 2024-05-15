@@ -112,6 +112,7 @@ namespace Global.Dynamic
             sceneProviderStrategy.World = globalWorld.EcsWorld;
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
+            partitionDataContainer.Restart();
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
@@ -158,7 +159,6 @@ namespace Global.Dynamic
 
             teleportController.InvalidateRealm();
             realmData.Invalidate();
-            partitionDataContainer.Clear();
 
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
 

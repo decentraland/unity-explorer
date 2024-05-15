@@ -43,16 +43,8 @@ namespace ECS.SceneLifeCycle.Components
 
             for (var i = 0; i < partitionSettingsSqrDistanceBuckets.Count; i++)
                 sqrDistanceBuckets[i] = partitionSettings.SqrDistanceBuckets[i];
-
-            Restart();
         }
 
-        public void Clear()
-        {
-            partitions.Dispose();
-            parcelCorners.Dispose();
-            Restart();
-        }
 
         public void SetPartitionData(ScenesPartitioningUtils.PartitionData partitionData)
         {
@@ -60,8 +52,11 @@ namespace ECS.SceneLifeCycle.Components
             CurrentPartitionIndex++;
         }
 
-        private void Restart()
+        public void Restart()
         {
+            partitions.Dispose();
+            parcelCorners.Dispose();
+            
             CurrentPartitionIndex = 0;
 
             // Hard limit of the real scenes that can exist
