@@ -113,6 +113,7 @@ def poll_build(id):
     while retries < max_retries:
         try:
             response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=headers)
+            break
         except Exception as e:
             print(f"Request failed: {e}")
             retries += 1
