@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEmoteCommand(ref PlayerCRDTEntity playerCRDTEntity, ref AvatarEmoteCommandComponent emoteCommand)
+        private void UpdateAvatarEmoteCommand(PlayerCRDTEntity playerCRDTEntity, ref AvatarEmoteCommandComponent emoteCommand)
         {
             if (!emoteCommand.IsDirty || emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
 
@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(AvatarEmoteCommandComponent))]
-        private void HandleComponentRemoval(in Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(in Entity entity, PlayerCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEmoteCommand>(playerCRDTEntity.CRDTEntity);
             World.Remove<AvatarEmoteCommandComponent>(entity);

@@ -32,10 +32,9 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CreatePlayerIdentityData(ref PlayerCRDTEntity playerCRDTEntity, Profile profile)
+        private void CreatePlayerIdentityData(PlayerCRDTEntity playerCRDTEntity, Profile profile)
         {
             if (!playerCRDTEntity.IsDirty) return;
-            playerCRDTEntity.IsDirty = false;
 
             ecsToCRDTWriter.PutMessage<PBPlayerIdentityData, (string address, bool isGuest)>(static (pbComponent, data) =>
             {
@@ -46,7 +45,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(PlayerCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBPlayerIdentityData>(playerCRDTEntity.CRDTEntity);
         }

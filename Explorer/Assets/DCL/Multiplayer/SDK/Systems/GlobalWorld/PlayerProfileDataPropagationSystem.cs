@@ -12,6 +12,7 @@ using SceneRunner.Scene;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
     [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem

@@ -1,18 +1,19 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.Emotes;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_EMOTE_COMMAND_DATA)]
     public partial class AvatarEmoteCommandPropagationSystem : BaseUnityLoopSystem
     {
