@@ -115,7 +115,7 @@ namespace DCL.AvatarRendering.Emotes
 
             AnimationClip? avatarClip = null;
             AnimationClip? propClip = null;
-            int propClipHash = 0;
+            var propClipHash = 0;
 
             RuntimeAnimatorController? rac = animator.runtimeAnimatorController;
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get();

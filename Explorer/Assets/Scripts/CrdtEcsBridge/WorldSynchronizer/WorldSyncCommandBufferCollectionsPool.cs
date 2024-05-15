@@ -32,11 +32,17 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         private Dictionary<CRDTEntity, Dictionary<int, BatchState>> mainDictionary = new (1024, CRDTEntityComparer.INSTANCE);
         private List<CRDTEntity> deletedEntities = new (256);
+        private bool disposed;
 
         private WorldSyncCommandBufferCollectionsPool() { }
 
         public void Dispose()
         {
+            if (disposed)
+                return;
+
+            disposed = true;
+
             if (mainDictionary == null)
             {
                 Debug.LogError($"{nameof(WorldSyncCommandBufferCollectionsPool)} can't be disposed: {nameof(mainDictionary)} leaked");
