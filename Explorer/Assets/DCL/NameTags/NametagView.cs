@@ -90,6 +90,8 @@ namespace DCL.Nametags
             Username.rectTransform.anchoredPosition = Vector2.zero;
             MessageContent.text = string.Empty;
             Background.size = Vector2.zero;
+            previousDistance = 0;
+            cts.SafeCancelAndDispose();
         }
 
         public void SetUsername(string username, string walletId, bool hasClaimedName)
