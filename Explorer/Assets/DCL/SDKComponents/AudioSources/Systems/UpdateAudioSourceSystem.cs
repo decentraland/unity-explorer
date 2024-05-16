@@ -11,7 +11,9 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
+using Microsoft.Extensions.ObjectPool;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -62,7 +64,10 @@ namespace DCL.SDKComponents.AudioSources
                 || !audioSourceComponent.ClipPromise.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
-            if (!audioSourceComponent.AudioSourceAssigned) { audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup); }
+            if (!audioSourceComponent.AudioSourceAssigned)
+            {
+                audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
+            }
 
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
@@ -98,7 +103,7 @@ namespace DCL.SDKComponents.AudioSources
 
             if (component.AudioClipUrl != sdkComponent.AudioClipUrl)
             {
-                component.CleanUp(world, cache, audioSourcesPool);
+                component.CleanUp(world, cache);
                 component.AudioClipUrl = sdkComponent.AudioClipUrl;
 
                 if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise)) { component.ClipPromise = clipPromise!.Value; }

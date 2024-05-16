@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioUtils
     {
-        public static void CleanUp(this ref AudioSourceComponent component, World world, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPool componentPool)
+        public static void CleanUp(this ref AudioSourceComponent component, World world, IDereferencableCache<AudioClip, GetAudioClipIntention> cache)
         {
             component.ClipPromise.ForgetLoading(world);
 
@@ -25,11 +25,6 @@ namespace DCL.SDKComponents.AudioSources
                 component.AudioSource.Stop();
 
             cache.Dereference(component.ClipPromise.LoadingIntention, component.AudioSource.clip);
-        }
-
-        public static void AddReferenceToAudioClip(this ref AudioSourceComponent component,IDereferencableCache<AudioClip, GetAudioClipIntention> cache)
-        {
-            cache.Add(component.ClipPromise.LoadingIntention, component.AudioSource.clip);
         }
 
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)

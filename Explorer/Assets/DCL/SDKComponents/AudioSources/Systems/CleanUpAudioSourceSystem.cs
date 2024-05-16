@@ -69,8 +69,11 @@ namespace DCL.SDKComponents.AudioSources
 
             public void Update(ref AudioSourceComponent component)
             {
-                component.CleanUp(world, cache, componentPool);
-                componentPool.Release(component.AudioSource);
+                component.CleanUp(world, cache);
+
+                //AudioSource can be null if the promise is still loading, if we return it now, we will basically return a null ref
+                if (component.AudioSource != null)
+                    componentPool.Release(component.AudioSource);
 
                 component.Dispose();
             }
