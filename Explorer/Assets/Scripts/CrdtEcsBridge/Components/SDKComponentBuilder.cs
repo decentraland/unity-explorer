@@ -1,6 +1,7 @@
 using CrdtEcsBridge.Serialization;
 using CrdtEcsBridge.WorldSynchronizer.CommandBuffer;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 
 namespace CrdtEcsBridge.Components
 {
@@ -13,7 +14,11 @@ namespace CrdtEcsBridge.Components
         public static SDKComponentBuilder<T> Create(int id) =>
             new () { id = id };
 
-        public SDKComponentBridge Build() =>
-            new (id, serializer, typeof(T), pool, new SDKComponentCommandBufferSynchronizer<T>(pool));
+        public readonly SDKComponentBridge Build()
+        {
+            serializer.EnsureNotNull();
+            pool.EnsureNotNull();
+            return new (id, serializer, typeof(T), pool, new SDKComponentCommandBufferSynchronizer<T>(pool));
+        }
     }
 }
