@@ -18,7 +18,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
         internal ReconciliationState reconciliationState;
         internal SDKComponentBridge sdkComponentBridge;
 
-        internal object deserializationTarget;
+        internal object? deserializationTarget;
 
         private BatchState() { }
     }

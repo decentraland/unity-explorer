@@ -2,8 +2,8 @@ using Arch.Buffer;
 using Arch.Core;
 using CRDT.Protocol;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
-using JetBrains.Annotations;
 using System;
 using UnityEngine;
 
@@ -27,7 +27,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
         ///     Applies deserialized component to the world.
         ///     Must be called on the thread where World is running
         /// </summary>
-        public override void Apply(World world, PersistentCommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object component)
+        public override void Apply(World world, PersistentCommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object? component)
         {
             // this is the cast we need
             var c = (T)component;
@@ -63,6 +63,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
     {
         public abstract void Apply(World world, PersistentCommandBuffer commandBuffer,
             Entity entity,
-            CRDTReconciliationEffect reconciliationEffect, [CanBeNull] object component);
+            CRDTReconciliationEffect reconciliationEffect, object? component);
     }
 }
