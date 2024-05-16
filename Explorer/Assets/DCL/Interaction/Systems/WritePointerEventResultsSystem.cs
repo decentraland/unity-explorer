@@ -89,7 +89,20 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 messageSent = true;
             }
 
+            foreach (var inputAction in intent.ValidInputActions)
+            {
+                RaycastHit raycastHit = raycastHitPool.Get();
+
+                raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
+                    sdkEntity, intent.Ray.origin, intent.Ray.direction);
+
+                AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
+
+                messageSent = true;
+            }
+
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
+            pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
