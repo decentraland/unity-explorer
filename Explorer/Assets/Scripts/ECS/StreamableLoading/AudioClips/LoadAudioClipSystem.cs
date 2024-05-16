@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.AudioClips
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
-    public partial class LoadAudioClipSystem  : LoadSystemBase<AudioClip, GetAudioClipIntention>
+    public partial class LoadAudioClipSystem : LoadSystemBase<AudioClip, GetAudioClipIntention>
     {
         private readonly IWebRequestController webRequestController;
 
@@ -27,7 +27,7 @@ namespace ECS.StreamableLoading.AudioClips
         protected override async UniTask<StreamableLoadingResult<AudioClip>> FlowInternalAsync(GetAudioClipIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             // Attempts should be always 1 as there is a repeat loop in `LoadSystemBase`
-            var result = await webRequestController.GetAudioClipAsync(
+            AudioClip? result = await webRequestController.GetAudioClipAsync(
                 intention.CommonArguments,
                 new GetAudioClipArguments(intention.AudioType),
                 new GetAudioClipWebRequest.CreateAudioClipOp(),

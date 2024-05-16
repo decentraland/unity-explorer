@@ -66,7 +66,6 @@ namespace DCL.SDKComponents.AudioSources
                 audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
             }
 
-            audioSourceComponent.AddReferenceToAudioClip(cache);
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource
@@ -107,7 +106,6 @@ namespace DCL.SDKComponents.AudioSources
                 if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise))
                 {
                     component.ClipPromise = clipPromise!.Value;
-                    component.AddReferenceToAudioClip(cache);
                 }
             }
 

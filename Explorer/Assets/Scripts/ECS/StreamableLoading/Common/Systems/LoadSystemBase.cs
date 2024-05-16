@@ -133,7 +133,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
                     result = await CacheableFlowAsync(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
-
+                else
+                {
+                    //This is in case we had OngoingRequests synced to the results of the first request.
+                    //They would not enter into any of these and go directly to the finalize,
+                    //without adding references to the cache thereby breaking the cleanup
+                    if (result is { Succeeded: true })
+                        AddToCache(in intention, result.Value.Asset);
+                    return;
+                }
                 if (!result.HasValue)
 
                     // Indicate that it should be grabbed by another system
@@ -191,6 +199,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result.Value.Succeeded)
                 {
                     OnAssetSuccessfullyLoaded(result.Value.Asset);
+
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
                 }
             }
@@ -241,7 +250,9 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
+                var a = cache.OngoingRequests.Count;
                 TryRemoveOngoingRequest();
+
                 source.TrySetResult(result);
 
                 if (!result.HasValue)
