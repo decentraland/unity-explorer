@@ -53,7 +53,10 @@ namespace DCL.LOD.Tests
                 }
             };
             var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-            var entity = world.Create( new PartitionComponent(), sceneDefinitionComponent);
+            var entity = world.Create( new PartitionComponent
+            {
+                IsDirty = true
+            }, sceneDefinitionComponent);
 
             system.Update(0);
 
@@ -77,7 +80,10 @@ namespace DCL.LOD.Tests
                 }
             };
             var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-            var entity = world.Create( new PartitionComponent(), sceneDefinitionComponent);
+            var entity = world.Create( new PartitionComponent
+            {
+                IsDirty = true
+            }, sceneDefinitionComponent);
 
             system.Update(0);
 
@@ -95,6 +101,7 @@ namespace DCL.LOD.Tests
         {
             var partitionComponent = new PartitionComponent();
             partitionComponent.Bucket = bucket;
+            partitionComponent.IsDirty = true;
 
             var sceneEntityDefinition = new SceneEntityDefinition
             {

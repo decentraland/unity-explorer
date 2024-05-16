@@ -114,9 +114,6 @@ namespace Global.Dynamic
                         remoteEntities.ForceRemoveAll(world);
                         await roomHub.StopIfNotAsync();
 
-                        // Re-add on exception? If there is timeout
-                        world.Remove<CameraSamplingData>(cameraEntity.Object);
-
                         await ChangeRealmAsync(realm, ct);
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
 
@@ -140,8 +137,7 @@ namespace Global.Dynamic
             }
             catch (TimeoutException)
             {
-                if (!world.Has<CameraSamplingData>(cameraEntity.Object))
-                    world.Add(cameraEntity.Object, cameraSamplingData);
+                
             }
 
             return true;
@@ -160,7 +156,8 @@ namespace Global.Dynamic
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
-            world.Add(cameraEntity.Object, cameraSamplingData);
+            if (!world.Has<CameraSamplingData>(cameraEntity.Object))
+                world.Add(cameraEntity.Object, cameraSamplingData);
             await waitForSceneReadiness;
         }
 

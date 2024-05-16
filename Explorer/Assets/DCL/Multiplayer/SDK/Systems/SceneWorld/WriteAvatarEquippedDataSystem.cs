@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEquippedData([Data] bool force, ref PlayerCRDTEntity playerCRDTEntity, ref Profile profile)
+        private void UpdateAvatarEquippedData([Data] bool force, PlayerCRDTEntity playerCRDTEntity, Profile profile)
         {
             if (!force && !profile.IsDirty) return;
 
@@ -58,7 +58,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(PlayerCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(playerCRDTEntity.CRDTEntity);
         }
