@@ -34,7 +34,16 @@ namespace ECS.StreamableLoading.DeferredLoading
             };
         }
 
-        public AssetsDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
-            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
+        public AssetsDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, SceneAssetLock sceneAssetLock)
+            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget, sceneAssetLock)
+        {
+        }
+
+        protected override void Update(float t)
+        {
+            base.Update(t);
+            //If a previous scene locked it or if we want to lock it
+            sceneAssetLock.IsLocked = sceneAssetLock.IsLocked || loadingIntentions.Count > 0;
+        }
     }
 }

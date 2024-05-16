@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.DeferredLoading.Tests
             memoryBudgetMock = Substitute.For<IReleasablePerformanceBudget>();
             memoryBudgetMock.TrySpendBudget().Returns(true);
 
-            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingPerformanceBudget, memoryBudgetMock);
+            system = new AssetsDeferredLoadingSystem(world, concurrentLoadingPerformanceBudget, memoryBudgetMock, new SceneAssetLock());
             entities = new List<Entity>();
         }
 

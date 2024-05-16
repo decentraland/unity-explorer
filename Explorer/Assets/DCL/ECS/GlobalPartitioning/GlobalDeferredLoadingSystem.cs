@@ -58,7 +58,21 @@ namespace DCL.GlobalPartitioning
             };
         }
 
-        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
-            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
+        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, SceneAssetLock sceneAssetLock)
+            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget, sceneAssetLock)
+        {
+        }
+
+        protected override void Update(float t)
+        {
+            if (sceneAssetLock.IsLocked)
+            {
+                Debug.Log("JUANI SCENE ASSET LOCKED");
+                return;
+            }
+
+            Debug.Log("JUANI SCENE ASSET UNLOCKED");
+            base.Update(t);
+        }
     }
 }

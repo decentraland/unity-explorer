@@ -76,7 +76,7 @@ namespace SceneRunner.ECSWorld
 
             // Prioritization
             PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot);
-            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
+            AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget, singletonDependencies.SceneAssetLock);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
             ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);

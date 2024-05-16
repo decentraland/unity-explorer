@@ -120,7 +120,7 @@ namespace Global.Dynamic
                 new LoadEmptySceneSystemLogic(),
                 sceneFactory, NoCache<ISceneFacade, GetSceneFacadeIntention>.INSTANCE);
 
-            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget);
+            GlobalDeferredLoadingSystem.InjectToWorld(ref builder, sceneBudget, memoryBudget, staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
