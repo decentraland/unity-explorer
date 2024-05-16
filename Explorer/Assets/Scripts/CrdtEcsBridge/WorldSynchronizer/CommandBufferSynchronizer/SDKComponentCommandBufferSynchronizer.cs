@@ -2,7 +2,6 @@ using Arch.Buffer;
 using Arch.Core;
 using CRDT.Protocol;
 using DCL.Optimization.Pools;
-using DCL.Utilities.Extensions;
 using ECS.LifeCycle.Components;
 using System;
 using UnityEngine;
@@ -30,7 +29,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
         public override void Apply(World world, PersistentCommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object? component)
         {
             // this is the cast we need
-            var c = (T)component;
+            T? c = (T?)component;
 
             switch (reconciliationEffect)
             {
@@ -48,7 +47,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
                 case CRDTReconciliationEffect.ComponentDeleted:
                     // if component is deleted return to the pool the existing one
                     Debug.Assert(world.Has<T>(entity));
-                    componentPool.Release(world.Get<T>(entity));
+                    var ecsComponent = world.Get<T>(entity);
+                    componentPool.Release(ecsComponent);
                     commandBuffer.Remove<T>(entity);
                     world.Get<RemovedComponents>(entity).Set.Add(typeof(T));
                     break;
