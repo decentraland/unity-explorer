@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioUtils
     {
-        public static void CleanUp(this ref AudioSourceComponent component, World world, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPool componentPool)
+        public static void CleanUp(this ref AudioSourceComponent component, World world, IDereferencableCache<AudioClip, GetAudioClipIntention> cache)
         {
             component.ClipPromise.ForgetLoading(world);
 
@@ -55,7 +55,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (string.IsNullOrEmpty(url))
             {
-                ReportHub.LogError(ReportCategory.AUDIO_SOURCES, $"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
+                ReportHub.LogError(ReportCategory.SDK_AUDIO_SOURCES, $"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
                 return AudioType.UNKNOWN;
             }
 
