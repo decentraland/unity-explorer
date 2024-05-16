@@ -36,7 +36,7 @@ namespace ECS.StreamableLoading.AudioClips
                 clipData.AddReference();
             else
             {
-                cache[key] = new AudioClipData(asset, 1);
+                cache[key] = new AudioClipData(asset);
                 listedCache.Add((key, cache[key]));
             }
 

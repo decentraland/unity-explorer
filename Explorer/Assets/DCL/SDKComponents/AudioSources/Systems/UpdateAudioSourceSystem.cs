@@ -33,7 +33,8 @@ namespace DCL.SDKComponents.AudioSources
         private readonly IDereferencableCache<AudioClip, GetAudioClipIntention> cache;
         private readonly AudioMixerGroup audioMixerGroup;
 
-        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry, IPerformanceBudget frameTimeBudgetProvider,
+        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
+            IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider, AudioMixerGroup audioMixerGroup) : base(world)
         {
             this.world = world;
@@ -61,10 +62,7 @@ namespace DCL.SDKComponents.AudioSources
                 || !audioSourceComponent.ClipPromise.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
-            if (!audioSourceComponent.AudioSourceAssigned)
-            {
-                audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
-            }
+            if (!audioSourceComponent.AudioSourceAssigned) { audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup); }
 
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
@@ -103,10 +101,7 @@ namespace DCL.SDKComponents.AudioSources
                 component.CleanUp(world, cache, audioSourcesPool);
                 component.AudioClipUrl = sdkComponent.AudioClipUrl;
 
-                if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise))
-                {
-                    component.ClipPromise = clipPromise!.Value;
-                }
+                if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise)) { component.ClipPromise = clipPromise!.Value; }
             }
 
             sdkComponent.IsDirty = false;
