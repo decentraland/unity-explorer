@@ -47,7 +47,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
                 if (!exists)
                 {
-                    ReportHub.LogError(GetReportCategory(), $"Trying to remove an ${nameof(UITransformComponent)}'s child but no component has been found on entity {childEntity.Entity}");
+                    ReportHub.LogError(GetReportCategory(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {childEntity.Entity}");
                     continue;
                 }
 
