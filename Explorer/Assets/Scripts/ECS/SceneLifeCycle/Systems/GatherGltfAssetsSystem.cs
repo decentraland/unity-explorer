@@ -51,6 +51,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             HashSetPool<EntityReference>.Release(entitiesUnderObservation);
             entitiesUnderObservation = null;
+            sceneData.SceneLoadingConcluded = true;
         }
 
         protected override void Update(float t)
@@ -69,7 +70,6 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     // if there is no report to dequeue, nothing to do
                     concluded = true;
-                    sceneData.SceneLoadingConcluded = true;
                     return;
                 }
 
