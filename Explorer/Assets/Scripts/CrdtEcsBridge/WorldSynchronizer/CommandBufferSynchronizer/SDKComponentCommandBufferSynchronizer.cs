@@ -7,7 +7,7 @@ using JetBrains.Annotations;
 using System;
 using UnityEngine;
 
-namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
+namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
 {
     /// <summary>
     ///     CommandBuffer has generic methods only, so we need to know the type of components somehow

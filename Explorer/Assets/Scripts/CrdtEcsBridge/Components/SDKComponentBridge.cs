@@ -1,5 +1,5 @@
 using CrdtEcsBridge.Serialization;
-using CrdtEcsBridge.WorldSynchronizer.CommandBuffer;
+using CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer;
 using DCL.Optimization.Pools;
 using System;
 
