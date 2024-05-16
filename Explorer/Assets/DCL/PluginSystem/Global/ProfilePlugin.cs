@@ -36,7 +36,7 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            LoadProfileSystem.InjectToWorld(ref builder, profileIntentionCache, mutexSync, profileRepository);
+            LoadProfileSystem.InjectToWorld(ref builder, profileIntentionCache, profileRepository);
             ResolveProfilePictureSystem.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<Profile>.InjectToWorld(ref builder);
         }
