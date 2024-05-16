@@ -17,7 +17,6 @@ namespace ECS.Unity.Transforms.Systems
     ///     This system syncs the Camera and Player transforms to specially created entities in each SDK scene
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [ThrottlingEnabled]
     public partial class SyncGlobalTransformSystem : BaseUnityLoopSystem
     {
         private readonly Entity cameraEntityProxy;
