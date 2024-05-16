@@ -1,6 +1,6 @@
-using DCL.Diagnostics;
 using System;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
@@ -27,7 +27,7 @@ namespace Utility.Multithreading
             }
             else
             {
-                ReportHub.LogWarning(ReportCategory.ENGINE, $"MutexSync.Acquire: Failed to acquire mutex in the timeout {TIMEOUT}ms.");
+                Debug.LogWarning( $"MutexSync.Acquire: Failed to acquire mutex in the timeout {TIMEOUT}ms.");
             }
 
         }
