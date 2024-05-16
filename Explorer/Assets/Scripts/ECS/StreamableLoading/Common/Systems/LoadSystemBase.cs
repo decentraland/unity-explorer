@@ -254,7 +254,6 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Set result for the reusable source
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
-                int a = cache.OngoingRequests.Count;
                 TryRemoveOngoingRequest();
 
                 source.TrySetResult(result);

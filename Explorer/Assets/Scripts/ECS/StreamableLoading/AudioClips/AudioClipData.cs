@@ -46,8 +46,6 @@ namespace ECS.StreamableLoading.AudioClips
             if (referencesCount < 0)
             {
                 ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.SDK_AUDIO_SOURCES);
-
-                //Assert.IsFalse(referencesCount < 0, "Reference count of AudioClip should never be negative!"); Leaving it commented for now :)
             }
 
             LastUsedFrame = MultithreadingUtility.FrameCount;
