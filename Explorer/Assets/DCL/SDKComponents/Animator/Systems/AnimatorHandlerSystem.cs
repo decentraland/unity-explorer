@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.Animator.Systems
         private void LoadAnimator(in Entity entity, ref PBAnimator pbAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
             //Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
-            if (gltfContainerComponent.State.Value != LoadingState.Finished) return;
+            if (gltfContainerComponent.State != LoadingState.Finished) return;
             if (gltfContainerComponent.Promise is not { Result: { } }) return;
             if (gltfContainerComponent.Promise.Result.Value.Asset.Animations.Count == 0) return;
 

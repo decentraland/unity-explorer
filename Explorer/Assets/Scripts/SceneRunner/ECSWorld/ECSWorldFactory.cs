@@ -1,5 +1,6 @@
 using Arch.Core;
 using Arch.SystemGroups;
+using CRDT;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using CrdtEcsBridge.UpdateGate;
@@ -7,19 +8,18 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Utilities.Extensions;
+using ECS.Abstract;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle.Reporting;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
-using GatherGltfAssetsSystem = ECS.SceneLifeCycle.Systems.GatherGltfAssetsSystem;
 
 namespace SceneRunner.ECSWorld
 {
@@ -29,13 +29,11 @@ namespace SceneRunner.ECSWorld
         private readonly IPartitionSettings partitionSettings;
         private readonly IReadOnlyCameraSamplingData cameraSamplingData;
         private readonly IReadOnlyList<IDCLWorldPlugin> plugins;
-        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
         public ECSWorldFactory(
             ECSWorldSingletonSharedDependencies sharedDependencies,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData cameraSamplingData,
-            ISceneReadinessReportQueue sceneReadinessReportQueue,
             IReadOnlyList<IDCLWorldPlugin> plugins
         )
         {
@@ -43,7 +41,6 @@ namespace SceneRunner.ECSWorld
             singletonDependencies = sharedDependencies;
             this.partitionSettings = partitionSettings;
             this.cameraSamplingData = cameraSamplingData;
-            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
         }
 
         public ECSWorldFacade CreateWorld(in ECSWorldFactoryArgs args)
@@ -57,21 +54,19 @@ namespace SceneRunner.ECSWorld
 
             IComponentPoolsRegistry componentPoolsRegistry = singletonDependencies.ComponentPoolsRegistry;
 
-            Entity sceneRootEntity = world.Create(new SceneRootComponent(), world);
-            var persistentEntities = new PersistentEntities(sceneRootEntity);
-
-            sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
+            PersistentEntities persistentEntities = CreateReservedEntities(world, sharedDependencies);
 
             // Create all systems and add them to the world
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
+            var mutex = sharedDependencies.MutexSync;
+
             builder
-               .InjectCustomGroup(new SyncedInitializationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedSimulationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPresentationSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostRenderingSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider))
-               .InjectCustomGroup(new SyncedPostPhysicsSystemGroup(sharedDependencies.MutexSync, sharedDependencies.SceneStateProvider));
+               .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedSimulationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPresentationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
+               .InjectCustomGroup(new SyncedPreRenderingSystemGroup(mutex, sharedDependencies.SceneStateProvider));
 
             var finalizeWorldSystems = new List<IFinalizeWorldSystem>(32);
             var isCurrentListeners = new List<ISceneIsCurrentListener>(32);
@@ -80,22 +75,38 @@ namespace SceneRunner.ECSWorld
                 worldPlugin.InjectToWorld(ref builder, in sharedDependencies, in persistentEntities, finalizeWorldSystems, isCurrentListeners);
 
             // Prioritization
-            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), sceneRootEntity);
+            PartitionAssetEntitiesSystem.InjectToWorld(ref builder, partitionSettings, scenePartition, cameraSamplingData, componentPoolsRegistry.GetReferenceTypePool<PartitionComponent>().EnsureNotNull(), persistentEntities.SceneRoot);
             AssetsDeferredLoadingSystem.InjectToWorld(ref builder, singletonDependencies.LoadingBudget, singletonDependencies.MemoryBudget);
             WriteEngineInfoSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
 
-            GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, args.SceneData);
-
+            ClearEntityEventsSystem.InjectToWorld(ref builder, sharedDependencies.EntityEventsBuilder);
             DestroyEntitiesSystem.InjectToWorld(ref builder);
+
             finalizeWorldSystems.Add(ReleaseReferenceComponentsSystem.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleaseRemovedComponentsSystem.InjectToWorld(ref builder));
 
-            // Add other systems here
+            // These system will prevent changes from the JS scenes to squeeze in between different stages of the PlayerLoop at the same frame
+            LockECSSystem.InjectToWorld(ref builder, mutex);
+            UnlockECSSystem.InjectToWorld(ref builder, mutex);
+
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 
             SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems, isCurrentListeners);
+        }
+
+        private static PersistentEntities CreateReservedEntities(World world, ECSWorldInstanceSharedDependencies sharedDependencies)
+        {
+            Entity sceneRootEntity = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), new SceneRootComponent(), world);
+            Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
+            Entity cameraEntity = world.Create(new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY));
+
+            sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
+            sharedDependencies.EntitiesMap[SpecialEntitiesID.PLAYER_ENTITY] = playerEntity;
+            sharedDependencies.EntitiesMap[SpecialEntitiesID.CAMERA_ENTITY] = cameraEntity;
+
+            return new PersistentEntities(playerEntity, cameraEntity, sceneRootEntity);
         }
     }
 }

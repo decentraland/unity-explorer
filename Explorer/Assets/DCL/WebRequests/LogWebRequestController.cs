@@ -29,7 +29,7 @@ namespace DCL.WebRequests
                 log($"WebRequestController send finish: {envelope}");
                 return result;
             }
-            catch (Exception e)
+            catch (Exception e) when (e is not OperationCanceledException)
             {
                 var exception = new Exception($"Error during request: {envelope}", e);
                 log($"WebRequestController send error: {exception}");

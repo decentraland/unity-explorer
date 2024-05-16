@@ -11,7 +11,7 @@ namespace ECS.LifeCycle.Systems
     /// <summary>
     ///     Destroys all entities marked for deletion
     /// </summary>
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(CleanUpGroup))]
     [ThrottlingEnabled]
     public partial class DestroyEntitiesSystem : BaseUnityLoopSystem
@@ -24,7 +24,7 @@ namespace ECS.LifeCycle.Systems
         }
 
         [Query]
-        public void DeleteEntities(in Entity entity, ref DeleteEntityIntention deleteEntityIntention)
+        private void DeleteEntities(in Entity entity, ref DeleteEntityIntention deleteEntityIntention)
         {
             if (!deleteEntityIntention.DeferDeletion)
                 World.Destroy(entity);

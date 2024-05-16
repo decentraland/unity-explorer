@@ -8,8 +8,7 @@ namespace DCL.AvatarRendering.Emotes
     public interface IEmote : IAvatarAttachment
     {
         StreamableLoadingResult<EmoteDTO> Model { get; set; }
-        StreamableLoadingResult<AudioClip>? AudioAssetResult { get; set; }
-
+        StreamableLoadingResult<AudioClip>?[] AudioAssetResults { get; set; }
         StreamableLoadingResult<WearableRegularAsset>?[] WearableAssetResults { get; }
 
         bool IsLooping();

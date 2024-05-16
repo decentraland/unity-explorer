@@ -61,6 +61,14 @@ namespace ECS.Unity.Transforms.Components
             UpdateCache();
         }
 
+        public void SetWorldTransform(Vector3 worldPosition, Quaternion worldRotation, Vector3 localScale)
+        {
+            Transform.SetPositionAndRotation(worldPosition, worldRotation);
+            Transform.localScale = localScale;
+
+            UpdateCache();
+        }
+
         public void SetTransform(Transform transform)
         {
             SetTransform(transform.localPosition, transform.localRotation, transform.localScale);

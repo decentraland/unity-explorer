@@ -16,6 +16,9 @@ namespace ECS.LifeCycle.Components
             Set = defaultHashSet;
         }
 
+        /// <summary>
+        /// it can be very expensive if the number of entities is significant
+        /// </summary>\
         public bool Remove<T>() =>
             Set.Remove(typeof(T));
 

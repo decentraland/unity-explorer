@@ -27,8 +27,9 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         var lodSettings = Substitute.For<ILODSettingsAsset>();
         int[] bucketThresholds =
         {
-            2, 4
+            4, 8
         };
+        lodSettings.SDK7LodThreshold.Returns(2);
         lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
         var scenesCahce = Substitute.For<IScenesCache>();

@@ -2,6 +2,10 @@ Shader "DCL/DCL_Toon"
 {
     Properties
     {
+        [HideInInspector] [PerRendererData] _HighlightObjectOffset ("Highlight Object Offset", Vector) = (0.0, 100.0, 0.0, 0.0)
+        [HideInInspector] [PerRendererData] _HighlightColour ("Highlight Colour", Color) = (1,0,0,1)
+        [HideInInspector] [PerRendererData] _HighlightWidth ("Highlight Width", Float) = 1.0
+        
         [HideInInspector] [PerRendererData] _MainTexArr_ID ("MainTex Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _1st_ShadeMapArr_ID ("1st Shade Map Array ID", Integer) = -1
         [HideInInspector] [PerRendererData] _2nd_ShadeMapArr_ID ("2nd Shader Map Array ID", Integer) = -1
@@ -506,33 +510,37 @@ Shader "DCL/DCL_Toon"
         PackageRequirements
         {
              "com.unity.render-pipelines.universal": "10.5.0"
-        }    
-        Tags {
+        }
+        
+        Tags
+        {
             "RenderType"="Opaque"
             "RenderPipeline" = "UniversalPipeline"
         }
-        Pass {
+        
+        Pass
+        {
             Name "Outline"
             Tags {
                 "LightMode" = "Outline"
             }
-            Cull [_SRPDefaultUnlitColMode]
-            ColorMask [_SPRDefaultUnlitColorMask]
-            Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref[_StencilNo]
-                Comp[_StencilComp]
-                Pass[_StencilOpPass]
-                Fail[_StencilOpFail]
-
-            }
+            Cull Front
+            //ColorMask [_SPRDefaultUnlitColorMask]
+            //Blend SrcAlpha OneMinusSrcAlpha
+//            Stencil
+//            {
+//                Ref[_StencilNo]
+//                Comp[_StencilComp]
+//                Pass[_StencilOpPass]
+//                Fail[_StencilOpFail]
+//            }
 
             HLSLPROGRAM
             //#pragma exclude_renderers gles gles3 glcore
             #pragma target 4.5
             #pragma vertex vert
             #pragma fragment frag
+            #pragma enable_d3d11_debug_symbols
 
             #pragma shader_feature_local _DCL_COMPUTE_SKINNING
             #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
@@ -550,6 +558,52 @@ Shader "DCL/DCL_Toon"
             #include "DCL_ToonInput.hlsl"
             #include "DCL_ToonHead.hlsl"
             #include "DCL_ToonOutline.hlsl"
+#endif
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Highlight"
+            Tags {
+                "LightMode" = "Highlight"
+            }
+            ZWrite Off
+            Cull [_SRPDefaultUnlitColMode]
+            ColorMask [_SPRDefaultUnlitColorMask]
+            //Blend SrcAlpha OneMinusSrcAlpha
+            Stencil
+            {
+                Ref[_StencilNo]
+                Comp[_StencilComp]
+                Pass[_StencilOpPass]
+                Fail[_StencilOpFail]
+
+            }
+
+            HLSLPROGRAM
+            //#pragma exclude_renderers gles gles3 glcore
+            #pragma target 4.5
+            #pragma vertex vert_highlight
+            #pragma fragment frag_highlight
+            #pragma enable_d3d11_debug_symbols
+
+            #pragma shader_feature_local _DCL_COMPUTE_SKINNING
+            #pragma shader_feature_local _DCL_TEXTURE_ARRAYS
+            
+            //V.2.0.4
+            #pragma multi_compile _IS_OUTLINE_CLIPPING_NO _IS_OUTLINE_CLIPPING_YES
+            #pragma multi_compile _OUTLINE_NML _OUTLINE_POS
+            //#pragma multi_compile_instancing
+            //#pragma instancing_options renderinglayer
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            // Outline is implemented in UniversalToonOutline.hlsl.
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#ifdef UNIVERSAL_PIPELINE_CORE_INCLUDED
+            #include "DCL_ToonInput.hlsl"
+            #include "DCL_ToonHead.hlsl"
+            #include "DCL_ToonHighlight.hlsl"
 #endif
             ENDHLSL
         }
@@ -611,7 +665,7 @@ Shader "DCL/DCL_Toon"
             // used in Shadow calculation 
             //#pragma shader_feature_local _ UTS_USE_RAYTRACING_SHADOW
             // used in DoubleShadeWithFeather
-            #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
+            #pragma dynamic_branch _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
 
             #define _EMISSIVE_SIMPLE
             //#pragma shader_feature _EMISSIVE_SIMPLE// _EMISSIVE_ANIMATION

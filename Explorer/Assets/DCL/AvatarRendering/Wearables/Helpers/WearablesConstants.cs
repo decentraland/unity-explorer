@@ -64,6 +64,31 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             Categories.MOUTH,
         };
 
+        public static Dictionary<string, string> READABLE_CATEGORIES = new Dictionary<string, string>()
+        {
+            {Categories.BODY_SHAPE, "Body shape"},
+            {Categories.UPPER_BODY, "Upper body"},
+            {Categories.LOWER_BODY, "Lower body"},
+            {Categories.FEET, "Feet"},
+            {Categories.EYES, "Eyes"},
+            {Categories.EYEBROWS, "Eyebrows"},
+            {Categories.MOUTH, "Mouth"},
+            {Categories.FACIAL, "Facial"},
+            {Categories.HAIR, "Hair"},
+            {Categories.SKIN, "Skin"},
+            {Categories.FACIAL_HAIR, "Facial hair"},
+            {Categories.EYEWEAR, "Eyewear"},
+            {Categories.TIARA, "Tiara"},
+            {Categories.EARRING, "Earring"},
+            {Categories.HAT, "Hat"},
+            {Categories.TOP_HEAD, "Top head"},
+            {Categories.HELMET, "Helmet"},
+            {Categories.MASK, "Mask"},
+            {Categories.HANDS, "Hands"},
+            {Categories.HANDS_WEAR, "Hands wear"},
+            {Categories.HEAD, "Head"}
+        };
+
         public static class Categories
         {
             public const string BODY_SHAPE = "body_shape";

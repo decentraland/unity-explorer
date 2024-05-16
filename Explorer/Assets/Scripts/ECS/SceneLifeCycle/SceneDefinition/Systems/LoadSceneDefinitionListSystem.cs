@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using Unity.Mathematics;
-using Utility.Multithreading;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
@@ -33,8 +32,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         // There is no cache for the list but a cache per entity that is stored in ECS itself
         internal LoadSceneDefinitionListSystem(World world, IWebRequestController webRequestController,
-            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache, MutexSync mutexSync)
-            : base(world, cache, mutexSync)
+            IStreamableCache<SceneDefinitions, GetSceneDefinitionList> cache)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }

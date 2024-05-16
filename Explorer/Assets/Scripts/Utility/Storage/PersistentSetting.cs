@@ -25,6 +25,12 @@ namespace Utility.Storage
             return new PersistentSetting<int>(key, defaultValue);
         }
 
+        public static PersistentSetting<T> WithSetForceDefaultValue<T>(this PersistentSetting<T> persistentSetting)
+        {
+            persistentSetting.Value = persistentSetting.defaultValue;
+            return persistentSetting;
+        }
+
         public static PersistentSetting<float> CreateFloat(string key, float defaultValue)
         {
             PersistentSetting<float>.ApplyIfNot(
@@ -98,7 +104,7 @@ namespace Utility.Storage
     {
         private static Func<string, T, T>? getValue;
         private static Action<string, T>? setValue;
-        private readonly T defaultValue;
+        internal readonly T defaultValue;
 
         private readonly string key;
 

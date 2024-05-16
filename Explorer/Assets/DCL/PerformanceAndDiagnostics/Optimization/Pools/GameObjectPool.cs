@@ -75,7 +75,7 @@ namespace DCL.Optimization.Pools
             GameObject gameObject;
             (gameObject = component.gameObject).SetActive(false);
             gameObject.name = DEFAULT_COMPONENT_NAME;
-            component.gameObject.transform.SetParent(parentContainer);
+            component.gameObject.transform.SetParent(parentContainer, false);
         }
     }
 }

@@ -97,7 +97,7 @@ namespace DCL.SDKComponents.CameraModeArea.Systems
             camera.RemoveCameraInputLock();
 
             // If there are more locks then there is another newer camera mode area in place
-            if (camera.CameraInputLocks == 0)
+            if (camera.CameraInputChangeEnabled)
                 camera.Mode = cameraModeBeforeLastAreaEnter;
         }
 

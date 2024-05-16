@@ -8,7 +8,8 @@ namespace ECS.StreamableLoading.AssetBundles.Editor
         [MenuItem("Decentraland/Clear AssetBundle cache")]
         public static void ClearAssetBundles()
         {
-            Caching.ClearCache();
+            if (!Caching.ClearCache())
+                EditorUtility.DisplayDialog("WARNING", "Failed to clear cache, try resetting Unity and run the action again", "Ok");
         }
     }
 }

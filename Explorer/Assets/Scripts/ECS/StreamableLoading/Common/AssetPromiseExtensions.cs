@@ -15,7 +15,8 @@ namespace ECS.StreamableLoading.Common
         {
             if (promise.IsConsumed)
             {
-                result = promise.Result!.Value;
+                result = promise.Result
+                         ?? new StreamableLoadingResult<TAsset>(new Exception("The promise generated no result"));
                 return true;
             }
 

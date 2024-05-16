@@ -37,7 +37,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController, IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
-            IWearableCatalog wearableCatalog, MutexSync mutexSync) : base(world, cache, mutexSync)
+            IWearableCatalog wearableCatalog, MutexSync mutexSync) : base(world, cache)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
@@ -54,7 +54,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             WearableDTO.LambdaResponse lambdaResponse =
                 await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory())
-                   .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                   .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
+
+
+            // The following logic is not thread-safe!
+            // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
 
             intention.TotalAmount = lambdaResponse.totalAmount;
 

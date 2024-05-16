@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
+using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
@@ -11,10 +12,12 @@ namespace ECS.Unity.Visibility.Tests
 {
     public class PrimitivesVisibilitySystemShould : UnitySystemTestBase<PrimitivesVisibilitySystem>
     {
+        private EntityEventBuffer<PrimitiveMeshRendererComponent> eventBuffer;
+
         [SetUp]
         public void SetUp()
         {
-            system = new PrimitivesVisibilitySystem(world);
+            system = new PrimitivesVisibilitySystem(world, eventBuffer = new EntityEventBuffer<PrimitiveMeshRendererComponent>(1));
         }
 
         [Test]

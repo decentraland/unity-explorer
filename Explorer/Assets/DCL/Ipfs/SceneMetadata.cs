@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Ipfs
 {
@@ -22,6 +23,7 @@ namespace DCL.Ipfs
             public bool @default;
 
             public Position position;
+            public Position? cameraTarget;
 
             [Serializable]
             public struct Position
@@ -29,6 +31,9 @@ namespace DCL.Ipfs
                 public Coordinate x;
                 public Coordinate y;
                 public Coordinate z;
+
+                public Vector3 ToVector3() =>
+                    new (x.SingleValue ?? 0f, y.SingleValue ?? 0f, z.SingleValue ?? 0f);
             }
 
             /// <summary>

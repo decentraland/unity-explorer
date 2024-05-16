@@ -38,7 +38,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [None(typeof(VolatileScenePointers))]
         [All(typeof(RealmComponent))]
-        private void CreatePointersWithIncreasingRadius(ref FixedScenePointers fixedScenePointers, ref ProcessesScenePointers processesScenePointers)
+        private void CreatePointersWithIncreasingRadius(ref FixedScenePointers fixedScenePointers, ref ProcessedScenePointers processedScenePointers)
         {
             if (parcelMathJobifiedHelper.JobStarted)
             {
@@ -59,11 +59,11 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 ParcelMathJobifiedHelper.ParcelInfo parcelInfo = flatArray[fixedScenePointers.EmptyParcelsLastProcessedIndex];
 
                 // we need to check it again as parcelInfo.AlreadyProcessed corresponds to the moment of splitting
-                if (!processesScenePointers.Value.Contains(parcelInfo.Parcel))
+                if (!processedScenePointers.Value.Contains(parcelInfo.Parcel))
                 {
                     World.Create(new SceneDefinitionComponent(parcelInfo.Parcel.ToVector2Int()));
                     pointersCreated++;
-                    processesScenePointers.Value.Add(parcelInfo.Parcel);
+                    processedScenePointers.Value.Add(parcelInfo.Parcel);
                 }
             }
         }

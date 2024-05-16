@@ -35,5 +35,8 @@ namespace DCL.Chat
 
         public static IChatMessagesBus WithCommands(this IChatMessagesBus messagesBus, IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory) =>
             new CommandsHandleChatMessageBus(messagesBus, commandsFactory);
+
+        public static IChatMessagesBus WithIgnoreSymbols(this IChatMessagesBus messagesBus) =>
+            new IgnoreWithSymbolsChatMessageBus(messagesBus);
     }
 }

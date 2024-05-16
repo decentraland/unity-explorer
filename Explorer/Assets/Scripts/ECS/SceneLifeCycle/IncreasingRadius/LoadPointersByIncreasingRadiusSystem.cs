@@ -131,7 +131,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
 
         [Query]
-        private void ResolveActivePromise(ref VolatileScenePointers volatileScenePointers, ref ProcessesScenePointers processesScenePointers)
+        private void ResolveActivePromise(ref VolatileScenePointers volatileScenePointers, ref ProcessedScenePointers processedScenePointers)
         {
             if (!volatileScenePointers.ActivePromise.HasValue) return;
 
@@ -151,14 +151,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     SceneEntityDefinition scene = definitions[i];
                     if (scene.pointers.Count == 0) continue;
 
-                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processesScenePointers.Value);
+                    TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value);
                 }
 
                 // Empty parcels = parcels for which no scene pointers were retrieved
                 for (var i = 0; i < requestedList.Count; i++)
                 {
                     int2 parcel = requestedList[i];
-                    if (!processesScenePointers.Value.Add(parcel)) continue;
+                    if (!processedScenePointers.Value.Add(parcel)) continue;
                     World.Create(new SceneDefinitionComponent(parcel.ToVector2Int()));
                 }
             }
@@ -166,7 +166,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             {
                 // Signal that those parcels should not be requested again
                 for (var i = 0; i < requestedList.Count; i++)
-                    processesScenePointers.Value.Add(requestedList[i]);
+                    processedScenePointers.Value.Add(requestedList[i]);
             }
 
             volatileScenePointers.ActivePromise = null;

@@ -2,7 +2,6 @@ using DCL.Audio;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI;
 using System;
-using TMPro;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -50,7 +49,10 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Animator HeaderAnimator { get; private set; }
-        
+
+        [field: SerializeField]
+        public WarningNotificationView WorldsWarningNotificationView { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }

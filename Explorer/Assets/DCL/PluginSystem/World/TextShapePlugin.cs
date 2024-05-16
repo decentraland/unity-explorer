@@ -3,41 +3,44 @@ using Cysharp.Threading.Tasks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using DCL.ResourcesUnloading;
 using DCL.SDKComponents.TextShape.Component;
 using DCL.SDKComponents.TextShape.Fonts;
-using DCL.SDKComponents.TextShape.Renderer;
-using DCL.SDKComponents.TextShape.Renderer.Factory;
+using DCL.SDKComponents.TextShape.Fonts.Settings;
 using DCL.SDKComponents.TextShape.System;
-using ECS.ComponentsPooling.Systems;
+using ECS.Abstract;
 using ECS.LifeCycle;
+using System;
 using System.Collections.Generic;
 using System.Threading;
+using TMPro;
+using UnityEngine;
+using Font = DCL.ECSComponents.Font;
 
 namespace DCL.PluginSystem.World
 {
-    public class TextShapePlugin : IDCLWorldPlugin
+    public class TextShapePlugin : IDCLWorldPlugin<TextShapePlugin.FontsSettings>
     {
-        private readonly ITextShapeRendererFactory textShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
-        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IPluginSettingsContainer settingsContainer) : this(
-            instantiationFrameTimeBudgetProvider,
-            componentPoolsRegistry,
-            settingsContainer.GetSettings<FontsSettings>().AsCached()
-        ) { }
+        private readonly MaterialPropertyBlock materialPropertyBlock = new ();
+        private readonly IComponentPool<TextMeshPro> textMeshProPool;
 
-        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry, IFontsStorage fontsStorage) : this(
-            new PoolTextShapeRendererFactory(componentPoolsRegistry, fontsStorage),
-            instantiationFrameTimeBudgetProvider,
-            componentPoolsRegistry
-        ) { }
+        private IFontsStorage fontsStorage;
 
-        public TextShapePlugin(ITextShapeRendererFactory textShapeRendererFactory, IPerformanceBudget instantiationFrameTimeBudgetProvider, IComponentPoolsRegistry componentPoolsRegistry)
+        static TextShapePlugin()
         {
-            this.textShapeRendererFactory = textShapeRendererFactory;
+            EntityEventBuffer<TextShapeComponent>.Register(1000);
+        }
+
+        public TextShapePlugin(IPerformanceBudget instantiationFrameTimeBudgetProvider, CacheCleaner cacheCleaner, IComponentPoolsRegistry componentPoolsRegistry)
+        {
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
             this.componentPoolsRegistry = componentPoolsRegistry;
+
+            textMeshProPool = componentPoolsRegistry.AddGameObjectPool<TextMeshPro>();
+            cacheCleaner.Register(textMeshProPool);
         }
 
         public void Dispose()
@@ -45,15 +48,31 @@ namespace DCL.PluginSystem.World
             //ignore
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
+        public UniTask InitializeAsync(FontsSettings settings, CancellationToken ct)
+        {
+            fontsStorage = settings;
+            return new UniTask();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InstantiateTextShapeSystem.InjectToWorld(ref builder, textShapeRendererFactory, instantiationFrameTimeBudgetProvider);
-            UpdateTextShapeSystem.InjectToWorld(ref builder);
-            VisibilityTextShapeSystem.InjectToWorld(ref builder);
-            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<ITextShapeRenderer, TextShapeRendererComponent>(ref builder, componentPoolsRegistry);
+            var buffer = sharedDependencies.EntityEventsBuilder.Rent<TextShapeComponent>();
+
+            InstantiateTextShapeSystem.InjectToWorld(ref builder, textMeshProPool, fontsStorage, materialPropertyBlock, instantiationFrameTimeBudgetProvider, buffer);
+            UpdateTextShapeSystem.InjectToWorld(ref builder, fontsStorage, materialPropertyBlock, buffer);
+            VisibilityTextShapeSystem.InjectToWorld(ref builder, buffer);
+
+            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<TextMeshPro, TextShapeComponent>(ref builder, componentPoolsRegistry);
+        }
+
+        [Serializable]
+        public class FontsSettings : IDCLPluginSettings, IFontsStorage
+        {
+            [field: SerializeField]
+            public SoFontList FontList { get; private set; }
+
+            public TMP_FontAsset Font(Font font) =>
+                FontList!.Font(font);
         }
     }
 }

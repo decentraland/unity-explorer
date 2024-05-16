@@ -93,5 +93,19 @@ namespace DCL.AuthenticationScreenFlow
         {
             VerificationCodeHintContainer.SetActive(false);
         }
+
+        private void OnDisable()
+        {
+            LoginAnimator.enabled = false;
+            VerificationAnimator.enabled = false;
+            FinalizeAnimator.enabled = false;
+        }
+
+        private void OnEnable()
+        {
+            LoginAnimator.enabled = true;
+            VerificationAnimator.enabled = true;
+            FinalizeAnimator.enabled = true;
+        }
     }
 }

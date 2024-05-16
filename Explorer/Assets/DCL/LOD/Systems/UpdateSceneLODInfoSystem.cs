@@ -1,27 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
-using DCL.Profiling;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using ECS.Unity.SceneBoundsChecker;
-using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 using Object = UnityEngine.Object;
@@ -36,7 +29,7 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-        private readonly ILODSettingsAsset lodSettingsAsset; 
+        private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
@@ -72,14 +65,16 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (partitionComponent.IsDirty)
+            //New LOD infront of you. Update
+            if (!partitionComponent.IsBehind && sceneLODInfo.CurrentLODLevel == byte.MaxValue)
             {
-                //If the scene is behind and has not been initialized, we return until we see it at least once
-                if (partitionComponent.IsBehind && sceneLODInfo.CurrentLODLevel == byte.MaxValue)
-                    return;
-                
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+                return;
             }
+
+            //Existing LOD (either infront or behind you). Update
+            if (partitionComponent.IsDirty && sceneLODInfo.CurrentLODLevel != byte.MaxValue)
+                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
 
@@ -101,8 +96,6 @@ namespace DCL.LOD.Systems
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
-
-
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
@@ -150,9 +143,9 @@ namespace DCL.LOD.Systems
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.CurrentLOD.LodKey.Level == 0)
+            if (IsLOD0(ref sceneLODInfo))
             {
-                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
                 LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
             sceneLODInfo.IsDirty = false;
@@ -237,6 +230,10 @@ namespace DCL.LOD.Systems
 
             currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
         }
-        
+
+        private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
+        {
+            return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
+        }
     }
 }

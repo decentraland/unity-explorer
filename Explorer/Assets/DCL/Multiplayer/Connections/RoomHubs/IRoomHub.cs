@@ -12,7 +12,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         UniTask StartAsync();
 
-        UniTask StopAsync();
+        UniTask StopIfNotAsync();
 
         class Fake : IRoomHub
         {
@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             public UniTask StartAsync() =>
                 UniTask.CompletedTask;
 
-            public UniTask StopAsync() =>
+            public UniTask StopIfNotAsync() =>
                 UniTask.CompletedTask;
 
             public void Reconnect()

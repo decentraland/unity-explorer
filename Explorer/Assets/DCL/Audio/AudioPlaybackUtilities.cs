@@ -32,9 +32,7 @@ namespace DCL.Audio
         public static async UniTask SchedulePlaySoundAsync(CancellationToken ct, AudioClipConfig clipConfig, float waitTime, AudioSource audioSource)
         {
             int clipIndex = GetClipIndex(clipConfig);
-            var clip = clipConfig.AudioClips[clipIndex];
-
-            if (ct.IsCancellationRequested) return;
+            AudioClip clip = clipConfig.AudioClips[clipIndex];
 
             await UniTask.Delay(TimeSpan.FromSeconds(waitTime), cancellationToken: ct);
 
@@ -43,10 +41,7 @@ namespace DCL.Audio
             audioSource.clip = clip;
             audioSource.Play();
 
-            if (!ct.IsCancellationRequested)
-            {
-                SchedulePlaySoundAsync(ct, clipConfig, audioSource.clip.length, audioSource).Forget();
-            }
+            if (!ct.IsCancellationRequested) { SchedulePlaySoundAsync(ct, clipConfig, audioSource.clip.length, audioSource).Forget(); }
         }
     }
 }

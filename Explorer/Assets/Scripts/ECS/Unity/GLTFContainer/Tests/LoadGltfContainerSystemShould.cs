@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -27,11 +28,12 @@ namespace ECS.Unity.GLTFContainer.Tests
         private readonly GltfContainerTestResources resources = new ();
 
         private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
+        private EntityEventBuffer<GltfContainerComponent> eventBuffer;
 
         [SetUp]
         public void SetUp()
         {
-            system = new LoadGltfContainerSystem(world);
+            system = new LoadGltfContainerSystem(world, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
@@ -62,8 +64,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(component.Promise.LoadingIntention.Name, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
             Assert.That(component.VisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClPointer));
             Assert.That(component.InvisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClPhysics | ColliderLayer.ClPointer));
-            Assert.That(component.State.Value, Is.EqualTo(LoadingState.Loading));
-            Assert.That(component.State.ChangedThisFrame(), Is.True);
+            Assert.That(component.State, Is.EqualTo(LoadingState.Loading));
+            Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(entity, component)));
         }
 
         private async Task InstantiateAssetBundle(string hash, Entity promiseEntity)
@@ -86,7 +88,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
 
-            component.State.Set(LoadingState.Finished);
+            component.State = LoadingState.Finished;
             component.Promise.TryConsume(world, out StreamableLoadingResult<GltfContainerAsset> result);
 
             Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SCENE_WITH_COLLIDER }, PartitionComponent.TOP_PRIORITY);
@@ -133,7 +135,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             component = world.Get<GltfContainerComponent>(e);
 
             Assert.That(component.Source, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
-            Assert.That(component.State.Value, Is.EqualTo(LoadingState.Loading));
+            Assert.That(component.State, Is.EqualTo(LoadingState.Loading));
+
+            Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
         }
     }
 }

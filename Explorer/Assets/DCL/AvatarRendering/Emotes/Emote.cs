@@ -13,7 +13,7 @@ namespace DCL.AvatarRendering.Emotes
         public StreamableLoadingResult<WearableRegularAsset>?[] WearableAssetResults { get; } = new StreamableLoadingResult<WearableRegularAsset>?[BodyShape.COUNT];
         public StreamableLoadingResult<Sprite>? ThumbnailAssetResult { get; set; }
         public StreamableLoadingResult<EmoteDTO> Model { get; set; }
-        public StreamableLoadingResult<AudioClip>? AudioAssetResult { get; set; }
+        public StreamableLoadingResult<AudioClip>?[] AudioAssetResults { get; set; } = new StreamableLoadingResult<AudioClip>?[BodyShape.COUNT];
 
         public bool IsLoading { get; set; } = true;
 

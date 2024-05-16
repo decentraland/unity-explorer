@@ -2,6 +2,7 @@
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Components;
@@ -16,6 +17,7 @@ namespace ECS.Unity.GLTFContainer.Tests
     {
         private IECSToCRDTWriter writer;
         private IComponentPool<PBGltfContainerLoadingState> componentPool;
+        private EntityEventBuffer<GltfContainerComponent> eventBuffer;
 
         [SetUp]
         public void SetUp()
@@ -25,16 +27,19 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             componentPool.Get().Returns(new PBGltfContainerLoadingState());
 
-            system = new WriteGltfContainerLoadingStateSystem(world, writer);
+            system = new WriteGltfContainerLoadingStateSystem(world, writer, eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
         }
 
         [Test]
         public void WriteIfStateChanged()
         {
-            var component = new GltfContainerComponent();
-            component.State.Set(LoadingState.Finished);
+            var component = new GltfContainerComponent
+                {
+                    State = LoadingState.Finished,
+                };
 
-            world.Create(component, new CRDTEntity(100), new PBGltfContainer());
+            var e = world.Create(component, new CRDTEntity(100), new PBGltfContainer());
+            eventBuffer.Add(e, component);
 
             system.Update(0);
 
@@ -43,19 +48,6 @@ namespace ECS.Unity.GLTFContainer.Tests
                        Arg.Any<Action<PBGltfContainerLoadingState, LoadingState>>(),
                        Arg.Is<CRDTEntity>(c => c.Id == 100),
                        Arg.Is<LoadingState>(c => c == LoadingState.Finished));
-        }
-
-        [Test]
-        public void WriteRemove()
-        {
-            var rc = RemovedComponents.CreateDefault();
-            rc.Set.Add(typeof(PBGltfContainer));
-
-            world.Create(new CRDTEntity(100), rc);
-
-            system.Update(0);
-
-            writer.Received(1).DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
         }
     }
 }

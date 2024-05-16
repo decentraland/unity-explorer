@@ -4,12 +4,15 @@ using CommunicationData.URLHelpers;
 using ECS.Abstract;
 using ECS.StreamableLoading.Common.Components;
 using System;
+using System.Linq;
 using Utility;
 
 namespace ECS.StreamableLoading.AssetBundles
 {
     public abstract class PrepareAssetBundleLoadingParametersSystemBase : BaseUnityLoopSystem
     {
+        private static readonly string[] COMMON_SHADERS = { "dcl/scene_ignore_windows", "dcl/scene_ignore_mac" };
+
         private readonly URLDomain streamingAssetURL;
 
         protected PrepareAssetBundleLoadingParametersSystemBase(World world, URLDomain streamingAssetURL) : base(world)
@@ -83,7 +86,10 @@ namespace ECS.StreamableLoading.AssetBundles
         }
 
         private URLAddress GetStreamingAssetsUrl(string hash, URLSubdirectory customSubdirectory) =>
-            customSubdirectory.IsEmpty()
+
+            // There is a special case when it comes to the shaders:
+            // they are shared and custom subdirectory should be ignored, otherwise we would need to store a copy in every subdirectory
+            customSubdirectory.IsEmpty() || COMMON_SHADERS.Contains(hash, StringComparer.OrdinalIgnoreCase)
                 ? streamingAssetURL.Append(URLPath.FromString(hash))
                 : streamingAssetURL.Append(customSubdirectory).Append(URLPath.FromString(hash));
     }

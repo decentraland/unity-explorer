@@ -1,6 +1,9 @@
 ﻿using Arch.Core;
+using CRDT;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
@@ -22,13 +25,17 @@ namespace ECS.Unity.GLTFContainer.Tests
     {
         private IDereferencableCache<GltfContainerAsset, string> cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
+        private EntityEventBuffer<GltfContainerComponent> eventBuffer;
+        private IECSToCRDTWriter ecsToCRDTWriter;
 
         [SetUp]
         public void SetUp()
         {
             system = new ResetGltfContainerSystem(world,
                 cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>(),
-                entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
+                entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(),
+                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1),
+                ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>());
         }
 
         [Test]
@@ -40,14 +47,15 @@ namespace ECS.Unity.GLTFContainer.Tests
             var asset = GltfContainerAsset.Create(new GameObject(), null);
             asset.VisibleMeshesColliders = new List<SDKCollider> { new () };
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-            c.State.Set(LoadingState.Finished);
+            c.State = LoadingState.Finished;
 
             Entity entity = world.Create(sdkComponent, c);
 
             system.Update(0);
 
             Assert.That(world.TryGet(entity, out GltfContainerComponent component), Is.True);
-            Assert.That(component.State.Value, Is.EqualTo(LoadingState.Unknown));
+            Assert.That(component.State, Is.EqualTo(LoadingState.Unknown));
+            Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(entity, component)));
             Assert.That(component.Promise, Is.EqualTo(AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL));
 
             cache.Received(1).Dereference("1", Arg.Any<GltfContainerAsset>());
@@ -64,15 +72,16 @@ namespace ECS.Unity.GLTFContainer.Tests
             asset.VisibleMeshesColliders = new List<SDKCollider> { new () };
 
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-            c.State.Set(LoadingState.Finished);
+            c.State = LoadingState.Finished;
 
-            Entity entity = world.Create(c);
+            Entity entity = world.Create(c, new CRDTEntity(100));
 
             system.Update(0);
 
             Assert.That(world.Has<GltfContainerComponent>(entity), Is.False);
             Assert.That(c.Promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested, Is.True);
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
+            ecsToCRDTWriter.Received().DeleteMessage<PBGltfContainerLoadingState>(new CRDTEntity(100));
         }
     }
 }

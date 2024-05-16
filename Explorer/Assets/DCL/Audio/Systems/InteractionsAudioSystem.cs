@@ -11,7 +11,7 @@ using ECS.LifeCycle.Components;
 namespace DCL.Audio.Systems
 {
     [LogCategory(ReportCategory.AUDIO)]
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateBefore(typeof(WritePointerEventResultsSystem))]
     public partial class InteractionsAudioSystem : BaseUnityLoopSystem
     {

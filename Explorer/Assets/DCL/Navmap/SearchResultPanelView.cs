@@ -21,6 +21,16 @@ namespace DCL.Navmap
         [field: SerializeField]
         public Animator panelAnimator;
 
+        private void OnEnable()
+        {
+            panelAnimator.enabled = true;
+        }
+
+        private void OnDisable()
+        {
+            panelAnimator.enabled = false;
+        }
+
         [Serializable]
         public class ResultAssetReference : ComponentReference<FullSearchResultsView>
         {

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Character.CharacterMotion.Components;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
@@ -20,12 +21,6 @@ namespace DCL.Navmap
         private ObjectPool<FullSearchResultsView> resultsPool;
         private readonly List<FullSearchResultsView> usedPoolElements;
 
-        private static readonly int OUT = Animator.StringToHash("Out");
-        private static readonly int IN = Animator.StringToHash("In");
-        private static readonly int LOADED = Animator.StringToHash("Loaded");
-        private static readonly int LOADING = Animator.StringToHash("Loading");
-        private static readonly int TO_LEFT = Animator.StringToHash("ToLeft");
-        private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
 
         public SearchResultPanelController(SearchResultPanelView view, IWebRequestController webRequestController)
         {
@@ -62,9 +57,20 @@ namespace DCL.Navmap
             view.gameObject.SetActive(true);
             view.CanvasGroup.interactable = true;
             view.CanvasGroup.blocksRaycasts = true;
+            ResetAnimator();
+            view.panelAnimator.SetTrigger(AnimationHashes.IN);
+        }
+
+        public void Reset()
+        {
+            ResetAnimator();
+            view.gameObject.SetActive(false);
+        }
+
+        public void ResetAnimator()
+        {
             view.panelAnimator.Rebind();
             view.panelAnimator.Update(0f);
-            view.panelAnimator.SetTrigger(IN);
         }
 
         public void Hide()
@@ -72,11 +78,11 @@ namespace DCL.Navmap
             ReleasePool();
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
-            view.panelAnimator.SetTrigger(OUT);
+            view.panelAnimator.SetTrigger(AnimationHashes.OUT);
         }
 
         public void AnimateLeftRight(bool left) =>
-            view.panelAnimator.SetTrigger(left ? TO_LEFT : TO_RIGHT);
+            view.panelAnimator.SetTrigger(left ? AnimationHashes.TO_LEFT : AnimationHashes.TO_RIGHT);
 
         public void SetLoadingState()
         {
@@ -101,7 +107,7 @@ namespace DCL.Navmap
                 fullSearchResultsView.placeCreator.text = string.Format("created by <b>{0}</b>", placeInfo.contact_name);
                 fullSearchResultsView.playerCounterContainer.SetActive(placeInfo.user_count > 0);
                 fullSearchResultsView.playersCount.text = placeInfo.user_count.ToString();
-                fullSearchResultsView.resultAnimator.SetTrigger(LOADED);
+                fullSearchResultsView.resultAnimator.SetTrigger(AnimationHashes.LOADED);
                 fullSearchResultsView.SetPlaceImage(placeInfo.image);
                 fullSearchResultsView.resultButton.onClick.AddListener(() => OnResultClicked?.Invoke(placeInfo.base_position));
             }

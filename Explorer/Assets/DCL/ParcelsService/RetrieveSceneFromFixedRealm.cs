@@ -5,7 +5,6 @@ using DCL.Ipfs;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
-using Ipfs;
 using System.Threading;
 using UnityEngine;
 
@@ -16,14 +15,14 @@ namespace DCL.ParcelsService
         /// <summary>
         ///     World should be set when the realm is [re-]loaded
         /// </summary>
-        public World World { get; set; }
+        public World? World { get; set; }
 
-        public async UniTask<SceneEntityDefinition> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
+        public async UniTask<SceneEntityDefinition?> ByParcelAsync(Vector2Int parcel, CancellationToken ct)
         {
             // Wait for all pointers resolution, they should be resolved at start-up
 
             var resolved = false;
-            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result = null;
+            AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] result = null!;
 
             while (!resolved)
             {
@@ -32,17 +31,17 @@ namespace DCL.ParcelsService
             }
 
             // Check if result contains the requested parcel
-
             // TODO O(N)
-            for (var i = 0; i < result.Length; i++)
+            foreach (var sceneDefPromise in result)
             {
-                SceneEntityDefinition sceneDef = result[i].Result.Value.Asset;
+                if (!sceneDefPromise.Result.HasValue) continue;
+                if (!sceneDefPromise.Result!.Value.Succeeded) continue;
 
-                for (var j = 0; j < sceneDef.metadata.scene.DecodedParcels.Count; j++)
-                {
+                SceneEntityDefinition? sceneDef = sceneDefPromise.Result!.Value.Asset;
+
+                for (var j = 0; j < sceneDef?.metadata.scene.DecodedParcels.Count; j++)
                     if (sceneDef.metadata.scene.DecodedParcels[j] == parcel)
                         return sceneDef;
-                }
             }
 
             // No real scene found

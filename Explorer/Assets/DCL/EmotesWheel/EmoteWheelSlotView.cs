@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.Character.CharacterMotion.Components;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -30,6 +31,9 @@ namespace DCL.EmotesWheel
         [field: SerializeField]
         public GameObject LoadingSpinner { get; private set; }
 
+        [field: SerializeField]
+        public Animator SlotAnimator { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
@@ -47,6 +51,12 @@ namespace DCL.EmotesWheel
             });
         }
 
+        private void OnEnable()
+        {
+            SlotAnimator.Rebind();
+            SlotAnimator.Update(0);
+        }
+
         private void OnDisable()
         {
             hoverBackground.SetActive(false);
@@ -56,12 +66,14 @@ namespace DCL.EmotesWheel
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             hoverBackground.SetActive(true);
+            SlotAnimator.SetTrigger(AnimationHashes.HOVER);
             OnHover?.Invoke(Slot);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             hoverBackground.SetActive(false);
+            SlotAnimator.SetTrigger(AnimationHashes.UNHOVER);
             OnFocusLeave?.Invoke(Slot);
         }
     }

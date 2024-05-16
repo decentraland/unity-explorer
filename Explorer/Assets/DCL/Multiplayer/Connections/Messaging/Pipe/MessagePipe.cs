@@ -11,6 +11,8 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Participants;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Utility;
 
 namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
@@ -21,6 +23,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly IMemoryPool memoryPool;
         private readonly MessageParser<Packet> messageParser;
         private readonly uint supportedVersion;
+        private readonly CancellationTokenSource cts;
 
         private readonly Dictionary<string, List<Action<(Packet, Participant)>>> subscribers = new ();
 
@@ -47,20 +50,21 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             this.messageParser = messageParser;
             this.supportedVersion = supportedVersion;
 
+            cts = new CancellationTokenSource();
             dataPipe.DataReceived += OnDataReceived;
-        }
-
-        ~MessagePipe()
-        {
-            Dispose();
         }
 
         public void Dispose()
         {
-            if (isDisposed) return;
+            if (isDisposed)
+            {
+                ReportHub.LogError(ReportCategory.LIVEKIT, "Trying to dispose twice?");
+                return;
+            }
 
-            isDisposed = true;
             dataPipe.DataReceived -= OnDataReceived;
+            cts.SafeCancelAndDispose();
+            isDisposed = true;
         }
 
         private void OnDataReceived(ReadOnlySpan<byte> data, Participant participant, DataPacketKind kind)
@@ -69,7 +73,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             {
                 Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
                 var name = packet.MessageCase.ToString()!;
-                NotifySubscribersAsync(name, packet, participant).Forget();
+                NotifySubscribersAsync(name, packet, participant, cts.Token).Forget();
             }
             catch (Exception e)
             {
@@ -80,12 +84,20 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
         }
 
-        private async UniTaskVoid NotifySubscribersAsync(string name, Packet packet, Participant participant)
+        private async UniTaskVoid NotifySubscribersAsync(string name, Packet packet, Participant participant, CancellationToken ctsToken)
         {
             await UniTask.SwitchToMainThread();
 
-            foreach (Action<(Packet, Participant)>? action in SubscribersList(name))
-                action((packet, participant));
+            try
+            {
+                foreach (Action<(Packet, Participant)>? action in SubscribersList(name))
+                {
+                    ctsToken.ThrowIfCancellationRequested();
+                    action((packet, participant));
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogException(e, ReportCategory.LIVEKIT); }
         }
 
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>

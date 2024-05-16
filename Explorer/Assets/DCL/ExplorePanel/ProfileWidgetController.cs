@@ -59,7 +59,11 @@ namespace DCL.ExplorePanel
             if (!profile.HasClaimedName)
                 viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
 
-            await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
+            profileImageController!.StopLoading();
+
+            //temporarily disabled the profile image request untill we have the correct
+            //picture deployment
+            //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
         }
     }
 }

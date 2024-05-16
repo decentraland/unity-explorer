@@ -34,7 +34,6 @@ namespace ECS.StreamableLoading.Common.Systems
                 ReportHub.Log(reportCategory, $"Starting loading {intention}\n{partition}, attempts left: {attemptCount}");
 
                 try { return await flow(intention, acquiredBudget, partition, ct); }
-
                 catch (UnityWebRequestException unityWebRequestException)
                 {
                     // we can't access web request here as it is disposed already
@@ -67,7 +66,7 @@ namespace ECS.StreamableLoading.Common.Systems
                         return null;
                     }
                 }
-                catch (Exception e) when (e is not OperationCanceledException)
+                catch (Exception e) when (e is not OperationCanceledException && e.InnerException is not OperationCanceledException)
                 {
                     // General exception
                     // conclude now, we can't do anything

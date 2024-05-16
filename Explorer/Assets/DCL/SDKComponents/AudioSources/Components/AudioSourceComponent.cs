@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.AudioSources
         ///     The final audio source ready for consumption
         /// </summary>
         public AudioSource AudioSource { get; private set; }
-        public bool AudioSourceAssigned { get; private set;}
+        public bool AudioSourceAssigned { get; private set; }
 
         public AudioSourceComponent(Promise promise, string audioClipUrl)
         {
@@ -30,8 +30,9 @@ namespace DCL.SDKComponents.AudioSources
         public void SetAudioSource(AudioSource audioSource, AudioMixerGroup audioMixerGroup)
         {
             AudioSource = audioSource;
+
             if (audioMixerGroup != null) { audioSource.outputAudioMixerGroup = audioMixerGroup; }
-            audioSource.spatialBlend = 1; // We make the AudioSource to work on 3D space
+
             AudioSourceAssigned = true;
         }
 

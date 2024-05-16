@@ -72,11 +72,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             };
         }
 
-        public async UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct)
-        {
-            await UniTask.SwitchToMainThread();
-            return new IRuntime.GetRealmResponse(realmData);
-        }
+        public UniTask<IRuntime.GetRealmResponse> GetRealmAsync(CancellationToken ct) =>
+            UniTask.FromResult(new IRuntime.GetRealmResponse(realmData));
 
         public async UniTask<IRuntime.GetWorldTimeResponse> GetWorldTimeAsync(CancellationToken ct)
         {

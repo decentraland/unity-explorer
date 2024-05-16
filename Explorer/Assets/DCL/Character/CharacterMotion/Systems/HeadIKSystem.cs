@@ -78,7 +78,8 @@ namespace DCL.CharacterMotion.Systems
             in ICharacterControllerSettings settings,
             in CharacterRigidTransform rigidTransform,
             in StunComponent stunComponent,
-            in CharacterEmoteComponent emoteComponent
+            in CharacterEmoteComponent emoteComponent,
+            in CharacterPlatformComponent platformComponent
         )
         {
             headIK.IsDisabled = !this.headIKIsEnabled;
@@ -88,7 +89,8 @@ namespace DCL.CharacterMotion.Systems
                              && !rigidTransform.IsOnASteepSlope
                              && !headIK.IsDisabled
                              && !(rigidTransform.MoveVelocity.Velocity.sqrMagnitude > 0.5f)
-                             && emoteComponent.CurrentEmoteReference == null;
+                             && emoteComponent.CurrentEmoteReference == null
+                             && !platformComponent.IsMovingPlatform;
 
             avatarBase.HeadIKRig.weight = Mathf.MoveTowards(avatarBase.HeadIKRig.weight, isEnabled ? 1 : 0, 2 * dt);
 

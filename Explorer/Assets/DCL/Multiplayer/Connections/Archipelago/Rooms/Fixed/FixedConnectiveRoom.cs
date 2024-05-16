@@ -23,7 +23,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 
             connectiveRoom = new ConnectiveRoom(
                 static _ => UniTask.CompletedTask,
-                RunConnectCycleStepAsync
+                RunConnectCycleStepAsync,
+                nameof(FixedConnectiveRoom)
             );
         }
 
@@ -39,7 +40,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
         public IRoom Room() =>
             connectiveRoom.Room();
 
-        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, CancellationToken token)
+        private async UniTask RunConnectCycleStepAsync(ConnectToRoomAsyncDelegate connectToRoomAsyncDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
         {
             if (connectiveRoom.CurrentState() is not IConnectiveRoom.State.Running)
             {

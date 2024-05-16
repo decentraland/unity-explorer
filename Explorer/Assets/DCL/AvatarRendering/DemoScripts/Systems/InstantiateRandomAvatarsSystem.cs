@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Physics;
+using DCL.AvatarRendering.AvatarShape;
 using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.AvatarRendering.DemoScripts.Components;
 using DCL.AvatarRendering.Emotes;
@@ -45,12 +46,14 @@ using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.AvatarRendering.DemoScripts.Systems
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(AvatarGroup))]
     [UpdateBefore(typeof(AvatarInstantiatorSystem))] // Updating before AvatarSystem allows it to react as soon as possible
     [LogCategory(ReportCategory.AVATAR)]
     public partial class InstantiateRandomAvatarsSystem : BaseUnityLoopSystem
     {
         private const int MAX_AVATAR_NUMBER = 1000;
+
+        private static readonly QueryDescription AVATARS_QUERY = new QueryDescription().WithAll<Profile, RandomAvatar>().WithNone<PlayerComponent>();
 
         private readonly IRealmData realmData;
         private readonly IEntityParticipantTable entityParticipantTable;
@@ -58,8 +61,6 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private readonly DebugWidgetVisibilityBinding debugVisibilityBinding;
         private readonly ElementBinding<ulong> totalAvatarsInstantiated;
-
-        private readonly QueryDescription avatarsQuery;
 
         private SingleInstanceEntity camera;
         private SingleInstanceEntity defaultWearableState;
@@ -77,14 +78,12 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             IDebugContainerBuilder debugBuilder,
             IRealmData realmData,
             IEntityParticipantTable entityParticipantTable,
-            QueryDescription avatarsQuery,
             IComponentPool<Transform> componentPools,
             AvatarRandomizerAsset avatarRandomizerAsset
         ) : base(world)
         {
             this.realmData = realmData;
             this.entityParticipantTable = entityParticipantTable;
-            this.avatarsQuery = avatarsQuery;
             transformPool = componentPools;
             this.avatarRandomizerAsset = avatarRandomizerAsset;
 
@@ -132,7 +131,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void RandomizeWearablesOfAvatars()
         {
-            World.Query(in avatarsQuery,
+            World.Query(in AVATARS_QUERY,
                 (ref PBAvatarShape pbAvatarShape) =>
                 {
                     AvatarRandomizer currentRandomizer = randomizers[Random.Range(0, randomizers.Length)];
@@ -148,7 +147,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
 
         private void DestroyRandomAmountOfAvatars()
         {
-            World.Query(in avatarsQuery,
+            World.Query(in AVATARS_QUERY,
                 entity =>
                 {
                     if (Random.Range(0, 3) == 0)
@@ -162,7 +161,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
         private void DestroyAllAvatars()
         {
             // Input events are processed before Update
-            World.Add(in avatarsQuery, new DeleteEntityIntention());
+            World.Add(in AVATARS_QUERY, new DeleteEntityIntention());
             totalAvatarsInstantiated.Value = 0;
         }
 
@@ -330,7 +329,8 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 new HeadIKComponent(),
                 new JumpInputComponent(),
                 new MovementInputComponent(),
-                characterControllerSettings
+                characterControllerSettings,
+                new RandomAvatar()
             );
         }
 

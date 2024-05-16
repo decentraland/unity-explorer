@@ -101,8 +101,7 @@ namespace SceneRuntime.Apis.Modules.Ethereums
             sendCancellationToken = sendCancellationToken.SafeRestart();
 
             return SendAndFormatAsync(id, method, JsonConvert.DeserializeObject<object[]>(jsonParams), sendCancellationToken.Token)
-                  .AsTask()
-                  .ToPromise();
+               .ToDisconnectedPromise();
         }
     }
 }

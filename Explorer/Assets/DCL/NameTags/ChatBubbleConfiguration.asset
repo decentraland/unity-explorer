@@ -21,4 +21,6 @@ MonoBehaviour:
   fullOpacityMaxDistance: 20
   bubbleIdleTime: 5000
   maxDistance: 40
+  singleEmojiExtraHeight: 0.1
+  singleEmojiSize: 3.5
   additionalMsPerCharacter: 20

@@ -35,7 +35,7 @@ namespace SceneRuntime.Apis.Modules.Players
                 return new PlayersGetUserDataResponse(profile, walletId);
             }
 
-            return ExecuteAsync().ToPromise();
+            return ExecuteAsync().ToDisconnectedPromise();
         }
 
         [UsedImplicitly]

@@ -8,6 +8,7 @@ using DCL.TeleportPrompt;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -16,7 +17,7 @@ namespace DCL.PluginSystem.Global
     public class TeleportPromptPlugin : IDCLGlobalPlugin<TeleportPromptPlugin.TeleportPromptSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly ITeleportController teleportController;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly IPlacesAPIService placesAPIService;
@@ -25,14 +26,14 @@ namespace DCL.PluginSystem.Global
 
         public TeleportPromptPlugin(
             IAssetsProvisioner assetsProvisioner,
-            ITeleportController teleportController,
+            IRealmNavigator realmNavigator,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
             IPlacesAPIService placesAPIService,
             ICursor cursor)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.teleportController = teleportController;
+            this.realmNavigator = realmNavigator;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.placesAPIService = placesAPIService;
@@ -45,7 +46,7 @@ namespace DCL.PluginSystem.Global
                 TeleportPromptController.CreateLazily(
                     (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.TeleportPromptPrefab, ct: ct)).Value.GetComponent<TeleportPromptView>(), null),
                 cursor,
-                teleportController,
+                realmNavigator,
                 mvcManager,
                 webRequestController,
                 placesAPIService);

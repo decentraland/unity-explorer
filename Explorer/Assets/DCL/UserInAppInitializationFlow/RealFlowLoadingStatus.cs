@@ -18,7 +18,7 @@ namespace DCL.UserInAppInitializationFlow
             Completed = 3,
         }
 
-        internal static readonly Dictionary<Stage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<Stage>())
+        public static readonly Dictionary<Stage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<Stage>())
         {
             [Stage.ProfileLoaded] = 0.1f,
             [Stage.LandscapeLoaded] = 0.9f,

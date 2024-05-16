@@ -18,4 +18,15 @@ namespace Utility
             States = states;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Field)]
+    public class ShowIfConditionAttribute : PropertyAttribute
+    {
+        public readonly string FieldName;
+
+        public ShowIfConditionAttribute(string fieldName)
+        {
+            FieldName = fieldName;
+        }
+    }
 }

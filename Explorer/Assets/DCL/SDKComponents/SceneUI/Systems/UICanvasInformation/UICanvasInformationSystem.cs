@@ -58,13 +58,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UICanvasInformation
             lastScreenRealResolutionWidth = Screen.mainWindowDisplayInfo.width;
             lastViewportResolutionWidth = Screen.width;
 
-            ecsToCRDTWriter.PutMessage<PBUiCanvasInformation, ISceneStateProvider>((component, _) =>
+            ecsToCRDTWriter.PutMessage<PBUiCanvasInformation, UICanvasInformationSystem>(static (component, system) =>
             {
-                component.InteractableArea = interactableArea;
+                component.InteractableArea = system.interactableArea;
                 component.Width = Screen.width;
                 component.Height = Screen.height;
-                component.DevicePixelRatio = lastScreenRealResolutionWidth / (float)lastViewportResolutionWidth;
-            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, sceneStateProvider);
+                component.DevicePixelRatio = system.lastScreenRealResolutionWidth / (float)system.lastViewportResolutionWidth;
+            }, SpecialEntitiesID.SCENE_ROOT_ENTITY, this);
         }
     }
 }

@@ -3,6 +3,7 @@ using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using DCL.SDKComponents.NFTShape.System;
@@ -12,6 +13,7 @@ using DCL.WebRequests;
 using DCL.WebRequests.Analytics;
 using DCL.WebRequests.WebContentSizes;
 using DCL.WebRequests.WebContentSizes.Sizes;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.DeferredLoading;
 using ECS.StreamableLoading.NFTShapes;
@@ -19,7 +21,6 @@ using ECS.StreamableLoading.NFTShapes.URNs;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.SDKComponents.NFTShape.Demo
 {
@@ -31,6 +32,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
 
         public NFTShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyList<(PBNftShape textShape, PBVisibilityComponent visibility, PBBillboard billboard)> list)
         {
+            var buffer = new EntityEventBuffer<NftShapeRendererComponent>(1);
+
             origin = new DemoWorld(
                 world,
                 w =>
@@ -45,7 +48,6 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     new WebRequestController(
                         new MemoryWeb3IdentityCache()
                     ),
-                    new MutexSync(),
                     new IWebContentSizes.Default(
                         new MaxSize
                         {
@@ -54,8 +56,8 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     )
                 ).InitializeAndReturnSelf(),
                 w => new LoadCycleNftShapeSystem(w, new BasedURNSource()),
-                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default()),
-                w => new VisibilityNftShapeSystem(w)
+                w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), buffer),
+                w => new VisibilityNftShapeSystem(w, buffer)
             );
         }
 

@@ -2,6 +2,7 @@ using DCL.Diagnostics;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.Multiplayer.Connections.Messaging.Pipe
 {
@@ -9,6 +10,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
     {
         private readonly IMessagePipe origin;
         private readonly Action<string> log;
+        private readonly Dictionary<Type, string> cachedMessages = new ();
 
         public LogMessagePipe(IMessagePipe origin, string fromPipe) : this(
             origin,
@@ -25,7 +27,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new()
         {
-            log($"LogMessagePipe: NewMessage of type {typeof(T).FullName} requested");
+            log(LogForNewMessage<T>());
             return origin.NewMessage<T>();
         }
 
@@ -43,6 +45,17 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         public void Dispose()
         {
             origin.Dispose();
+        }
+
+        private string LogForNewMessage<T>()
+        {
+            var type = typeof(T);
+
+            if (cachedMessages.TryGetValue(type, out string? message))
+                return message!;
+
+            cachedMessages[type] = message = $"LogMessagePipe: NewMessage of type {typeof(T).FullName} requested";
+            return message;
         }
     }
 }

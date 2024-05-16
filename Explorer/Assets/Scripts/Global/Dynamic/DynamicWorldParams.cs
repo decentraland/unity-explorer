@@ -28,6 +28,14 @@ namespace Global.Dynamic
         public Vector2Int StartParcel { get; init; }
         public bool EnableLandscape { get; init; }
         public bool EnableLOD { get; init; }
+        public HybridSceneParams HybridSceneParams { get; init; }
 
+    }
+
+    public struct HybridSceneParams
+    {
+        public bool EnableHybridScene { get; set; }
+        public string HybridSceneID { get; set; }
+        public string HybridSceneContent { get; set; }
     }
 }

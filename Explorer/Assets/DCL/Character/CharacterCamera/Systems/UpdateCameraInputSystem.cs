@@ -38,6 +38,7 @@ namespace DCL.CharacterCamera.Systems
             cameraInput.ZoomOut = false;
             cameraInput.Delta = Vector2.zero;
             cameraInput.FreeMovement = Vector2.zero;
+            cameraInput.FreePanning = Vector2.zero;
         }
 
         [Query]
@@ -58,8 +59,22 @@ namespace DCL.CharacterCamera.Systems
             cameraInput.Delta = cursorComponent.CursorState != CursorState.Free ? currentDelta : Vector2.zero;
 
             cameraInput.FreeMovement = freeCameraActions.Movement.ReadValue<Vector2>();
+            cameraInput.FreePanning = freeCameraActions.Panning.ReadValue<Vector2>();
+            cameraInput.FreeFOV = freeCameraActions.FOV.ReadValue<Vector2>();
 
-            if (freeCameraActions.Sprint.IsPressed()) { cameraInput.FreeMovement *= 10; }
+            if (freeCameraActions.Sprint.IsPressed())
+            {
+                cameraInput.FreeMovement *= 10;
+                cameraInput.FreePanning *= 10;
+                cameraInput.FreeFOV *= 2;
+            }
+
+            if (freeCameraActions.Slow.IsPressed())
+            {
+                cameraInput.FreeMovement *= 0.5f;
+                cameraInput.FreePanning *= 0.5f;
+                cameraInput.FreeFOV *= 0.5f;
+            }
         }
     }
 }

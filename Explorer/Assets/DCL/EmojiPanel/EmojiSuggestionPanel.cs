@@ -34,7 +34,11 @@ namespace DCL.Emoji
                 () => CreatePoolElement(view, emojiSuggestion),
                 defaultCapacity: 20,
                 actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
-                actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
+                actionOnRelease: buttonView =>
+                {
+                    buttonView.gameObject.SetActive(false);
+                    buttonView.SelectedBackground.SetActive(false);
+                }
             );
 
             dclInput.Player.ActionForward.performed += OnArrowUp;

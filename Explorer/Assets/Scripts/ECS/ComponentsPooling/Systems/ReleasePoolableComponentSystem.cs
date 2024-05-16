@@ -23,28 +23,49 @@ namespace ECS.ComponentsPooling.Systems
         private readonly QueryDescription finalizeQuery = new QueryDescription()
            .WithAll<TProvider>();
 
+        private Finalize finalize;
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
         public ReleasePoolableComponentSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
+            finalize = new Finalize(poolsRegistry);
             releaseOnEntityDestroy = new ReleaseOnEntityDestroy(poolsRegistry);
         }
 
         protected override void Update(float t)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, TProvider>(in entityDestroyQuery, ref releaseOnEntityDestroy);
+            World.InlineQuery<ReleaseOnEntityDestroy, TProvider, DeleteEntityIntention>(in entityDestroyQuery, ref releaseOnEntityDestroy);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            World.InlineQuery<ReleaseOnEntityDestroy, TProvider>(in finalizeQuery, ref releaseOnEntityDestroy);
+            World.InlineQuery<Finalize, TProvider>(in finalizeQuery, ref finalize);
         }
 
-        private readonly struct ReleaseOnEntityDestroy : IForEach<TProvider>
+        private readonly struct ReleaseOnEntityDestroy : IForEach<TProvider, DeleteEntityIntention>
         {
             private readonly IComponentPoolsRegistry poolsRegistry;
 
             public ReleaseOnEntityDestroy(IComponentPoolsRegistry poolsRegistry)
+            {
+                this.poolsRegistry = poolsRegistry;
+            }
+
+            public void Update(ref TProvider provider, ref DeleteEntityIntention deleteEntityIntention)
+            {
+                // If deletion was delayed so should be the release
+                if (deleteEntityIntention.DeferDeletion) return;
+
+                poolsRegistry.GetPool(provider.PoolableComponentType).Release(provider.PoolableComponent);
+                provider.Dispose();
+            }
+        }
+
+        private readonly struct Finalize : IForEach<TProvider>
+        {
+            private readonly IComponentPoolsRegistry poolsRegistry;
+
+            public Finalize(IComponentPoolsRegistry poolsRegistry)
             {
                 this.poolsRegistry = poolsRegistry;
             }

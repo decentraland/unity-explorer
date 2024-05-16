@@ -3,6 +3,7 @@ using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Character.Components;
+using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
 using ECS.SceneLifeCycle.Reporting;
@@ -44,15 +45,15 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
-                loadReport.ProgressCounter.Value = 1f;
-                loadReport.CompletionSource.TrySetResult();
+                TeleportCharacterQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                loadReport.SetProgress(1f);
                 return null;
             }
 
-            SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+            SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
             Vector3 targetPosition;
+            Vector3? cameraTarget = null;
 
             if (sceneDef != null)
             {
@@ -61,29 +62,17 @@ namespace DCL.ParcelsService
 
                 targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
 
-                List<SceneMetadata.SpawnPoint> spawnPoints = sceneDef.metadata.spawnPoints;
+                List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
 
                 if (spawnPoints is { Count: > 0 })
                 {
-                    // TODO transfer obscure logic of how to pick the desired spawn point from the array
-                    // For now just pick default/first
-
-                    SceneMetadata.SpawnPoint spawnPoint = spawnPoints[0];
-
-                    for (var i = 0; i < spawnPoints.Count; i++)
-                    {
-                        SceneMetadata.SpawnPoint sp = spawnPoints[i];
-                        if (!sp.@default) continue;
-
-                        spawnPoint = sp;
-                        break;
-                    }
-
-                    Vector3 offset = GetOffsetFromSpawnPoint(spawnPoint);
+                    SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints);
 
                     // TODO validate offset position is within bounds of one of scene parcels
+                    targetPosition += GetSpawnPositionOffset(spawnPoint);
 
-                    targetPosition += offset;
+                    if (spawnPoint.cameraTarget != null)
+                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + GetSpawnCameraOffset(sceneDef);
                 }
             }
             else
@@ -91,13 +80,18 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            AddTeleportIntentQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
+            TeleportCharacterQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
+
+            if (cameraTarget != null)
+            {
+                ForceCameraLookAtQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
+                ForceCharacterLookAtQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value, targetPosition));
+            }
 
             if (sceneDef == null)
             {
                 // Instant completion for empty parcels
-                loadReport.ProgressCounter.Value = 1;
-                loadReport.CompletionSource.TrySetResult();
+                loadReport.SetProgress(1f);
 
                 return null;
             }
@@ -105,18 +99,18 @@ namespace DCL.ParcelsService
             return new WaitForSceneReadiness(parcel, loadReport, sceneReadinessReportQueue);
         }
 
+        // TODO: this method should be removed, implies possible mantainance efforts and its only for debugging purposes
         public async UniTask TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
             if (retrieveScene == null)
             {
-                AddTeleportIntentQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
-                loadReport.ProgressCounter.Value = 1f;
-                loadReport.CompletionSource.TrySetResult();
+                TeleportCharacterQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                loadReport.SetProgress(1f);
                 return;
             }
 
             Vector3 characterPos = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-            SceneEntityDefinition sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
+            SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
             if (sceneDef != null)
 
@@ -128,14 +122,12 @@ namespace DCL.ParcelsService
             // Add report to the queue so it will be grabbed by the actual scene
             sceneReadinessReportQueue.Enqueue(parcel, loadReport);
 
-            AddTeleportIntentQuery(world, new PlayerTeleportIntent(characterPos, parcel, loadReport));
+            TeleportCharacterQuery(world, new PlayerTeleportIntent(characterPos, parcel, loadReport));
 
             if (sceneDef == null)
             {
                 // Instant completion for empty parcels
-                loadReport.ProgressCounter.Value = 1;
-                loadReport.CompletionSource.TrySetResult();
-
+                loadReport.SetProgress(1f);
                 return;
             }
 
@@ -147,7 +139,31 @@ namespace DCL.ParcelsService
             catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
 
-        private static Vector3 GetOffsetFromSpawnPoint(SceneMetadata.SpawnPoint spawnPoint)
+        private SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints)
+        {
+            // TODO transfer obscure logic of how to pick the desired spawn point from the array
+            // For now just pick default/first
+            SceneMetadata.SpawnPoint spawnPoint = spawnPoints[0];
+
+            for (var i = 0; i < spawnPoints.Count; i++)
+            {
+                SceneMetadata.SpawnPoint sp = spawnPoints[i];
+                if (!sp.@default) continue;
+
+                spawnPoint = sp;
+                break;
+            }
+
+            return spawnPoint;
+        }
+
+        private Vector3 GetSpawnCameraOffset(SceneEntityDefinition sceneDef)
+        {
+            Vector2 baseParcel = sceneDef.metadata.scene.DecodedBase;
+            return new Vector3(baseParcel.x * ParcelMathHelper.PARCEL_SIZE, 0, baseParcel.y * ParcelMathHelper.PARCEL_SIZE);
+        }
+
+        private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint)
         {
             static float GetMidPoint(float[] coordArray)
             {
@@ -178,7 +194,21 @@ namespace DCL.ParcelsService
 
         [Query]
         [All(typeof(PlayerComponent))]
-        private void AddTeleportIntent([Data] PlayerTeleportIntent intent, in Entity entity)
+        private void TeleportCharacter([Data] PlayerTeleportIntent intent, in Entity entity)
+        {
+            world?.Add(entity, intent);
+        }
+
+        [Query]
+        [All(typeof(CameraComponent))]
+        private void ForceCameraLookAt([Data] CameraLookAtIntent intent, in Entity entity)
+        {
+            world?.Add(entity, intent);
+        }
+
+        [Query]
+        [All(typeof(CharacterRigidTransform), typeof(CharacterTransform))]
+        private void ForceCharacterLookAt([Data] PlayerLookAtIntent intent, in Entity entity)
         {
             world?.Add(entity, intent);
         }

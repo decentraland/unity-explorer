@@ -75,7 +75,7 @@ namespace ECS.Unity.SceneBoundsChecker
         [Query]
         private void CheckGltfAsset(ref GltfContainerComponent component, ref PartitionComponent partitionComponent)
         {
-            if (component.State.Value != LoadingState.Finished) return;
+            if (component.State != LoadingState.Finished) return;
 
             if (scenePartition.Bucket > BUCKET_THRESHOLD && partitionComponent.Bucket > BUCKET_THRESHOLD)
                 return;

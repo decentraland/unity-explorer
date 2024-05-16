@@ -59,7 +59,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             connectiveRoom = new RenewableConnectiveRoom(
                 () => new ConnectiveRoom(
                     PrewarmAsync,
-                    SendHeartbeatAsync
+                    SendHeartbeatAsync,
+                    nameof(ArchipelagoIslandRoom)
                 )
             );
         }
@@ -69,6 +70,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         public UniTask StopAsync() =>
             UniTask.WhenAll(
+
                 //signFlow.DisconnectAsync(CancellationToken.None),
                 connectiveRoom.StopAsync()
             );
@@ -85,7 +87,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             signFlow.StartListeningForConnectionStringAsync(newString => OnNewConnectionString(newString, token), token);
         }
 
-        private async UniTask SendHeartbeatAsync(ConnectToRoomAsyncDelegate connectDelegate, CancellationToken token)
+        private async UniTask SendHeartbeatAsync(ConnectToRoomAsyncDelegate connectDelegate, DisconnectCurrentRoomAsyncDelegate disconnectCurrentRoomAsyncDelegate, CancellationToken token)
         {
             connectToRoomAsyncDelegate = connectDelegate;
             await UniTask.SwitchToMainThread(token);

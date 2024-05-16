@@ -17,7 +17,6 @@ MonoBehaviour:
   - rid: 6784895265412481024
   - rid: 6784895265412481025
   - rid: 1268264197252972544
-  - rid: 8147919284940570626
   - rid: 1841402216112979968
   - rid: 2174542042650378246
   references:
@@ -96,6 +95,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <cinemachineCameraAudioSettingsReference>k__BackingField:
+          m_AssetGUID: 
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6784895265412481025
       type: {class: CharacterMotionSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -104,7 +108,3 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 8147919284940570626
-      type: {class: FontsSettings, ns: DCL.SDKComponents.TextShape.Fonts, asm: DCL.Plugins}
-      data:
-        <FontList>k__BackingField: {fileID: 11400000, guid: 353f2294734a94b57b061c9b83eb275d, type: 2}

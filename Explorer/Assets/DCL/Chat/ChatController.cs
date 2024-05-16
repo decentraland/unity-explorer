@@ -107,7 +107,6 @@ namespace DCL.Chat
             viewInstance.InputField.onValueChanged.AddListener(OnInputChanged);
             viewInstance.InputField.onSelect.AddListener(OnInputSelected);
             viewInstance.InputField.onDeselect.AddListener(OnInputDeselected);
-            viewInstance.InputField.onSubmit.AddListener(OnSubmit);
             viewInstance.CloseChatButton.onClick.AddListener(CloseChat);
             viewInstance.LoopList.InitListView(0, OnGetItemByIndex);
             emojiPanelController = new EmojiPanelController(viewInstance.EmojiPanel, emojiPanelConfiguration, emojiMappingJson, emojiSectionViewPrefab, emojiButtonPrefab);
@@ -120,20 +119,22 @@ namespace DCL.Chat
 
             viewInstance.ChatBubblesToggle.Toggle.onValueChanged.AddListener(OnToggleChatBubblesValueChanged);
             viewInstance.ChatBubblesToggle.Toggle.SetIsOnWithoutNotify(nametagsData.showChatBubbles);
-            dclInput.UI.Submit.performed += OnSubmitAction;
             OnToggleChatBubblesValueChanged(nametagsData.showChatBubbles);
+            OnFocus();
         }
 
         protected override void OnViewShow()
         {
             base.OnViewShow();
             dclInput.UI.Click.performed += OnClick;
+            dclInput.Shortcuts.ToggleNametags.performed += ToggleNametagsFromShortcut;
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
             dclInput.UI.Click.performed -= OnClick;
+            dclInput.Shortcuts.ToggleNametags.performed -= ToggleNametagsFromShortcut;
         }
 
         private void OnClick(InputAction.CallbackContext obj)
@@ -141,7 +142,7 @@ namespace DCL.Chat
             raycastResults = eventSystem.RaycastAll(device.position.value);
             var clickedOnPanel = false;
             foreach (RaycastResult raycasted in raycastResults)
-                if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.gameObject)
+                if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.ScrollView.gameObject)
                     clickedOnPanel = true;
 
             if (!clickedOnPanel)
@@ -171,8 +172,27 @@ namespace DCL.Chat
                 emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
+        private void ToggleNametagsFromShortcut(InputAction.CallbackContext obj)
+        {
+            nametagsData.showNameTags = !nametagsData.showNameTags;
+
+            if (!nametagsData.showNameTags)
+            {
+                viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(true);
+                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(false);
+            }
+            else
+            {
+                viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!nametagsData.showChatBubbles);
+                viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(nametagsData.showChatBubbles);
+            }
+        }
+
         private void OnToggleChatBubblesValueChanged(bool isToggled)
         {
+            if(!nametagsData.showNameTags)
+                return;
+
             viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
             viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
             nametagsData.showChatBubbles = isToggled;
@@ -293,41 +313,41 @@ namespace DCL.Chat
                 item = listView.NewListViewItem(listView.ItemPrefabDataList[2].mItemPrefab.name);
             else
             {
-                item = listView.NewListViewItem(itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name);
+                item = listView.NewListViewItem(itemData.SystemMessage ? listView.ItemPrefabDataList[3].mItemPrefab.name : (itemData.SentByOwnUser ? listView.ItemPrefabDataList[1].mItemPrefab.name : listView.ItemPrefabDataList[0].mItemPrefab.name));
                 ChatEntryView itemScript = item!.GetComponent<ChatEntryView>()!;
+                SetItemData(index, itemData, itemScript);
+            }
 
-                if (entityParticipantTable.Has(itemData.WalletAddress))
-                {
-                    var entity = entityParticipantTable.Entity(itemData.WalletAddress);
-                    Profile profile = world.Get<Profile>(entity);
-                    if(profile.ProfilePicture != null)
-                        itemScript.playerIcon.sprite = profile.ProfilePicture.Value.Asset;
-                }
+            return item;
+        }
 
-                //temporary approach to extract the username without the walledId, will be refactored
-                //once we have the proper integration of the profile retrieval
-                Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
-                    ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
-                    : itemData.Sender);
+        private void SetItemData(int index, ChatMessage itemData, ChatEntryView itemScript)
+        {
+            //temporary approach to extract the username without the walledId, will be refactored
+            //once we have the proper integration of the profile retrieval
+            Color playerNameColor = chatEntryConfiguration.GetNameColor(itemData.Sender.Contains("#")
+                ? $"{itemData.Sender.Substring(0, itemData.Sender.IndexOf("#", StringComparison.Ordinal))}"
+                : itemData.Sender);
 
-                itemScript.playerName.color = playerNameColor;
+            itemScript.playerName.color = playerNameColor;
+
+            if (!itemData.SystemMessage)
+            {
                 itemScript.ProfileBackground.color = playerNameColor;
                 playerNameColor.r += 0.3f;
                 playerNameColor.g += 0.3f;
                 playerNameColor.b += 0.3f;
                 itemScript.ProfileOutline.color = playerNameColor;
-
-                itemScript.SetItemData(itemData);
-
-                //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
-                if (itemData.HasToAnimate)
-                {
-                    itemScript.AnimateChatEntry();
-                    chatMessages[index] = new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false);
-                }
             }
 
-            return item;
+            itemScript.SetItemData(itemData);
+
+            //Workaround needed to animate the chat entries due to infinite scroll plugin behaviour
+            if (itemData.HasToAnimate)
+            {
+                itemScript.AnimateChatEntry();
+                chatMessages[index] = new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false);
+            }
         }
 
         private void CloseChat()
@@ -367,6 +387,20 @@ namespace DCL.Chat
 
             viewInstance.CharacterCounter.SetCharacterCount(inputText.Length);
             viewInstance.StopChatEntriesFadeout();
+        }
+
+        protected override void OnBlur()
+        {
+            viewInstance.InputField.onSubmit.RemoveAllListeners();
+            dclInput.UI.Submit.performed -= OnSubmitAction;
+            viewInstance.InputField.DeactivateInputField();
+
+        }
+
+        protected override void OnFocus()
+        {
+            viewInstance.InputField.onSubmit.AddListener(OnSubmit);
+            dclInput.UI.Submit.performed += OnSubmitAction;
         }
 
         private void HandleEmojiSearch(string inputText)
@@ -409,7 +443,7 @@ namespace DCL.Chat
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatReceiveMessageAudio);
             }
-            else
+            else if(!chatMessage.SystemMessage)
             {
                 world.AddOrGet(playerEntity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
             }

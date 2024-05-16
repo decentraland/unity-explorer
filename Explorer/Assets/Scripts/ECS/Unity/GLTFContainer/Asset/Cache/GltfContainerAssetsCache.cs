@@ -90,7 +90,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             if (UnityObjectUtils.IsQuitting) return;
 
             asset.Root.SetActive(false);
-            asset.Root.transform.SetParent(parentContainer);
+            asset.Root.transform.SetParent(parentContainer, false);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)

@@ -1,9 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.ECSComponents;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Multiplayer.SDK.Systems;
-using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using ECS.LifeCycle;

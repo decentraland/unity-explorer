@@ -46,7 +46,7 @@ namespace ECS.SceneLifeCycle.Tests
             parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);
             var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(), new List<int2>());
 
-            Entity e = world.Create(realm, scenePointers, new ProcessesScenePointers { Value = processedParcels });
+            Entity e = world.Create(realm, scenePointers, new ProcessedScenePointers { Value = processedParcels });
             system.Update(0);
 
             Assert.That(parcelMathJobifiedHelper.JobStarted, Is.False);
@@ -73,7 +73,7 @@ namespace ECS.SceneLifeCycle.Tests
 
             var scenePointers = new VolatileScenePointers(new List<SceneEntityDefinition>(), new List<int2>());
 
-            Entity e = world.Create(realm, scenePointers, new ProcessesScenePointers { Value = processedParcels });
+            Entity e = world.Create(realm, scenePointers, new ProcessedScenePointers { Value = processedParcels });
 
             // For system
             parcelMathJobifiedHelper.StartParcelsRingSplit(new int2(1, 1), radius, processedParcels);

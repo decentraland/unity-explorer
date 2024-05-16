@@ -36,7 +36,7 @@ namespace DCL.Diagnostics
         }
 
         [HideInCallstack]
-        public void LogException<T>(T ecsSystemException) where T: Exception, IManagedEcsException
+        public void LogException<T>(T ecsSystemException) where T: Exception, IDecentralandException
         {
             if (IsLogMessageAllowed(ecsSystemException, in ecsSystemException.ReportData, LogType.Exception))
                 LogExceptionInternal(ecsSystemException);
@@ -53,7 +53,7 @@ namespace DCL.Diagnostics
 
         internal abstract void LogFormatInternal(LogType logType, ReportData category, Object context, object message, params object[] args);
 
-        internal abstract void LogExceptionInternal<T>(T ecsSystemException) where T: Exception, IManagedEcsException;
+        internal abstract void LogExceptionInternal<T>(T ecsSystemException) where T: Exception, IDecentralandException;
 
         internal abstract void LogExceptionInternal(Exception exception, ReportData reportData, Object context);
 

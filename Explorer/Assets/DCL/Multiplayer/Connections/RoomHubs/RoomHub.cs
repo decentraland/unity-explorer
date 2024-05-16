@@ -28,10 +28,10 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             return UniTask.CompletedTask;
         }
 
-        public UniTask StopAsync() =>
+        public UniTask StopIfNotAsync() =>
             UniTask.WhenAll(
-                archipelagoIslandRoom.StopAsync(),
-                gateKeeperSceneRoom.StopAsync()
+                archipelagoIslandRoom.StopIfNotAsync(),
+                gateKeeperSceneRoom.StopIfNotAsync()
             );
     }
 }

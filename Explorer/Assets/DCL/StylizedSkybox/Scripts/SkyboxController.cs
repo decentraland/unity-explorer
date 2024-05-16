@@ -8,6 +8,7 @@ public class SkyboxController : MonoBehaviour
     [HideInInspector]
     public int SecondsInDay = 86400;
     public bool PlayOnStart;
+    public bool StopRefresh = false;
     public float Speed = 1 * 60;
 
     [HideInInspector] public float NaturalTime;
@@ -23,6 +24,12 @@ public class SkyboxController : MonoBehaviour
 
     [GradientUsage(true)]
     public Gradient DirectionalColorRamp;
+    [GradientUsage(true)]
+    public Gradient SunColorRamp;
+
+    public AnimationCurve sunRadiance;
+    public AnimationCurve sunRadianceIntensity;
+    public AnimationCurve moonMaskSize;
 
     [Header("Skybox Color")]
     [GradientUsage(true)] public Gradient SkyZenitColorRamp;
@@ -129,9 +136,6 @@ public class SkyboxController : MonoBehaviour
         if (Fog)
         {
             RenderSettings.fog = true;
-            /*
-            RenderSettings.fogDensity = 0.001f;
-            */
         }
 
         isInitialized = true;
@@ -174,6 +178,16 @@ public class SkyboxController : MonoBehaviour
     }
 
     /// <summary>
+    ///     Sets the time of the skybox to an specific second
+    /// </summary>
+    /// <param name="seconds"></param>
+    public void SetTimeNormalized(float normalizedTime)
+    {
+        NormalizedTime = normalizedTime;
+        NaturalTime = normalizedTime * SecondsInDay;
+    }
+
+    /// <summary>
     ///     Auxiliary function to returnt the normalized time in HH:MM:SS
     /// </summary>
     public string GetFormatedTime()
@@ -191,10 +205,13 @@ public class SkyboxController : MonoBehaviour
     /// </summary>
     private void UpdateSkybox()
     {
-        UpdateIndirectLight();
-        UpdateDirectionaLight();
-        UpdateSkyboxColor();
-        UpdateFog();
+        if(!StopRefresh)
+        {
+            UpdateIndirectLight();
+            UpdateDirectionaLight();
+            UpdateSkyboxColor();
+            UpdateFog();
+        }
     }
 
     /// <summary>
@@ -206,7 +223,7 @@ public class SkyboxController : MonoBehaviour
         RenderSettings.skybox.SetColor("_ZenitColor", SkyZenitColorRamp.Evaluate(NormalizedTime));
         RenderSettings.skybox.SetColor("_HorizonColor", SkyHorizonColorRamp.Evaluate(NormalizedTime));
         RenderSettings.skybox.SetColor("_NadirColor", SkyNadirColorRamp.Evaluate(NormalizedTime));
-        RenderSettings.skybox.SetColor("_SunColor", DirectionalColorRamp.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetColor("_SunColor", SunColorRamp.Evaluate(NormalizedTime));
         RenderSettings.skybox.SetColor("_RimColor", RimColorRamp.Evaluate(NormalizedTime));
         RenderSettings.skybox.SetColor("_CloudsColor", CloudsColorRamp.Evaluate(NormalizedTime));
     }
@@ -247,6 +264,13 @@ public class SkyboxController : MonoBehaviour
 
         RenderSettings.skybox.SetFloat("_SunSize", DirectionalLight.gameObject.transform.localScale.x);
         RenderSettings.skybox.SetFloat("_SunOpacity", DirectionalLight.gameObject.transform.localScale.y);
+
+        //sampling sun randiance and intensity curves
+        RenderSettings.skybox.SetFloat("_Sun_Radiance", sunRadiance.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetFloat("_Sun_Radiance_Intensity", sunRadianceIntensity.Evaluate(NormalizedTime));
+
+        //change size of moon mask
+        RenderSettings.skybox.SetFloat("_Moon_Mask_Size", moonMaskSize.Evaluate(NormalizedTime));
     }
 
     /// <summary>

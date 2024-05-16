@@ -1,4 +1,4 @@
-#if defined(_IS_CLIPPING_MODE) || defined(_IS_CLIPPING_TRANSMODE)
+//#if defined(_IS_CLIPPING_MODE) || defined(_IS_CLIPPING_TRANSMODE)
 // Returns true if AlphaToMask functionality is currently available
 // NOTE: This does NOT guarantee that AlphaToMask is enabled for the current draw. It only indicates that AlphaToMask functionality COULD be enabled for it.
 //       In cases where AlphaToMask COULD be enabled, we export a specialized alpha value from the shader.
@@ -35,7 +35,7 @@ half AlphaClip(half alpha, half cutoff)
 
     return alpha;
 }
-#endif
+//#endif
 
 float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET 
 {
@@ -183,10 +183,19 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
     float4 _MainTex_var = SAMPLE_MAINTEX(uv_maintex,nMainTexArrID);
     
     // Clipping modes - early outs
-    #if defined(_IS_CLIPPING_MODE) || defined(_IS_CLIPPING_TRANSMODE)
+    if (_IS_CLIPPING_MODE || _IS_CLIPPING_TRANSMODE)
+    {
         float fAlphaClip = _MainTex_var.a * _BaseColor.a;
         AlphaClip(fAlphaClip, _Clipping_Level);
-    #endif
+    }
+    //#endif
+
+    // if (_IS_CLIPPING_TRANSMODE)
+    // {
+    //     float fAlphaClip = _MainTex_var.a * _BaseColor.a;
+    //     AlphaClip(fAlphaClip, _Clipping_Level);
+    // }
+    //#endif
 
     float shadowAttenuation = 1.0;
     #if defined(_MAIN_LIGHT_SHADOWS) || defined(_MAIN_LIGHT_SHADOWS_CASCADE) || defined(_MAIN_LIGHT_SHADOWS_SCREEN)
@@ -539,13 +548,21 @@ float4 fragDoubleShadeFeather(VertexOutput i, half facing : VFACE) : SV_TARGET
         
         finalColor += pointLightColor;
     //#endif
-    
-    #ifdef _IS_CLIPPING_OFF
-        half4 finalRGBA = half4(finalColor,1);
-    #elif _IS_CLIPPING_MODE || _IS_CLIPPING_TRANSMODE
+
+    half4 finalRGBA = half4(finalColor,1);
+    if (_IS_CLIPPING_MODE || _IS_CLIPPING_TRANSMODE)
+    {
         float Set_Opacity = SATURATE_IF_SDR((_MainTex_var.a+_Tweak_transparency));
-        half4 finalRGBA = half4(finalColor,Set_Opacity);
-    #endif
+        finalRGBA = half4(finalColor,Set_Opacity);
+    }
+    //#endif
+    
+    // #if defined()
+    // {
+    //     float Set_Opacity = SATURATE_IF_SDR((_MainTex_var.a+_Tweak_transparency));
+    //     finalRGBA = half4(finalColor,Set_Opacity);
+    // }
+    // #endif
     
     return finalRGBA;
 }

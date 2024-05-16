@@ -1,6 +1,8 @@
+using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI.Buttons;
 using MVC;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,9 +11,6 @@ namespace DCL.Minimap
 {
     public class MinimapView : ViewBase, IView
     {
-        private static readonly int HOVER = Animator.StringToHash("Hover");
-        private static readonly int UNHOVER = Animator.StringToHash("Unhover");
-
         [field: SerializeField]
         internal RawImage mapRendererTargetImage { get; private set; }
 
@@ -51,6 +50,21 @@ namespace DCL.Minimap
         [field: SerializeField]
         internal Animator minimapAnimator  { get; private set; }
 
+        [field: SerializeField]
+        internal Button goToGenesisCityButton { get; private set; }
+
+        [field: SerializeField]
+        internal RuntimeAnimatorController genesisCityAnimatorController { get; private set; }
+
+        [field: SerializeField]
+        internal RuntimeAnimatorController worldsAnimatorController { get; private set; }
+
+        [field: SerializeField]
+        internal List<GameObject> objectsToActivateForGenesis { get; private set; }
+
+        [field: SerializeField]
+        internal List<GameObject> objectsToActivateForWorlds { get; private set; }
+
         private void Start()
         {
             minimapRendererButton.OnButtonHover += OnHoverMap;
@@ -58,10 +72,10 @@ namespace DCL.Minimap
         }
 
         private void OnHoverMap() =>
-            minimapAnimator.SetTrigger(HOVER);
+            minimapAnimator.SetTrigger(AnimationHashes.HOVER);
 
         private void OnUnHoverMap() =>
-            minimapAnimator.SetTrigger(UNHOVER);
+            minimapAnimator.SetTrigger(AnimationHashes.UNHOVER);
 
     }
 }

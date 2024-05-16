@@ -84,7 +84,7 @@ namespace ECS.SceneLifeCycle.Tests
             AssetPromise<SceneEntityDefinition, GetSceneDefinition>[] results = await promises;
 
             // Create realm + fixed pointers
-            var processedScenePointers = ProcessesScenePointers.Create();
+            var processedScenePointers = ProcessedScenePointers.Create();
             using var _ = processedScenePointers.Value;
             Entity realm = world.Create(new RealmComponent(new RealmData(ipfsRealm)), new FixedScenePointers(results), processedScenePointers);
 

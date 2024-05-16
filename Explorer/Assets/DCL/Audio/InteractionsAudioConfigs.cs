@@ -13,7 +13,7 @@ namespace DCL.Audio
     public class InteractionsAudioConfigs : ScriptableObject, IInteractionsAudioConfigs
     {
         [SerializeField] private AudioClipConfig primaryAudio;
-        [SerializeField] private AudioClipConfig pointerAudio ;
+        [SerializeField] private AudioClipConfig pointerAudio;
         [SerializeField] private AudioClipConfig secondaryAudio;
         public AudioClipConfig PointerAudio => pointerAudio;
         public AudioClipConfig PrimaryAudio => primaryAudio;

@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Profiles.Self;
+using DCL.Web3.Identities;
 using ECS;
+using System;
 using System.Threading;
 using Utility;
 
@@ -27,14 +30,23 @@ namespace DCL.Multiplayer.Profiles.BroadcastProfiles
 
         private async UniTaskVoid NotifyAsync(CancellationToken ct)
         {
-            await realm.WaitConfiguredAsync();
+            try
+            {
+                await realm.WaitConfiguredAsync();
 
-            bool published = await selfProfile.IsProfilePublishedAsync(ct);
+                bool published = await selfProfile.IsProfilePublishedAsync(ct);
 
-            if (published == false)
-                await selfProfile.PublishAsync(ct);
+                if (published == false)
+                    await selfProfile.PublishAsync(ct);
 
-            origin.NotifyRemotes();
+                origin.NotifyRemotes();
+            }
+            catch (OperationCanceledException) { }
+            // It can happen, for example when the user performs a logout, that the web3 identity becomes invalid
+            catch (Web3IdentityMissingException)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.MULTIPLAYER), "Cannot broadcast the self profile because web3 identity is invalid");
+            }
         }
 
         public void Dispose()

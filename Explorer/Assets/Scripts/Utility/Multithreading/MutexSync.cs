@@ -8,39 +8,54 @@ namespace Utility.Multithreading
     {
         private static readonly CustomSampler SAMPLER;
 
-        public readonly Mutex Mutex = new ();
+        private readonly Mutex mutex = new ();
+
+        public bool Acquired { get; private set; }
 
         static MutexSync()
         {
             SAMPLER = CustomSampler.Create("MutexSync.Wait");
         }
 
+        public void Acquire()
+        {
+            mutex.WaitOne();
+            Acquired = true;
+        }
+
+        public void Release()
+        {
+            mutex.ReleaseMutex();
+            Acquired = false;
+        }
+
         public void Dispose()
         {
-            Mutex.Dispose();
+            Acquired = false;
+            mutex.Dispose();
         }
 
         public Scope GetScope()
         {
             SAMPLER.Begin();
-            var scope = new Scope(Mutex);
+            var scope = new Scope(this);
             SAMPLER.End();
             return scope;
         }
 
         public readonly struct Scope : IDisposable
         {
-            private readonly Mutex mutex;
+            private readonly MutexSync mutex;
 
-            public Scope(Mutex mutex)
+            public Scope(MutexSync mutex)
             {
                 this.mutex = mutex;
-                mutex.WaitOne();
+                mutex.Acquire();
             }
 
             public void Dispose()
             {
-                mutex.ReleaseMutex();
+                mutex.Release();
             }
         }
     }

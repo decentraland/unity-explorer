@@ -4,6 +4,7 @@ using DCL.Optimization.Pools;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.AvatarRendering.AvatarShape.Helpers;
+using DCL.Diagnostics;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
@@ -159,6 +160,14 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                         Renderer meshRenderer = pooledList.Value[j];
                         if (!meshRenderer.gameObject.activeSelf) continue;
 
+                        if (j < 0 || j >= cachedWearable.OriginalAsset.RendererInfos.Count)
+                        {
+                            ReportHub.LogError(ReportCategory.AVATAR, $"RendererInfos.Count ({pooledList.Value.Count}) is different than pooledList.Value.Count ({pooledList.Value.Count})");
+                            continue;
+                        }
+
+                        Material originalMaterial = cachedWearable.OriginalAsset.RendererInfos[j].Material;
+
                         if (meshRenderer is SkinnedMeshRenderer renderer)
                         {
                             // From Asset Bundle
@@ -167,7 +176,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
                             cachedWearable.Renderers.Add(tuple.Item1);
 
                             targetList.Add(new MeshData(tuple.Item2, tuple.Item1, tuple.Item1.transform, instance.transform,
-                                cachedWearable.OriginalAsset.RendererInfos[j].Material));
+                                originalMaterial));
                         }
                         else
                         {
@@ -175,7 +184,7 @@ namespace DCL.AvatarRendering.AvatarShape.ComputeShader
 
                             // From Pooled Object
                             targetList.Add(new MeshData(meshRenderer.GetComponent<MeshFilter>(), meshRenderer, meshRenderer.transform, instance.transform,
-                                cachedWearable.OriginalAsset.RendererInfos[j].Material));
+                                originalMaterial));
                         }
                     }
                 }

@@ -5,7 +5,7 @@ namespace Utility
 {
     public static class QuaternionUtils
     {
-        public const float DEFAULT_ERROR = 0.00001f;
+        public const float DEFAULT_ERROR = float.Epsilon;
 
         /// <summary>
         ///     <inheritdoc cref="QuaternionEqualityComparer" />

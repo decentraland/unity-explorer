@@ -38,6 +38,7 @@ namespace DCL.CharacterMotion.Animation
             if (!rigidTransform.IsGrounded)
                 return;
 
+            view.SetAnimatorInt(AnimationHashes.MOVEMENT_TYPE, movementBlendId);
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
         }
 

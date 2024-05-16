@@ -1,19 +1,19 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
-using UnityEngine;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
@@ -26,26 +26,23 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void PropagateProfileToScene(Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        private void PropagateProfileToScene(Profile profile, PlayerCRDTEntity playerCRDTEntity)
         {
-            SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-
             if (playerCRDTEntity.IsDirty)
             {
-                profile.IsDirty = true;
-
-                // External world access should be always synchronized (Global World calls into Scene World)
-                using (sceneEcsExecutor.Sync.GetScope())
-                    sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, profile);
-
+                SetSceneProfile(profile, playerCRDTEntity);
                 return;
             }
 
             if (!profile.IsDirty) return;
 
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-                sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, profile);
+            SetSceneProfile(profile, playerCRDTEntity);
+        }
+
+        private void SetSceneProfile(Profile profile, PlayerCRDTEntity playerCRDTEntity)
+        {
+            SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
+            sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
         }
     }
 }

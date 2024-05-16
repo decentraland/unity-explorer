@@ -5,6 +5,7 @@ using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -33,6 +34,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         private readonly GltfContainerTestResources resources = new ();
 
         private CreateGltfAssetFromAssetBundleSystem createGltfAssetFromAssetBundleSystem;
+        private EntityEventBuffer<GltfContainerComponent> eventBuffer;
 
         [SetUp]
         public void SetUp()
@@ -43,7 +45,9 @@ namespace ECS.Unity.GLTFContainer.Tests
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
-            system = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData);
+            system = new FinalizeGltfContainerLoadingSystem(
+                world, world.Reference(sceneRoot), releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData,
+                eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
@@ -70,7 +74,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention(), PartitionComponent.TOP_PRIORITY));
 
-            component.State.Set(LoadingState.Loading);
+            component.State = LoadingState.Loading;
 
             Entity e = world.Create(component, new CRDTEntity(100), new TransformComponent(), new PBGltfContainer());
             world.Add(component.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(new Exception()));
@@ -80,7 +84,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
-            Assert.That(component.State.Value, Is.EqualTo(LoadingState.FinishedWithError));
+            Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
         }
 
         [Test]
@@ -90,7 +94,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
                     world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
-            component.State.Set(LoadingState.Loading);
+            component.State = LoadingState.Loading;
 
             await InstantiateAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER, component.Promise.Entity);
 
@@ -101,7 +105,10 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             component = world.Get<GltfContainerComponent>(e);
 
-            Assert.That(component.State.Value, Is.EqualTo(LoadingState.Finished));
+            Assert.That(component.State, Is.EqualTo(LoadingState.Finished));
+            // Check events buffer
+            Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
+
             Assert.That(component.Promise.Result.Value.Asset.Root.transform.parent, Is.EqualTo(transform.Transform));
             Assert.That(component.Promise.Result.Value.Asset.Root.activeSelf, Is.EqualTo(true));
         }
@@ -113,7 +120,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
                     world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
-            component.State.Set(LoadingState.Loading);
+            component.State = LoadingState.Loading;
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
 
@@ -136,7 +143,7 @@ namespace ECS.Unity.GLTFContainer.Tests
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
                     world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
-            component.State.Set(LoadingState.Loading);
+            component.State = LoadingState.Loading;
 
             await InstantiateAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER, component.Promise.Entity);
 

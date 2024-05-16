@@ -13,11 +13,6 @@ namespace Global.Dynamic
         GlobalWorld GlobalWorld { get; set; }
         Entity RealmEntity { get; }
 
-        /// <summary>
-        ///     Unload the current realm and load the new one
-        /// </summary>
-        UniTask SetRealmAsync(URLDomain realm, Vector2Int playerStartPosition, AsyncLoadProcessReport loadReport, CancellationToken ct);
-
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
 
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);

@@ -8,20 +8,21 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using DCL.Diagnostics;
+using ECS.LifeCycle;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common.Components;
 
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.LOD)]
-    public partial class UnloadSceneLODSystem : BaseUnityLoopSystem
+    public partial class UnloadSceneLODSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
-        private readonly ILODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
 
-        public UnloadSceneLODSystem(World world, ILODAssetsPool lodAssetsPool, IScenesCache scenesCache) : base(world)
+        public UnloadSceneLODSystem(World world, IScenesCache scenesCache) : base(world)
         {
-            this.lodAssetsPool = lodAssetsPool;
             this.scenesCache = scenesCache;
         }
 
@@ -30,12 +31,26 @@ namespace ECS.SceneLifeCycle.Systems
             UnloadLODQuery(World);
         }
 
+        public void FinalizeComponents(in Query query)
+        {
+            AbortSucceededLODPromisesQuery(World);
+        }
+
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void UnloadLOD(in Entity entity, ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void UnloadLOD(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
         {
             sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
             World.Remove<SceneLODInfo, VisualSceneState, DeleteEntityIntention>(entity);
+        }
+
+        [Query]
+        private void AbortSucceededLODPromises(ref SceneLODInfo sceneLODInfo)
+        {
+            if (!sceneLODInfo.CurrentLODPromise.IsConsumed && sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result) && result.Succeeded)
+                result.Asset!.Dispose();
+            else
+                sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
         }
     }
 }

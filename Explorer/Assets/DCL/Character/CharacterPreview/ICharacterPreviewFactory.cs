@@ -16,7 +16,9 @@ namespace DCL.CharacterPreview
     public class CharacterPreviewFactory : ICharacterPreviewFactory
     {
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+
         private IComponentPool<CharacterPreviewAvatarContainer>? characterPreviewComponentPool;
+        private IComponentPool<Transform>? transformPool;
 
         public CharacterPreviewFactory(IComponentPoolsRegistry poolsRegistry)
         {
@@ -26,9 +28,10 @@ namespace DCL.CharacterPreview
         public CharacterPreviewController Create(World world, RenderTexture targetTexture, CharacterPreviewInputEventBus inputEventBus, CharacterPreviewCameraSettings cameraSettings)
         {
             characterPreviewComponentPool ??= componentPoolsRegistry.GetReferenceTypePool<CharacterPreviewAvatarContainer>();
+            transformPool ??= componentPoolsRegistry.GetReferenceTypePool<Transform>();
             CharacterPreviewAvatarContainer container = characterPreviewComponentPool.Get();
             container.Initialize(targetTexture);
-            return new CharacterPreviewController(world, container, inputEventBus, characterPreviewComponentPool, cameraSettings);
+            return new CharacterPreviewController(world, container, inputEventBus, characterPreviewComponentPool, cameraSettings, transformPool);
         }
     }
 }

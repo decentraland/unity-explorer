@@ -21,14 +21,17 @@ namespace DCL.SDKComponents.NFTShape.System
         private readonly INFTShapeRendererFactory nftShapeRendererFactory;
         private readonly IPerformanceBudget instantiationFrameTimeBudgetProvider;
 
+        private readonly EntityEventBuffer<NftShapeRendererComponent> changedNftShapes;
+
         public InstantiateNftShapeSystem(
             World world,
             INFTShapeRendererFactory nftShapeRendererFactory,
-            IPerformanceBudget instantiationFrameTimeBudgetProvider
-        ) : base(world)
+            IPerformanceBudget instantiationFrameTimeBudgetProvider,
+            EntityEventBuffer<NftShapeRendererComponent> changedNftShapes) : base(world)
         {
             this.nftShapeRendererFactory = nftShapeRendererFactory;
             this.instantiationFrameTimeBudgetProvider = instantiationFrameTimeBudgetProvider;
+            this.changedNftShapes = changedNftShapes;
         }
 
         protected override void Update(float t)
@@ -37,19 +40,24 @@ namespace DCL.SDKComponents.NFTShape.System
         }
 
         [Query]
+        [All(typeof(PartitionComponent))]
         [None(typeof(NftShapeRendererComponent), typeof(MaterialComponent))]
-        private void InstantiateRemaining(in Entity entity, in TransformComponent transform, in PBNftShape nftShape, ref PartitionComponent partitionComponent)
+        private void InstantiateRemaining(Entity entity, in TransformComponent transform, in PBNftShape nftShape)
         {
             if (instantiationFrameTimeBudgetProvider.TrySpendBudget() == false)
                 return;
 
-            World.Add(entity, NewNftShapeRendererComponent(transform, nftShape));
+            var component = NewNftShapeRendererComponent(transform, nftShape);
+
+            World.Add(entity, component);
+            changedNftShapes.Add(entity, component);
         }
 
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)
         {
             var renderer = nftShapeRendererFactory.New(transform.Transform);
             renderer.Apply(nftShape);
+
             return new NftShapeRendererComponent(renderer);
         }
     }

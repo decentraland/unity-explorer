@@ -16,7 +16,7 @@ using System;
 
 namespace DCL.SDKComponents.MediaStream
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
     [ThrottlingEnabled]
     public partial class VideoEventsSystem : BaseUnityLoopSystem

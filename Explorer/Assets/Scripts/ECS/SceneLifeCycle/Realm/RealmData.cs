@@ -50,6 +50,7 @@ namespace ECS
 
         public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter)
         {
+            IsDirty = true;
             Configured = true;
 
             RealmName = realmName;
@@ -73,5 +74,7 @@ namespace ECS
             if (!Configured)
                 throw new InvalidOperationException("RealmData has not been configured");
         }
+
+        public bool IsDirty { get; internal set; } = true;
     }
 }

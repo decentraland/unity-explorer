@@ -28,5 +28,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public override int GetHashCode() =>
             Name != null ? Name.GetHashCode() : 0;
+
+        public override string ToString() =>
+            Name;
     }
 }

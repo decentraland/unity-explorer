@@ -30,17 +30,17 @@ namespace DCL.Character.Plugin
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IExposedCameraData exposedCameraData;
-        private readonly ExposedTransform exposedTransform;
+        private readonly ExposedTransform transform;
         private byte bucketPropagationLimit;
 
         private ProvidedInstance<CharacterObject> characterObject;
 
-        public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData)
+        public CharacterContainer(IAssetsProvisioner assetsProvisioner, IExposedCameraData exposedCameraData, ExposedTransform exposedPlayerTransform)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.exposedCameraData = exposedCameraData;
 
-            exposedTransform = new ExposedTransform();
+            transform = exposedPlayerTransform;
         }
 
         /// <summary>
@@ -67,10 +67,10 @@ namespace DCL.Character.Plugin
         }
 
         public WorldPlugin CreateWorldPlugin() =>
-            new (exposedTransform, exposedCameraData, bucketPropagationLimit);
+            new (transform, exposedCameraData, bucketPropagationLimit);
 
         public GlobalPlugin CreateGlobalPlugin() =>
-            new (exposedTransform);
+            new (transform);
 
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;

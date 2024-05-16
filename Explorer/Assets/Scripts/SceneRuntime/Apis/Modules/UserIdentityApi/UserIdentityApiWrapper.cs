@@ -68,7 +68,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 }
             }
 
-            return GetOwnUserDataAsync(lifeCycleCts.Token).ToPromise();
+            return GetOwnUserDataAsync(lifeCycleCts.Token).ToDisconnectedPromise();
         }
     }
 }

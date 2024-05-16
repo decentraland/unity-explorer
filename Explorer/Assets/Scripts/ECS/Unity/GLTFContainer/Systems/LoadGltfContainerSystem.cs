@@ -22,7 +22,12 @@ namespace ECS.Unity.GLTFContainer.Systems
     [ThrottlingEnabled]
     public partial class LoadGltfContainerSystem : BaseUnityLoopSystem
     {
-        internal LoadGltfContainerSystem(World world) : base(world) { }
+        private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
+
+        internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+        {
+            this.eventsBuffer = eventsBuffer;
+        }
 
         protected override void Update(float t)
         {
@@ -37,23 +42,25 @@ namespace ECS.Unity.GLTFContainer.Systems
             // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
             var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
             var component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
-            component.State.Set(LoadingState.Loading);
+            component.State = LoadingState.Loading;
             World.Add(entity, component);
+            eventsBuffer.Add(entity, component);
         }
 
         // SDK Component was changed
         [Query]
-        private void ReconfigureGltfContainer(ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
+        private void ReconfigureGltfContainer(Entity entity, ref GltfContainerComponent component, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
             if (!sdkComponent.IsDirty) return;
 
-            switch (component.State.Value)
+            switch (component.State)
             {
                 // The source is changed, should start downloading over again
                 case LoadingState.Unknown:
                     var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
                     component.Promise = promise;
-                    component.State.Set(LoadingState.Loading);
+                    component.State = LoadingState.Loading;
+                    eventsBuffer.Add(entity, component);
                     return;
 
                 // Clean-up is handled by ResetGltfContainerSystem so "InProgress" is not considered here

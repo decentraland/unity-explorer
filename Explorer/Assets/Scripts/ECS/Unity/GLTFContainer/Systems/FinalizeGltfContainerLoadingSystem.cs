@@ -27,14 +27,16 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly IPerformanceBudget capBudget;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly ISceneData sceneData;
+        private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
 
         public FinalizeGltfContainerLoadingSystem(World world, Entity sceneRoot, IPerformanceBudget capBudget,
-            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData) : base(world)
+            IEntityCollidersSceneCache entityCollidersSceneCache, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
         {
             this.sceneRoot = sceneRoot;
             this.capBudget = capBudget;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             this.sceneData = sceneData;
+            this.eventsBuffer = eventsBuffer;
         }
 
         protected override void Update(float t)
@@ -65,12 +67,13 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (!capBudget.TrySpendBudget())
                 return;
 
-            if (component.State.Value == LoadingState.Loading
+            if (component.State == LoadingState.Loading
                 && component.Promise.TryConsume(World!, out StreamableLoadingResult<GltfContainerAsset> result))
             {
                 if (!result.Succeeded)
                 {
-                    component.State.Set(LoadingState.FinishedWithError);
+                    component.State = LoadingState.FinishedWithError;
+                    eventsBuffer.Add(entity, component);
                     return;
                 }
 
@@ -84,7 +87,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                 result.Asset.Root.transform.ResetLocalTRS();
                 result.Asset.Root.SetActive(true);
 
-                component.State.Set(LoadingState.Finished);
+                component.State = LoadingState.Finished;
+                eventsBuffer.Add(entity, component);
             }
         }
     }

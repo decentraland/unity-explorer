@@ -1,9 +1,11 @@
 ﻿using DCL.CharacterCamera;
 using ECS.Prioritization.Components;
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 using static Utility.ParcelMathHelper;
 
@@ -56,20 +58,21 @@ namespace ECS.Prioritization
             }
         }
 
+        [BurstCompile]
         public struct ScenePartitionParallelJob : IJobParallelFor
         {
-            public Vector3 CameraPosition;
-            public Vector3 CameraForward;
+            public float3 CameraPosition;
+            public float3 CameraForward;
             [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
             [ReadOnly] public UnsafeList<ParcelCornersData> ParcelCorners;
             private NativeArray<PartitionData> partitions;
 
-            public ScenePartitionParallelJob(ref NativeArray<PartitionData> partitions)
+            public ScenePartitionParallelJob(NativeArray<PartitionData> partitions)
             {
                 this.partitions = partitions;
                 ParcelCorners = default(UnsafeList<ParcelCornersData>);
-                CameraPosition = default(Vector3);
-                CameraForward = default(Vector3);
+                CameraPosition = default;
+                CameraForward = default;
                 SqrDistanceBuckets = default(NativeArray<int>);
             }
 
@@ -90,7 +93,7 @@ namespace ECS.Prioritization
 
                 for (var i = 0; i < corners.Corners.Length; i++)
                 {
-                    void ProcessCorners(Vector3 corner, ref PartitionData partitionData, ref Vector3 position, ref Vector3 forward)
+                    void ProcessCorners(float3 corner, ref PartitionData partitionData, ref float3 position, ref float3 forward)
                     {
                         Vector3 vectorToCamera = corner - position;
                         vectorToCamera.y = 0; // ignore Y
@@ -126,7 +129,7 @@ namespace ECS.Prioritization
                 // mind that taking cosines is not cheap
                 // the same scene is counted as InFront
                 // If the bucket exceeds the maximum bucket array, we need to mark partition as dirty since we are out of range
-                partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length;
+                partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length || partition.RawSqrDistance == -1;
 
                 if (partition.IsDirty)
                     partition.RawSqrDistance = minSqrMagnitude;

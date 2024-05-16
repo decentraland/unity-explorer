@@ -150,7 +150,8 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         private void FinalizeComponents(in Entity entity, ref CharacterTriggerAreaComponent triggerAreaComponent, ref AvatarModifierAreaComponent modifierComponent)
         {
             // Reset state of affected entities
-            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside) { ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds); }
+            foreach (Transform avatarTransform in triggerAreaComponent.CurrentAvatarsInside)
+                ToggleAvatarHiding(avatarTransform, false, modifierComponent.ExcludedIds);
 
             World.Remove<AvatarModifierAreaComponent>(entity);
         }

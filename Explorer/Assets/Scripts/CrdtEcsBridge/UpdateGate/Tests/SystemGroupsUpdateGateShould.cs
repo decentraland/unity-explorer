@@ -27,7 +27,7 @@ namespace CrdtEcsBridge.UpdateGate.Tests
                 typeof(PresentationSystemGroup),
                 typeof(PhysicsSystemGroup),
                 typeof(PostPhysicsSystemGroup),
-                typeof(PostRenderingSystemGroup),
+                typeof(PreRenderingSystemGroup),
             }, updateGate.OpenGroups);
         }
 
@@ -37,7 +37,7 @@ namespace CrdtEcsBridge.UpdateGate.Tests
         [TestCase(typeof(PresentationSystemGroup))]
         [TestCase(typeof(PhysicsSystemGroup))]
         [TestCase(typeof(PostPhysicsSystemGroup))]
-        [TestCase(typeof(PostRenderingSystemGroup))]
+        [TestCase(typeof(PreRenderingSystemGroup))]
         public void CloseGroupOnInvocation(Type systemGroup)
         {
             updateGate.Open();

@@ -69,7 +69,7 @@ namespace CrdtEcsBridge.UpdateGate
                 openGroups.Add(typeof(PresentationSystemGroup));
                 openGroups.Add(typeof(PhysicsSystemGroup));
                 openGroups.Add(typeof(PostPhysicsSystemGroup));
-                openGroups.Add(typeof(PostRenderingSystemGroup));
+                openGroups.Add(typeof(PreRenderingSystemGroup));
 
                 keepOpenFrame = MultithreadingUtility.FrameCount + 1;
             }

@@ -1,12 +1,8 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using DCL.AssetsProvision;
 using DCL.Diagnostics;
 using DCL.LOD;
 using DCL.LOD.Components;
-using DCL.LOD.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -14,9 +10,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
-using System;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {

@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Meta
         {
             log($"{PREFIX} MetaDataAsync start");
             MetaData result = await origin.MetaDataAsync(token);
-            log($"{PREFIX} MetaDataAsync finish {result.ToJson()}");
+            log($"{PREFIX} MetaDataAsync finish {result.realmName} {result.sceneId}");
             return result;
         }
     }

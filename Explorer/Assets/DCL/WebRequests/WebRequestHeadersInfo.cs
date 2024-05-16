@@ -44,17 +44,18 @@ namespace DCL.WebRequests
             return this;
         }
 
-        /// <param name="key">Case sensitive key</param>
+        /// <param name="key">Case sensitive key or use bool for insensitive</param>
         /// <returns>Value of the key or not, if the key doesn't exist</returns>
-        public readonly string? HeaderOrNull(string key)
+        public readonly string? HeaderOrNull(string key, bool caseInsensitive = false)
         {
             if (values == null)
                 return null;
 
             foreach (WebRequestHeader header in values)
-                if (header.Name == key)
+            {
+                if (string.Equals(header.Name, key, caseInsensitive? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture))
                     return header.Value;
-
+            }
             return null;
         }
 

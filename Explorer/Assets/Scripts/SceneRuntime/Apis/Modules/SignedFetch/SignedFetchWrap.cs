@@ -83,7 +83,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                         _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
                     };
 
-                return CreatePromise().ToPromise();
+                return CreatePromise().ToDisconnectedPromise();
         }
 
         public void Dispose()

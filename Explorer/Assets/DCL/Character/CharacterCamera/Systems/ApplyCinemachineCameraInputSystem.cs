@@ -54,9 +54,10 @@ namespace DCL.CharacterCamera.Systems
                     ApplyPOV(cinemachinePreset.FreeCameraData.POV, in cameraInput);
 
                     // Apply free movement
-
                     ApplyFreeCameraMovement(dt, camera, cameraInput, cinemachinePreset);
 
+                    // Apply Field of View
+                    ApplyFOV(dt, cinemachinePreset, in cameraInput);
                     break;
             }
 
@@ -100,8 +101,11 @@ namespace DCL.CharacterCamera.Systems
             Transform cameraTransform = camera.Camera.transform;
 
             cinemachineTransform.localPosition += ((cameraTransform.forward * cameraInput.FreeMovement.y) +
-                                                   (cameraTransform.right * cameraInput.FreeMovement.x))
-                                                  * cinemachinePreset.FreeCameraData.Speed * dt;
+                                                    (cameraTransform.up * cameraInput.FreePanning.y) +
+                                                    (cameraTransform.right * cameraInput.FreeMovement.x))
+                                                    * cinemachinePreset.FreeCameraData.Speed * dt;
+
+
         }
 
         private void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
@@ -111,6 +115,14 @@ namespace DCL.CharacterCamera.Systems
                 cinemachinePOV.m_HorizontalAxis.m_InputAxisValue = cameraInput.Delta.x;
                 cinemachinePOV.m_VerticalAxis.m_InputAxisValue = cameraInput.Delta.y;
             }
+        }
+
+        private void ApplyFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
+        {
+            CinemachineVirtualCamera tpc = cinemachinePreset.FreeCameraData.Camera;
+            LensSettings tpcMLens = tpc.m_Lens;
+            tpcMLens.FieldOfView += cameraInput.FreeFOV.y * cinemachinePreset.FreeCameraData.Speed * dt;
+            tpc.m_Lens = tpcMLens;
         }
     }
 }

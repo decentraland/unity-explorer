@@ -9,12 +9,12 @@ namespace ECS.Unity.PrimitiveRenderer.Components
     public struct PrimitiveMeshRendererComponent : IPoolableComponentProvider<IPrimitiveMesh>,
         IPoolableComponentProvider<MeshRenderer>
     {
-        public IPrimitiveMesh PrimitiveMesh;
+        public IPrimitiveMesh? PrimitiveMesh;
         public MeshRenderer MeshRenderer;
         public PBMeshRenderer.MeshOneofCase SDKType;
         public bool DefaultMaterialIsUsed;
 
-        Type IPoolableComponentProvider<IPrimitiveMesh>.PoolableComponentType => PrimitiveMesh.GetType();
+        Type IPoolableComponentProvider<IPrimitiveMesh>.PoolableComponentType => PrimitiveMesh!.GetType();
 
         Type IPoolableComponentProvider<MeshRenderer>.PoolableComponentType => typeof(MeshRenderer);
 

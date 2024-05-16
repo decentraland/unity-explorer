@@ -35,7 +35,7 @@ namespace SceneRuntime.Apis.Modules.Runtime
         [UsedImplicitly]
         public object ReadFile(string fileName)
         {
-            try { return api.ReadFileAsync(fileName, cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.ReadFileAsync(fileName, cancellationTokenSource.Token).ToDisconnectedPromise(); }
             catch (Exception e)
             {
                 // Report an uncategorized exception
@@ -46,11 +46,11 @@ namespace SceneRuntime.Apis.Modules.Runtime
 
         [UsedImplicitly]
         public object GetRealm() =>
-            api.GetRealmAsync(cancellationTokenSource.Token).ToPromise();
+            api.GetRealmAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
 
         [UsedImplicitly]
         public object GetWorldTime() =>
-            api.GetWorldTimeAsync(cancellationTokenSource.Token).ToPromise();
+            api.GetWorldTimeAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
 
         [UsedImplicitly]
         public object GetSceneInformation() =>

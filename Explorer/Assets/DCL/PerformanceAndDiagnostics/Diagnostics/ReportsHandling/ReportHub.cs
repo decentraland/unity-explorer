@@ -101,7 +101,7 @@ namespace DCL.Diagnostics
         /// <param name="ecsSystemException">ECS System Exception</param>
         /// <param name="reportHandler">Handlers to report to, All by default</param>
         [HideInCallstack]
-        public static void LogException<T>(T ecsSystemException, ReportHandler reportHandler = ReportHandler.All) where T: Exception, IManagedEcsException
+        public static void LogException<T>(T ecsSystemException, ReportHandler reportHandler = ReportHandler.All) where T: Exception, IDecentralandException
         {
             Instance.LogException(ecsSystemException, reportHandler);
         }

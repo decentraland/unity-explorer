@@ -6,7 +6,7 @@ namespace DCL.Diagnostics
     /// <summary>
     ///     Exception happened in the ECS system
     /// </summary>
-    public class EcsSystemException : Exception, IManagedEcsException
+    public class EcsSystemException : Exception, IDecentralandException
     {
         /// <summary>
         ///     Can be used for stability analytics
@@ -26,7 +26,7 @@ namespace DCL.Diagnostics
 
         public ref readonly ReportData ReportData => ref reportData;
 
-        string IManagedEcsException.MessagePrefix
+        string IDecentralandException.MessagePrefix
         {
             set => messagePrefix = value;
         }

@@ -27,11 +27,13 @@ namespace DCL.Backpack.EmotesSection
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
+        private readonly BackpackEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IEquippedEmotes equippedEmotes;
+        private readonly BackpackSortController backpackSortController;
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackEmoteGridItemView> usedPoolItems;
         private readonly BackpackEmoteGridItemView?[] loadingResults = new BackpackEmoteGridItemView[CURRENT_PAGE_SIZE];
@@ -65,11 +67,13 @@ namespace DCL.Backpack.EmotesSection
         {
             this.view = view;
             this.commandBus = commandBus;
+            this.eventBus = eventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.equippedEmotes = equippedEmotes;
+            this.backpackSortController = backpackSortController;
             this.gridItemsPool = gridItemsPool;
             this.emoteProvider = emoteProvider;
             this.embeddedEmoteIds = embeddedEmoteIds;
@@ -77,14 +81,26 @@ namespace DCL.Backpack.EmotesSection
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackEmoteGridItemView>();
+            pageSelectorController.OnSetPage += RequestAndFillEmotes;
             eventBus.EquipEmoteEvent += OnEquip;
             eventBus.EquipWearableEvent += OnWearableEquipped;
             eventBus.UnEquipEmoteEvent += OnUnequip;
+        }
+
+        public void Activate()
+        {
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
-            pageSelectorController.OnSetPage += RequestAndFillEmotes;
+        }
+
+        public void Deactivate()
+        {
+            eventBus.FilterCategoryEvent -= OnFilterCategory;
+            eventBus.SearchEvent -= OnSearch;
+            backpackSortController.OnSortChanged -= OnSortChanged;
+            backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
         }
 
         public void Dispose()

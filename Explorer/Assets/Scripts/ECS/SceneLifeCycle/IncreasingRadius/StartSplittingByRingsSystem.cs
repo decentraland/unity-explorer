@@ -31,7 +31,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         {
             base.Dispose();
 
+            parcelMathJobifiedHelper.Complete();
             parcelMathJobifiedHelper.Dispose();
+
+            DisposeProcessedScenePointersQuery(World);
         }
 
         protected override void Update(float t)
@@ -40,20 +43,26 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
 
         [Query]
-        [All(typeof(RealmComponent))]
-        private void ProcessRealm(ref ProcessesScenePointers processesScenePointers)
+        private void DisposeProcessedScenePointers(ref ProcessedScenePointers processedScenePointers)
         {
-            StartSplittingQuery(World, in processesScenePointers);
+            processedScenePointers.Value.Dispose();
         }
 
         [Query]
-        private void StartSplitting([Data] in ProcessesScenePointers processesScenePointers, ref CameraSamplingData cameraSamplingData)
+        [All(typeof(RealmComponent))]
+        private void ProcessRealm(ref ProcessedScenePointers processedScenePointers)
+        {
+            StartSplittingQuery(World, in processedScenePointers);
+        }
+
+        [Query]
+        private void StartSplitting([Data] in ProcessedScenePointers processedScenePointers, ref CameraSamplingData cameraSamplingData)
         {
             if (cameraSamplingData.IsDirty)
                 parcelMathJobifiedHelper.StartParcelsRingSplit(
                     cameraSamplingData.Parcel.ToInt2(),
                     realmPartitionSettings.MaxLoadingDistanceInParcels,
-                    processesScenePointers.Value);
+                    processedScenePointers.Value);
         }
     }
 }

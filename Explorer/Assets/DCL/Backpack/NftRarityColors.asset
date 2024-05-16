@@ -32,5 +32,5 @@ MonoBehaviour:
   - key: name
     value: {r: 1, g: 0.4949912, b: 0.23113209, a: 1}
   - key: exotic
-    value: {r: 0.7921569, g: 1, b: 0.4509804, a: 1}
+    value: {r: 0.64705884, g: 0.8862745, b: 0.25882354, a: 1}
   defaultColor: {r: 0.627451, g: 0.60784316, b: 0.65882355, a: 1}

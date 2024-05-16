@@ -3,7 +3,7 @@ using Arch.SystemGroups.Throttling;
 
 namespace ECS.Groups
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [ThrottlingEnabled]
     public partial class CleanUpGroup { }
 }

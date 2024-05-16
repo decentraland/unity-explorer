@@ -41,7 +41,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             asset.VisibleMeshesColliders = new List<SDKCollider> { new (), new () };
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
-            c.State.Set(LoadingState.Finished);
+            c.State = LoadingState.Finished;
 
             Entity e = world.Create(sdkComponent, c, new DeleteEntityIntention());
 

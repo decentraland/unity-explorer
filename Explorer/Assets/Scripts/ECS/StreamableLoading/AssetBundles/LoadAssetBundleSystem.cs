@@ -36,8 +36,7 @@ namespace ECS.StreamableLoading.AssetBundles
 
         internal LoadAssetBundleSystem(World world,
             IStreamableCache<AssetBundleData, GetAssetBundleIntention> cache,
-            MutexSync mutexSync,
-            AssetBundleLoadingMutex loadingMutex) : base(world, cache, mutexSync)
+            AssetBundleLoadingMutex loadingMutex) : base(world, cache)
         {
             this.loadingMutex = loadingMutex;
         }
@@ -108,7 +107,7 @@ namespace ECS.StreamableLoading.AssetBundles
                 }
                 else
                     dependencies = Array.Empty<AssetBundleData>();
-                 
+
 
                 ct.ThrowIfCancellationRequested();
 
@@ -119,7 +118,7 @@ namespace ECS.StreamableLoading.AssetBundles
             {
                 // If the loading process didn't finish successfully unload the bundle
                 // Otherwise, it gets stuck in Unity's memory but not cached in our cache
-                // Can only be done in main thread                
+                // Can only be done in main thread
                 await UniTask.SwitchToMainThread();
                 if (assetBundle)
                     assetBundle.Unload(true);

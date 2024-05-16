@@ -47,6 +47,11 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
                 room.Start();
         }
 
+        public static UniTask StopIfNotAsync(this IConnectiveRoom room) =>
+            room.CurrentState() is IConnectiveRoom.State.Running
+                ? room.StopAsync()
+                : UniTask.CompletedTask;
+
         public static string ParticipantCountInfo(this IConnectiveRoom room) =>
             room.CurrentState() is IConnectiveRoom.State.Running
                 ? room.Room().Participants.RemoteParticipantSids().Count.ToString()

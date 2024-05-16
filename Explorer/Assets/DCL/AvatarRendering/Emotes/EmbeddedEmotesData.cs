@@ -42,7 +42,7 @@ namespace DCL.AvatarRendering.Emotes
                 model.id = embeddedEmote.id;
 
                 // No content hashes available
-                model.content = Array.Empty<EmoteDTO.Content>();
+                model.content = Array.Empty<AvatarAttachmentDTO.Content>();
                 model.pointers = new[] { embeddedEmote.id };
                 model.type = "emote";
                 model.version = "v3";
@@ -73,7 +73,10 @@ namespace DCL.AvatarRendering.Emotes
                 emote.WearableAssetResults[BodyShape.FEMALE] = assetLoadResult;
 
                 if (embeddedEmote.audioClip != null)
-                    emote.AudioAssetResult = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
+                {
+                    emote.AudioAssetResults[BodyShape.MALE] = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
+                    emote.AudioAssetResults[BodyShape.FEMALE] = new StreamableLoadingResult<AudioClip>(embeddedEmote.audioClip);
+                }
 
                 emote.ManifestResult = null;
 

@@ -232,7 +232,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6377136878412521182
 RectTransform:
   m_ObjectHideFlags: 0
@@ -253,7 +253,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 125, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 0.0024414062, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1004994801631878468
 MonoBehaviour:
@@ -702,6 +702,7 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 7578292249645083079}
   <ButtonAnimator>k__BackingField: {fileID: 6575934798372011232}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!1 &823388781594039178
 GameObject:
   m_ObjectHideFlags: 0
@@ -3761,6 +3762,7 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 1710274344204595558}
   <ButtonAnimator>k__BackingField: {fileID: 5712724491899242742}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!1 &5339241425948155178
 GameObject:
   m_ObjectHideFlags: 0
@@ -4349,6 +4351,7 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 4828106312302719395}
   <ButtonAnimator>k__BackingField: {fileID: 2373458321560173937}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!1 &6302728689054732172
 GameObject:
   m_ObjectHideFlags: 0
@@ -4783,6 +4786,7 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 4708745492529117082}
   <ButtonAnimator>k__BackingField: {fileID: 7203393505669435826}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!1 &6558392808739463091
 GameObject:
   m_ObjectHideFlags: 0
@@ -5644,6 +5648,7 @@ MonoBehaviour:
   <Button>k__BackingField: {fileID: 8577423537029511}
   <ButtonAnimator>k__BackingField: {fileID: 5351041963807919196}
   <ButtonPressedAudio>k__BackingField: {fileID: 11400000, guid: cbbd6a003fc75e24da47c13feacd92c7, type: 2}
+  <ButtonHoverAudio>k__BackingField: {fileID: 0}
 --- !u!1 &7955526012718410760
 GameObject:
   m_ObjectHideFlags: 0

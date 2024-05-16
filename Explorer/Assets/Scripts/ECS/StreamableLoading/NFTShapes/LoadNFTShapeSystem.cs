@@ -14,7 +14,6 @@ using ECS.StreamableLoading.NFTShapes.DTOs;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.NFTShapes
 {
@@ -25,7 +24,7 @@ namespace ECS.StreamableLoading.NFTShapes
         private readonly IWebRequestController webRequestController;
         private readonly IWebContentSizes webContentSizes;
 
-        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2D, GetNFTShapeIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync, IWebContentSizes webContentSizes) : base(world, cache, mutexSync)
+        public LoadNFTShapeSystem(World world, IStreamableCache<Texture2D, GetNFTShapeIntention> cache, IWebRequestController webRequestController, IWebContentSizes webContentSizes) : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.webContentSizes = webContentSizes;
