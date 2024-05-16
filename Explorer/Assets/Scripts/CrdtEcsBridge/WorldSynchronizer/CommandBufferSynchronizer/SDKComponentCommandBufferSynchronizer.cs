@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using JetBrains.Annotations;
+using System;
 using UnityEngine;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
@@ -51,6 +52,9 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                     commandBuffer.Remove<T>(entity);
                     world.Get<RemovedComponents>(entity).Set.Add(typeof(T));
                     break;
+                case CRDTReconciliationEffect.NoChanges: break;
+                case CRDTReconciliationEffect.EntityDeleted: break;
+                default: throw new ArgumentOutOfRangeException(nameof(reconciliationEffect), reconciliationEffect, null);
             }
         }
     }
