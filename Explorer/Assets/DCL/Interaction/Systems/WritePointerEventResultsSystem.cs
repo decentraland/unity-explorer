@@ -89,20 +89,23 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                 messageSent = true;
             }
 
-            foreach (var inputAction in intent.ValidInputActions)
+            if (intent.ValidInputActions != null)
             {
-                RaycastHit raycastHit = raycastHitPool.Get();
+                foreach (var inputAction in intent.ValidInputActions)
+                {
+                    RaycastHit raycastHit = raycastHitPool.Get();
 
-                raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
-                    sdkEntity, intent.Ray.origin, intent.Ray.direction);
+                    raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
+                        sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
-                AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
+                    AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
 
-                messageSent = true;
+                    messageSent = true;
+                }
+
+                pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
             }
-
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
-            pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
