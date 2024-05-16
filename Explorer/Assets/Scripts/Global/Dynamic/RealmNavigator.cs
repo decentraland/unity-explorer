@@ -114,6 +114,9 @@ namespace Global.Dynamic
                         remoteEntities.ForceRemoveAll(world);
                         await roomHub.StopIfNotAsync();
 
+                        // By removing the CameraSamplingData, we stop the ring calculation
+                        world.Remove<CameraSamplingData>(cameraEntity.Object);
+
                         await ChangeRealmAsync(realm, ct);
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
 
@@ -137,7 +140,8 @@ namespace Global.Dynamic
             }
             catch (TimeoutException)
             {
-                
+                if (!world.Has<CameraSamplingData>(cameraEntity.Object))
+                    world.Add(cameraEntity.Object, cameraSamplingData);
             }
 
             return true;
@@ -156,8 +160,7 @@ namespace Global.Dynamic
 
             // add camera sampling data to the camera entity to start partitioning
             Assert.IsTrue(cameraEntity.Configured);
-            if (!world.Has<CameraSamplingData>(cameraEntity.Object))
-                world.Add(cameraEntity.Object, cameraSamplingData);
+            world.Add(cameraEntity.Object, cameraSamplingData);
             await waitForSceneReadiness;
         }
 
