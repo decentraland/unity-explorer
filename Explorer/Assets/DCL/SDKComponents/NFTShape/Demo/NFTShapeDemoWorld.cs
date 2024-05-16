@@ -41,7 +41,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                     foreach ((PBNftShape nftShape, PBVisibilityComponent visibility, PBBillboard billboard) in list)
                         w.Create(nftShape, visibility, billboard, NewTransform(), new PartitionComponent { IsBehind = false, RawSqrDistance = 0 });
                 },
-                w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget(), new SceneAssetLock()),
+                w => new AssetsDeferredLoadingSystem(w, new NullPerformanceBudget(), new NullPerformanceBudget()),
                 w => new LoadNFTShapeSystem(
                     w,
                     new NftShapeCache(),

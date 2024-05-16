@@ -16,18 +16,16 @@ namespace ECS.StreamableLoading.DeferredLoading
     {
         private readonly IReleasablePerformanceBudget releasablePerformanceLoadingBudget;
 
-        protected readonly List<IntentionData> loadingIntentions;
+        private readonly List<IntentionData> loadingIntentions;
 
         private readonly QueryDescription[] sameBoatQueries;
         private readonly IPerformanceBudget memoryBudget;
-        protected SceneAssetLock sceneAssetLock;
 
-        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, SceneAssetLock sceneAssetLock) : base(world)
+        protected DeferredLoadingSystem(World world, QueryDescription[] sameBoatQueries, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.sameBoatQueries = sameBoatQueries;
             this.releasablePerformanceLoadingBudget = releasablePerformanceLoadingBudget;
             this.memoryBudget = memoryBudget;
-            this.sceneAssetLock = sceneAssetLock;
             loadingIntentions = ListPool<IntentionData>.Get();
         }
 
@@ -100,7 +98,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             ListPool<IntentionData>.Release(loadingIntentions);
         }
 
-        public struct IntentionData
+        internal struct IntentionData
         {
             public IPartitionComponent PartitionComponent;
             public ManagedTypePointer<StreamableLoadingState> StatePointer;

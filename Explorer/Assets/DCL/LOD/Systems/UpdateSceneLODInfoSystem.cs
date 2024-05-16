@@ -57,7 +57,6 @@ namespace DCL.LOD.Systems
         protected override void Update(float t)
         {
             UpdateLODLevelQuery(World);
-            ResolveCurrentLODPromiseQuery(World);
             //InstantiateCurrentLODQuery(World);
         }
 
@@ -77,7 +76,7 @@ namespace DCL.LOD.Systems
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
-
+/*
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
@@ -96,51 +95,7 @@ namespace DCL.LOD.Systems
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLODPromise.IsConsumed) return;
-
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
-
-            if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
-            {
-                LODAsset newLod = default;
-                if (result.Succeeded)
-                {
-                    //NOTE (JUANI): Using the count API since the one without count does not parent correctly.
-                    //ANOTHER NOTE: InstantiateAsync has an issue with SMR assignation. Its a Unity bug (https://issuetracker.unity3d.com/issues/instantiated-prefabs-recttransform-values-are-incorrect-when-object-dot-instantiateasync-is-used)
-                    //we cannot fix, so we'll use Instantiate until solved.
-                    //var asyncInstantiation =
-                    //    Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(),1,
-                    //        lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
-                    //asyncInstantiation.allowSceneActivation = false;
-                    //newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                    //    lodCache, result.Asset, asyncInstantiation);
-
-
-                    //Remove everything down here once Unity fixes AsyncInstantiation
-                    //Uncomment everything above here and the InstantiateCurrentLODQuery
-                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
-                        sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity, lodsTransformParent);
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        lodCache, result.Asset, null);
-                    FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
-                }
-                else
-                {
-                    ReportHub.LogWarning(GetReportCategory(),
-                        $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
-                }
-
-                sceneLODInfo.SetCurrentLOD(newLod);
-                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-            }
-        }
-
+*/
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (IsLOD0(ref sceneLODInfo))
@@ -211,6 +166,7 @@ namespace DCL.LOD.Systems
             sceneLODInfo.IsDirty = true;
         }
 
+        /*
         private void FinalizeAsyncInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent)
         {
             currentLOD.AsyncInstantiation.allowSceneActivation = true;
@@ -230,6 +186,7 @@ namespace DCL.LOD.Systems
 
             currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
         }
+        */
 
         private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
         {

@@ -13,6 +13,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
+using DCL.Optimization.PerformanceBudgeting;
 
 namespace DCL.PluginSystem.World
 {
@@ -27,10 +28,13 @@ namespace DCL.PluginSystem.World
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue)
+        private readonly SceneAssetLock sceneAssetLock;
+
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.sceneAssetLock = sceneAssetLock;
             assetsCache = new GltfContainerAssetsCache();
 
             cacheCleaner.Register(assetsCache);
@@ -61,7 +65,6 @@ namespace DCL.PluginSystem.World
             GltfContainerVisibilitySystem.InjectToWorld(ref builder, buffer);
 
             GatherGltfAssetsSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, sharedDependencies.SceneData, buffer);
-
 
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 

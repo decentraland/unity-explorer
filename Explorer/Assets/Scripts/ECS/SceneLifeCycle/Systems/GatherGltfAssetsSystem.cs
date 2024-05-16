@@ -69,6 +69,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     // if there is no report to dequeue, nothing to do
                     concluded = true;
+                    sceneData.SceneLoadingConcluded = true;
                     return;
                 }
 
@@ -123,13 +124,14 @@ namespace ECS.SceneLifeCycle.Systems
                     reports.Value.Dispose();
                     reports = null;
                 }
+
+                sceneData.SceneLoadingConcluded = concluded;
             }
         }
 
         private void GatherEntities(Entity entity, GltfContainerComponent component)
         {
             // No matter to which state component has changed
-
             EntityReference entityRef = World.Reference(entity);
             entitiesUnderObservation!.Add(entityRef);
         }
