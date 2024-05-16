@@ -1,4 +1,5 @@
-﻿using DCL.ECSComponents;
+﻿using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -53,9 +54,12 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             in PBPointerEvents.Types.Entry entry, int entryIndex,
             ref AppendPointerEventResultsIntent resultsIntent, in AnyInputInfo anyInputInfo)
         {
+
             switch (entry.EventType)
             {
                 case PointerEventType.PetDown:
+
+
                     if (entry.EventInfo.Button == ECSComponents.InputAction.IaAny)
                     {
                         if (!anyInputInfo.AnyButtonWasPressedThisFrame)
