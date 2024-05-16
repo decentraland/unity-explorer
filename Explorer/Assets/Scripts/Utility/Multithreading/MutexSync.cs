@@ -1,3 +1,4 @@
+using DCL.Diagnostics;
 using System;
 using System.Threading;
 using UnityEngine.Profiling;
@@ -7,6 +8,7 @@ namespace Utility.Multithreading
     public class MutexSync : IDisposable
     {
         private static readonly CustomSampler SAMPLER;
+        private const int TIMEOUT = 1000;
 
         private readonly Mutex mutex = new ();
 
@@ -19,13 +21,20 @@ namespace Utility.Multithreading
 
         public void Acquire()
         {
-            mutex.WaitOne();
-            Acquired = true;
+            if (mutex.WaitOne(TIMEOUT))
+            {
+                Acquired = true;
+            }
+            else
+            {
+                ReportHub.LogWarning(ReportCategory.ENGINE, $"MutexSync.Acquire: Failed to acquire mutex in the timeout {TIMEOUT}ms.");
+            }
+
         }
 
         public void Release()
         {
-            mutex.ReleaseMutex();
+            if(Acquired) mutex.ReleaseMutex();
             Acquired = false;
         }
 
