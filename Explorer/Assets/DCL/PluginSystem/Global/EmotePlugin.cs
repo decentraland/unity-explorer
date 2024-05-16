@@ -83,21 +83,18 @@ namespace DCL.PluginSystem.Global
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var mutexSync = new MutexSync();
-
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                mutexSync,
                 emoteCache, realmData,
                 URLSubdirectory.FromString("/Emotes/"));
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteCache, mutexSync);
+                emoteCache);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 
-            LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, mutexSync);
+            LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
         }
