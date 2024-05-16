@@ -7,13 +7,13 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
@@ -26,20 +26,20 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void PropagateProfileToScene(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        private void PropagateProfileToScene(Profile profile, PlayerCRDTEntity playerCRDTEntity)
         {
             if (playerCRDTEntity.IsDirty)
             {
-                SetSceneProfile(ref profile, ref playerCRDTEntity);
+                SetSceneProfile(profile, playerCRDTEntity);
                 return;
             }
 
             if (!profile.IsDirty) return;
 
-            SetSceneProfile(ref profile, ref playerCRDTEntity);
+            SetSceneProfile(profile, playerCRDTEntity);
         }
 
-        private void SetSceneProfile(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        private void SetSceneProfile(Profile profile, PlayerCRDTEntity playerCRDTEntity)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));

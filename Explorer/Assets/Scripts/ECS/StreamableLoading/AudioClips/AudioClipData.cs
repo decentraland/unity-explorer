@@ -1,7 +1,7 @@
-﻿using DCL.Profiling;
+﻿using DCL.Diagnostics;
+using DCL.Profiling;
 using System;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Utility;
 using Utility.Multithreading;
 
@@ -42,7 +42,8 @@ namespace ECS.StreamableLoading.AudioClips
         {
             referencesCount--;
 
-            Assert.IsFalse(referencesCount < 0, "Reference count of AudioClip should never be negative!");
+            if (referencesCount < 0)
+                ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.AUDIO);
 
             LastUsedFrame = MultithreadingUtility.FrameCount;
 

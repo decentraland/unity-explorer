@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -10,6 +11,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
+using System;
 using System.Threading;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -58,14 +60,18 @@ namespace ECS.SceneLifeCycle.Systems
 
                 async UniTaskVoid RunOnThreadPoolAsync()
                 {
-                    await UniTask.SwitchToThreadPool();
-                    if (destroyCancellationToken.IsCancellationRequested) return;
+                    try
+                    {
+                        await UniTask.SwitchToThreadPool();
+                        if (destroyCancellationToken.IsCancellationRequested) return;
 
-                    // Provide basic Thread Pool synchronization context
-                    SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+                        // Provide basic Thread Pool synchronization context
+                        SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
 
-                    // FPS is set by another system
-                    await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
+                        // FPS is set by another system
+                        await scene.StartUpdateLoopAsync(fps, destroyCancellationToken);
+                    }
+                    catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
                 }
 
                 RunOnThreadPoolAsync().Forget();

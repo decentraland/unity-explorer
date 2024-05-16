@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DG.Tweening;
 using System;
 using System.Collections.Generic;
@@ -25,9 +26,6 @@ namespace DCL.UI
     {
         private readonly Dictionary<T, ISection> sections;
         private T previousSection;
-        private static readonly int ACTIVE = Animator.StringToHash("Active");
-        private static readonly int OUT = Animator.StringToHash("Out");
-        private static readonly int IN = Animator.StringToHash("In");
 
         public SectionSelectorController(Dictionary<T, ISection> sections, T initialSection)
         {
@@ -41,7 +39,7 @@ namespace DCL.UI
                 return;
 
             if(isOn)
-                selectorToggle.tabAnimator.SetTrigger(ACTIVE);
+                selectorToggle.tabAnimator.SetTrigger(AnimationHashes.ACTIVE);
             else
             {
                 selectorToggle.tabAnimator.Rebind();
@@ -89,8 +87,8 @@ namespace DCL.UI
         {
             panelOpening.Activate();
             panelOpening.ResetAnimator();
-            panelOpening.Animate(IN);
-            panelClosing.Animate(OUT);
+            panelOpening.Animate(AnimationHashes.IN);
+            panelClosing.Animate(AnimationHashes.OUT);
             panelClosing.Deactivate();
             previousSection = newSection;
         }
