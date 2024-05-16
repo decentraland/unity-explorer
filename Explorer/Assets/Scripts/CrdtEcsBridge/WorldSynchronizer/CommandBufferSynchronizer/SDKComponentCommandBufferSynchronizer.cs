@@ -45,12 +45,23 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
                     commandBuffer.Add(entity, c);
                     break;
                 case CRDTReconciliationEffect.ComponentDeleted:
-                    // if component is deleted return to the pool the existing one
-                    Debug.Assert(world.Has<T>(entity));
-                    var ecsComponent = world.Get<T>(entity);
-                    componentPool.Release(ecsComponent);
-                    commandBuffer.Remove<T>(entity);
-                    world.Get<RemovedComponents>(entity).Set.Add(typeof(T));
+                    try
+                    {
+                        // if component is deleted return to the pool the existing one
+                        Debug.Assert(world.Has<T>(entity));
+                        var ecsComponent = world.Get<T>(entity);
+                        componentPool.Release(ecsComponent);
+                        commandBuffer.Remove<T>(entity);
+                        world.Get<RemovedComponents>(entity).Set.Add(typeof(T));
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception(
+                            $"Error while deleting component world id: {world.Id}, entity id: {entity.Id}, type {typeof(T).FullName}",
+                            e
+                        );
+                    }
+
                     break;
                 case CRDTReconciliationEffect.NoChanges: break;
                 case CRDTReconciliationEffect.EntityDeleted: break;
