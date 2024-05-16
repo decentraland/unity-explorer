@@ -6339,7 +6339,7 @@ MonoBehaviour:
     RoadModel: Road_D
   - RoadCoordinate: {x: -47, y: -60}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: Crossroads_C
+    RoadModel: Crossroads_D
   - RoadCoordinate: {x: -47, y: -61}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_0
@@ -9446,8 +9446,8 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_A
   - RoadCoordinate: {x: -21, y: 21}
-    Rotation: {x: 0, y: 0, z: 0, w: 1}
-    RoadModel: OpenFork3Corners_A
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
+    RoadModel: OpenFork_0
   - RoadCoordinate: {x: -21, y: 20}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: OpenCorner_A
@@ -9660,7 +9660,7 @@ MonoBehaviour:
     RoadModel: OpenCorner_A
   - RoadCoordinate: {x: -20, y: 20}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: OpenFork3Corners_A
+    RoadModel: OpenFork_0
   - RoadCoordinate: {x: -20, y: 19}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_A
@@ -14724,7 +14724,7 @@ MonoBehaviour:
     RoadModel: OpenRoad_B
   - RoadCoordinate: {x: 12, y: -11}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: OpenFork3Corners_A
+    RoadModel: OpenFork_A
   - RoadCoordinate: {x: 12, y: -12}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_0
@@ -16220,8 +16220,8 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_B
   - RoadCoordinate: {x: 21, y: -20}
-    Rotation: {x: 0, y: 0, z: 0, w: 1}
-    RoadModel: OpenFork3Corners_A
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
+    RoadModel: OpenFork_A
   - RoadCoordinate: {x: 21, y: -21}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: OpenCorner_0
@@ -16329,7 +16329,7 @@ MonoBehaviour:
     RoadModel: OpenCorner_B
   - RoadCoordinate: {x: 22, y: -21}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: OpenFork3Corners_A
+    RoadModel: OpenFork_A
   - RoadCoordinate: {x: 22, y: -22}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_0
@@ -17312,8 +17312,8 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_A
   - RoadCoordinate: {x: 29, y: -29}
-    Rotation: {x: 0, y: 0, z: 0, w: 1}
-    RoadModel: OpenFork3Corners_A
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
+    RoadModel: OpenFork_0
   - RoadCoordinate: {x: 29, y: -30}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
     RoadModel: OpenCorner_A
@@ -17418,7 +17418,7 @@ MonoBehaviour:
     RoadModel: OpenCorner_A
   - RoadCoordinate: {x: 30, y: -30}
     Rotation: {x: 0, y: 1, z: 0, w: 6.123234e-17}
-    RoadModel: OpenFork3Corners_A
+    RoadModel: OpenFork_0
   - RoadCoordinate: {x: 30, y: -31}
     Rotation: {x: 0, y: 0.70710677, z: 0, w: -0.70710677}
     RoadModel: Road_A
@@ -23232,10 +23232,6 @@ MonoBehaviour:
     m_SubObjectType: 
     m_EditorAssetChanged: 0
   - m_AssetGUID: 239163e03a3740d4996a2d35587b2ff6
-    m_SubObjectName: 
-    m_SubObjectType: 
-    m_EditorAssetChanged: 0
-  - m_AssetGUID: a6ccf6a6da422044f9ef236fb69e66bb
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
