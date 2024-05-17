@@ -80,7 +80,7 @@ namespace DCL.Interaction.Systems
                 World world = ecsExecutor.World;
                 EntityReference entityRef = colliderInfo.EntityReference;
 
-                // Entity should be alive and contain PBPointerEvents component to be qualified
+                // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
                 if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
                 {
                     hoverStateComponent.LastHitCollider = raycastResult.GetCollider();
@@ -167,37 +167,13 @@ namespace DCL.Interaction.Systems
 
             }
 
-            if (!isAtDistance) return false;
-
+            if (!isAtDistance) return false; //This only works if elements have PBPointerEvents to filter distances, otherwise, we need to send the input event anyway (not done yet)
 
             foreach (var input in sdkInputActionsMap)
             {
                 // Add all inputs that were pressed/unpressed this frame
                 InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, ref pbPointerEvents.AppendPointerEventResultsIntent);
             }
-
-        /*for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
-        {
-            PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
-            PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
-
-            info.PrepareDefaultValues();
-
-            if (!InteractionInputUtils.IsQualifiedByDistance(raycastResult, info)) continue;
-            isAtDistance = true;
-
-            // Check Input for validity
-            InteractionInputUtils.TryAppendButtonLikeInput(sdkInputActionsMap, pointerEvent, i,
-                ref pbPointerEvents.AppendPointerEventResultsIntent, anyInputInfo);
-
-            // Try Append Hover Input
-            if (newEntityWasHovered)
-                InteractionInputUtils.TryAppendHoverInput(ref pbPointerEvents.AppendPointerEventResultsIntent, PointerEventType.PetHoverEnter, pointerEvent, i);
-
-            // Try Append Hover Feedback
-            HoverFeedbackUtils.TryAppendHoverFeedback(sdkInputActionsMap, pointerEvent,
-                ref hoverFeedbackComponent, anyInputInfo.AnyButtonIsPressed);
-        }*/
 
             return isAtDistance;
         }
