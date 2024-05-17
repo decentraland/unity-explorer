@@ -6,6 +6,7 @@ using CrdtEcsBridge.Components;
 using ECS.LifeCycle.Components;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CrdtEcsBridge.WorldSynchronizer
 {
@@ -210,14 +211,12 @@ namespace CrdtEcsBridge.WorldSynchronizer
             try
             {
                 foreach (CRDTEntity deletedEntity in deletedEntities)
-                {
                     if (entitiesMap.TryGetValue(deletedEntity, out Entity entity))
                     {
                         // let components dispose if the entity was deleted
                         commandBuffer.Add(entity, new DeleteEntityIntention());
                         entitiesMap.Remove(deletedEntity);
                     }
-                }
 
                 // we have final state and deserialized component already
                 foreach ((CRDTEntity entity, Dictionary<int, BatchState> componentsBatch) in batchStates)
@@ -230,23 +229,34 @@ namespace CrdtEcsBridge.WorldSynchronizer
                     if (componentsBatch.Count == 0) continue;
 
                     if (entity.Equals(SpecialEntitiesID.PLAYER_ENTITY) || entity.Equals(SpecialEntitiesID.CAMERA_ENTITY))
-                    {
                         // Camera and player entities are not supported yet
                         continue;
-                    }
 
                     if (!entitiesMap.TryGetValue(entity, out Entity realEntity))
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
 
                     foreach (BatchState batchState in componentsBatch.Values)
-                    {
-                        if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
-                            continue;
+                        try
+                        {
+                            if (batchState.reconciliationState.Last == CRDTReconciliationEffect.NoChanges)
+                                continue;
 
-                        batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
-                            batchState.reconciliationState.Last, batchState.deserializationTarget);
-                    }
+                            batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
+                                batchState.reconciliationState.Last, batchState.deserializationTarget);
+                        }
+                        catch (Exception e)
+                        {
+                            throw new Exception(
+                                $"Error while applying (Entity: {realEntity.Id}; Batch: {batchState})",
+                                e
+                            );
+                        }
                 }
+            }
+            catch (Exception e)
+            {
+                var entities = entitiesMap.Select(pair => $"CrdtEntity: {pair.Key.Id}, Entity: {pair.Value.Id}");
+                throw new Exception($"Error while applying CRDT to ECS:\n{string.Join('\n', entities)}", e);
             }
             finally
             {

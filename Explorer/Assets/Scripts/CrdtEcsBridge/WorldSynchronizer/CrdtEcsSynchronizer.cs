@@ -30,8 +30,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
         private bool disposed;
 
-        public IReadOnlyDictionary<CRDTEntity, Entity> EntitiesMap => entitiesMap;
-
         public CRDTWorldSynchronizer(World world, ISDKComponentsRegistry sdkComponentsRegistry, ISceneEntityFactory entityFactory,
             Dictionary<CRDTEntity, Entity> entitiesMap)
         {

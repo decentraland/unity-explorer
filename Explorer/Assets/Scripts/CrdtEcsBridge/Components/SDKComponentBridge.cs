@@ -21,5 +21,8 @@ namespace CrdtEcsBridge.Components
             Pool = pool;
             CommandBufferSynchronizer = commandBufferSynchronizer;
         }
+
+        public override string ToString() =>
+            $"(Id {Id}, ComponentType {ComponentType}, Serializer {Serializer}, Pool {Pool}, CommandBufferSynchronizer {CommandBufferSynchronizer})";
     }
 }

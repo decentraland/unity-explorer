@@ -21,5 +21,8 @@ namespace CrdtEcsBridge.WorldSynchronizer
         internal object? deserializationTarget;
 
         private BatchState() { }
+
+        public override string ToString() =>
+            $"(CRDTMessage {crdtMessage}; ReconciliationState {reconciliationState}; SDKComponentBridge {sdkComponentBridge}; DeserializationTarget {deserializationTarget})";
     }
 }

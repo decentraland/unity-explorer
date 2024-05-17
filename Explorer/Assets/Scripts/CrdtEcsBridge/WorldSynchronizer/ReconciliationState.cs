@@ -31,7 +31,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
             HashCode.Combine((int)First, (int)Last);
 
         public override string ToString() =>
-            $"First: {First}, Last: {Last}";
+            $"(First: {First}, Last: {Last})";
 
         public static implicit operator ReconciliationState((CRDTReconciliationEffect, CRDTReconciliationEffect) tuple) =>
             new (tuple.Item1, tuple.Item2);

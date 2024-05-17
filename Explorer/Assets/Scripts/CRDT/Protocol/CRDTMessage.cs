@@ -50,6 +50,6 @@ namespace CRDT.Protocol
             HashCode.Combine((int)Type, EntityId, ComponentId, Timestamp, Data);
 
         public override string ToString() =>
-            $"Type {Type}, Entity {EntityId}, Component {ComponentId}, Timestamp {Timestamp}, Data {Data.Memory.Length} Bytes";
+            $"(Type {Type}, CRDTEntity {EntityId.Id}, Component {ComponentId}, Timestamp {Timestamp}, Data {Data?.Memory.Length} Bytes)";
     }
 }

@@ -11,6 +11,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules.EngineApi;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine.Profiling;
 using Utility.Multithreading;
@@ -71,9 +72,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
         {
@@ -85,41 +84,50 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // Deserialize messages from the byte array
             List<CRDTMessage> messages = instancePoolsProvider.GetDeserializationMessagesPool();
 
-            deserializeBatchSampler.Begin();
-
-            // TODO add metrics to understand bottlenecks better
-            crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
-
-            deserializeBatchSampler.End();
-
-            worldSyncBufferSampler.Begin();
-
-            // as we no longer wait for a buffer to apply the thread should be frozen
-            IWorldSyncCommandBuffer worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
-
-            // Reconcile CRDT state
-            for (var i = 0; i < messages.Count; i++)
+            try
             {
-                crdtProcessMessagesSampler.Begin();
+                deserializeBatchSampler.Begin();
 
-                CRDTMessage message = messages[i];
-                CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
+                // TODO add metrics to understand bottlenecks better
+                crdtDeserializer.DeserializeBatch(ref dataMemory, messages);
 
-                crdtProcessMessagesSampler.End();
+                deserializeBatchSampler.End();
 
-                // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
+                worldSyncBufferSampler.Begin();
 
-                // Prepare the message to be synced with the ECS World
-                worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
+                // as we no longer wait for a buffer to apply the thread should be frozen
+                IWorldSyncCommandBuffer worldSyncBuffer = crdtWorldSynchronizer.GetSyncCommandBuffer();
+
+                // Reconcile CRDT state
+                for (var i = 0; i < messages.Count; i++)
+                {
+                    crdtProcessMessagesSampler.Begin();
+
+                    CRDTMessage message = messages[i];
+                    CRDTReconciliationResult reconciliationResult = crdtProtocol.ProcessMessage(in message);
+
+                    crdtProcessMessagesSampler.End();
+
+                    // TODO add metric to understand how many conflicts we have based on CRDTStateReconciliationResult
+
+                    // Prepare the message to be synced with the ECS World
+                    worldSyncBuffer.SyncCRDTMessage(in message, reconciliationResult.Effect);
+                }
+
+                // Deserialize messages
+                worldSyncBuffer.FinalizeAndDeserialize();
+
+                worldSyncBufferSampler.End();
+
+                ApplySyncCommandBuffer(worldSyncBuffer);
+                instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
             }
-
-            // Deserialize messages
-            worldSyncBuffer.FinalizeAndDeserialize();
-
-            worldSyncBufferSampler.End();
-
-            ApplySyncCommandBuffer(worldSyncBuffer);
-            instancePoolsProvider.ReleaseDeserializationMessagesPool(messages);
+            catch (Exception e)
+            {
+                var m = messages.Select(message => message.ToString());
+                var newError = new Exception($"Error while processing CRDT messages:\n{string.Join('\n', m)}", e);
+                exceptionsHandler.OnEngineException(newError, ReportCategory.CRDT_ECS_BRIDGE);
+            }
 
             return returnData ? SerializeOutgoingCRDTMessages() : PoolableByteArray.EMPTY;
         }
@@ -232,21 +240,17 @@ namespace CrdtEcsBridge.JsModulesImplementation
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
-            try
-            {
-                using MutexSync.Scope mutex = mutexSync.GetScope();
+            using MutexSync.Scope mutex = mutexSync.GetScope();
 
-                applyBufferSampler.Begin();
+            applyBufferSampler.Begin();
 
-                // Apply changes to the ECS World on the main thread
-                crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
-                applyBufferSampler.End();
+            // Apply changes to the ECS World on the main thread
+            crdtWorldSynchronizer.ApplySyncCommandBuffer(worldSyncBuffer);
+            applyBufferSampler.End();
 
-                // Allow system for which throttling is enabled to process once
-                // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
-                systemGroupsUpdateGate.Open();
-            }
-            catch (Exception e) { exceptionsHandler.OnEngineException(e, ReportCategory.CRDT_ECS_BRIDGE); }
+            // Allow system for which throttling is enabled to process once
+            // If the scene is updated more frequently than Unity Loop the gate will be effectively open all the time
+            systemGroupsUpdateGate.Open();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
