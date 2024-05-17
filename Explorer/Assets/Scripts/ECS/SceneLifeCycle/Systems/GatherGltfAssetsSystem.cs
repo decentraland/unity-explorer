@@ -70,7 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     // if there is no report to dequeue, nothing to do
                     concluded = true;
-                    sceneData.SceneLoadingConcluded = concluded;
+                    sceneData.SceneLoadingConcluded = true;
                     return;
                 }
 
