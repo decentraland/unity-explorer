@@ -13,7 +13,6 @@ using DCL.Interaction.Utility;
 using ECS.Abstract;
 using SceneRunner.Scene;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace DCL.Interaction.Systems
