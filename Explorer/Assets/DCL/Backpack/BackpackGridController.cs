@@ -110,6 +110,7 @@ namespace DCL.Backpack
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
+            pageSelectorController.SetActive(false);
         }
 
         public void Deactivate()
@@ -263,13 +264,19 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise, bool refreshPageSelector, CancellationToken ct)
         {
+            if (refreshPageSelector)
+                pageSelectorController.SetActive(false);
+
             AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
                 return;
 
-            if(refreshPageSelector)
+            if (refreshPageSelector)
+            {
+                pageSelectorController.SetActive(false);
                 pageSelectorController.Configure(uniTaskAsync.Result.Value.Asset.TotalAmount, CURRENT_PAGE_SIZE);
+            }
 
             currentPageWearables = uniTaskAsync.Result.Value.Asset.Wearables;
 
