@@ -30,6 +30,7 @@ namespace DCL.Rendering.Highlight
     {
         private const string k_ShaderName_HighlightInput = "DCL/HighlightInput_Override";
         private const string k_ShaderName_HighlightInputBlur = "DCL/HighlightInput_Blur";
+        private const string k_ShaderName_HighlightInputBlooming = "DCL/HighlightInput_Blooming";
         private const string k_ShaderName_HighlightOutput = "DCL/HighlightOutput";
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
@@ -40,12 +41,24 @@ namespace DCL.Rendering.Highlight
         private HighlightInputRenderPass highlightInputRenderPass;
         private Material highlightInputMaterial;
         private Material highlightInputBlurMaterial;
+        private Material highlightInputBloomingMaterial;
         private Shader m_ShaderHighlightInput;
         private Shader m_ShaderHighlightInputBlur;
+        private Shader m_ShaderHighlightInputBlooming;
         private RTHandle highlightRTHandle_Colour;
         private RTHandle highlightRTHandle_Depth;
         private RTHandle highlightRTHandle_Colour_Blur_Ping;
         private RTHandle highlightRTHandle_Colour_Blur_Pong;
+        private RTHandle highlightRTHandle_Colour_Blooming_0_Down;
+        private RTHandle highlightRTHandle_Colour_Blooming_0_Up;
+        private RTHandle highlightRTHandle_Colour_Blooming_1_Down;
+        private RTHandle highlightRTHandle_Colour_Blooming_1_Up;
+        private RTHandle highlightRTHandle_Colour_Blooming_2_Down;
+        private RTHandle highlightRTHandle_Colour_Blooming_2_Up;
+        private RTHandle highlightRTHandle_Colour_Blooming_3_Down;
+        private RTHandle highlightRTHandle_Colour_Blooming_3_Up;
+        private RTHandle highlightRTHandle_Colour_Blooming_4_Down;
+        private RTHandle highlightRTHandle_Colour_Blooming_4_Up;
         private RenderTextureDescriptor highlightRTDescriptor_Colour;
         private RenderTextureDescriptor highlightRTDescriptor_Depth;
         private RenderTextureDescriptor highlightRTDescriptor_Colour_Blur;
@@ -108,6 +121,25 @@ namespace DCL.Rendering.Highlight
                     if (highlightInputBlurMaterial == null)
                     {
                         ReportHub.LogError(m_ReportData, "highlightInputBlurMaterial not found.");
+                        return;
+                    }
+                }
+
+                if (highlightInputBloomingMaterial == null)
+                {
+                    m_ShaderHighlightInputBlooming = Shader.Find(k_ShaderName_HighlightInputBlooming);
+
+                    if (m_ShaderHighlightInputBlooming == null)
+                    {
+                        ReportHub.LogError(m_ReportData, "m_ShaderHighlightInputBlooming not found.");
+                        return;
+                    }
+
+                    highlightInputBloomingMaterial = CoreUtils.CreateEngineMaterial(m_ShaderHighlightInputBlooming);
+
+                    if (highlightInputBloomingMaterial == null)
+                    {
+                        ReportHub.LogError(m_ReportData, "highlightInputBloomingMaterial not found.");
                         return;
                     }
                 }
@@ -194,10 +226,55 @@ namespace DCL.Rendering.Highlight
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Pong");
                 }
 
-                highlightInputRenderPass.Setup(highlightInputMaterial, highlightInputBlurMaterial,
+                // Highlight - Blooming Texture
+                {
+                    var desc = new RenderTextureDescriptor();
+                    desc.autoGenerateMips = false;
+                    desc.bindMS = false;
+                    desc.colorFormat = RenderTextureFormat.ARGB32;
+                    desc.depthBufferBits = 0;
+                    desc.depthStencilFormat = GraphicsFormat.None;
+                    desc.dimension = TextureDimension.Tex2D;
+                    desc.enableRandomWrite = false;
+                    desc.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+                    desc.height = (int)(_renderingData.cameraData.cameraTargetDescriptor.height * 0.5f);
+                    desc.memoryless = RenderTextureMemoryless.None;
+                    desc.mipCount = 0;
+                    desc.msaaSamples = 1;
+                    desc.shadowSamplingMode = ShadowSamplingMode.None;
+                    desc.sRGB = false;
+                    desc.stencilFormat = GraphicsFormat.None;
+                    desc.useDynamicScale = false;
+                    desc.useMipMap = false;
+                    desc.volumeDepth = 0;
+                    desc.vrUsage = VRTextureUsage.None;
+                    desc.width = (int)(_renderingData.cameraData.cameraTargetDescriptor.width * 0.5f);
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_0_Down, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_0_Down");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_0_Up, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_0_Up");
+                    desc.height = (int)(desc.height * 0.5f);
+                    desc.width = (int)(desc.width * 0.5f);
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_1_Down, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_1_Down");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_1_Up, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_1_Up");
+                    desc.height = (int)(desc.height * 0.5f);
+                    desc.width = (int)(desc.width * 0.5f);
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_2_Down, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_2_Down");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_2_Up, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_2_Up");
+                    desc.height = (int)(desc.height * 0.5f);
+                    desc.width = (int)(desc.width * 0.5f);
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_3_Down, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_3_Down");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_3_Up, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_3_Up");
+                    desc.height = (int)(desc.height * 0.5f);
+                    desc.width = (int)(desc.width * 0.5f);
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_4_Down, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_4_Down");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blooming_4_Up, desc, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blooming_4_Up");
+                }
+
+                highlightInputRenderPass.Setup(highlightInputMaterial, highlightInputBlurMaterial, highlightInputBloomingMaterial,
                                             highlightRTHandle_Colour, highlightRTDescriptor_Colour,
                                             highlightRTHandle_Depth, highlightRTDescriptor_Depth,
-                                            highlightRTHandle_Colour_Blur_Ping, highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur);
+                                            highlightRTHandle_Colour_Blur_Ping, highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur,
+                                            highlightRTHandle_Colour_Blooming_0_Down, highlightRTHandle_Colour_Blooming_1_Down, highlightRTHandle_Colour_Blooming_2_Down, highlightRTHandle_Colour_Blooming_3_Down, highlightRTHandle_Colour_Blooming_4_Down,
+                                            highlightRTHandle_Colour_Blooming_0_Up, highlightRTHandle_Colour_Blooming_1_Up, highlightRTHandle_Colour_Blooming_2_Up, highlightRTHandle_Colour_Blooming_3_Up, highlightRTHandle_Colour_Blooming_4_Up);
             }
 
             // Highlight Output Material, Shader, RenderTarget and pass setups

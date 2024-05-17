@@ -20,9 +20,11 @@ namespace DCL.Rendering.Highlight
                 HighlightInput_Blur_Vertical = 1
             }
 
-            private const string PROFILER_TAG_ADDITIVE = "Custom Pass: Highlight Additive";
-            private const string PROFILER_TAG_SUBTRACTIVE = "Custom Pass: Highlight Subtractive";
-            private const string PROFILER_TAG_BLUR = "Custom Pass: Highlight Blur";
+            private const string PROFILER_TAG_HIGHLIGHT = "Highlight Pass";
+            private const string PROFILER_TAG_ADDITIVE = "Additive";
+            private const string PROFILER_TAG_SUBTRACTIVE = "Subtractive";
+            private const string PROFILER_TAG_BLUR = "Blur";
+            private const string PROFILER_TAG_BLOOMING = "Blooming";
 
             //private RTHandle destinationHandle;
             private readonly ShaderTagId m_ShaderTagId = new ("Highlight");
@@ -30,10 +32,21 @@ namespace DCL.Rendering.Highlight
 
             private Material highLightInputMaterial;
             private Material highlightInputBlurMaterial;
+            private Material highlightInputBloomingMaterial;
             private RTHandle highLightRTHandle_Colour;
             private RTHandle highLightRTHandle_Depth;
             private RTHandle highLightRTHandle_Colour_Blur_Ping;
             private RTHandle highLightRTHandle_Colour_Blur_Pong;
+            private RTHandle highLightRTHandle_Colour_Blooming_0_Down;
+            private RTHandle highLightRTHandle_Colour_Blooming_0_Up;
+            private RTHandle highLightRTHandle_Colour_Blooming_1_Down;
+            private RTHandle highLightRTHandle_Colour_Blooming_1_Up;
+            private RTHandle highLightRTHandle_Colour_Blooming_2_Down;
+            private RTHandle highLightRTHandle_Colour_Blooming_2_Up;
+            private RTHandle highLightRTHandle_Colour_Blooming_3_Down;
+            private RTHandle highLightRTHandle_Colour_Blooming_3_Up;
+            private RTHandle highLightRTHandle_Colour_Blooming_4_Down;
+            private RTHandle highLightRTHandle_Colour_Blooming_4_Up;
             private RenderTextureDescriptor highLightRTDescriptor_Colour;
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
             private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
@@ -50,16 +63,28 @@ namespace DCL.Rendering.Highlight
 
             public void Setup(Material _highLightInputMaterial,
                 Material _highlightInputBlurMaterial,
+                Material _highlightInputBloomingMaterial,
                 RTHandle _highLightRTHandle_Colour,
                 RenderTextureDescriptor _highLightRTDescriptor_Colour,
                 RTHandle _highLightRTHandle_Depth,
                 RenderTextureDescriptor _highLightRTDescriptor_Depth,
                 RTHandle _highLightRTHandle_Colour_Blur_Ping,
                 RTHandle _highLightRTHandle_Colour_Blur_Pong,
-                RenderTextureDescriptor _highLightRTDescriptor_Colour_Blur)
+                RenderTextureDescriptor _highLightRTDescriptor_Colour_Blur,
+                RTHandle _highLightRTHandle_Colour_Blooming_0_Down,
+                RTHandle _highLightRTHandle_Colour_Blooming_1_Down,
+                RTHandle _highLightRTHandle_Colour_Blooming_2_Down,
+                RTHandle _highLightRTHandle_Colour_Blooming_3_Down,
+                RTHandle _highLightRTHandle_Colour_Blooming_4_Down,
+                RTHandle _highLightRTHandle_Colour_Blooming_0_Up,
+                RTHandle _highLightRTHandle_Colour_Blooming_1_Up,
+                RTHandle _highLightRTHandle_Colour_Blooming_2_Up,
+                RTHandle _highLightRTHandle_Colour_Blooming_3_Up,
+                RTHandle _highLightRTHandle_Colour_Blooming_4_Up)
             {
                 highLightInputMaterial = _highLightInputMaterial;
                 highlightInputBlurMaterial = _highlightInputBlurMaterial;
+                highlightInputBloomingMaterial = _highlightInputBloomingMaterial;
                 highLightRTHandle_Colour = _highLightRTHandle_Colour;
                 highLightRTDescriptor_Colour = _highLightRTDescriptor_Colour;
                 highLightRTHandle_Depth = _highLightRTHandle_Depth;
@@ -67,6 +92,16 @@ namespace DCL.Rendering.Highlight
                 highLightRTHandle_Colour_Blur_Ping = _highLightRTHandle_Colour_Blur_Ping;
                 highLightRTHandle_Colour_Blur_Pong = _highLightRTHandle_Colour_Blur_Pong;
                 highLightRTDescriptor_Colour_Blur = _highLightRTDescriptor_Colour_Blur;
+                highLightRTHandle_Colour_Blooming_0_Down = _highLightRTHandle_Colour_Blooming_0_Down;
+                highLightRTHandle_Colour_Blooming_1_Down = _highLightRTHandle_Colour_Blooming_1_Down;
+                highLightRTHandle_Colour_Blooming_2_Down = _highLightRTHandle_Colour_Blooming_2_Down;
+                highLightRTHandle_Colour_Blooming_3_Down = _highLightRTHandle_Colour_Blooming_3_Down;
+                highLightRTHandle_Colour_Blooming_4_Down = _highLightRTHandle_Colour_Blooming_4_Down;
+                highLightRTHandle_Colour_Blooming_0_Up = _highLightRTHandle_Colour_Blooming_0_Up;
+                highLightRTHandle_Colour_Blooming_1_Up = _highLightRTHandle_Colour_Blooming_1_Up;
+                highLightRTHandle_Colour_Blooming_2_Up = _highLightRTHandle_Colour_Blooming_2_Up;
+                highLightRTHandle_Colour_Blooming_3_Up = _highLightRTHandle_Colour_Blooming_3_Up;
+                highLightRTHandle_Colour_Blooming_4_Up = _highLightRTHandle_Colour_Blooming_4_Up;
             }
 
             // Configure the pass by creating a temporary render texture and
@@ -84,23 +119,33 @@ namespace DCL.Rendering.Highlight
                 if (m_HighLightRenderers is not { Count: > 0 })
                     return;
 
-                ExecuteCommand(context, renderingData, false, "_HighlightInputPass_Additive", PROFILER_TAG_ADDITIVE);
+                //using (new ProfilingScope(null, new ProfilingSampler(PROFILER_TAG_HIGHLIGHT)))
+                {
+                    ExecuteCommand(context, renderingData, false, "_HighlightInputPass_Additive", PROFILER_TAG_ADDITIVE);
 
-                ExecuteCommandCopy(context, renderingData, highLightRTHandle_Colour, highLightRTHandle_Colour_Blur_Ping, "_copyBuffer0", "firstCopy");
-                uint nBlurCount = 4;
-                int nBlurRT = ExecuteCommandBlur(context, renderingData, nBlurCount, "_HighlightInputPass_Blur", PROFILER_TAG_BLUR);
+                    ExecuteCommandCopy(context, renderingData, highLightRTHandle_Colour, highLightRTHandle_Colour_Blur_Ping, "_copyBuffer0", "firstCopy");
+                    uint nBlurCount = 4;
+                    int nBlurRT = ExecuteCommandBlur(context, renderingData, nBlurCount, "_HighlightInputPass_Blur", PROFILER_TAG_BLUR);
 
-                ExecuteCommandCopy(context, renderingData, (nBlurRT % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, highLightRTHandle_Colour, "_copyBuffer1", "secondCopy");
+                    ExecuteCommandCopy(context, renderingData, (nBlurRT % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, highLightRTHandle_Colour, "_copyBuffer1", "secondCopy");
 
-                ExecuteCommand(context, renderingData, true, "_HighlightInputPass_Subtractive", PROFILER_TAG_SUBTRACTIVE);
+                    ExecuteCommandBlooming(context, renderingData, "_HighlightInputPass_Blooming", PROFILER_TAG_BLOOMING);
+
+                    ExecuteCommandCopy(context, renderingData, highLightRTHandle_Colour, highLightRTHandle_Colour_Blur_Ping, "_copyBuffer0", "firstCopy");
+                    nBlurRT = ExecuteCommandBlur(context, renderingData, nBlurCount, "_HighlightInputPass_Blur", PROFILER_TAG_BLUR);
+
+                    ExecuteCommandCopy(context, renderingData, (nBlurRT % 2) > 0 ? highLightRTHandle_Colour_Blur_Ping : highLightRTHandle_Colour_Blur_Pong, highLightRTHandle_Colour, "_copyBuffer1", "secondCopy");
+
+                    ExecuteCommand(context, renderingData, true, "_HighlightInputPass_Subtractive", PROFILER_TAG_SUBTRACTIVE);
+                }
             }
 
             private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, string profilerTag)
             {
                 CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName);
-
-                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(commandBuffer, new ProfilingSampler(profilerTag)))
                 {
+                    commandBuffer.SetRenderTarget(highLightRTHandle_Colour);
                     foreach ((Renderer renderer, HighlightSettings settings) in m_HighLightRenderers)
                     {
                         if (renderer == null)
@@ -152,7 +197,7 @@ namespace DCL.Rendering.Highlight
                     return nOutputTexture;
 
                 CommandBuffer cmd = CommandBufferPool.Get(bufferName);
-                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
                 {
                     for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
                     {
@@ -167,6 +212,74 @@ namespace DCL.Rendering.Highlight
                 }
 
                 return nOutputTexture;
+            }
+
+            private void ExecuteCommandBlooming(ScriptableRenderContext context, RenderingData renderingData, string bufferName, string profilerTag)
+            {
+                CommandBuffer cmd = CommandBufferPool.Get(bufferName);
+                using (new ProfilingScope(cmd, new ProfilingSampler(profilerTag)))
+                {
+                    // DOWNSAMPLE
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_0_Down);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_0_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_1_Down);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_1_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_2_Down);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_2_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_3_Down);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_3_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_4_Down);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    // UPSAMPLE
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_4_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_3_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_3_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_3_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_3_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_2_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_2_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_2_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_2_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_1_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_1_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_1_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_1_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_0_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_0_Down);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_0_Up);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_0_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
+
+                    context.ExecuteCommandBuffer(cmd);
+                    CommandBufferPool.Release(cmd);
+                }
             }
 
             private void ExecuteCommandCopy(ScriptableRenderContext context, RenderingData renderingData, RTHandle sourceRT, RTHandle destinationRT, string bufferName, string profilerTag)
