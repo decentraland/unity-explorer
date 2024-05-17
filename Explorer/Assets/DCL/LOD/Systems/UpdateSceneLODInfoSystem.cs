@@ -30,28 +30,17 @@ namespace DCL.LOD.Systems
     {
         private readonly ILODAssetsPool lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
-        private readonly IPerformanceBudget memoryBudget;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        internal IPerformanceBudget frameCapBudget;
-
-
-        private readonly Transform lodsTransformParent;
-        private readonly TextureArrayContainer lodTextureArrayContainer;
 
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
-            Transform lodsTransformParent, TextureArrayContainer lodTextureArrayContainer) : base(world)
+            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
-            this.memoryBudget = memoryBudget;
-            this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.lodsTransformParent = lodsTransformParent;
-            this.lodTextureArrayContainer = lodTextureArrayContainer;
         }
 
         protected override void Update(float t)
