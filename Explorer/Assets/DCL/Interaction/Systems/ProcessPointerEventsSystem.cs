@@ -78,39 +78,50 @@ namespace DCL.Interaction.Systems
 
                 World world = ecsExecutor.World;
                 EntityReference entityRef = colliderInfo.EntityReference;
-
-                // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
-                if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
+                if (entityRef.IsAlive(world))
                 {
-                    hoverStateComponent.LastHitCollider = raycastResult.GetCollider();
-                    hoverStateComponent.HasCollider = true;
+                    // Entity should contain PBPointerEvents component to be qualified for highlighting
+                    if (world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
+                    {
+                        hoverStateComponent.LastHitCollider = raycastResult.GetCollider();
+                        hoverStateComponent.HasCollider = true;
 
-                    bool newEntityWasHovered = !candidateForHoverLeaveIsValid
-                                               || (previousEntityInfo.EcsExecutor.World != world && previousEntityInfo.ColliderEntityInfo.EntityReference != entityRef);
+                        bool newEntityWasHovered = !candidateForHoverLeaveIsValid
+                                                   || (previousEntityInfo.EcsExecutor.World != world && previousEntityInfo.ColliderEntityInfo.EntityReference != entityRef);
 
-                    // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
-                    if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
-                        candidateForHoverLeaveIsValid = false;
+                        // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
+                        if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
+                            candidateForHoverLeaveIsValid = false;
 
-                    pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.GetRaycastHit(), raycastResult.GetOriginRay());
+                        pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResult.GetRaycastHit(), raycastResult.GetOriginRay());
 
-                    bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
+                        bool isAtDistance = SetupPointerEvents(raycastResult, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
 
-                    hoverStateComponent.IsAtDistance = isAtDistance;
+                        hoverStateComponent.IsAtDistance = isAtDistance;
 
-                    int count = world.CountEntities(highlightQuery);
+                        int count = world.CountEntities(highlightQuery);
 
-                    if (count > 0) { SetupHighlightComponentQuery(world, isAtDistance, entityRef); }
+                        if (count > 0) { SetupHighlightComponentQuery(world, isAtDistance, entityRef); }
+                        else
+                        {
+                            world.Create(
+                                new HighlightComponent(
+                                    true,
+                                    isAtDistance,
+                                    entityRef,
+                                    entityRef
+                                )
+                            );
+                        }
+                    }
+                    //If the entity doesnt have a PBPointerEvent means we wont check distance and just send any input we receive to it.
                     else
                     {
-                        world.Create(
-                            new HighlightComponent(
-                                true,
-                                isAtDistance,
-                                entityRef,
-                                entityRef
-                            )
-                        );
+                        foreach (var input in sdkInputActionsMap)
+                        {
+                            // Add all inputs that were pressed/unpressed this frame
+                            InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, raycastResult.ValidInputActions);
+                        }
                     }
                 }
             }
@@ -171,7 +182,7 @@ namespace DCL.Interaction.Systems
             foreach (var input in sdkInputActionsMap)
             {
                 // Add all inputs that were pressed/unpressed this frame
-                InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, ref pbPointerEvents.AppendPointerEventResultsIntent);
+                InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions);
             }
 
             return isAtDistance;

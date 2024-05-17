@@ -1,6 +1,9 @@
+using DCL.ECSComponents;
 using DCL.Interaction.Utility;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using RaycastHit = UnityEngine.RaycastHit;
 
 namespace DCL.Interaction.PlayerOriginated.Components
 {
@@ -15,6 +18,7 @@ namespace DCL.Interaction.PlayerOriginated.Components
         private GlobalColliderEntityInfo? entityInfo;
         private RaycastHit unityRaycastHit;
         private Ray originRay;
+        public Dictionary<InputAction, PointerEventType> ValidInputActions;
 
         public PlayerOriginRaycastResult(RaycastHit unityRaycastHit) : this()
         {
@@ -26,6 +30,12 @@ namespace DCL.Interaction.PlayerOriginated.Components
         {
             unityRaycastHit = default(RaycastHit);
             entityInfo = null;
+            if (ValidInputActions == null)
+                ValidInputActions = new Dictionary<InputAction, PointerEventType>();
+            else
+            {
+                ValidInputActions.Clear();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -40,6 +50,12 @@ namespace DCL.Interaction.PlayerOriginated.Components
             unityRaycastHit = hitInfo;
             this.entityInfo = entityInfo;
             this.distance = distance;
+            if (ValidInputActions == null)
+                ValidInputActions = new Dictionary<InputAction, PointerEventType>();
+            else
+            {
+                ValidInputActions.Clear();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
