@@ -203,6 +203,12 @@ namespace DCL.ParcelsService
         [All(typeof(CameraComponent))]
         private void ForceCameraLookAt([Data] CameraLookAtIntent intent, in Entity entity)
         {
+            if (world == null)
+                return;
+
+            if (world.Has<CameraLookAtIntent>(entity))
+                return;
+
             world?.Add(entity, intent);
         }
 
