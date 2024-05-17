@@ -39,6 +39,7 @@ namespace ECS.StreamableLoading.Common.Systems
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
         {
             this.cache = cache;
+
             // this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
 
@@ -116,12 +117,14 @@ namespace ECS.StreamableLoading.Common.Systems
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
                 }
 
-                // Try load from cache first
                 if (cache.TryGet(intention, out TAsset asset))
                 {
                     result = new StreamableLoadingResult<TAsset>(asset);
                     return;
                 }
+
+                // Try load from cache first
+
 
                 // If the given URL failed irrecoverably just return the failure
                 if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
@@ -133,6 +136,16 @@ namespace ECS.StreamableLoading.Common.Systems
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
                     result = await CacheableFlowAsync(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                else
+                {
+                    //This is in case we had OngoingRequests synced to the results of the first request.
+                    //They would not enter into any of these and go directly to the finalize,
+                    //without adding references to the cache thereby breaking the cleanup
+                    if (result is { Succeeded: true })
+                        AddToCache(in intention, result.Value.Asset);
+
+                    return;
+                }
 
                 if (!result.HasValue)
 
@@ -151,9 +164,7 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
 
-        protected virtual void DisposeAbandonedResult(TAsset asset)
-        {
-        }
+        protected virtual void DisposeAbandonedResult(TAsset asset) { }
 
         private void FinalizeLoading(in Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
@@ -174,6 +185,7 @@ namespace ECS.StreamableLoading.Common.Systems
             if (!exists)
             {
                 ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
+
                 // it could be already disposed of, but it's safe to call it again
                 acquiredBudget.Dispose();
                 return;
@@ -191,6 +203,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result.Value.Succeeded)
                 {
                     OnAssetSuccessfullyLoaded(result.Value.Asset);
+
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
                 }
             }
@@ -242,6 +255,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 TryRemoveOngoingRequest();
+
                 source.TrySetResult(result);
 
                 if (!result.HasValue)
@@ -257,7 +271,7 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             catch (OperationCanceledException operationCanceledException)
             {
-                if(result is { Succeeded: true })
+                if (result is { Succeeded: true })
                     DisposeAbandonedResult(result.Value.Asset!);
 
                 // Remove from the ongoing requests immediately because finally will be called later than

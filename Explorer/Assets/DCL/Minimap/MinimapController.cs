@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Chat;
 using DCL.Diagnostics;
@@ -46,8 +47,6 @@ namespace DCL.Minimap
         private SideMenuController sideMenuController;
         private readonly IRealmNavigator realmNavigator;
 
-        private static readonly int EXPAND = Animator.StringToHash("Expand");
-        private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -99,7 +98,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
-            viewInstance.minimapAnimator.SetTrigger(EXPAND);
+            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.EXPAND);
         }
 
         private void CollapseMinimap()
@@ -107,7 +106,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
-            viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
+            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.COLLAPSE);
         }
 
         private void OpenSideMenu()

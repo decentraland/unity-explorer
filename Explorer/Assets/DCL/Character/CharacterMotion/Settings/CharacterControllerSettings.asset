@@ -132,14 +132,18 @@ MonoBehaviour:
   <FOVIncreaseSpeed>k__BackingField: 15
   <FOVDecreaseSpeed>k__BackingField: 20
   <FeetIKHipsPullMaxDistance>k__BackingField: 0.6
-  <FeetIKSphereSize>k__BackingField: 0.1
+  <FeetIKSphereSize>k__BackingField: 0.08
   <IKWeightSpeed>k__BackingField: 10
   <IKPositionSpeed>k__BackingField: 10
   <FeetIKVerticalAngleLimits>k__BackingField: {x: -30, y: 50}
   <FeetIKTwistAngleLimits>k__BackingField: {x: -30, y: 15}
+  <FeetIKLeftOffset>k__BackingField: {x: 0, y: 0, z: 0}
+  <FeetIKRightOffset>k__BackingField: {x: 0, y: 0, z: 0.08}
+  <FeetIKLeftRotationOffset>k__BackingField: {x: 0, y: -5.35, z: 0}
+  <FeetIKRightRotationOffset>k__BackingField: {x: 0, y: 6.39, z: 0}
   <FeetHeightCorrection>k__BackingField: 0.08
   <FeetHeightDisableIkDistance>k__BackingField: 0.1
-  <HipsHeightCorrection>k__BackingField: 0.05
+  <HipsHeightCorrection>k__BackingField: 0
   <HandsIKWallHitDistance>k__BackingField: 0.5
   <HandsIKWeightSpeed>k__BackingField: 5
   <HandsIKElbowOffset>k__BackingField: {x: 0.256, y: 0.9800129, z: -0.4610018}
