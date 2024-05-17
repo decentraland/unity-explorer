@@ -110,7 +110,6 @@ namespace DCL.Backpack
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
-            pageSelectorController.SetActive(false);
         }
 
         public void Deactivate()
