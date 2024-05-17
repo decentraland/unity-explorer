@@ -34,7 +34,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEmoteCommand(PlayerCRDTEntity playerCRDTEntity, AvatarEmoteCommandComponent emoteCommand)
+        private void UpdateAvatarEmoteCommand(PlayerCRDTEntity playerCRDTEntity, ref AvatarEmoteCommandComponent emoteCommand)
         {
             if (!emoteCommand.IsDirty || emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
 

@@ -31,12 +31,16 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         public void RemoveSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
         {
-            lock (this) { this.onSceneMessage -= onSceneMessage; }
+            lock (this)
+            {
+                if (Equals(onSceneMessage, this.onSceneMessage))
+                    this.onSceneMessage = null;
+            }
         }
 
         public void SetSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
         {
-            lock (this) { this.onSceneMessage += onSceneMessage; }
+            lock (this) { this.onSceneMessage = onSceneMessage; }
         }
 
         public void SendMessage(ReadOnlySpan<byte> message, string sceneId, CancellationToken ct)
