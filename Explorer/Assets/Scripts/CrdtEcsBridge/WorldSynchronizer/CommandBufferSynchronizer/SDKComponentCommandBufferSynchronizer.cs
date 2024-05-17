@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
@@ -56,8 +57,9 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
                     }
                     catch (Exception e)
                     {
+                        var componentsOnEntity = string.Join(", ", world.GetAllComponents(entity).Select(e => e?.GetType().FullName ?? "NULL"));
                         throw new Exception(
-                            $"Error while deleting component world id: {world.Id}, entity id: {entity.Id}, type {typeof(T).FullName}",
+                            $"Error while deleting component world id: {world.Id}, entity id: {entity.Id}, type {typeof(T).FullName}, components: {componentsOnEntity}",
                             e
                         );
                     }
