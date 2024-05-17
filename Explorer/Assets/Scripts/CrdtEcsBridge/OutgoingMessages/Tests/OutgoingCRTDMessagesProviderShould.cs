@@ -132,7 +132,7 @@ namespace CrdtEcsBridge.OutgoingMessages.Tests
             provider.AddPutMessage<PBPointerEventsResult, int>((_, _) => { }, new CRDTEntity(2), 100);
             provider.AppendMessage<PBPointerEventsResult, int>((_, _) => { }, new CRDTEntity(3), 780, 100);
 
-            using OutgoingCRDTMessagesSyncBlock syncBlock = provider.GetSerializationSyncBlock();
+            using OutgoingCRDTMessagesSyncBlock syncBlock = provider.GetSerializationSyncBlock(null);
 
             crdtProtocol.Received(1).CreatePutMessage(Arg.Is<CRDTEntity>(c => c.Id == 1), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());
             crdtProtocol.Received(1).CreatePutMessage(Arg.Is<CRDTEntity>(c => c.Id == 2), ComponentID.POINTER_EVENTS_RESULT, Arg.Any<IMemoryOwner<byte>>());

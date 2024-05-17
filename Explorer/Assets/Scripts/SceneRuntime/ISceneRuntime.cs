@@ -8,6 +8,7 @@ using DCL.WebRequests;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Apis.Modules.Players;
@@ -122,5 +123,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
         }
 
+        public static void RegisterSDKMessageBusCommsApi(this ISceneRuntime sceneRuntime, ISDKMessageBusCommsControllerAPI api)
+        {
+            sceneRuntime.Register("UnitySDKMessageBusCommsControllerApi", new SDKMessageBusCommsControllerAPIWrapper(api));
+        }
     }
 }

@@ -2,6 +2,8 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
+using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
+using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
@@ -19,6 +21,9 @@ using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
+using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Factory;
 using System;
 using System.Threading;
@@ -30,6 +35,8 @@ namespace SceneRunner
 {
     public class SceneFactory : ISceneFactory
     {
+        private const bool ENABLE_SDK_OBSERVABLES = true;
+
         private readonly ICRDTSerializer crdtSerializer;
         private readonly IECSWorldFactory ecsWorldFactory;
         private readonly ISceneEntityFactory entityFactory;
@@ -156,13 +163,24 @@ namespace SceneRunner
                 await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
                 deps.Dispose();
                 sceneRuntime?.Dispose();
-
                 throw new OperationCanceledException();
             }
 
-            var runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+            SceneInstanceDependencies.WithRuntimeAndEngineAPI runtimeDeps;
+            if (ENABLE_SDK_OBSERVABLES)
+            {
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+                var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
 
-            sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
+                sceneRuntime.RegisterSDKObservablesEngineApi((runtimeDeps.EngineAPI as ISDKObservableEventsEngineApi)!, sdkCommsControllerAPI, deps.ExceptionsHandler);
+                sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
+            }
+            else
+            {
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+                sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
+            }
+
             sceneRuntime.RegisterAll(
                 deps.ExceptionsHandler,
                 roomHub,
