@@ -76,4 +76,22 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
             Entity entity,
             CRDTReconciliationEffect reconciliationEffect, object? component);
     }
+
+    public class LogSDKComponentCommandBufferSynchronizer<T> : SDKComponentCommandBufferSynchronizer where T : class, new()
+    {
+        private readonly SDKComponentCommandBufferSynchronizer<T> origin;
+        private readonly Action<string> log;
+
+        public LogSDKComponentCommandBufferSynchronizer(SDKComponentCommandBufferSynchronizer<T> origin, Action<string> log)
+        {
+            this.origin = origin;
+            this.log = log;
+        }
+
+        public override void Apply(World world, PersistentCommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object? component)
+        {
+            log($"SDKComponentCommandBufferSynchronizer Apply to world {world.Id}, entity {entity.Id}, effect {reconciliationEffect}, component {component}, type {typeof(T).FullName}");
+            origin.Apply(world, commandBuffer, entity, reconciliationEffect, component);
+        }
+    }
 }
