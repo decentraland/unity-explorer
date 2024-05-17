@@ -272,10 +272,7 @@ namespace DCL.Backpack
                 return;
 
             if (refreshPageSelector)
-            {
-                pageSelectorController.SetActive(false);
                 pageSelectorController.Configure(uniTaskAsync.Result.Value.Asset.TotalAmount, CURRENT_PAGE_SIZE);
-            }
 
             currentPageWearables = uniTaskAsync.Result.Value.Asset.Wearables;
 
