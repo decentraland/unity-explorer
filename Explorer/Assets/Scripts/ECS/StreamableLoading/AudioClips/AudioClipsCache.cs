@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiling;
 using ECS.StreamableLoading.Cache;
@@ -46,8 +47,8 @@ namespace ECS.StreamableLoading.AudioClips
         {
             if (cache.TryGetValue(key, out AudioClipData? value))
             {
-                asset = value.AudioClip;
                 value.AddReference();
+                asset = value.AudioClip;
                 return true;
             }
 

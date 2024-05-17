@@ -7,7 +7,9 @@ using Microsoft.ClearScript.JavaScript;
 using Microsoft.ClearScript.V8;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.ModuleHub;
 using System;
 using System.Buffers;
@@ -110,6 +112,11 @@ namespace SceneRuntime
         public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
+        }
+
+        public void RegisterSDKObservablesEngineApi(ISDKObservableEventsEngineApi engineApiImplementation, ISDKMessageBusCommsControllerAPI commsApiImplementation, ISceneExceptionsHandler sceneExceptionsHandler)
+        {
+            Register("UnityEngineApi", engineApi = new SDKObservableEventsEngineApiWrapper(engineApiImplementation, commsApiImplementation, instancePoolsProvider, sceneExceptionsHandler));
         }
 
         public void SetIsDisposing()
