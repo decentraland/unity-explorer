@@ -72,9 +72,13 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer
 
     public abstract class SDKComponentCommandBufferSynchronizer
     {
-        public abstract void Apply(World world, PersistentCommandBuffer commandBuffer,
+        public abstract void Apply(
+            World world,
+            PersistentCommandBuffer commandBuffer,
             Entity entity,
-            CRDTReconciliationEffect reconciliationEffect, object? component);
+            CRDTReconciliationEffect reconciliationEffect,
+            object? component
+        );
     }
 
     public class LogSDKComponentCommandBufferSynchronizer<T> : SDKComponentCommandBufferSynchronizer where T : class, new()
