@@ -120,7 +120,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             return true;
         }
 
-        public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock(Action<PendingMessage> actOnPendingMessage)
+        public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock()
         {
             // Process all pending messages
 
@@ -132,9 +132,6 @@ namespace CrdtEcsBridge.OutgoingMessages
                 for (var i = 0; i < messages.Count; i++)
                 {
                     PendingMessage pendingMessage = messages[i];
-
-                    actOnPendingMessage?.Invoke(pendingMessage);
-
                     IMemoryOwner<byte> memory;
 
                     switch (pendingMessage.MessageType)
@@ -147,8 +144,8 @@ namespace CrdtEcsBridge.OutgoingMessages
                             break;
                         case CRDTMessageType.APPEND_COMPONENT:
                             memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
-                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
                             pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
+                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
                             processedMessages.Add(crdtProtocol.CreateAppendMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, pendingMessage.Timestamp, memory));
                             break;
                         case CRDTMessageType.DELETE_COMPONENT:
@@ -165,7 +162,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             return new OutgoingCRDTMessagesSyncBlock(processedMessages);
         }
 
-        public readonly struct PendingMessage
+        internal readonly struct PendingMessage
         {
             public readonly IMessage Message;
             public readonly CRDTEntity Entity;

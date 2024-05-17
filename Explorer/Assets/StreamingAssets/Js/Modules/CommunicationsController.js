@@ -5,8 +5,7 @@ module.exports.sendBinary = async function(message) {
     };
 }
 
-// Needed for scenes own MessageBus through 'comms' observable
-module.exports.send = async function(message) { 
-    UnitySDKMessageBusCommsControllerApi.Send(message.message)
+module.exports.send = async function(message) {
+    console.warning("CommunicationsController.send is not implemented")
     return {};
 }

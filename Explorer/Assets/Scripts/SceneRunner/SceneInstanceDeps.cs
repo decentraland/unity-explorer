@@ -125,7 +125,7 @@ namespace SceneRunner
 
         internal class WithRuntimeAndEngineAPI : IDisposable
         {
-            public IEngineApi EngineAPI;
+            public readonly IEngineApi EngineAPI;
             public readonly IRestrictedActionsAPI RestrictedActionsAPI;
             public readonly IRuntime RuntimeImplementation;
             public readonly ISceneApi SceneApiImplementation;
@@ -133,8 +133,8 @@ namespace SceneRunner
             public readonly ICommunicationsControllerAPI CommunicationsControllerAPI;
             public readonly ISimpleFetchApi SimpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
 
-            protected SceneInstanceDependencies dependencies;
-            protected ISceneRuntime runtime;
+            private readonly SceneInstanceDependencies dependencies;
+            private readonly ISceneRuntime runtime;
 
             public WithRuntimeAndEngineAPI
             (SceneInstanceDependencies sceneInstanceDependencies, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
@@ -171,30 +171,6 @@ namespace SceneRunner
 
                 runtime.Dispose();
                 dependencies.Dispose();
-            }
-        }
-
-        internal class WithRuntimeAndSDKObservablesEngineAPI : WithRuntimeAndEngineAPI
-        {
-            public WithRuntimeAndSDKObservablesEngineAPI
-            (SceneInstanceDependencies sceneInstanceDependencies, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
-                IGlobalWorldActions globalWorldActions, IRealmData realmData, ICommunicationControllerHub messagePipesHub) : base(sceneInstanceDependencies, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager,
-                globalWorldActions, realmData, messagePipesHub)
-            {
-                dependencies = sceneInstanceDependencies;
-                runtime = sceneRuntime;
-
-                EngineAPI = new SDKObservableEventsEngineAPIImplementation(
-                    sharedPoolsProvider,
-                    dependencies.PoolsProvider,
-                    dependencies.CRDTProtocol,
-                    dependencies.crdtDeserializer,
-                    crdtSerializer,
-                    dependencies.CRDTWorldSynchronizer,
-                    dependencies.OutgoingCRDTMessagesProvider,
-                    dependencies.systemGroupThrottler,
-                    dependencies.ExceptionsHandler,
-                    dependencies.ecsMutexSync);
             }
         }
     }
