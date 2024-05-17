@@ -141,8 +141,13 @@ namespace SceneRunner
                 while (true)
                 {
                     // 1. 'ct' is an external cancellation token
-                    // 2. don't try to run the update loop if DisposeAsync was already called
-                    if (ct.IsCancellationRequested || SceneStateProvider.State is SceneState.Disposing or SceneState.Disposed)
+                    if (ct.IsCancellationRequested) break;
+
+                    // 2. don't try to run the update loop if the scene is not running
+                    if (SceneStateProvider.State is SceneState.Disposing
+                        or SceneState.Disposed
+                        or SceneState.JavaScriptError
+                        or SceneState.EngineError)
                         break;
 
                     stopWatch.Restart();
@@ -152,11 +157,7 @@ namespace SceneRunner
                         // We can't guarantee that the thread is preserved between updates
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
-                    catch (ScriptEngineException e)
-                    {
-                        sceneExceptionsHandler.OnJavaScriptException(e);
-                        break;
-                    }
+                    catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
 
                     SceneStateProvider.TickNumber++;
 
@@ -239,6 +240,7 @@ namespace SceneRunner
 
             SceneStateProvider.State = SceneState.Disposed;
         }
+
         private void DisposeInternal()
         {
             runtimeInstance.Dispose();
