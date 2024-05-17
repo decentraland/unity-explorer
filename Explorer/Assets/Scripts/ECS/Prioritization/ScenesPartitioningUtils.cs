@@ -18,6 +18,7 @@ namespace ECS.Prioritization
             public bool IsDirty;
             public byte Bucket;
             public bool IsBehind;
+            public bool OutOfRange;
             public float RawSqrDistance;
         }
 
@@ -130,6 +131,7 @@ namespace ECS.Prioritization
                 // the same scene is counted as InFront
                 // If the bucket exceeds the maximum bucket array, we need to mark partition as dirty since we are out of range
                 partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length || partition.RawSqrDistance == -1;
+                partition.OutOfRange = bucketIndex == SqrDistanceBuckets.Length;
 
                 if (partition.IsDirty)
                     partition.RawSqrDistance = minSqrMagnitude;

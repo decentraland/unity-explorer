@@ -84,6 +84,7 @@ namespace ECS.SceneLifeCycle.Components
             partitionComponent.IsBehind = partition.IsBehind;
             partitionComponent.Bucket = partition.Bucket;
             partitionComponent.RawSqrDistance = partition.RawSqrDistance;
+            partitionComponent.OutOfRange = partition.OutOfRange;
         }
 
         public void AddCorners(ScenesPartitioningUtils.ParcelCornersData parcelCornersData)
