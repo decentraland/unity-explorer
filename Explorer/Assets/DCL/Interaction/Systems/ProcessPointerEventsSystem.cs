@@ -166,7 +166,7 @@ namespace DCL.Interaction.Systems
 
             }
 
-            if (!isAtDistance) return false; //This only works if elements have PBPointerEvents to filter distances, otherwise, we need to send the input event anyway (not done yet)
+            if (!isAtDistance) return false;
 
             foreach (var input in sdkInputActionsMap)
             {

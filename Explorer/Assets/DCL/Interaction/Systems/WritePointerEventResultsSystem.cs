@@ -85,9 +85,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
-
-                messageSent = true;
             }
+            pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
 
             if (intent.ValidInputActions != null)
             {
@@ -100,12 +99,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                     AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
 
-                    messageSent = true;
+                    //We dont consider hover events to disable global input messages
+                    if (inputAction.Value != PointerEventType.PetHoverEnter && inputAction.Value != PointerEventType.PetHoverLeave) { messageSent = true; }
                 }
-
                 pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
             }
-            pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
