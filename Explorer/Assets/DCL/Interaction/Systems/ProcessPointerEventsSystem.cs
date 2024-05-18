@@ -5,7 +5,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Input;
-using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.PlayerOriginated.Utility;
@@ -26,18 +25,16 @@ namespace DCL.Interaction.Systems
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly IEventSystem eventSystem;
         private readonly IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap;
-        private readonly IPlayerInputEvents playerInputEvents;
         private readonly QueryDescription highlightQuery = new QueryDescription().WithAll<HighlightComponent>();
 
         internal ProcessPointerEventsSystem(World world,
             IReadOnlyDictionary<InputAction, UnityEngine.InputSystem.InputAction> sdkInputActionsMap,
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            IEventSystem eventSystem,
-            IPlayerInputEvents playerInputEvents) : base(world)
+            IEventSystem eventSystem) : base(world)
         {
             this.sdkInputActionsMap = sdkInputActionsMap;
             this.entityCollidersGlobalCache = entityCollidersGlobalCache;
-            this.playerInputEvents = playerInputEvents;
+
             this.eventSystem = eventSystem;
         }
 
@@ -81,11 +78,8 @@ namespace DCL.Interaction.Systems
 
                 World world = ecsExecutor.World;
                 EntityReference entityRef = colliderInfo.EntityReference;
-
                 if (entityRef.IsAlive(world))
                 {
-                    playerInputEvents.Initialize(raycastResult.GetOriginRay(), raycastResult.GetRaycastHit(), colliderInfo.SDKEntity);
-
                     // Entity should contain PBPointerEvents component to be qualified for highlighting
                     if (world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
                     {
@@ -120,12 +114,13 @@ namespace DCL.Interaction.Systems
                             );
                         }
                     }
+                    //If the entity doesnt have a PBPointerEvent means we wont check distance and just send any input we receive to it.
                     else
                     {
-                        foreach (KeyValuePair<InputAction, UnityEngine.InputSystem.InputAction> input in sdkInputActionsMap)
+                        foreach (var input in sdkInputActionsMap)
                         {
                             // Add all inputs that were pressed/unpressed this frame
-                            InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, playerInputEvents.Entries, false);
+                            InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, raycastResult.ValidInputActions);
                         }
                     }
                 }
@@ -179,14 +174,15 @@ namespace DCL.Interaction.Systems
                 // Try Append Hover Feedback
                 HoverFeedbackUtils.TryAppendHoverFeedback(sdkInputActionsMap, pointerEvent,
                     ref hoverFeedbackComponent, anyInputInfo.AnyButtonIsPressed);
+
             }
 
-            if (!isAtDistance) return false;
+            if (!isAtDistance) return false; //This only works if elements have PBPointerEvents to filter distances, otherwise, we need to send the input event anyway (not done yet)
 
-            foreach (KeyValuePair<InputAction, UnityEngine.InputSystem.InputAction> input in sdkInputActionsMap)
+            foreach (var input in sdkInputActionsMap)
             {
                 // Add all inputs that were pressed/unpressed this frame
-                InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, playerInputEvents.Entries, true);
+                InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions);
             }
 
             return isAtDistance;

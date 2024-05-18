@@ -22,7 +22,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private readonly List<PBPointerEventsResult> results = new ();
         private IECSToCRDTWriter writer;
         private IGlobalInputEvents globalInputEvents;
-        private IPlayerInputEvents playerInputEvents;
 
         [SetUp]
         public void SetUp()
@@ -40,8 +39,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 writer = Substitute.For<IECSToCRDTWriter>(),
                 sceneStateProvider,
                 globalInputEvents = Substitute.For<IGlobalInputEvents>(),
-                pool,
-                playerInputEvents = Substitute.ForPartsOf<IPlayerInputEvents>() );
+                pool);
         }
 
         [TearDown]

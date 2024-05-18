@@ -1,5 +1,4 @@
-﻿using DCL.Diagnostics;
-using DCL.ECSComponents;
+﻿using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -94,20 +93,22 @@ namespace DCL.Interaction.PlayerOriginated.Utility
         /// <summary>
         ///     Handler Pointer Up and Pointer Down, check the corresponding input action if it was upped or downed this frame
         /// </summary>
-        public static void TryAppendButtonAction(InputAction inputAction, ECSComponents.InputAction ecsInputAction,
-            List<InputEventEntry> validInputActions, bool isAtDistance)
+        public static void TryAppendButtonAction(InputAction inputAction, DCL.ECSComponents.InputAction ecsInputAction,
+            Dictionary<DCL.ECSComponents.InputAction, PointerEventType> validInputActions)
         {
             if (inputAction.WasPressedThisFrame())
             {
-                validInputActions.Add(new InputEventEntry(ecsInputAction, PointerEventType.PetDown, isAtDistance));
+                validInputActions.Add(ecsInputAction, PointerEventType.PetDown);
                 return;
             }
 
             if (inputAction.WasReleasedThisFrame())
             {
-                validInputActions.Add(new InputEventEntry(ecsInputAction, PointerEventType.PetUp, isAtDistance));
+                validInputActions.Add(ecsInputAction, PointerEventType.PetUp);
+                return;
             }
         }
+
 
         public static void PrepareDefaultValues(this PBPointerEvents.Types.Info info)
         {

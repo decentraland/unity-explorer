@@ -24,7 +24,6 @@ namespace DCL.PluginSystem.World
     public class InteractionPlugin : IDCLWorldPlugin<InteractionPlugin.Settings>
     {
         private readonly IGlobalInputEvents globalInputEvents;
-        private readonly IPlayerInputEvents playerInputEvents;
         private readonly IProfilingProvider profilingProvider;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
         private readonly IComponentPoolsRegistry poolsRegistry;
@@ -34,20 +33,13 @@ namespace DCL.PluginSystem.World
         private Settings settings;
         private InteractionSettingsData interactionData;
 
-        public InteractionPlugin(
-            ECSWorldSingletonSharedDependencies sharedDependencies,
-            IProfilingProvider profilingProvider,
-            IGlobalInputEvents globalInputEvents,
-            IComponentPoolsRegistry poolsRegistry,
-            IAssetsProvisioner assetsProvisioner,
-            IPlayerInputEvents playerInputEvents)
+        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner)
         {
             this.sharedDependencies = sharedDependencies;
             this.profilingProvider = profilingProvider;
             this.globalInputEvents = globalInputEvents;
             this.poolsRegistry = poolsRegistry;
             this.assetsProvisioner = assetsProvisioner;
-            this.playerInputEvents = playerInputEvents;
         }
 
         public void Dispose() { }
@@ -76,8 +68,7 @@ namespace DCL.PluginSystem.World
                 sceneDeps.EcsToCRDTWriter,
                 sceneDeps.SceneStateProvider,
                 globalInputEvents,
-                poolsRegistry.GetReferenceTypePool<RaycastHit>(),
-                playerInputEvents);
+                poolsRegistry.GetReferenceTypePool<RaycastHit>());
 
             InteractionHighlightSystem.InjectToWorld(ref builder, interactionData);
         }
@@ -85,7 +76,6 @@ namespace DCL.PluginSystem.World
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
-            [field: SerializeField] internal AssetReferenceT<InteractionSettingsData> Data;
             [field: Header(nameof(InteractionPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
@@ -102,6 +92,8 @@ namespace DCL.PluginSystem.World
             /// </summary>
             [field: SerializeField]
             public int GlobalInputPropagationBucketThreshold { get; private set; } = 3;
+
+            [field: SerializeField] internal AssetReferenceT<InteractionSettingsData> Data;
         }
     }
 }
