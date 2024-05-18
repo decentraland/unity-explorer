@@ -6,7 +6,7 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Interaction.Systems;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -51,9 +51,11 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
-            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
-            WriteRaycastInputResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
-            WriteGlobalEvents();
+            var messageSent = false;
+            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition, ref messageSent);
+
+            if (!messageSent)
+                WriteGlobalEvents();
         }
 
         private void WriteGlobalEvents()
@@ -68,7 +70,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void WriteResults([Data] Vector3 scenePosition, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        private void WriteResults([Data] Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
 
@@ -83,6 +85,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
+
+                messageSent = true;
             }
 
             if (intent.ValidInputActions != null)
@@ -95,37 +99,14 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                         sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
                     AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
+
+                    messageSent = true;
                 }
 
                 pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
             }
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
         }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void WriteRaycastInputResults([Data] Vector3 scenePosition, ref PlayerOriginRaycastResult raycastResult)
-        {
-
-            GlobalColliderEntityInfo? entityInfo = raycastResult.GetEntityInfo();
-            ColliderEntityInfo colliderInfo = entityInfo.Value.ColliderEntityInfo;
-            var sdkEntity = colliderInfo.SDKEntity;
-
-                foreach (var inputAction in raycastResult.ValidInputActions)
-                {
-                    RaycastHit raycastHit = raycastHitPool.Get();
-
-                    raycastHit.FillSDKRaycastHit(scenePosition, raycastResult.GetRaycastHit(), string.Empty,
-                        sdkEntity, raycastResult.GetOriginRay().origin, raycastResult.GetOriginRay().direction);
-
-                    AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
-                }
-
-            raycastResult.ValidInputActions.Clear();
-        }
-
-
-
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
         {
