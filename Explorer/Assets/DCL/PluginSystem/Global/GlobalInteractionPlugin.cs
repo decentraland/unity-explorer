@@ -28,6 +28,8 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
         private readonly GlobalInputEvents globalInputEvents;
+        private readonly IPlayerInputEvents playerInputEvents;
+
         private readonly ICursor cursor;
         private readonly IEventSystem eventSystem;
 
@@ -42,7 +44,8 @@ namespace DCL.PluginSystem.Global
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
             ICursor cursor,
-            IEventSystem eventSystem)
+            IEventSystem eventSystem,
+            IPlayerInputEvents playerInputEvents)
         {
             this.dclInput = dclInput;
             this.canvas = canvas;
@@ -51,6 +54,7 @@ namespace DCL.PluginSystem.Global
             this.globalInputEvents = globalInputEvents;
             this.cursor = cursor;
             this.eventSystem = eventSystem;
+            this.playerInputEvents = playerInputEvents;
         }
 
         public void Dispose() { }
@@ -97,7 +101,7 @@ namespace DCL.PluginSystem.Global
                 { InputAction.IaAction6, playerInput.ActionButton6 },
             };
 
-            ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
+            ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem, playerInputEvents);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

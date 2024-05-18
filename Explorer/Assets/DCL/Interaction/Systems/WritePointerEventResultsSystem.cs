@@ -34,12 +34,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IGlobalInputEvents globalInputEvents;
+        private readonly IPlayerInputEvents playerInputEvents;
 
         private readonly IComponentPool<RaycastHit> raycastHitPool;
 
-
         internal WritePointerEventResultsSystem(World world, ISceneData sceneData, IECSToCRDTWriter ecsToCRDTWriter,
-            ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents, IComponentPool<RaycastHit> raycastHitPool) : base(world)
+            ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents, IComponentPool<RaycastHit> raycastHitPool,
+            IPlayerInputEvents playerInputEvents) : base(world)
         {
             this.sceneData = sceneData;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
@@ -47,13 +48,14 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             this.sceneStateProvider = sceneStateProvider;
             this.globalInputEvents = globalInputEvents;
             this.raycastHitPool = raycastHitPool;
+            this.playerInputEvents = playerInputEvents;
         }
 
         protected override void Update(float t)
         {
-            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
-            WriteRaycastInputResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
             WriteGlobalEvents();
+            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
+            WritePlayerInputResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
         }
 
         private void WriteGlobalEvents()
@@ -61,7 +63,10 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             // ReSharper disable once ForCanBeConvertedToForeach
             for (var i = 0; i < globalInputEvents.Entries.Count; i++)
             {
+                if (playerInputEvents.Entries.Exists(e => e.IsAtDistance && e.InputAction == globalInputEvents.Entries[i].InputAction)) {continue;}
+
                 IGlobalInputEvents.Entry entry = globalInputEvents.Entries[i];
+                ReportHub.LogError(ReportCategory.INPUT, $"Sent PB pointer event to GLOBAL {SpecialEntitiesID.SCENE_ROOT_ENTITY} - {entry.InputAction} - {entry.PointerEventType}");
                 AppendMessage(SpecialEntitiesID.SCENE_ROOT_ENTITY, null, entry.InputAction, entry.PointerEventType);
             }
         }
@@ -72,8 +77,9 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
 
-            foreach (byte validIndex in intent.ValidIndices)
+            for (var i = 0; i < intent.ValidIndices.Length; i++)
             {
+                byte validIndex = intent.ValidIndices[i];
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[validIndex];
                 PBPointerEvents.Types.Info info = entry.EventInfo;
 
@@ -81,53 +87,34 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                 raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
+                ReportHub.LogError(ReportCategory.INPUT, $"Sent PB pointer event to ENTITY {sdkEntity} - {info.Button} - {entry.EventType}");
 
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
             }
 
-            if (intent.ValidInputActions != null)
-            {
-                foreach (var inputAction in intent.ValidInputActions)
-                {
-                    RaycastHit raycastHit = raycastHitPool.Get();
-
-                    raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
-                        sdkEntity, intent.Ray.origin, intent.Ray.direction);
-
-                    AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
-                }
-
-                pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
-            }
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void WriteRaycastInputResults([Data] Vector3 scenePosition, ref PlayerOriginRaycastResult raycastResult)
+        private void WritePlayerInputResults([Data] Vector3 scenePosition)
         {
+            if (playerInputEvents.Entries.Count <= 0) return;
 
-            GlobalColliderEntityInfo? entityInfo = raycastResult.GetEntityInfo();
-            ColliderEntityInfo colliderInfo = entityInfo.Value.ColliderEntityInfo;
-            var sdkEntity = colliderInfo.SDKEntity;
+            CRDTEntity crdtEntity = playerInputEvents.CrdtEntity;
 
-                foreach (var inputAction in raycastResult.ValidInputActions)
-                {
-                    RaycastHit raycastHit = raycastHitPool.Get();
+            foreach (InputEventEntry entry in playerInputEvents.Entries)
+            {
+                RaycastHit raycastHit = raycastHitPool.Get();
 
-                    raycastHit.FillSDKRaycastHit(scenePosition, raycastResult.GetRaycastHit(), string.Empty,
-                        sdkEntity, raycastResult.GetOriginRay().origin, raycastResult.GetOriginRay().direction);
+                raycastHit.FillSDKRaycastHit(scenePosition, playerInputEvents.RaycastHit, string.Empty, crdtEntity, playerInputEvents.Ray.origin, playerInputEvents.Ray.direction);
+                ReportHub.LogError(ReportCategory.INPUT, $"Sent input action to ENTITY {crdtEntity} - {entry.InputAction} - {entry.PointerEventType}");
+                AppendMessage(crdtEntity, raycastHit, entry.InputAction, entry.PointerEventType);
+            }
 
-                    AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
-                }
-
-            raycastResult.ValidInputActions.Clear();
+            playerInputEvents.Entries.Clear();
         }
 
-
-
-
-        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
+        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
         {
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>

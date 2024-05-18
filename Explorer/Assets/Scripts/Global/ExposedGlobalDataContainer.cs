@@ -16,12 +16,15 @@ namespace Global
 
         public GlobalInputEvents GlobalInputEvents { get; private set; }
 
+        public PlayerInputEvents PlayerInputEvents { get; private set; }
+
         public static ExposedGlobalDataContainer Create() =>
             new ()
             {
                 CameraSamplingData = new CameraSamplingData(),
                 ExposedCameraData = new ExposedCameraData(),
                 GlobalInputEvents = new GlobalInputEvents(),
+                PlayerInputEvents = new PlayerInputEvents(),
             };
     }
 }
