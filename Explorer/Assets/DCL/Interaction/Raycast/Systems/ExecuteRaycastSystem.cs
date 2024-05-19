@@ -45,6 +45,7 @@ namespace DCL.Interaction.Raycast.Systems
         private readonly ISceneData sceneData;
 
         private List<OrderedData> orderedData;
+        private List<OrderedData> specialEntitiesData;
 
         internal ExecuteRaycastSystem(World world,
             ISceneData sceneData,
@@ -71,11 +72,13 @@ namespace DCL.Interaction.Raycast.Systems
         public override void Initialize()
         {
             orderedData = ListPool<OrderedData>.Get();
+            specialEntitiesData = ListPool<OrderedData>.Get();
         }
 
         public override void Dispose()
         {
             ListPool<OrderedData>.Release(orderedData);
+            ListPool<OrderedData>.Release(specialEntitiesData);
         }
 
         protected override void Update(float t)
@@ -91,12 +94,22 @@ namespace DCL.Interaction.Raycast.Systems
             // Process only not executed raycasts which bucket is not farther than the max allowed distance
             orderedData.Clear();
 
+            GatherSpecialEntitiesRaycastIntentsQuery(World);
             GatherRaycastIntentsQuery(World);
 
             // Sort raycasts by distance to the scene root
             orderedData.Sort(static (p1, p2) => DistanceBasedComparer.INSTANCE.Compare(p1.Partition, p2.Partition));
 
-            // Execute raycasts while budget is available
+            // Execute raycasts while budget is available, starting for special entities raycasts
+            for (var i = 0; i < specialEntitiesData.Count; i++)
+            {
+                OrderedData data = specialEntitiesData[i];
+
+                if (budget.TrySpendBudget())
+                    Raycast(scenePosition, data.CRDTEntity, ref data.Component.Value, data.SDKComponent, in data.TransformComponent);
+                else break;
+            }
+
             for (var i = 0; i < orderedData.Count; i++)
             {
                 OrderedData data = orderedData[i];
@@ -121,6 +134,27 @@ namespace DCL.Interaction.Raycast.Systems
             orderedData.Add(new OrderedData
             {
                 Partition = partitionComponent,
+                Component = new ManagedTypePointer<RaycastComponent>(ref raycastComponent),
+                SDKComponent = raycast,
+                TransformComponent = transformComponent,
+                CRDTEntity = crdtEntity,
+            });
+        }
+
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(PartitionComponent))]
+        private void GatherSpecialEntitiesRaycastIntents(ref CRDTEntity crdtEntity,
+            ref PBRaycast raycast, ref RaycastComponent raycastComponent, ref TransformComponent transformComponent)
+        {
+            if (raycastComponent.Executed) return;
+
+            // Filter out invalid type
+            if (raycast.QueryType == RaycastQueryType.RqtNone) return;
+
+            specialEntitiesData.Add(new OrderedData
+            {
+                Partition = null,
                 Component = new ManagedTypePointer<RaycastComponent>(ref raycastComponent),
                 SDKComponent = raycast,
                 TransformComponent = transformComponent,
@@ -239,7 +273,7 @@ namespace DCL.Interaction.Raycast.Systems
 
         private struct OrderedData
         {
-            public PartitionComponent Partition;
+            public PartitionComponent? Partition;
             public ManagedTypePointer<RaycastComponent> Component;
             public TransformComponent TransformComponent;
             public CRDTEntity CRDTEntity;
