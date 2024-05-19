@@ -17,7 +17,7 @@ MonoBehaviour:
     name: clap
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
-    prefab: {fileID: 8018143466885850673, guid: bc7c208d1e7e942f0b37191bd9fad362, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 902282f4070ec7b469e73bcbdcc0c3dd, type: 3}
     entity:
       representations: []
       category: 
@@ -43,7 +43,7 @@ MonoBehaviour:
     name: cry
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: ff531623182fec8479d734ac8df22d8f, type: 3}
-    prefab: {fileID: 8018143466885850673, guid: 421866c63941c466aaa78f9f5098685b, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: c4ac165a6ecb9194ba6417ac99aa1d0f, type: 3}
     entity:
       representations: []
       category: 
@@ -134,7 +134,7 @@ MonoBehaviour:
     name: hands_in_the_air
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
-    prefab: {fileID: 6200107889642170044, guid: 42bbd277642a57346972d66d0c99bf1f, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 1367a4cc5c746844995474c692ce506f, type: 3}
     entity:
       representations: []
       category: 
@@ -173,7 +173,7 @@ MonoBehaviour:
     name: hohoho
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 08fb89e42a3f7d44e9b2a391aa41aff6, type: 3}
-    prefab: {fileID: 8018143466885850673, guid: 69f0da6e0085e47dd8dd41624072fec8, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 77a28322abe8e2d48889b4bb91fea3c1, type: 3}
     entity:
       representations: []
       category: 
@@ -186,7 +186,7 @@ MonoBehaviour:
     name: kiss
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 8845b5e9671db49409bf747319c8f5c7, type: 3}
-    prefab: {fileID: 8018143466885850673, guid: d222a0241a8f34e8dbf033b971717370, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 28c3224df1c472940947608d6984ab5b, type: 3}
     entity:
       representations: []
       category: 
@@ -199,7 +199,7 @@ MonoBehaviour:
     name: money
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: e2b6332b93b06ab488a93d40b83c69fe, type: 3}
-    prefab: {fileID: 8018143466885850673, guid: 21d1b0898364d4ac590ece2883709553, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 73aef91399409734da49e67af4552191, type: 3}
     entity:
       representations: []
       category: 
@@ -251,7 +251,7 @@ MonoBehaviour:
     name: snowfall
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 9622f862db0a54f49a26e220aac90cbe, type: 3}
-    prefab: {fileID: 8018143466885850673, guid: fe2d0358d08da4382ba641136ab6ffa8, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 8689dd2ff74a71649a0c3d9229b5c68b, type: 3}
     entity:
       representations: []
       category: 
