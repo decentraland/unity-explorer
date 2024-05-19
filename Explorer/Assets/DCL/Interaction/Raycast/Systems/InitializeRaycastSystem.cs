@@ -38,7 +38,8 @@ namespace DCL.Interaction.Raycast.Systems
         {
             if (raycast.IsDirty)
             {
-                if (raycast.Continuous) raycastComponent.Executed = false;
+                //If dirty, we set executed to false, continuous raycasts always will have Executed as false.
+                raycastComponent.Executed = false;
                 raycast.IsDirty = false;
             }
         }

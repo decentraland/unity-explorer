@@ -46,6 +46,7 @@ namespace DCL.Interaction.Raycast.Systems
 
         private List<OrderedData> orderedData;
         private List<OrderedData> specialEntitiesData;
+        private List<ECSComponents.RaycastHit> raycastHits;
 
         internal ExecuteRaycastSystem(World world,
             ISceneData sceneData,
@@ -73,12 +74,15 @@ namespace DCL.Interaction.Raycast.Systems
         {
             orderedData = ListPool<OrderedData>.Get();
             specialEntitiesData = ListPool<OrderedData>.Get();
+            raycastHits = ListPool<ECSComponents.RaycastHit>.Get();
         }
 
         public override void Dispose()
         {
             ListPool<OrderedData>.Release(orderedData);
             ListPool<OrderedData>.Release(specialEntitiesData);
+            ListPool<ECSComponents.RaycastHit>.Release(raycastHits);
+
         }
 
         protected override void Update(float t)
@@ -93,6 +97,7 @@ namespace DCL.Interaction.Raycast.Systems
         {
             // Process only not executed raycasts which bucket is not farther than the max allowed distance
             orderedData.Clear();
+            specialEntitiesData.Clear();
 
             GatherSpecialEntitiesRaycastIntentsQuery(World);
             GatherRaycastIntentsQuery(World);
@@ -170,16 +175,10 @@ namespace DCL.Interaction.Raycast.Systems
                 return;
             }
 
+            raycastHits.Clear();
+
             ColliderLayer sdkCollisionMask = sdkComponent.GetCollisionMask();
             int collisionMask = PhysicsLayers.CreateUnityLayerMaskFromSDKMask(sdkCollisionMask);
-
-            // It will be released by the writer
-            PBRaycastResult result = raycastComponentPool.Get();
-
-            result.Timestamp = sdkComponent.Timestamp;
-            result.Direction.Set(ray.direction);
-            result.GlobalOrigin.Set(ray.origin);
-            result.TickNumber = sceneStateProvider.TickNumber;
 
             Array.Clear(SHARED_RAYCAST_HIT_ARRAY, 0, SHARED_RAYCAST_HIT_ARRAY.Length);
 
@@ -190,19 +189,29 @@ namespace DCL.Interaction.Raycast.Systems
             switch (sdkComponent.QueryType)
             {
                 case RaycastQueryType.RqtHitFirst:
-                    SetClosestQualifiedHit(result, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
+                    SetClosestQualifiedHit(raycastHits, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
                     break;
                 case RaycastQueryType.RqtQueryAll:
-                    SetAllQualifiedHits(result, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
+                    SetAllQualifiedHits(raycastHits, SHARED_RAYCAST_HIT_ARRAY.AsSpan(0, hitsCount), sdkCollisionMask, scenePos, transformComponent.Cached.WorldPosition, ray.direction);
                     break;
             }
 
             raycastComponent.Executed = !sdkComponent.Continuous;
 
-            ecsToCRDTWriter.PutMessage(result, crdtEntity);
+            //I changed this thinking it might help with the issue of the PBRaycastResults being Released at random places, but it did not help,
+            //Still the other PutMessage has some warning that I rather not trigger: "Be careful! If you provide the message manually created the whole scheme will break!"
+            ecsToCRDTWriter.PutMessage<PBRaycastResult, (Ray ray, ISceneStateProvider sceneStateProvider, PBRaycast sdkComponent, List<ECSComponents.RaycastHit> raycastHits)>(
+                static (result, data) =>
+                {
+                    result.Direction.Set(data.ray.direction);
+                    result.GlobalOrigin.Set(data.ray.origin);
+                    result.Hits.AddRange(data.raycastHits);
+                    result.Timestamp = data.sdkComponent.Timestamp;
+                    result.TickNumber = data.sceneStateProvider.TickNumber;
+                }, crdtEntity, (ray, sceneStateProvider, sdkComponent, raycastHits));
         }
 
-        private void SetClosestQualifiedHit(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
+        private void SetClosestQualifiedHit(List<ECSComponents.RaycastHit> raycastHits, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
             Vector3 rayDirection)
         {
             RaycastHit? closestQualifiedHit = null;
@@ -225,11 +234,11 @@ namespace DCL.Interaction.Raycast.Systems
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
                 RaycastHit qualifiedHit = closestQualifiedHit.Value;
                 sdkHit.FillSDKRaycastHit(scenePos, qualifiedHit, qualifiedHit.collider.name, foundEntity, globalOrigin, rayDirection);
-                raycastResult.Hits.Add(sdkHit);
+                raycastHits.Add(sdkHit);
             }
         }
 
-        private void SetAllQualifiedHits(PBRaycastResult raycastResult, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
+        private void SetAllQualifiedHits(List<ECSComponents.RaycastHit> raycastHits, Span<RaycastHit> hits, ColliderLayer collisionMask, Vector3 scenePos, Vector3 globalOrigin,
             Vector3 rayDirection)
         {
             for (var i = 0; i < hits.Length; i++)
@@ -242,7 +251,7 @@ namespace DCL.Interaction.Raycast.Systems
 
                 ECSComponents.RaycastHit sdkHit = raycastHitPool.Get();
                 sdkHit.FillSDKRaycastHit(scenePos, hit, hit.collider.name, foundEntity, globalOrigin, rayDirection);
-                raycastResult.Hits.Add(sdkHit);
+                raycastHits.Add(sdkHit);
             }
         }
 
