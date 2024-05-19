@@ -23074,6 +23074,39 @@ MonoBehaviour:
   - RoadCoordinate: {x: 150, y: -150}
     Rotation: {x: 0, y: 0, z: 0, w: 1}
     RoadModel: Corner_0
+  - RoadCoordinate: {x: 0, y: 12}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: 0,12
+  - RoadCoordinate: {x: 0, y: -69}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: 0,-69
+  - RoadCoordinate: {x: -70, y: -1}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: -70,-1
+  - RoadCoordinate: {x: -51, y: -49}
+    Rotation: {x: 0, y: -0.70710677, z: 0, w: 0.70710677}
+    RoadModel: -51,-49
+  - RoadCoordinate: {x: -49, y: 50}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: -49,-51
+  - RoadCoordinate: {x: -49, y: -51}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: -49,-51
+  - RoadCoordinate: {x: 2, y: 50}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: 2,-51
+  - RoadCoordinate: {x: 2, y: -51}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: 2,-51
+  - RoadCoordinate: {x: 50, y: 2}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: 50,2
+  - RoadCoordinate: {x: 50, y: -49}
+    Rotation: {x: 0, y: 0.70710677, z: 0, w: 0.70710677}
+    RoadModel: 50,-49
+  - RoadCoordinate: {x: 13, y: 0}
+    Rotation: {x: 0, y: 1, z: 0, w: 0}
+    RoadModel: 13,0
   <RoadAssetsReference>k__BackingField:
   - m_AssetGUID: 2d6ac3b70dd761a428bae0e655a93ebc
     m_SubObjectName: 
@@ -23232,6 +23265,46 @@ MonoBehaviour:
     m_SubObjectType: 
     m_EditorAssetChanged: 0
   - m_AssetGUID: 239163e03a3740d4996a2d35587b2ff6
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: 270a2df17ccc0fe44bbbe9b89996f6f2
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: ed8f2f5afa50a0247b29b631da441ee5
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: ce57a63a939f85142837d3b5a24461e9
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: 9588e94b171f5b841bf0a6812ab81af1
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: 84f715070590b274e9b0ed12caa37590
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: 0497021599e4feb45ac2c724a424fe8c
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: c697711c3d22d7f43b4e14e312c035e5
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: acde861af6ee13e4a9903f0986b542a8
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: ed357ed706450634ca3f1d3e603fcc6b
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  - m_AssetGUID: dba2ab136796a6f4184187604c092d1f
     m_SubObjectName: 
     m_SubObjectType: 
     m_EditorAssetChanged: 0
