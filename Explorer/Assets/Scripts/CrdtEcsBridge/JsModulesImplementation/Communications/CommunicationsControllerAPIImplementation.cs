@@ -1,6 +1,5 @@
 ﻿using CRDT.Memory;
 using CrdtEcsBridge.PoolsProviders;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
@@ -11,6 +10,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -54,8 +54,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)

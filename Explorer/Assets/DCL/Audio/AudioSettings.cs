@@ -17,23 +17,22 @@ namespace DCL.Audio
         public float MasterVolume => masterVolume;
         public AudioMixer MasterAudioMixer => masterAudioMixer;
 
-        public AudioCategorySettings GetSettingsForCategory(AudioCategory category)
-        {
-            audioCategorySettingsDictionary.TryGetValue(category, out AudioCategorySettings settings);
-            return settings;
-        }
-
-        public void OnBeforeSerialize()
-        {
-        }
+        public void OnBeforeSerialize() { }
 
         public void OnAfterDeserialize()
         {
             audioCategorySettingsDictionary.Clear();
-            foreach (var audioCategory in audioCategorySettings)
+
+            foreach (AudioCategorySettingsKeyValuePair audioCategory in audioCategorySettings)
             {
                 if (audioCategory.value != null) { audioCategorySettingsDictionary.Add(audioCategory.key, audioCategory.value); }
             }
+        }
+
+        public AudioCategorySettings GetSettingsForCategory(AudioCategory category)
+        {
+            audioCategorySettingsDictionary.TryGetValue(category, out AudioCategorySettings settings);
+            return settings;
         }
     }
 

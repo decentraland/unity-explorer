@@ -71,10 +71,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
         }
 
-        public void Dispose()
-        {
-        }
-
         public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
         {
             // TODO it's dirty, think how to do it better

@@ -1,7 +1,7 @@
-﻿using DCL.Profiling;
+﻿using DCL.Diagnostics;
+using DCL.Profiling;
 using System;
 using UnityEngine;
-using UnityEngine.Assertions;
 using Utility;
 using Utility.Multithreading;
 
@@ -35,6 +35,7 @@ namespace ECS.StreamableLoading.AudioClips
                 ProfilingCounters.AudioClipsReferenced.Value++;
 
             referencesCount++;
+
             LastUsedFrame = MultithreadingUtility.FrameCount;
         }
 
@@ -42,12 +43,14 @@ namespace ECS.StreamableLoading.AudioClips
         {
             referencesCount--;
 
-            Assert.IsFalse(referencesCount < 0, "Reference count of AudioClip should never be negative!");
+            if (referencesCount < 0)
+            {
+                ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.SDK_AUDIO_SOURCES);
+            }
 
             LastUsedFrame = MultithreadingUtility.FrameCount;
 
-            if (referencesCount == 0)
-                ProfilingCounters.AudioClipsReferenced.Value--;
+            if (referencesCount == 0) ProfilingCounters.AudioClipsReferenced.Value--;
         }
 
         public bool CanBeDisposed() =>

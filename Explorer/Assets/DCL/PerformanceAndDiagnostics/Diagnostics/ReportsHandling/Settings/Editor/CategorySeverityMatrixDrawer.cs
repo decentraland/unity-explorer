@@ -22,6 +22,7 @@ namespace Diagnostics.ReportsHandling.Settings.Editor
                                                                             .Where(f => f.FieldType == typeof(string))
                                                                             .Select(f => f.GetValue(null))
                                                                             .Cast<string>()
+                                                                            .OrderBy(s => s)
                                                                             .ToArray();
 
         /// <summary>

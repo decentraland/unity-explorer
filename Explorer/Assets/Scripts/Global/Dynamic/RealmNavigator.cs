@@ -114,7 +114,7 @@ namespace Global.Dynamic
                         remoteEntities.ForceRemoveAll(world);
                         await roomHub.StopIfNotAsync();
 
-                        // Re-add on exception? If there is timeout
+                        // By removing the CameraSamplingData, we stop the ring calculation
                         world.Remove<CameraSamplingData>(cameraEntity.Object);
 
                         await ChangeRealmAsync(realm, ct);

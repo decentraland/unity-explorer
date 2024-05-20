@@ -11,7 +11,9 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
+using Microsoft.Extensions.ObjectPool;
 using SceneRunner.Scene;
+using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -21,7 +23,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     [UpdateInGroup(typeof(SDKAudioSourceGroup))]
     [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget frameTimeBudgetProvider;
@@ -33,7 +35,8 @@ namespace DCL.SDKComponents.AudioSources
         private readonly IDereferencableCache<AudioClip, GetAudioClipIntention> cache;
         private readonly AudioMixerGroup audioMixerGroup;
 
-        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry, IPerformanceBudget frameTimeBudgetProvider,
+        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
+            IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider, AudioMixerGroup audioMixerGroup) : base(world)
         {
             this.world = world;
@@ -62,7 +65,9 @@ namespace DCL.SDKComponents.AudioSources
                 return;
 
             if (!audioSourceComponent.AudioSourceAssigned)
+            {
                 audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
+            }
 
             audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
@@ -98,11 +103,10 @@ namespace DCL.SDKComponents.AudioSources
 
             if (component.AudioClipUrl != sdkComponent.AudioClipUrl)
             {
-                component.CleanUp(world, cache, audioSourcesPool);
+                component.CleanUp(world, cache);
                 component.AudioClipUrl = sdkComponent.AudioClipUrl;
 
-                if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise))
-                    component.ClipPromise = clipPromise!.Value;
+                if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise)) { component.ClipPromise = clipPromise!.Value; }
             }
 
             sdkComponent.IsDirty = false;

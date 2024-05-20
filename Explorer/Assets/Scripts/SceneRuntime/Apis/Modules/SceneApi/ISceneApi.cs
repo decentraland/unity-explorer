@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules.SceneApi
 {
-    public interface ISceneApi : IDisposable
+    public interface ISceneApi
     {
         public GetSceneResponse GetSceneInfo();
 

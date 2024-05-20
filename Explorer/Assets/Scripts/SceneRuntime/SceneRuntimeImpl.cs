@@ -107,14 +107,9 @@ namespace SceneRuntime
             jsApiBunch.AddHostObject(itemName, target);
         }
 
-        public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
-        {
-            Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
-        }
-
         public void SetIsDisposing()
         {
-            engineApi?.SetIsDisposing();
+            jsApiBunch.SetIsDisposing();
         }
 
         public UniTask StartScene()

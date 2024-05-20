@@ -84,6 +84,7 @@ namespace DCL.Nametags
             nametagView.InjectConfiguration(chatBubbleConfigurationSo);
             nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName);
             nametagView.gameObject.name = avatarShape.ID;
+            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
 
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
