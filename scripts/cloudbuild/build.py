@@ -164,23 +164,22 @@ def download_artifact(id):
     artifact_url = response_json['links']['download_primary']['href']
 
     download_dir = 'build'
-    filename = os.path.join(download_dir, 'artifact.zip')
+    filepath = os.path.join(download_dir, 'artifact.zip')
     os.makedirs(download_dir, exist_ok=True)
 
+    print('Started downloading artifacts from Unity Cloud...')
+
     response = requests.get(artifact_url)
-    with open(filename, 'wb') as f:
+    with open(filepath, 'wb') as f:
         f.write(response.content)
 
-    # Extract the contents of the zip file
-    with zipfile.ZipFile(filename, 'r') as zip_ref:
+    print('Started extracting artifacts from Unity Cloud...')
+
+    with zipfile.ZipFile(filepath, 'r') as zip_ref:
         zip_ref.extractall(download_dir)
 
-    print(f"Zip file downloaded and extracted to {download_dir}")
-    # TEMP
-    files = os.listdir()
-    for file in files:
-        print(file)
-
+    os.remove(filepath)
+    print('Artifacts ready!')
 
 # Entrypoint here ->
 
