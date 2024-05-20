@@ -146,7 +146,5 @@ namespace CrdtEcsBridge.RestrictedActions
             await UniTask.SwitchToMainThread();
             await mvcManager.ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params(contractAddress, tokenId)));
         }
-
-        public void Dispose() { }
     }
 }
