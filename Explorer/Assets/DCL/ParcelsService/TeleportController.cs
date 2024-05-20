@@ -14,6 +14,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
+using Random = System.Random;
 using SpawnPoint = DCL.Ipfs.SceneMetadata.SpawnPoint;
 
 namespace DCL.ParcelsService
@@ -177,14 +178,33 @@ namespace DCL.ParcelsService
 
         private static Vector3 GetSpawnPositionOffset(SpawnPoint spawnPoint)
         {
-            static float GetMidPoint(float[] coordArray)
+            static float GetRandomPoint(float[] coordArray)
             {
-                var sum = 0f;
+                float randomPoint = 0;
 
-                for (var i = 0; i < coordArray.Length; i++)
-                    sum += (int)coordArray[i];
+                switch (coordArray.Length)
+                {
+                    case 1:
+                        randomPoint = coordArray[0];
+                        break;
+                    case >= 2:
+                    {
+                        float min = coordArray[0];
+                        float max = coordArray[1];
 
-                return sum / coordArray.Length;
+                        if (Mathf.Approximately(min, max))
+                            return max;
+
+                        if (min > max)
+                            (min, max) = (max, min);
+
+                        Random r = new Random();
+                        randomPoint = (float)((r.NextDouble() * (max - min)) + min);
+                        break;
+                    }
+                }
+
+                return randomPoint;
             }
 
             static float? GetSpawnComponent(SpawnPoint.Coordinate coordinate)
@@ -193,7 +213,7 @@ namespace DCL.ParcelsService
                     return coordinate.SingleValue.Value;
 
                 if (coordinate.MultiValue != null)
-                    return GetMidPoint(coordinate.MultiValue);
+                    return GetRandomPoint(coordinate.MultiValue);
 
                 return null;
             }
