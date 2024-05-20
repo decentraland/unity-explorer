@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49ee1f2493e44e029443e1a749da5565, type: 3}
   m_Name: TerrainDataDebug+
   m_EditorClassIdentifier: 
+  parcelSize: 16
   terrainSize: 512
   chunkSize: 512
   heightScaleNerf: 0.5
@@ -19,6 +20,7 @@ MonoBehaviour:
   terrainHoleEdgeSize: 0.5
   minHeight: 0
   pondDepth: 0
+  borderPadding: 2
   terrainHeightNoise: {fileID: 11400000, guid: f1828e41f6f44394c8807749fc57c5bd, type: 2}
   terrainMaterial: {fileID: 2100000, guid: 01f1076962f95af4aa8276dd6e16f6d6, type: 2}
   terrainLayers:

@@ -46,7 +46,7 @@ namespace SceneRunner
     /// </summary>
     public class SceneInstanceDependencies : IDisposable
     {
-        public readonly CRDTProtocol CRDTProtocol;
+        public readonly ICRDTProtocol CRDTProtocol;
         public readonly IInstancePoolsProvider PoolsProvider;
         public readonly ICRDTMemoryAllocator CRDTMemoryAllocator;
         public readonly IOutgoingCRDTMessagesProvider OutgoingCRDTMessagesProvider;
@@ -58,16 +58,59 @@ namespace SceneRunner
         public readonly ICRDTWorldSynchronizer CRDTWorldSynchronizer;
         public readonly URLAddress SceneCodeUrl;
         public readonly SceneEcsExecutor EcsExecutor;
+        internal readonly ISystemGroupsUpdateGate systemGroupThrottler;
+        internal readonly IWorldTimeProvider worldTimeProvider;
         private readonly ISceneData sceneData;
 
         private readonly MutexSync ecsMutexSync;
         private readonly ICRDTDeserializer crdtDeserializer;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly ISystemGroupsUpdateGate systemGroupThrottler;
-        private readonly IWorldTimeProvider worldTimeProvider;
         private readonly ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies;
 
         private readonly Dictionary<CRDTEntity, Entity> entitiesMap = new (1000, CRDTEntityComparer.INSTANCE);
+
+        /// <summary>
+        ///     For Unit Test only
+        /// </summary>
+        internal SceneInstanceDependencies(
+            ICRDTProtocol crdtProtocol,
+            IInstancePoolsProvider poolsProvider,
+            ICRDTMemoryAllocator crdtMemoryAllocator,
+            IOutgoingCRDTMessagesProvider outgoingCRDTMessagesProvider,
+            IEntityCollidersSceneCache entityCollidersCache,
+            ISceneStateProvider sceneStateProvider,
+            ISceneExceptionsHandler exceptionsHandler,
+            ECSWorldFacade ecsWorldFacade,
+            ICRDTWorldSynchronizer crdtWorldSynchronizer,
+            URLAddress sceneCodeUrl,
+            SceneEcsExecutor ecsExecutor,
+            ISceneData sceneData,
+            MutexSync ecsMutexSync,
+            ICRDTDeserializer crdtDeserializer,
+            IECSToCRDTWriter ecsToCRDTWriter,
+            ISystemGroupsUpdateGate systemGroupThrottler,
+            IWorldTimeProvider worldTimeProvider,
+            ECSWorldInstanceSharedDependencies ecsWorldSharedDependencies)
+        {
+            CRDTProtocol = crdtProtocol;
+            PoolsProvider = poolsProvider;
+            CRDTMemoryAllocator = crdtMemoryAllocator;
+            OutgoingCRDTMessagesProvider = outgoingCRDTMessagesProvider;
+            EntityCollidersCache = entityCollidersCache;
+            SceneStateProvider = sceneStateProvider;
+            ExceptionsHandler = exceptionsHandler;
+            ECSWorldFacade = ecsWorldFacade;
+            CRDTWorldSynchronizer = crdtWorldSynchronizer;
+            SceneCodeUrl = sceneCodeUrl;
+            EcsExecutor = ecsExecutor;
+            this.sceneData = sceneData;
+            this.ecsMutexSync = ecsMutexSync;
+            this.crdtDeserializer = crdtDeserializer;
+            this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.systemGroupThrottler = systemGroupThrottler;
+            this.worldTimeProvider = worldTimeProvider;
+            this.ecsWorldSharedDependencies = ecsWorldSharedDependencies;
+        }
 
         public SceneInstanceDependencies(ISDKComponentsRegistry sdkComponentsRegistry, IEntityCollidersGlobalCache entityCollidersGlobalCache,
             ISceneData sceneData, IPartitionComponent partitionProvider,
@@ -86,7 +129,7 @@ namespace SceneRunner
             OutgoingCRDTMessagesProvider = new OutgoingCRDTMessagesProvider(sdkComponentsRegistry, CRDTProtocol, CRDTMemoryAllocator);
             ecsToCRDTWriter = new ECSToCRDTWriter(OutgoingCRDTMessagesProvider);
             EntityCollidersCache = EntityCollidersSceneCache.Create(entityCollidersGlobalCache);
-            ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo, CRDTProtocol).EnsureNotNull();
+            ExceptionsHandler = SceneExceptionsHandler.Create(SceneStateProvider, sceneData.SceneShortInfo).EnsureNotNull();
             var entityEventsBuilder = new EntityEventsBuilder();
 
             /* Pass dependencies here if they are needed by the systems */
@@ -123,55 +166,95 @@ namespace SceneRunner
             ExceptionsHandler.Dispose();
         }
 
-        internal class WithRuntimeAndEngineAPI : IDisposable
+        /// <summary>
+        ///     The base class is for Observables
+        /// </summary>
+        public abstract class WithRuntimeAndJsAPIBase : IDisposable
         {
             public readonly IEngineApi EngineAPI;
             public readonly IRestrictedActionsAPI RestrictedActionsAPI;
             public readonly IRuntime RuntimeImplementation;
             public readonly ISceneApi SceneApiImplementation;
-            public readonly IWebSocketApi WebSocketAipImplementation = new WebSocketApiImplementation();
+            public readonly IWebSocketApi WebSocketAipImplementation;
             public readonly ICommunicationsControllerAPI CommunicationsControllerAPI;
-            public readonly ISimpleFetchApi SimpleFetchApi = new LogSimpleFetchApi(new SimpleFetchApiImplementation());
+            public readonly ISimpleFetchApi SimpleFetchApi;
 
-            private readonly SceneInstanceDependencies dependencies;
-            private readonly ISceneRuntime runtime;
+            public readonly SceneInstanceDependencies SyncDeps;
+            public readonly ISceneRuntime Runtime;
 
-            public WithRuntimeAndEngineAPI
-            (SceneInstanceDependencies sceneInstanceDependencies, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
-                IGlobalWorldActions globalWorldActions, IRealmData realmData, ICommunicationControllerHub messagePipesHub)
+            /// <summary>
+            ///     For Unit Tests only
+            /// </summary>
+            protected internal WithRuntimeAndJsAPIBase(
+                IEngineApi engineAPI,
+                IRestrictedActionsAPI restrictedActionsAPI,
+                IRuntime runtimeImplementation,
+                ISceneApi sceneApiImplementation,
+                IWebSocketApi webSocketApi,
+                ISimpleFetchApi simpleFetchApi,
+                ICommunicationsControllerAPI communicationsControllerAPI,
+                SceneInstanceDependencies syncDeps,
+                ISceneRuntime runtime)
             {
-                dependencies = sceneInstanceDependencies;
-                runtime = sceneRuntime;
+                EngineAPI = engineAPI;
+                RestrictedActionsAPI = restrictedActionsAPI;
+                RuntimeImplementation = runtimeImplementation;
+                SceneApiImplementation = sceneApiImplementation;
+                CommunicationsControllerAPI = communicationsControllerAPI;
+                WebSocketAipImplementation = webSocketApi;
+                SimpleFetchApi = simpleFetchApi;
+                SyncDeps = syncDeps;
+                Runtime = runtime;
+            }
 
-                EngineAPI = new EngineAPIImplementation(
-                    sharedPoolsProvider,
-                    dependencies.PoolsProvider,
-                    dependencies.CRDTProtocol,
-                    dependencies.crdtDeserializer,
-                    crdtSerializer,
-                    dependencies.CRDTWorldSynchronizer,
-                    dependencies.OutgoingCRDTMessagesProvider,
-                    dependencies.systemGroupThrottler,
-                    dependencies.ExceptionsHandler,
-                    dependencies.ecsMutexSync);
-
-                RestrictedActionsAPI = new RestrictedActionsAPIImplementation(mvcManager, dependencies.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, dependencies.sceneData);
-                RuntimeImplementation = new RuntimeImplementation(sceneRuntime, dependencies.sceneData, dependencies.worldTimeProvider, realmData);
-                SceneApiImplementation = new SceneApiImplementation(dependencies.sceneData);
-                CommunicationsControllerAPI = new CommunicationsControllerAPIImplementation(dependencies.sceneData, messagePipesHub, sceneRuntime, dependencies.CRDTMemoryAllocator, dependencies.ecsWorldSharedDependencies.SceneStateProvider);
+            protected WithRuntimeAndJsAPIBase(
+                IEngineApi engineApi,
+                SceneInstanceDependencies syncDeps,
+                ISceneRuntime sceneRuntime,
+                IJsOperations jsOperations,
+                IMVCManager mvcManager,
+                IGlobalWorldActions globalWorldActions,
+                IRealmData realmData,
+                ICommunicationControllerHub messagePipesHub)
+                : this(
+                    engineApi,
+                    new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData),
+                    new RuntimeImplementation(jsOperations, syncDeps.sceneData, syncDeps.worldTimeProvider, realmData),
+                    new SceneApiImplementation(syncDeps.sceneData),
+                    new WebSocketApiImplementation(),
+                    new LogSimpleFetchApi(new SimpleFetchApiImplementation()),
+                    new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator, syncDeps.ecsWorldSharedDependencies.SceneStateProvider),
+                    syncDeps,
+                    sceneRuntime)
+            {
             }
 
             public void Dispose()
             {
-                CommunicationsControllerAPI.Dispose();
-                SceneApiImplementation.Dispose();
-                RuntimeImplementation.Dispose();
-                RestrictedActionsAPI.Dispose();
-                EngineAPI.Dispose();
+                // Runtime is responsible to dispose APIs
 
-                runtime.Dispose();
-                dependencies.Dispose();
+                Runtime.Dispose();
+                SyncDeps.Dispose();
             }
+        }
+
+        internal class WithRuntimeAndJsAPI : WithRuntimeAndJsAPIBase
+        {
+            public WithRuntimeAndJsAPI
+            (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
+                IGlobalWorldActions globalWorldActions, IRealmData realmData, ICommunicationControllerHub messagePipesHub)
+                : base(new EngineAPIImplementation(
+                        sharedPoolsProvider,
+                        syncDeps.PoolsProvider,
+                        syncDeps.CRDTProtocol,
+                        syncDeps.crdtDeserializer,
+                        crdtSerializer,
+                        syncDeps.CRDTWorldSynchronizer,
+                        syncDeps.OutgoingCRDTMessagesProvider,
+                        syncDeps.systemGroupThrottler,
+                        syncDeps.ExceptionsHandler,
+                        syncDeps.ecsMutexSync),
+                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub) { }
         }
     }
 }

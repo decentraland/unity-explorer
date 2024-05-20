@@ -32,5 +32,6 @@ namespace SceneRunner.Scene
         internal UniTask Tick(float dt);
 
         bool Contains(Vector2Int parcel);
+        bool IsSceneReady();
     }
 }

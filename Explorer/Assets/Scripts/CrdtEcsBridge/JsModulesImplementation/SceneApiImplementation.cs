@@ -14,8 +14,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.sceneData = sceneData;
         }
 
-        public void Dispose() { }
-
         public ISceneApi.GetSceneResponse GetSceneInfo() =>
             new (
                 cid: sceneData.SceneEntityDefinition.id,
