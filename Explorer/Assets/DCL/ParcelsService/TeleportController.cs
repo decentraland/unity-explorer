@@ -21,6 +21,8 @@ namespace DCL.ParcelsService
 {
     public partial class TeleportController : ITeleportController
     {
+        private static readonly Random RANDOM = new ();
+        
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private IRetrieveScene? retrieveScene;
         private World? world;
@@ -198,8 +200,7 @@ namespace DCL.ParcelsService
                         if (min > max)
                             (min, max) = (max, min);
 
-                        Random r = new Random();
-                        randomPoint = (float)((r.NextDouble() * (max - min)) + min);
+                        randomPoint = (float)((RANDOM.NextDouble() * (max - min)) + min);
                         break;
                     }
                 }
