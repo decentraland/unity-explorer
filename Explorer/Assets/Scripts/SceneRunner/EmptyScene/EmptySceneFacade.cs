@@ -35,6 +35,11 @@ namespace SceneRunner.EmptyScene
             Dispose();
         }
 
+        public bool IsSceneReady()
+        {
+            return true;
+        }
+
         public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct) =>
             UniTask.CompletedTask;
 

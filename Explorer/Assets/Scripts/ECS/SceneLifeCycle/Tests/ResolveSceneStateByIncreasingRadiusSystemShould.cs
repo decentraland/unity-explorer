@@ -99,7 +99,7 @@ namespace ECS.SceneLifeCycle.Tests
                     },
                     new IpfsPath()), new PartitionComponent
                 {
-                    Bucket = i, RawSqrDistance = ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i - 1f
+                    Bucket = i, RawSqrDistance = ParcelMathHelper.PARCEL_SIZE * i * ParcelMathHelper.PARCEL_SIZE * i - 1f, OutOfRange = i < 4
                 }, Substitute.For<ISceneFacade>());
             }
 

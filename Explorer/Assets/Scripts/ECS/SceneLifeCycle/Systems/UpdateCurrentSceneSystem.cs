@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using DCL.Character.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using SceneRunner.Scene;
 using UnityEngine;
@@ -20,11 +21,14 @@ namespace ECS.SceneLifeCycle.Systems
 
         private Vector2Int lastParcelProcessed;
 
-        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, Entity playerEntity) : base(world)
+        private readonly SceneAssetLock sceneAssetLock;
+
+        internal UpdateCurrentSceneSystem(World world, IRealmData realmData, IScenesCache scenesCache, Entity playerEntity, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.playerEntity = playerEntity;
+            this.sceneAssetLock = sceneAssetLock;
             ResetProcessedParcel();
         }
 
@@ -40,14 +44,25 @@ namespace ECS.SceneLifeCycle.Systems
                 ResetProcessedParcel();
                 return;
             }
-
+            
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
+            UpdateSceneReadiness(parcel);
+            UpdateCurrentScene(parcel);
+        }
 
+        private void UpdateSceneReadiness(Vector2Int parcel)
+        {
+            if (scenesCache.TryGetByParcel(parcel, out var currentScene))
+                sceneAssetLock.IsLocked = !currentScene.IsSceneReady();
+        }
+
+        private void UpdateCurrentScene(Vector2Int parcel)
+        {
             if (lastParcelProcessed == parcel) return;
 
-            scenesCache.TryGetByParcel(lastParcelProcessed, out ISceneFacade? lastProcessedScene);
-            scenesCache.TryGetByParcel(parcel, out ISceneFacade? currentScene);
+            scenesCache.TryGetByParcel(lastParcelProcessed, out var lastProcessedScene);
+            scenesCache.TryGetByParcel(parcel, out var currentScene);
 
             if (lastProcessedScene != currentScene)
             {
