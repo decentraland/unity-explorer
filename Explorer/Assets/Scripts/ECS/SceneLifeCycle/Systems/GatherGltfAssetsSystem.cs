@@ -16,7 +16,7 @@ namespace ECS.SceneLifeCycle.Systems
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
-        private const int FRAMES_COUNT = 60;
+        private const int FRAMES_COUNT = 90;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -25,19 +25,20 @@ namespace ECS.SceneLifeCycle.Systems
 
         private HashSet<EntityReference>? entitiesUnderObservation;
 
-        private int framesLeft = FRAMES_COUNT;
         private bool concluded;
         private int assetsResolved;
         private int totalAssetsToResolve = -1;
 
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
+        private readonly ISceneStateProvider sceneStateProvider;
 
-        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
             this.eventsBuffer = eventsBuffer;
+            this.sceneStateProvider = sceneStateProvider;
 
             forEachEvent = GatherEntities;
         }
@@ -51,14 +52,14 @@ namespace ECS.SceneLifeCycle.Systems
         {
             HashSetPool<EntityReference>.Release(entitiesUnderObservation);
             entitiesUnderObservation = null;
+            sceneData.SceneLoadingConcluded = true;
         }
 
         protected override void Update(float t)
         {
-            if (framesLeft > 0)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
             {
                 eventsBuffer.ForEach(forEachEvent);
-                framesLeft--;
             }
             else if (!concluded)
             {
@@ -69,6 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     // if there is no report to dequeue, nothing to do
                     concluded = true;
+                    sceneData.SceneLoadingConcluded = true;
                     return;
                 }
 
@@ -123,13 +125,14 @@ namespace ECS.SceneLifeCycle.Systems
                     reports.Value.Dispose();
                     reports = null;
                 }
+
+                sceneData.SceneLoadingConcluded = concluded;
             }
         }
 
         private void GatherEntities(Entity entity, GltfContainerComponent component)
         {
             // No matter to which state component has changed
-
             EntityReference entityRef = World.Reference(entity);
             entitiesUnderObservation!.Add(entityRef);
         }

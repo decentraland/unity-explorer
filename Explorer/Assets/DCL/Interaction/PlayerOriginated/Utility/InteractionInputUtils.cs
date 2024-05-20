@@ -90,6 +90,26 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             resultsIntent.ValidIndices.Add((byte)entryIndex);
         }
 
+        /// <summary>
+        ///     Handler Pointer Up and Pointer Down, check the corresponding input action if it was upped or downed this frame
+        /// </summary>
+        public static void TryAppendButtonAction(InputAction inputAction, DCL.ECSComponents.InputAction ecsInputAction,
+            ref AppendPointerEventResultsIntent resultsIntent)
+        {
+            if (inputAction.WasPressedThisFrame())
+            {
+                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetDown);
+                return;
+            }
+
+            if (inputAction.WasReleasedThisFrame())
+            {
+                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetUp);
+                return;
+            }
+        }
+
+
         public static void PrepareDefaultValues(this PBPointerEvents.Types.Info info)
         {
             if (!info.HasButton)

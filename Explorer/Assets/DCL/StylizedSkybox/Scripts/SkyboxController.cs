@@ -47,6 +47,7 @@ public class SkyboxController : MonoBehaviour
 
     [Header("Clouds")]
     [GradientUsage(true)] public Gradient CloudsColorRamp;
+    public AnimationCurve CloudsHighlightsIntensity;
 
     [Header("Fog")]
     [InspectorName("Enabled")] public bool Fog = true;
@@ -226,6 +227,7 @@ public class SkyboxController : MonoBehaviour
         RenderSettings.skybox.SetColor("_SunColor", SunColorRamp.Evaluate(NormalizedTime));
         RenderSettings.skybox.SetColor("_RimColor", RimColorRamp.Evaluate(NormalizedTime));
         RenderSettings.skybox.SetColor("_CloudsColor", CloudsColorRamp.Evaluate(NormalizedTime));
+        RenderSettings.skybox.SetFloat("_Cloud_Highlights", CloudsHighlightsIntensity.Evaluate(NormalizedTime));
     }
 
     /// <summary>

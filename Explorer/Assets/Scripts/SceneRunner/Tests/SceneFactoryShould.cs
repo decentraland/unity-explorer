@@ -79,14 +79,17 @@ namespace SceneRunner.Tests
 
             Assert.IsNotNull(sceneFacade);
 
-            Assert.IsNotNull(sceneFacadeImpl.crdtProtocol);
-            Assert.IsNotNull(sceneFacadeImpl.runtimeInstance);
-            Assert.IsNotNull(sceneFacadeImpl.crdtWorldSynchronizer);
-            Assert.IsNotNull(sceneFacadeImpl.instancePoolsProvider);
-            Assert.IsNotNull(sceneFacadeImpl.crdtMemoryAllocator);
-            Assert.IsNotNull(sceneFacadeImpl.sceneExceptionsHandler);
+            var deps = sceneFacadeImpl.deps;
 
-            Assert.AreNotEqual(default(World), sceneFacadeImpl.ecsWorldFacade.EcsWorld);
+            Assert.IsNotNull(deps.Runtime);
+            Assert.IsNotNull(deps.RuntimeImplementation);
+            Assert.IsNotNull(deps.SyncDeps.CRDTWorldSynchronizer);
+            Assert.IsNotNull(deps.SyncDeps.ExceptionsHandler);
+            Assert.IsNotNull(deps.SyncDeps.SceneStateProvider);
+            Assert.IsNotNull(deps.SyncDeps.PoolsProvider);
+            Assert.IsNotNull(deps.SyncDeps.CRDTMemoryAllocator);
+
+            Assert.AreNotEqual(default(World), sceneFacadeImpl.EcsExecutor.World);
         }
 
         [Test]

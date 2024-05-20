@@ -16,7 +16,7 @@ namespace SceneRunner.Scene.Tests
         [SetUp]
         public void SetUp()
         {
-            sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo(), Substitute.For<CRDTProtocol>());
+            sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo());
 
             reportHandler = new MockedReportScope();
         }

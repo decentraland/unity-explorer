@@ -32,8 +32,9 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
             componentPool.Get().Returns(_ => new PartitionComponent());
+            var realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
 
-            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer());
+            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
             system.partitionDataContainer.Restart();
         }
 

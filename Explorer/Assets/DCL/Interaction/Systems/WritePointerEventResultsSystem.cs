@@ -85,11 +85,25 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
-
-                messageSent = true;
             }
-
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
+
+            if (intent.ValidInputActions != null)
+            {
+                foreach (var inputAction in intent.ValidInputActions)
+                {
+                    RaycastHit raycastHit = raycastHitPool.Get();
+
+                    raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
+                        sdkEntity, intent.Ray.origin, intent.Ray.direction);
+
+                    AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
+
+                    //We dont consider hover events to disable global input messages
+                    if (inputAction.Value != PointerEventType.PetHoverEnter && inputAction.Value != PointerEventType.PetHoverLeave) { messageSent = true; }
+                }
+                pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
+            }
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)

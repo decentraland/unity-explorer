@@ -2,6 +2,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
@@ -18,7 +19,7 @@ using Utility;
 
 namespace DCL.Roads.Systems
 {
-    [UpdateInGroup(typeof(RealmGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [LogCategory(ReportCategory.ROADS)]
     public partial class RoadInstantiatorSystem : BaseUnityLoopSystem
     {
