@@ -185,8 +185,6 @@ namespace DCL.Interaction.Raycast.Systems
 
             raycastComponent.Executed = !sdkComponent.Continuous;
 
-            ReportHub.LogError(ReportCategory.INPUT, $"RAYCAST WRITTEN! {ray.direction} hit meshName {raycastResult.Hits.First()?.MeshName} continuous? {sdkComponent.Continuous}");
-
             raycastResult.Direction.Set(ray.direction);
             raycastResult.GlobalOrigin.Set(ray.origin);
             raycastResult.Timestamp = sdkComponent.Timestamp;
