@@ -1,23 +1,14 @@
-using System.Collections.Generic;
-using Arch.Core;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
-using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
-using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
-    ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.LOD.Tests
 {
@@ -27,7 +18,6 @@ namespace DCL.LOD.Tests
         private LODAssetsPool lodAssetsPool;
         private PartitionComponent partitionComponent;
         private SceneDefinitionComponent sceneDefinitionComponent;
-
 
         private const string fakeHash = "FAKE_HASH";
 
@@ -40,13 +30,6 @@ namespace DCL.LOD.Tests
                 2
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
-
-            
-            var frameCapBudget = Substitute.For<IPerformanceBudget>();
-            frameCapBudget.TrySpendBudget().Returns(true);
-
-            var memoryBudget = Substitute.For<IPerformanceBudget>();
-            memoryBudget.TrySpendBudget().Returns(true);
 
             var scenesCache = Substitute.For<IScenesCache>();
             var sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
@@ -72,12 +55,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();
 
-            var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, memoryBudget, frameCapBudget, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform,
-                textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
-                {
-                    new TextureArrayResolutionDescriptor(256, 500, 1)
-                }, TextureFormat.BC7, 20, 1));
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue);
         }
 
 
@@ -106,27 +84,7 @@ namespace DCL.LOD.Tests
 
   
          
-        [Test]
-        public void ResolvePromiseAndInstantiate()
-        {
-            //Arrange
-            var promiseGenerated = GenerateLODPromise();
-            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
-            sceneLODInfo.CurrentLODLevel = 1;
-            sceneLODInfo.IsDirty = true;
-            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
-
-            //Act
-            system.Update(0);
-
-            //Assert
-            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
-            Assert.IsFalse(sceneLODInfoRetrieved.IsDirty);
-            Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD?.Root);
-            Assert.AreEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
-            Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
-            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
-        }
+       
 
         /*
    TODO: Uncomment when LOD Async Instantiation is back up
@@ -157,47 +115,8 @@ namespace DCL.LOD.Tests
       Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
   }
   */
-        [Test]
-        public void UpdateCache()
-        {
-            //Arrange
-            var promiseGenerated = GenerateLODPromise();
-            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
-            sceneLODInfo.CurrentLODLevel = 1;
-            sceneLODInfo.IsDirty = true;
-            world.Create(sceneLODInfo, sceneDefinitionComponent);
-            system.Update(0);
+        
 
-            world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
-                (ref SceneLODInfo sceneLODInfo) =>
-                {
-                    var newPromiseGenerated = GenerateLODPromise();
-                    sceneLODInfo.CurrentLODLevel = 2;
-                    sceneLODInfo.CurrentLODPromise = newPromiseGenerated.Item2;
-                    sceneLODInfo.IsDirty = true;
-                });
 
-            //Act
-            system.Update(0);
-
-            //Assert
-            Assert.AreEqual(lodAssetsPool.vacantInstances.Count, 1);
-        }
-
-        private (AssetBundleData, Promise) GenerateLODPromise()
-        {
-            var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromName("Cube"),
-                new PartitionComponent());
-
-            var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
-                new AssetBundleData[]
-                {
-                });
-
-            world.Add(promise.Entity,
-                new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
-            return (fakeAssetBundleData, promise);
-        }
     }
 }

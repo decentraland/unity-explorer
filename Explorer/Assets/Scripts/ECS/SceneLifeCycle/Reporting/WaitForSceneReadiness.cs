@@ -48,10 +48,17 @@ namespace ECS.SceneLifeCycle.Reporting
             {
                 // add timeout in case of a trouble
                 await loadProcessReport.CompletionSource.Task
-                                       .Timeout(TIMEOUT)
-                                       .AttachExternalCancellation(ct);
+                    .Timeout(TIMEOUT)
+                    .AttachExternalCancellation(ct);
             }
-            catch (Exception e) { loadProcessReport.CompletionSource.TrySetException(e); }
+            catch (Exception e)
+            {
+                loadProcessReport.CompletionSource.TrySetException(e);
+                sceneReadinessReportQueue.TryDequeue(new []
+                {
+                    parcel
+                }, out _);
+            }
         }
     }
 }

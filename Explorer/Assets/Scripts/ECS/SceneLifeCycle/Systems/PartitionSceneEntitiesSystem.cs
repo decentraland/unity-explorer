@@ -9,6 +9,8 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using Unity.Collections;
 using Unity.Jobs;
+using UnityEngine;
+using Utility;
 using static ECS.Prioritization.ScenesPartitioningUtils;
 using static Utility.ParcelMathHelper;
 
@@ -31,6 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
+        private readonly IRealmPartitionSettings realmPartitionSettings;
 
         private readonly byte emptyScenePartition;
 
@@ -43,15 +46,19 @@ namespace ECS.SceneLifeCycle.Systems
             IComponentPool<PartitionComponent> partitionComponentPool,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
-            PartitionDataContainer partitionDataContainer) : base(world)
+            PartitionDataContainer partitionDataContainer,
+            IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
             this.partitionComponentPool = partitionComponentPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
             this.partitionDataContainer = partitionDataContainer;
+            this.realmPartitionSettings = realmPartitionSettings;
 
 
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
             emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
+            
+
         }
 
         public override void Dispose()
@@ -83,7 +90,10 @@ namespace ECS.SceneLifeCycle.Systems
             // Repartition if camera transform is qualified and the last job has already been completed
             if (readOnlyCameraSamplingData.IsDirty && !isRunningJob && partitionDataContainer.CurrentPartitionIndex > 0)
             {
-                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData);
+                float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
+                                          * PARCEL_SIZE;
+                float unloadingSqrDistance = unloadingDistance * unloadingDistance;
+                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance);
                 isRunningJob = true;
             }
         }

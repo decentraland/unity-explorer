@@ -80,6 +80,11 @@ namespace SceneRunner
             return false;
         }
 
+        public bool IsSceneReady()
+        {
+            return SceneData.SceneLoadingConcluded;
+        }
+
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
             AssertMainThread(nameof(StartUpdateLoopAsync));

@@ -113,19 +113,17 @@ namespace DCL.Landscape.Systems
         private void InitializeMiscVisibility()
         {
             IReadOnlyList<Transform> cliffs = terrainGenerator.Cliffs;
-            cliffsBoundaries = new NativeArray<VisibleBounds>(cliffs.Count * 3, Allocator.Persistent);
+            var visibleBoundsList = new List<VisibleBounds>();
 
-            for (var i = 0; i < cliffs.Count; i++)
+            foreach (Transform? cliff in cliffs)
             {
-                Transform cliff = cliffs[i];
                 MeshRenderer[] meshRenderers = cliff.GetComponentsInChildren<MeshRenderer>();
 
-                for (var j = 0; j < meshRenderers.Length; j++)
+                foreach (MeshRenderer cliffRenderer in meshRenderers)
                 {
-                    MeshRenderer cliffRenderer = meshRenderers[j];
                     Bounds bounds = cliffRenderer.bounds;
 
-                    cliffsBoundaries[(i * 3) + j] = new VisibleBounds
+                    var cliffsBoundary = new VisibleBounds
                     {
                         Bounds = new AABB
                         {
@@ -134,9 +132,12 @@ namespace DCL.Landscape.Systems
                         },
                     };
 
+                    visibleBoundsList.Add(cliffsBoundary);
                     cliffRenderers.Add(cliffRenderer);
                 }
             }
+
+            cliffsBoundaries = visibleBoundsList.ToNativeArray(Allocator.Persistent);
         }
 
         private void InitializeWaterVisibility()
@@ -172,7 +173,8 @@ namespace DCL.Landscape.Systems
             cameraPosition = camera.transform.position;
 
             var wind = terrainGenerator.Wind;
-            if(wind.parent == null)
+
+            if (wind.parent == null)
                 wind.parent = camera.transform;
 
             GeometryUtility.CalculateFrustumPlanes(camera.cullingMatrix, frustumPlanes);
