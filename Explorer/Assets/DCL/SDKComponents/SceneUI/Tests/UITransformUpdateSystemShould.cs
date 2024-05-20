@@ -1,4 +1,6 @@
-﻿using DCL.ECSComponents;
+﻿using CRDT;
+using CrdtEcsBridge.Components;
+using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
@@ -12,7 +14,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
         public async void SetUp()
         {
             await Initialize();
-            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider);
+            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY)));
         }
 
         [Test]

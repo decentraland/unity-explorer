@@ -2,6 +2,7 @@
 using Arch.System;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.Character;
 using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
@@ -15,11 +16,13 @@ using Utility;
 
 namespace DCL.ParcelsService
 {
-    public partial class TeleportController : ITeleportController
+    public class TeleportController : ITeleportController
     {
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private IRetrieveScene? retrieveScene;
         private World? world;
+        private Entity cameraEntity;
+        private Entity playerEntity;
 
         public IRetrieveScene SceneProviderStrategy
         {
@@ -28,7 +31,12 @@ namespace DCL.ParcelsService
 
         public World World
         {
-            set => world = value;
+            set
+            {
+                world = value;
+                cameraEntity = world.CacheCamera();
+                playerEntity = world.CachePlayer();
+            }
         }
 
         public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
@@ -45,7 +53,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                TeleportCharacterQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.SetProgress(1f);
                 return null;
             }
@@ -80,12 +88,12 @@ namespace DCL.ParcelsService
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            TeleportCharacterQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
+            TeleportCharacter(new PlayerTeleportIntent(targetPosition, parcel, loadReport));
 
             if (cameraTarget != null)
             {
-                ForceCameraLookAtQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
-                ForceCharacterLookAtQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value, targetPosition));
+                ForceCameraLookAt(new CameraLookAtIntent(cameraTarget.Value, targetPosition));
+                ForceCharacterLookAt(new PlayerLookAtIntent(cameraTarget.Value, targetPosition));
             }
 
             if (sceneDef == null)
@@ -104,7 +112,7 @@ namespace DCL.ParcelsService
         {
             if (retrieveScene == null)
             {
-                TeleportCharacterQuery(world, new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
+                TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));
                 loadReport.SetProgress(1f);
                 return;
             }
@@ -122,7 +130,7 @@ namespace DCL.ParcelsService
             // Add report to the queue so it will be grabbed by the actual scene
             sceneReadinessReportQueue.Enqueue(parcel, loadReport);
 
-            TeleportCharacterQuery(world, new PlayerTeleportIntent(characterPos, parcel, loadReport));
+            TeleportCharacter(new PlayerTeleportIntent(characterPos, parcel, loadReport));
 
             if (sceneDef == null)
             {
@@ -192,25 +200,20 @@ namespace DCL.ParcelsService
                 GetSpawnComponent(spawnPoint.position.z) ?? ParcelMathHelper.PARCEL_SIZE / 2f);
         }
 
-        [Query]
-        [All(typeof(PlayerComponent))]
-        private void TeleportCharacter([Data] PlayerTeleportIntent intent, in Entity entity)
+        private void TeleportCharacter(PlayerTeleportIntent intent)
         {
-            world?.Add(entity, intent);
+            world?.AddOrGet(playerEntity, intent);
         }
 
-        [Query]
-        [All(typeof(CameraComponent))]
-        private void ForceCameraLookAt([Data] CameraLookAtIntent intent, in Entity entity)
+
+        private void ForceCameraLookAt(CameraLookAtIntent intent)
         {
-            world?.Add(entity, intent);
+            world?.AddOrGet(cameraEntity, intent);
         }
 
-        [Query]
-        [All(typeof(CharacterRigidTransform), typeof(CharacterTransform))]
-        private void ForceCharacterLookAt([Data] PlayerLookAtIntent intent, in Entity entity)
+        private void ForceCharacterLookAt(PlayerLookAtIntent intent)
         {
-            world?.Add(entity, intent);
+            world?.AddOrGet(playerEntity, intent);
         }
     }
 }

@@ -3,6 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
+using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
@@ -36,6 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(SceneRootComponent))]
         private void OrphanChildrenOfDeletedEntity(ref UITransformComponent uiTransformComponentToBeDeleted)
         {
             var children = uiTransformComponentToBeDeleted.RelationData.Children;
@@ -51,13 +54,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     continue;
                 }
 
-                uiTransformComponentToBeDeleted.RelationData.RemoveChild(ref uiTransform.RelationData);
+                uiTransformComponentToBeDeleted.RelationData.RemoveChild(ref uiTransform.RelationData, childEntity);
                 SetNewChild(ref uiTransform, childEntity, sceneRoot);
             }
         }
 
         [Query]
-        private void DoUITransformParenting(in Entity entity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        [None(typeof(SceneRootComponent))]
+        private void DoUITransformParenting(Entity entity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
@@ -66,12 +70,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             {
                 Entity parentReference = newParentEntity;
 
+                var entityReference = World.Reference(entity);
+
                 //We have to remove the child from the old parent
                 if (uiTransformComponent.RelationData.parent != parentReference)
-                    RemoveFromParent(uiTransformComponent);
+                    RemoveFromParent(uiTransformComponent, entityReference);
 
-                if (parentReference != sceneRoot)
-                    SetNewChild(ref uiTransformComponent, World.Reference(entity), parentReference);
+                SetNewChild(ref uiTransformComponent, entityReference, parentReference);
             }
         }
 
@@ -100,7 +105,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             parentComponent.Transform.Add(childComponent.Transform);
         }
 
-        private void RemoveFromParent(UITransformComponent childComponent)
+        private void RemoveFromParent(UITransformComponent childComponent, EntityReference child)
         {
             if (!childComponent.RelationData.parent.IsAlive(World)) return;
 
@@ -112,7 +117,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return;
             }
 
-            parentTransform.RelationData.RemoveChild(ref childComponent.RelationData);
+            parentTransform.RelationData.RemoveChild(ref childComponent.RelationData, child);
         }
     }
 }
