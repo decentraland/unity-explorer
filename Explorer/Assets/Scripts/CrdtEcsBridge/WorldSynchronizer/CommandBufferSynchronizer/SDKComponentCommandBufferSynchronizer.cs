@@ -47,11 +47,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                 case CRDTReconciliationEffect.ComponentDeleted:
                     // if component is deleted return to the pool the existing one
                     Debug.Assert(world.Has<T>(entity));
-                    if (!world.Has<T>(entity))
-                    {
-                        //THIS IS BAD AND SHOULD NO BE NEEDED, but PBRaycastResults for some reason also get attached at least once to the entity instead of just used in the message.
-                        break;
-                    }
                     componentPool.Release(world.Get<T>(entity));
                     commandBuffer.Remove<T>(entity);
                     world.Get<RemovedComponents>(entity).Set.Add(typeof(T));

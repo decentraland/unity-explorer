@@ -61,7 +61,7 @@ namespace Global
                                                         .WithPool(onGet: raycastHitResult => raycastHitResult.Reset(),
                                                              onRelease: raycastHitResult =>
                                                              {
-                                                                 // Return hits to their own pool
+                                                                 // Return hits to their own pooldw
                                                                  for (var i = 0; i < raycastHitResult.Hits.Count; i++)
                                                                      raycastHitPool.Release(raycastHitResult.Hits[i]);
                                                              })
