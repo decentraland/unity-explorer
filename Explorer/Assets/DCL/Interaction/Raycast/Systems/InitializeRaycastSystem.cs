@@ -28,7 +28,6 @@ namespace DCL.Interaction.Raycast.Systems
         {
             HandleChangedComponentQuery(World);
             HandleNewComponentQuery(World);
-            HandleMissingRaycastResultQuery(World);
         }
 
         [Query]
@@ -37,18 +36,7 @@ namespace DCL.Interaction.Raycast.Systems
         private void HandleNewComponent(in Entity entity)
         {
             var comp = new RaycastComponent();
-            PBRaycastResult? raycastResult = raycastComponentPool.Get();
-            World.Add(entity, comp, raycastResult);
-        }
-
-        [Query]
-        [All(typeof(TransformComponent), typeof(PBRaycast))]
-        [None(typeof(PBRaycastResult))]
-        private void HandleMissingRaycastResult(in Entity entity)
-        {
-            //I Dont like this, but the SDK removes the PBRaycastResult and does not add it when it adds the PBRaycast + we dont remove the RaycastComponent
-            PBRaycastResult? raycastResult = raycastComponentPool.Get();
-            World.Add(entity, raycastResult);
+            World.Add(entity, comp);
         }
 
         [Query]

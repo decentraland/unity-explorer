@@ -238,7 +238,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                             continue;
 
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
-                            batchState.reconciliationState.Last, batchState.deserializationTarget);
+                            batchState.reconciliationState.Last, batchState.deserializationTarget, batchState.sdkComponentBridge.IsResultComponent);
                     }
                 }
             }

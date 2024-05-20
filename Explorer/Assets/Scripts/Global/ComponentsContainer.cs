@@ -58,16 +58,18 @@ namespace Global
                 // Special logic for pooling/releasing PBRaycastResult
                .Add(SDKComponentBuilder<PBRaycastResult>.Create(ComponentID.RAYCAST_RESULT)
                                                         .WithProtobufSerializer()
+                                                        .AsResult()
                                                         .WithPool(onGet: raycastHitResult => raycastHitResult.Reset(),
                                                              onRelease: raycastHitResult =>
                                                              {
-                                                                 // Return hits to their own pooldw
+                                                                 // Return hits to their own pool
                                                                  for (var i = 0; i < raycastHitResult.Hits.Count; i++)
                                                                      raycastHitPool.Release(raycastHitResult.Hits[i]);
                                                              })
                                                         .Build())
                .Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT)
                                                               .WithProtobufSerializer()
+                                                              .AsResult()
                                                               .WithPool(onRelease: pointerEventsResult =>
                                                                {
                                                                    if (pointerEventsResult.Hit != null)

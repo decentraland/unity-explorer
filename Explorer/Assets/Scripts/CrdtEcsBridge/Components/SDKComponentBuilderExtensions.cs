@@ -70,7 +70,14 @@ namespace CrdtEcsBridge.Components
             where T: class, IMessage<T>, new() =>
             sdkComponentBuilder.WithProtobufSerializer()
                                .WithPool(ClearProtobufComponent)
+                               .AsResult()
                                .Build();
+
+        public static SDKComponentBuilder<T> AsResult<T>(this SDKComponentBuilder<T> sdkComponentBuilder) where T: class, IMessage<T>, new()
+        {
+            sdkComponentBuilder.isResultComponent = true;
+            return sdkComponentBuilder;
+        }
 
         public static void SetAsDirty(IDirtyMarker dirtyMarker) =>
             dirtyMarker.IsDirty = true;
