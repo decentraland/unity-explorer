@@ -69,11 +69,12 @@ namespace ECS.SceneLifeCycle.Components
             };
         }
 
-        public JobHandle ScheduleJob(IReadOnlyCameraSamplingData readOnlyCameraSamplingData)
+        public JobHandle ScheduleJob(IReadOnlyCameraSamplingData readOnlyCameraSamplingData, float unloadSqrDistance)
         {
             partitionJob.CameraForward = readOnlyCameraSamplingData.Forward;
             partitionJob.CameraPosition = readOnlyCameraSamplingData.Position;
             partitionJob.ParcelCorners = parcelCorners;
+            partitionJob.UnloadingSqrDistance = unloadSqrDistance;
             return partitionJob.Schedule(CurrentPartitionIndex, 8);
         }
 
