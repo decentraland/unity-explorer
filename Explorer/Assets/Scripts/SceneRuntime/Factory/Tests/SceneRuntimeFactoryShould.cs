@@ -67,7 +67,7 @@ namespace SceneRuntime.Factory.Tests
                 instancePoolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
 
                 SceneRuntimeImpl sceneRuntime = await factory.CreateByPathAsync(path, instancePoolsProvider, new SceneShortInfo(), CancellationToken.None);
-                sceneRuntime.RegisterEngineApi(engineApi, sceneExceptionsHandler);
+                sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, sceneExceptionsHandler);
                 sceneRuntime.ExecuteSceneJson();
 
                 // Assert

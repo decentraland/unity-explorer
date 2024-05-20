@@ -15,7 +15,6 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 
         public void Dispose()
         {
-            api.Dispose();
         }
 
         [UsedImplicitly]

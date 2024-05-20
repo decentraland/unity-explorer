@@ -7,7 +7,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
     ///     The contracts correspond directly to the JS-SDK-Toolchain and its transport API.
     ///     They don't have Protobuf related stuff
     /// </summary>
-    public interface IEngineApi : IDisposable
+    public interface IEngineApi
     {
         /// <param name="dataMemory"></param>
         /// <param name="returnData"></param>
