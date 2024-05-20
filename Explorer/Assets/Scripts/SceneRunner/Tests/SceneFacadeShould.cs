@@ -2,19 +2,25 @@
 
 using Arch.Core;
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using CRDT.Deserializer;
 using CRDT.Memory;
 using CRDT.Protocol;
 using CRDT.Serializer;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
+using CrdtEcsBridge.RestrictedActions;
+using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
+using DCL.Time;
 using DCL.Utilities.Extensions;
 using DCL.Web3;
 using DCL.Web3.Identities;
@@ -31,13 +37,23 @@ using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRunner.Tests.TestUtils;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
+using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.FetchApi;
+using SceneRuntime.Apis.Modules.RestrictedActionsApi;
+using SceneRuntime.Apis.Modules.Runtime;
+using SceneRuntime.Apis.Modules.SceneApi;
 using SceneRuntime.Factory;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using Utility.Multithreading;
 
 namespace SceneRunner.Tests
 {
@@ -206,25 +222,75 @@ namespace SceneRunner.Tests
         }
 
         [Test]
+        public async Task DisposeEverythingOnce()
+        {
+            const int DURATION = 1000;
+
+            var sceneFacade = new SceneFacade(
+                Substitute.For<ISceneData>(),
+                new TestDeps(ecsWorldFactory)
+            );
+
+            var apis = new List<IJsApiWrapper>();
+
+            var runtime = sceneFacade.deps.Runtime;
+            runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<IJsApiWrapper>()))
+                   .Do(info => apis.Add(info.ArgAt<IJsApiWrapper>(1)));
+
+            runtime.When(r => r.Dispose())
+                   .Do(_ => apis.ForEach(a => a.Dispose()));
+
+            // Already mocked APIs
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.SimpleFetchApi));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.WebSocketAipImplementation));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.CommunicationsControllerAPI));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RuntimeImplementation));
+
+            await UniTask.SwitchToThreadPool();
+
+            // Provide basic Thread Pool synchronization context
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.CancelAfter(DURATION);
+
+            await sceneFacade.StartUpdateLoopAsync(10, cancellationTokenSource.Token);
+
+            await UniTask.SwitchToMainThread();
+
+            await sceneFacade.DisposeAsync();
+
+            // Find all mocked disposable fields and make sure dispose was called on them
+            foreach (FieldInfo field in sceneFacade.deps.GetType().GetFields())
+            {
+                if (!field.FieldType.IsValueType
+                    && field.FieldType.GetInterface(nameof(IDisposable)) != null
+                    && field.FieldType != typeof(SceneInstanceDependencies))
+                {
+                    var disposable = (IDisposable)field.GetValue(sceneFacade.deps);
+                    disposable.Received(1).Dispose();
+                }
+            }
+
+            // And in the base class
+            foreach (FieldInfo field in sceneFacade.deps.SyncDeps.GetType().GetFields())
+            {
+                if (!field.FieldType.IsValueType && field.FieldType.GetInterface(nameof(IDisposable)) != null)
+                {
+                    var disposable = (IDisposable)field.GetValue(sceneFacade.deps.SyncDeps);
+                    disposable.Received(1).Dispose();
+                }
+            }
+        }
+
+        [Test]
         public async Task DisposeInProperOrder()
         {
             const int DURATION = 1000;
 
-            ISceneRuntime sceneRuntime = Substitute.For<ISceneRuntime>();
-
             var sceneFacade = new SceneFacade(
-                sceneRuntime,
-                TestSystemsWorld.Create(),
-                Substitute.For<ICRDTProtocol>(),
-                Substitute.For<IOutgoingCRDTMessagesProvider>(),
-                Substitute.For<ICRDTWorldSynchronizer>(),
-                Substitute.For<IInstancePoolsProvider>(),
-                Substitute.For<ICRDTMemoryAllocator>(),
-                Substitute.For<ISceneExceptionsHandler>(),
-                new SceneStateProvider(),
-                Substitute.For<IEntityCollidersSceneCache>(),
                 Substitute.For<ISceneData>(),
-                new SceneEcsExecutor()
+                new TestDeps(ecsWorldFactory)
             );
 
             await UniTask.SwitchToThreadPool();
@@ -243,15 +309,68 @@ namespace SceneRunner.Tests
 
             Received.InOrder(() =>
             {
-                sceneRuntime.Dispose();
+                sceneFacade.deps.Runtime.Dispose();
 
                 // World facade is not mockable
-                sceneFacade.crdtProtocol.Dispose();
-                sceneFacade.outgoingCrtdMessagesProvider.Dispose();
-                sceneFacade.crdtWorldSynchronizer.Dispose();
-                sceneFacade.instancePoolsProvider.Dispose();
-                sceneFacade.crdtMemoryAllocator.Dispose();
+                // sceneFacade.deps.SyncDeps.ECSWorldFacade.Dispose();
+                sceneFacade.deps.SyncDeps.CRDTProtocol.Dispose();
+                sceneFacade.deps.SyncDeps.OutgoingCRDTMessagesProvider.Dispose();
+                sceneFacade.deps.SyncDeps.CRDTWorldSynchronizer.Dispose();
+                sceneFacade.deps.SyncDeps.PoolsProvider.Dispose();
+                sceneFacade.deps.SyncDeps.CRDTMemoryAllocator.Dispose();
+
+                sceneFacade.deps.SyncDeps.systemGroupThrottler.Dispose();
+                sceneFacade.deps.SyncDeps.EntityCollidersCache.Dispose();
+                sceneFacade.deps.SyncDeps.worldTimeProvider.Dispose();
+                sceneFacade.deps.SyncDeps.ExceptionsHandler.Dispose();
             });
+        }
+
+        public class TestDeps : SceneInstanceDependencies.WithRuntimeAndJsAPIBase
+        {
+            public TestDeps(IECSWorldFactory worldFactory) : base(
+                Substitute.For<IEngineApi>(),
+                Substitute.For<IRestrictedActionsAPI>(),
+                Substitute.For<IRuntime>(),
+                Substitute.For<ISceneApi>(),
+                Substitute.For<IWebSocketApi>(),
+                Substitute.For<ISimpleFetchApi>(),
+                Substitute.For<ICommunicationsControllerAPI>(),
+                new SceneInstanceDependencies(
+                    Substitute.For<ICRDTProtocol>(),
+                    Substitute.For<IInstancePoolsProvider>(),
+                    Substitute.For<ICRDTMemoryAllocator>(),
+                    Substitute.For<IOutgoingCRDTMessagesProvider>(),
+                    Substitute.For<IEntityCollidersSceneCache>(),
+                    Substitute.For<ISceneStateProvider>(),
+                    Substitute.For<ISceneExceptionsHandler>(),
+                    worldFactory.CreateWorld(new ECSWorldFactoryArgs()),
+                    Substitute.For<ICRDTWorldSynchronizer>(),
+                    new URLAddress(),
+                    new SceneEcsExecutor(),
+                    Substitute.For<ISceneData>(),
+                    new MutexSync(),
+                    Substitute.For<ICRDTDeserializer>(),
+                    Substitute.For<IECSToCRDTWriter>(),
+                    Substitute.For<ISystemGroupsUpdateGate>(),
+                    Substitute.For<IWorldTimeProvider>(),
+                    new ECSWorldInstanceSharedDependencies()),
+                Substitute.For<ISceneRuntime>()) { }
+        }
+
+        public class TestAPIWrapper : IJsApiWrapper
+        {
+            private readonly IDisposable api;
+
+            public TestAPIWrapper(IDisposable api)
+            {
+                this.api = api;
+            }
+
+            public void Dispose()
+            {
+                api.Dispose();
+            }
         }
     }
 }
