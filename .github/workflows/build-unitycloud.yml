@@ -94,6 +94,31 @@ jobs:
             echo "upload_symbols=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Get BuildOptions
+        id: get_options
+        run: |
+          #!/bin/bash
+
+          options=()
+
+          # input.profile
+          profile="${{ github.event.inputs.profile }}"
+
+          if [[ "$profile" != "none" ]]; then
+            options+="Development"
+            options+="AllowDebugging"
+            options+="ConnectWithProfiler"
+          fi
+
+          if [[ "$profile" == "deep" ]]; then
+            options+="EnableDeepProfilingSupport"
+          fi
+
+          # Write the array as a comma-separated string
+          # Set the Internal Field Separator to comma
+          IFS=,
+          echo "options=${options[*]}" >> "$GITHUB_OUTPUT"
+
       - name: Execute Unity Cloud build
         env:
           API_KEY: ${{ secrets.UNITY_CLOUD_API_KEY }}
@@ -103,6 +128,7 @@ jobs:
           TARGET: t_windows64
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
+          BUILD_OPTIONS: ${{ steps.get_options.outputs.options }}
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
@@ -113,32 +139,7 @@ jobs:
           PARAM_SENTRY_ENVIRONMENT: ${{ steps.get_sentry.outputs.environment }}
           PARAM_SENTRY_CLI_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ steps.get_sentry.outputs.upload_symbols }}
-
-          # Profiling and such
-          #customParameters: ${{ env.UNITY_CUSTOM_PARAMS }}
-
         run: python -u scripts/cloudbuild/build.py
-
-          
-#      - name: Manage custom input parameters
-#        run: |
-#          $profileEnabled = "${{ github.event.inputs.profile }}"
-#          $deepProfileEnabled = "${{ github.event.inputs.deep_profile }}"
-#          
-#          if ($profileEnabled -eq 'true') {
-#            $profilingParam = '-profile'
-#          } else {
-#            $profilingParam = ''
-#          }
-#
-#          if ($deepProfileEnabled -eq 'true') {
-#            $deepProfilingParam = '-deepProfile'
-#          } else {
-#            $deepProfilingParam = ''
-#          }
-#
-#          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
-#          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
 
       # Upload artifact
 #      - name: Upload windows artifact

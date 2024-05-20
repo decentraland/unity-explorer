@@ -47,6 +47,7 @@ def clone_current_target():
 
     body['name'] = new_target_name
     body['settings']['scm']['branch'] = os.getenv('BRANCH_NAME')
+    body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = os.getenv('BUILD_OPTIONS').split(',')
 
     # Check if the target already exists (re-use of a branch)
     if 'error' in get_target(new_target_name):
