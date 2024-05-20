@@ -92,7 +92,6 @@ namespace SceneRuntime
 
         public void Dispose()
         {
-            engineApi?.Dispose();
             engine.Dispose();
             jsApiBunch.Dispose();
         }
@@ -100,6 +99,11 @@ namespace SceneRuntime
         public void OnSceneIsCurrentChanged(bool isCurrent)
         {
             jsApiBunch.OnSceneIsCurrentChanged(isCurrent);
+        }
+
+        public void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper)
+        {
+            engineApi = newWrapper;
         }
 
         public void Register<T>(string itemName, T target) where T: IJsApiWrapper
@@ -125,7 +129,7 @@ namespace SceneRuntime
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;
         }
-
+        
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
             PoolableByteArray result = engineApi.EnsureNotNull().api.CrdtSendToRenderer(data, false);
