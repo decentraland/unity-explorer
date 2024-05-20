@@ -99,12 +99,13 @@ jobs:
         run: |
           #!/bin/bash
 
+          #options=("DetailedBuildReport")
           options=()
 
           # input.profile
           profile="${{ github.event.inputs.profile }}"
 
-          if [[ "$profile" != "none" ]]; then
+          if [[ "$profile" == "profile" || "$profile" == "deep" ]]; then
             options+=("Development")
             options+=("AllowDebugging")
             options+=("ConnectWithProfiler")
@@ -141,16 +142,15 @@ jobs:
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ steps.get_sentry.outputs.upload_symbols }}
         run: python -u scripts/cloudbuild/build.py
 
-      # Upload artifact
-#      - name: Upload windows artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: Decentraland
-#          path: |
-#            build
-#            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
-#            !build/**/*_BurstDebugInformation_DoNotShip
-#          if-no-files-found: error
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Decentraland
+          path: |
+            build
+            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
+            !build/**/*_BurstDebugInformation_DoNotShip
+          if-no-files-found: error
           
 #      # Upload build report
 #      - name: Uploading build report (test)

@@ -3,6 +3,8 @@ import re
 import sys
 import time
 import base64
+import shutil
+import zipfile
 import requests
 import datetime
 
@@ -150,6 +152,36 @@ def poll_build(id):
             sys.exit(1)
             return False
 
+def download_artifact(id):
+    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=headers)
+
+    if response.status_code != 200:
+        print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
+        print("Response body:", response.text)
+        sys.exit(1)
+
+    response_json = response.json()
+    artifact_url = response_json['links']['download_primary']['href']
+
+    download_dir = 'build'
+    filename = os.path.join(download_dir, 'artifact.zip')
+    os.makedirs(download_dir, exist_ok=True)
+
+    response = requests.get(artifact_url)
+    with open(filename, 'wb') as f:
+        f.write(response.content)
+
+    # Extract the contents of the zip file
+    with zipfile.ZipFile(filename, 'r') as zip_ref:
+        zip_ref.extractall(download_dir)
+
+    print(f"Zip file downloaded and extracted to {download_dir}")
+    # TEMP
+    files = os.listdir()
+    for file in files:
+        print(file)
+
+
 # Entrypoint here ->
 
 # Clone current target
@@ -178,3 +210,6 @@ while True:
     else:
         print(f'Runner FINAL elapsed time: {datetime.timedelta(seconds=(time.time() - start_time))}')
         break
+
+# Handle build artifact
+download_artifact(id)
