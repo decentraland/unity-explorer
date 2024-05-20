@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.ECSComponents;
 using DCL.Interaction.Raycast.Components;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
@@ -14,7 +15,14 @@ namespace DCL.Interaction.Raycast.Systems
     [ThrottlingEnabled] // as we react on Scene Changes
     public partial class InitializeRaycastSystem : BaseUnityLoopSystem
     {
-        internal InitializeRaycastSystem(World world) : base(world) { }
+        private readonly IComponentPool<PBRaycastResult> raycastComponentPool;
+
+        internal InitializeRaycastSystem(World world,
+            IComponentPool<PBRaycastResult> raycastComponentPool
+        ) : base(world)
+        {
+            this.raycastComponentPool = raycastComponentPool;
+        }
 
         protected override void Update(float t)
         {
@@ -38,7 +46,8 @@ namespace DCL.Interaction.Raycast.Systems
         {
             if (raycast.IsDirty)
             {
-                if (raycast.Continuous) raycastComponent.Executed = false;
+                //If dirty, we set executed to false, continuous raycasts always will have Executed as false.
+                raycastComponent.Executed = false;
                 raycast.IsDirty = false;
             }
         }

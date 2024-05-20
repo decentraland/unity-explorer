@@ -54,11 +54,13 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
             in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InitializeRaycastSystem.InjectToWorld(ref builder);
+            IComponentPool<PBRaycastResult>? raycastResultPool = sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>();
+
+            InitializeRaycastSystem.InjectToWorld(ref builder, raycastResultPool);
 
             ExecuteRaycastSystem.InjectToWorld(ref builder, sceneDeps.SceneData, raycastBudget, settings.RaycastBucketThreshold,
                 sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
-                sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>(),
+                raycastResultPool,
                 sceneDeps.EntityCollidersSceneCache,
                 sceneDeps.EntitiesMap,
                 sceneDeps.EcsToCRDTWriter,
@@ -76,6 +78,7 @@ namespace DCL.PluginSystem.World
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            [field: SerializeField] internal AssetReferenceT<InteractionSettingsData> Data;
             [field: Header(nameof(InteractionPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
@@ -92,8 +95,6 @@ namespace DCL.PluginSystem.World
             /// </summary>
             [field: SerializeField]
             public int GlobalInputPropagationBucketThreshold { get; private set; } = 3;
-
-            [field: SerializeField] internal AssetReferenceT<InteractionSettingsData> Data;
         }
     }
 }
