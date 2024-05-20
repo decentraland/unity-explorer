@@ -14,7 +14,6 @@ using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System.Threading;
 using Utility;
-using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -30,7 +29,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         internal LoadWearableAssetBundleManifestSystem(World world,
             IWebRequestController webRequestController,
-            IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache, MutexSync mutexSync, URLDomain assetBundleURL) : base(world, cache)
+            IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache, URLDomain assetBundleURL) : base(world, cache)
         {
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;

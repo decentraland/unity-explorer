@@ -9,14 +9,20 @@ using DCL.Ipfs;
 using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
+using Random = System.Random;
+using SpawnPoint = DCL.Ipfs.SceneMetadata.SpawnPoint;
 
 namespace DCL.ParcelsService
 {
     public partial class TeleportController : ITeleportController
     {
+        private static readonly Random RANDOM = new ();
+        
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private IRetrieveScene? retrieveScene;
         private World? world;
@@ -52,40 +58,40 @@ namespace DCL.ParcelsService
 
             SceneEntityDefinition? sceneDef = await retrieveScene.ByParcelAsync(parcel, ct);
 
-            Vector3 targetPosition;
+            Vector3 targetWorldPosition;
             Vector3? cameraTarget = null;
 
             if (sceneDef != null)
             {
                 // Override parcel as it's a new target
                 parcel = sceneDef.metadata.scene.DecodedBase;
+                Vector3 parcelBaseWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
+                targetWorldPosition = parcelBaseWorldPosition;
 
-                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel);
-
-                List<SceneMetadata.SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
+                List<SpawnPoint>? spawnPoints = sceneDef.metadata.spawnPoints;
 
                 if (spawnPoints is { Count: > 0 })
                 {
-                    SceneMetadata.SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints);
+                    SpawnPoint spawnPoint = PickSpawnPoint(spawnPoints, targetWorldPosition, parcelBaseWorldPosition);
 
                     // TODO validate offset position is within bounds of one of scene parcels
-                    targetPosition += GetSpawnPositionOffset(spawnPoint);
+                    targetWorldPosition += GetSpawnPositionOffset(spawnPoint);
 
                     if (spawnPoint.cameraTarget != null)
-                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + GetSpawnCameraOffset(sceneDef);
+                        cameraTarget = spawnPoint.cameraTarget!.Value.ToVector3() + parcelBaseWorldPosition;
                 }
             }
             else
-                targetPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel, true);
+                targetWorldPosition = ParcelMathHelper.GetPositionByParcelPosition(parcel, true);
 
             await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
 
-            TeleportCharacterQuery(retrieveScene.World, new PlayerTeleportIntent(targetPosition, parcel, loadReport));
+            TeleportCharacterQuery(retrieveScene.World, new PlayerTeleportIntent(targetWorldPosition, parcel, loadReport));
 
             if (cameraTarget != null)
             {
-                ForceCameraLookAtQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetPosition));
-                ForceCharacterLookAtQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value, targetPosition));
+                ForceCameraLookAtQuery(retrieveScene.World, new CameraLookAtIntent(cameraTarget.Value, targetWorldPosition));
+                ForceCharacterLookAtQuery(retrieveScene.World, new PlayerLookAtIntent(cameraTarget.Value, targetWorldPosition));
             }
 
             if (sceneDef == null)
@@ -139,49 +145,76 @@ namespace DCL.ParcelsService
             catch (Exception e) { loadReport.CompletionSource.TrySetException(e); }
         }
 
-        private SceneMetadata.SpawnPoint PickSpawnPoint(IReadOnlyList<SceneMetadata.SpawnPoint> spawnPoints)
+        private SpawnPoint PickSpawnPoint(IReadOnlyList<SpawnPoint> spawnPoints, Vector3 targetWorldPosition, Vector3 parcelBaseWorldPosition)
         {
-            // TODO transfer obscure logic of how to pick the desired spawn point from the array
-            // For now just pick default/first
-            SceneMetadata.SpawnPoint spawnPoint = spawnPoints[0];
+            List<SpawnPoint> defaults = ListPool<SpawnPoint>.Get();
+            defaults.AddRange(spawnPoints.Where(sp => sp.@default));
 
-            for (var i = 0; i < spawnPoints.Count; i++)
+            IReadOnlyList<SpawnPoint> elegibleSpawnPoints = defaults.Count > 0 ? defaults : spawnPoints;
+            var closestIndex = 0;
+
+            if (elegibleSpawnPoints.Count > 1)
             {
-                SceneMetadata.SpawnPoint sp = spawnPoints[i];
-                if (!sp.@default) continue;
+                float closestDistance = float.MaxValue;
 
-                spawnPoint = sp;
-                break;
+                for (var i = 0; i < elegibleSpawnPoints.Count; i++)
+                {
+                    SpawnPoint sp = elegibleSpawnPoints[i];
+                    Vector3 spawnWorldPosition = GetSpawnPositionOffset(sp) + parcelBaseWorldPosition;
+                    float distance = Vector3.Distance(targetWorldPosition, spawnWorldPosition);
+
+                    if (distance < closestDistance)
+                    {
+                        closestIndex = i;
+                        closestDistance = distance;
+                    }
+                }
             }
+
+            SpawnPoint spawnPoint = elegibleSpawnPoints[closestIndex];
+
+            ListPool<SpawnPoint>.Release(defaults);
 
             return spawnPoint;
         }
 
-        private Vector3 GetSpawnCameraOffset(SceneEntityDefinition sceneDef)
+        private static Vector3 GetSpawnPositionOffset(SpawnPoint spawnPoint)
         {
-            Vector2 baseParcel = sceneDef.metadata.scene.DecodedBase;
-            return new Vector3(baseParcel.x * ParcelMathHelper.PARCEL_SIZE, 0, baseParcel.y * ParcelMathHelper.PARCEL_SIZE);
-        }
-
-        private static Vector3 GetSpawnPositionOffset(SceneMetadata.SpawnPoint spawnPoint)
-        {
-            static float GetMidPoint(float[] coordArray)
+            static float GetRandomPoint(float[] coordArray)
             {
-                var sum = 0f;
+                float randomPoint = 0;
 
-                for (var i = 0; i < coordArray.Length; i++)
-                    sum += (int)coordArray[i];
+                switch (coordArray.Length)
+                {
+                    case 1:
+                        randomPoint = coordArray[0];
+                        break;
+                    case >= 2:
+                    {
+                        float min = coordArray[0];
+                        float max = coordArray[1];
 
-                return sum / coordArray.Length;
+                        if (Mathf.Approximately(min, max))
+                            return max;
+
+                        if (min > max)
+                            (min, max) = (max, min);
+
+                        randomPoint = (float)((RANDOM.NextDouble() * (max - min)) + min);
+                        break;
+                    }
+                }
+
+                return randomPoint;
             }
 
-            static float? GetSpawnComponent(SceneMetadata.SpawnPoint.Coordinate coordinate)
+            static float? GetSpawnComponent(SpawnPoint.Coordinate coordinate)
             {
                 if (coordinate.SingleValue != null)
                     return coordinate.SingleValue.Value;
 
                 if (coordinate.MultiValue != null)
-                    return GetMidPoint(coordinate.MultiValue);
+                    return GetRandomPoint(coordinate.MultiValue);
 
                 return null;
             }

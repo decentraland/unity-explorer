@@ -229,12 +229,6 @@ namespace CrdtEcsBridge.WorldSynchronizer
 
                     if (componentsBatch.Count == 0) continue;
 
-                    if (entity.Equals(SpecialEntitiesID.PLAYER_ENTITY) || entity.Equals(SpecialEntitiesID.CAMERA_ENTITY))
-                    {
-                        // Camera and player entities are not supported yet
-                        continue;
-                    }
-
                     if (!entitiesMap.TryGetValue(entity, out Entity realEntity))
                         entitiesMap[entity] = realEntity = entityFactory.Create(entity, world);
 
@@ -244,7 +238,7 @@ namespace CrdtEcsBridge.WorldSynchronizer
                             continue;
 
                         batchState.sdkComponentBridge.CommandBufferSynchronizer.Apply(world, commandBuffer, realEntity,
-                            batchState.reconciliationState.Last, batchState.deserializationTarget);
+                            batchState.reconciliationState.Last, batchState.deserializationTarget, batchState.sdkComponentBridge.IsResultComponent);
                     }
                 }
             }
