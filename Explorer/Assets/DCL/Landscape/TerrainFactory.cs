@@ -56,7 +56,7 @@ namespace DCL.Landscape
         {
             Transform side = Object.Instantiate(terrainGenData.cliffSide, at, rotation).transform;
             side.SetParent(parent, true);
-
+            side.name = "Cliff side " + at;
             return side;
         }
 
