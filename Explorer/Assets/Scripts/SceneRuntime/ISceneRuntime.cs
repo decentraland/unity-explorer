@@ -35,6 +35,8 @@ namespace SceneRuntime
         void SetIsDisposing();
 
         void OnSceneIsCurrentChanged(bool isCurrent);
+
+        void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper);
     }
 
     public static class SceneRuntimeExtensions
@@ -69,10 +71,13 @@ namespace SceneRuntime
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
         }
+        
 
         internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("UnityEngineApi", new EngineApiWrapper(engineApi, instancePoolsProvider, sceneExceptionsHandler));
+            var newWrapper = new EngineApiWrapper(engineApi, instancePoolsProvider, sceneExceptionsHandler);
+            sceneRuntime.Register("UnityEngineApi", newWrapper);
+            sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
 
         private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
