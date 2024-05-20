@@ -18,6 +18,7 @@ namespace ECS.Prioritization
             public bool IsDirty;
             public byte Bucket;
             public bool IsBehind;
+            public bool OutOfRange;
             public float RawSqrDistance;
         }
 
@@ -63,6 +64,7 @@ namespace ECS.Prioritization
         {
             public float3 CameraPosition;
             public float3 CameraForward;
+            public float UnloadingSqrDistance;
             [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
             [ReadOnly] public UnsafeList<ParcelCornersData> ParcelCorners;
             private NativeArray<PartitionData> partitions;
@@ -74,6 +76,7 @@ namespace ECS.Prioritization
                 CameraPosition = default;
                 CameraForward = default;
                 SqrDistanceBuckets = default(NativeArray<int>);
+                UnloadingSqrDistance = default;
             }
 
             public void Execute(int index)
@@ -130,6 +133,7 @@ namespace ECS.Prioritization
                 // the same scene is counted as InFront
                 // If the bucket exceeds the maximum bucket array, we need to mark partition as dirty since we are out of range
                 partition.IsDirty = partition.Bucket != bucket || partition.IsBehind != isBehind || bucketIndex == SqrDistanceBuckets.Length || partition.RawSqrDistance == -1;
+                partition.OutOfRange = minSqrMagnitude > UnloadingSqrDistance;
 
                 if (partition.IsDirty)
                     partition.RawSqrDistance = minSqrMagnitude;

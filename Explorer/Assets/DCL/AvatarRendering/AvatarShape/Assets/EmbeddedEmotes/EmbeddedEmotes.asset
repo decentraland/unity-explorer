@@ -130,24 +130,11 @@ MonoBehaviour:
       hides: []
       removesDefaultHiding: []
       loop: 1
-  - id: hands_in_the_air
-    name: hands_in_the_air
-    audioClip: {fileID: 0}
-    thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
-    prefab: {fileID: 8771091787928289351, guid: 1367a4cc5c746844995474c692ce506f, type: 3}
-    entity:
-      representations: []
-      category: 
-      tags: []
-      replaces: []
-      hides: []
-      removesDefaultHiding: []
-      loop: 0
   - id: handsair
     name: handsair
     audioClip: {fileID: 0}
     thumbnail: {fileID: 21300000, guid: 5d9d324d9b1257f4cbeed858807c2c06, type: 3}
-    prefab: {fileID: 8018143466885850673, guid: 425469edfdeba472c907877cc4c364c3, type: 3}
+    prefab: {fileID: 8771091787928289351, guid: 1367a4cc5c746844995474c692ce506f, type: 3}
     entity:
       representations: []
       category: 
