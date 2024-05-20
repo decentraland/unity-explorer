@@ -27,10 +27,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         {
             // Dispose the last input buffer
             lastInput.ReleaseAndDispose();
-
-            // Dispose the engine API Implementation
-            // It will dispose its buffers
-            api.Dispose();
         }
 
         [UsedImplicitly]

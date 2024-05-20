@@ -138,6 +138,7 @@ namespace SceneRunner
 
             // Try create scene runtime
             SceneRuntimeImpl sceneRuntime;
+
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
             {
@@ -156,14 +157,13 @@ namespace SceneRunner
                 await UniTask.SwitchToMainThread(PlayerLoopTiming.Initialization);
                 deps.Dispose();
                 sceneRuntime?.Dispose();
-
                 throw new OperationCanceledException();
             }
 
-            var runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
 
-            sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
             sceneRuntime.RegisterAll(
+                runtimeDeps.EngineAPI,
                 deps.ExceptionsHandler,
                 roomHub,
                 profileRepository,
@@ -177,21 +177,12 @@ namespace SceneRunner
                 runtimeDeps.CommunicationsControllerAPI,
                 deps.PoolsProvider,
                 runtimeDeps.SimpleFetchApi);
+
             sceneRuntime.ExecuteSceneJson();
 
             return new SceneFacade(
-                sceneRuntime,
-                deps.ECSWorldFacade,
-                deps.CRDTProtocol,
-                deps.OutgoingCRDTMessagesProvider,
-                deps.CRDTWorldSynchronizer,
-                deps.PoolsProvider,
-                deps.CRDTMemoryAllocator,
-                deps.ExceptionsHandler,
-                deps.SceneStateProvider,
-                deps.EntityCollidersCache,
                 sceneData,
-                deps.EcsExecutor
+                runtimeDeps
             );
         }
     }

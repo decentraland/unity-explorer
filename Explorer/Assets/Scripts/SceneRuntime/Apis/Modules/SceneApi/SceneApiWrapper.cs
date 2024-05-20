@@ -14,7 +14,6 @@ namespace SceneRuntime.Apis.Modules.SceneApi
 
         public void Dispose()
         {
-            api.Dispose();
         }
 
         [UsedImplicitly]
