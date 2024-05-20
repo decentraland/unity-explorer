@@ -9,6 +9,7 @@ namespace SceneRunner.Scene
 {
     public interface ISceneData
     {
+        public bool SceneLoadingConcluded { get; set; } 
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
@@ -60,6 +61,12 @@ namespace SceneRunner.Scene
 
         class Fake : ISceneData
         {
+            public bool SceneLoadingConcluded
+            {
+                get => true;
+                set { }
+            }
+
             public SceneShortInfo SceneShortInfo => new (Vector2Int.zero, "Fake");
             public IReadOnlyList<Vector2Int> Parcels { get; } = new List<Vector2Int>();
 

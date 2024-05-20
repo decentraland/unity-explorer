@@ -14,6 +14,7 @@ namespace SceneRunner.EmptyScene
     /// </summary>
     public class EmptySceneData : ISceneData
     {
+        public bool SceneLoadingConcluded { get => true; set { } }
 
         /// <summary>
         ///     Per scene data is not resolved as empty scenes use the shared world for all instances
