@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
-using DCL.PlacesAPIService;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -49,8 +49,12 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
         {
             IReadOnlyList<string> pointsOfInterestCoordsAsync = await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken);
             vectorCoords.Clear();
+
             foreach (var s in pointsOfInterestCoordsAsync)
-                vectorCoords.Add(IpfsHelper.DecodePointer(s));
+            {
+                try { vectorCoords.Add(IpfsHelper.DecodePointer(s)); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.TEXTURES); }
+            }
 
             using var placesByCoordsListAsync = await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true);
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
