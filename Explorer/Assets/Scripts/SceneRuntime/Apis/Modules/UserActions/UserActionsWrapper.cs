@@ -6,21 +6,23 @@ using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.UserActions
 {
-    public class UserActionsWrap : IJsApiWrapper
+    public class UserActionsWrapper : IJsApiWrapper
     {
         private readonly IRestrictedActionsAPI restrictedActionsAPI;
         private readonly Action<string> logWarning;
 
-        public UserActionsWrap(IRestrictedActionsAPI restrictedActionsAPI) : this(
+        public UserActionsWrapper(IRestrictedActionsAPI restrictedActionsAPI) : this(
             restrictedActionsAPI,
             m => ReportHub.LogWarning(ReportCategory.ENGINE, m)
         ) { }
 
-        public UserActionsWrap(IRestrictedActionsAPI restrictedActionsAPI, Action<string> logWarning)
+        public UserActionsWrapper(IRestrictedActionsAPI restrictedActionsAPI, Action<string> logWarning)
         {
             this.restrictedActionsAPI = restrictedActionsAPI;
             this.logWarning = logWarning;
         }
+
+        public void Dispose() { }
 
         [UsedImplicitly]
         public void RequestTeleport(string destination)
@@ -37,11 +39,6 @@ namespace SceneRuntime.Apis.Modules.UserActions
                 restrictedActionsAPI.TryTeleportTo(coordinates.AsVector2Int());
             }
             catch (Exception e) { logWarning($"Error while trying to teleport to {destination}: {e.Message} {e}"); }
-        }
-
-        public void Dispose()
-        {
-            restrictedActionsAPI.Dispose();
         }
 
         private readonly struct ParcelCoordinates
