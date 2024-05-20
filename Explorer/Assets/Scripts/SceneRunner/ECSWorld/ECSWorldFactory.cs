@@ -12,6 +12,7 @@ using ECS.Abstract;
 using ECS.ComponentsPooling.Systems;
 using ECS.Groups;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Components;
 using ECS.LifeCycle.Systems;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -99,8 +100,8 @@ namespace SceneRunner.ECSWorld
         private static PersistentEntities CreateReservedEntities(World world, ECSWorldInstanceSharedDependencies sharedDependencies)
         {
             Entity sceneRootEntity = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), new SceneRootComponent(), world);
-            Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
-            Entity cameraEntity = world.Create(new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY));
+            Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), RemovedComponents.CreateDefault());
+            Entity cameraEntity = world.Create(new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY), RemovedComponents.CreateDefault());
 
             sharedDependencies.EntitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRootEntity;
             sharedDependencies.EntitiesMap[SpecialEntitiesID.PLAYER_ENTITY] = playerEntity;

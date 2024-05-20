@@ -31,7 +31,7 @@ namespace DCL.AvatarRendering.Emotes
             IRealmData realmData,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesResolution, GetOwnedEmotesFromRealmIntention> cache,
-            IEmoteCache emoteCache, MutexSync mutexSync)
+            IEmoteCache emoteCache)
             : base(world, cache)
         {
             this.realmData = realmData;
