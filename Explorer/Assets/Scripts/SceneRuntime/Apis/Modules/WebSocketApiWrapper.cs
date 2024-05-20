@@ -1,4 +1,3 @@
-using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using System;
@@ -8,21 +7,18 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules
 {
-    public class WebSocketApiWrapper : IJsApiWrapper
+    public class WebSocketApiWrapper : JsApiWrapperBase<IWebSocketApi>
     {
-        private readonly IWebSocketApi api;
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        public WebSocketApiWrapper(IWebSocketApi api)
+        public WebSocketApiWrapper(IWebSocketApi api) : base(api)
         {
-            this.api = api;
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public void Dispose()
+        protected override void DisposeInternal()
         {
             cancellationTokenSource.SafeCancelAndDispose();
-            api.Dispose();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/webSocketApi.js")]

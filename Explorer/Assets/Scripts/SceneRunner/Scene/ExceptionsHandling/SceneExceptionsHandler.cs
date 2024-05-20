@@ -23,7 +23,6 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
         private ISceneStateProvider? sceneState;
         private SceneShortInfo sceneShortInfo;
-        private CRDTProtocol? crdtProtocol;
 
         private SceneExceptionsHandler() { }
 
@@ -125,12 +124,11 @@ namespace SceneRunner.Scene.ExceptionsHandling
                 new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber));
         }
 
-        public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo, CRDTProtocol crdtProtocol)
+        public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)
         {
             SceneExceptionsHandler handler = POOL.Get();
             handler.sceneState = sceneState;
             handler.sceneShortInfo = sceneShortInfo;
-            handler.crdtProtocol = crdtProtocol;
             return handler;
         }
 

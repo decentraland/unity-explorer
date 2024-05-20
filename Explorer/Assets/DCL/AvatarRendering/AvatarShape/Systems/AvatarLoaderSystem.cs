@@ -104,6 +104,9 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
             avatarShapeComponent.WearablePromise = newPromise;
             avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
             avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
+            avatarShapeComponent.HairColor = profile.Avatar.HairColor;
+            avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
+            avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
             avatarShapeComponent.IsDirty = true;
         }
 

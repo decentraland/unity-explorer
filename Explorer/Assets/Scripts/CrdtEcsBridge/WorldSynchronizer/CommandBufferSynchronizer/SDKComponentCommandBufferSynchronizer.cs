@@ -36,6 +36,11 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                 case CRDTReconciliationEffect.ComponentModified:
                     // if component is modified then return to the pool the existing one
                     // No need to add it to the command buffer as we already get the component by ref and can "override" it directly without overhead
+                    if (!world.Has<T>(entity))
+                    {
+                        {}
+                    }
+
                     ref T pointerToPrevObj = ref world.Get<T>(entity);
                     componentPool.Release(pointerToPrevObj);
                     pointerToPrevObj = c;
