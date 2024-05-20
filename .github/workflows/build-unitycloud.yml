@@ -105,13 +105,13 @@ jobs:
           profile="${{ github.event.inputs.profile }}"
 
           if [[ "$profile" != "none" ]]; then
-            options+="Development"
-            options+="AllowDebugging"
-            options+="ConnectWithProfiler"
+            options+=("Development")
+            options+=("AllowDebugging")
+            options+=("ConnectWithProfiler")
           fi
 
           if [[ "$profile" == "deep" ]]; then
-            options+="EnableDeepProfilingSupport"
+            options+=("EnableDeepProfilingSupport")
           fi
 
           # Write the array as a comma-separated string
