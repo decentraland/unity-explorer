@@ -35,6 +35,7 @@ namespace ECS.StreamableLoading.AudioClips
                 ProfilingCounters.AudioClipsReferenced.Value++;
 
             referencesCount++;
+
             LastUsedFrame = MultithreadingUtility.FrameCount;
         }
 
@@ -43,12 +44,13 @@ namespace ECS.StreamableLoading.AudioClips
             referencesCount--;
 
             if (referencesCount < 0)
-                ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.AUDIO);
+            {
+                ReportHub.LogException(new Exception("Reference count of AudioClip should never be negative!"), ReportCategory.SDK_AUDIO_SOURCES);
+            }
 
             LastUsedFrame = MultithreadingUtility.FrameCount;
 
-            if (referencesCount == 0)
-                ProfilingCounters.AudioClipsReferenced.Value--;
+            if (referencesCount == 0) ProfilingCounters.AudioClipsReferenced.Value--;
         }
 
         public bool CanBeDisposed() =>

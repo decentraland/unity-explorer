@@ -123,7 +123,7 @@
         /// <summary>
         ///     Everything related to Scenes audio source components
         /// </summary>
-        public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
+        public const string SDK_AUDIO_SOURCES = nameof(SDK_AUDIO_SOURCES);
 
         /// <summary>
         ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer

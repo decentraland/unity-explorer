@@ -17,7 +17,7 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class LoadEmoteAudioClipSystem : LoadSystemBase<AudioClip, GetAudioClipIntention>
     {
         private readonly IWebRequestController webRequestController;
