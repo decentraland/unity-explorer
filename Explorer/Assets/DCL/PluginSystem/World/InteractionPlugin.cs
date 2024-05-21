@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.World
                 globalInputEvents,
                 poolsRegistry.GetReferenceTypePool<RaycastHit>());
 
-            InteractionHighlightSystem.InjectToWorld(ref builder, interactionData);
+            InteractionHighlightSystem.InjectToWorld(ref builder, interactionData, sceneDeps.SceneStateProvider);
         }
 
         [Serializable]
