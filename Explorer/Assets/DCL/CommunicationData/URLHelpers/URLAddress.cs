@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace CommunicationData.URLHelpers
 {
@@ -45,5 +46,17 @@ namespace CommunicationData.URLHelpers
 
         public override string ToString() =>
             Value;
+
+
+        private static readonly string HTTP_STARTER = "https";
+        private static readonly string VALIDATION_PATTERN = "/v[0-9]+/";
+
+        public string GetCacheableURL()
+        {
+            if (Value.StartsWith(HTTP_STARTER))
+                return Regex.Replace(Value, VALIDATION_PATTERN, "/");
+
+            return Value;
+        }
     }
 }
