@@ -45,17 +45,24 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             var parentContainer = new GameObject("MediaPlayerContainer");
 
             mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
-                creationHandler:() => Object.Instantiate(mediaPlayerPrefab),
-                onGet: mp =>
+                creationHandler: () =>
                 {
-                    mp.transform.SetParent(parentContainer.transform);
-                    mp.AutoOpen = false;
-                    mp.enabled = true;
+                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab);
+                    mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
+                    mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
+                    //Add other options if we release on other platforms :D
+                    return mediaPlayer;
                 },
-                onRelease: mp =>
+                onGet: mediaPlayer =>
                 {
-                    mp.CloseCurrentStream();
-                    mp.enabled = false;
+                    mediaPlayer.transform.SetParent(parentContainer.transform);
+                    mediaPlayer.AutoOpen = false;
+                    mediaPlayer.enabled = true;
+                },
+                onRelease: mediaPlayer =>
+                {
+                    mediaPlayer.CloseCurrentStream();
+                    mediaPlayer.enabled = false;
                 });
 
             cacheCleaner.Register(mediaPlayerPool);
