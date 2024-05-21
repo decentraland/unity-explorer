@@ -199,9 +199,7 @@ namespace DCL.Minimap
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
                 finally
                 {
-                    viewInstance.placeCoordinatesText.text = realmData.ScenesAreFixed ?
-                        realmData.RealmName :
-                        playerParcelPosition.ToString().Replace("(", "").Replace(")", "");
+                    viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", "");
                 }
             }
         }
