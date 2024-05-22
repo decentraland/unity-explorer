@@ -8,7 +8,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine;
 using Utility;
 using Utility.Times;
 
@@ -68,7 +67,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                     method ?? string.Empty
                 );
 
-                async Task<UniTask<FlatFetchResponse>> CreatePromise()
+                async Task<UniTask<FlatFetchResponse>> CreatePromiseAsync()
                 {
                     await UniTask.SwitchToMainThread();
                     return method switch
@@ -106,7 +105,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                            };
                 }
 
-                return CreatePromise().Result.ToDisconnectedPromise();
+                return CreatePromiseAsync().Result.ToDisconnectedPromise();
         }
 
         public void Dispose()
