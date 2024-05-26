@@ -15,7 +15,7 @@ on:
       target:
         description: 'OS target'
         required: true
-        default: 'MacOS'
+        default: 'Windows64'
         type: choice
         options:
           - Windows64
@@ -134,7 +134,7 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           POLL_TIME: 60 # In seconds (int)
-          TARGET: t_${{ github.event.inputs.target }}
+          TARGET: t_${{ github.event.inputs.target || 'MacOS' }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ steps.get_options.outputs.options }}
