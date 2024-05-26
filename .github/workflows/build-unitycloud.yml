@@ -12,6 +12,14 @@ on:
   push: { branches: [feat/unity-cloud-build] } # [main]
   workflow_dispatch:
     inputs:
+      target:
+        description: 'OS target'
+        required: true
+        default: 'MacOS'
+        type: choice
+        options:
+          - Windows64
+          - MacOS
       profile:
         description: 'Controls profiling, auto-connect and deep profiling options'
         required: true
@@ -126,7 +134,7 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           POLL_TIME: 60 # In seconds (int)
-          TARGET: t_windows64
+          TARGET: t_${{ github.event.inputs.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ steps.get_options.outputs.options }}
@@ -151,7 +159,7 @@ jobs:
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
-          
+
 #      # Upload build report
 #      - name: Uploading build report (test)
 #        uses: actions/upload-artifact@v4
