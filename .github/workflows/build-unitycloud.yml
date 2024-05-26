@@ -29,7 +29,11 @@ jobs:
     timeout-minutes: 10
     #if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft) || ${{ github.event.label.name == 'force-build' }}
     outputs:
-      upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
+      commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
+      options: ${{ steps.get_options.outputs.options }}
+      version: ${{ steps.get_version.outputs.version }}
+      sentry_environment: ${{ steps.get_sentry.outputs.environment }}
+      sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -143,18 +147,18 @@ jobs:
           POLL_TIME: 60 # In seconds (int)
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
-          BUILD_OPTIONS: ${{ steps.get_options.outputs.options }}
+          COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
+          BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
           # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
           PARAM_TEST_VALUE: "value exists"
-          PARAM_BUILD_VERSION: ${{ steps.get_version.outputs.version }}
+          PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
           PARAM_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          PARAM_SENTRY_ENVIRONMENT: ${{ steps.get_sentry.outputs.environment }}
+          PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
           PARAM_SENTRY_CLI_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
-          PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.upload_symbols }}
+          PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
         run: python -u scripts/cloudbuild/build.py
 
       - name: Upload artifact
