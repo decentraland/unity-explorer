@@ -134,7 +134,8 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           POLL_TIME: 60 # In seconds (int)
-          TARGET: t_${{ github.event.inputs.target || 'MacOS' }}
+          #TARGET: t_${{ github.event.inputs.target || 'macos' }}
+          TARGET: $(echo "t_${{ github.event.inputs.target || 'MacOS' }}" | tr '[:upper:]' '[:lower:]')
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ steps.get_options.outputs.options }}
