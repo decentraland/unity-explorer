@@ -15,11 +15,11 @@ on:
       target:
         description: 'OS target'
         required: true
-        default: 'Windows64'
+        default: 'windows64'
         type: choice
         options:
-          - Windows64
-          - MacOS
+          - windows64
+          - macos
       profile:
         description: 'Controls profiling, auto-connect and deep profiling options'
         required: true
@@ -134,8 +134,7 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
           POLL_TIME: 60 # In seconds (int)
-          #TARGET: t_${{ github.event.inputs.target || 'macos' }}
-          TARGET: $(echo "t_${{ github.event.inputs.target || 'MacOS' }}" | tr '[:upper:]' '[:lower:]')
+          TARGET: t_${{ github.event.inputs.target || 'macos' }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           COMMIT_SHA: ${{ steps.get_commit_sha.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ steps.get_options.outputs.options }}
