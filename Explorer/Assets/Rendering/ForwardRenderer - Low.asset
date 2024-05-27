@@ -90,7 +90,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32ece3c6636d58f4e9f925c9eb9b72c2, type: 3}
   m_Name: HighlightRendererFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_Settings:
     OutlineThickness: 1
     DepthSensitivity: 0.05
