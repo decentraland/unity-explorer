@@ -13,6 +13,7 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -27,14 +28,18 @@ namespace DCL.Interaction.Systems
     public partial class InteractionHighlightSystem : BaseUnityLoopSystem
     {
         private readonly InteractionSettingsData settingsData;
+        private readonly ISceneStateProvider sceneStateProvider;
 
-        internal InteractionHighlightSystem(World world, InteractionSettingsData settingsData) : base(world)
+        internal InteractionHighlightSystem(World world, InteractionSettingsData settingsData, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.settingsData = settingsData;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
         {
+            if (!sceneStateProvider.IsCurrent) return;
+
             UpdateHighlightsQuery(World);
         }
 

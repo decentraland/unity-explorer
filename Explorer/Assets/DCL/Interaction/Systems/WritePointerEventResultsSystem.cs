@@ -51,6 +51,8 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
+            if (!sceneStateProvider.IsCurrent) return;
+
             var messageSent = false;
             WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition, ref messageSent);
 

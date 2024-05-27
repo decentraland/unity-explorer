@@ -58,6 +58,7 @@ namespace Global
                 // Special logic for pooling/releasing PBRaycastResult
                .Add(SDKComponentBuilder<PBRaycastResult>.Create(ComponentID.RAYCAST_RESULT)
                                                         .WithProtobufSerializer()
+                                                        .AsResult()
                                                         .WithPool(onGet: raycastHitResult => raycastHitResult.Reset(),
                                                              onRelease: raycastHitResult =>
                                                              {
@@ -68,6 +69,7 @@ namespace Global
                                                         .Build())
                .Add(SDKComponentBuilder<PBPointerEventsResult>.Create(ComponentID.POINTER_EVENTS_RESULT)
                                                               .WithProtobufSerializer()
+                                                              .AsResult()
                                                               .WithPool(onRelease: pointerEventsResult =>
                                                                {
                                                                    if (pointerEventsResult.Hit != null)
