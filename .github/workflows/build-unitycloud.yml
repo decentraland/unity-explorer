@@ -164,7 +164,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Decentraland
+          name: Decentraland_${{ matrix.target }}
           path: |
             build
             !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
