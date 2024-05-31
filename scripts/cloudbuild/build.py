@@ -46,6 +46,14 @@ def clone_current_target():
     body['settings']['scm']['branch'] = os.getenv('BRANCH_NAME')
     body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = os.getenv('BUILD_OPTIONS').split(',')
 
+    # Copy cache check
+    use_cache = os.getenv('USE_CACHE')
+    if use_cache:
+        body['settings']['buildTargetCopyCache'] = os.getenv('TARGET')
+    else:
+        if 'buildTargetCopyCache' in data['settings']:
+            del data['settings']['buildTargetCopyCache']
+
     # Check if the target already exists (re-use of a branch)
     if 'error' in get_target(new_target_name):
         # Create new
@@ -189,9 +197,17 @@ def download_artifact(id):
 # Entrypoint here ->
 args = parser.parse_args()
 
+cache = os.getenv('USE_CACHE')
+print(cache)
+if cache:
+    print('YES')
+else:
+    print('NO')
+exit(0)
+
 # MODE: Resume
 if args.resume or args.cancel:
-    build_info = read_build_info()
+    build_info = utils.read_build_info()
     if build_info is None:
         sys.exit(1)
 

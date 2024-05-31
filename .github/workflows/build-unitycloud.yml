@@ -21,6 +21,11 @@ on:
           - none
           - profile
           - deep
+      cache:
+        description: 'Use workspace caching in cloud runners'
+        required: true
+        default: true
+        type: boolean
 
 jobs:
   prebuild:
@@ -147,6 +152,7 @@ jobs:
           POLL_TIME: 60 # In seconds (int)
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          USE_CACHE: ${{ github.event.inputs.cache }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
