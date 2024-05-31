@@ -5,7 +5,8 @@ namespace CommunicationData.URLHelpers
 {
     public readonly struct URN
     {
-        public const int SHORTEN_URN_PARTS = 6;
+        private const int SHORTEN_URN_PARTS = 6;
+        private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
         private readonly string urn;
 
@@ -95,6 +96,8 @@ namespace CommunicationData.URLHelpers
         public URN Shorten()
         {
             if (string.IsNullOrEmpty(urn)) return urn;
+            // Third party collections do not include the tokenId and have 7 parts, so we must keep all of them
+            if (IsThirdPartyCollection()) return urn;
 
             int index = -1;
 
@@ -109,6 +112,9 @@ namespace CommunicationData.URLHelpers
 
         public bool IsExtended()
         {
+            // Third party collections do not apply to shortened/extended rules
+            if (IsThirdPartyCollection()) return false;
+
             var count = 0;
 
             foreach (char c in urn)
@@ -126,5 +132,8 @@ namespace CommunicationData.URLHelpers
 
         public static implicit operator URN(string urn) =>
             new (urn);
+
+        private bool IsThirdPartyCollection() =>
+            !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
     }
 }
