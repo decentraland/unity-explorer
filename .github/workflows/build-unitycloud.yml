@@ -42,6 +42,7 @@ jobs:
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
+    needs: testtimeout
     timeout-minutes: 10
     #if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (!github.event.pull_request.draft) || ${{ github.event.label.name == 'force-build' }}
     outputs:
