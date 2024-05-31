@@ -153,7 +153,6 @@ jobs:
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
           # e.g.: Editor.CloudBuild.Parameters["ALLOW_DEBUG"]
-          PARAM_TEST_VALUE: "value exists"
           PARAM_BUILD_VERSION: ${{ needs.prebuild.outputs.version }}
           PARAM_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}

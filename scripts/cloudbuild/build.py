@@ -12,7 +12,7 @@ import utils
 
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
-POLL_TIME = int(os.getenv('POLL_TIME')) # Seconds
+POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')

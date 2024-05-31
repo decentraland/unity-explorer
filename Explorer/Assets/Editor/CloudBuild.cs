@@ -24,7 +24,7 @@ namespace Editor
             Parameters = environmentVariables.Cast<DictionaryEntry>().ToDictionary(x => x.Key.ToString(), x => x.Value);
 
             // E.g. access like:
-            Debug.Log(Parameters["TEST_VALUE"]);
+            // Debug.Log(Parameters["TEST_VALUE"] as string);
 
             //Unity suggestion: 1793168
             //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
