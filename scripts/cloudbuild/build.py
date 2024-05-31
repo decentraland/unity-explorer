@@ -48,11 +48,11 @@ def clone_current_target():
 
     # Copy cache check
     use_cache = os.getenv('USE_CACHE')
-    if use_cache == 'true':
+    if use_cache == 'true' or use_cache == '':
         body['settings']['buildTargetCopyCache'] = os.getenv('TARGET')
     else:
-        if 'buildTargetCopyCache' in data['settings']:
-            del data['settings']['buildTargetCopyCache']
+        if 'buildTargetCopyCache' in body['settings']:
+            del body['settings']['buildTargetCopyCache']
 
     # Check if the target already exists (re-use of a branch)
     if 'error' in get_target(new_target_name):
