@@ -48,7 +48,7 @@ def clone_current_target():
 
     # Copy cache check
     use_cache = os.getenv('USE_CACHE')
-    if use_cache:
+    if use_cache == 'true':
         body['settings']['buildTargetCopyCache'] = os.getenv('TARGET')
     else:
         if 'buildTargetCopyCache' in data['settings']:
@@ -196,14 +196,6 @@ def download_artifact(id):
 
 # Entrypoint here ->
 args = parser.parse_args()
-
-cache = os.getenv('USE_CACHE')
-print(cache)
-if cache:
-    print('YES')
-else:
-    print('NO')
-exit(0)
 
 # MODE: Resume
 if args.resume or args.cancel:
