@@ -23,6 +23,22 @@ on:
           - deep
 
 jobs:
+  testtimeout:
+    name: Timeout Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Wait for 10min
+        run: sleep 10m
+
+      - name: Execute on cancel
+        if: ${{ cancelled() }}
+        run: echo "CANCEL"
+
+      - name: Execute always
+        if: ${{ always() }}
+        run: echo "ALWAYS"
+
   prebuild:
     name: Prebuild
     runs-on: ubuntu-latest
