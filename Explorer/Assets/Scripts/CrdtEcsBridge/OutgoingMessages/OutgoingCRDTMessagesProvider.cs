@@ -147,8 +147,8 @@ namespace CrdtEcsBridge.OutgoingMessages
                             break;
                         case CRDTMessageType.APPEND_COMPONENT:
                             memory = memoryAllocator.GetMemoryBuffer(pendingMessage.Message.CalculateSize());
-                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
                             pendingMessage.Bridge.Serializer.SerializeInto(pendingMessage.Message, memory.Memory.Span);
+                            pendingMessage.Bridge.Pool.Release(pendingMessage.Message);
                             processedMessages.Add(crdtProtocol.CreateAppendMessage(pendingMessage.Entity, pendingMessage.Bridge.Id, pendingMessage.Timestamp, memory));
                             break;
                         case CRDTMessageType.DELETE_COMPONENT:
