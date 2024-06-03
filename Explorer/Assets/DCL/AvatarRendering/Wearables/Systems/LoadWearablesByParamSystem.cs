@@ -83,6 +83,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             price));
                 }
 
+                if (wearable.ManifestResult == null)
+                {
+                    //urlBuilder.Clear();
+                    //wearable.ManifestResult = await webRequestController.GetAsync(urlBuilder.AppendDomainWithReplacedPath()
+                }
+                
                 WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, wearable, World, partition);
                 intention.Results.Add(wearable);
             }

@@ -162,7 +162,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape, ref IPartitionComponent partitionComponent)
+        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -196,8 +196,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                         component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity));
                         component.IsLoading = false;
-
-                        WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
                     }
                 }
 
@@ -207,7 +205,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
+        private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape,
+            ref IPartitionComponent partitionComponent)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -226,6 +225,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 
                 wearable.IsLoading = false;
+                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(realmData, wearable, World, partitionComponent);
                 World.Destroy(entity);
             }
         }

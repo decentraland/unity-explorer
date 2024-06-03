@@ -11,9 +11,13 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using AssetManagement;
+using ECS.StreamableLoading.AssetBundles;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 
 namespace DCL.AvatarRendering.Wearables.Helpers
 {
@@ -51,6 +55,27 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
+        
+        public static void CreateWearableThumbnailPromiseAB(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+            CancellationTokenSource? cancellationTokenSource = null)
+        {
+            URLPath thumbnailPath = attachment.GetThumbnail();
+
+            if (string.IsNullOrEmpty(thumbnailPath.Value) || attachment.ManifestResult?.Asset == null)
+            {
+                attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                return;
+            }
+            
+            var promise = AssetBundlePromise.Create(world,
+                GetAssetBundleIntention.FromHash(typeof(Texture2D), 
+                    hash:thumbnailPath.Value + PlatformUtils.GetPlatform(),
+                    permittedSources: AssetSource.ALL,
+                    manifest:attachment.ManifestResult?.Asset), 
+                partitionComponent);
+
+            world.Create(attachment, promise, partitionComponent);
+        }
 
         public static Promise? CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
@@ -62,12 +87,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
                 return null;
             }
-
+            
             using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();
             var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
             urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(thumbnailPath);
-
+            
             var promise = Promise.Create(world,
                 new GetTextureIntention
                 {

@@ -249,8 +249,7 @@ namespace DCL.AvatarRendering.Emotes
 
         [Query]
         private void FinalizeEmoteDTO(in Entity entity,
-            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise,
-            ref IPartitionComponent partitionComponent)
+            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -275,7 +274,6 @@ namespace DCL.AvatarRendering.Emotes
                         component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
                         component.IsLoading = false;
 
-                        WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
                     }
                 }
 
@@ -284,8 +282,8 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise,
-            ref IEmote emote)
+        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise, ref BodyShape bodyShape,
+            ref IEmote emote, ref IPartitionComponent partitionComponent)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -300,6 +298,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 emote.ManifestResult = result;
                 emote.IsLoading = false;
+                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(realmData, emote, World, partitionComponent);
                 World.Destroy(entity);
             }
         }
