@@ -80,9 +80,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
-                HandleTaskWithErrorHandling(sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken)),
-                HandleTaskWithErrorHandling(favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken)),
-                HandleTaskWithErrorHandling(hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken))
+                HandleTaskWithErrorHandlingAsync(sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken)),
+                HandleTaskWithErrorHandlingAsync(favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken)),
+                HandleTaskWithErrorHandlingAsync(hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken))
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
@@ -98,7 +98,7 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         //Some markers installers can fail due to network issues or APIs problems, we handle here the initialization errors to avoid
         //breaking the whole map rendering process as an error in the UniTask.WhenAll would stop the execution of the other tasks.
-        private async UniTask HandleTaskWithErrorHandling(UniTask task)
+        private async UniTask HandleTaskWithErrorHandlingAsync(UniTask task)
         {
             try
             {
