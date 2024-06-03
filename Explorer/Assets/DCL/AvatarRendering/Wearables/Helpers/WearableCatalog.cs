@@ -13,25 +13,25 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new ();
         private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new ();
 
-        internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
+        internal Dictionary<URN, IWearable> wearablesCache { get; } = new ();
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true) =>
             TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
                 : AddWearable(wearableDto.metadata.id, new Wearable(new StreamableLoadingResult<WearableDTO>(wearableDto)), qualifiedForUnloading);
 
-        public void AddEmptyWearable(string loadingIntentionPointer, bool qualifiedForUnloading = true)
+        public void AddEmptyWearable(URN urn, bool qualifiedForUnloading = true)
         {
-            AddWearable(loadingIntentionPointer, new Wearable(), qualifiedForUnloading);
+            AddWearable(urn, new Wearable(), qualifiedForUnloading);
         }
 
-        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
+        internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
-            wearablesCache.Add(loadingIntentionPointer, wearable);
+            wearablesCache.Add(urn, wearable);
 
             if (qualifiedForUnloading)
-                cacheKeysDictionary[loadingIntentionPointer] =
-                    listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+                cacheKeysDictionary[urn] =
+                    listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
 
             return wearable;
         }

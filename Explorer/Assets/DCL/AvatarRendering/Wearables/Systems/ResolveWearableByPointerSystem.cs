@@ -192,7 +192,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component);
+                        if (!wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component))
+                        {
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot finalize wearable DTO: {assetEntity.metadata.id}");
+                            continue;
+                        }
 
                         component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity));
                         component.IsLoading = false;
