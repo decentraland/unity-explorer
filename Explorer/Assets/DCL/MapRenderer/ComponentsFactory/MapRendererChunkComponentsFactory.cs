@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
@@ -79,9 +80,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
-                sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
-                favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken)
+                HandleTaskWithErrorHandling(sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken)),
+                HandleTaskWithErrorHandling(favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken)),
+                HandleTaskWithErrorHandling(hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken))
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
@@ -92,6 +93,20 @@ namespace DCL.MapRenderer.ComponentsFactory
                 var interactivityController = new MapCameraInteractivityController(configuration.MapCamerasRoot, instance.mapCamera, highlightMarkersPool, coordsUtils);
 
                 return new MapCameraController.MapCameraController(interactivityController, instance, coordsUtils, cullingController);
+            }
+        }
+
+        //Some markers installers can fail due to network issues or APIs problems, we handle here the initialization errors to avoid
+        //breaking the whole map rendering process as an error in the UniTask.WhenAll would stop the execution of the other tasks.
+        private async UniTask HandleTaskWithErrorHandling(UniTask task)
+        {
+            try
+            {
+                await task;
+            }
+            catch (Exception ex)
+            {
+                ReportHub.LogError(new ReportData(ReportCategory.PLUGINS), $"Marker installation failed: {ex.Message}");
             }
         }
 
