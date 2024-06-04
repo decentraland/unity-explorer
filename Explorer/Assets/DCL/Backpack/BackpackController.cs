@@ -153,6 +153,8 @@ namespace DCL.Backpack
 
         private async UniTaskVoid AwaitForProfileAsync(CancellationToken ct)
         {
+            if (ct.IsCancellationRequested) return;
+
             isAvatarLoaded = false;
 
             world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
@@ -165,6 +167,8 @@ namespace DCL.Backpack
 
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: ct);
+
+            if (ct.IsCancellationRequested) return;
 
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender));
             backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value));
