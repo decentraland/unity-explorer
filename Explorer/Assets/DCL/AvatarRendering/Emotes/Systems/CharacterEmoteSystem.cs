@@ -11,11 +11,13 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -28,6 +30,8 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(RemoteEmotesSystem))]
+    [UpdateBefore(typeof(InterpolateCharacterSystem))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         // todo: use this to add nice Debug UI to trigger any emote?
@@ -53,8 +57,33 @@ namespace DCL.AvatarRendering.Emotes
             ReplicateLoopingEmotesQuery(World);
             CancelEmotesByMovementQuery(World);
             CancelEmotesQuery(World);
+            CancelEmotesByDeletionQuery(World);
+            CancelEmotesByTeleportIntentionQuery(World);
             UpdateEmoteTagsQuery(World);
             CleanUpQuery(World);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent)
+        {
+            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+
+            if (emoteReference != null)
+                StopEmote(ref emoteComponent, emoteReference);
+        }
+
+        [Query]
+        [All(typeof(PlayerTeleportIntent))]
+        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
+
+            if (emoteReference != null)
+            {
+                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+                StopEmote(ref emoteComponent, emoteReference);
+            }
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
