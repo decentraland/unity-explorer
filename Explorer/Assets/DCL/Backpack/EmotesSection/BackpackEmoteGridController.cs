@@ -336,7 +336,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.gameObject.SetActive(false);
         }
 
-        private void OnEquip(int slot, IEmote emote)
+        private void OnEquip(int slot, IEmote emote, bool arg3)
         {
             if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackEmoteGridItemView backpackItemView)) return;
             backpackItemView.IsEquipped = true;
@@ -345,7 +345,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.text = slot.ToString();
         }
 
-        private void OnWearableEquipped(IWearable wearable)
+        private void OnWearableEquipped(IWearable wearable, bool b)
         {
             if (wearable.GetCategory() != WearablesConstants.Categories.BODY_SHAPE) return;
 

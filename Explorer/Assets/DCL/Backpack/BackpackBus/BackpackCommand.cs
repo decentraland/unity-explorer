@@ -19,10 +19,12 @@ namespace DCL.Backpack.BackpackBus
     {
         public readonly string Id;
         public readonly int? Slot;
+        public readonly bool IsInitialEquip;
 
-        public BackpackEquipEmoteCommand(string id, int? slot = null)
+        public BackpackEquipEmoteCommand(string id, int? slot = null, bool isInitialEquip = false)
         {
             Id = id;
+            IsInitialEquip = isInitialEquip;
             Slot = slot;
         }
     }
@@ -42,10 +44,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackEquipWearableCommand
     {
         public readonly string Id;
+        public readonly bool IsInitialEquip;
 
-        public BackpackEquipWearableCommand(string id)
+        public BackpackEquipWearableCommand(string id, bool isInitialEquip = false)
         {
             Id = id;
+            IsInitialEquip = isInitialEquip;
         }
     }
 
@@ -82,10 +86,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackHideCommand
     {
         public readonly IReadOnlyCollection<string> ForceRender;
+        public readonly bool IsInitialHide;
 
-        public BackpackHideCommand(IReadOnlyCollection<string> forceRender)
+        public BackpackHideCommand(IReadOnlyCollection<string> forceRender, bool isInitialHide = false)
         {
             ForceRender = new ReadOnlyCollection<string>(forceRender.ToList());
+            IsInitialHide = isInitialHide;
         }
     }
 

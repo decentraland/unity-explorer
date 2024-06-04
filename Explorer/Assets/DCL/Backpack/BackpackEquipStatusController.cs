@@ -1,6 +1,8 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
@@ -8,6 +10,7 @@ using DCL.Profiles.Self;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
@@ -25,6 +28,7 @@ namespace DCL.Backpack
         private World? world;
         private Entity? playerEntity;
         private CancellationTokenSource? publishProfileCts;
+        private bool hasEquipStatusChanges = false;
 
         public BackpackEquipStatusController(
             IBackpackEventBus backpackEventBus,
@@ -42,40 +46,71 @@ namespace DCL.Backpack
             this.selfProfile = selfProfile;
             this.forceRender = forceRender;
 
-            backpackEventBus.EquipWearableEvent += equippedWearables.Equip;
-            backpackEventBus.UnEquipWearableEvent += equippedWearables.UnEquip;
+            backpackEventBus.EquipWearableEvent += EquipWearable;
+            backpackEventBus.UnEquipWearableEvent += UnEquipWearable;
             backpackEventBus.PublishProfileEvent += PublishProfile;
-            backpackEventBus.EquipEmoteEvent += equippedEmotes.EquipEmote;
-            backpackEventBus.UnEquipEmoteEvent += equippedEmotes.UnEquipEmote;
+            backpackEventBus.EquipEmoteEvent += EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
             backpackEventBus.ForceRenderEvent += SetForceRender;
         }
 
         public void Dispose()
         {
-            backpackEventBus.EquipWearableEvent -= equippedWearables.Equip;
-            backpackEventBus.UnEquipWearableEvent -= equippedWearables.UnEquip;
+            backpackEventBus.EquipWearableEvent -= EquipWearable;
+            backpackEventBus.UnEquipWearableEvent -= UnEquipWearable;
             backpackEventBus.PublishProfileEvent -= PublishProfile;
-            backpackEventBus.EquipEmoteEvent -= equippedEmotes.EquipEmote;
-            backpackEventBus.UnEquipEmoteEvent -= equippedEmotes.UnEquipEmote;
+            backpackEventBus.EquipEmoteEvent -= EquipEmote;
+            backpackEventBus.UnEquipEmoteEvent -= UnEquipEmote;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             publishProfileCts?.SafeCancelAndDispose();
         }
 
-        private void SetForceRender(IReadOnlyCollection<string> categories)
+        private void EquipEmote(int slot, IEmote emote, bool isInitialEquip)
+        {
+            equippedEmotes.EquipEmote(slot, emote);
+            hasEquipStatusChanges = !isInitialEquip;
+        }
+
+        private void UnEquipEmote(int slot, IEmote? emote)
+        {
+            equippedEmotes.UnEquipEmote(slot, emote);
+            hasEquipStatusChanges = true;
+        }
+
+        private void EquipWearable(IWearable wearable, bool isInitialEquip)
+        {
+            equippedWearables.Equip(wearable);
+            hasEquipStatusChanges = !isInitialEquip;
+        }
+
+        private void UnEquipWearable(IWearable wearable)
+        {
+            equippedWearables.UnEquip(wearable);
+            hasEquipStatusChanges = true;
+        }
+
+        private void SetForceRender(IReadOnlyCollection<string> categories, bool isInitialHide)
         {
             forceRender.Clear();
 
             foreach (string category in categories)
                 forceRender.Add(category);
+
+            hasEquipStatusChanges = !isInitialHide;
         }
 
         private void PublishProfile()
         {
+            if (!hasEquipStatusChanges)
+                return;
+
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
             {
+                Debug.Log("Had changed, publishing");
                 var profile = await selfProfile.PublishAsync(ct);
                 // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
                 UpdateAvatarInWorld(profile!);
+                hasEquipStatusChanges = false;
             }
 
             publishProfileCts = publishProfileCts.SafeRestart();
