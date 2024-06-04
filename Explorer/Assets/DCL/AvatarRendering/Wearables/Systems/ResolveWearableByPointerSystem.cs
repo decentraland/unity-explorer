@@ -177,7 +177,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<WearablesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<WearablesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -222,7 +222,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 if (result.Succeeded)
                     wearable.ManifestResult = result;
@@ -245,7 +245,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 // every asset in the batch is mandatory => if at least one has already failed set the default wearables
                 if (result.Succeeded && !AnyAssetHasFailed(wearable, bodyShape))

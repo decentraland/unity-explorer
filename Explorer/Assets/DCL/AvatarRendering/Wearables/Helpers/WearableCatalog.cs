@@ -27,6 +27,13 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            // For example a wearable in the profile (/lambdas/profiles/:address):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            // The same wearable in the content server (/content/entities/active):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            urn = urn.ToLower();
+
             wearablesCache.Add(urn, wearable);
 
             if (qualifiedForUnloading)
@@ -44,16 +51,38 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return true;
             }
 
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            // For example a wearable in the profile (/lambdas/profiles/:address):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            // The same wearable in the content server (/content/entities/active):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            if (wearablesCache.TryGetValue(wearableURN.ToLower(), out wearable))
+            {
+                UpdateListedCachePriority(@for: wearableURN);
+                return true;
+            }
+
             return false;
         }
 
         public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
         {
-            var wearableURN =
-                WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
+            string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
 
-            UpdateListedCachePriority(@for: wearableURN);
-            return wearablesCache[wearableURN];
+            UpdateListedCachePriority(wearableURN);
+
+            if (wearablesCache.TryGetValue(wearableURN, out IWearable wearable))
+                return wearable;
+
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            // For example a wearable in the profile (/lambdas/profiles/:address):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            // The same wearable in the content server (/content/entities/active):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            if (wearablesCache.TryGetValue(wearableURN.ToLower(), out wearable))
+                return wearable;
+
+            return null;
         }
 
         private void UpdateListedCachePriority(string @for)
@@ -71,17 +100,31 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public void Unload(IPerformanceBudget frameTimeBudget)
         {
             for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
-                if (wearablesCache.TryGetValue(node.Value.key, out IWearable wearable))
-                    if (TryUnloadAllWearableAssets(wearable))
-                    {
-                        wearablesCache.Remove(node.Value.key);
-                        cacheKeysDictionary.Remove(node.Value.key);
-                        listedCacheKeys.Remove(node);
-                    }
+            {
+                string urn = node.Value.key;
+
+                if (!wearablesCache.TryGetValue(urn, out IWearable wearable))
+                    if (wearablesCache.TryGetValue(urn.ToLower(), out wearable))
+                        urn = urn.ToLower();
+
+                if (wearable == null) continue;
+                if (!TryUnloadAllWearableAssets(wearable)) continue;
+
+                wearablesCache.Remove(urn);
+                cacheKeysDictionary.Remove(urn);
+                listedCacheKeys.Remove(node);
+            }
         }
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            // For example a wearable in the profile (/lambdas/profiles/:address):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            // The same wearable in the content server (/content/entities/active):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            nftUrn = nftUrn.ToLower();
+
             if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
             {
                 ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
@@ -94,7 +137,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
         {
             bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
+
+            if (!result)
+                ownedNftsRegistry.TryGetValue(nftUrn.ToLower(), out r);
+
             registry = r;
+
             return result;
         }
 

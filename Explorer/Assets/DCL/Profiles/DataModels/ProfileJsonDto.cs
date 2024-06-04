@@ -91,9 +91,7 @@ namespace DCL.Profiles
             List<string> forceRenderCategories = forceRenderPool.Get();
 
             foreach (string w in wearables)
-                // The profile endpoint could return wearables with CAPS, but entities/active endpoint lowers everything
-                // In order to avoid cache misses thus errors building the avatar, we lower all the wearables
-                wearableUrns.Add(w.ToLower());
+                wearableUrns.Add(w);
 
             avatar.forceRender.Clear();
 
@@ -111,9 +109,7 @@ namespace DCL.Profiles
             avatar.BodyShape = BodyShape.FromStringSafe(bodyShape);
 
             foreach (EmoteJsonDto emoteJsonDto in emotes)
-                // The profile endpoint could return emotes with CAPS, but entities/active endpoint lowers everything
-                // In order to avoid cache misses thus errors building the avatar, we lower all the emotes
-                avatar.emotes[emoteJsonDto.slot] = emoteJsonDto.urn.ToLower();
+                avatar.emotes[emoteJsonDto.slot] = emoteJsonDto.urn;
 
             avatar.FaceSnapshotUrl = URLAddress.FromString(snapshots!.face256);
             avatar.BodySnapshotUrl = URLAddress.FromString(snapshots.body);

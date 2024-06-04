@@ -17,13 +17,25 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool TryGetEmote(URN urn, out IEmote emote)
         {
-            if (!emotes.TryGetValue(urn, out emote)) return false;
-            UpdateListedCachePriority(@for: urn);
+            if (!emotes.TryGetValue(urn, out emote))
+            {
+                if (!emotes.TryGetValue(urn.ToLower(), out emote))
+                    return false;
+
+                urn = urn.ToLower();
+            }
+
+            UpdateListedCachePriority(urn);
+
             return true;
         }
 
-        public void Set(URN urn, IEmote emote) =>
+        public void Set(URN urn, IEmote emote)
+        {
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            urn = urn.ToLower();
             emotes[urn] = emote;
+        }
 
         public IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
             TryGetEmote(emoteDto.metadata.id, out IEmote existingEmote)
@@ -37,40 +49,59 @@ namespace DCL.AvatarRendering.Emotes
         public void Unload(IPerformanceBudget frameTimeBudget)
         {
             for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
-                if (emotes.TryGetValue(node.Value.key, out IEmote emote))
-                    if (TryUnloadAllWearableAssets(emote))
-                    {
-                        emotes.Remove(node.Value.key);
-                        cacheKeysDictionary.Remove(node.Value.key);
-                        listedCacheKeys.Remove(node);
-                    }
+            {
+                URN urn = node.Value.key;
+
+                if (!emotes.TryGetValue(urn, out IEmote emote))
+                    if (emotes.TryGetValue(urn.ToLower(), out emote))
+                        urn = urn.ToLower();
+
+                if (emote == null) continue;
+                if (!TryUnloadAllWearableAssets(emote)) continue;
+
+                emotes.Remove(urn);
+                cacheKeysDictionary.Remove(urn);
+                listedCacheKeys.Remove(node);
+            }
         }
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            nftUrn = nftUrn.ToLower();
+
             if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
             {
                 ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
                 ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
             }
 
-            ownedWearableRegistry[entry.Urn] = entry;
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            ownedWearableRegistry[entry.Urn.ToLower()] = entry;
         }
 
         public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
         {
             bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
+
+            if (!result)
+                ownedNftsRegistry.TryGetValue(nftUrn.ToLower(), out r);
+
             registry = r;
+
             return result;
         }
 
-        private IEmote AddEmote(string loadingIntentionPointer, IEmote wearable, bool qualifiedForUnloading)
+        private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)
         {
-            emotes.Add(loadingIntentionPointer, wearable);
+            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
+            urn = urn.ToLower();
+
+            emotes.Add(urn, wearable);
 
             if (qualifiedForUnloading)
-                cacheKeysDictionary[loadingIntentionPointer] =
-                    listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+                cacheKeysDictionary[urn] =
+                    listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
 
             return wearable;
         }
