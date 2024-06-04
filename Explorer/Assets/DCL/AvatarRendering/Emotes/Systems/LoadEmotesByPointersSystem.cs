@@ -65,7 +65,6 @@ namespace DCL.AvatarRendering.Emotes
         public LoadEmotesByPointersSystem(World world,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
-            MutexSync mutexSync,
             IEmoteCache emoteCache,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory)

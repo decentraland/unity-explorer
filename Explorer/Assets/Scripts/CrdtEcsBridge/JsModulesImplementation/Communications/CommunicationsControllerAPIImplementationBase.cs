@@ -22,11 +22,9 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         protected readonly CancellationTokenSource cancellationTokenSource = new ();
         protected readonly ICommunicationControllerHub messagePipesHub;
         protected readonly ISceneData sceneData;
-
-        private readonly ISceneStateProvider sceneStateProvider;
-        private readonly IJsOperations jsOperations;
-        private readonly Action<ReceivedMessage<Scene>> onMessageReceivedCached;
-
+        protected readonly ISceneStateProvider sceneStateProvider;
+        protected readonly IJsOperations jsOperations;
+        protected readonly Action<ReceivedMessage<Scene>> onMessageReceivedCached;
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 

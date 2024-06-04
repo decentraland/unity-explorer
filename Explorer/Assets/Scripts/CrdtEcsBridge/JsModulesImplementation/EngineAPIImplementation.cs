@@ -76,10 +76,6 @@ namespace CrdtEcsBridge.JsModulesImplementation
             processPendingMessage = ProcessPendingMessage;
         }
 
-        public virtual void Dispose()
-        {
-        }
-
         public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
         {
             // TODO it's dirty, think how to do it better
@@ -174,7 +170,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             finally { Profiler.EndThreadProfiling(); }
         }
 
-        public void SetIsDisposing()
+        public virtual void SetIsDisposing()
         {
             isDisposing = true;
         }

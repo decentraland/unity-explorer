@@ -22,53 +22,28 @@ namespace SceneRunner
 {
     public class SceneFacade : ISceneFacade
     {
-        internal readonly ISceneRuntime runtimeInstance;
-        internal readonly ICRDTMemoryAllocator crdtMemoryAllocator;
-        internal readonly ICRDTProtocol crdtProtocol;
-        internal readonly ICRDTWorldSynchronizer crdtWorldSynchronizer;
-        internal readonly ECSWorldFacade ecsWorldFacade;
-        internal readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-        internal readonly IInstancePoolsProvider instancePoolsProvider;
-        internal readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
-        internal readonly ISceneExceptionsHandler sceneExceptionsHandler;
+        internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
-        public ISceneStateProvider SceneStateProvider { get; }
-        public SceneEcsExecutor EcsExecutor { get; }
+        public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
+        public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
+
+        private ISceneRuntime runtimeInstance => deps.Runtime;
+        private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public ISceneData SceneData { get; }
 
-        public bool IsEmpty { get; } = false;
+        public bool IsEmpty => false;
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
         private int intervalMS;
 
         public SceneFacade(
-            ISceneRuntime runtimeInstance,
-            ECSWorldFacade ecsWorldFacade,
-            ICRDTProtocol crdtProtocol,
-            IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider,
-            ICRDTWorldSynchronizer crdtWorldSynchronizer,
-            IInstancePoolsProvider instancePoolsProvider,
-            ICRDTMemoryAllocator crdtMemoryAllocator,
-            ISceneExceptionsHandler sceneExceptionsHandler,
-            ISceneStateProvider sceneStateProvider,
-            IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneData sceneData,
-            SceneEcsExecutor ecsExecutor)
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps)
         {
-            this.runtimeInstance = runtimeInstance;
-            this.ecsWorldFacade = ecsWorldFacade;
-            this.crdtProtocol = crdtProtocol;
-            this.outgoingCrtdMessagesProvider = outgoingCrtdMessagesProvider;
-            this.crdtWorldSynchronizer = crdtWorldSynchronizer;
-            this.instancePoolsProvider = instancePoolsProvider;
-            this.crdtMemoryAllocator = crdtMemoryAllocator;
-            this.sceneExceptionsHandler = sceneExceptionsHandler;
-            this.entityCollidersSceneCache = entityCollidersSceneCache;
+            this.deps = deps;
             SceneData = sceneData;
-            EcsExecutor = ecsExecutor;
-            SceneStateProvider = sceneStateProvider;
         }
 
         public void Dispose()
@@ -103,6 +78,11 @@ namespace SceneRunner
             }
 
             return false;
+        }
+
+        public bool IsSceneReady()
+        {
+            return SceneData.SceneLoadingConcluded;
         }
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
@@ -141,8 +121,13 @@ namespace SceneRunner
                 while (true)
                 {
                     // 1. 'ct' is an external cancellation token
-                    // 2. don't try to run the update loop if DisposeAsync was already called
-                    if (ct.IsCancellationRequested || SceneStateProvider.State is SceneState.Disposing or SceneState.Disposed)
+                    if (ct.IsCancellationRequested) break;
+
+                    // 2. don't try to run the update loop if the scene is not running
+                    if (SceneStateProvider.State is SceneState.Disposing
+                        or SceneState.Disposed
+                        or SceneState.JavaScriptError
+                        or SceneState.EngineError)
                         break;
 
                     stopWatch.Restart();
@@ -152,11 +137,7 @@ namespace SceneRunner
                         // We can't guarantee that the thread is preserved between updates
                         await runtimeInstance.UpdateScene(deltaTime);
                     }
-                    catch (ScriptEngineException e)
-                    {
-                        sceneExceptionsHandler.OnJavaScriptException(e);
-                        break;
-                    }
+                    catch (ScriptEngineException e) { sceneExceptionsHandler.OnJavaScriptException(e); }
 
                     SceneStateProvider.TickNumber++;
 
@@ -221,7 +202,7 @@ namespace SceneRunner
         {
             SceneStateProvider.IsCurrent = isCurrent;
             runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
-            ecsWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+            deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
         }
 
         public async UniTask DisposeAsync()
@@ -239,17 +220,10 @@ namespace SceneRunner
 
             SceneStateProvider.State = SceneState.Disposed;
         }
+
         private void DisposeInternal()
         {
-            runtimeInstance.Dispose();
-            ecsWorldFacade.Dispose();
-            crdtProtocol.Dispose();
-            outgoingCrtdMessagesProvider.Dispose();
-            crdtWorldSynchronizer.Dispose();
-            instancePoolsProvider.Dispose();
-            crdtMemoryAllocator.Dispose();
-            sceneExceptionsHandler.Dispose();
-            entityCollidersSceneCache.Dispose();
+            deps.Dispose();
         }
     }
 }

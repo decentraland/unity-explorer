@@ -37,6 +37,7 @@ namespace DCL.GlobalPartitioning
     public partial class GlobalDeferredLoadingSystem : DeferredLoadingSystem
     {
         private static readonly QueryDescription[] COMPONENT_HANDLERS;
+        private readonly SceneAssetLock sceneAssetLock;
 
         static GlobalDeferredLoadingSystem()
         {
@@ -58,7 +59,16 @@ namespace DCL.GlobalPartitioning
             };
         }
 
-        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget)
-            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget) { }
+        public GlobalDeferredLoadingSystem(World world, IReleasablePerformanceBudget releasablePerformanceLoadingBudget, IPerformanceBudget memoryBudget, SceneAssetLock sceneAssetLock)
+            : base(world, COMPONENT_HANDLERS, releasablePerformanceLoadingBudget, memoryBudget)
+        {
+            this.sceneAssetLock = sceneAssetLock;
+        }
+
+        protected override void Update(float t)
+        {
+            if (sceneAssetLock.IsLocked) return;
+            base.Update(t);
+        }
     }
 }

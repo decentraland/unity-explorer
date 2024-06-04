@@ -28,12 +28,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         public List<SDKObservableEvent> SdkObservableEvents { get; } = new ();
         public HashSet<string> SdkObservableEventSubscriptions { get; } = new ();
 
-        public override void Dispose()
+        public override void SetIsDisposing()
         {
             userIdEntitiesMap.Clear();
             SdkObservableEvents.Clear();
             SdkObservableEventSubscriptions.Clear();
-            base.Dispose();
+
+            base.SetIsDisposing();
         }
 
         public PoolableSDKObservableEventArray? ConsumeSDKObservableEvents()

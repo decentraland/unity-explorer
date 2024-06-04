@@ -62,8 +62,8 @@ namespace DCL.Landscape
             void AddCollider(float posX, float posY, float length, string name, int2 dir,
                 float rotation)
             {
-                float xShift = dir.x == 0 ? length / 2 : ((THICKNESS / 2) + parcelSize) * dir.x;
-                float yShift = dir.y == 0 ? length / 2 : ((THICKNESS / 2) + parcelSize) * dir.y;
+                float xShift = dir.x == 0 ? length / 2 : THICKNESS / 2 * dir.x;
+                float yShift = dir.y == 0 ? length / 2 : THICKNESS / 2 * dir.y;
 
                 factory.CreateBorderCollider(name, collidersRoot,
                     size: new Vector3(length, HEIGHT, THICKNESS),

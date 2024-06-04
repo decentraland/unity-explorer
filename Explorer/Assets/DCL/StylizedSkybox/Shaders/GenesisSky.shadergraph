@@ -8210,17 +8210,7 @@
     "m_Type": "UnityEditor.ShaderGraph.CategoryData",
     "m_ObjectId": "4f825b4798d84103bda65572012e2a11",
     "m_Name": "",
-    "m_ChildObjectList": [
-        {
-            "m_Id": "1a4f261044d743fda4d61f6d193c46a3"
-        },
-        {
-            "m_Id": "0c342bdcd9674e36b23f1e85cc934a59"
-        },
-        {
-            "m_Id": "03650a18ac014c46b7ccd5a212b41651"
-        }
-    ]
+    "m_ChildObjectList": []
 }
 
 {
@@ -11388,6 +11378,15 @@
         },
         {
             "m_Id": "b355b084c5444fd580bc74d98cf3e2bd"
+        },
+        {
+            "m_Id": "1a4f261044d743fda4d61f6d193c46a3"
+        },
+        {
+            "m_Id": "0c342bdcd9674e36b23f1e85cc934a59"
+        },
+        {
+            "m_Id": "03650a18ac014c46b7ccd5a212b41651"
         }
     ]
 }

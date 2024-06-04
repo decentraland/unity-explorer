@@ -145,6 +145,7 @@ namespace SceneRunner
 
             // Try create scene runtime
             SceneRuntimeImpl sceneRuntime;
+
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
             catch (Exception e)
             {
@@ -166,50 +167,58 @@ namespace SceneRunner
                 throw new OperationCanceledException();
             }
 
-            SceneInstanceDependencies.WithRuntimeAndEngineAPI runtimeDeps;
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase runtimeDeps;
+
             if (ENABLE_SDK_OBSERVABLES)
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
-
-                sceneRuntime.RegisterSDKObservablesEngineApi((runtimeDeps.EngineAPI as ISDKObservableEventsEngineApi)!, sdkCommsControllerAPI, deps.ExceptionsHandler);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
+
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+
+                sceneRuntime.RegisterAll(
+                    (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
+                    sdkCommsControllerAPI,
+                    deps.ExceptionsHandler,
+                    roomHub,
+                    profileRepository,
+                    runtimeDeps.SceneApiImplementation,
+                    webRequestController,
+                    runtimeDeps.RestrictedActionsAPI,
+                    runtimeDeps.RuntimeImplementation,
+                    ethereumApi,
+                    runtimeDeps.WebSocketAipImplementation,
+                    identityCache,
+                    runtimeDeps.CommunicationsControllerAPI,
+                    deps.PoolsProvider,
+                    runtimeDeps.SimpleFetchApi);
             }
             else
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
-                sceneRuntime.RegisterEngineApi(runtimeDeps.EngineAPI, deps.ExceptionsHandler);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+
+                sceneRuntime.RegisterAll(
+                    runtimeDeps.EngineAPI,
+                    deps.ExceptionsHandler,
+                    roomHub,
+                    profileRepository,
+                    runtimeDeps.SceneApiImplementation,
+                    webRequestController,
+                    runtimeDeps.RestrictedActionsAPI,
+                    runtimeDeps.RuntimeImplementation,
+                    ethereumApi,
+                    runtimeDeps.WebSocketAipImplementation,
+                    identityCache,
+                    runtimeDeps.CommunicationsControllerAPI,
+                    deps.PoolsProvider,
+                    runtimeDeps.SimpleFetchApi);
             }
 
-            sceneRuntime.RegisterAll(
-                deps.ExceptionsHandler,
-                roomHub,
-                profileRepository,
-                runtimeDeps.SceneApiImplementation,
-                webRequestController,
-                runtimeDeps.RestrictedActionsAPI,
-                runtimeDeps.RuntimeImplementation,
-                ethereumApi,
-                runtimeDeps.WebSocketAipImplementation,
-                identityCache,
-                runtimeDeps.CommunicationsControllerAPI,
-                deps.PoolsProvider,
-                runtimeDeps.SimpleFetchApi);
             sceneRuntime.ExecuteSceneJson();
 
             return new SceneFacade(
-                sceneRuntime,
-                deps.ECSWorldFacade,
-                deps.CRDTProtocol,
-                deps.OutgoingCRDTMessagesProvider,
-                deps.CRDTWorldSynchronizer,
-                deps.PoolsProvider,
-                deps.CRDTMemoryAllocator,
-                deps.ExceptionsHandler,
-                deps.SceneStateProvider,
-                deps.EntityCollidersCache,
                 sceneData,
-                deps.EcsExecutor
+                runtimeDeps
             );
         }
     }

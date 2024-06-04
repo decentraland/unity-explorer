@@ -44,7 +44,7 @@ namespace DCL.Navmap
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
-        private readonly NavmapLocationController navmapLocationController;
+        private NavmapLocationController navmapLocationController;
         private readonly IRealmData realmData;
 
         private Vector2 lastParcelHovered;
@@ -58,11 +58,8 @@ namespace DCL.Navmap
             IMapRenderer mapRenderer,
             IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController,
-            IMVCManager mvcManager,
             IWebBrowser webBrowser,
             DCLInput dclInput,
-            World world,
-            Entity playerEntity,
             IRealmNavigator realmNavigator,
             IRealmData realmData)
         {
@@ -81,7 +78,6 @@ namespace DCL.Navmap
             searchBarController.OnSearchTextChanged += floatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
-            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
 
             mapSections = new ()
             {
@@ -140,6 +136,11 @@ namespace DCL.Navmap
 
         public async UniTask InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, CancellationToken ct) =>
             await searchBarController.InitialiseAssetsAsync(assetsProvisioner, ct);
+
+        public void InitialiseWorldDependencies(World world, Entity playerEntity)
+        {
+            navmapLocationController = new NavmapLocationController(navmapView.LocationView, world, playerEntity);
+        }
 
         private void OnResultClicked(string coordinates)
         {
