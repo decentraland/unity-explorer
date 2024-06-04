@@ -298,7 +298,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 emote.ManifestResult = result;
                 emote.IsLoading = false;
-                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(realmData, emote, World, partitionComponent);
+                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(emote, World, partitionComponent).Forget();
                 World.Destroy(entity);
             }
         }

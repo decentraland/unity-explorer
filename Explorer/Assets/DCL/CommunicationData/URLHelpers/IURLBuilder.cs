@@ -15,5 +15,7 @@
         IURLBuilder AppendParameter(in URLParameter parameter);
 
         IURLBuilder AppendPath(in URLPath path);
+
+        IURLBuilder AppendDomain(in URLDomain domain);
     }
 }

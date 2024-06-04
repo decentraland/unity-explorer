@@ -36,17 +36,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.TryConsume(World, out var result) && result.Succeeded)
             {
-                Texture2D sprite = result.Asset.GetMainAsset<Texture2D>();
-                wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(
-                    result.Succeeded
-                        ? Sprite.Create(sprite, new Rect(0, 0, sprite.width, sprite.height),
-                            VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)
-                        : WearableComponentsUtils.DEFAULT_THUMBNAIL);
-
+                if (result.Succeeded)
+                {
+                    var sprite = result.Asset?.GetMainAsset<Texture2D>();
+                    wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(
+                        result.Succeeded
+                            ? Sprite.Create(sprite, new Rect(0, 0, sprite.width, sprite.height),
+                                VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)
+                            : WearableComponentsUtils.DEFAULT_THUMBNAIL);
+                }
                 World.Destroy(entity);
             }
+            
         }
 
 

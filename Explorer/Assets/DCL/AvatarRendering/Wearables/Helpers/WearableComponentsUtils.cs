@@ -12,7 +12,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using AssetManagement;
+using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.WebRequests;
 using ECS.StreamableLoading.AssetBundles;
+using SceneRunner.Scene;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -36,6 +40,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity:2);
 
+        public static IWebRequestController WebRequestController = IWebRequestController.DEFAULT;
+
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
             List<URN> pointers = POINTERS_POOL.Get();
@@ -55,26 +61,48 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
-        
-        public static void CreateWearableThumbnailPromiseAB(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+
+        public static async UniTask<AssetBundlePromise?> CreateWearableThumbnailPromiseAB(IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
             URLPath thumbnailPath = attachment.GetThumbnail();
 
-            if (string.IsNullOrEmpty(thumbnailPath.Value) || attachment.ManifestResult?.Asset == null)
+            if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
                 attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
-                return;
+                return null;
+            }
+
+            if (attachment.ManifestResult?.Asset == null)
+            {
+                var assetBundleURL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
+                var urlBuilder = new URLBuilder();
+                urlBuilder.Clear();
+                urlBuilder.AppendDomain(assetBundleURL).AppendSubDirectory(URLSubdirectory.FromString("manifest/")).AppendPath(URLPath.FromString($"{attachment.GetHash()}{PlatformUtils.GetPlatform()}.json"));
+                try
+                {
+                    var sceneAbDto = await WebRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), new CancellationToken(), ReportCategory.WEARABLE)
+                        .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
+                    attachment.ManifestResult  = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files));
+                }
+                catch (Exception e)
+                {
+                    ReportHub.Log(ReportCategory.WEARABLE, $"Wearable {attachment.GetHash()} doesnt have a manifest");
+                    attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                    return null;
+                }
             }
             
             var promise = AssetBundlePromise.Create(world,
-                GetAssetBundleIntention.FromHash(typeof(Texture2D), 
-                    hash:thumbnailPath.Value + PlatformUtils.GetPlatform(),
+                GetAssetBundleIntention.FromHash(typeof(Texture2D),
+                    hash: thumbnailPath.Value + PlatformUtils.GetPlatform(),
                     permittedSources: AssetSource.ALL,
-                    manifest:attachment.ManifestResult?.Asset), 
+                    manifest: attachment.ManifestResult?.Asset,
+                    cancellationTokenSource: cancellationTokenSource), 
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
+            return promise;
         }
 
         public static Promise? CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,

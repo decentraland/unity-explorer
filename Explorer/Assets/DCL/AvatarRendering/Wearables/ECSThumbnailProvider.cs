@@ -7,6 +7,8 @@ using ECS.Prioritization.Components;
 using System.Threading;
 using UnityEngine;
 using ThumbnailPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
+using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
+
 
 namespace DCL.AvatarRendering.Wearables
 {
@@ -27,9 +29,9 @@ namespace DCL.AvatarRendering.Wearables
             if (avatarAttachment.ThumbnailAssetResult != null)
                 return avatarAttachment.ThumbnailAssetResult.Value.Asset;
 
-            ThumbnailPromise? wearableThumbnailPromise = null;
-            world.Query(in new QueryDescription().WithAll<IAvatarAttachment, ThumbnailPromise, IPartitionComponent>(),
-                (ref IAvatarAttachment attachment, ref ThumbnailPromise promise) =>
+            AssetBundlePromise? wearableThumbnailPromise = null;
+            world.Query(in new QueryDescription().WithAll<IAvatarAttachment, AssetBundlePromise, IPartitionComponent>(),
+                (ref IAvatarAttachment attachment, ref AssetBundlePromise promise) =>
                 {
                     if (attachment.GetThumbnail().Equals(avatarAttachment.GetThumbnail()))
                         wearableThumbnailPromise = promise;
@@ -37,8 +39,7 @@ namespace DCL.AvatarRendering.Wearables
 
             // Create a new promise bound to the current cancellation token
             // if the promise was created before, we should not override its cancellation
-            wearableThumbnailPromise ??= WearableComponentsUtils.CreateWearableThumbnailPromise(
-                realmData,
+            wearableThumbnailPromise ??= await WearableComponentsUtils.CreateWearableThumbnailPromiseAB(
                 avatarAttachment,
                 world,
                 PartitionComponent.TOP_PRIORITY,
