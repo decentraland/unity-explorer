@@ -85,7 +85,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             price));
                 }
 
-                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(assetBundleURL, wearable, World, partition).Forget();
+                WearableComponentsUtils.CreateWearableThumbnailPromise(assetBundleURL, realmData, wearable, World, partition).Forget();
                 intention.Results.Add(wearable);
             }
 

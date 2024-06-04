@@ -14,6 +14,7 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
+using CommunicationData.URLHelpers;
 using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Emotes
@@ -25,17 +26,19 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IRealmData realmData;
         private readonly IEmoteCache emoteCache;
         private readonly IWebRequestController webRequestController;
+        private readonly URLDomain assetBundleURL;
 
         public LoadOwnedEmotesSystem(
             World world,
             IRealmData realmData,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesResolution, GetOwnedEmotesFromRealmIntention> cache,
-            IEmoteCache emoteCache)
+            IEmoteCache emoteCache, URLDomain assetBundleURL)
             : base(world, cache)
         {
             this.realmData = realmData;
             this.emoteCache = emoteCache;
+            this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
         }
 
@@ -77,7 +80,7 @@ namespace DCL.AvatarRendering.Emotes
                             price));
                 }
 
-                WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, emote, World, partition);
+                WearableComponentsUtils.CreateWearableThumbnailPromise(assetBundleURL, realmData, emote, World, partition);
 
                 emotes[i] = emote;
             }

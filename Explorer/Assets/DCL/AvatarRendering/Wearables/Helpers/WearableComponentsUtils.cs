@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static async UniTask<AssetBundlePromise?> CreateWearableThumbnailPromiseAB(URLDomain assetBundleURL, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+        public static async UniTask<AssetBundlePromise?> CreateWearableThumbnailPromise(URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
             URLPath thumbnailPath = attachment.GetThumbnail();
@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 catch (Exception e)
                 {
                     ReportHub.Log(ReportCategory.WEARABLE, $"Wearable {attachment.GetHash()} doesnt have a manifest");
-                    attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
+                    CreateWearableThumbnailPromiseTexture(realmData, thumbnailPath, attachment, world, partitionComponent, cancellationTokenSource);
                     return null;
                 }
             }
@@ -101,17 +101,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return promise;
         }
 
-        public static Promise? CreateWearableThumbnailPromise(IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+        public static void CreateWearableThumbnailPromiseTexture(IRealmData realmData, URLPath thumbnailPath, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
-            URLPath thumbnailPath = attachment.GetThumbnail();
-
-            if (string.IsNullOrEmpty(thumbnailPath.Value))
-            {
-                attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
-                return null;
-            }
-            
             using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();
             var urlBuilder = urlBuilderScope.Value;
             urlBuilder.Clear();
@@ -126,7 +118,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
-            return promise;
         }
 
         public static void ExtractVisibleWearables(string bodyShapeId, IReadOnlyList<IWearable> wearables, int wearableCount, ref HideWearablesResolution hideWearablesResolution)

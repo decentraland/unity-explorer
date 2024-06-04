@@ -300,7 +300,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 emote.ManifestResult = result;
                 emote.IsLoading = false;
-                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(assetBundleURL, emote, World, partitionComponent).Forget();
+                WearableComponentsUtils.CreateWearableThumbnailPromise(assetBundleURL, realmData, emote, World, partitionComponent).Forget();
                 World.Destroy(entity);
             }
         }

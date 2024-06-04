@@ -228,7 +228,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 
                 wearable.IsLoading = false;
-                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(assetBundleURL, wearable, World, partitionComponent).Forget();
+                WearableComponentsUtils.CreateWearableThumbnailPromise(assetBundleURL, realmData, wearable, World, partitionComponent).Forget();
                 World.Destroy(entity);
             }
         }

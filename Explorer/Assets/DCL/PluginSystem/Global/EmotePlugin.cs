@@ -92,7 +92,7 @@ namespace DCL.PluginSystem.Global
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteCache);
+                emoteCache, assetBundleURL);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 

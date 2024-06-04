@@ -43,8 +43,9 @@ namespace DCL.AvatarRendering.Wearables
 
             // Create a new promise bound to the current cancellation token
             // if the promise was created before, we should not override its cancellation
-            wearableThumbnailPromise ??= await WearableComponentsUtils.CreateWearableThumbnailPromiseAB(
+            wearableThumbnailPromise ??= await WearableComponentsUtils.CreateWearableThumbnailPromise(
                 assetBundleURL,
+                realmData,
                 avatarAttachment,
                 world,
                 PartitionComponent.TOP_PRIORITY,
