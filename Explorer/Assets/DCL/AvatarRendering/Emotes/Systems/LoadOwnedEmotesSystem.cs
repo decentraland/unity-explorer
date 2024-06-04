@@ -26,19 +26,17 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IRealmData realmData;
         private readonly IEmoteCache emoteCache;
         private readonly IWebRequestController webRequestController;
-        private readonly URLDomain assetBundleURL;
 
         public LoadOwnedEmotesSystem(
             World world,
             IRealmData realmData,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesResolution, GetOwnedEmotesFromRealmIntention> cache,
-            IEmoteCache emoteCache, URLDomain assetBundleURL)
+            IEmoteCache emoteCache)
             : base(world, cache)
         {
             this.realmData = realmData;
             this.emoteCache = emoteCache;
-            this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
         }
 
@@ -79,9 +77,6 @@ namespace DCL.AvatarRendering.Emotes
                             DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
-
-                WearableComponentsUtils.CreateWearableThumbnailPromise(assetBundleURL, realmData, emote, World, partition);
-
                 emotes[i] = emote;
             }
 

@@ -31,19 +31,17 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly IWearableCatalog wearableCatalog;
         private readonly IWebRequestController webRequestController;
         private readonly Func<bool> isRealmDataReady;
-        private readonly URLDomain assetBundleURL;
 
         internal IURLBuilder urlBuilder = new URLBuilder();
 
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController, IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
-            IWearableCatalog wearableCatalog, URLDomain assetBundleURL) : base(world, cache)
+            IWearableCatalog wearableCatalog) : base(world, cache)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
             this.wearableCatalog = wearableCatalog;
-            this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.wearablesSubdirectory = wearablesSubdirectory;
 
@@ -84,8 +82,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             individualData.tokenId, DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
-
-                WearableComponentsUtils.CreateWearableThumbnailPromise(assetBundleURL, realmData, wearable, World, partition).Forget();
                 intention.Results.Add(wearable);
             }
 

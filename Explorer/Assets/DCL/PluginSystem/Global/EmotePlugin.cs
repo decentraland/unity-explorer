@@ -88,11 +88,11 @@ namespace DCL.PluginSystem.Global
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 emoteCache, realmData,
-                URLSubdirectory.FromString("/Emotes/"), assetBundleURL);
+                URLSubdirectory.FromString("/Emotes/"));
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteCache, assetBundleURL);
+                emoteCache);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 

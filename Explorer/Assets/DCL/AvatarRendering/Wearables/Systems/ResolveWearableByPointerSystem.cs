@@ -34,18 +34,16 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IRealmData realmData;
-        private readonly URLDomain assetBundleURL;
         private readonly IWearableCatalog wearableCatalog;
 
         private SingleInstanceEntity defaultWearablesState;
 
         public ResolveWearableByPointerSystem(World world, IWearableCatalog wearableCatalog, IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory, URLDomain assetBundleURL) : base(world)
+            URLSubdirectory customStreamingSubdirectory) : base(world)
         {
             this.wearableCatalog = wearableCatalog;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
-            this.assetBundleURL = assetBundleURL;
         }
 
         public override void Initialize()
@@ -228,7 +226,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     SetDefaultWearables(defaultWearablesResolved, wearable, in bodyShape);
 
                 wearable.IsLoading = false;
-                WearableComponentsUtils.CreateWearableThumbnailPromise(assetBundleURL, realmData, wearable, World, partitionComponent).Forget();
                 World.Destroy(entity);
             }
         }

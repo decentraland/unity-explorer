@@ -44,7 +44,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
                 ResolvedState = DefaultWearablesComponent.State.Success,
             });
 
-            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY, URLDomain.EMPTY);
+            system = new ResolveWearableByPointerSystem(world, wearableCatalog, new RealmData(new TestIpfsRealm()), URLSubdirectory.EMPTY);
         }
 
         private WearableCatalog wearableCatalog;
