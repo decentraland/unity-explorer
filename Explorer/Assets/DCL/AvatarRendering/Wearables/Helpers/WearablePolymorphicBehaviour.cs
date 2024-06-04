@@ -35,7 +35,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             component.ManifestResult = new StreamableLoadingResult<SceneAssetBundleManifest>();
             component.IsLoading = true;
-            world.Create(promise, component, bodyShape, partitionComponent);
+            world.Create(promise, component, bodyShape);
             return true;
         }
 
