@@ -36,17 +36,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 return;
             }
 
-            if (promise.TryConsume(World, out var result) && result.Succeeded)
+            if (promise.TryConsume(World, out var result))
             {
-                if (result.Succeeded)
-                {
-                    var sprite = result.Asset?.GetMainAsset<Texture2D>();
-                    wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(
-                        result.Succeeded
-                            ? Sprite.Create(sprite, new Rect(0, 0, sprite.width, sprite.height),
-                                VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)
-                            : WearableComponentsUtils.DEFAULT_THUMBNAIL);
-                }
+                var sprite = result.Asset?.GetMainAsset<Texture2D>();
+                wearable.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(
+                    result.Succeeded
+                        ? Sprite.Create(sprite, new Rect(0, 0, sprite.width, sprite.height),
+                            VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)
+                        : WearableComponentsUtils.DEFAULT_THUMBNAIL);
                 World.Destroy(entity);
             }
             
@@ -69,7 +66,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         ? Sprite.Create(result.Asset, new Rect(0, 0, result.Asset!.width, result.Asset.height),
                             VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false)
                         : WearableComponentsUtils.DEFAULT_THUMBNAIL);
-
                 World.Destroy(entity);
             }
         }

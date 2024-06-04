@@ -66,6 +66,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public static async UniTask<AssetBundlePromise?> CreateWearableThumbnailPromise(URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
+            if (attachment.ThumbnailAssetResult != null)
+                return null;
+            
             URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
