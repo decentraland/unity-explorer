@@ -68,10 +68,10 @@ namespace DCL.AvatarRendering.Wearables
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            ResolveWearableByPointerSystem.InjectToWorld(ref builder, wearableCatalog, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY);
-            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog);
+            ResolveWearableByPointerSystem.InjectToWorld(ref builder, wearableCatalog, realmData, WEARABLES_EMBEDDED_SUBDIRECTORY, assetBundleURL);
+            LoadWearablesByParamSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesResponse, GetWearableByParamIntention>(false, false), realmData, EXPLORER_SUBDIRECTORY, WEARABLES_COMPLEMENT_URL, wearableCatalog, assetBundleURL);
             LoadWearablesDTOByPointersSystem.InjectToWorld(ref builder, webRequestController, new NoCache<WearablesDTOList, GetWearableDTOByPointersIntention>(false, false));
-            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, webRequestController, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL);
+            LoadWearableAssetBundleManifestSystem.InjectToWorld(ref builder, new NoCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>(true, true), assetBundleURL);
             LoadDefaultWearablesSystem.InjectToWorld(ref builder, defaultWearablesDTOs, defaultEmptyWearableAsset,
                 wearableCatalog);
 

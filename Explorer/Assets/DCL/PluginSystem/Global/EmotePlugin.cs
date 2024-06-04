@@ -44,6 +44,7 @@ namespace DCL.PluginSystem.Global
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
         private readonly AudioClipsCache audioClipsCache;
+        private readonly URLDomain assetBundleURL;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteCache emoteCache,
@@ -56,7 +57,7 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             CacheCleaner cacheCleaner,
             IWeb3IdentityCache web3IdentityCache,
-            IReadOnlyEntityParticipantTable entityParticipantTable)
+            IReadOnlyEntityParticipantTable entityParticipantTable, URLDomain assetBundleURL)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -66,6 +67,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.web3IdentityCache = web3IdentityCache;
             this.entityParticipantTable = entityParticipantTable;
+            this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
@@ -86,7 +88,7 @@ namespace DCL.PluginSystem.Global
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 emoteCache, realmData,
-                URLSubdirectory.FromString("/Emotes/"));
+                URLSubdirectory.FromString("/Emotes/"), assetBundleURL);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
@@ -127,7 +129,7 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
-                IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World);
+                IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL);
 
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                     selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider,

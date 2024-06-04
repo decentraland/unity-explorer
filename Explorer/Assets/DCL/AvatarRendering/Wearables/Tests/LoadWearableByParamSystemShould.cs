@@ -36,7 +36,7 @@ namespace DCL.AvatarRendering.Wearables.Tests
             realmData.Configured.Returns(true);
 
             return new LoadWearablesByParamSystem(world, TestWebRequestController.INSTANCE, cache, realmData,
-                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog);
+                URLSubdirectory.EMPTY, URLSubdirectory.FromString("Wearables"), wearableCatalog, URLDomain.EMPTY);
         }
 
         protected override void AssertSuccess(WearablesResponse asset)

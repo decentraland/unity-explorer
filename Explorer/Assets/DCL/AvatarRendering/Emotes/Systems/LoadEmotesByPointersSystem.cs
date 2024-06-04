@@ -61,19 +61,21 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
         private readonly URLBuilder urlBuilder;
+        private readonly URLDomain assetBundleURL;
 
         public LoadEmotesByPointersSystem(World world,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
             IEmoteCache emoteCache,
             IRealmData realmData,
-            URLSubdirectory customStreamingSubdirectory)
+            URLSubdirectory customStreamingSubdirectory, URLDomain assetBundleURL)
             : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
+            this.assetBundleURL = assetBundleURL;
             urlBuilder = new URLBuilder();
         }
 
@@ -298,7 +300,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 emote.ManifestResult = result;
                 emote.IsLoading = false;
-                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(emote, World, partitionComponent).Forget();
+                WearableComponentsUtils.CreateWearableThumbnailPromiseAB(assetBundleURL, emote, World, partitionComponent).Forget();
                 World.Destroy(entity);
             }
         }

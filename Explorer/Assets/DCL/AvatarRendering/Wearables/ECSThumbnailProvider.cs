@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using ECS;
 using ECS.Prioritization.Components;
 using System.Threading;
+using CommunicationData.URLHelpers;
 using UnityEngine;
 using ThumbnailPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -16,12 +17,15 @@ namespace DCL.AvatarRendering.Wearables
     {
         private readonly IRealmData realmData;
         private readonly World world;
+        private readonly URLDomain assetBundleURL;
+        
 
         public ECSThumbnailProvider(IRealmData realmData,
-            World world)
+            World world, URLDomain assetBundleURL)
         {
             this.realmData = realmData;
             this.world = world;
+            this.assetBundleURL = assetBundleURL;
         }
 
         public async UniTask<Sprite?> GetAsync(IAvatarAttachment avatarAttachment, CancellationToken ct)
@@ -40,6 +44,7 @@ namespace DCL.AvatarRendering.Wearables
             // Create a new promise bound to the current cancellation token
             // if the promise was created before, we should not override its cancellation
             wearableThumbnailPromise ??= await WearableComponentsUtils.CreateWearableThumbnailPromiseAB(
+                assetBundleURL,
                 avatarAttachment,
                 world,
                 PartitionComponent.TOP_PRIORITY,

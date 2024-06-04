@@ -63,7 +63,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static async UniTask<AssetBundlePromise?> CreateWearableThumbnailPromiseAB(IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+        public static async UniTask<AssetBundlePromise?> CreateWearableThumbnailPromiseAB(URLDomain assetBundleURL, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
             URLPath thumbnailPath = attachment.GetThumbnail();
@@ -79,7 +79,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 try
                 {
                     attachment.ManifestResult  = new StreamableLoadingResult<SceneAssetBundleManifest>(
-                        await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(URLDomain.FromString("https://ab-cdn.decentraland.org/"), attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? new CancellationToken()));
+                        await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(assetBundleURL, attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? new CancellationToken()));
                 }
                 catch (Exception e)
                 {

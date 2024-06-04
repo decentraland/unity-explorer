@@ -23,16 +23,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLDomain assetBundleURL;
 
-        private readonly URLBuilder urlBuilder = new ();
-
-        private readonly IWebRequestController webRequestController;
-
         internal LoadWearableAssetBundleManifestSystem(World world,
-            IWebRequestController webRequestController,
             IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache, URLDomain assetBundleURL) : base(world, cache)
         {
             this.assetBundleURL = assetBundleURL;
-            this.webRequestController = webRequestController;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
