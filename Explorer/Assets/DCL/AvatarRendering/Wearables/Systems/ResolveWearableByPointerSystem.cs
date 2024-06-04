@@ -206,8 +206,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape,
-            ref IPartitionComponent partitionComponent)
+        private void FinalizeAssetBundleManifestLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundleManifestPromise promise, ref IWearable wearable, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {

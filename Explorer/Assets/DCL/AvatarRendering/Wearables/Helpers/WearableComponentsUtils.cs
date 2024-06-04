@@ -104,7 +104,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return promise;
         }
 
-        public static void CreateWearableThumbnailPromiseTexture(IRealmData realmData, URLPath thumbnailPath, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+        private static void CreateWearableThumbnailPromiseTexture(IRealmData realmData, URLPath thumbnailPath, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
             using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();

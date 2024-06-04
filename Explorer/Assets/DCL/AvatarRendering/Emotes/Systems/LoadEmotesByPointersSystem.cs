@@ -283,7 +283,7 @@ namespace DCL.AvatarRendering.Emotes
 
         [Query]
         private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise, ref BodyShape bodyShape,
-            ref IEmote emote, ref IPartitionComponent partitionComponent)
+            ref IEmote emote)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
