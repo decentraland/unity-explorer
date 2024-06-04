@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Threading;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
 using DCL.WebRequests;
 using ECS.StreamableLoading.AssetBundles;
@@ -75,15 +76,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (attachment.ManifestResult?.Asset == null)
             {
-                var assetBundleURL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
-                var urlBuilder = new URLBuilder();
-                urlBuilder.Clear();
-                urlBuilder.AppendDomain(assetBundleURL).AppendSubDirectory(URLSubdirectory.FromString("manifest/")).AppendPath(URLPath.FromString($"{attachment.GetHash()}{PlatformUtils.GetPlatform()}.json"));
                 try
                 {
-                    var sceneAbDto = await WebRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), new CancellationToken(), ReportCategory.WEARABLE)
-                        .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
-                    attachment.ManifestResult  = new StreamableLoadingResult<SceneAssetBundleManifest>(new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files));
+                    attachment.ManifestResult  = new StreamableLoadingResult<SceneAssetBundleManifest>(
+                        await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(URLDomain.FromString("https://ab-cdn.decentraland.org/"), attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? new CancellationToken()));
                 }
                 catch (Exception e)
                 {
