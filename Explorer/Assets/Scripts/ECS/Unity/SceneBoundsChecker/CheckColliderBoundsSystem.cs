@@ -66,7 +66,7 @@ namespace ECS.Unity.SceneBoundsChecker
         private void CheckPrimitive(ref PrimitiveColliderComponent primitiveCollider)
         {
             Collider collider = primitiveCollider.Collider;
-            if (!collider) return;
+            if (!collider || !primitiveCollider.IsVisible) return;
 
             collider.enabled = true;
             collider.enabled = sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds);

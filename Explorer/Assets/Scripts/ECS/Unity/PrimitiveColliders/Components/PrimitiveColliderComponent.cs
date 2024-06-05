@@ -11,6 +11,7 @@ namespace ECS.Unity.PrimitiveColliders.Components
     public struct PrimitiveColliderComponent : IPoolableComponentProvider<Collider>
     {
         public Collider Collider;
+        public bool IsVisible;
         public Type ColliderType;
         public PBMeshCollider.MeshOneofCase SDKType;
 
