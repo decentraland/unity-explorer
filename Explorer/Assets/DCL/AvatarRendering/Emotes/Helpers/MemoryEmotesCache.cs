@@ -71,12 +71,7 @@ namespace DCL.AvatarRendering.Emotes
         public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
         {
             bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
-
-            if (!result)
-                ownedNftsRegistry.TryGetValue(nftUrn, out r);
-
             registry = r;
-
             return result;
         }
 
