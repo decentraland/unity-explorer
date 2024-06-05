@@ -67,20 +67,14 @@ namespace DCL.AvatarRendering.Emotes
         [All(typeof(DeleteEntityIntention))]
         private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
-
-            if (emoteReference != null)
-                StopEmote(ref emoteComponent, emoteReference, avatarView);
+            StopEmote(ref emoteComponent, avatarView);
         }
 
         [Query]
         [All(typeof(PlayerTeleportIntent))]
         private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
         {
-            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
-
-            if (emoteReference != null)
-                StopEmote(ref emoteComponent, emoteReference, avatarView);
+            StopEmote(ref emoteComponent, avatarView);
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
@@ -113,7 +107,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (wantsToCancelEmote)
             {
-                StopEmote(ref emoteComponent, emoteReference, avatarView);
+                StopEmote(ref emoteComponent, avatarView);
                 return;
             }
 
@@ -121,7 +115,7 @@ namespace DCL.AvatarRendering.Emotes
             bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
             if (isOnAnotherTag)
-                StopEmote(ref emoteComponent, emoteReference, avatarView);
+                StopEmote(ref emoteComponent, avatarView);
         }
 
         // when moving or jumping we detect the emote cancellation and we take care of getting rid of the emote props and sounds
@@ -136,17 +130,18 @@ namespace DCL.AvatarRendering.Emotes
 
             if (!canEmoteBeCancelled) return;
 
-            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
-            if (emoteReference == null) return;
-
-            StopEmote(ref emoteComponent, emoteReference, avatarView);
+            StopEmote(ref emoteComponent, avatarView);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReference, IAvatarView avatarView)
+        private void StopEmote(ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
         {
-            avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-            emotePlayer.Stop(emoteReference);
+            if (emoteComponent.CurrentEmoteReference != null)
+            {
+                emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
+                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+            }
+
             emoteComponent.Reset();
         }
 
