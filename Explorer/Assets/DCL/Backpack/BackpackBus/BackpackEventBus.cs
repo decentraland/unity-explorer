@@ -21,6 +21,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<AvatarWearableCategoryEnum> FilterCategoryByEnumEvent;
         public event Action<BackpackSections>? ChangedBackpackSectionEvent;
         public event Action? DeactivateEvent;
+        public event Action UnEquipAllEvent;
         public event Action PublishProfileEvent;
 
         public event Action<string> SearchEvent;
@@ -33,6 +34,9 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendUnEquipWearable(IWearable unEquipWearable) =>
             UnEquipWearableEvent?.Invoke(unEquipWearable);
+
+        public void SendUnEquipAll() =>
+            UnEquipAllEvent?.Invoke();
 
         public void SendForceRender(IReadOnlyCollection<string> forceRender, bool isInitialHide = false) =>
             ForceRenderEvent?.Invoke(forceRender, isInitialHide);

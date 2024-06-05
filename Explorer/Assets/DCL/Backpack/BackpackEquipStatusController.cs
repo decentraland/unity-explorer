@@ -56,6 +56,7 @@ namespace DCL.Backpack
             backpackEventBus.EquipEmoteEvent += EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
             backpackEventBus.ForceRenderEvent += SetForceRender;
+            backpackEventBus.UnEquipAllEvent += UnEquipAll;
         }
 
         public void Dispose()
@@ -66,7 +67,15 @@ namespace DCL.Backpack
             backpackEventBus.EquipEmoteEvent -= EquipEmote;
             backpackEventBus.UnEquipEmoteEvent -= UnEquipEmote;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
+            backpackEventBus.UnEquipAllEvent -= UnEquipAll;
             publishProfileCts?.SafeCancelAndDispose();
+        }
+
+        private void UnEquipAll()
+        {
+            equippedEmotes.UnEquipAll();
+            equippedWearables.UnEquipAll();
+            forceRender.Clear();
         }
 
         private void EquipEmote(int slot, IEmote emote, bool isInitialEquip)

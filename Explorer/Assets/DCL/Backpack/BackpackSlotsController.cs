@@ -42,6 +42,7 @@ namespace DCL.Backpack
             this.backpackEventBus.UnEquipWearableEvent += UnEquipInSlot;
             this.backpackEventBus.FilterCategoryEvent += DeselectCategory;
             this.backpackEventBus.ForceRenderEvent += SetForceRender;
+            this.backpackEventBus.UnEquipAllEvent += UnEquipAll;
 
             foreach (var avatarSlotView in avatarSlotViews)
             {
@@ -87,6 +88,24 @@ namespace DCL.Backpack
             avatarSlotView.Item1.EmptyOverlay.SetActive(true);
 
             CalculateHideStatus();
+        }
+
+        private void UnEquipAll()
+        {
+            equippedWearables.Clear();
+
+            foreach ((string? key, (AvatarSlotView, CancellationTokenSource) value) in avatarSlots)
+            {
+                value.Item2.SafeCancelAndDispose();
+                value.Item1.UnequipButton.gameObject.SetActive(false);
+                value.Item1.SlotWearableUrn = null;
+                value.Item1.SlotWearableThumbnail.gameObject.SetActive(false);
+                value.Item1.SlotWearableThumbnail.sprite = null;
+                value.Item1.SlotWearableRarityBackground.sprite = null;
+                value.Item1.EmptyOverlay.SetActive(true);
+            }
+
+            forceRender.Clear();
         }
 
         private void EquipInSlot(IWearable equippedWearable, bool isInitialEquip)
@@ -179,6 +198,7 @@ namespace DCL.Backpack
         {
             backpackEventBus.EquipWearableEvent -= EquipInSlot;
             backpackEventBus.UnEquipWearableEvent -= UnEquipInSlot;
+            this.backpackEventBus.UnEquipAllEvent -= UnEquipAll;
             foreach (var avatarSlotView in avatarSlots.Values)
                 avatarSlotView.Item1.OnSlotButtonPressed -= OnSlotButtonPressed;
         }

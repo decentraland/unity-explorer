@@ -166,6 +166,7 @@ namespace DCL.Backpack
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
                 await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
 
+            backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
             backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value, true));
 

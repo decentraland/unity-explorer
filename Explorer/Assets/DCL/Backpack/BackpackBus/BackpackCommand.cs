@@ -117,5 +117,7 @@ namespace DCL.Backpack.BackpackBus
         }
     }
 
+    public readonly struct BackpackUnEquipAllCommand { }
+
     public readonly struct BackpackPublishProfileCommand { }
 }
