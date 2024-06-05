@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,6 +23,7 @@ namespace DCL.Backpack
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         private readonly ICollection<string> forceRender;
 
@@ -36,13 +38,15 @@ namespace DCL.Backpack
             IEquippedWearables equippedWearables,
             ISelfProfile selfProfile,
             ICollection<string> forceRender,
-            Func<(World, Entity)> ecsContextProvider
+            Func<(World, Entity)> ecsContextProvider,
+            IWeb3IdentityCache web3IdentityCache
         )
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
             this.equippedWearables = equippedWearables;
             this.ecsContextProvider = ecsContextProvider;
+            this.web3IdentityCache = web3IdentityCache;
             this.selfProfile = selfProfile;
             this.forceRender = forceRender;
 
@@ -101,7 +105,7 @@ namespace DCL.Backpack
 
         private void PublishProfile()
         {
-            if (!hasEquipStatusChanges)
+            if (!hasEquipStatusChanges || web3IdentityCache.Identity == null)
                 return;
 
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
