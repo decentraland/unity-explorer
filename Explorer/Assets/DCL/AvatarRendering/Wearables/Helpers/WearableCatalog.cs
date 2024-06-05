@@ -2,6 +2,7 @@
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -9,11 +10,22 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public partial class WearableCatalog : IWearableCatalog
     {
-        private readonly LinkedList<(string key, long lastUsedFrame)> listedCacheKeys = new ();
-        private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new ();
-        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new ();
+        private class StringIgnoreCaseEqualityComparer : IEqualityComparer<string>
+        {
+            public static StringIgnoreCaseEqualityComparer Default { get; } = new ();
 
-        internal Dictionary<URN, IWearable> wearablesCache { get; } = new ();
+            public bool Equals(string x, string y) =>
+                x.Equals(y);
+
+            public int GetHashCode(string obj) =>
+                StringComparer.OrdinalIgnoreCase.GetHashCode(obj);
+        }
+
+        private readonly LinkedList<(string key, long lastUsedFrame)> listedCacheKeys = new ();
+        private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>>(), StringIgnoreCaseEqualityComparer.Default);
+        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(), URNIgnoreCaseEqualityComparer.Default);
+
+        internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true) =>
             TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
@@ -27,13 +39,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            // For example a wearable in the profile (/lambdas/profiles/:address):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            // The same wearable in the content server (/content/entities/active):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            urn = urn.ToLower();
-
             wearablesCache.Add(urn, wearable);
 
             if (qualifiedForUnloading)
@@ -51,12 +56,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return true;
             }
 
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            // For example a wearable in the profile (/lambdas/profiles/:address):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            // The same wearable in the content server (/content/entities/active):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            if (wearablesCache.TryGetValue(wearableURN.ToLower(), out wearable))
+            if (wearablesCache.TryGetValue(wearableURN, out wearable))
             {
                 UpdateListedCachePriority(@for: wearableURN);
                 return true;
@@ -74,12 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (wearablesCache.TryGetValue(wearableURN, out IWearable wearable))
                 return wearable;
 
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            // For example a wearable in the profile (/lambdas/profiles/:address):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            // The same wearable in the content server (/content/entities/active):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            if (wearablesCache.TryGetValue(wearableURN.ToLower(), out wearable))
+            if (wearablesCache.TryGetValue(wearableURN, out wearable))
                 return wearable;
 
             return null;
@@ -104,14 +99,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 URN urn = node.Value.key;
 
                 if (!wearablesCache.TryGetValue(urn, out IWearable wearable))
-                {
-                    URN loweredUrn = urn.ToLower();
+                    continue;
 
-                    if (wearablesCache.TryGetValue(loweredUrn, out wearable))
-                        urn = loweredUrn;
-                }
-
-                if (wearable == null) continue;
                 if (!TryUnloadAllWearableAssets(wearable)) continue;
 
                 wearablesCache.Remove(urn);
@@ -122,16 +111,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            // For example a wearable in the profile (/lambdas/profiles/:address):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            // The same wearable in the content server (/content/entities/active):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            nftUrn = nftUrn.ToLower();
-
             if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
             {
-                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
+                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
+                    URNIgnoreCaseEqualityComparer.Default);
                 ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
             }
 
@@ -141,12 +124,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
         {
             bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
-
-            if (!result)
-                ownedNftsRegistry.TryGetValue(nftUrn.ToLower(), out r);
-
             registry = r;
-
             return result;
         }
 

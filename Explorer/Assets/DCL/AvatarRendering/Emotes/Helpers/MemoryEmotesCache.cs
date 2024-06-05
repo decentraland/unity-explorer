@@ -11,33 +11,24 @@ namespace DCL.AvatarRendering.Emotes
     public class MemoryEmotesCache : IEmoteCache
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
-        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new ();
-        private readonly Dictionary<URN, IEmote> emotes = new ();
-        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new ();
+        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
+            URNIgnoreCaseEqualityComparer.Default);
+        private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
+        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(),
+            URNIgnoreCaseEqualityComparer.Default);
 
         public bool TryGetEmote(URN urn, out IEmote emote)
         {
             if (!emotes.TryGetValue(urn, out emote))
-            {
-                URN loweredUrn = urn.ToLower();
-
-                if (!emotes.TryGetValue(loweredUrn, out emote))
-                    return false;
-
-                urn = loweredUrn;
-            }
+                return false;
 
             UpdateListedCachePriority(urn);
 
             return true;
         }
 
-        public void Set(URN urn, IEmote emote)
-        {
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            urn = urn.ToLower();
+        public void Set(URN urn, IEmote emote) =>
             emotes[urn] = emote;
-        }
 
         public IEmote GetOrAddEmoteByDTO(EmoteDTO emoteDto, bool qualifiedForUnloading = true) =>
             TryGetEmote(emoteDto.metadata.id, out IEmote existingEmote)
@@ -55,14 +46,8 @@ namespace DCL.AvatarRendering.Emotes
                 URN urn = node.Value.key;
 
                 if (!emotes.TryGetValue(urn, out IEmote emote))
-                {
-                    URN loweredUrn = urn.ToLower();
+                    continue;
 
-                    if (emotes.TryGetValue(loweredUrn, out emote))
-                        urn = loweredUrn;
-                }
-
-                if (emote == null) continue;
                 if (!TryUnloadAllWearableAssets(emote)) continue;
 
                 emotes.Remove(urn);
@@ -73,17 +58,14 @@ namespace DCL.AvatarRendering.Emotes
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            nftUrn = nftUrn.ToLower();
-
             if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
             {
-                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
+                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
+                    URNIgnoreCaseEqualityComparer.Default);
                 ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
             }
 
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            ownedWearableRegistry[entry.Urn.ToLower()] = entry;
+            ownedWearableRegistry[entry.Urn] = entry;
         }
 
         public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
@@ -91,7 +73,7 @@ namespace DCL.AvatarRendering.Emotes
             bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
 
             if (!result)
-                ownedNftsRegistry.TryGetValue(nftUrn.ToLower(), out r);
+                ownedNftsRegistry.TryGetValue(nftUrn, out r);
 
             registry = r;
 
@@ -100,9 +82,6 @@ namespace DCL.AvatarRendering.Emotes
 
         private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)
         {
-            // Lower all urn since the server returns urns with lower caps or upper caps representing the same content on different endpoints
-            urn = urn.ToLower();
-
             emotes.Add(urn, wearable);
 
             if (qualifiedForUnloading)

@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using UnityEngine.Assertions;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -198,7 +199,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             continue;
                         }
 
-                        component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity));
+                        try { component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)); }
+                        catch (AssertionException e) { ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}"); }
+
                         component.IsLoading = false;
 
                         WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
@@ -235,7 +238,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeAssetBundleLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundlePromise promise, ref IWearable wearable, in BodyShape bodyShape, int index)
+        private void FinalizeAssetBundleLoading([Data] bool defaultWearablesResolved, in Entity entity, ref AssetBundlePromise promise, ref IWearable wearable, in BodyShape bodyShape,
+            int index)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -259,8 +263,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape)
-            => wearable.WearableAssetResults[bodyShape].Results.All(static r => r is { IsInitialized: true });
+        private static bool AllAssetsAreLoaded(IWearable wearable, BodyShape bodyShape) =>
+            wearable.WearableAssetResults[bodyShape].Results.All(static r => r is { IsInitialized: true });
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static bool AnyAssetHasFailed(IWearable wearable, BodyShape bodyShape) =>

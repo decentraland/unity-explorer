@@ -51,9 +51,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            // This assert breaks the wearable resolving process when not on the happy path
-            // Makes sense to be able to update the dto of the wearable
-            // Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
+            Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
 
             WearableDTO = result;
 

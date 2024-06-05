@@ -1,5 +1,6 @@
 using DCL.Diagnostics;
 using System;
+using System.Collections.Generic;
 
 namespace CommunicationData.URLHelpers
 {
@@ -32,7 +33,12 @@ namespace CommunicationData.URLHelpers
             Equals(other.urn);
 
         public bool Equals(string other) =>
-            urn == other;
+            // Ignore case of all urn since the server returns urns with lower case or upper case representing the same content on different endpoints
+            // For example a wearable in the profile (/lambdas/profiles/:address):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            // The same wearable in the content server (/content/entities/active):
+            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
+            string.Equals(urn, other, StringComparison.OrdinalIgnoreCase);
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
@@ -94,7 +100,7 @@ namespace CommunicationData.URLHelpers
         }
 
         public override int GetHashCode() =>
-            urn != null ? urn.GetHashCode() : 0;
+            urn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(urn) : 0;
 
         public URN Shorten()
         {
@@ -138,5 +144,16 @@ namespace CommunicationData.URLHelpers
 
         private bool IsThirdPartyCollection() =>
             !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
+    }
+
+    public class URNIgnoreCaseEqualityComparer : IEqualityComparer<URN>
+    {
+        public static URNIgnoreCaseEqualityComparer Default { get; } = new ();
+
+        public bool Equals(URN x, URN y) =>
+            x.Equals(y);
+
+        public int GetHashCode(URN obj) =>
+            obj.GetHashCode();
     }
 }
