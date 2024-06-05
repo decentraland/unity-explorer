@@ -53,7 +53,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void SetForceRender(IReadOnlyCollection<string> forceRenders, bool b)
+        private void SetForceRender(IReadOnlyCollection<string> forceRenders, bool isInitialHide)
         {
             forceRender.Clear();
 
@@ -89,7 +89,7 @@ namespace DCL.Backpack
             CalculateHideStatus();
         }
 
-        private void EquipInSlot(IWearable equippedWearable, bool b)
+        private void EquipInSlot(IWearable equippedWearable, bool isInitialEquip)
         {
             if (!avatarSlots.TryGetValue(equippedWearable.GetCategory(), out (AvatarSlotView, CancellationTokenSource) avatarSlotView))
                 return;

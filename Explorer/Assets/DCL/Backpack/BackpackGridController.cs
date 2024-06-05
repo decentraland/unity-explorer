@@ -335,7 +335,7 @@ namespace DCL.Backpack
             }
         }
 
-        private void OnEquip(IWearable equippedWearable, bool b)
+        private void OnEquip(IWearable equippedWearable, bool isInitialEquip)
         {
             if (usedPoolItems.TryGetValue(equippedWearable.GetUrn(), out BackpackItemView backpackItemView))
             {
