@@ -133,7 +133,8 @@ namespace DCL.PluginSystem.Global
                 forceRender,
                 realmData,
                 dclInput,
-                assetBundleURL
+                assetBundleURL,
+                webRequestController
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

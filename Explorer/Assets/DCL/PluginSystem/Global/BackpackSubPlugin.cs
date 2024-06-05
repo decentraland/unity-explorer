@@ -21,6 +21,7 @@ using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.WebRequests;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.Global
@@ -41,6 +42,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly BackpackEquipStatusController backpackEquipStatusController;
         private readonly URLDomain assetBundleURL;
+        private readonly IWebRequestController webRequestController;
 
         private BackpackBusController? busController;
         private Arch.Core.World? world;
@@ -60,7 +62,7 @@ namespace DCL.PluginSystem.Global
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
             IRealmData realmData,
-            DCLInput dclInput, URLDomain assetBundleURL)
+            DCLInput dclInput, URLDomain assetBundleURL, IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -73,6 +75,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.dclInput = dclInput;
             this.assetBundleURL = assetBundleURL;
+            this.webRequestController = webRequestController;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -143,7 +146,7 @@ namespace DCL.PluginSystem.Global
                 world = builder.World!;
                 playerEntity = args.PlayerEntity;
 
-                var thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL);
+                var thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
 
                 var gridController = new BackpackGridController(
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,

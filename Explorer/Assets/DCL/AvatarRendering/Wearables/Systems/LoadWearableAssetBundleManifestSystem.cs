@@ -22,17 +22,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
     public partial class LoadWearableAssetBundleManifestSystem : LoadSystemBase<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention>
     {
         private readonly URLDomain assetBundleURL;
+        private readonly IWebRequestController webRequestController;
 
         internal LoadWearableAssetBundleManifestSystem(World world,
-            IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache, URLDomain assetBundleURL) : base(world, cache)
+            IStreamableCache<SceneAssetBundleManifest, GetWearableAssetBundleManifestIntention> cache, URLDomain assetBundleURL, IWebRequestController webRequestController) : base(world, cache)
         {
             this.assetBundleURL = assetBundleURL;
+            this.webRequestController = webRequestController;
         }
 
         protected override async UniTask<StreamableLoadingResult<SceneAssetBundleManifest>> FlowInternalAsync(GetWearableAssetBundleManifestIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             return new StreamableLoadingResult<SceneAssetBundleManifest>(
-                await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(assetBundleURL, intention.Hash, GetReportCategory(), ct));
+                await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(webRequestController, assetBundleURL, intention.Hash, GetReportCategory(), ct));
         }
     }
 }

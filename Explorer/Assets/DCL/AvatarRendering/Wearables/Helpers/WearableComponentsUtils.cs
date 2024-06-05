@@ -11,6 +11,7 @@ using ECS.StreamableLoading.Textures;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using AssetManagement;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Systems;
@@ -41,8 +42,6 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         private static readonly IExtendedObjectPool<URLBuilder> URL_BUILDER_POOL = new ExtendedObjectPool<URLBuilder>(() => new URLBuilder(), defaultCapacity:2);
 
-        public static IWebRequestController WebRequestController = IWebRequestController.DEFAULT;
-
         public static GetWearablesByPointersIntention CreateGetWearablesByPointersIntention(BodyShape bodyShape, IReadOnlyCollection<string> wearables, IReadOnlyCollection<string> forceRender)
         {
             List<URN> pointers = POINTERS_POOL.Get();
@@ -63,34 +62,29 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return new GetWearablesByPointersIntention(pointers, bodyShape, forceRender);
         }
 
-        public static async UniTask<AssetBundlePromise?> CreateWearableThumbnailPromise(URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+        public static async UniTask CreateWearableThumbnailABPromiseAsync(IWebRequestController requestController, URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
             if (attachment.ThumbnailAssetResult != null)
-                return null;
+                return;
             
             URLPath thumbnailPath = attachment.GetThumbnail();
 
             if (string.IsNullOrEmpty(thumbnailPath.Value))
             {
                 attachment.ThumbnailAssetResult = new StreamableLoadingResult<Sprite>(DEFAULT_THUMBNAIL);
-                return null;
+                return;
             }
 
-            if (attachment.ManifestResult?.Asset == null)
+
+            if (!await ManifestResolved(requestController, assetBundleURL, realmData, attachment, world, partitionComponent, cancellationTokenSource, thumbnailPath))
             {
-                try
-                {
-                    attachment.ManifestResult  = new StreamableLoadingResult<SceneAssetBundleManifest>(
-                        await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(assetBundleURL, attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? new CancellationToken()));
-                }
-                catch (Exception e)
-                {
-                    ReportHub.Log(ReportCategory.WEARABLE, $"Wearable {attachment.GetHash()} doesnt have a manifest");
-                    CreateWearableThumbnailPromiseTexture(realmData, thumbnailPath, attachment, world, partitionComponent, cancellationTokenSource);
-                    return null;
-                }
-            }
+                ReportHub.Log(ReportCategory.WEARABLE, $"Cannot load the thumbnail of the wearable {attachment.GetUrn()} {attachment.GetHash()} since it doesnt have an AB manifest. " +
+                                                       "Trying to get the texture through content server");
+                CreateWearableThumbnailTexturePromise(realmData, thumbnailPath, attachment, world, partitionComponent, cancellationTokenSource);
+                return;
+            }                
+
             
             var promise = AssetBundlePromise.Create(world,
                 GetAssetBundleIntention.FromHash(typeof(Texture2D),
@@ -101,10 +95,27 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 partitionComponent);
 
             world.Create(attachment, promise, partitionComponent);
-            return promise;
         }
 
-        private static void CreateWearableThumbnailPromiseTexture(IRealmData realmData, URLPath thumbnailPath, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
+        private static async Task<bool> ManifestResolved(IWebRequestController requestController, URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent, CancellationTokenSource? cancellationTokenSource, URLPath thumbnailPath)
+        {
+            if (attachment.ManifestResult?.Asset == null)
+            {
+                try
+                {
+                    attachment.ManifestResult  = new StreamableLoadingResult<SceneAssetBundleManifest>(
+                        await LoadWearableAssetBundleManifestUtils.LoadWearableAssetBundleManifestAsync(requestController, assetBundleURL, attachment.GetHash(), ReportCategory.WEARABLE, cancellationTokenSource?.Token ?? new CancellationToken()));
+                }
+                catch (Exception)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static void CreateWearableThumbnailTexturePromise(IRealmData realmData, URLPath thumbnailPath, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent,
             CancellationTokenSource? cancellationTokenSource = null)
         {
             using var urlBuilderScope = URL_BUILDER_POOL.AutoScope();

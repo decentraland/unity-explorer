@@ -12,9 +12,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
     public static class LoadWearableAssetBundleManifestUtils
     {
         private static readonly URLBuilder urlBuilder = new ();
-        private static readonly IWebRequestController webRequestController = IWebRequestController.DEFAULT;
 
-        public static async UniTask<SceneAssetBundleManifest> LoadWearableAssetBundleManifestAsync(URLDomain assetBundleURL, string hash, string reportCategory, CancellationToken ct)
+        public static async UniTask<SceneAssetBundleManifest> LoadWearableAssetBundleManifestAsync(IWebRequestController webRequestController, URLDomain assetBundleURL,
+            string hash, string reportCategory, CancellationToken ct)
         {
             urlBuilder.Clear();
 
@@ -24,7 +24,6 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             var sceneAbDto = await webRequestController.GetAsync(new CommonArguments(urlBuilder.Build(), attemptsCount: 1), ct, reportCategory)
                 .CreateFromJson<SceneAbDto>(WRJsonParser.Unity, WRThreadFlags.SwitchBackToMainThread);
-
 
             return new SceneAssetBundleManifest(assetBundleURL, sceneAbDto.Version, sceneAbDto.Files);
         }
