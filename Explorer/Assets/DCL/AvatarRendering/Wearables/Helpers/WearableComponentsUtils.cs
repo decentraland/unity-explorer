@@ -77,7 +77,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             }
 
 
-            if (!await ManifestResolved(requestController, assetBundleURL, realmData, attachment, world, partitionComponent, cancellationTokenSource, thumbnailPath))
+            if (!await ManifestResolvedAsync(requestController, assetBundleURL, realmData, attachment, world, partitionComponent, cancellationTokenSource, thumbnailPath))
             {
                 ReportHub.Log(ReportCategory.WEARABLE, $"Cannot load the thumbnail of the wearable {attachment.GetUrn()} {attachment.GetHash()} since it doesnt have an AB manifest. " +
                                                        "Trying to get the texture through content server");
@@ -97,7 +97,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             world.Create(attachment, promise, partitionComponent);
         }
 
-        private static async Task<bool> ManifestResolved(IWebRequestController requestController, URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent, CancellationTokenSource? cancellationTokenSource, URLPath thumbnailPath)
+        private static async Task<bool> ManifestResolvedAsync(IWebRequestController requestController, URLDomain assetBundleURL, IRealmData realmData, IAvatarAttachment attachment, World world, IPartitionComponent partitionComponent, CancellationTokenSource? cancellationTokenSource, URLPath thumbnailPath)
         {
             if (attachment.ManifestResult?.Asset == null)
             {
