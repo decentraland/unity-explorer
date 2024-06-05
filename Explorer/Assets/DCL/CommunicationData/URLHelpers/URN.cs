@@ -46,9 +46,6 @@ namespace CommunicationData.URLHelpers
         public override string ToString() =>
             urn;
 
-        public URN ToLower() =>
-            urn.ToLower();
-
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
             string currentUrn = this.urn;
