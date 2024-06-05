@@ -101,11 +101,15 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         {
             for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
             {
-                string urn = node.Value.key;
+                URN urn = node.Value.key;
 
                 if (!wearablesCache.TryGetValue(urn, out IWearable wearable))
-                    if (wearablesCache.TryGetValue(urn.ToLower(), out wearable))
-                        urn = urn.ToLower();
+                {
+                    URN loweredUrn = urn.ToLower();
+
+                    if (wearablesCache.TryGetValue(loweredUrn, out wearable))
+                        urn = loweredUrn;
+                }
 
                 if (wearable == null) continue;
                 if (!TryUnloadAllWearableAssets(wearable)) continue;

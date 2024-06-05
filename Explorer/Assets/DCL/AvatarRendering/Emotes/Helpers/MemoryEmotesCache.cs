@@ -19,10 +19,12 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (!emotes.TryGetValue(urn, out emote))
             {
-                if (!emotes.TryGetValue(urn.ToLower(), out emote))
+                URN loweredUrn = urn.ToLower();
+
+                if (!emotes.TryGetValue(loweredUrn, out emote))
                     return false;
 
-                urn = urn.ToLower();
+                urn = loweredUrn;
             }
 
             UpdateListedCachePriority(urn);
@@ -53,8 +55,12 @@ namespace DCL.AvatarRendering.Emotes
                 URN urn = node.Value.key;
 
                 if (!emotes.TryGetValue(urn, out IEmote emote))
-                    if (emotes.TryGetValue(urn.ToLower(), out emote))
-                        urn = urn.ToLower();
+                {
+                    URN loweredUrn = urn.ToLower();
+
+                    if (emotes.TryGetValue(loweredUrn, out emote))
+                        urn = loweredUrn;
+                }
 
                 if (emote == null) continue;
                 if (!TryUnloadAllWearableAssets(emote)) continue;
