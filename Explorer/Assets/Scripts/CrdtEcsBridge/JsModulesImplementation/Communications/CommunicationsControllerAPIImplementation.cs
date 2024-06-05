@@ -91,7 +91,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
-        private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
+        protected override void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
             using (receivedMessage)
             {
