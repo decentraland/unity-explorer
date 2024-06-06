@@ -70,6 +70,7 @@ namespace DCL.Nametags
             UpdateTagQuery(World, camera);
             AddTagQuery(World, camera);
             ProcessChatBubbleComponentsQuery(World);
+            UpdateOwnTagQuery(World, camera);
         }
 
         [Query]
@@ -89,6 +90,22 @@ namespace DCL.Nametags
             UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
 
             World.Add(e, nametagView);
+        }
+
+        [Query]
+        private void UpdateOwnTag([Data] in CameraComponent camera, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
+        {
+            Debug.Log($"nametag {nametagView.Id} and avatarshape {avatarShape.ID} and profile {profile.UserId}");
+            if (nametagView.Id == avatarShape.ID)
+                return;
+
+            nametagView.Id = avatarShape.ID;
+            nametagView.Username.color = chatEntryConfiguration.GetNameColor(avatarShape.Name);
+            nametagView.SetUsername(avatarShape.Name, avatarShape.ID.Substring(avatarShape.ID.Length - 4), profile.HasClaimedName);
+            nametagView.gameObject.name = avatarShape.ID;
+            UpdateTagTransparencyAndScale(nametagView, camera.Camera, characterTransform.Position);
+
+            UpdateTagPosition(nametagView, camera.Camera, characterTransform.Position);
         }
 
         [Query]

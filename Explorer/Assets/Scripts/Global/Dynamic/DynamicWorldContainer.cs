@@ -362,7 +362,8 @@ namespace Global.Dynamic
                     realmNavigator,
                     forceRender,
                     dclInput,
-                    staticContainer.RealmData
+                    staticContainer.RealmData,
+                    profileCache
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

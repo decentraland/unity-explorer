@@ -198,6 +198,7 @@ namespace DCL.AuthenticationScreenFlow
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
             Profile profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            profile.IsDirty = true;
             profileNameLabel!.Value = profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
         }
