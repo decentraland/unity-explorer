@@ -15,7 +15,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             public static StringIgnoreCaseEqualityComparer Default { get; } = new ();
 
             public bool Equals(string x, string y) =>
-                x.Equals(y);
+                string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
 
             public int GetHashCode(string obj) =>
                 StringComparer.OrdinalIgnoreCase.GetHashCode(obj);
