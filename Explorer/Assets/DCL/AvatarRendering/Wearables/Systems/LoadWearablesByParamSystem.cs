@@ -82,10 +82,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             individualData.tokenId, DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
-
-                WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, wearable, World, partition);
                 intention.Results.Add(wearable);
             }
+
 
             return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results.ToArray(), intention.TotalAmount));
         }
