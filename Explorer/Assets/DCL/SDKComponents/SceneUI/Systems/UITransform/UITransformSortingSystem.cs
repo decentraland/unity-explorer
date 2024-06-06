@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        private void ResolveSiblingsOrder(in Entity entity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        private void ResolveSiblingsOrder(ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;

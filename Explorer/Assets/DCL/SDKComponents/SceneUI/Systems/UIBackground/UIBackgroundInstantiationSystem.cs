@@ -69,7 +69,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         }
 
         [Query]
-        private void UpdateUIBackground(CRDTEntity sdkEntity, ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent, ref PartitionComponent partitionComponent)
+        private void UpdateUIBackground(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent, ref PartitionComponent partitionComponent)
         {
             if (!sdkModel.IsDirty)
                 return;

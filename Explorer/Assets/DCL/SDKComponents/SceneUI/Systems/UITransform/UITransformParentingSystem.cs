@@ -60,25 +60,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                     SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
                 }
             }
-
-            // foreach (EntityReference childEntity in children)
-            // {
-            //     ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity.Entity, out bool exists);
-            //
-            //     if (!exists)
-            //     {
-            //         ReportHub.LogError(GetReportCategory(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {childEntity.Entity}");
-            //         continue;
-            //     }
-            //
-            //     uiTransformComponentToBeDeleted.RelationData.RemoveChild(ref uiTransform.RelationData, childEntity);
-            //     SetNewChild(ref uiTransform, childEntity, sceneRoot);
-            // }
         }
 
         [Query]
         [None(typeof(SceneRootComponent))]
-        private void DoUITransformParenting(Entity entity, CRDTEntity sdkEntity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        private void DoUITransformParenting(CRDTEntity sdkEntity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
