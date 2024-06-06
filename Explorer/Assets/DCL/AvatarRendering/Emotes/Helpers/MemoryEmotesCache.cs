@@ -11,14 +11,19 @@ namespace DCL.AvatarRendering.Emotes
     public class MemoryEmotesCache : IEmoteCache
     {
         private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
-        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new ();
-        private readonly Dictionary<URN, IEmote> emotes = new ();
-        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new ();
+        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
+            URNIgnoreCaseEqualityComparer.Default);
+        private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
+        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(),
+            URNIgnoreCaseEqualityComparer.Default);
 
         public bool TryGetEmote(URN urn, out IEmote emote)
         {
-            if (!emotes.TryGetValue(urn, out emote)) return false;
-            UpdateListedCachePriority(@for: urn);
+            if (!emotes.TryGetValue(urn, out emote))
+                return false;
+
+            UpdateListedCachePriority(urn);
+
             return true;
         }
 
@@ -37,20 +42,26 @@ namespace DCL.AvatarRendering.Emotes
         public void Unload(IPerformanceBudget frameTimeBudget)
         {
             for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
-                if (emotes.TryGetValue(node.Value.key, out IEmote emote))
-                    if (TryUnloadAllWearableAssets(emote))
-                    {
-                        emotes.Remove(node.Value.key);
-                        cacheKeysDictionary.Remove(node.Value.key);
-                        listedCacheKeys.Remove(node);
-                    }
+            {
+                URN urn = node.Value.key;
+
+                if (!emotes.TryGetValue(urn, out IEmote emote))
+                    continue;
+
+                if (!TryUnloadAllWearableAssets(emote)) continue;
+
+                emotes.Remove(urn);
+                cacheKeysDictionary.Remove(urn);
+                listedCacheKeys.Remove(node);
+            }
         }
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
             if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
             {
-                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
+                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
+                    URNIgnoreCaseEqualityComparer.Default);
                 ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
             }
 
@@ -64,13 +75,13 @@ namespace DCL.AvatarRendering.Emotes
             return result;
         }
 
-        private IEmote AddEmote(string loadingIntentionPointer, IEmote wearable, bool qualifiedForUnloading)
+        private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)
         {
-            emotes.Add(loadingIntentionPointer, wearable);
+            emotes.Add(urn, wearable);
 
             if (qualifiedForUnloading)
-                cacheKeysDictionary[loadingIntentionPointer] =
-                    listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+                cacheKeysDictionary[urn] =
+                    listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
 
             return wearable;
         }
