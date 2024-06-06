@@ -99,7 +99,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void UpdateCurrentScene(Vector2Int parcel)
         {
-            //if (lastParcelProcessed == parcel) return;
+            if (lastParcelProcessed == parcel) return;
 
             if (scenesCache.TryGetByParcel(parcel, out var sceneInCache))
             {
