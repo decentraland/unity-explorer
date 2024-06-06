@@ -2,10 +2,12 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CRDT;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Defaults;
 using ECS.Abstract;
 using ECS.Groups;
 using UnityEngine.UIElements;
@@ -36,11 +38,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         [Query]
         [None(typeof(UITransformComponent))]
-        private void InstantiateUITransform(in Entity entity, ref PBUiTransform sdkModel)
+        private void InstantiateUITransform(in Entity entity, CRDTEntity sdkEntity, ref PBUiTransform sdkModel)
         {
             UITransformComponent newTransform = transformsPool.Get();
 
-            newTransform.Initialize(COMPONENT_NAME, entity, sdkModel.RightOf);
+            newTransform.Initialize(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
 
             canvas.rootVisualElement.Add(newTransform.Transform);
 

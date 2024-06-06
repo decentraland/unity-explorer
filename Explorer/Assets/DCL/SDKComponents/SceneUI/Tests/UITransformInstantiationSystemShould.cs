@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
             Assert.AreEqual(EntityReference.Null, uiTransformComponent.RelationData.parent);
             Assert.AreEqual(0, uiTransformComponent.RelationData.rightOf);
-            Assert.AreEqual(null, uiTransformComponent.RelationData.Children);
+            Assert.AreEqual(null, uiTransformComponent.RelationData.head);
             Assert.IsFalse(uiTransformComponent.IsHidden);
         }
     }

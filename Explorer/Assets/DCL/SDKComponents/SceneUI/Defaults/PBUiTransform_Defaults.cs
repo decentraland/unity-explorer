@@ -1,9 +1,13 @@
+using CRDT;
 using DCL.ECSComponents;
 
 namespace DCL.SDKComponents.SceneUI.Defaults
 {
     public static class PBUiTransform_Defaults
     {
+        public static CRDTEntity GetRightOfEntity(this PBUiTransform self) =>
+            self.RightOf;
+
         public static float GetFlexShrink(this PBUiTransform self) =>
             self.HasFlexShrink ? self.FlexShrink : 1;
 

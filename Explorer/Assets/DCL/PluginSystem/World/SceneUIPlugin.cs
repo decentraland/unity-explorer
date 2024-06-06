@@ -62,12 +62,12 @@ namespace DCL.PluginSystem.World
         {
             // Add a regular UITransformComponent to the root entity so we can treat with the common scheme
             var rootUiTransform = transformsPool.Get();
-            rootUiTransform.Transform = canvas!.rootVisualElement;
+            rootUiTransform.InitializeAsRoot(canvas!.rootVisualElement);
             builder.World.Add(persistentEntities.SceneRoot, rootUiTransform);
 
             UITransformInstantiationSystem.InjectToWorld(ref builder, canvas, componentPoolsRegistry);
             UITransformParentingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot);
-            UITransformSortingSystem.InjectToWorld(ref builder);
+            UITransformSortingSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap);
             sceneIsCurrentListeners.Add(UITransformUpdateSystem.InjectToWorld(ref builder, canvas, sharedDependencies.SceneStateProvider, persistentEntities.SceneRoot));
             UITransformReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UITextInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry);
