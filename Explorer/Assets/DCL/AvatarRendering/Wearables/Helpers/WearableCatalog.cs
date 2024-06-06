@@ -2,7 +2,6 @@
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using Utility.Multithreading;
 
@@ -10,19 +9,8 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public partial class WearableCatalog : IWearableCatalog
     {
-        private class StringIgnoreCaseEqualityComparer : IEqualityComparer<string>
-        {
-            public static StringIgnoreCaseEqualityComparer Default { get; } = new ();
-
-            public bool Equals(string x, string y) =>
-                string.Equals(x, y, StringComparison.OrdinalIgnoreCase);
-
-            public int GetHashCode(string obj) =>
-                StringComparer.OrdinalIgnoreCase.GetHashCode(obj);
-        }
-
-        private readonly LinkedList<(string key, long lastUsedFrame)> listedCacheKeys = new ();
-        private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>>(), StringIgnoreCaseEqualityComparer.Default);
+        private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
+        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
         private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(), URNIgnoreCaseEqualityComparer.Default);
 
         internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
@@ -80,9 +68,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             return null;
         }
 
-        private void UpdateListedCachePriority(string @for)
+        private void UpdateListedCachePriority(URN @for)
         {
-            if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(string key, long lastUsedFrame)> node))
+            if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(URN key, long lastUsedFrame)> node))
             {
                 node.Value = (@for, MultithreadingUtility.FrameCount);
 
@@ -94,7 +82,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void Unload(IPerformanceBudget frameTimeBudget)
         {
-            for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+            for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
             {
                 URN urn = node.Value.key;
 
