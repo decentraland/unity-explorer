@@ -16,12 +16,14 @@ namespace DCL.PluginSystem.World
 {
     public class AssetsCollidersPlugin : IDCLWorldPluginWithoutSettings
     {
+        private const int COLLIDERS_VISIBILITY_EVENTS_CAPACITY = 500;
+
         private readonly IPhysicsTickProvider physicsTickProvider;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
 
         static AssetsCollidersPlugin()
         {
-            EntityEventBuffer<PrimitiveColliderComponent>.Register(500);
+            EntityEventBuffer<PrimitiveColliderComponent>.Register(COLLIDERS_VISIBILITY_EVENTS_CAPACITY);
         }
 
         public AssetsCollidersPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IPhysicsTickProvider physicsTickProvider)
