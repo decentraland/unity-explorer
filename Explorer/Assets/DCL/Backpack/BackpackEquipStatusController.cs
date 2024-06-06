@@ -122,9 +122,9 @@ namespace DCL.Backpack
                 var profile = await selfProfile.PublishAsync(ct);
                 // TODO: is it a single responsibility issue? perhaps we can move it elsewhere?
                 UpdateAvatarInWorld(profile!);
-                hasEquipStatusChanges = false;
             }
 
+            hasEquipStatusChanges = false;
             publishProfileCts = publishProfileCts.SafeRestart();
             PublishProfileAsync(publishProfileCts.Token).Forget();
         }
