@@ -81,6 +81,13 @@ namespace DCL.SDKComponents.SceneUI.Components
                     pendingRightOf[childComponent.rightOf] = newNode;
                 }
             }
+            else if (head != null)
+            {
+                // if the element is unsorted pull it to the head - make it a new head
+                newNode.Next = head;
+                head.Previous = newNode;
+                head = newNode;
+            }
 
             nodes[childEntity] = newNode;
 

@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITransformSortingSystemShould : UnitySystemTestBase<UITransformSortingSystem>
     {
-        private static readonly int[] ORDER = Enumerable.Range(0, 10).ToArray();
+        private static readonly int[] ORDER = Enumerable.Range(10, 10).ToArray();
 
         private Dictionary<CRDTEntity, Entity> entitiesMap;
         private Entity sceneRoot;
@@ -50,6 +50,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // shuffle randomly
             var rng = new Random(seed);
 
+            int firstElement = ORDER.Min();
             int[] copy = ORDER.ToArray();
             int n = ORDER.Length;
 
@@ -64,7 +65,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             {
                 var crdtEntity = new CRDTEntity(i);
 
-                int rightOf = i - 1;
+                int rightOf = i == firstElement ? 0 : i - 1;
 
                 var sdkModel = new PBUiTransform { IsDirty = true, RightOf = rightOf };
 

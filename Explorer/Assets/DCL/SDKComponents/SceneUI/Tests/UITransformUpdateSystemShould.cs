@@ -1,20 +1,24 @@
-﻿using CRDT;
+﻿using Arch.Core;
+using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
 using NUnit.Framework;
+using System.Threading.Tasks;
 
 namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITransformUpdateSystemShould : UITransformSystemTestBase<UITransformUpdateSystem>
     {
+        private Entity sceneRoot;
+
         [SetUp]
-        public async void SetUp()
+        public async Task SetUp()
         {
             await Initialize();
-            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY)));
+            system = new UITransformUpdateSystem(world, canvas, sceneStateProvider, sceneRoot = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY)));
         }
 
         [Test]
@@ -51,6 +55,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             sceneStateProvider.IsCurrent = isCurrentScene;
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             uiTransformComponent.IsHidden = isCurrentScene;
+            uiTransformComponent.RelationData.parent = world.Reference(sceneRoot);
 
             // Act
             system.Update(0);

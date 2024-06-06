@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CRDT;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Systems.UITransform;
 using DCL.SDKComponents.SceneUI.Utils;
@@ -22,10 +23,10 @@ namespace DCL.SDKComponents.SceneUI.Tests
             // Assert
             UITransformComponent uiTransformComponent = world.Get<UITransformComponent>(entity);
             Assert.IsNotNull(uiTransformComponent);
-            Assert.AreEqual(UiElementUtils.BuildElementName("UITransform", entity), uiTransformComponent.Transform.name);
+            Assert.AreEqual(UiElementUtils.BuildElementName("UITransform", world.Get<CRDTEntity>(entity)), uiTransformComponent.Transform.name);
             Assert.IsTrue(canvas.rootVisualElement.Contains(uiTransformComponent.Transform));
             Assert.AreEqual(EntityReference.Null, uiTransformComponent.RelationData.parent);
-            Assert.AreEqual(0, uiTransformComponent.RelationData.rightOf);
+            Assert.AreEqual(new CRDTEntity(0), uiTransformComponent.RelationData.rightOf);
             Assert.AreEqual(null, uiTransformComponent.RelationData.head);
             Assert.IsFalse(uiTransformComponent.IsHidden);
         }
