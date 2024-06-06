@@ -336,7 +336,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.gameObject.SetActive(false);
         }
 
-        private void OnEquip(int slot, IEmote emote, bool arg3)
+        private void OnEquip(int slot, IEmote emote, bool isInitialEquip)
         {
             if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackEmoteGridItemView backpackItemView)) return;
             backpackItemView.IsEquipped = true;

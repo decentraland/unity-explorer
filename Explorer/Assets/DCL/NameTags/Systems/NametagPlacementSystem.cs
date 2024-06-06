@@ -95,7 +95,6 @@ namespace DCL.Nametags
         [Query]
         private void UpdateOwnTag([Data] in CameraComponent camera, in AvatarShapeComponent avatarShape, in CharacterTransform characterTransform, in Profile profile, in NametagView nametagView)
         {
-            Debug.Log($"nametag {nametagView.Id} and avatarshape {avatarShape.ID} and profile {profile.UserId}");
             if (nametagView.Id == avatarShape.ID)
                 return;
 

@@ -91,7 +91,7 @@ namespace DCL.Backpack.CharacterPreview
             inputEventBus.OnChangePreviewFocus(categoryEnum);
         }
 
-        private void OnForceRenderChange(IReadOnlyCollection<string> forceRender, bool b)
+        private void OnForceRenderChange(IReadOnlyCollection<string> forceRender, bool isFirstHide)
         {
             previewAvatarModel.ForceRenderCategories.Clear();
 
@@ -100,7 +100,7 @@ namespace DCL.Backpack.CharacterPreview
             OnModelUpdated();
         }
 
-        private void OnWearableEquipped(IWearable i, bool b)
+        private void OnWearableEquipped(IWearable i, bool isFirstEquip)
         {
             previewAvatarModel.Wearables ??= new List<URN>();
 
@@ -130,7 +130,7 @@ namespace DCL.Backpack.CharacterPreview
             OnModelUpdated();
         }
 
-        private void OnEmoteEquipped(int slot, IEmote emote, bool arg3)
+        private void OnEmoteEquipped(int slot, IEmote emote, bool isFirstEquip)
         {
             previewAvatarModel.Emotes ??= new HashSet<URN>();
 
