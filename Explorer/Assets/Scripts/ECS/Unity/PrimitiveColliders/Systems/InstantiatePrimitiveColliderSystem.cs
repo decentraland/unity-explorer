@@ -131,7 +131,6 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             colliderTransform.ResetLocalTRS();
 
             component.Collider = collider;
-            component.IsVisible = true;
         }
     }
 }
