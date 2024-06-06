@@ -94,15 +94,11 @@ namespace ECS.SceneLifeCycle.Systems
 
                     // if Gltf Container Component has finished loading at least once (it can be reconfigured, we don't care)
                     if (gltfContainerComponent.State == LoadingState.Loading)
-                    {
+                        // if at least one entity is still loading, we are not done.
                         concluded = false;
-
-                        // no reason to iterate further
-                        break;
-                    }
-
-                    // remove entity from list - it's loaded, we don't need to check it anymore
-                    toDelete.Add(entityRef);
+                    else
+                        // remove entity from list - it's loaded, we don't need to check it anymore
+                        toDelete.Add(entityRef);
                 }
 
                 assetsResolved += toDelete.Count;
