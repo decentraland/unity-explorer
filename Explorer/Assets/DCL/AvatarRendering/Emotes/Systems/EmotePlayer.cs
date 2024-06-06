@@ -84,6 +84,7 @@ namespace DCL.AvatarRendering.Emotes
                 audioSource.spatialize = isSpatial;
                 audioSource.spatialBlend = isSpatial ? 1 : 0;
                 audioSource.transform.position = avatarTransform.position;
+                audioSource.loop = isLooping;
                 audioSource.Play();
                 emoteReferences.audioSource = audioSource;
             }

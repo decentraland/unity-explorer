@@ -45,7 +45,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 {
                     body = body,
                     headers = deserializedHeaders ?? new Dictionary<string, string>(),
-                    method = method,
+                    method = string.IsNullOrEmpty(method) ? "get" : method,
                 },
             });
         }
