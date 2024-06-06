@@ -249,8 +249,7 @@ namespace DCL.AvatarRendering.Emotes
 
         [Query]
         private void FinalizeEmoteDTO(in Entity entity,
-            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise,
-            ref IPartitionComponent partitionComponent)
+            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -275,7 +274,6 @@ namespace DCL.AvatarRendering.Emotes
                         component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
                         component.IsLoading = false;
 
-                        WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
                     }
                 }
 
