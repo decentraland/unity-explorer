@@ -176,6 +176,16 @@ jobs:
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
+      - name: Upload cloud logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity_cloud_log
+          path: unity_cloud_log.log
+          if-no-files-found: error
+
+      - name: Print cloud logs
+        run: cat unity_cloud_log.log
+
       # Will run on cancel or timeout
       - name: Cancel Unity Cloud build
         if: ${{ cancelled() }}
@@ -184,11 +194,3 @@ jobs:
           ORG_ID: ${{ secrets.UNITY_CLOUD_ORG_ID }}
           PROJECT_ID: ${{ secrets.UNITY_CLOUD_PROJECT_ID }}
         run: python -u scripts/cloudbuild/build.py --cancel
-
-#      - name: Uploading build report (test)
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: Build Report
-#          path: |
-#            Explorer/Library/LastBuild.buildreport
-#          if-no-files-found: error

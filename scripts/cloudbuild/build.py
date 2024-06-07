@@ -194,6 +194,29 @@ def download_artifact(id):
     os.remove(filepath)
     print('Artifacts ready!')
 
+def download_log(id):
+    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
+
+    if response.status_code != 200:
+        print(f'Failed to get build log with ID {id} with status code: {response.status_code}')
+        print("Response body:", response.text)
+        sys.exit(1)
+
+    with open('unity_cloud_log.log', 'w') as f:
+        f.write(response.text)
+
+    print('Build log ready!')
+
+def delete_build(id):
+    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/artifacts', headers=HEADERS)
+
+    if response.status_code == 200:
+        print('Build (on cloud) deleted successfully')
+    else:
+        print('Build (on cloud) failed to be deleted with status code:', response.status_code)
+        print('Response body:', response.text)
+        sys.exit(1)
+
 # Entrypoint here ->
 args = parser.parse_args()
 
@@ -242,6 +265,9 @@ while True:
 
 # Handle build artifact
 download_artifact(id)
+# Handle build log
+download_log(id)
 
 # Cleanup
+delete_build(id)
 utils.delete_build_info()
