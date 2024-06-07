@@ -19,12 +19,10 @@ namespace DCL.Backpack.BackpackBus
     {
         public readonly string Id;
         public readonly int? Slot;
-        public readonly bool IsInitialEquip;
 
-        public BackpackEquipEmoteCommand(string id, int? slot = null, bool isInitialEquip = false)
+        public BackpackEquipEmoteCommand(string id, int? slot = null)
         {
             Id = id;
-            IsInitialEquip = isInitialEquip;
             Slot = slot;
         }
     }
@@ -44,12 +42,10 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackEquipWearableCommand
     {
         public readonly string Id;
-        public readonly bool IsInitialEquip;
 
-        public BackpackEquipWearableCommand(string id, bool isInitialEquip = false)
+        public BackpackEquipWearableCommand(string id)
         {
             Id = id;
-            IsInitialEquip = isInitialEquip;
         }
     }
 

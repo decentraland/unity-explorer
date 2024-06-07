@@ -168,16 +168,16 @@ namespace DCL.Backpack
 
             backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
-            backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value, true));
+            backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value));
 
             foreach (URN w in avatar.Wearables)
-                backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten(), true));
+                backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(w.Shorten()));
 
             for (var i = 0; i < avatar.Emotes.Count; i++)
             {
                 URN avatarEmote = avatar.Emotes[i];
                 if (avatarEmote.IsNullOrEmpty()) continue;
-                backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i, true));
+                backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i));
             }
 
             isAvatarLoaded = true;

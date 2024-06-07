@@ -118,7 +118,7 @@ namespace DCL.Backpack.BackpackBus
             if (wearableToUnequip != null)
                 backpackEventBus.SendUnEquipWearable(wearableToUnequip);
 
-            backpackEventBus.SendEquipWearable(wearable, command.IsInitialEquip);
+            backpackEventBus.SendEquipWearable(wearable);
 
             if (wearable.Type == WearableType.BodyShape)
                 UnEquipIncompatibleWearables(wearable);
@@ -161,7 +161,7 @@ namespace DCL.Backpack.BackpackBus
             }
 
             backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
-            backpackEventBus.SendEquipEmote(slot, emote, command.IsInitialEquip);
+            backpackEventBus.SendEquipEmote(slot, emote);
         }
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)
@@ -201,7 +201,7 @@ namespace DCL.Backpack.BackpackBus
 
         private void HandleHideCommand(BackpackHideCommand command)
         {
-            backpackEventBus.SendForceRender(command.ForceRender, command.IsInitialHide);
+            backpackEventBus.SendForceRender(command.ForceRender);
         }
 
         private void HandleEmoteSlotSelectCommand(BackpackEmoteSlotSelectCommand command)

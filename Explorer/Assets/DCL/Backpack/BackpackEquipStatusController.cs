@@ -11,7 +11,6 @@ using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
@@ -24,13 +23,11 @@ namespace DCL.Backpack
         private readonly IEquippedWearables equippedWearables;
         private readonly ISelfProfile selfProfile;
         private readonly IWeb3IdentityCache web3IdentityCache;
-
         private readonly ICollection<string> forceRender;
 
         private World? world;
         private Entity? playerEntity;
         private CancellationTokenSource? publishProfileCts;
-        private bool hasEquipStatusChanges = false;
 
         public BackpackEquipStatusController(
             IBackpackEventBus backpackEventBus,
@@ -78,43 +75,37 @@ namespace DCL.Backpack
             forceRender.Clear();
         }
 
-        private void EquipEmote(int slot, IEmote emote, bool isInitialEquip)
+        private void EquipEmote(int slot, IEmote emote)
         {
             equippedEmotes.EquipEmote(slot, emote);
-            hasEquipStatusChanges = !isInitialEquip;
         }
 
         private void UnEquipEmote(int slot, IEmote? emote)
         {
             equippedEmotes.UnEquipEmote(slot, emote);
-            hasEquipStatusChanges = true;
         }
 
-        private void EquipWearable(IWearable wearable, bool isInitialEquip)
+        private void EquipWearable(IWearable wearable)
         {
             equippedWearables.Equip(wearable);
-            hasEquipStatusChanges = !isInitialEquip;
         }
 
         private void UnEquipWearable(IWearable wearable)
         {
             equippedWearables.UnEquip(wearable);
-            hasEquipStatusChanges = true;
         }
 
-        private void SetForceRender(IReadOnlyCollection<string> categories, bool isInitialHide)
+        private void SetForceRender(IReadOnlyCollection<string> categories)
         {
             forceRender.Clear();
 
             foreach (string category in categories)
                 forceRender.Add(category);
-
-            hasEquipStatusChanges = !isInitialHide;
         }
 
         private void PublishProfile()
         {
-            if (!hasEquipStatusChanges || web3IdentityCache.Identity == null)
+            if (web3IdentityCache.Identity == null)
                 return;
 
             async UniTaskVoid PublishProfileAsync(CancellationToken ct)
@@ -124,7 +115,6 @@ namespace DCL.Backpack
                 UpdateAvatarInWorld(profile!);
             }
 
-            hasEquipStatusChanges = false;
             publishProfileCts = publishProfileCts.SafeRestart();
             PublishProfileAsync(publishProfileCts.Token).Forget();
         }
