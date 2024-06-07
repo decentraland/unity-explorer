@@ -61,7 +61,7 @@ globalThis.require = require;
 globalThis.console = console;
 globalThis.WebSocket = require('~system/WebSocketApi').WebSocket;
 globalThis.fetch = async function executeFetch(url, init) {
-    if (init != undefined) {
+    if (init != undefined && init.body != undefined) {
         init.body = JSON.parse(init.body)
     }
     
