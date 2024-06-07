@@ -17,7 +17,6 @@ namespace DCL.SDKComponents.SceneUI.Components
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
 
-        // public UITransformRelationData RelationData;
         public UITransformRelationLinkedData RelationData;
 
         internal EventCallback<PointerDownEvent> currentOnPointerDownCallback;
