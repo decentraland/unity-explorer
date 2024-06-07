@@ -179,7 +179,7 @@ jobs:
       - name: Upload cloud logs
         uses: actions/upload-artifact@v4
         with:
-          name: unity_cloud_log
+          name: ${{ matrix.target }}_unity_log
           path: unity_cloud_log.log
           if-no-files-found: error
 
