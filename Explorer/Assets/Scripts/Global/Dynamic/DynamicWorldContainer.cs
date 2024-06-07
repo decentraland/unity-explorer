@@ -338,8 +338,7 @@ namespace Global.Dynamic
                     container.DefaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog
                 ),
-                new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
-                new MapRendererPlugin(mapRendererContainer.MapRenderer), new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator),
+                new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()), new MapRendererPlugin(mapRendererContainer.MapRenderer), new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache),
                 new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, unityEventSystem),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
