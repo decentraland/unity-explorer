@@ -8,7 +8,9 @@ using DCL.WebRequests;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
 using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Apis.Modules.Players;
@@ -71,11 +73,49 @@ namespace SceneRuntime
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
         }
-        
+
+        public static void RegisterAll(this ISceneRuntime sceneRuntime,
+            ISDKObservableEventsEngineApi engineApi,
+            ISDKMessageBusCommsControllerAPI commsApiImplementation,
+            ISceneExceptionsHandler exceptionsHandler,
+            IRoomHub roomHub,
+            IProfileRepository profileRepository,
+            ISceneApi sceneApi,
+            IWebRequestController webRequestController,
+            IRestrictedActionsAPI restrictedActionsAPI,
+            IRuntime runtime,
+            IEthereumApi ethereumApi,
+            IWebSocketApi webSocketApi,
+            IWeb3IdentityCache web3IdentityCache,
+            ICommunicationsControllerAPI communicationsControllerAPI,
+            IInstancePoolsProvider instancePoolsProvider,
+            ISimpleFetchApi simpleFetchApi
+        )
+        {
+            sceneRuntime.RegisterEngineAPI(engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
+            sceneRuntime.RegisterPlayers(roomHub, profileRepository);
+            sceneRuntime.RegisterSceneApi(sceneApi);
+            sceneRuntime.RegisterSignedFetch(webRequestController);
+            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
+            sceneRuntime.RegisterUserActions(restrictedActionsAPI);
+            sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
+            sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
+            sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
+            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
+            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
+            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
+        }
 
         internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
         {
             var newWrapper = new EngineApiWrapper(engineApi, instancePoolsProvider, sceneExceptionsHandler);
+            sceneRuntime.Register("UnityEngineApi", newWrapper);
+            sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
+        }
+
+        internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISDKObservableEventsEngineApi engineApi, ISDKMessageBusCommsControllerAPI commsApiImplementation, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
+        {
+            var newWrapper = new SDKObservableEventsEngineApiWrapper(engineApi, commsApiImplementation, instancePoolsProvider, sceneExceptionsHandler);
             sceneRuntime.Register("UnityEngineApi", newWrapper);
             sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
@@ -135,5 +175,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
         }
 
+        public static void RegisterSDKMessageBusCommsApi(this ISceneRuntime sceneRuntime, ISDKMessageBusCommsControllerAPI api)
+        {
+            sceneRuntime.Register("UnitySDKMessageBusCommsControllerApi", new SDKMessageBusCommsControllerAPIWrapper(api));
+        }
     }
 }

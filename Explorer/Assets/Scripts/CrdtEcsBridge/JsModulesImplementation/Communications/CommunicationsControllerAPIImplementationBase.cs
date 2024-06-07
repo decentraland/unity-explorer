@@ -1,41 +1,53 @@
-﻿using CRDT.Memory;
-using CrdtEcsBridge.PoolsProviders;
+﻿using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
-using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
-    public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
+    public class CommunicationsControllerAPIImplementationBase : ICommunicationsControllerAPI
     {
-        private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
+        internal enum MsgType
+        {
+            String = 1, // SDK scenes MessageBus messages
+            Uint8Array = 2,
+        }
 
-        public CommunicationsControllerAPIImplementation(
+        protected readonly CancellationTokenSource cancellationTokenSource = new ();
+        protected readonly ICommunicationControllerHub messagePipesHub;
+        protected readonly ISceneData sceneData;
+        protected readonly ISceneStateProvider sceneStateProvider;
+        protected readonly IJsOperations jsOperations;
+        protected readonly Action<ReceivedMessage<Scene>> onMessageReceivedCached;
+        protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
+        internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
+
+        public CommunicationsControllerAPIImplementationBase(
             ISceneData sceneData,
             ICommunicationControllerHub messagePipesHub,
             IJsOperations jsOperations,
-            ICRDTMemoryAllocator crdtMemoryAllocator,
-            ISceneStateProvider sceneStateProvider) : base(
-            sceneData,
-            messagePipesHub,
-            jsOperations,
-            sceneStateProvider)
+            ISceneStateProvider sceneStateProvider)
         {
-            this.crdtMemoryAllocator = crdtMemoryAllocator;
+            this.sceneData = sceneData;
+            this.messagePipesHub = messagePipesHub;
+            this.jsOperations = jsOperations;
+            this.sceneStateProvider = sceneStateProvider;
+
+            onMessageReceivedCached = OnMessageReceived;
         }
 
         public void Dispose()
         {
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
-            cancellationTokenSource.SafeCancelAndDispose();
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -51,12 +63,12 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             if (!sceneStateProvider.IsCurrent)
                 return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
 
-            foreach (var poolable in data)
+            foreach (PoolableByteArray poolable in data)
             {
                 if (poolable.Length == 0)
                     continue;
 
-                var message = poolable.Memory;
+                Memory<byte> message = poolable.Memory;
 
                 EncodeAndSend();
 
@@ -91,32 +103,13 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
-        protected override void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
+        protected virtual void OnMessageReceived(ReceivedMessage<Scene> receivedMessage) { }
+
+        internal static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {
-            using (receivedMessage)
-            {
-                ReadOnlySpan<byte> decodedMessage = receivedMessage.Payload.Data.Span;
-                MsgType msgType = DecodeMessage(ref decodedMessage);
-
-                if (msgType != MsgType.Uint8Array || decodedMessage.Length == 0)
-                    return;
-
-                // Wallet Id
-                int walletBytesCount = Encoding.UTF8.GetByteCount(receivedMessage.FromWalletId);
-                Span<byte> senderBytes = stackalloc byte[walletBytesCount];
-                Encoding.UTF8.GetBytes(receivedMessage.FromWalletId, senderBytes);
-
-                int messageLength = senderBytes.Length + decodedMessage.Length + 1;
-
-                IMemoryOwner<byte>? serializedMessageOwner = crdtMemoryAllocator.GetMemoryBuffer(messageLength);
-                Span<byte> serializedMessage = serializedMessageOwner.Memory.Span;
-
-                serializedMessage[0] = (byte)senderBytes.Length;
-                senderBytes.CopyTo(serializedMessage[1..]);
-                decodedMessage.CopyTo(serializedMessage.Slice(senderBytes.Length + 1));
-
-                lock (eventsToProcess) { eventsToProcess.Add(serializedMessageOwner); }
-            }
+            var msgType = (MsgType)value[0];
+            value = value[1..];
+            return msgType;
         }
     }
 }
