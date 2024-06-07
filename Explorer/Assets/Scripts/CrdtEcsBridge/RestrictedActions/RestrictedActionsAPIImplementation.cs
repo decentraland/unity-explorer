@@ -90,10 +90,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return false;
 
-            if (!sceneData.SceneContent.TryGetHash(src, out string hash))
-                return false;
-
-            // globalWorldActions.TriggerEmote();
+            // TODO: Implement scene emote triggering (blocked until emotes are implemented)...
 
             return true;
         }

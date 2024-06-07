@@ -1,5 +1,4 @@
-﻿using CommunicationData.URLHelpers;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace CrdtEcsBridge.RestrictedActions
 {
@@ -7,7 +6,5 @@ namespace CrdtEcsBridge.RestrictedActions
     {
         void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget);
         void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition);
-
-        // void TriggerEmote(URN urn);
     }
 }
