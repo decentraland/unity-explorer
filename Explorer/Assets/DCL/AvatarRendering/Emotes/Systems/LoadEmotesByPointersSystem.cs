@@ -258,7 +258,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -294,7 +294,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.ManifestResult = result;
                 emote.IsLoading = false;
@@ -313,7 +313,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
                 {
@@ -401,7 +401,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (promise.IsConsumed) return;
 
-            if (!promise.TryConsume(World, out StreamableLoadingResult<AudioClip> result))
+            if (!promise.SafeTryConsume(World, out StreamableLoadingResult<AudioClip> result))
                 return;
 
             if (result.Succeeded)
