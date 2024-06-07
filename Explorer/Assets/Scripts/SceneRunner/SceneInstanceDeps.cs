@@ -171,7 +171,7 @@ namespace SceneRunner
         /// </summary>
         public abstract class WithRuntimeAndJsAPIBase : IDisposable
         {
-            public readonly IEngineApi EngineAPI;
+            public IEngineApi EngineAPI;
             public readonly IRestrictedActionsAPI RestrictedActionsAPI;
             public readonly IRuntime RuntimeImplementation;
             public readonly ISceneApi SceneApiImplementation;
@@ -254,6 +254,25 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMutexSync),
+                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub) { }
+        }
+
+        internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
+        {
+            public WithRuntimeJsAndSDKObservablesEngineAPI
+            (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
+                IGlobalWorldActions globalWorldActions, IRealmData realmData, ICommunicationControllerHub messagePipesHub)
+                : base(new SDKObservableEventsEngineAPIImplementation(
+                    sharedPoolsProvider,
+                    syncDeps.PoolsProvider,
+                    syncDeps.CRDTProtocol,
+                    syncDeps.crdtDeserializer,
+                    crdtSerializer,
+                    syncDeps.CRDTWorldSynchronizer,
+                    syncDeps.OutgoingCRDTMessagesProvider,
+                    syncDeps.systemGroupThrottler,
+                    syncDeps.ExceptionsHandler,
+                    syncDeps.ecsMutexSync),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub) { }
         }
     }

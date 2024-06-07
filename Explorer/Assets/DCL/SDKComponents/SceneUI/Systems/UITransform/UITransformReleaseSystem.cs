@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CrdtEcsBridge.Components.Special;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -9,7 +10,6 @@ using DCL.SDKComponents.SceneUI.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 {
@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         }
 
         [Query]
-        [None(typeof(PBUiTransform), typeof(DeleteEntityIntention))]
+        [None(typeof(PBUiTransform), typeof(DeleteEntityIntention), typeof(SceneRootComponent))]
         private void HandleUITransformRemoval(ref UITransformComponent uiTransformComponent) =>
             RemoveVisualElement(ref uiTransformComponent);
 

@@ -52,6 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
+
             WearableDTO = result;
 
             if (!result.Succeeded) return;

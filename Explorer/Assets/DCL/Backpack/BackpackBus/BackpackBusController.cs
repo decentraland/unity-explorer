@@ -98,7 +98,16 @@ namespace DCL.Backpack.BackpackBus
                 return;
             }
 
-            string? category = wearable.GetCategory();
+            string? category = null;
+
+            try
+            {
+                category = wearable.GetCategory();
+            }
+            catch (Exception)
+            {
+                // Sometimes the wearable has no available category thus asking for it provokes NRE
+            }
 
             if (category == null)
             {
