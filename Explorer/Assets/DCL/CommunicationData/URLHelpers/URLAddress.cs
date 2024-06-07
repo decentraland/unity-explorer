@@ -13,11 +13,14 @@ namespace CommunicationData.URLHelpers
         public readonly string Value;
         private readonly string CacheableURL;
 
+        private static readonly string HTTP_STARTER = "https";
+        private static readonly string VALIDATION_PATTERN = "/v[0-9]+/";
+
         internal URLAddress(string value)
         {
             Value = value;
 
-            if (Value.StartsWith(HTTP_STARTER))
+            if (!string.IsNullOrEmpty(Value) && Value.StartsWith(HTTP_STARTER))
                 CacheableURL = Regex.Replace(Value, VALIDATION_PATTERN, "/");
             else
                 CacheableURL = Value;
@@ -52,10 +55,6 @@ namespace CommunicationData.URLHelpers
 
         public override string ToString() =>
             Value;
-
-
-        private static readonly string HTTP_STARTER = "https";
-        private static readonly string VALIDATION_PATTERN = "/v[0-9]+/";
 
         public string GetCacheableURL()
         {
