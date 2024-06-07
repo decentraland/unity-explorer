@@ -104,6 +104,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
                 colliderGameObject.layer = unityLayer;
 
             sdkCollider.IsActiveByEntity = enabled;
+            sdkCollider.Collider.enabled = enabled;
 
             entityCollidersCache.Associate(sdkCollider.Collider, new ColliderEntityInfo(World.Reference(entity), sdkEntity, colliderLayer));
 
@@ -123,8 +124,8 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             component.SDKCollider = new SDKCollider(collider);
 
             SetupCollider(entity, sdkEntity, setupCollider, component.SDKCollider, in sdkComponent);
-            // Parent collider to the entity's transform
 
+            // Parent collider to the entity's transform
             Transform colliderTransform = collider.transform;
 
             colliderTransform.SetParent(transformComponent.Transform, false);
