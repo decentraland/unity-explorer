@@ -33,17 +33,17 @@ namespace ECS.Unity.Visibility.Systems
         private void ProcessEvent(Entity entity, TComponent @event)
         {
             if (World.TryGet(entity, out PBVisibilityComponent? visibilityComponent))
-                UpdateVisibilityInternal(ref @event, visibilityComponent!.GetVisible());
+                UpdateVisibilityInternal(in @event, visibilityComponent!.GetVisible());
         }
 
         /// <summary>
         ///     Updates visibility based on PBVisibilityComponent isDirty
         /// </summary>
         [Query]
-        private void UpdateVisibility(ref TComponent component, in PBVisibilityComponent visibility)
+        private void UpdateVisibility(in TComponent component, in PBVisibilityComponent visibility)
         {
             if (visibility.IsDirty)
-                UpdateVisibilityInternal(ref component, visibility.GetVisible());
+                UpdateVisibilityInternal(in component, visibility.GetVisible());
         }
 
         [Query]
@@ -51,10 +51,10 @@ namespace ECS.Unity.Visibility.Systems
         private void HandleComponentRemoval(ref RemovedComponents removedComponents, ref TComponent primitiveMeshRendererComponent)
         {
             if (removedComponents.Remove<PBVisibilityComponent>())
-                UpdateVisibilityInternal(ref primitiveMeshRendererComponent, true);
+                UpdateVisibilityInternal(in primitiveMeshRendererComponent, true);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected abstract void UpdateVisibilityInternal(ref TComponent @event, bool visible);
+        protected abstract void UpdateVisibilityInternal(in TComponent @event, bool visible);
     }
 }

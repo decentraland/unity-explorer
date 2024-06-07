@@ -18,7 +18,7 @@ namespace ECS.Unity.Visibility.Systems
         {
         }
 
-        protected override void UpdateVisibilityInternal(ref PrimitiveMeshRendererComponent component, bool visible)
+        protected override void UpdateVisibilityInternal(in PrimitiveMeshRendererComponent component, bool visible)
         {
             component.MeshRenderer.enabled = visible;
         }

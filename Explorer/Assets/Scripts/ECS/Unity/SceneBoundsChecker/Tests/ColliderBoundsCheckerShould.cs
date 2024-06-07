@@ -50,7 +50,6 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new PrimitiveColliderComponent
             {
                 Collider = collider,
-                IsVisible = true,
             };
 
             world.Create(component);
@@ -70,7 +69,6 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new PrimitiveColliderComponent
             {
                 Collider = collider,
-                IsVisible = true,
             };
 
             world.Create(component);
@@ -89,7 +87,6 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new PrimitiveColliderComponent
             {
                 Collider = collider,
-                IsVisible = true,
             };
 
             world.Create(component);

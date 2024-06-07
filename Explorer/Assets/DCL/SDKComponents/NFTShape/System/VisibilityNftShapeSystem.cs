@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.NFTShape.System
         {
         }
 
-        protected override void UpdateVisibilityInternal(ref NftShapeRendererComponent component, bool visible)
+        protected override void UpdateVisibilityInternal(in NftShapeRendererComponent component, bool visible)
         {
             component.ApplyVisibility(visible);
         }

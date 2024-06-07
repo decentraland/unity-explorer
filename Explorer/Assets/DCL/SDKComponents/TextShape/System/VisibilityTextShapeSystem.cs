@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.TextShape.System
     {
         public VisibilityTextShapeSystem(World world, EntityEventBuffer<TextShapeComponent> changedTextMeshes) : base(world, changedTextMeshes) { }
 
-        protected override void UpdateVisibilityInternal(ref TextShapeComponent component, bool visible)
+        protected override void UpdateVisibilityInternal(in TextShapeComponent component, bool visible)
         {
             component.TextMeshPro.enabled = visible;
         }

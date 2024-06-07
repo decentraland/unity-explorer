@@ -1,5 +1,6 @@
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
+using ECS.Unity.SceneBoundsChecker;
 using System;
 using UnityEngine;
 
@@ -11,7 +12,8 @@ namespace ECS.Unity.PrimitiveColliders.Components
     public struct PrimitiveColliderComponent : IPoolableComponentProvider<Collider>
     {
         public Collider Collider;
-        public bool IsVisible;
+        public SDKCollider SDKCollider;
+
         public Type ColliderType;
         public PBMeshCollider.MeshOneofCase SDKType;
 

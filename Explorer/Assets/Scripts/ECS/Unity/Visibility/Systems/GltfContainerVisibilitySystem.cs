@@ -19,7 +19,7 @@ namespace ECS.Unity.Visibility.Systems
 
         }
 
-        protected override void UpdateVisibilityInternal(ref GltfContainerComponent component, bool visible)
+        protected override void UpdateVisibilityInternal(in GltfContainerComponent component, bool visible)
         {
             // we have several states that are notified with events
             if (component.State != LoadingState.Finished) return;
