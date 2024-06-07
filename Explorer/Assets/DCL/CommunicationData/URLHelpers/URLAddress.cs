@@ -11,10 +11,16 @@ namespace CommunicationData.URLHelpers
         public static readonly URLAddress EMPTY = new (string.Empty);
 
         public readonly string Value;
+        private readonly string CacheableURL;
 
         internal URLAddress(string value)
         {
             Value = value;
+
+            if (Value.StartsWith(HTTP_STARTER))
+                CacheableURL = Regex.Replace(Value, VALIDATION_PATTERN, "/");
+            else
+                CacheableURL = Value;
         }
 
         public static implicit operator string(in URLAddress address) =>
@@ -53,10 +59,7 @@ namespace CommunicationData.URLHelpers
 
         public string GetCacheableURL()
         {
-            if (Value.StartsWith(HTTP_STARTER))
-                return Regex.Replace(Value, VALIDATION_PATTERN, "/");
-
-            return Value;
+            return CacheableURL;
         }
     }
 }
