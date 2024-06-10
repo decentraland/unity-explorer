@@ -25,7 +25,7 @@ namespace Utility.Storage
             return new PersistentSetting<int>(key, defaultValue);
         }
 
-        public static PersistentSetting<T> WithSetForceDefaultValue<T>(this PersistentSetting<T> persistentSetting)
+        public static PersistentSetting<T> WithSetForceDefaultValue<T>(this PersistentSetting<T> persistentSetting) where T : IEquatable<T>
         {
             persistentSetting.Value = persistentSetting.defaultValue;
             return persistentSetting;
@@ -41,7 +41,7 @@ namespace Utility.Storage
             return new PersistentSetting<float>(key, defaultValue);
         }
 
-        public static PersistentSetting<T> CreateEnum<T>(string key, T defaultValue) where T: unmanaged, Enum
+        public static PersistentSetting<T> CreateEnum<T>(string key, T defaultValue) where T: unmanaged, Enum, IEquatable<T>
         {
             PersistentSetting<T>.ApplyIfNot(
                 static (key, defaultValue) => EnumUtils.FromInt<T>(PlayerPrefs.GetInt(key, EnumUtils.ToInt(defaultValue))),
@@ -105,7 +105,7 @@ namespace Utility.Storage
     /// <summary>
     ///     Value which is stored in PlayerPrefs at runtime and can override values coming from presets
     /// </summary>
-    public readonly struct PersistentSetting<T> : ISetting<T>
+    public readonly struct PersistentSetting<T> : ISetting<T> where T : IEquatable<T>
     {
         private static Func<string, T, T>? getValue;
         private static Action<string, T>? setValue;
@@ -117,7 +117,7 @@ namespace Utility.Storage
         {
             this.key = key;
             this.defaultValue = defaultValue;
-            Value = getValue!(key, defaultValue);
+            Value = getValue!(key, defaultValue)!;
         }
 
         public static void ApplyIfNot(Func<string, T, T>? getValueFunc, Action<string, T>? setValueFunc)
@@ -128,7 +128,7 @@ namespace Utility.Storage
 
         public T Value
         {
-            get => getValue!(key, defaultValue);
+            get => getValue!(key, defaultValue)!;
 
             set
             {
@@ -144,7 +144,7 @@ namespace Utility.Storage
             new (this);
     }
 
-    public struct CachedSetting<T, TK> : ISetting<T> where TK: ISetting<T>
+    public struct CachedSetting<T, TK> : ISetting<T> where TK: ISetting<T> where T: IEquatable<T>
     {
         private TK origin;
         private T? cache;
@@ -158,13 +158,17 @@ namespace Utility.Storage
         {
             get
             {
-                if (cache == null)
+                if (cache == null || cache.Equals(default(T)!))
                     cache = origin.Value;
 
                 return cache;
             }
 
-            set => origin.Value = cache = value;
+            set
+            {
+                origin.Value = value;
+                cache = default(T?);
+            }
         }
     }
 }
