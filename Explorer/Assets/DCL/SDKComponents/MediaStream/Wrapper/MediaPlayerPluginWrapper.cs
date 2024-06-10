@@ -10,11 +10,8 @@ using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
-
-#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-using DCL.ECSComponents;
 using RenderHeads.Media.AVProVideo;
-#endif
+using DCL.ECSComponents;
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
 {
@@ -24,10 +21,7 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly IWebRequestController webRequestController;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
-
-#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
-#endif
 
         public MediaPlayerPluginWrapper(
             IComponentPoolsRegistry componentPoolsRegistry,
