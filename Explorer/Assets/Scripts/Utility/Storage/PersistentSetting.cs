@@ -128,17 +128,11 @@ namespace Utility.Storage
 
         public T Value
         {
-            get
-            {
-                // It's for runtime only, in case it is used from the Editor it should not be saved anywhere
-                if (Application.isPlaying)
-                    return getValue!(key, defaultValue);
-
-                return defaultValue;
-            }
+            get => getValue!(key, defaultValue);
 
             set
             {
+                // It's for runtime only, in case it is used from the Editor it should not be saved anywhere
                 if (!Application.isPlaying)
                     return;
 
