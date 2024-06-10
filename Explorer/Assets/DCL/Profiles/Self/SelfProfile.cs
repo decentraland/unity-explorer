@@ -81,7 +81,7 @@ namespace DCL.Profiles.Self
 
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
-            profile = profileBuilder.From(profile)
+            var newProfile = profileBuilder.From(profile)
                                     .WithBodyShape(bodyShape)
                                     .WithWearables(uniqueWearables)
                                     .WithEmotes(uniqueEmotes)
@@ -89,10 +89,17 @@ namespace DCL.Profiles.Self
                                     .WithVersion(profile!.Version + 1)
                                     .Build();
 
-            profile.UserId = web3IdentityCache.Identity.Address;
+            newProfile.UserId = web3IdentityCache.Identity.Address;
 
-            await profileRepository.SetAsync(profile, ct);
-            return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
+            // Skip publishing the same profile
+            if (newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
+                && newProfile.Avatar.wearables.SetEquals(profile.Avatar.wearables)
+                && newProfile.Avatar.emotes.EqualsContentInOrder(profile.Avatar.emotes)
+                && newProfile.Avatar.forceRender.SetEquals(profile.Avatar.forceRender))
+                return profile;
+
+            await profileRepository.SetAsync(newProfile, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
         private void ConvertEquippedWearablesIntoUniqueUrns(Profile? profile, ISet<URN> uniqueWearables)

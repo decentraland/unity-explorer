@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
@@ -14,7 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -76,9 +74,6 @@ namespace DCL.AvatarRendering.Emotes
                             DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
-
-                WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, emote, World, partition);
-
                 emotes[i] = emote;
             }
 

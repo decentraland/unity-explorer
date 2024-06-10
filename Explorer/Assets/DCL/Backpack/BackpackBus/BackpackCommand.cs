@@ -82,10 +82,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackHideCommand
     {
         public readonly IReadOnlyCollection<string> ForceRender;
+        public readonly bool IsInitialHide;
 
-        public BackpackHideCommand(IReadOnlyCollection<string> forceRender)
+        public BackpackHideCommand(IReadOnlyCollection<string> forceRender, bool isInitialHide = false)
         {
             ForceRender = new ReadOnlyCollection<string>(forceRender.ToList());
+            IsInitialHide = isInitialHide;
         }
     }
 
@@ -110,6 +112,8 @@ namespace DCL.Backpack.BackpackBus
             SearchText = searchText;
         }
     }
+
+    public readonly struct BackpackUnEquipAllCommand { }
 
     public readonly struct BackpackPublishProfileCommand { }
 }
