@@ -361,6 +361,7 @@ namespace Global.Dynamic
                     forceRender,
                     dclInput,
                     staticContainer.RealmData,
+                    profileCache,
                     ASSET_BUNDLES_URL
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),

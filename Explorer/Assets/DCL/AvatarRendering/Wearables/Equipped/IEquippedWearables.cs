@@ -7,5 +7,7 @@ namespace DCL.AvatarRendering.Wearables.Equipped
         void Equip(IWearable wearable);
 
         void UnEquip(IWearable wearable);
+
+        void UnEquipAll();
     }
 }
