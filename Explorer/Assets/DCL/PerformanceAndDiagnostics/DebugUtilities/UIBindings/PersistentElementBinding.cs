@@ -6,17 +6,17 @@ namespace DCL.DebugUtilities.UIBindings
     public class PersistentElementBinding<T> : IElementBinding<T>
     {
         private readonly ElementBinding<T> elementBinding;
-        private readonly PersistentSetting<T> persistentSetting;
+        private readonly ISetting<T> setting; //cannot use generics here due capturing in the lambda on 19'th line
 
-        public T Value => persistentSetting.Value;
+        public T Value => setting.Value;
 
-        public PersistentElementBinding(PersistentSetting<T> persistentSetting)
+        public PersistentElementBinding(ISetting<T> setting)
         {
-            this.persistentSetting = persistentSetting;
+            this.setting = setting;
 
             elementBinding = new ElementBinding<T>(
-                this.persistentSetting.Value,
-                changeEvent => this.persistentSetting.Value = changeEvent.newValue
+                this.setting.Value,
+                changeEvent => this.setting.Value = changeEvent.newValue
             );
         }
 
