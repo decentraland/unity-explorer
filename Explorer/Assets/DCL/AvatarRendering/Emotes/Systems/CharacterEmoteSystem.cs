@@ -171,7 +171,7 @@ namespace DCL.AvatarRendering.Emotes
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.WearableAssetResults[bodyShape];
+                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null)

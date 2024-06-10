@@ -6,7 +6,6 @@ using AssetManagement;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Diagnostics;
@@ -22,7 +21,6 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
-using Global.Dynamic;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -32,7 +30,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
-using Utility.Multithreading;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
@@ -213,13 +210,13 @@ namespace DCL.AvatarRendering.Emotes
                 if (emote.IsLoading) continue;
                 if (CreateAssetBundlePromiseIfRequired(emote, in intention, partitionComponent)) continue;
 
-                if (emote.WearableAssetResults[intention.BodyShape] != null)
+                if (emote.AssetResults[intention.BodyShape] != null)
 
                     // TODO: it may occur that the requested emote does not support the body shape
                     // If that is the case, the promise will never be resolved
                     emotesWithResponse++;
 
-                if (emote.WearableAssetResults[intention.BodyShape] is { Succeeded: true })
+                if (emote.AssetResults[intention.BodyShape] is { Succeeded: true })
                 {
                     // Reference must be added only once when the wearable is resolved
                     if (!intention.SuccessfulPointers.Contains(emote.GetUrn()))
@@ -227,7 +224,7 @@ namespace DCL.AvatarRendering.Emotes
                         intention.SuccessfulPointers.Add(emote.GetUrn());
 
                         // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                        emote.WearableAssetResults[intention.BodyShape]?.Asset.AddReference();
+                        emote.AssetResults[intention.BodyShape]?.Asset.AddReference();
                     }
                 }
             }
@@ -323,11 +320,11 @@ namespace DCL.AvatarRendering.Emotes
                     {
                         // TODO: can an emote have different files for each gender?
                         // if that the case, we should not set the same asset result for both body shapes
-                        emote.WearableAssetResults[BodyShape.MALE] = asset;
-                        emote.WearableAssetResults[BodyShape.FEMALE] = asset;
+                        emote.AssetResults[BodyShape.MALE] = asset;
+                        emote.AssetResults[BodyShape.FEMALE] = asset;
                     }
                     else
-                        emote.WearableAssetResults[bodyShape] = asset;
+                        emote.AssetResults[bodyShape] = asset;
                 }
 
                 emote.IsLoading = false;
@@ -347,7 +344,7 @@ namespace DCL.AvatarRendering.Emotes
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
                 return false;
 
-            if (component.WearableAssetResults[intention.BodyShape] == null)
+            if (component.AssetResults[intention.BodyShape] == null)
             {
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
@@ -414,8 +411,8 @@ namespace DCL.AvatarRendering.Emotes
         {
             emote.IsLoading = false;
 
-            if (emote.WearableAssetResults[bodyShape] is { IsInitialized: false })
-                emote.WearableAssetResults[bodyShape] = null;
+            if (emote.AssetResults[bodyShape] is { IsInitialized: false })
+                emote.AssetResults[bodyShape] = null;
         }
     }
 }

@@ -7,8 +7,8 @@ using DCL.TeleportPrompt;
 using DCL.Utilities;
 using MVC;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
+using System.Threading;
 using UnityEngine;
 using Utility;
 
@@ -85,12 +85,16 @@ namespace CrdtEcsBridge.RestrictedActions
             // TODO: Implement emote triggering (blocked until emotes are implemented)...
         }
 
-        public bool TryTriggerSceneEmote(string src, bool loop)
+        public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct)
         {
             if (!sceneStateProvider.IsCurrent)
                 return false;
 
-            // TODO: Implement scene emote triggering (blocked until emotes are implemented)...
+            if (!sceneData.SceneContent.TryGetHash(src, out string hash))
+                return false;
+
+            // TODO: version of the AB?
+            await globalWorldActions.TriggerSceneEmoteAsync(hash, loop, ct);
 
             return true;
         }
@@ -108,7 +112,6 @@ namespace CrdtEcsBridge.RestrictedActions
 
             OpenNftDialogAsync(contractAddress, tokenId).Forget();
             return true;
-
         }
 
         private async UniTask OpenUrlAsync(string url)

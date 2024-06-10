@@ -85,10 +85,12 @@ namespace DCL.PluginSystem.Global
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
+
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 emoteCache, realmData,
-                URLSubdirectory.FromString("/Emotes/"));
+                customStreamingSubdirectory);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
@@ -99,6 +101,8 @@ namespace DCL.PluginSystem.Global
             LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
+
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteCache, realmData, customStreamingSubdirectory);
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)
