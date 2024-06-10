@@ -1,8 +1,8 @@
-using DCL.Diagnostics;
+using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
-using System;
-using UnityEngine;
+using Utility.Storage;
 
 namespace DCL.WebRequests.Analytics
 {
@@ -18,7 +18,7 @@ namespace DCL.WebRequests.Analytics
             AnalyticsContainer = analyticsContainer;
         }
 
-        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, WebRequestsContainerParams containerParams)
+        public static WebRequestsContainer Create(IWeb3IdentityCache web3IdentityProvider, IDebugContainerBuilder debugContainerBuilder)
         {
             var analyticsContainer = new WebRequestsAnalyticsContainer()
                                     .AddTrackedMetric<ActiveCounter>()
@@ -27,31 +27,45 @@ namespace DCL.WebRequests.Analytics
                                     .AddTrackedMetric<BandwidthDown>()
                                     .AddTrackedMetric<BandwidthUp>();
 
-            IWebRequestController webRequestController = new LogWebRequestController(
-                new WebRequestController(analyticsContainer, web3IdentityProvider)
-            );
+            var options = new ElementBindingOptions();
 
-            if (containerParams.ShouldApplyDelay())
-            {
-                ReportHub.Log(ReportCategory.WEB_REQUESTS, "Artificial delay enabled");
-                webRequestController = new ArtificialDelayWebRequestController(webRequestController, containerParams.ArtificialDelaySeconds);
-            }
+            debugContainerBuilder
+               .AddWidget("Web Requests Delay")
+               .AddControlWithLabel(
+                    "Use Artificial Delay",
+                    new DebugToggleDef(options.Enable)
+                )
+               .AddControlWithLabel(
+                    "Artificial Delay Seconds",
+                    new DebugFloatFieldDef(options.Delay)
+                );
+
+            var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
+                                      .WithLog()
+                                      .WithArtificialDelay(options)
+                                      .WithSafeMainThread();
 
             return new WebRequestsContainer(webRequestController, analyticsContainer);
         }
-    }
 
-    [Serializable]
-    public class WebRequestsContainerParams
-    {
-        [SerializeField] private bool useDelay = true;
-        [SerializeField] private float artificialDelaySeconds = 10;
+        private class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
+        {
+            public float ArtificialDelaySeconds => Delay.Value;
+            public bool UseDelay => Enable.Value;
 
-        public float ArtificialDelaySeconds => artificialDelaySeconds;
+            public readonly IElementBinding<bool> Enable;
+            public readonly IElementBinding<float> Delay;
 
-        public bool ShouldApplyDelay() =>
-            Application.isEditor
-            && useDelay
-            && Mathf.Approximately(artificialDelaySeconds, 0) == false;
+            public ElementBindingOptions() : this(
+                new PersistentElementBinding<bool>(PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false).WithCached()),
+                new PersistentElementBinding<float>(PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10).WithCached())
+            ) { }
+
+            public ElementBindingOptions(IElementBinding<bool> enable, IElementBinding<float> delay)
+            {
+                this.Enable = enable;
+                this.Delay = delay;
+            }
+        }
     }
 }
