@@ -61,6 +61,11 @@
         public const string ECS = nameof(ECS);
 
         /// <summary>
+        ///     Global events for web requests
+        /// </summary>
+        public const string WEB_REQUESTS = nameof(WEB_REQUESTS);
+
+        /// <summary>
         ///     Unspecified web request
         /// </summary>
         public const string GENERIC_WEB_REQUEST = nameof(GENERIC_WEB_REQUEST);
