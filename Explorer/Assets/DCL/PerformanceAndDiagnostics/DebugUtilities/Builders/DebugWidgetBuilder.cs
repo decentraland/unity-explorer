@@ -1,7 +1,6 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using DCL.DebugUtilities.Views;
 using DCL.Optimization.Pools;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -37,6 +36,9 @@ namespace DCL.DebugUtilities
             placements!.Add(new ElementPlacement(left, right, debugHintDef));
             return this;
         }
+
+        public DebugWidgetBuilder AddControlWithLabel(string label, IDebugElementDef? right, DebugHintDef? debugHintDef = null) =>
+            AddControl(new DebugConstLabelDef(label), right, debugHintDef);
 
         /// <summary>
         ///     Set the control of the activity of the whole widget
