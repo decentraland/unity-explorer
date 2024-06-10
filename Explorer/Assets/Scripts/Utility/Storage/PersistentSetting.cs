@@ -97,10 +97,15 @@ namespace Utility.Storage
         }
     }
 
+    public interface ISetting<T>
+    {
+        T Value { get; set; }
+    }
+
     /// <summary>
     ///     Value which is stored in PlayerPrefs at runtime and can override values coming from presets
     /// </summary>
-    public readonly struct PersistentSetting<T>
+    public readonly struct PersistentSetting<T> : ISetting<T>
     {
         private static Func<string, T, T>? getValue;
         private static Action<string, T>? setValue;
@@ -139,6 +144,33 @@ namespace Utility.Storage
 
                 setValue!(key, value);
             }
+        }
+
+        public CachedSetting<T, PersistentSetting<T>> WithCached() =>
+            new (this);
+    }
+
+    public struct CachedSetting<T, TK> : ISetting<T> where TK: ISetting<T>
+    {
+        private TK origin;
+        private T? cache;
+
+        public CachedSetting(TK origin) : this()
+        {
+            this.origin = origin;
+        }
+
+        public T Value
+        {
+            get
+            {
+                if (cache == null)
+                    cache = origin.Value;
+
+                return cache;
+            }
+
+            set => origin.Value = cache = value;
         }
     }
 }
