@@ -9,7 +9,10 @@ on:
       - ready_for_review
       - labeled
   merge_group: {}
-  push: { branches: [feat/unity-cloud-build] } # [main]
+  push:
+    branches:
+      - main
+      - feat/unity-cloud-build
   workflow_dispatch:
     inputs:
       profile:

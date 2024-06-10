@@ -217,6 +217,16 @@ def delete_build(id):
         print('Response body:', response.text)
         sys.exit(1)
 
+def delete_current_target():
+    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=HEADERS)
+
+    if response.status_code == 204:
+        print('Build target deleted successfully')
+    else:
+        print('Build target failed to be deleted with status code:', response.status_code)
+        print('Response body:', response.text)
+        sys.exit(1)
+
 # Entrypoint here ->
 args = parser.parse_args()
 
@@ -269,5 +279,6 @@ download_artifact(id)
 download_log(id)
 
 # Cleanup
-delete_build(id)
+#delete_build(id) Deleting the parent target also removes all builds
+delete_current_target()
 utils.delete_build_info()
