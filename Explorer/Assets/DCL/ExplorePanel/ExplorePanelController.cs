@@ -231,7 +231,7 @@ namespace DCL.ExplorePanel
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct), UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct));
+            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct), UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct), viewInstance.SystemMenu.LogoutButton.OnClickAsync(ct));
         }
 
         private void ShowSystemMenu()
