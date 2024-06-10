@@ -32,6 +32,12 @@ namespace DCL.AvatarRendering.Wearables.Equipped
             wearables[wearable.GetCategory()] = null;
         }
 
+        public void UnEquipAll()
+        {
+            foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
+                wearables[category] = null;
+        }
+
         public IReadOnlyDictionary<string, IWearable?> Items() =>
             wearables;
     }

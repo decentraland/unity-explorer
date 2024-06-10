@@ -22,6 +22,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
@@ -46,6 +47,7 @@ namespace DCL.Minimap
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
         private readonly IRealmNavigator realmNavigator;
+        private readonly IScenesCache scenesCache;
 
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
@@ -61,7 +63,8 @@ namespace DCL.Minimap
             TrackPlayerPositionSystem system,
             IRealmData realmData,
             IChatMessagesBus chatMessagesBus,
-            IRealmNavigator realmNavigator
+            IRealmNavigator realmNavigator,
+            IScenesCache scenesCache
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -71,6 +74,7 @@ namespace DCL.Minimap
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
+            this.scenesCache = scenesCache;
         }
 
         private void OnRealmChanged(bool isGenesis)
@@ -175,6 +179,11 @@ namespace DCL.Minimap
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
+
+            bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
+            bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
+            viewInstance.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+            
             return;
 
             async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
@@ -190,6 +199,7 @@ namespace DCL.Minimap
                         PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
                         viewInstance.placeNameText.text = placeInfo?.title ?? "Unknown place";
                     }
+                    
                 }
                 catch (NotAPlaceException notAPlaceException)
                 {

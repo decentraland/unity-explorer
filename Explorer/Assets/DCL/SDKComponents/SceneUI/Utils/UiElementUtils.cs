@@ -1,4 +1,5 @@
 using Arch.Core;
+using CRDT;
 using UnityEngine.UIElements;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Classes;
@@ -201,7 +202,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
         public static void ReleaseUITransformComponent(UITransformComponent transform)
         {
             transform.Dispose();
-            ReleaseUIElement(transform.Transform);
         }
 
         public static void ReleaseDCLImage(DCLImage image) =>
@@ -331,6 +331,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 default:
                     return Align.Auto;
             }
+        }
+
+        public static string BuildElementName(string prefix, in CRDTEntity entity)
+        {
+#if UNITY_EDITOR
+            return $"{prefix} ({entity})";
+#else
+            return prefix;
+#endif
         }
 
         public static string BuildElementName(string prefix, in Entity entity)

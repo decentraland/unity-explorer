@@ -129,7 +129,7 @@ namespace SceneRuntime
             updateFunc.InvokeAsFunction(dt);
             return resetableSource.Task;
         }
-        
+
         public void ApplyStaticMessages(ReadOnlyMemory<byte> data)
         {
             PoolableByteArray result = engineApi.EnsureNotNull().api.CrdtSendToRenderer(data, false);

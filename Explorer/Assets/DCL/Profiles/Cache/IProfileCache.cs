@@ -8,6 +8,8 @@ namespace DCL.Profiles
 
         void Set(string id, Profile profile);
 
+        void Remove(string id);
+
         void Unload(IPerformanceBudget concurrentBudgetProvider, int maxAmount);
     }
 }
