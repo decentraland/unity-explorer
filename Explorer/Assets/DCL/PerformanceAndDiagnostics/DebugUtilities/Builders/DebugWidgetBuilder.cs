@@ -90,13 +90,13 @@ namespace DCL.DebugUtilities
             return widget;
         }
 
-        private DebugControl CreateControl(
+        private static DebugControl CreateControl(
             Func<DebugControl> controlFactoryMethod,
             IReadOnlyDictionary<Type, IDebugElementFactory> factories,
-            IDebugElementDef left,
-            IDebugElementDef right)
+            IDebugElementDef? left,
+            IDebugElementDef? right)
         {
-            DebugControl debugControl = controlFactoryMethod();
+            DebugControl debugControl = controlFactoryMethod()!;
 
             VisualElement CreateElement(IDebugElementDef def)
             {
