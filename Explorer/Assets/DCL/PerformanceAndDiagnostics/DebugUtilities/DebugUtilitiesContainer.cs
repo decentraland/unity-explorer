@@ -7,13 +7,17 @@ namespace DCL.DebugUtilities
 {
     public class DebugUtilitiesContainer
     {
-        public DebugContainerBuilder Builder { get; private set; }
+        public DebugContainerBuilder Builder { get; }
+
+        private DebugUtilitiesContainer(DebugContainerBuilder builder)
+        {
+            Builder = builder;
+        }
 
         public static DebugUtilitiesContainer Create(DebugViewsCatalog viewsCatalog)
         {
-            return new DebugUtilitiesContainer
-            {
-                Builder = new DebugContainerBuilder(
+            return new DebugUtilitiesContainer(
+                new DebugContainerBuilder(
                     () => viewsCatalog.Widget.InstantiateForElement<DebugWidget>(),
                     () => viewsCatalog.ControlContainer.InstantiateForElement<DebugControl>(),
                     new Dictionary<Type, IDebugElementFactory>
@@ -31,8 +35,9 @@ namespace DCL.DebugUtilities
                         { typeof(DebugTextFieldDef), new DebugElementBase<DebugTextFieldElement, DebugTextFieldDef>.Factory(viewsCatalog.TextField) },
                         { typeof(DebugToggleDef), new DebugElementBase<DebugToggleElement, DebugToggleDef>.Factory(viewsCatalog.Toggle) },
                         { typeof(DebugDropdownDef), new DebugElementBase<DebugDropdownElement, DebugDropdownDef>.Factory(viewsCatalog.DropdownField) },
-                    }),
-            };
+                    }
+                )
+            );
         }
     }
 }

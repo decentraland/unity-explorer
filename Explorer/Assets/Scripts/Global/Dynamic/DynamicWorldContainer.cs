@@ -153,7 +153,7 @@ namespace Global.Dynamic
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
 
-            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
+            var debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
