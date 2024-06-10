@@ -198,6 +198,7 @@ namespace DCL.AuthenticationScreenFlow
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
             Profile profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            //When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
             profile.IsDirty = true;
             profileNameLabel!.Value = profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
