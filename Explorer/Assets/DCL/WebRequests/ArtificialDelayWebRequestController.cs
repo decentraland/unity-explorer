@@ -6,17 +6,12 @@ namespace DCL.WebRequests
     public class ArtificialDelayWebRequestController : IWebRequestController
     {
         private readonly IWebRequestController origin;
-        private readonly TimeSpan delay;
+        private readonly IReadOnlyOptions options;
 
-        public ArtificialDelayWebRequestController(IWebRequestController origin, float delaySeconds) : this(
-            origin,
-            TimeSpan.FromSeconds(delaySeconds)
-        ) { }
-
-        public ArtificialDelayWebRequestController(IWebRequestController origin, TimeSpan delay)
+        public ArtificialDelayWebRequestController(IWebRequestController origin, IReadOnlyOptions options)
         {
             this.origin = origin;
-            this.delay = delay;
+            this.options = options;
         }
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(
@@ -28,8 +23,18 @@ namespace DCL.WebRequests
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
             var result = await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
-            await UniTask.Delay(delay);
+
+            if (options.UseDelay)
+                await UniTask.Delay(TimeSpan.FromSeconds(options.ArtificialDelaySeconds));
+
             return result;
+        }
+
+        public interface IReadOnlyOptions
+        {
+            public float ArtificialDelaySeconds { get; }
+
+            public bool UseDelay { get; }
         }
     }
 }
