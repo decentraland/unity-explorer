@@ -7,9 +7,9 @@ namespace DCL.DebugUtilities
 {
     public class DebugUtilitiesContainer
     {
-        public DebugContainerBuilder Builder { get; }
+        public IDebugContainerBuilder Builder { get; }
 
-        private DebugUtilitiesContainer(DebugContainerBuilder builder)
+        private DebugUtilitiesContainer(IDebugContainerBuilder builder)
         {
             Builder = builder;
         }
