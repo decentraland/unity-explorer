@@ -151,8 +151,10 @@ namespace DCL.Backpack
             view.TipsPanelDeselectable.gameObject.SetActive(!view.TipsPanelDeselectable.gameObject.activeInHierarchy);
         }
 
-        private async UniTaskVoid AwaitForProfileAsync(CancellationTokenSource cts)
+        private async UniTaskVoid AwaitForProfileAsync(CancellationToken ct)
         {
+            if (ct.IsCancellationRequested) return;
+
             isAvatarLoaded = false;
 
             world.TryGet(playerEntity, out AvatarShapeComponent avatarShapeComponent);
@@ -164,7 +166,9 @@ namespace DCL.Backpack
             backpackCharacterPreviewController.Initialize(avatar);
 
             if (!avatarShapeComponent.WearablePromise.IsConsumed)
-                await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: cts.Token);
+                await avatarShapeComponent.WearablePromise.ToUniTaskAsync(world, cancellationToken: ct);
+
+            if (ct.IsCancellationRequested) return;
 
             backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
@@ -185,8 +189,8 @@ namespace DCL.Backpack
 
         public void Activate()
         {
-            profileLoadingCts = new CancellationTokenSource();
-            AwaitForProfileAsync(profileLoadingCts).Forget();
+            profileLoadingCts = profileLoadingCts.SafeRestart();
+            AwaitForProfileAsync(profileLoadingCts.Token).Forget();
 
             backpackSections[currentSection].Activate();
 
