@@ -38,6 +38,7 @@ MonoBehaviour:
   - rid: 6697045322133929986
   - rid: 4132209997426458630
   - rid: 758312859982102531
+  - rid: 4956658025799090178
   references:
     version: 2
     RefIds:
@@ -370,6 +371,12 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 4956658025799090178
+      type: {class: WebRequestsPluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        webRequestsContainerParams:
+          useDelay: 0
+          artificialDelaySeconds: 10
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
