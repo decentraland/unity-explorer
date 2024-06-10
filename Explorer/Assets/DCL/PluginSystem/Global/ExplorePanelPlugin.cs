@@ -64,6 +64,7 @@ namespace DCL.PluginSystem.Global
         private PersistentExplorePanelOpenerController? explorePanelOpener;
         private ExplorePanelInputHandler? inputHandler;
         private readonly IRealmData realmData;
+        private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -85,7 +86,9 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
-            IRealmData realmData, URLDomain assetBundleURL)
+            IRealmData realmData,
+            IProfileCache profileCache,
+            URLDomain assetBundleURL)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -105,6 +108,7 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.forceRender = forceRender;
             this.realmData = realmData;
+            this.profileCache = profileCache;
             this.assetBundleURL = assetBundleURL;
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
@@ -159,7 +163,7 @@ namespace DCL.PluginSystem.Global
 
                 mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow),
+                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache),
                     dclInput));
 
                 explorePanelOpener = new PersistentExplorePanelOpenerController(

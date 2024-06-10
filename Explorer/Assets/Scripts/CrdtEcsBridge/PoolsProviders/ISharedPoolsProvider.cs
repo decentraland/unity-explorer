@@ -1,4 +1,5 @@
 using CRDT.Protocol.Factory;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents.Events;
 
 namespace CrdtEcsBridge.PoolsProviders
 {
@@ -12,8 +13,12 @@ namespace CrdtEcsBridge.PoolsProviders
 
         PoolableByteArray GetSerializedStateBytesPool(int size);
 
+        PoolableSDKObservableEventArray GetSerializationSDKObservableEventsPool(int size);
+
         void ReleaseSerializationCrdtMessagesPool(ProcessedCRDTMessage[] messages);
 
         void ReleaseSerializedStateBytesPool(byte[] bytes);
+
+        void ReleaseSerializationSDKObservableEventsPool(SDKObservableEvent[] events);
     }
 }
