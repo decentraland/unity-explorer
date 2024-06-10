@@ -31,7 +31,7 @@ namespace DCL.DebugUtilities
         /// <param name="right">Right can be null if left is not null</param>
         /// <param name="debugHintDef">Can be null</param>
         /// <returns></returns>
-        public DebugWidgetBuilder AddControl(IDebugElementDef left, IDebugElementDef right, DebugHintDef? debugHintDef = null)
+        public DebugWidgetBuilder AddControl(IDebugElementDef? left, IDebugElementDef? right, DebugHintDef? debugHintDef = null)
         {
             placements ??= DEF_POOL.Get();
             placements!.Add(new ElementPlacement(left, right, debugHintDef));
@@ -118,8 +118,8 @@ namespace DCL.DebugUtilities
 
         internal readonly struct ElementPlacement
         {
-            public readonly IDebugElementDef Left;
-            public readonly IDebugElementDef Right;
+            public readonly IDebugElementDef? Left;
+            public readonly IDebugElementDef? Right;
             public readonly DebugHintDef? HintDef;
 
             public ElementPlacement(IDebugElementDef left, IDebugElementDef right, DebugHintDef? hintDef)
