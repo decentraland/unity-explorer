@@ -1,3 +1,5 @@
+using System;
+
 namespace DCL.AvatarRendering.Emotes.Equipped
 {
     public class EquippedEmotes : IEquippedEmotes
@@ -43,5 +45,11 @@ namespace DCL.AvatarRendering.Emotes.Equipped
 
         public void UnEquipEmote(int slot, IEmote? emote) =>
             equippedEmotes[slot] = null;
+
+        public void UnEquipAll()
+        {
+            for (var i = 0; i < equippedEmotes.Length; i++)
+                equippedEmotes[i] = null;
+        }
     }
 }

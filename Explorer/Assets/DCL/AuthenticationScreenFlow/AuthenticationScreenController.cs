@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.Profiles;
@@ -21,10 +22,6 @@ namespace DCL.AuthenticationScreenFlow
     {
         private const int ANIMATION_DELAY = 300;
 
-        private static readonly int IN = Animator.StringToHash("In");
-        private static readonly int OUT = Animator.StringToHash("Out");
-        private static readonly int JUMP_IN = Animator.StringToHash("Jump");
-        private static readonly int TO_OTHER = Animator.StringToHash("Different");
 
         private enum ViewState
         {
@@ -126,14 +123,22 @@ namespace DCL.AuthenticationScreenFlow
             {
                 CancelLoginProcess();
                 loginCancellationToken = new CancellationTokenSource();
-                await FetchProfileAsync(loginCancellationToken.Token);
 
-                SwitchState(ViewState.Finalize);
+                try
+                {
+                    await FetchProfileAsync(loginCancellationToken.Token);
+                    SwitchState(ViewState.Finalize);
+                }
+                catch (Exception e)
+                {
+                    ReportHub.LogException(e, new ReportData(ReportCategory.AUTHENTICATION));
+                    SwitchState(ViewState.Login);
+                }
             }
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.SetTrigger(OUT);
+            splashScreenAnimator.SetTrigger(AnimationHashes.OUT);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -193,6 +198,8 @@ namespace DCL.AuthenticationScreenFlow
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
             Profile profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            //When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
+            profile.IsDirty = true;
             profileNameLabel!.Value = profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
         }
@@ -201,7 +208,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance.FinalizeAnimator.SetTrigger(TO_OTHER);
+                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 SwitchState(ViewState.Login);
@@ -217,7 +224,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                viewInstance.FinalizeAnimator.SetTrigger(JUMP_IN);
+                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
@@ -235,7 +242,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(IN);
+                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
@@ -245,8 +252,8 @@ namespace DCL.AuthenticationScreenFlow
                     ResetAnimator(viewInstance.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.Slides.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(OUT);
-                    viewInstance.VerificationAnimator.SetTrigger(IN);
+                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.OUT);
+                    viewInstance.VerificationAnimator.SetTrigger(AnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
@@ -270,11 +277,13 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(true);
-                    viewInstance.FinalizeAnimator.SetTrigger(IN);
+                    viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.IN);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
 

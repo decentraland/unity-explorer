@@ -123,7 +123,7 @@
         /// <summary>
         ///     Everything related to Scenes audio source components
         /// </summary>
-        public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
+        public const string SDK_AUDIO_SOURCES = nameof(SDK_AUDIO_SOURCES);
 
         /// <summary>
         ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
@@ -197,6 +197,11 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
+        ///     CameraTransform SDK System
+        /// </summary>
+        public const string CAMERA_TRANSFORM = nameof(CAMERA_TRANSFORM);
+
+        /// <summary>
         ///     AvatarModifierArea SDK component
         /// </summary>
         public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
@@ -240,6 +245,11 @@
         ///     RealmData 'IsDirty' flag reset system
         /// </summary>
         public const string REALM_DATA_DIRTY_RESET_SYSTEM = nameof(REALM_DATA_DIRTY_RESET_SYSTEM);
+
+        /// <summary>
+        ///     SDK Observables layer
+        /// </summary>
+        public const string SDK_OBSERVABLES = nameof(SDK_OBSERVABLES);
 
         /// <summary>
         ///     Roads related systems

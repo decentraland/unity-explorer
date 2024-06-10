@@ -7,23 +7,19 @@ using System.Collections.Generic;
 
 namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
 {
-    public class CommunicationsControllerAPIWrapper : IJsApiWrapper
+    public class CommunicationsControllerAPIWrapper : JsApiWrapperBase<ICommunicationsControllerAPI>
     {
-        private readonly ICommunicationsControllerAPI api;
         private readonly IInstancePoolsProvider instancePoolsProvider;
 
         private readonly List<PoolableByteArray> lastInput = new (10);
 
-        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider)
+        public CommunicationsControllerAPIWrapper(ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider) : base(api)
         {
-            this.api = api;
             this.instancePoolsProvider = instancePoolsProvider;
         }
 
-        public void Dispose()
+        protected override void DisposeInternal()
         {
-            api.Dispose();
-
             // Release the last input buffer
             for (var i = 0; i < lastInput.Count; i++)
             {
@@ -47,7 +43,6 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
                 for (var i = 0; i < dataList.Count; i++)
                 {
                     var message = (ITypedArray<byte>)dataList[i];
-                    var messageLength = message.Length;
                     PoolableByteArray element = PoolableByteArray.EMPTY;
 
                     if (lastInput.Count <= i)

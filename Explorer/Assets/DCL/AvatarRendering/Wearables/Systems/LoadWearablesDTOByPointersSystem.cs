@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -36,7 +35,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private readonly IWebRequestController webRequestController;
 
-        internal LoadWearablesDTOByPointersSystem(World world, IWebRequestController webRequestController, IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache, MutexSync mutexSync) : base(world, cache, mutexSync)
+        internal LoadWearablesDTOByPointersSystem(
+            World world,
+            IWebRequestController webRequestController,
+            IStreamableCache<WearablesDTOList, GetWearableDTOByPointersIntention> cache
+        ) : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }
@@ -87,7 +90,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             List<WearableDTO> dtoTempBuffer = dtoPooledList.Value;
 
             await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
-               .OverwriteFromJsonAsync(dtoTempBuffer, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+                                      .OverwriteFromJsonAsync(dtoTempBuffer, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
 
             // List is not concurrent
             lock (results) { results.AddRange(dtoTempBuffer); }

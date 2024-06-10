@@ -5,6 +5,7 @@ using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Raycast.Systems;
+using DCL.Interaction.Settings;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -14,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using InteractionHighlightSystem = DCL.Interaction.Systems.InteractionHighlightSystem;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
@@ -29,8 +31,7 @@ namespace DCL.PluginSystem.World
 
         private IReleasablePerformanceBudget raycastBudget;
         private Settings settings;
-        private Material hoverMaterial;
-        private Material hoverOorMaterial;
+        private InteractionSettingsData interactionData;
 
         public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner)
         {
@@ -47,18 +48,19 @@ namespace DCL.PluginSystem.World
         {
             this.settings = settings;
             raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profilingProvider);
-            hoverMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverMaterial!, ct)).Value;
-            hoverOorMaterial = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.hoverOutOfRangeMaterial!, ct)).Value;
+            interactionData = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.Data, ct)).Value;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sceneDeps,
             in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
-            InitializeRaycastSystem.InjectToWorld(ref builder);
+            IComponentPool<PBRaycastResult>? raycastResultPool = sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>();
+
+            InitializeRaycastSystem.InjectToWorld(ref builder, raycastResultPool);
 
             ExecuteRaycastSystem.InjectToWorld(ref builder, sceneDeps.SceneData, raycastBudget, settings.RaycastBucketThreshold,
                 sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
-                sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>(),
+                raycastResultPool,
                 sceneDeps.EntityCollidersSceneCache,
                 sceneDeps.EntitiesMap,
                 sceneDeps.EcsToCRDTWriter,
@@ -70,12 +72,13 @@ namespace DCL.PluginSystem.World
                 globalInputEvents,
                 poolsRegistry.GetReferenceTypePool<RaycastHit>());
 
-            InteractionHighlightSystem.InjectToWorld(ref builder, hoverMaterial, hoverOorMaterial);
+            InteractionHighlightSystem.InjectToWorld(ref builder, interactionData, sceneDeps.SceneStateProvider);
         }
 
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            [field: SerializeField] internal AssetReferenceT<InteractionSettingsData> Data;
             [field: Header(nameof(InteractionPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
@@ -92,9 +95,6 @@ namespace DCL.PluginSystem.World
             /// </summary>
             [field: SerializeField]
             public int GlobalInputPropagationBucketThreshold { get; private set; } = 3;
-
-            [field: SerializeField] internal AssetReferenceMaterial? hoverMaterial { get; private set; }
-            [field: SerializeField] internal AssetReferenceMaterial? hoverOutOfRangeMaterial { get; private set; }
         }
     }
 }

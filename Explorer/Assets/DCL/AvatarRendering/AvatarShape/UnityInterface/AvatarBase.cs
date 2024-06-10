@@ -9,6 +9,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
         [SerializeField] private Animator avatarAnimator;
+        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
+        private AnimationClip lastEmote;
+
+        private AnimatorOverrideController overrideController;
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
         [field: Header("Feet IK")]
@@ -60,10 +64,6 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
 
-        private AnimatorOverrideController overrideController;
-        private List<KeyValuePair<AnimationClip,AnimationClip>> animationOverrides;
-        private AnimationClip lastEmote;
-
         private void Awake()
         {
             if (!avatarAnimator)
@@ -84,6 +84,11 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         public void SetAnimatorFloat(int hash, float value)
         {
             avatarAnimator.SetFloat(hash, value);
+        }
+
+        public void SetAnimatorInt(int hash, int value)
+        {
+            avatarAnimator.SetInteger(hash, value);
         }
 
         public void SetAnimatorTrigger(int hash)
@@ -125,7 +130,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public interface IAvatarView
     {
         Transform GetTransform();
+
         void SetAnimatorFloat(int hash, float value);
+
+        void SetAnimatorInt(int hash, int value);
 
         void SetAnimatorTrigger(int hash);
 

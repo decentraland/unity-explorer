@@ -23,9 +23,10 @@ namespace DCL.Landscape
     public class TerrainGenerator : IDisposable
     {
         private const string TERRAIN_OBJECT_NAME = "Generated Terrain";
+        private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 4;
+        private const int CACHE_VERSION = 5;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -138,7 +139,7 @@ namespace DCL.Landscape
             }
         }
 
-        public async UniTask GenerateTerrainAsync(
+        public async UniTask GenerateTerrainAndShowAsync(
             uint worldSeed = 1,
             bool withHoles = true,
             bool hideTrees = false,
@@ -162,6 +163,8 @@ namespace DCL.Landscape
                     using (timeProfiler.Measure(t => ReportHub.Log(reportData, $"[{t:F2}ms] Misc & Cliffs, Border Colliders")))
                     {
                         rootGo = factory.InstantiateSingletonTerrainRoot(TERRAIN_OBJECT_NAME);
+                        rootGo.position = new Vector3(0, ROOT_VERTICAL_SHIFT, 0);
+
                         Ocean = factory.CreateOcean(rootGo);
                         Wind = factory.CreateWind();
 
@@ -221,6 +224,7 @@ namespace DCL.Landscape
                     localCache.Save();
 
                 IsTerrainGenerated = true;
+                IsTerrainShown = true;
 
                 emptyParcels.Dispose();
                 ownedParcels.Dispose();
@@ -329,7 +333,7 @@ namespace DCL.Landscape
                         }
                         else
                         {
-                            bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize);
+                            bool[,] holes = chunkDataGenerator.DigHoles(terrainModel, chunkModel, parcelSize, withOwned: false);
                             chunkModel.TerrainData.SetHoles(0, 0, holes);
                             localCache.SaveHoles(chunkModel.MinParcel.x, chunkModel.MinParcel.y, holes);
                         }

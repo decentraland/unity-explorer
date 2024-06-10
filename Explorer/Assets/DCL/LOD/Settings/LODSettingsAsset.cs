@@ -9,7 +9,12 @@ namespace DCL.LOD
     [CreateAssetMenu(menuName = "Create LOD Settings", fileName = "LODSettings", order = 0)]
     public class LODSettingsAsset : ScriptableObject, ILODSettingsAsset
     {
-        [field: SerializeField] public int[] LodPartitionBucketThresholds { get; set; } = { 1, 2, 5 };
+        [field: SerializeField] public int[] LodPartitionBucketThresholds { get; set; } =
+        {
+            5
+        };
+
+        [field: SerializeField] public int SDK7LodThreshold { get; set; } = 2;
 
         [field: SerializeField] public TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get; set; } =
         {

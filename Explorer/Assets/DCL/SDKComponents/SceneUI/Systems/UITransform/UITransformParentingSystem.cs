@@ -3,6 +3,8 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
+using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Special;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
@@ -36,21 +38,33 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent), typeof(DeleteEntityIntention))]
+        [None(typeof(SceneRootComponent))]
         private void OrphanChildrenOfDeletedEntity(ref UITransformComponent uiTransformComponentToBeDeleted)
         {
-            var children = uiTransformComponentToBeDeleted.RelationData.Children;
-            if (children == null) return;
+            var head = uiTransformComponentToBeDeleted.RelationData.head;
+            if (head == null) return;
 
-            foreach (EntityReference childEntity in children)
+            for (var current = head; current != null; current = current.Next)
             {
-                ref var uiTransform = ref World.Get<UITransformComponent>(childEntity.Entity);
-                uiTransformComponentToBeDeleted.RelationData.RemoveChild(ref uiTransform.RelationData);
-                SetNewChild(ref uiTransform, childEntity, sceneRoot);
+                if (entitiesMap.TryGetValue(current.EntityId, out Entity childEntity))
+                {
+                    ref UITransformComponent uiTransform = ref World.TryGetRef<UITransformComponent>(childEntity, out bool exists);
+
+                    if (!exists)
+                    {
+                        ReportHub.LogError(GetReportCategory(), $"Trying to unparent an ${nameof(UITransformComponent)}'s child but no component has been found on entity {current.EntityId}");
+                        continue;
+                    }
+
+                    uiTransformComponentToBeDeleted.RelationData.RemoveChild(current.EntityId, ref uiTransform.RelationData);
+                    SetNewChild(ref uiTransform, current.EntityId, sceneRoot);
+                }
             }
         }
 
         [Query]
-        private void DoUITransformParenting(in Entity entity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
+        [None(typeof(SceneRootComponent))]
+        private void DoUITransformParenting(CRDTEntity sdkEntity, ref PBUiTransform sdkModel, ref UITransformComponent uiTransformComponent)
         {
             if (!sdkModel.IsDirty)
                 return;
@@ -61,37 +75,50 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
                 //We have to remove the child from the old parent
                 if (uiTransformComponent.RelationData.parent != parentReference)
-                    RemoveFromParent(uiTransformComponent);
+                    RemoveFromParent(uiTransformComponent, sdkEntity);
 
-                if (parentReference != sceneRoot)
-                    SetNewChild(ref uiTransformComponent, World.Reference(entity), parentReference);
+                SetNewChild(ref uiTransformComponent, sdkEntity, parentReference);
             }
         }
 
-        private void SetNewChild(ref UITransformComponent childComponent, EntityReference childEntityReference, Entity parentEntity)
+        private void SetNewChild(ref UITransformComponent childComponent, CRDTEntity childEntity, Entity parentEntity)
         {
             if (childComponent.RelationData.parent == parentEntity)
                 return;
 
             if (!World.IsAlive(parentEntity))
             {
-                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntityReference.Entity} to a dead entity parent");
+                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntity} to a dead entity parent");
                 return;
             }
 
-            UITransformComponent parentComponent = World.Get<UITransformComponent>(parentEntity);
+            ref UITransformComponent parentComponent = ref World.TryGetRef<UITransformComponent>(parentEntity, out bool exists);
 
-            if (parentComponent == childComponent)
+            if (!exists)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Trying to parent entity {childEntity} to a parent {parentEntity} that do not have ${nameof(UITransformComponent)} component");
                 return;
+            }
 
-            parentComponent.RelationData.AddChild(World.Reference(parentEntity), childEntityReference, ref childComponent.RelationData);
+            if (parentComponent == childComponent) return;
+
+            parentComponent.RelationData.AddChild(World.Reference(parentEntity), childEntity, ref childComponent.RelationData);
             parentComponent.Transform.Add(childComponent.Transform);
         }
 
-        private void RemoveFromParent(UITransformComponent childComponent)
+        private void RemoveFromParent(UITransformComponent childComponent, CRDTEntity child)
         {
-            if (childComponent.RelationData.parent.IsAlive(World))
-                World.Get<UITransformComponent>(childComponent.RelationData.parent.Entity).RelationData.RemoveChild(ref childComponent.RelationData);
+            if (!childComponent.RelationData.parent.IsAlive(World)) return;
+
+            ref UITransformComponent parentTransform = ref World.TryGetRef<UITransformComponent>(childComponent.RelationData.parent.Entity, out bool exists);
+
+            if (!exists)
+            {
+                ReportHub.LogError(GetReportCategory(), $"Trying to remove a child from a parent {childComponent.RelationData.parent.Entity} that do not have ${nameof(UITransformComponent)} component");
+                return;
+            }
+
+            parentTransform.RelationData.RemoveChild(child, ref childComponent.RelationData);
         }
     }
 }

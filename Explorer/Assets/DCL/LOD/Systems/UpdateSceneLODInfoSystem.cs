@@ -1,27 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using AssetManagement;
-using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
-using DCL.Profiling;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using ECS.Unity.SceneBoundsChecker;
-using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 using Object = UnityEngine.Object;
@@ -36,35 +29,23 @@ namespace DCL.LOD.Systems
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODAssetsPool lodCache;
-        private readonly ILODSettingsAsset lodSettingsAsset; 
-        private readonly IPerformanceBudget memoryBudget;
+        private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        internal IPerformanceBudget frameCapBudget;
-
-
-        private readonly Transform lodsTransformParent;
-        private readonly TextureArrayContainer lodTextureArrayContainer;
 
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IPerformanceBudget memoryBudget, IPerformanceBudget frameCapBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue,
-            Transform lodsTransformParent, TextureArrayContainer lodTextureArrayContainer) : base(world)
+            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
-            this.memoryBudget = memoryBudget;
-            this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.lodsTransformParent = lodsTransformParent;
-            this.lodTextureArrayContainer = lodTextureArrayContainer;
         }
 
         protected override void Update(float t)
         {
             UpdateLODLevelQuery(World);
-            ResolveCurrentLODPromiseQuery(World);
             //InstantiateCurrentLODQuery(World);
         }
 
@@ -81,12 +62,10 @@ namespace DCL.LOD.Systems
 
             //Existing LOD (either infront or behind you). Update
             if (partitionComponent.IsDirty && sceneLODInfo.CurrentLODLevel != byte.MaxValue)
-            {
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
-            }
         }
 
-
+/*
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
@@ -105,58 +84,12 @@ namespace DCL.LOD.Systems
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
-
-
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLODPromise.IsConsumed) return;
-
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
-
-            if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
-            {
-                LODAsset newLod = default;
-                if (result.Succeeded)
-                {
-                    //NOTE (JUANI): Using the count API since the one without count does not parent correctly.
-                    //ANOTHER NOTE: InstantiateAsync has an issue with SMR assignation. Its a Unity bug (https://issuetracker.unity3d.com/issues/instantiated-prefabs-recttransform-values-are-incorrect-when-object-dot-instantiateasync-is-used)
-                    //we cannot fix, so we'll use Instantiate until solved.
-                    //var asyncInstantiation =
-                    //    Object.InstantiateAsync(result.Asset!.GetMainAsset<GameObject>(),1,
-                    //        lodsTransformParent, sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity);
-                    //asyncInstantiation.allowSceneActivation = false;
-                    //newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                    //    lodCache, result.Asset, asyncInstantiation);
-
-
-                    //Remove everything down here once Unity fixes AsyncInstantiation
-                    //Uncomment everything above here and the InstantiateCurrentLODQuery
-                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
-                        sceneDefinitionComponent.SceneGeometry.BaseParcelPosition, Quaternion.identity, lodsTransformParent);
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        lodCache, result.Asset, null);
-                    FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
-                }
-                else
-                {
-                    ReportHub.LogWarning(GetReportCategory(),
-                        $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
-                }
-
-                sceneLODInfo.SetCurrentLOD(newLod);
-                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-            }
-        }
-
+*/
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.CurrentLOD.LodKey.Level == 0)
+            if (IsLOD0(ref sceneLODInfo))
             {
-                scenesCache.Add(sceneLODInfo, sceneDefinitionComponent.Parcels);
+                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
                 LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
             sceneLODInfo.IsDirty = false;
@@ -222,6 +155,7 @@ namespace DCL.LOD.Systems
             sceneLODInfo.IsDirty = true;
         }
 
+        /*
         private void FinalizeAsyncInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent)
         {
             currentLOD.AsyncInstantiation.allowSceneActivation = true;
@@ -241,6 +175,11 @@ namespace DCL.LOD.Systems
 
             currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
         }
-        
+        */
+
+        private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
+        {
+            return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
+        }
     }
 }

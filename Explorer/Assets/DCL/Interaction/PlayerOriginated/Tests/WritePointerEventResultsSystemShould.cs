@@ -22,6 +22,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         private readonly List<PBPointerEventsResult> results = new ();
         private IECSToCRDTWriter writer;
         private IGlobalInputEvents globalInputEvents;
+        private ISceneStateProvider sceneStateProvider;
 
         [SetUp]
         public void SetUp()
@@ -29,8 +30,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes()));
 
-            ISceneStateProvider sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
             sceneStateProvider.TickNumber.Returns(123u);
+            sceneStateProvider.IsCurrent.Returns(true);
 
             IComponentPool<RaycastHit> pool = Substitute.For<IComponentPool<RaycastHit>>();
             pool.Get().Returns(new RaycastHit().Reset());
@@ -149,6 +151,45 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             }
 
             Assert.That(writer.ReceivedCalls().Count(), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void WriteEventsOnlyForCurrentScene()
+        {
+            sceneStateProvider.IsCurrent.Returns(false);
+
+            writer.AppendMessage(
+                       Arg.Any<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(),
+                       Arg.Any<CRDTEntity>(),
+                       Arg.Any<int>(),
+                       Arg.Any<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>())
+                  .Returns(info =>
+                   {
+                       var res = new PBPointerEventsResult();
+
+                       info.ArgAt<Action<PBPointerEventsResult, (RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>>(0)
+                           .Invoke(res, info.ArgAt<(RaycastHit, InputAction, PointerEventType, ISceneStateProvider)>(3));
+
+                       results.Add(res);
+
+                       return res;
+                   });
+
+            globalInputEvents.Entries.Returns(new List<IGlobalInputEvents.Entry>
+            {
+                new (InputAction.IaBackward, PointerEventType.PetUp),
+                new (InputAction.IaAction6, PointerEventType.PetDown),
+            });
+
+            system.Update(0);
+
+            Assert.That(results.Count, Is.EqualTo(0));
+
+            sceneStateProvider.IsCurrent.Returns(true);
+
+            system.Update(0);
+
+            Assert.That(results.Count, Is.EqualTo(2));
         }
 
         private static PBPointerEvents.Types.Entry CreateEntry(PointerEventType eventType, InputAction button) =>

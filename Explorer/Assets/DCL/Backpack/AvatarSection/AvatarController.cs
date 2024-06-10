@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
+using DCL.Character.CharacterMotion.Components;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -8,12 +9,11 @@ namespace DCL.Backpack
 {
     public class AvatarController : ISection, IDisposable
     {
-        private static readonly int IN = Animator.StringToHash("In");
-
         private readonly RectTransform rectTransform;
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
         private readonly AvatarView view;
+        private readonly BackpackCommandBus backpackCommandBus;
         private readonly BackpackInfoPanelController backpackInfoPanelController;
 
         public AvatarController(AvatarView view,
@@ -23,12 +23,14 @@ namespace DCL.Backpack
             BackpackEventBus backpackEventBus,
             BackpackGridController backpackGridController,
             BackpackInfoPanelController backpackInfoPanelController,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            DCLInput dclInput)
         {
             this.view = view;
+            this.backpackCommandBus = backpackCommandBus;
             this.backpackInfoPanelController = backpackInfoPanelController;
             this.backpackGridController = backpackGridController;
-            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus);
+            new BackpackSearchController(view.backpackSearchBar, backpackCommandBus, backpackEventBus, dclInput);
             slotsController = new BackpackSlotsController(slotViews, backpackCommandBus, backpackEventBus, rarityBackgrounds, thumbnailProvider);
 
             rectTransform = view.GetComponent<RectTransform>();
@@ -40,19 +42,20 @@ namespace DCL.Backpack
             backpackInfoPanelController?.Dispose();
         }
 
-        public void RequestInitialWearablesPage()
+        public void RequestInitialWearablesPage() =>
+            backpackGridController.RequestPage(1, true);
+
+        public void Activate() =>
+            backpackGridController.Activate();
+
+        public void Deactivate()
         {
-            backpackGridController.RequestTotalNumber();
+            backpackCommandBus.SendCommand(new BackpackFilterCategoryCommand(""));
+            backpackGridController.Deactivate();
         }
 
-        public void Activate() { }
-
-        public void Deactivate() { }
-
-        public void Animate(int triggerId)
-        {
-            view.gameObject.SetActive(triggerId == IN);
-        }
+        public void Animate(int triggerId) =>
+            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
 
         public void ResetAnimator() { }
 

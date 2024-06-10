@@ -22,7 +22,6 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -32,7 +31,6 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
-using UnityEngine.InputSystem;
 
 // ReSharper disable UnusedAutoPropertyAccessor.Local
 namespace DCL.PluginSystem.Global
@@ -66,6 +64,8 @@ namespace DCL.PluginSystem.Global
         private PersistentExplorePanelOpenerController? explorePanelOpener;
         private ExplorePanelInputHandler? inputHandler;
         private readonly IRealmData realmData;
+        private readonly IProfileCache profileCache;
+        private readonly URLDomain assetBundleURL;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -86,8 +86,9 @@ namespace DCL.PluginSystem.Global
             IRealmNavigator realmNavigator,
             ICollection<string> forceRender,
             DCLInput dclInput,
-            IRealmData realmData
-        )
+            IRealmData realmData,
+            IProfileCache profileCache,
+            URLDomain assetBundleURL)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -107,6 +108,8 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.forceRender = forceRender;
             this.realmData = realmData;
+            this.profileCache = profileCache;
+            this.assetBundleURL = assetBundleURL;
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
         }
@@ -132,7 +135,10 @@ namespace DCL.PluginSystem.Global
                 emoteCache,
                 settings.EmbeddedEmotesAsURN(),
                 forceRender,
-                realmData
+                realmData,
+                dclInput,
+                assetBundleURL,
+                webRequestController
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
@@ -146,18 +152,18 @@ namespace DCL.PluginSystem.Global
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
             exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
-
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData);
+            await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
-                navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, mvcManager, webBrowser, dclInput, builder.World, arguments.PlayerEntity, realmNavigator, realmData);
-                navmapController.InitialiseAssetsAsync(assetsProvisioner, ct).Forget();
+                navmapController.InitialiseWorldDependencies(builder.World, arguments.PlayerEntity);
                 backpackInitialization.Invoke(ref builder, arguments);
 
                 mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow),
+                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache),
                     dclInput));
 
                 explorePanelOpener = new PersistentExplorePanelOpenerController(

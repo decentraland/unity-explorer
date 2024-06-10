@@ -111,10 +111,11 @@ namespace SceneRuntime.Factory
             AssertCalledOnTheMainThread();
 
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
+
             return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
-        private void AssertCalledOnTheMainThread()
+        private static void AssertCalledOnTheMainThread()
         {
             if (!PlayerLoopHelper.IsMainThread)
                 throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");

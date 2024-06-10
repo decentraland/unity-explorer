@@ -15,6 +15,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<BackpackFilterCategoryCommand> FilterCategoryMessageReceived;
         public event Action<BackpackSearchCommand> SearchMessageReceived;
         public event Action<BackpackPublishProfileCommand> PublishProfileReceived;
+        public event Action<BackpackUnEquipAllCommand>? UnEquipAllMessageReceived;
 
         void SendCommand(BackpackEquipWearableCommand command);
 
@@ -31,5 +32,7 @@ namespace DCL.Backpack.BackpackBus
         void SendCommand(BackpackEmoteSlotSelectCommand command);
 
         void SendCommand(BackpackUnEquipEmoteCommand command);
+
+        void SendCommand(BackpackUnEquipAllCommand command);
     }
 }

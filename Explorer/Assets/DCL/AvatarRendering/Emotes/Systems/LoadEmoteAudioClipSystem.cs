@@ -17,12 +17,12 @@ using Utility.Multithreading;
 namespace DCL.AvatarRendering.Emotes
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class LoadEmoteAudioClipSystem : LoadSystemBase<AudioClip, GetAudioClipIntention>
     {
         private readonly IWebRequestController webRequestController;
 
-        internal LoadEmoteAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController, MutexSync mutexSync) : base(world, cache, mutexSync)
+        internal LoadEmoteAudioClipSystem(World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IWebRequestController webRequestController) : base(world, cache)
         {
             this.webRequestController = webRequestController;
         }

@@ -1,8 +1,11 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
+using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -18,6 +21,8 @@ namespace DCL.ExplorePanel
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
+        private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IProfileCache profileCache;
         private readonly Entity playerEntity;
         private readonly World world;
 
@@ -30,12 +35,14 @@ namespace DCL.ExplorePanel
             Entity playerEntity,
             IWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,
-            IUserInAppInitializationFlow userInAppInitializationFlow)
+            IUserInAppInitializationFlow userInAppInitializationFlow, IProfileCache profileCache, IWeb3IdentityCache web3IdentityCache)
             : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
+            this.profileCache = profileCache;
+            this.web3IdentityCache = web3IdentityCache;
             this.playerEntity = playerEntity;
             this.world = world;
         }
@@ -86,7 +93,9 @@ namespace DCL.ExplorePanel
         {
             async UniTaskVoid LogoutAsync(CancellationToken ct)
             {
+                Web3Address address = web3IdentityCache.Identity!.Address;
                 await web3Authenticator.LogoutAsync(ct);
+                profileCache.Remove(address);
                 await userInAppInitializationFlow.ExecuteAsync(true, true, world, playerEntity, ct);
             }
 

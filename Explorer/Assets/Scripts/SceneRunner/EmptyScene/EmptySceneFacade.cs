@@ -1,20 +1,12 @@
-﻿using Arch.Core;
-using CRDT;
-using CrdtEcsBridge.Components.Transform;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
-using ECS.LifeCycle.Components;
-using ECS.Prioritization.Components;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
-using Utility.Multithreading;
 
 namespace SceneRunner.EmptyScene
 {
@@ -41,6 +33,11 @@ namespace SceneRunner.EmptyScene
         {
             await UniTask.SwitchToThreadPool();
             Dispose();
+        }
+
+        public bool IsSceneReady()
+        {
+            return true;
         }
 
         public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct) =>

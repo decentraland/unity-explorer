@@ -12,7 +12,7 @@ using SceneRunner.Scene;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
+    [UpdateBefore(typeof(CharacterEmoteSystem))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_EMOTE_COMMAND_DATA)]
     public partial class AvatarEmoteCommandPropagationSystem : BaseUnityLoopSystem
     {
@@ -30,7 +30,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateEmoteCommandDataComponent(ref PlayerCRDTEntity playerCRDTEntity, ref CharacterEmoteIntent emoteIntent)
+        private void UpdateEmoteCommandDataComponent(PlayerCRDTEntity playerCRDTEntity, CharacterEmoteIntent emoteIntent)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
             World sceneWorld = sceneEcsExecutor.World;
@@ -46,14 +46,10 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 emoteCommandComponent.PlayingEmote = emoteIntent.EmoteId;
                 emoteCommandComponent.LoopingEmote = emote.IsLooping();
 
-                // External world access should be always synchronized (Global World calls into Scene World)
-                using (sceneEcsExecutor.Sync.GetScope())
-                {
-                    if (componentFound)
-                        sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
-                    else
-                        sceneWorld.Add(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
-                }
+                if (componentFound)
+                    sceneWorld.Set(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
+                else
+                    sceneWorld.Add(playerCRDTEntity.SceneWorldEntity, emoteCommandComponent);
             }
         }
     }

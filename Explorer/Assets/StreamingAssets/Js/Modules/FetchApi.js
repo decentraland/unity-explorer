@@ -39,18 +39,18 @@ declare function fetch(url: string, init?: RequestInit): Promise<Response>
 
 */
 
-async function restrictedFetch(url, init) {
+async function restrictedFetch(message) {
     const canUseFetch = true // TODO: this should come from somewhere
 
-    if (url.toLowerCase().substr(0, 8) !== "https://") {
-            return Promise.reject(new Error("Can't make an unsafe http request, please upgrade to https. url=" + url))
+    if (message.url.toLowerCase().substr(0, 8) !== "https://") {
+            return Promise.reject(new Error("Can't make an unsafe http request, please upgrade to https. url=" + message.url))
         }
 
     if (!canUseFetch) {
         return Promise.reject(new Error("This scene is not allowed to use fetch."))
     }
 
-    return await fetch(url, init)
+    return await fetch(message.url, message.init)
 }
 
 async function fetch(url, init) {
@@ -62,7 +62,7 @@ async function fetch(url, init) {
     const reqRedirect = redirect ?? 'follow'
 
     let response = await UnitySimpleFetchApi.Fetch(
-        reqMethod, url, reqHeaders, hasBody, body ?? '', reqRedirect, reqTimeout
+        reqMethod, url, reqHeaders, hasBody, JSON.stringify(body) ?? '', reqRedirect, reqTimeout
     )
     
     response = { ...response };

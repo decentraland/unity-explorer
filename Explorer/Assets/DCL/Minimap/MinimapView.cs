@@ -1,3 +1,4 @@
+using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.UI.Buttons;
 using MVC;
@@ -10,9 +11,6 @@ namespace DCL.Minimap
 {
     public class MinimapView : ViewBase, IView
     {
-        private static readonly int HOVER = Animator.StringToHash("Hover");
-        private static readonly int UNHOVER = Animator.StringToHash("Unhover");
-
         [field: SerializeField]
         internal RawImage mapRendererTargetImage { get; private set; }
 
@@ -42,6 +40,9 @@ namespace DCL.Minimap
 
         [field: SerializeField]
         internal TMP_Text placeCoordinatesText  { get; private set; }
+
+        [field: SerializeField]
+        internal RectTransform sdk6Label  { get; private set; }
 
         [field: SerializeField]
         internal RectTransform minimapContainer  { get; private set; }
@@ -74,10 +75,10 @@ namespace DCL.Minimap
         }
 
         private void OnHoverMap() =>
-            minimapAnimator.SetTrigger(HOVER);
+            minimapAnimator.SetTrigger(AnimationHashes.HOVER);
 
         private void OnUnHoverMap() =>
-            minimapAnimator.SetTrigger(UNHOVER);
+            minimapAnimator.SetTrigger(AnimationHashes.UNHOVER);
 
     }
 }

@@ -28,9 +28,10 @@ namespace DCL.LOD.Tests
             var lodSettings = Substitute.For<ILODSettingsAsset>();
             int[] bucketThresholds =
             {
-                2, 4
+                4, 8
             };
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
+            lodSettings.SDK7LodThreshold.Returns(2);
             var realmData = Substitute.For<IRealmData>();
             system = new ResolveVisualSceneStateSystem(world, lodSettings, new VisualSceneStateResolver(new HashSet<Vector2Int>
             {
@@ -52,7 +53,10 @@ namespace DCL.LOD.Tests
                 }
             };
             var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-            var entity = world.Create( new PartitionComponent(), sceneDefinitionComponent);
+            var entity = world.Create( new PartitionComponent
+            {
+                IsDirty = true
+            }, sceneDefinitionComponent);
 
             system.Update(0);
 
@@ -76,7 +80,10 @@ namespace DCL.LOD.Tests
                 }
             };
             var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-            var entity = world.Create( new PartitionComponent(), sceneDefinitionComponent);
+            var entity = world.Create( new PartitionComponent
+            {
+                IsDirty = true
+            }, sceneDefinitionComponent);
 
             system.Update(0);
 
@@ -87,12 +94,14 @@ namespace DCL.LOD.Tests
         }
 
         [Test]
-        [TestCase(0, VisualSceneStateEnum.SHOWING_SCENE)]
         [TestCase(5, VisualSceneStateEnum.SHOWING_LOD)]
+        [TestCase(3, VisualSceneStateEnum.SHOWING_LOD)]
+        [TestCase(0, VisualSceneStateEnum.SHOWING_SCENE)]
         public void AddDefaultSDK7SceneVisualState(byte bucket, VisualSceneStateEnum expectedVisualSceneState)
         {
             var partitionComponent = new PartitionComponent();
             partitionComponent.Bucket = bucket;
+            partitionComponent.IsDirty = true;
 
             var sceneEntityDefinition = new SceneEntityDefinition
             {

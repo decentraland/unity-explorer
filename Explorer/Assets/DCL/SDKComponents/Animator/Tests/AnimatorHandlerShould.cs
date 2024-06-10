@@ -7,6 +7,7 @@ using DCL.Interaction.Utility;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.Animator.Components;
 using DCL.SDKComponents.Animator.Systems;
+using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -38,7 +39,6 @@ namespace DCL.SDKComponents.Animator.Tests
         private FinalizeGltfContainerLoadingSystem finalizeGltfContainerLoadingSystem;
         private readonly GltfContainerTestResources resources = new ();
 
-
         [SetUp]
         public void SetUp()
         {
@@ -48,7 +48,8 @@ namespace DCL.SDKComponents.Animator.Tests
             releasablePerformanceBudget.TrySpendBudget().Returns(true);
             ISceneData sceneData = Substitute.For<ISceneData>();
             sceneData.Geometry.Returns(ParcelMathHelper.UNDEFINED_SCENE_GEOMETRY);
-            finalizeGltfContainerLoadingSystem = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), releasablePerformanceBudget, NullEntityCollidersSceneCache.INSTANCE, sceneData);
+            finalizeGltfContainerLoadingSystem = new FinalizeGltfContainerLoadingSystem(world, world.Reference(sceneRoot), releasablePerformanceBudget,
+                NullEntityCollidersSceneCache.INSTANCE, sceneData, new EntityEventBuffer<GltfContainerComponent>(1));
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
@@ -102,7 +103,7 @@ namespace DCL.SDKComponents.Animator.Tests
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
                     world, new GetGltfContainerAssetIntention(GltfContainerTestResources.ANIMATION, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
-            component.State.Set(LoadingState.Loading);
+            component.State = LoadingState.Loading;
 
             StreamableLoadingResult<AssetBundleData> assetBundleData = await resources.LoadAssetBundle(GltfContainerTestResources.ANIMATION);
 

@@ -2,6 +2,7 @@
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using ECS.Abstract;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.PrimitiveRenderer.MeshPrimitive;
@@ -54,7 +55,9 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             IReleasablePerformanceBudget budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);
 
-            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budget, Substitute.For<ISceneData>(), setupMeshes);
+            var buffer = new EntityEventBuffer<PrimitiveMeshRendererComponent>(10);
+
+            system = new InstantiatePrimitiveRenderingSystem(world, poolsRegistry, budget, Substitute.For<ISceneData>(), buffer, setupMeshes);
 
             entity = world.Create();
             AddTransformToEntity(entity);

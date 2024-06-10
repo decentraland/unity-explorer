@@ -23,14 +23,14 @@ namespace DCL.CharacterPreview
 
         private readonly World world;
         protected CharacterPreviewAvatarModel previewAvatarModel;
-        private CharacterPreviewController? previewController;
-        private bool initialized;
-        private CancellationTokenSource updateModelCancellationToken;
-        private Color profileColor;
 
         protected bool zoomEnabled = true;
         protected bool panEnabled = true;
         protected bool rotateEnabled = true;
+        private CharacterPreviewController? previewController;
+        private bool initialized;
+        private CancellationTokenSource updateModelCancellationToken;
+        private Color profileColor;
 
         protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
         {
@@ -165,7 +165,6 @@ namespace DCL.CharacterPreview
                 previewController?.Dispose();
                 previewController = null;
                 initialized = false;
-
             }
         }
 
@@ -196,7 +195,7 @@ namespace DCL.CharacterPreview
             profileColor = view.RawImage.color;
             profileColor.a = 0;
             view.RawImage.color = profileColor;
-            var spinner = view.Spinner;
+            GameObject spinner = view.Spinner;
             spinner.SetActive(true);
             return spinner;
         }

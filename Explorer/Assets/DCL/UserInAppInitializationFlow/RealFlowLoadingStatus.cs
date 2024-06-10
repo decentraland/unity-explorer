@@ -20,8 +20,7 @@ namespace DCL.UserInAppInitializationFlow
 
         public static readonly Dictionary<Stage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<Stage>())
         {
-            [Stage.ProfileLoaded] = 0.1f,
-            [Stage.LandscapeLoaded] = 0.9f,
+            [Stage.ProfileLoaded] = 0.1f, [Stage.LandscapeLoaded] = 0.5f,
             [Stage.PlayerTeleported] = 0.95f,
             [Stage.Completed] = 1f,
         };

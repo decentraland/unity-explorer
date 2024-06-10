@@ -92,7 +92,6 @@ namespace SceneRuntime
 
         public void Dispose()
         {
-            engineApi?.Dispose();
             engine.Dispose();
             jsApiBunch.Dispose();
         }
@@ -102,19 +101,19 @@ namespace SceneRuntime
             jsApiBunch.OnSceneIsCurrentChanged(isCurrent);
         }
 
+        public void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper)
+        {
+            engineApi = newWrapper;
+        }
+
         public void Register<T>(string itemName, T target) where T: IJsApiWrapper
         {
             jsApiBunch.AddHostObject(itemName, target);
         }
 
-        public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
-        {
-            Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
-        }
-
         public void SetIsDisposing()
         {
-            engineApi?.SetIsDisposing();
+            jsApiBunch.SetIsDisposing();
         }
 
         public UniTask StartScene()

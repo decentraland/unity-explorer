@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 }, null);
 
             entity = world.Create();
-            canvas = Object.Instantiate(await Addressables.LoadAssetAsync<GameObject>(SCENES_UI_ROOT_CANVAS)).GetComponent<UIDocument>();
+            canvas = (await Addressables.InstantiateAsync(SCENES_UI_ROOT_CANVAS, trackHandle: false)).GetComponent<UIDocument>();
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             entitiesMap = new Dictionary<CRDTEntity, Entity>();
         }
@@ -52,7 +52,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
                 instantiationSystem = new UITransformInstantiationSystem(world, canvas, poolsRegistry);
 
             var input = new PBUiTransform();
-            world.Add(entity, input);
+            world.Add(entity, input, new CRDTEntity(20));
             instantiationSystem.Update(0);
             return input;
         }

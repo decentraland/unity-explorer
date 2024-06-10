@@ -8,6 +8,8 @@ using ECS;
 using Global.Dynamic;
 using MVC;
 using System.Threading;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
@@ -20,10 +22,12 @@ namespace DCL.PluginSystem.Global
         private readonly MapRendererContainer mapRendererContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
+        private readonly IRealmNavigator realmNavigator;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IScenesCache scenesCache;
 
         public MinimapPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus)
+            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -31,6 +35,8 @@ namespace DCL.PluginSystem.Global
             this.placesAPIService = placesAPIService;
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
+            this.realmNavigator = realmNavigator;
+            this.scenesCache = scenesCache;
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
@@ -41,7 +47,7 @@ namespace DCL.PluginSystem.Global
             {
                 mvcManager.RegisterController(new MinimapController(MinimapController.CreateLazily(prefab, null),
                     mapRendererContainer.MapRenderer, mvcManager, placesAPIService, TrackPlayerPositionSystem.InjectToWorld(ref world),
-                    realmData, chatMessagesBus));
+                    realmData, chatMessagesBus, realmNavigator, scenesCache));
             };
         }
 

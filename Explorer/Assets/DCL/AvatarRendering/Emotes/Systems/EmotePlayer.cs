@@ -84,6 +84,7 @@ namespace DCL.AvatarRendering.Emotes
                 audioSource.spatialize = isSpatial;
                 audioSource.spatialBlend = isSpatial ? 1 : 0;
                 audioSource.transform.position = avatarTransform.position;
+                audioSource.loop = isLooping;
                 audioSource.Play();
                 emoteReferences.audioSource = audioSource;
             }
@@ -115,7 +116,7 @@ namespace DCL.AvatarRendering.Emotes
 
             AnimationClip? avatarClip = null;
             AnimationClip? propClip = null;
-            int propClipHash = 0;
+            var propClipHash = 0;
 
             RuntimeAnimatorController? rac = animator.runtimeAnimatorController;
             List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get();

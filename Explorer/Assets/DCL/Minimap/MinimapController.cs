@@ -3,6 +3,7 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Chat;
 using DCL.Diagnostics;
@@ -21,6 +22,8 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
 
@@ -38,15 +41,14 @@ namespace DCL.Minimap
         private readonly IRealmData realmData;
         private readonly IChatMessagesBus chatMessagesBus;
         private CancellationTokenSource cts;
-        private bool isWorld;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
         private SideMenuController sideMenuController;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IScenesCache scenesCache;
 
-        private static readonly int EXPAND = Animator.StringToHash("Expand");
-        private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -60,7 +62,9 @@ namespace DCL.Minimap
             IPlacesAPIService placesAPIService,
             TrackPlayerPositionSystem system,
             IRealmData realmData,
-            IChatMessagesBus chatMessagesBus
+            IChatMessagesBus chatMessagesBus,
+            IRealmNavigator realmNavigator,
+            IScenesCache scenesCache
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -69,6 +73,14 @@ namespace DCL.Minimap
             SystemBinding = AddModule(new BridgeSystemBinding<TrackPlayerPositionSystem>(this, QueryPlayerPositionQuery, system));
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
+            this.realmNavigator = realmNavigator;
+            this.scenesCache = scenesCache;
+        }
+
+        private void OnRealmChanged(bool isGenesis)
+        {
+            SetWorldMode(!isGenesis);
+            previousParcelPosition = new Vector2Int(int.MaxValue, int.MaxValue);
         }
 
         protected override void OnViewInstantiated()
@@ -81,7 +93,8 @@ namespace DCL.Minimap
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
             sideMenuController = new SideMenuController(viewInstance.sideMenuView);
-            SetWorldMode(false);
+            SetWorldMode(realmData.ScenesAreFixed);
+            realmNavigator.RealmChanged += OnRealmChanged;
         }
 
         private void ExpandMinimap()
@@ -89,7 +102,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
-            viewInstance.minimapAnimator.SetTrigger(EXPAND);
+            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.EXPAND);
         }
 
         private void CollapseMinimap()
@@ -97,7 +110,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
-            viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
+            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.COLLAPSE);
         }
 
         private void OpenSideMenu()
@@ -166,6 +179,11 @@ namespace DCL.Minimap
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
+
+            bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
+            bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
+            viewInstance.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+            
             return;
 
             async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
@@ -174,12 +192,6 @@ namespace DCL.Minimap
 
                 try
                 {
-                    if (isWorld != realmData.ScenesAreFixed)
-                    {
-                        isWorld = realmData.ScenesAreFixed;
-                        SetWorldMode(realmData.ScenesAreFixed);
-                    }
-
                     if (realmData.ScenesAreFixed)
                         viewInstance.placeNameText.text = realmData.RealmName.Replace(".dcl.eth", string.Empty);
                     else
@@ -187,6 +199,7 @@ namespace DCL.Minimap
                         PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
                         viewInstance.placeNameText.text = placeInfo?.title ?? "Unknown place";
                     }
+                    
                 }
                 catch (NotAPlaceException notAPlaceException)
                 {
@@ -196,9 +209,7 @@ namespace DCL.Minimap
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
                 finally
                 {
-                    viewInstance.placeCoordinatesText.text = realmData.ScenesAreFixed ?
-                        realmData.RealmName :
-                        playerParcelPosition.ToString().Replace("(", "").Replace(")", "");
+                    viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", "");
                 }
             }
         }
@@ -217,6 +228,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
+            realmNavigator.RealmChanged -= OnRealmChanged;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
