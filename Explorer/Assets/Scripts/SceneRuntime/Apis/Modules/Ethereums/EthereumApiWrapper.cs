@@ -19,22 +19,25 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         private readonly IWeb3IdentityCache web3IdentityCache;
 
         private CancellationTokenSource sendCancellationToken;
+        private CancellationTokenSource signMessageCancellationToken;
 
         public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache) : this(
-            ethereumApi, sceneExceptionsHandler, web3IdentityCache, new CancellationTokenSource()
+            ethereumApi, sceneExceptionsHandler, web3IdentityCache, new CancellationTokenSource(), new CancellationTokenSource()
         ) { }
 
-        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache, CancellationTokenSource sendCancellationToken)
+        public EthereumApiWrapper(IEthereumApi ethereumApi, ISceneExceptionsHandler sceneExceptionsHandler, IWeb3IdentityCache web3IdentityCache, CancellationTokenSource sendCancellationToken, CancellationTokenSource signMessageCancellationToken)
         {
             this.ethereumApi = ethereumApi;
             this.sceneExceptionsHandler = sceneExceptionsHandler;
             this.web3IdentityCache = web3IdentityCache;
             this.sendCancellationToken = sendCancellationToken;
+            this.signMessageCancellationToken = signMessageCancellationToken;
         }
 
         public void Dispose()
         {
             sendCancellationToken.SafeCancelAndDispose();
+            signMessageCancellationToken.SafeCancelAndDispose();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
@@ -54,6 +57,8 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         {
             async UniTask<SignMessageResponse> RequestPersonalSignatureAsync(CancellationToken ct)
             {
+                await UniTask.SwitchToMainThread();
+
                 var hex = $"0x{Encoding.UTF8.GetBytes(message).ToHex()!}";
 
                 try
@@ -77,7 +82,9 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                 }
             }
 
-            return RequestPersonalSignatureAsync(CancellationToken.None)
+            signMessageCancellationToken = signMessageCancellationToken.SafeRestart();
+
+            return RequestPersonalSignatureAsync(signMessageCancellationToken.Token)
                .ToDisconnectedPromise();
         }
 
