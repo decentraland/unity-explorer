@@ -154,6 +154,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     TryCreateSceneEntity(scene, new IpfsPath(scene.id, URLDomain.EMPTY), processedScenePointers.Value);
                 }
 
+                Debug.Log(World.Capacity + " | " + World.Size);
+
                 // Empty parcels = parcels for which no scene pointers were retrieved
                 for (var i = 0; i < requestedList.Count; i++)
                 {
