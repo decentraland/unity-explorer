@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine;
 
@@ -128,10 +129,19 @@ namespace Utility.Storage
 
         public T Value
         {
-            get => getValue!(key, defaultValue)!;
+            get
+            {
+                if (PlayerLoopHelper.IsMainThread == false)
+                    throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread: {key}");
+
+                return getValue!(key, defaultValue)!;
+            }
 
             set
             {
+                if (PlayerLoopHelper.IsMainThread == false)
+                    throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread: {key}");
+
                 // It's for runtime only, in case it is used from the Editor it should not be saved anywhere
                 if (!Application.isPlaying)
                     return;
