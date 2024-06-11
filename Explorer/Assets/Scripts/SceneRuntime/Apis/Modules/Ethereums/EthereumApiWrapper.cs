@@ -78,6 +78,8 @@ namespace SceneRuntime.Apis.Modules.Ethereums
                 catch (Exception e)
                 {
                     sceneExceptionsHandler.OnEngineException(e);
+
+                    // Returns empty signature in case of error
                     return new SignMessageResponse(hex, message, string.Empty);
                 }
             }
