@@ -1,5 +1,7 @@
 using Cysharp.Threading.Tasks;
 using System;
+using System.Diagnostics;
+using System.Threading;
 using UnityEngine;
 
 namespace Utility.Storage
@@ -131,16 +133,13 @@ namespace Utility.Storage
         {
             get
             {
-                if (PlayerLoopHelper.IsMainThread == false)
-                    throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread: {key}");
-
+                EnsureMainThread();
                 return getValue!(key, defaultValue)!;
             }
 
             set
             {
-                if (PlayerLoopHelper.IsMainThread == false)
-                    throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread: {key}");
+                EnsureMainThread();
 
                 // It's for runtime only, in case it is used from the Editor it should not be saved anywhere
                 if (!Application.isPlaying)
@@ -152,6 +151,13 @@ namespace Utility.Storage
 
         public CachedSetting<T, PersistentSetting<T>> WithCached() =>
             new (this);
+
+        [Conditional("DEBUG")]
+        private void EnsureMainThread()
+        {
+            if (PlayerLoopHelper.IsMainThread == false)
+                throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread, key: {key}, current thread: {Thread.CurrentThread.ManagedThreadId}, main thread: {PlayerLoopHelper.MainThreadId}");
+        }
     }
 
     public struct CachedSetting<T, TK> : ISetting<T> where TK: ISetting<T> where T: IEquatable<T>

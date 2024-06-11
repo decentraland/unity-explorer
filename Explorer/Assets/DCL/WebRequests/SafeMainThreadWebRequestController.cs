@@ -14,10 +14,8 @@ namespace DCL.WebRequests
 
         public async UniTask<TResult?> SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(RequestEnvelope<TWebRequest, TWebRequestArgs> envelope, TWebRequestOp op) where TWebRequest: struct, ITypedWebRequest where TWebRequestArgs: struct where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
-            await using var scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
-            MultithreadingUtility.AssertMainThread(nameof(SendAsync), true);
-            var result = await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
-            return result;
+            await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
+                return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
         }
     }
 }

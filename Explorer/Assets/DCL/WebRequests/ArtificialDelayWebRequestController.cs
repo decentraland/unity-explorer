@@ -22,12 +22,10 @@ namespace DCL.WebRequests
             where TWebRequestArgs: struct
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
-            var result = await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
-
             if (options.UseDelay)
                 await UniTask.Delay(TimeSpan.FromSeconds(options.ArtificialDelaySeconds));
 
-            return result;
+            return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
         }
 
         public interface IReadOnlyOptions
