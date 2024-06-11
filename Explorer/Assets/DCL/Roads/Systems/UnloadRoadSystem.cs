@@ -10,6 +10,7 @@ using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Roads.Systems
 {
@@ -34,11 +35,11 @@ namespace DCL.Roads.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
-        private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void UnloadRoad(Entity entity, ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             roadInfo.Dispose(roadAssetPool);
             scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
         }
-      
+
     }
 }

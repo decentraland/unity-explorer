@@ -11,7 +11,7 @@ namespace DCL.Diagnostics
     public class DebugTraceListener : TraceListener
     {
 #if DEBUG_ARCH && !UNITY_EDITOR
-        [RuntimeInitializeOnLoadMethod]
+        [UnityEngine.RuntimeInitializeOnLoadMethod]
         public static void InitializeInBuild()
         {
             Inject();

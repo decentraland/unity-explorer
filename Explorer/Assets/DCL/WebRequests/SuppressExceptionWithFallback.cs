@@ -29,6 +29,6 @@ namespace DCL.WebRequests
         }
 
         public UniTask<TResult?> ExecuteAsync(TWebRequest webRequest, CancellationToken ct) =>
-            coreOp.ExecuteAsync(webRequest, ct).SuppressExceptionWithFallback(fallbackValue, behaviour, reportContext);
+            coreOp.ExecuteAsync(webRequest, ct).SuppressExceptionWithFallbackAsync(fallbackValue, behaviour, reportContext);
     }
 }

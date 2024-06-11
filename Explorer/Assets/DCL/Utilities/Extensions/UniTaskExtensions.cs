@@ -9,11 +9,11 @@ namespace DCL.Utilities.Extensions
     {
         public static UniTask<TResult?> SuppressAnyExceptionWithFallback<TResult>(this UniTask<TResult?> coreOp,
             TResult fallbackValue, ReportData? reportData = null) =>
-            coreOp.SuppressExceptionWithFallback(fallbackValue, Extensions.SuppressExceptionWithFallback.Behaviour.SuppressAnyException, reportData);
+            coreOp.SuppressExceptionWithFallbackAsync(fallbackValue, SuppressExceptionWithFallback.Behaviour.SuppressAnyException, reportData);
 
-        public static async UniTask<TResult?> SuppressExceptionWithFallback<TResult>(this UniTask<TResult?> coreOp,
+        public static async UniTask<TResult?> SuppressExceptionWithFallbackAsync<TResult>(this UniTask<TResult?> coreOp,
             TResult fallbackValue,
-            SuppressExceptionWithFallback.Behaviour behaviour = Extensions.SuppressExceptionWithFallback.Behaviour.Default,
+            SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default,
             ReportData? reportData = null)
         {
             try { return await coreOp; }
@@ -22,8 +22,8 @@ namespace DCL.Utilities.Extensions
                 ReportException(e);
                 return fallbackValue;
             }
-            catch (OperationCanceledException) when (EnumUtils.HasFlag(behaviour, Extensions.SuppressExceptionWithFallback.Behaviour.SuppressCancellation)) { return fallbackValue; }
-            catch (Exception e) when (EnumUtils.HasFlag(behaviour, Extensions.SuppressExceptionWithFallback.Behaviour.SuppressAnyException))
+            catch (OperationCanceledException) when (EnumUtils.HasFlag(behaviour, SuppressExceptionWithFallback.Behaviour.SuppressCancellation)) { return fallbackValue; }
+            catch (Exception e) when (EnumUtils.HasFlag(behaviour, SuppressExceptionWithFallback.Behaviour.SuppressAnyException))
             {
                 ReportException(e);
                 return fallbackValue;
