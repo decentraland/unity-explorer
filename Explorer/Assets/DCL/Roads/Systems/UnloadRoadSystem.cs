@@ -29,16 +29,15 @@ namespace DCL.Roads.Systems
         protected override void Update(float t)
         {
             UnloadRoadQuery(World);
-            World.Remove<RoadInfo, VisualSceneState, DeleteEntityIntention>(UnloadRoad_QueryDescription);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
-        private void UnloadRoad(ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void UnloadRoad(in Entity entity, ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             roadInfo.Dispose(roadAssetPool);
             scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
+            World.Remove<RoadInfo, VisualSceneState, DeleteEntityIntention>(entity);
         }
-      
     }
 }
