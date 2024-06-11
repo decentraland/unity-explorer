@@ -11107,6 +11107,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2615893756840628995, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
+      propertyPath: <ColorPickerView>k__BackingField
+      value: 
+      objectReference: {fileID: 457264880525757106}
     - target: {fileID: 2686056793847770930, guid: e64a5b3ebe4b2447e965bb76004651a4, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -14541,6 +14545,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}
+--- !u!114 &457264880525757106 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8155558797585328725, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}
+  m_PrefabInstance: {fileID: 8608307947788656871}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4da3552d84e74bfba7b8dc83ffff3933, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &2959346003065959482 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6802528885745030365, guid: 0bc3c54f016e94fe1a9dd7522a0c05c1, type: 3}

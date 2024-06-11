@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6802528885745030365}
+  - component: {fileID: 8155558797585328725}
   m_Layer: 5
   m_Name: ColorPicker
   m_TagString: Untagged
@@ -37,6 +38,28 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 386, y: 450}
   m_Pivot: {x: 0, y: 1}
+--- !u!114 &8155558797585328725
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 951936997369523285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4da3552d84e74bfba7b8dc83ffff3933, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <SliderHue>k__BackingField: {fileID: 4446405260838116596}
+  <SliderSaturation>k__BackingField: {fileID: 4462375709561359149}
+  <SliderValue>k__BackingField: {fileID: 1652141134889042530}
+  <ToggleButton>k__BackingField: {fileID: 4066248081272917147}
+  <Container>k__BackingField: {fileID: 4200688421014649722}
+  <ContainerImage>k__BackingField: {fileID: 4369451972972127477}
+  <ColorSelectorObject>k__BackingField: {fileID: 0}
+  <ColorPreviewImage>k__BackingField: {fileID: 1085402447691280675}
+  <ArrowUpMark>k__BackingField: {fileID: 2506626392086248904}
+  <ArrowDownMark>k__BackingField: {fileID: 7105173855339447081}
 --- !u!1 &1751772365164399631
 GameObject:
   m_ObjectHideFlags: 0
@@ -395,7 +418,6 @@ GameObject:
   - component: {fileID: 8459376800888603026}
   - component: {fileID: 4030228082775423795}
   - component: {fileID: 4369451972972127477}
-  - component: {fileID: 4414520422376717383}
   m_Layer: 5
   m_Name: Container
   m_TagString: Untagged
@@ -461,28 +483,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &4414520422376717383
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4200688421014649722}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4da3552d84e74bfba7b8dc83ffff3933, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <SliderHue>k__BackingField: {fileID: 4446405260838116596}
-  <SliderSaturation>k__BackingField: {fileID: 4462375709561359149}
-  <SliderValue>k__BackingField: {fileID: 1652141134889042530}
-  <ToggleButton>k__BackingField: {fileID: 4066248081272917147}
-  <Container>k__BackingField: {fileID: 4200688421014649722}
-  <ContainerImage>k__BackingField: {fileID: 4369451972972127477}
-  <ColorSelectorObject>k__BackingField: {fileID: 0}
-  <ColorPreviewImage>k__BackingField: {fileID: 1085402447691280675}
-  <ArrowUpMark>k__BackingField: {fileID: 2506626392086248904}
-  <ArrowDownMark>k__BackingField: {fileID: 7105173855339447081}
 --- !u!1 &4205788182706853419
 GameObject:
   m_ObjectHideFlags: 0

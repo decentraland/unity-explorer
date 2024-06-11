@@ -1,6 +1,8 @@
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.UI;
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace DCL.Backpack.Breadcrumb
@@ -10,12 +12,14 @@ namespace DCL.Backpack.Breadcrumb
         private readonly BackpackBreadCrumbView view;
         private readonly IBackpackCommandBus commandBus;
         private readonly NftTypeIconSO categoryIcons;
+        private readonly ColorPickerController colorPickerController;
 
-        public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons)
+        public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons, ColorToggleView colorToggle, ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
+            colorPickerController = new ColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
 
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
@@ -59,6 +63,7 @@ namespace DCL.Backpack.Breadcrumb
 
         private void OnFilterCategory(string category)
         {
+            colorPickerController.SetColorPickerStatus(category.ToLower());
             if (string.IsNullOrEmpty(category))
             {
                 view.FilterButton.gameObject.SetActive(false);

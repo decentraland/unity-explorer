@@ -24,6 +24,9 @@ namespace DCL.UI
         public Image ContainerImage { get; private set; }
 
         [field: SerializeField]
+        public Transform ColorPresetsParent { get; private set; }
+
+        [field: SerializeField]
         public GameObject ColorSelectorObject { get; private set; }
 
         [field: SerializeField]

@@ -465,6 +465,8 @@ MonoBehaviour:
   targetScene: {x: 0, y: 0}
   targetWorld: MetadyneLabs.dcl.eth
   customRealm: https://peer.decentraland.org
+  remoteSceneID: bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q
+  remoteSceneContentServer: 0
   showSplash: 1
   showAuthentication: 1
   showLoading: 1
@@ -545,8 +547,28 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
+      <HairColors>k__BackingField:
+        m_AssetGUID: 2668240d360264034b2ee70e645aab92
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <EyesColors>k__BackingField:
+        m_AssetGUID: a00387527d7ddda41b9eb524b4a8662c
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <BodyshapeColors>k__BackingField:
+        m_AssetGUID: 5af318126b38647fea34ff22fba4ef17
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
       <PageButtonView>k__BackingField:
         m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <ColorToggle>k__BackingField:
+        m_AssetGUID: 
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
