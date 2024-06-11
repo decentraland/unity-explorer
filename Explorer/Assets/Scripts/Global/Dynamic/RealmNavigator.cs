@@ -224,7 +224,7 @@ namespace Global.Dynamic
             RealmChanged?.Invoke(isGenesis);
             mapRenderer.SetSharedLayer(MapLayer.PlayerMarker, isGenesis);
             await satelliteFloor.SwitchVisibilityAsync(isGenesis);
-            roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
+            // roadsPlugin.RoadAssetPool?.SwitchVisibility(isGenesis);
         }
 
         private async UniTask<UniTask> TeleportToParcelAsync(Vector2Int parcel, AsyncLoadProcessReport processReport, CancellationToken ct)

@@ -38,8 +38,7 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
         private void AddSceneVisualState(in Entity entity, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            // if (!partition.IsDirty) return;
-
+            if (!partition.IsDirty) return;
             if (partition.OutOfRange) return;
 
             VisualSceneState visualSceneState = new VisualSceneState();

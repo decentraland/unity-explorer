@@ -51,8 +51,8 @@ namespace DCL.Roads.Systems
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in GlobalPluginArguments arguments)
         {
-            RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, RoadAssetPool, sceneReadinessReportQueue, scenesCache);
-            UnloadRoadSystem.InjectToWorld(ref builder, RoadAssetPool, scenesCache);
+            // RoadInstantiatorSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, roadDataDictionary, RoadAssetPool, sceneReadinessReportQueue, scenesCache);
+            // UnloadRoadSystem.InjectToWorld(ref builder, RoadAssetPool, scenesCache);
         }
 
         public void Dispose()
