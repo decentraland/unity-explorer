@@ -1,13 +1,12 @@
 using Cysharp.Threading.Tasks;
-using DCL.Utilities.Extensions;
 using DCL.Web3;
-using DCL.Web3.Chains;
 using DCL.Web3.Identities;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
+using Nethereum.Hex.HexConvertors.Extensions;
 using Newtonsoft.Json;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
+using System.Text;
 using System.Threading;
 using Utility;
 
@@ -53,9 +52,33 @@ namespace SceneRuntime.Apis.Modules.Ethereums
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
         public object SignMessage(string message)
         {
-            using AuthChain chain = web3IdentityCache.Identity.EnsureNotNull().Sign(message);
-            var entity = chain.Get(AuthLinkType.ECDSA_SIGNED_ENTITY);
-            return new SignMessageResponse(entity);
+            async UniTask<SignMessageResponse> RequestPersonalSignatureAsync(CancellationToken ct)
+            {
+                var hex = $"0x{Encoding.UTF8.GetBytes(message).ToHex()!}";
+
+                try
+                {
+                    string signature = await ethereumApi.SendAsync<string>(new EthApiRequest
+                    {
+                        method = "personal_sign",
+                        @params = new object[]
+                        {
+                            hex,
+                            web3IdentityCache.Identity!.Address.ToString(),
+                        },
+                    }, ct);
+
+                    return new SignMessageResponse(hex, message, signature);
+                }
+                catch (Exception e)
+                {
+                    sceneExceptionsHandler.OnEngineException(e);
+                    return new SignMessageResponse(hex, message, string.Empty);
+                }
+            }
+
+            return RequestPersonalSignatureAsync(CancellationToken.None)
+               .ToDisconnectedPromise();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/EthereumController.js")]
