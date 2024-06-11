@@ -47,3 +47,4 @@ MonoBehaviour:
   - eth_requestAccounts
   - eth_signTypedData_v4
   - eth_getCode
+  - personal_sign
