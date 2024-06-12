@@ -42,7 +42,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void SetSceneProfile(Profile profile, PlayerCRDTEntity playerCRDTEntity)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-            sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+            var newProfile = new Profile(profile.UserId, profile.Name, profile.Avatar); // TODO reuse the profile object
+            ref var profileComponent = ref sceneEcsExecutor.World.AddOrGet<Profile>(playerCRDTEntity.SceneWorldEntity);
+            profileComponent = newProfile;
         }
     }
 }

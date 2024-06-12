@@ -197,16 +197,6 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
-        ///     CameraTransform SDK System
-        /// </summary>
-        public const string CAMERA_TRANSFORM = nameof(CAMERA_TRANSFORM);
-
-        /// <summary>
-        ///     AvatarModifierArea SDK component
-        /// </summary>
-        public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
-
-        /// <summary>
         ///     Multiplayer SDK Profile component propagator
         /// </summary>
         public const string MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY = nameof(MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY);
@@ -262,6 +252,11 @@
         public const string MULTIPLAYER = nameof(MULTIPLAYER);
 
         public const string AUDIO = nameof(AUDIO);
+
+        /// <summary>
+        ///     Generic UI category
+        /// </summary>
+        public const string UI = nameof(UI);
 
         /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API
