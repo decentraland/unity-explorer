@@ -3,11 +3,13 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
-using DCL.Profiles;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
@@ -40,7 +42,7 @@ namespace DCL.Chat
         private readonly EmojiSectionView emojiSectionViewPrefab;
         private readonly EmojiButton emojiButtonPrefab;
         private readonly EmojiSuggestionView emojiSuggestionViewPrefab;
-        private readonly List<ChatMessage> chatMessages = new ();
+        private readonly IChatHistory chatHistory;
         private readonly List<EmojiData> keysWithPrefix = new ();
         private readonly IEventSystem eventSystem;
         private readonly World world;
@@ -63,6 +65,7 @@ namespace DCL.Chat
             ViewFactoryMethod viewFactory,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IChatMessagesBus chatMessagesBus,
+            IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             EmojiPanelConfigurationSO emojiPanelConfiguration,
@@ -78,6 +81,7 @@ namespace DCL.Chat
         {
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.chatMessagesBus = chatMessagesBus;
+            this.chatHistory = chatHistory;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.emojiPanelConfiguration = emojiPanelConfiguration;
@@ -91,9 +95,7 @@ namespace DCL.Chat
             this.eventSystem = eventSystem;
 
             chatMessagesBus.OnMessageAdded += CreateChatEntry;
-            // Adding two elements to count as top and bottom padding
-            chatMessages.Add(new ChatMessage(true));
-            chatMessages.Add(new ChatMessage(true));
+            chatHistory.OnCleared += ChatHistoryOnOnCleared;
             device = InputSystem.GetDevice<Mouse>();
         }
 
@@ -303,10 +305,10 @@ namespace DCL.Chat
 
         private LoopListViewItem2? OnGetItemByIndex(LoopListView2 listView, int index)
         {
-            if (index < 0 || index >= chatMessages.Count)
+            if (index < 0 || index >= chatHistory.Messages.Count)
                 return null;
 
-            ChatMessage itemData = chatMessages[index];
+            ChatMessage itemData = chatHistory.Messages[index];
             LoopListViewItem2 item;
 
             if (itemData.IsPaddingElement)
@@ -346,7 +348,7 @@ namespace DCL.Chat
             if (itemData.HasToAnimate)
             {
                 itemScript.AnimateChatEntry();
-                chatMessages[index] = new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false);
+                chatHistory.ForceUpdateMessage(index, new ChatMessage(itemData.Message, itemData.Sender, itemData.WalletAddress, itemData.SentByOwnUser, false));
             }
         }
 
@@ -450,20 +452,23 @@ namespace DCL.Chat
 
             viewInstance.ResetChatEntriesFadeout();
 
-            //Removing padding element and reversing list due to infinite scroll view behaviour
-            chatMessages.Remove(chatMessages[^1]);
-            chatMessages.Reverse();
-            chatMessages.Add(chatMessage);
-            chatMessages.Add(new ChatMessage(true));
-            chatMessages.Reverse();
+            chatHistory.AddMessage(chatMessage);
 
-            viewInstance.LoopList.SetListItemCount(chatMessages.Count, false);
+            viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count, false);
+            viewInstance.LoopList.MovePanelToItemIndex(0, 0);
+        }
+
+        private void ChatHistoryOnOnCleared()
+        {
+            viewInstance.ResetChatEntriesFadeout();
+            viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count);
             viewInstance.LoopList.MovePanelToItemIndex(0, 0);
         }
 
         public override void Dispose()
         {
             chatMessagesBus.OnMessageAdded -= CreateChatEntry;
+            chatHistory.OnCleared -= ChatHistoryOnOnCleared;
 
             if (emojiPanelController != null)
             {
