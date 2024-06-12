@@ -88,7 +88,7 @@ namespace DCL.Landscape.Utils
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<FetchParcelResult> LoadManifest(CancellationToken ct)
+        public async UniTask<FetchParcelResult> LoadManifestAsync(CancellationToken ct)
         {
             try
             {

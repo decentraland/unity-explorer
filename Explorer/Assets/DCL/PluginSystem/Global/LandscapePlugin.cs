@@ -76,7 +76,7 @@ namespace DCL.PluginSystem.Global
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
 
-            FetchParcelResult fetchParcelResult = await parcelService.LoadManifest(ct);
+            FetchParcelResult fetchParcelResult = await parcelService.LoadManifestAsync(ct);
             string parcelChecksum = string.Empty;
 
             if (!fetchParcelResult.Succeeded)
