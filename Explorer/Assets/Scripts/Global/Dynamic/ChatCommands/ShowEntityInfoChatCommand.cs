@@ -35,7 +35,7 @@ namespace Global.Dynamic.ChatCommands
             object?[]? components = null;
 
             world!.Query(
-                new QueryDescription().WithAll<Entity>(),
+                new QueryDescription().WithNone<FindMarker>(),
                 entity =>
                 {
                     if (entity.Id == id)
@@ -54,6 +54,8 @@ namespace Global.Dynamic.ChatCommands
 
             return sb.ToString();
         }
+
+        private struct FindMarker { }
 
         private (World? world, int entityId, string? errorMessage) ArgsFromCommand(string text)
         {
