@@ -32,6 +32,7 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle.Components;
+using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
@@ -171,7 +172,8 @@ namespace Global
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
                 new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds),
-                new SceneAssetLock()
+                new SceneAssetLock(),
+                new SceneMapping()
             );
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.AssetsProvisioner);
