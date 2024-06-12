@@ -207,8 +207,7 @@ namespace DCL.Interaction.Raycast.Systems
 
                 if (closestQualifiedHit == null || hit.distance < closestQualifiedHit.Value.distance)
                 {
-                    closestQualifiedHit = hit;
-                    TryGetQualifiedEntity(collider, collisionMask, out foundEntity);
+                    if (TryGetQualifiedEntity(collider, collisionMask, out foundEntity)) { closestQualifiedHit = hit; }
                 }
             }
 
