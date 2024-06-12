@@ -82,12 +82,13 @@ namespace DCL.Profiles.Self
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
             var newProfile = profileBuilder.From(profile)
-                                    .WithBodyShape(bodyShape)
-                                    .WithWearables(uniqueWearables)
-                                    .WithEmotes(uniqueEmotes)
-                                    .WithForceRender(forceRender)
-                                    .WithVersion(profile!.Version + 1)
-                                    .Build();
+                                           .WithBodyShape(bodyShape)
+                                           .WithWearables(uniqueWearables)
+                                           .WithColors(profile!.Avatar.HairColor, profile!.Avatar.EyesColor, profile!.Avatar.SkinColor)
+                                           .WithEmotes(uniqueEmotes)
+                                           .WithForceRender(forceRender)
+                                           .WithVersion(profile!.Version + 1)
+                                           .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 

@@ -1,8 +1,6 @@
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
-using System;
-using System.Linq;
 using UnityEngine;
 
 namespace DCL.Backpack.Breadcrumb
@@ -20,7 +18,7 @@ namespace DCL.Backpack.Breadcrumb
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
             colorPickerController = new ColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
-
+            colorPickerController.OnColorChanged += OnColorChanged;
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
 
@@ -36,15 +34,14 @@ namespace DCL.Backpack.Breadcrumb
             SetAllButtonColor(true);
         }
 
-        private void OnExitSearch()
-        {
+        private void OnExitSearch() =>
             commandBus.SendCommand(new BackpackSearchCommand(""));
-        }
 
-        private void OnExitFilter()
-        {
+        private void OnExitFilter() =>
             commandBus.SendCommand(new BackpackFilterCategoryCommand(""));
-        }
+
+        private void OnColorChanged(Color newColor, string category) =>
+            commandBus.SendCommand(new BackpackChangeColorCommand(newColor, category));
 
         private void OnSearch(string searchString)
         {

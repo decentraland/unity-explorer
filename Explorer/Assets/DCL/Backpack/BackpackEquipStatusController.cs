@@ -11,6 +11,7 @@ using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
@@ -52,6 +53,7 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent += PublishProfile;
             backpackEventBus.EquipEmoteEvent += EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
+            backpackEventBus.ChangeColorEvent += ChangeColor;
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
         }
@@ -63,6 +65,7 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent -= PublishProfile;
             backpackEventBus.EquipEmoteEvent -= EquipEmote;
             backpackEventBus.UnEquipEmoteEvent -= UnEquipEmote;
+            backpackEventBus.ChangeColorEvent -= ChangeColor;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
             publishProfileCts?.SafeCancelAndDispose();
@@ -101,6 +104,11 @@ namespace DCL.Backpack
 
             foreach (string category in categories)
                 forceRender.Add(category);
+        }
+
+        private void ChangeColor(Color newColor, string category)
+        {
+            Debug.Log($"New color for {category} is {newColor.ToString()}");
         }
 
         private void PublishProfile()

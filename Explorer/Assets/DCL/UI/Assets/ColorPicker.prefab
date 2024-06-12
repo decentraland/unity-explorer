@@ -56,6 +56,7 @@ MonoBehaviour:
   <ToggleButton>k__BackingField: {fileID: 4066248081272917147}
   <Container>k__BackingField: {fileID: 4200688421014649722}
   <ContainerImage>k__BackingField: {fileID: 4369451972972127477}
+  <ColorPresetsParent>k__BackingField: {fileID: 6346025365088475134}
   <ColorSelectorObject>k__BackingField: {fileID: 0}
   <ColorPreviewImage>k__BackingField: {fileID: 1085402447691280675}
   <ArrowUpMark>k__BackingField: {fileID: 2506626392086248904}
