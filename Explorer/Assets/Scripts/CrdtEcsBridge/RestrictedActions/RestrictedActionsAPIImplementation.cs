@@ -93,6 +93,9 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneData.SceneContent.TryGetHash(src, out string hash))
                 return false;
 
+            if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL)
+                return false;
+
             await globalWorldActions.TriggerSceneEmoteAsync(sceneData.AssetBundleManifest, hash, loop, ct);
 
             return true;
