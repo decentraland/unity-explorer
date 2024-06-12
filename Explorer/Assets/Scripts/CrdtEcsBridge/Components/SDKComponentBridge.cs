@@ -15,14 +15,14 @@ namespace CrdtEcsBridge.Components
         public readonly SDKComponentCommandBufferSynchronizer CommandBufferSynchronizer;
 
         internal SDKComponentBridge(int id, IComponentSerializer serializer, Type componentType, IComponentPool pool, SDKComponentCommandBufferSynchronizer commandBufferSynchronizer,
-            bool isResult)
+            bool isResultComponent)
         {
             Id = id;
             Serializer = serializer;
             ComponentType = componentType;
             Pool = pool;
             CommandBufferSynchronizer = commandBufferSynchronizer;
-            IsResultComponent = isResult;
+            IsResultComponent = isResultComponent;
         }
     }
 }
