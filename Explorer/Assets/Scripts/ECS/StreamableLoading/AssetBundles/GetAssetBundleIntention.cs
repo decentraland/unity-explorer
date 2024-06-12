@@ -33,6 +33,7 @@ namespace ECS.StreamableLoading.AssetBundles
         /// </summary>
         internal Hash128? cacheHash;
 
+        /// <param name="expectedObjectType"></param>
         /// <param name="name">Name is resolved into Hash before loading by the manifest</param>
         /// <param name="hash">Hash of the asset, if it is provided manifest is not checked</param>
         /// <param name="permittedSources">Sources from which systems will try to load</param>

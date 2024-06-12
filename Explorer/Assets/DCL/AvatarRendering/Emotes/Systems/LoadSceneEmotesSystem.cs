@@ -2,23 +2,18 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using AssetManagement;
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
 using DCL.Diagnostics;
-using DCL.SDKComponents.AudioSources;
-using ECS;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
-using SceneRunner.Scene;
 using System;
 using UnityEngine;
 using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -30,19 +25,14 @@ namespace DCL.AvatarRendering.Emotes
 
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IEmoteCache emoteCache;
-        private readonly IRealmData realmData;
-        private readonly URLBuilder urlBuilder;
 
         public LoadSceneEmotesSystem(World world,
             IEmoteCache emoteCache,
-            IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory)
             : base(world)
         {
             this.emoteCache = emoteCache;
-            this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
-            urlBuilder = new URLBuilder();
         }
 
         protected override void Update(float t)
@@ -59,7 +49,7 @@ namespace DCL.AvatarRendering.Emotes
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
                 if (!World.Has<StreamableResult>(entity))
-                    World.Add(entity, new StreamableResult(new OperationCanceledException("Pointer request cancelled")));
+                    World.Add(entity, new StreamableResult(new OperationCanceledException($"Scene emote request cancelled {intention.Hash}")));
 
                 return;
             }
@@ -72,12 +62,43 @@ namespace DCL.AvatarRendering.Emotes
             {
                 if (!intention.IsModelProcessed)
                 {
-                    emote = new Emote
+                    var dto = new EmoteDTO
                     {
-                        Model = new StreamableLoadingResult<EmoteDTO>(new EmoteDTO
+                        id = urn,
+                        metadata = new EmoteDTO.Metadata
                         {
                             id = urn,
-                        }),
+                            emoteDataADR74 = new EmoteDTO.Metadata.Data
+                            {
+                                loop = intention.Loop,
+                                category = "scene",
+                                hides = Array.Empty<string>(),
+                                replaces = Array.Empty<string>(),
+                                tags = Array.Empty<string>(),
+                                removesDefaultHiding = Array.Empty<string>(),
+                                representations = new AvatarAttachmentDTO.Representation[]
+                                {
+                                    new ()
+                                    {
+                                        contents = Array.Empty<string>(),
+                                        bodyShapes = new[]
+                                        {
+                                            BodyShape.MALE.ToString(),
+                                            BodyShape.FEMALE.ToString(),
+                                        },
+                                        overrideHides = Array.Empty<string>(),
+                                        overrideReplaces = Array.Empty<string>(),
+                                        mainFile = "",
+                                    },
+                                },
+                            },
+                        },
+                    };
+
+                    emote = new Emote
+                    {
+                        Model = new StreamableLoadingResult<EmoteDTO>(dto),
+                        IsLoading = false,
                     };
 
                     emoteCache.Set(urn, emote);
@@ -109,6 +130,10 @@ namespace DCL.AvatarRendering.Emotes
             if (isTimeout)
             {
                 ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
+
+                if (!World.Has<StreamableResult>(entity))
+                    World.Add(entity, new StreamableResult(new TimeoutException($"Scene emote timeout {intention.Hash}")));
+
                 return;
             }
 
@@ -193,49 +218,23 @@ namespace DCL.AvatarRendering.Emotes
         //     World.Destroy(entity);
         // }
 
-        private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetSceneEmoteFromRealmIntention intention, IPartitionComponent partitionComponent)
+        private bool CreateAssetBundlePromiseIfRequired(IEmote emote, in GetSceneEmoteFromRealmIntention intention, IPartitionComponent partitionComponent)
         {
-            if (component.AssetResults[intention.BodyShape] != null) return false;
-
-            SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
+            if (emote.AssetResults[intention.BodyShape] != null) return false;
 
             var promise = AssetBundlePromise.Create(World,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
                     intention.Hash + PlatformUtils.GetPlatform(),
                     permittedSources: intention.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory,
-                    manifest: manifest,
-                    cancellationTokenSource: intention.CancellationTokenSource),
+                    cancellationTokenSource: intention.CancellationTokenSource,
+                    manifest: intention.AssetBundleManifest),
                 partitionComponent);
 
-            TryCreateAudioClipPromise(component, intention.BodyShape, partitionComponent);
-
-            component.IsLoading = true;
-            World.Create(promise, component, intention.BodyShape);
+            emote.IsLoading = true;
+            World.Create(promise, emote, intention.BodyShape);
 
             return true;
-        }
-
-        private void TryCreateAudioClipPromise(IEmote component, BodyShape bodyShape, IPartitionComponent partitionComponent)
-        {
-            AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
-
-            if (content == null) return;
-
-            foreach (AvatarAttachmentDTO.Content item in content)
-            {
-                var audioType = item.file.ToAudioType();
-
-                if (audioType == AudioType.UNKNOWN)
-                    continue;
-
-                urlBuilder.Clear();
-                urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
-                URLAddress url = urlBuilder.Build();
-
-                AudioPromise promise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, partitionComponent);
-                World.Create(promise, component, bodyShape);
-            }
         }
 
         private static URN GetUrn(string hash, bool loop) =>

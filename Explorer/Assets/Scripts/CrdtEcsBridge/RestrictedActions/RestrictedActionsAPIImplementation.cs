@@ -93,8 +93,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneData.SceneContent.TryGetHash(src, out string hash))
                 return false;
 
-            // TODO: version of the AB?
-            await globalWorldActions.TriggerSceneEmoteAsync(hash, loop, ct);
+            await globalWorldActions.TriggerSceneEmoteAsync(sceneData.AssetBundleManifest, hash, loop, ct);
 
             return true;
         }

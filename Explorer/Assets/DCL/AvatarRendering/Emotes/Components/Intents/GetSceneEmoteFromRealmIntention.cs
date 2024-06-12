@@ -2,6 +2,7 @@ using AssetManagement;
 using DCL.AvatarRendering.Wearables;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using System;
 using System.Threading;
 
@@ -10,23 +11,24 @@ namespace DCL.AvatarRendering.Emotes
     public struct GetSceneEmoteFromRealmIntention : IEquatable<GetSceneEmoteFromRealmIntention>, IAssetIntention
     {
         public CancellationTokenSource CancellationTokenSource { get; }
-
+        public SceneAssetBundleManifest AssetBundleManifest { get; }
         public string Hash { get; }
         public bool Loop { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
         public int Timeout { get; }
-        public bool IsModelProcessed;
-        public bool IsAssetBundleProcessed;
+        public bool IsModelProcessed { get; set; }
+        public bool IsAssetBundleProcessed { get; set; }
+        public float ElapsedTime { get; set; }
 
-        public float ElapsedTime;
-
-        public GetSceneEmoteFromRealmIntention(string hash,
+        public GetSceneEmoteFromRealmIntention(SceneAssetBundleManifest assetBundleManifest,
+            string hash,
             bool loop,
             BodyShape bodyShape,
             AssetSource permittedSources = AssetSource.ALL,
             int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
         {
+            AssetBundleManifest = assetBundleManifest;
             Hash = hash;
             Loop = loop;
             CancellationTokenSource = new CancellationTokenSource();

@@ -7,6 +7,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -48,13 +49,13 @@ namespace CrdtEcsBridge.RestrictedActions
             world.Add(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        public async UniTask TriggerSceneEmoteAsync(string entityHash, bool loop, CancellationToken ct)
+        public async UniTask TriggerSceneEmoteAsync(SceneAssetBundleManifest abManifest, string hash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
             var promise = SceneEmotePromise.Create(world,
-               new GetSceneEmoteFromRealmIntention(entityHash, loop, avatarShape.BodyShape),
+               new GetSceneEmoteFromRealmIntention(abManifest, hash, loop, avatarShape.BodyShape),
                PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
