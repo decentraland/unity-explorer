@@ -2,7 +2,6 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using SceneRunner.Mapping;
-using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -24,27 +23,18 @@ namespace Global.Dynamic.ChatCommands
         }
 
         public UniTask<string> ExecuteAsync(Match match, CancellationToken ct) =>
-            UniTask.FromResult(Execute(match.Value.AsSpan()));
+            UniTask.FromResult(Execute(match.Value));
 
-        private string Execute(ReadOnlySpan<char> text)
+        private string Execute(string text)
         {
-            int index = COMMAND_SHOW.Length;
+            var (world, id, errorMessage) = ArgsFromCommand(text);
 
-            var worldResult = WorldFromCommand(text, ref index);
-
-            if (worldResult.errorMessage != null)
-                return worldResult.errorMessage;
-
-            (int id, string? errorMessageForId) = EntityIdFromCommand(text, ref index);
-
-            if (errorMessageForId != null)
-                return errorMessageForId;
+            if (errorMessage != null)
+                return errorMessage;
 
             object?[]? components = null;
 
-            var world = worldResult.world!;
-
-            world.Query(
+            world!.Query(
                 new QueryDescription().WithAll<Entity>(),
                 entity =>
                 {
@@ -65,51 +55,32 @@ namespace Global.Dynamic.ChatCommands
             return sb.ToString();
         }
 
-        private (World? world, string? errorMessage) WorldFromCommand(ReadOnlySpan<char> text, ref int index)
+        private (World? world, int entityId, string? errorMessage) ArgsFromCommand(string text)
         {
-            var sceneName = WhitespaceSliceOrEmpty(text, ref index).ToString()!;
+            string[] split = text.Split(' ')!;
+
+            if (split.Length < 3)
+                return (null, 0, $"Invalid command, please provide a valid scene name and entity id as an example: {EXAMPLE}");
+
+            string sceneName = split[1];
 
             if (sceneName.Length is 0)
-                return (null, $"Cannot fetch scene name, please provide a valid scene name as an example: {EXAMPLE}");
+                return (null, 0, $"Cannot fetch scene name, please provide a valid scene name as an example: {EXAMPLE}");
 
             var world = sceneMapping.GetWorld(sceneName);
 
             if (world is null)
-                return (null, $"Scene {sceneName} not found");
+                return (null, 0, $"Scene {sceneName} not found");
 
-            return (world, null);
-        }
+            string entityIdString = split[2];
 
-        private (int id, string? errorMessage) EntityIdFromCommand(ReadOnlySpan<char> text, ref int index)
-        {
-            var entityId = WhitespaceSliceOrEmpty(text, ref index);
+            if (entityIdString.Length is 0)
+                return (null, 0, $"Cannot fetch entity id, please provide a valid entity id as an example: {EXAMPLE}");
 
-            if (entityId.Length is 0)
-                return (0, $"Cannot fetch entity id, please provide a valid entity id as an example: {EXAMPLE}");
+            if (int.TryParse(entityIdString, out int id) == false)
+                return (null, 0, $"Cannot parse entity id: {entityIdString}");
 
-            if (int.TryParse(entityId, out int id) == false)
-                return (0, $"Cannot parse entity id: {entityId.ToString()}");
-
-            return (id, null);
-        }
-
-        private static ReadOnlySpan<char> WhitespaceSliceOrEmpty(ReadOnlySpan<char> text, ref int currentIndex)
-        {
-            int start = -1;
-            int finish = -1;
-
-            for (; currentIndex < text.Length; currentIndex++)
-                if (text[currentIndex] is ' ')
-                    start = currentIndex + 1;
-
-            for (; currentIndex < text.Length; currentIndex++)
-                if (text[currentIndex] is ' ')
-                    finish = currentIndex - 1;
-
-            if (start == -1 || finish == -1)
-                return new ReadOnlySpan<char>();
-
-            return text.Slice(start, finish);
+            return (world, id, null);
         }
     }
 }

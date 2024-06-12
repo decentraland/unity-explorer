@@ -92,9 +92,8 @@ namespace SceneRunner.ECSWorld
 
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 
-            var sceneName = args.SceneData.SceneShortInfo.ToString();
-            SystemGroupSnapshot.Instance!.Register(sceneName, systemsWorld);
-            singletonDependencies.SceneMapping.Register(sceneName, world);
+            SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
+            singletonDependencies.SceneMapping.Register(args.SceneData.SceneShortInfo.Name, args.SceneData.SceneShortInfo.BaseParcel, world);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems, isCurrentListeners);
         }
