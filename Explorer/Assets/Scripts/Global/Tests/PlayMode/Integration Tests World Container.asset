@@ -20,9 +20,18 @@ MonoBehaviour:
   - rid: 758312634468794373
   - rid: 758312881421549570
   - rid: 857448817791336450
+  - rid: 278567035285012480
   references:
     version: 2
     RefIds:
+    - rid: 278567035285012480
+      type: {class: MediaPlayerPlugin/MediaPlayerPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        MediaPlayerPrefab:
+          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 758312634468794373
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -42,15 +51,15 @@ MonoBehaviour:
     - rid: 1268264197252972545
       type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <RaycastBucketThreshold>k__BackingField: 3
-        <RaycastFrameBudgetMs>k__BackingField: 3
-        <PlayerOriginRaycastMaxDistance>k__BackingField: 200
-        <GlobalInputPropagationBucketThreshold>k__BackingField: 3
         Data:
           m_AssetGUID: ea1f7da7c78c3d74bac70064dcc265a7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <RaycastBucketThreshold>k__BackingField: 3
+        <RaycastFrameBudgetMs>k__BackingField: 3
+        <PlayerOriginRaycastMaxDistance>k__BackingField: 200
+        <GlobalInputPropagationBucketThreshold>k__BackingField: 3
     - rid: 4555433133200637954
       type: {class: CharacterTriggerAreaSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

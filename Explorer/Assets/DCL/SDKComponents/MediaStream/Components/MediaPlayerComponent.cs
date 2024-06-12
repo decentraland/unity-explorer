@@ -23,6 +23,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public MediaPlayer PoolableComponent => MediaPlayer;
         public Type PoolableComponentType => typeof(MediaPlayer);
+        public AudioOutput AudioOutput;
 
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
