@@ -154,6 +154,7 @@ namespace Global.Dynamic
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
+            var reloadSceneDebugController = new ReloadSceneDebugController(builder.World, playerEntity, scenesCache, debugContainerBuilder);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
 

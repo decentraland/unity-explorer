@@ -51,7 +51,7 @@ namespace DCL.SDKComponents.MediaStream
         }
 
         [Query]
-        [All(typeof(DeleteEntityIntention), typeof(VideoTextureComponent))]
+        [All(typeof(DeleteEntityIntention))]
         private void HandleAudioEntityDestruction(ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpMediaPlayer(ref mediaPlayer);

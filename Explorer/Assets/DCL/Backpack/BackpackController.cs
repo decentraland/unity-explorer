@@ -170,7 +170,8 @@ namespace DCL.Backpack
 
             if (ct.IsCancellationRequested) return;
 
-            backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender));
+            backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
+            backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
             backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value));
 
             foreach (URN w in avatar.Wearables)

@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime;
-using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -14,40 +13,22 @@ using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
-    public class CommunicationsControllerAPIImplementation : ICommunicationsControllerAPI
+    public class CommunicationsControllerAPIImplementation : CommunicationsControllerAPIImplementationBase
     {
-        internal enum MsgType
-        {
-            String = 1, // Deprecated in SDK7
-            Uint8Array = 2,
-        }
-
-        private readonly CancellationTokenSource cancellationTokenSource = new ();
-        private readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
-        private readonly ISceneStateProvider sceneStateProvider;
-        private readonly IJsOperations jsOperations;
-        private readonly ICommunicationControllerHub messagePipesHub;
         private readonly ICRDTMemoryAllocator crdtMemoryAllocator;
-        private readonly ISceneData sceneData;
-
-        internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
-
-        private readonly Action<ReceivedMessage<Scene>> onMessageReceivedCached;
 
         public CommunicationsControllerAPIImplementation(
             ISceneData sceneData,
             ICommunicationControllerHub messagePipesHub,
             IJsOperations jsOperations,
             ICRDTMemoryAllocator crdtMemoryAllocator,
-            ISceneStateProvider sceneStateProvider)
+            ISceneStateProvider sceneStateProvider) : base(
+            sceneData,
+            messagePipesHub,
+            jsOperations,
+            sceneStateProvider)
         {
-            this.sceneData = sceneData;
-            this.messagePipesHub = messagePipesHub;
-            this.jsOperations = jsOperations;
             this.crdtMemoryAllocator = crdtMemoryAllocator;
-            this.sceneStateProvider = sceneStateProvider;
-
-            onMessageReceivedCached = OnMessageReceived;
         }
 
         public void Dispose()
@@ -110,7 +91,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
-        private void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
+        protected override void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)
         {
             using (receivedMessage)
             {
@@ -136,13 +117,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
                 lock (eventsToProcess) { eventsToProcess.Add(serializedMessageOwner); }
             }
-        }
-
-        private static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
-        {
-            var msgType = (MsgType)value[0];
-            value = value[1..];
-            return msgType;
         }
     }
 }

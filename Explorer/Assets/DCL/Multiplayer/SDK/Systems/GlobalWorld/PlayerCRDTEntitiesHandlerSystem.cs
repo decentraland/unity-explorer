@@ -19,6 +19,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     // Currently implemented to track reserved entities only on the CURRENT SCENE
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY)]
     public partial class PlayerCRDTEntitiesHandlerSystem : BaseUnityLoopSystem
     {

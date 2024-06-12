@@ -120,7 +120,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             return true;
         }
 
-        public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock()
+        public OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock(Action<PendingMessage> actOnPendingMessage)
         {
             // Process all pending messages
 
@@ -132,6 +132,9 @@ namespace CrdtEcsBridge.OutgoingMessages
                 for (var i = 0; i < messages.Count; i++)
                 {
                     PendingMessage pendingMessage = messages[i];
+
+                    actOnPendingMessage?.Invoke(pendingMessage);
+
                     IMemoryOwner<byte> memory;
 
                     switch (pendingMessage.MessageType)
@@ -162,7 +165,7 @@ namespace CrdtEcsBridge.OutgoingMessages
             return new OutgoingCRDTMessagesSyncBlock(processedMessages);
         }
 
-        internal readonly struct PendingMessage
+        public readonly struct PendingMessage
         {
             public readonly IMessage Message;
             public readonly CRDTEntity Entity;
