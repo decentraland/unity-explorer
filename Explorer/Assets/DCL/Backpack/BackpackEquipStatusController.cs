@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -108,7 +109,18 @@ namespace DCL.Backpack
 
         private void ChangeColor(Color newColor, string category)
         {
-            Debug.Log($"New color for {category} is {newColor.ToString()}");
+            switch (category)
+            {
+                case WearablesConstants.Categories.EYES:
+                    equippedWearables.SetEyesColor(newColor);
+                    break;
+                case WearablesConstants.Categories.HAIR:
+                    equippedWearables.SetHairColor(newColor);
+                    break;
+                case WearablesConstants.Categories.BODY_SHAPE:
+                    equippedWearables.SetBodyshapeColor(newColor);
+                    break;
+            }
         }
 
         private void PublishProfile()

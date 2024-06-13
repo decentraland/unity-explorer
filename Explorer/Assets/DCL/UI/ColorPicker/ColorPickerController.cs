@@ -44,11 +44,17 @@ namespace DCL.UI
             view.SliderValue.Slider.onValueChanged.AddListener(_ => SetColor());
             view.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty("val", INCREMENT_AMOUNT));
             view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty("val", -INCREMENT_AMOUNT));
+
+            view.ToggleButton.onClick.AddListener(() => TogglePanel());
         }
+
+        private void TogglePanel() =>
+            view.Container.SetActive(!view.Container.activeInHierarchy);
 
         public void SetColorPickerStatus(string category)
         {
             view.gameObject.SetActive(WearablesConstants.COLOR_PICKER_CATEGORIES.Contains(category));
+            view.Container.SetActive(false);
             ClearPool();
             currentCategory = category;
             switch (category)
