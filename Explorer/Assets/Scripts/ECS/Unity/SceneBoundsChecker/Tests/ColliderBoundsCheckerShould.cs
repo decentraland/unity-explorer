@@ -50,7 +50,10 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new PrimitiveColliderComponent
             {
                 Collider = collider,
+                SDKCollider = new SDKCollider(collider),
             };
+            component.SDKCollider.IsActiveByEntity = true;
+            collider.enabled = true;
 
             world.Create(component);
 
@@ -69,7 +72,10 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new PrimitiveColliderComponent
             {
                 Collider = collider,
+                SDKCollider = new SDKCollider(collider),
             };
+            component.SDKCollider.IsActiveByEntity = true;
+            collider.enabled = true;
 
             world.Create(component);
 
@@ -87,7 +93,10 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             var component = new PrimitiveColliderComponent
             {
                 Collider = collider,
+                SDKCollider = new SDKCollider(collider),
             };
+            component.SDKCollider.IsActiveByEntity = true;
+            collider.enabled = true;
 
             world.Create(component);
 

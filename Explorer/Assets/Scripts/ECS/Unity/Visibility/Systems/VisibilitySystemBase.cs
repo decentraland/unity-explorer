@@ -33,7 +33,7 @@ namespace ECS.Unity.Visibility.Systems
         private void ProcessEvent(Entity entity, TComponent @event)
         {
             if (World.TryGet(entity, out PBVisibilityComponent? visibilityComponent))
-                UpdateVisibilityInternal(@event, visibilityComponent!.GetVisible());
+                UpdateVisibilityInternal(in @event, visibilityComponent!.GetVisible());
         }
 
         /// <summary>
