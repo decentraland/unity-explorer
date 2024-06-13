@@ -60,8 +60,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 splitIsPending = true;
             }
 
-            ResolveActivePromiseQuery(World);
-            StartLoadingFromVolatilePointersQuery(World);
+            // ResolveActivePromiseQuery(World);
+            // StartLoadingFromVolatilePointersQuery(World);
         }
 
         /// <summary>

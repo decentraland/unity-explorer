@@ -22,6 +22,7 @@ namespace ECS.SceneLifeCycle.Systems
         /// </summary>
         protected void TryCreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, NativeHashSet<int2> processedParcels)
         {
+            return;
             var shouldCreate = true;
 
             for (var i = 0; i < definition.metadata.scene.DecodedParcels.Count; i++)
