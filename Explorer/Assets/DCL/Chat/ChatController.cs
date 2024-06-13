@@ -21,6 +21,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Utility;
+using Utility.Arch;
 
 namespace DCL.Chat
 {
@@ -158,7 +159,7 @@ namespace DCL.Chat
         }
 
         private void OnChatViewPointerExit() =>
-            world.Remove<CameraBlockerComponent>(cameraEntity);
+            world.TryRemove<CameraBlockerComponent>(cameraEntity);
 
         private void OnChatViewPointerEnter() =>
             world.AddOrGet(cameraEntity, new CameraBlockerComponent());

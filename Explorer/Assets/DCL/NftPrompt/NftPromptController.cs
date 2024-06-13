@@ -96,7 +96,9 @@ namespace DCL.NftPrompt
                 await UniTask.SwitchToMainThread();
                 SetNftInfo(nftInfo);
             }
-            catch (Exception) when (!ct.IsCancellationRequested)
+            catch (OperationCanceledException)
+            {}
+            catch (Exception)
             {
                 ReportHub.LogError(ReportCategory.NFT_INFO_WEB_REQUEST, "OpenExternalUrl: Player is not inside of scene");
                 ShowMainErrorFeedback(true);
