@@ -31,8 +31,14 @@ namespace SceneRunner.Debugging
             var sb = new StringBuilder();
             sb.AppendLine($"Components of entity {entityId}, total count: {components.Length}");
 
+            var itemIndex = 1;
+
             foreach (object? component in components)
-                sb.AppendLine(component == null ? "NULL_COMPONENT" : component.ToString()!);
+            {
+                string text = component == null ? "NULL_COMPONENT" : component.ToString()!;
+                sb.AppendLine($"{itemIndex}) {text}");
+                itemIndex++;
+            }
 
             return sb.ToString();
         }
