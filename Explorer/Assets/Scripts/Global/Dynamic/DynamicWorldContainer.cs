@@ -52,6 +52,7 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using MVC;
 using MVC.PopupsController.PopupCloser;
+using SceneRunner.Debugging.Hub;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -277,7 +278,7 @@ namespace Global.Dynamic
                 { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
-                { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(staticContainer.SingletonSharedDependencies.SceneMapping) },
+                { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping)) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
             };
 
