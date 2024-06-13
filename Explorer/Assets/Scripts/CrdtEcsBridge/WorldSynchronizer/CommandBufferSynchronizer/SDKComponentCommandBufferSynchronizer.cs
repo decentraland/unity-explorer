@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using JetBrains.Annotations;
+using System;
 using UnityEngine;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
@@ -49,9 +50,17 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                     }
                     else
                     {
-                        ref T pointerToPrevObj = ref world.Get<T>(entity);
-                        componentPool.Release(pointerToPrevObj);
-                        pointerToPrevObj = c;
+                        try
+                        {
+                            ref T pointerToPrevObj = ref world.Get<T>(entity);
+                            componentPool.Release(pointerToPrevObj);
+                            pointerToPrevObj = c;
+                        }
+                        catch (Exception)
+                        {
+                            {}
+                            throw;
+                        }
                     }
 
                     break;
