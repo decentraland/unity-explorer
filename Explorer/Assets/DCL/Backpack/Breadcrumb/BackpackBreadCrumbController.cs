@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.UI;
+using System;
 using UnityEngine;
 
 namespace DCL.Backpack.Breadcrumb
@@ -21,10 +22,16 @@ namespace DCL.Backpack.Breadcrumb
             colorPickerController.OnColorChanged += OnColorChanged;
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
+            eventBus.ChangeColorEvent += UpdateColorPickerColors;
 
             view.SearchButton.ExitButton.onClick.AddListener(OnExitSearch);
             view.FilterButton.ExitButton.onClick.AddListener(OnExitFilter);
             view.AllButton.NavigateButton.onClick.AddListener(OnAllFilter);
+        }
+
+        private void UpdateColorPickerColors(Color newColor, string category)
+        {
+            colorPickerController.SetCurrentColor(newColor, category);
         }
 
         private void OnAllFilter()

@@ -21,6 +21,10 @@ namespace DCL.UI
         private readonly List<ColorToggleView> usedColorToggles = new ();
         private string currentCategory = "";
 
+        private Color hairsColor;
+        private Color eyesColor;
+        private Color bodyshapeColor;
+
         public ColorPickerController(ColorPickerView view, ColorToggleView colorToggle, ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
@@ -48,8 +52,21 @@ namespace DCL.UI
             view.ToggleButton.onClick.AddListener(() => TogglePanel());
         }
 
-        private void TogglePanel() =>
-            view.Container.SetActive(!view.Container.activeInHierarchy);
+        public void SetCurrentColor(Color newColor, string category)
+        {
+            switch (category)
+            {
+                case WearablesConstants.Categories.EYES:
+                    eyesColor = newColor;
+                    break;
+                case WearablesConstants.Categories.HAIR:
+                    hairsColor = newColor;
+                    break;
+                case WearablesConstants.Categories.BODY_SHAPE:
+                    bodyshapeColor = newColor;
+                    break;
+            }
+        }
 
         public void SetColorPickerStatus(string category)
         {
@@ -60,16 +77,22 @@ namespace DCL.UI
             switch (category)
             {
                 case WearablesConstants.Categories.EYES:
-                    SetColors(hairColors);
+                    SetColors(eyesColors);
+                    UpdateSliderValues(eyesColor);
                     break;
                 case WearablesConstants.Categories.HAIR:
-                    SetColors(eyesColors);
+                    SetColors(hairColors);
+                    UpdateSliderValues(hairsColor);
                     break;
                 case WearablesConstants.Categories.BODY_SHAPE:
                     SetColors(bodyshapeColors);
+                    UpdateSliderValues(bodyshapeColor);
                     break;
             }
         }
+
+        private void TogglePanel() =>
+            view.Container.SetActive(!view.Container.activeInHierarchy);
 
         private void SetColor()
         {
