@@ -24,6 +24,11 @@ namespace ECS.Prioritization
         /// </summary>
         int MaxLoadingDistanceInParcels { get; }
 
+        ///  /// <summary>
+        ///     Loads only scene in which located the player
+        /// </summary>
+        bool SoloSceneLoading { set; }
+
         /// <summary>
         ///     Tolerance that is added to <see cref="MaxLoadingDistanceInParcels" /> to determine the distance at which scenes start unloading.
         ///     It should be slightly bigger than 0 to avoid scenes unloading and loading back immediately when the player moves back and forth

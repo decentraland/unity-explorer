@@ -19,7 +19,7 @@ namespace ECS.Prioritization
         public float AggregateAngleTolerance { get; private set; }
 
         [field: SerializeField]
-        public bool SoloSceneLoading  { get; private set; }
+        public bool SoloSceneLoading  { get; set; }
 
         public int MaxLoadingDistanceInParcels
         {

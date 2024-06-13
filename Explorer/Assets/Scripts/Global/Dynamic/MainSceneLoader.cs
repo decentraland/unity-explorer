@@ -44,6 +44,7 @@ namespace Global.Dynamic
         [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
         private ContentServer remoteSceneContentServer = ContentServer.World;
 
+        [SerializeField] private bool soloSceneLoading;
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -179,6 +180,8 @@ namespace Global.Dynamic
                     GameReports.PrintIsDead();
                     return;
                 }
+
+                staticContainer!.RealmPartitionSettings.SoloSceneLoading = soloSceneLoading;
 
                 bool shouldEnableLandscape = enableLandscape;
 
