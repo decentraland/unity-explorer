@@ -7,6 +7,8 @@ namespace DCL.Chat.History
     {
         event Action OnCleared;
 
+        event Action<ChatMessage> OnMessageAdded;
+
         IReadOnlyList<ChatMessage> Messages { get; }
 
         void AddMessage(ChatMessage message);

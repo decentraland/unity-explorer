@@ -6,6 +6,7 @@ namespace DCL.Chat.History
     public class ChatHistory : IChatHistory
     {
         public event Action? OnCleared;
+        public event Action<ChatMessage>? OnMessageAdded;
 
         private readonly List<ChatMessage> messages = new ();
 
@@ -26,6 +27,8 @@ namespace DCL.Chat.History
             messages.Add(message);
             messages.Add(new ChatMessage(true));
             messages.Reverse();
+
+            OnMessageAdded?.Invoke(message);
         }
 
         public void ForceUpdateMessage(int inIndex, ChatMessage message)

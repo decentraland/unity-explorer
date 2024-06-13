@@ -94,7 +94,8 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
 
-            chatMessagesBus.OnMessageAdded += CreateChatEntry;
+            chatMessagesBus.OnMessageAdded += OnMessageAdded;
+            chatHistory.OnMessageAdded += CreateChatEntry;
             chatHistory.OnCleared += ChatHistoryOnOnCleared;
             device = InputSystem.GetDevice<Mouse>();
         }
@@ -143,6 +144,7 @@ namespace DCL.Chat
         {
             raycastResults = eventSystem.RaycastAll(device.position.value);
             var clickedOnPanel = false;
+
             foreach (RaycastResult raycasted in raycastResults)
                 if (raycasted.gameObject == viewInstance.EmojiPanel.gameObject || raycasted.gameObject == viewInstance.EmojiSuggestionPanel.ScrollView.gameObject)
                     clickedOnPanel = true;
@@ -170,7 +172,8 @@ namespace DCL.Chat
             viewInstance.InputField.SetTextWithoutNotify(viewInstance.InputField.text.Replace(EMOJI_PATTERN_REGEX.Match(viewInstance.InputField.text).Value, emojiCode));
             viewInstance.InputField.stringPosition += emojiCode.Length;
             viewInstance.InputField.ActivateInputField();
-            if(shouldClose)
+
+            if (shouldClose)
                 emojiSuggestionPanelController!.SetPanelVisibility(false);
         }
 
@@ -192,7 +195,7 @@ namespace DCL.Chat
 
         private void OnToggleChatBubblesValueChanged(bool isToggled)
         {
-            if(!nametagsData.showNameTags)
+            if (!nametagsData.showNameTags)
                 return;
 
             viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
@@ -277,6 +280,7 @@ namespace DCL.Chat
                 emojiSuggestionPanelController.SetPanelVisibility(false);
                 return;
             }
+
             emojiPanelController.SetPanelVisibility(false);
 
             if (string.IsNullOrWhiteSpace(viewInstance.InputField.text))
@@ -374,6 +378,7 @@ namespace DCL.Chat
                 viewInstance.ToggleChat(true);
                 viewInstance.LoopList.MovePanelToItemIndex(0, 0);
             }
+
             UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.EnterInputAudio);
 
             viewInstance.EmojiPanelButton.SetColor(true);
@@ -396,7 +401,6 @@ namespace DCL.Chat
             viewInstance.InputField.onSubmit.RemoveAllListeners();
             dclInput.UI.Submit.performed -= OnSubmitAction;
             viewInstance.InputField.DeactivateInputField();
-
         }
 
         protected override void OnFocus()
@@ -424,7 +428,7 @@ namespace DCL.Chat
             }
             else
             {
-                if(emojiSuggestionPanelController is { IsActive: true })
+                if (emojiSuggestionPanelController is { IsActive: true })
                     emojiSuggestionPanelController!.SetPanelVisibility(false);
             }
         }
@@ -437,6 +441,11 @@ namespace DCL.Chat
             emojiSuggestionPanelController.SetPanelVisibility(true);
         }
 
+        private void OnMessageAdded(ChatMessage chatMessage)
+        {
+            chatHistory.AddMessage(chatMessage);
+        }
+
         private void CreateChatEntry(ChatMessage chatMessage)
         {
             if (chatMessage.SentByOwnUser == false && entityParticipantTable.Has(chatMessage.WalletAddress))
@@ -445,14 +454,17 @@ namespace DCL.Chat
                 world.AddOrGet(entity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(viewInstance.ChatReceiveMessageAudio);
             }
-            else if(!chatMessage.SystemMessage)
-            {
-                world.AddOrGet(playerEntity, new ChatBubbleComponent(chatMessage.Message, chatMessage.Sender, chatMessage.WalletAddress));
-            }
+            else if (chatMessage.SystemMessage == false)
+                world.AddOrGet(
+                    playerEntity,
+                    new ChatBubbleComponent(
+                        chatMessage.Message,
+                        chatMessage.Sender,
+                        chatMessage.WalletAddress
+                    )
+                );
 
             viewInstance.ResetChatEntriesFadeout();
-
-            chatHistory.AddMessage(chatMessage);
 
             viewInstance.LoopList.SetListItemCount(chatHistory.Messages.Count, false);
             viewInstance.LoopList.MovePanelToItemIndex(0, 0);
