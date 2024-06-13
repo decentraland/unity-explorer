@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -13,23 +14,27 @@ namespace Global.Dynamic.ChatCommands
     public class TeleportToChatCommand : IChatCommand
     {
         private const string COMMAND_GOTO_LOCAL = "goto-local";
+        private const string COMMAND_GOTO_LOCAL_ONLY = "goto-local-only";
         private const string PARAMETER_RANDOM = "random";
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+),(-?\d+)|{PARAMETER_RANDOM})$",RegexOptions.Compiled);
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL}|{COMMAND_GOTO_LOCAL_ONLY})\s+(?:(-?\d+),(-?\d+)|{PARAMETER_RANDOM})$",RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
+        private readonly IRealmPartitionSettings realmPartitionSettings;
 
         private int x;
         private int y;
 
-        public TeleportToChatCommand(IRealmNavigator realmNavigator)
+        public TeleportToChatCommand(IRealmNavigator realmNavigator, IRealmPartitionSettings realmPartitionSettings)
         {
             this.realmNavigator = realmNavigator;
+            this.realmPartitionSettings = realmPartitionSettings;
         }
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
-            bool isLocal = match.Groups[1].Value == COMMAND_GOTO_LOCAL;
+            realmPartitionSettings.SoloSceneLoading = match.Groups[1].Value is COMMAND_GOTO_LOCAL_ONLY;
+            bool isLocal = match.Groups[1].Value is COMMAND_GOTO_LOCAL or COMMAND_GOTO_LOCAL_ONLY;
 
             if (match.Groups[2].Success && match.Groups[3].Success)
             {

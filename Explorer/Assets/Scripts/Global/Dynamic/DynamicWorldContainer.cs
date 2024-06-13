@@ -272,7 +272,7 @@ namespace Global.Dynamic
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
+                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator, staticContainer.RealmPartitionSettings) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
             };
