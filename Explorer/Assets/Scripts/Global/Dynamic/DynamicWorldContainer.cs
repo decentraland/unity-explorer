@@ -271,6 +271,8 @@ namespace Global.Dynamic
                 loadingScreen
             );
 
+            var worldInfoHub = new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping);
+
             var chatHistory = new ChatHistory();
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
@@ -278,7 +280,7 @@ namespace Global.Dynamic
                 { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
-                { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping)) },
+                { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
             };
 
@@ -321,6 +323,7 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache,
                     emotesCache
                 ),
+                new WorldInfoPlugin(worldInfoHub, debugBuilder),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, container.DebugContainer.Builder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
