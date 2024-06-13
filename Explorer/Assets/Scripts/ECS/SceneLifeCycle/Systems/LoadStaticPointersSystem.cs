@@ -30,8 +30,6 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(FixedScenePointers))]
         private void ResolvePromise(ref RealmComponent realm, ref StaticScenePointers staticScenePointers)
         {
-            return;
-
             if (staticScenePointers.Promise == null)
             {
                 // start loading
