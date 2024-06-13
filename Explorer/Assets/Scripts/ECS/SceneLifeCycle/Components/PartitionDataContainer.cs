@@ -5,6 +5,7 @@ using ECS.Prioritization.Components;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Mathematics;
 
 namespace ECS.SceneLifeCycle.Components
 {
@@ -56,7 +57,7 @@ namespace ECS.SceneLifeCycle.Components
         {
             partitions.Dispose();
             parcelCorners.Dispose();
-            
+
             CurrentPartitionIndex = 0;
 
             // Hard limit of the real scenes that can exist
@@ -69,9 +70,10 @@ namespace ECS.SceneLifeCycle.Components
             };
         }
 
-        public JobHandle ScheduleJob(IReadOnlyCameraSamplingData readOnlyCameraSamplingData, float unloadSqrDistance)
+        public JobHandle ScheduleJob(float2 playerPosition, IReadOnlyCameraSamplingData readOnlyCameraSamplingData, float unloadSqrDistance)
         {
             partitionJob.CameraForward = readOnlyCameraSamplingData.Forward;
+            partitionJob.PlayerPosition = playerPosition;
             partitionJob.CameraPosition = readOnlyCameraSamplingData.Position;
             partitionJob.ParcelCorners = parcelCorners;
             partitionJob.UnloadingSqrDistance = unloadSqrDistance;
@@ -86,6 +88,7 @@ namespace ECS.SceneLifeCycle.Components
             partitionComponent.Bucket = partition.Bucket;
             partitionComponent.RawSqrDistance = partition.RawSqrDistance;
             partitionComponent.OutOfRange = partition.OutOfRange;
+            partitionComponent.IsPlayerInScene = partition.IsPlayerInScene;
         }
 
         public void AddCorners(ScenesPartitioningUtils.ParcelCornersData parcelCornersData)

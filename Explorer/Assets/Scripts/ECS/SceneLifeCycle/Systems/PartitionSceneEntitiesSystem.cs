@@ -1,7 +1,9 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -31,6 +33,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private const int DEPLOYED_SCENES_LIMIT = 90000; // 300x300 scenes (without empty)
 
+        private readonly ICharacterObject playerCharacter;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly IRealmPartitionSettings realmPartitionSettings;
@@ -43,22 +46,21 @@ namespace ECS.SceneLifeCycle.Systems
         private bool isRunningJob;
 
         internal PartitionSceneEntitiesSystem(World world,
+            ICharacterObject playerCharacter,
             IComponentPool<PartitionComponent> partitionComponentPool,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
             PartitionDataContainer partitionDataContainer,
             IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
+            this.playerCharacter = playerCharacter;
             this.partitionComponentPool = partitionComponentPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
             this.partitionDataContainer = partitionDataContainer;
             this.realmPartitionSettings = realmPartitionSettings;
 
-
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
             emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
-            
-
         }
 
         public override void Dispose()
@@ -93,7 +95,7 @@ namespace ECS.SceneLifeCycle.Systems
                 float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
                                           * PARCEL_SIZE;
                 float unloadingSqrDistance = unloadingDistance * unloadingDistance;
-                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance);
+                partitionJobHandle = partitionDataContainer.ScheduleJob(playerCharacter.Position.ToFloat2(), readOnlyCameraSamplingData, unloadingSqrDistance);
                 isRunningJob = true;
             }
         }

@@ -67,7 +67,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
 
             if (!anyNonEmpty)
             {
-                float maxLoadingDistance = realmPartitionSettings.MaxLoadingDistanceInParcels * ParcelMathHelper.PARCEL_SIZE;
+                var dist = 1; // realmPartitionSettings.MaxLoadingDistanceInParcels
+                float maxLoadingDistance = dist * ParcelMathHelper.PARCEL_SIZE;
                 float maxLoadingSqrDistance = maxLoadingDistance * maxLoadingDistance;
 
                 ProcessVolatileRealmQuery(World, maxLoadingSqrDistance);
@@ -137,13 +138,16 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
 
-                    if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance) continue;
 
-                    orderedData.Add(new OrderedData
+
+                    if (partitionComponent.IsPlayerInScene)
                     {
-                        Entity = entity,
-                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind),
-                    });
+                        orderedData.Add(new OrderedData
+                        {
+                            Entity = entity,
+                            Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind),
+                        });
+                    }
                 }
             }
 

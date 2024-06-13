@@ -13,13 +13,14 @@ namespace ECS.Prioritization.Components
         {
             Bucket = 0,
             IsBehind = false,
+            IsPlayerInScene = false,
         };
 
         /// <summary>
         ///     Indicates that the partition is out of buckets range
         /// </summary>
         public bool OutOfRange { get; set; }
-        
+
         /// <summary>
         ///     Indicates that the partition value has changed and the processes assigned to it should be re-prioritized
         /// </summary>
@@ -40,6 +41,7 @@ namespace ECS.Prioritization.Components
         ///     Indicates if entity position is counted as behind the forward vector of the camera
         /// </summary>
         public bool IsBehind { get; set; }
+        public bool IsPlayerInScene { get; set; }
 
         public bool Equals(IPartitionComponent other) =>
             Bucket == other.Bucket && IsBehind == other.IsBehind;
