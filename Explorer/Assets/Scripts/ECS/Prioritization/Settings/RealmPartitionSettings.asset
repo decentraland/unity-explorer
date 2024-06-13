@@ -15,8 +15,9 @@ MonoBehaviour:
   fpsBuckets: 280000001e0000000f0000000a0000000500000000000000
   behindFps: 1
   aggregatePositionTolerance: 0.5
+  maxLoadingDistanceInParcels: 100
   <AggregateAngleTolerance>k__BackingField: 10
-  <MaxLoadingDistanceInParcels>k__BackingField: 15
+  <SoloSceneLoading>k__BackingField: 0
   <UnloadingDistanceToleranceInParcels>k__BackingField: 1
   <ScenesRequestBatchSize>k__BackingField: 6
   <ScenesDefinitionsRequestBatchSize>k__BackingField: 30

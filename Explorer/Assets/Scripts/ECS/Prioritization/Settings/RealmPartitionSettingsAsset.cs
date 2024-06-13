@@ -18,9 +18,12 @@ namespace ECS.Prioritization
         [field: SerializeField]
         public float AggregateAngleTolerance { get; private set; }
 
+        [field: SerializeField]
+        public bool SoloSceneLoading  { get; private set; }
+
         public int MaxLoadingDistanceInParcels
         {
-            get => Mathf.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
+            get => SoloSceneLoading? 0 : Mathf.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
 
             set
             {
