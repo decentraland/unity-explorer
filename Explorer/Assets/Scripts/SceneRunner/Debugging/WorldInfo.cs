@@ -16,7 +16,7 @@ namespace SceneRunner.Debugging
         {
             object?[]? components = null;
 
-            world!.Query(
+            world.Query(
                 new QueryDescription().WithNone<FindMarker>(),
                 entity =>
                 {
@@ -35,7 +35,9 @@ namespace SceneRunner.Debugging
 
             foreach (object? component in components)
             {
-                string text = component == null ? "NULL_COMPONENT" : component.ToString()!;
+                string text = component == null
+                    ? "NULL_COMPONENT"
+                    : $"{component.GetType().Name} {component}";
                 sb.AppendLine($"{itemIndex}) {text}");
                 itemIndex++;
             }
