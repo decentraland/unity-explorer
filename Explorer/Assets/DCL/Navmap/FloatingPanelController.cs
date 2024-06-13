@@ -1,15 +1,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.ParcelsService;
+using DCL.Character.CharacterMotion.Components;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
-using MVC;
-using DCL.PlacesAPIService;
-using DCL.UI;
-using DCL.WebRequests;
-using DG.Tweening;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
@@ -34,12 +28,6 @@ namespace DCL.Navmap
         private CancellationTokenSource cts;
 
         private readonly ImageController placeImageController;
-        private static readonly int OUT = Animator.StringToHash("Out");
-        private static readonly int IN = Animator.StringToHash("In");
-        private static readonly int LOADED = Animator.StringToHash("Loaded");
-        private static readonly int LOADING = Animator.StringToHash("Loading");
-        private static readonly int TO_LEFT = Animator.StringToHash("ToLeft");
-        private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -87,7 +75,7 @@ namespace DCL.Navmap
             {
                 view.panelAnimator.Rebind();
                 view.panelAnimator.Update(0f);
-                view.panelAnimator.SetTrigger(TO_LEFT);
+                view.panelAnimator.SetTrigger(AnimationHashes.TO_LEFT);
                 ShowPanel(parcel, -1);
             }
             else
@@ -96,13 +84,13 @@ namespace DCL.Navmap
                 {
                     view.panelAnimator.Rebind();
                     view.panelAnimator.Update(0f);
-                    view.panelAnimator.SetTrigger(IN);
-                    ShowPanel(parcel, LOADED);
+                    view.panelAnimator.SetTrigger(AnimationHashes.IN);
+                    ShowPanel(parcel, AnimationHashes.LOADED);
                 }
                 else
                 {
-                    view.panelAnimator.SetTrigger(LOADING);
-                    GetPlaceInfoAsync(parcel, LOADED).Forget();
+                    view.panelAnimator.SetTrigger(AnimationHashes.LOADING);
+                    GetPlaceInfoAsync(parcel, AnimationHashes.LOADED).Forget();
                 }
             }
         }
@@ -228,14 +216,14 @@ namespace DCL.Navmap
 
         private void HidePanelFromBackButton()
         {
-            view.panelAnimator.SetTrigger(TO_RIGHT);
+            view.panelAnimator.SetTrigger(AnimationHashes.TO_RIGHT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }
 
         public void HidePanel()
         {
-            view.panelAnimator.SetTrigger(OUT);
+            view.panelAnimator.SetTrigger(AnimationHashes.OUT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }

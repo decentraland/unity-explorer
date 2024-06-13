@@ -222,6 +222,61 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e1cc13afb4db8964c9febcf74091aa85
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/LongRoadPivot.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1222a2b612e63da4b8c5ce523c0241c8
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/-49,-51.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a7dc66251f083147baf3907dc2782e4
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/-51,-49.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f7a326b227aaab3429d13aa1cbe8d32d
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/-70,-1.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14d01fab2fcc2a440a8bccf12e0ff49f
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/0,-69.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: df4f8eb553c06214c947c079ff3f6a71
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/0,12.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e582d006d62bf01449a4264cca988b36
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/2,-51.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 40ba78f34c5ad424eb2093388750895c
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/2,50.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a89af142ec7d41a40902a3d993e0c758
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/13,0.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c5fd6869b2cebd74f892a9e390734b5a
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/50,-49.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 74cec7b5359025447b3f7dcb7923a0e1
+    m_Address: Assets/DCL/Roads/Data/RoadAssets/LongRoad/50,2.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:

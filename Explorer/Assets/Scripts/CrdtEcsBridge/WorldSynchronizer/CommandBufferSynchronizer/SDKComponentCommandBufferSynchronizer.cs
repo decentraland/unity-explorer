@@ -26,7 +26,8 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
         ///     Applies deserialized component to the world.
         ///     Must be called on the thread where World is running
         /// </summary>
-        public override void Apply(World world, PersistentCommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object component)
+        public override void Apply(World world, PersistentCommandBuffer commandBuffer, Entity entity, CRDTReconciliationEffect reconciliationEffect, object component,
+            bool isResultComponent)
         {
             // this is the cast we need
             var c = (T)component;
@@ -36,9 +37,23 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                 case CRDTReconciliationEffect.ComponentModified:
                     // if component is modified then return to the pool the existing one
                     // No need to add it to the command buffer as we already get the component by ref and can "override" it directly without overhead
-                    ref T pointerToPrevObj = ref world.Get<T>(entity);
-                    componentPool.Release(pointerToPrevObj);
-                    pointerToPrevObj = c;
+                    if (isResultComponent)
+                    {
+                        ref T ct = ref world.TryGetRef<T>(entity, out bool hasComponent);
+
+                        if (hasComponent)
+                        {
+                            componentPool.Release(ct);
+                            ct = c;
+                        }
+                    }
+                    else
+                    {
+                        ref T pointerToPrevObj = ref world.Get<T>(entity);
+                        componentPool.Release(pointerToPrevObj);
+                        pointerToPrevObj = c;
+                    }
+
                     break;
                 case CRDTReconciliationEffect.ComponentAdded:
                     Debug.Assert(!world.Has<T>(entity)); // Trace Assert from Arch will not work with Unity
@@ -46,9 +61,21 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                     break;
                 case CRDTReconciliationEffect.ComponentDeleted:
                     // if component is deleted return to the pool the existing one
-                    Debug.Assert(world.Has<T>(entity));
-                    componentPool.Release(world.Get<T>(entity));
-                    commandBuffer.Remove<T>(entity);
+                    if (isResultComponent)
+                    {
+                        if (world.TryGet(entity, out T ct))
+                        {
+                            componentPool.Release(ct);
+                            commandBuffer.Remove<T>(entity);
+                        }
+                    }
+                    else
+                    {
+                        Debug.Assert(world.Has<T>(entity));
+                        componentPool.Release(world.Get<T>(entity));
+                        commandBuffer.Remove<T>(entity);
+                    }
+
                     world.Get<RemovedComponents>(entity).Set.Add(typeof(T));
                     break;
             }
@@ -59,6 +86,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
     {
         public abstract void Apply(World world, PersistentCommandBuffer commandBuffer,
             Entity entity,
-            CRDTReconciliationEffect reconciliationEffect, [CanBeNull] object component);
+            CRDTReconciliationEffect reconciliationEffect, [CanBeNull] object component, bool isResultComponent);
     }
 }

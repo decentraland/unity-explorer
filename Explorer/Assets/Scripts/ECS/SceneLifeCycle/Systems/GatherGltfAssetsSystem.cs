@@ -13,10 +13,10 @@ using UnityEngine.Pool;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     public partial class GatherGltfAssetsSystem : BaseUnityLoopSystem
     {
-        private const int FRAMES_COUNT = 20;
+        private const int FRAMES_COUNT = 90;
 
         private readonly ISceneReadinessReportQueue readinessReportQueue;
         private readonly ISceneData sceneData;
@@ -25,15 +25,22 @@ namespace ECS.SceneLifeCycle.Systems
 
         private HashSet<EntityReference>? entitiesUnderObservation;
 
-        private int framesLeft = FRAMES_COUNT;
         private bool concluded;
         private int assetsResolved;
         private int totalAssetsToResolve = -1;
 
-        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData) : base(world)
+        private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
+        private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
+        private readonly ISceneStateProvider sceneStateProvider;
+
+        internal GatherGltfAssetsSystem(World world, ISceneReadinessReportQueue readinessReportQueue, ISceneData sceneData, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.readinessReportQueue = readinessReportQueue;
             this.sceneData = sceneData;
+            this.eventsBuffer = eventsBuffer;
+            this.sceneStateProvider = sceneStateProvider;
+
+            forEachEvent = GatherEntities;
         }
 
         public override void Initialize()
@@ -45,15 +52,14 @@ namespace ECS.SceneLifeCycle.Systems
         {
             HashSetPool<EntityReference>.Release(entitiesUnderObservation);
             entitiesUnderObservation = null;
+            sceneData.SceneLoadingConcluded = true;
         }
 
         protected override void Update(float t)
         {
-            if (framesLeft > 0)
+            if (sceneStateProvider.TickNumber < FRAMES_COUNT)
             {
-                GatherEntitiesQuery(World);
-
-                framesLeft--;
+                eventsBuffer.ForEach(forEachEvent);
             }
             else if (!concluded)
             {
@@ -64,6 +70,7 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     // if there is no report to dequeue, nothing to do
                     concluded = true;
+                    sceneData.SceneLoadingConcluded = true;
                     return;
                 }
 
@@ -86,16 +93,12 @@ namespace ECS.SceneLifeCycle.Systems
                     }
 
                     // if Gltf Container Component has finished loading at least once (it can be reconfigured, we don't care)
-                    if (gltfContainerComponent.State.Value == LoadingState.Loading)
-                    {
+                    if (gltfContainerComponent.State == LoadingState.Loading)
+                        // if at least one entity is still loading, we are not done.
                         concluded = false;
-
-                        // no reason to iterate further
-                        break;
-                    }
-
-                    // remove entity from list - it's loaded, we don't need to check it anymore
-                    toDelete.Add(entityRef);
+                    else
+                        // remove entity from list - it's loaded, we don't need to check it anymore
+                        toDelete.Add(entityRef);
                 }
 
                 assetsResolved += toDelete.Count;
@@ -112,19 +115,17 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (concluded)
                 {
-                    for (var i = 0; i < reports.Value.Count; i++)
-                        reports.Value[i].SetProgress(1f);
-
                     reports.Value.Dispose();
                     reports = null;
                 }
+
+                sceneData.SceneLoadingConcluded = concluded;
             }
         }
 
-        [Query]
-        [All(typeof(GltfContainerComponent))]
-        private void GatherEntities(in Entity entity)
+        private void GatherEntities(Entity entity, GltfContainerComponent component)
         {
+            // No matter to which state component has changed
             EntityReference entityRef = World.Reference(entity);
             entitiesUnderObservation!.Add(entityRef);
         }

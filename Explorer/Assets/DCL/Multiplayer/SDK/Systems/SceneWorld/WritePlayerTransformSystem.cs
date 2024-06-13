@@ -14,8 +14,8 @@ using Utility;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
-    // [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    // [UpdateBefore(typeof(CleanUpGroup))]
     // [LogCategory(ReportCategory.PLAYER_AVATAR_BASE)]
     public partial class WritePlayerTransformSystem : BaseUnityLoopSystem
     {

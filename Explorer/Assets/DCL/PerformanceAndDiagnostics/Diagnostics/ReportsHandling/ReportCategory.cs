@@ -123,7 +123,7 @@
         /// <summary>
         ///     Everything related to Scenes audio source components
         /// </summary>
-        public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
+        public const string SDK_AUDIO_SOURCES = nameof(SDK_AUDIO_SOURCES);
 
         /// <summary>
         ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
@@ -197,11 +197,6 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
-        ///     AvatarModifierArea SDK component
-        /// </summary>
-        public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
-
-        /// <summary>
         ///     Multiplayer SDK Profile component propagator
         /// </summary>
         public const string MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY = nameof(MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY);
@@ -242,6 +237,11 @@
         public const string REALM_DATA_DIRTY_RESET_SYSTEM = nameof(REALM_DATA_DIRTY_RESET_SYSTEM);
 
         /// <summary>
+        ///     SDK Observables layer
+        /// </summary>
+        public const string SDK_OBSERVABLES = nameof(SDK_OBSERVABLES);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);
@@ -252,6 +252,11 @@
         public const string MULTIPLAYER = nameof(MULTIPLAYER);
 
         public const string AUDIO = nameof(AUDIO);
+
+        /// <summary>
+        ///     Generic UI category
+        /// </summary>
+        public const string UI = nameof(UI);
 
         /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API

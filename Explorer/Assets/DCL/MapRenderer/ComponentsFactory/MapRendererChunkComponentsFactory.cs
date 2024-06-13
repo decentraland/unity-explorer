@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Diagnostics;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
@@ -95,7 +96,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             }
         }
 
-        private async UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
+        private UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             const int GRID_SIZE = 8; // satellite images are provided by 8x8 grid.
             const int PARCELS_INSIDE_CHUNK = 40; // One satellite image contains 40 parcels.
@@ -105,7 +106,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.SatelliteAtlas, chunkAtlas);
-            return;
+            return UniTask.CompletedTask;
 
             async UniTask<IChunkController> CreateSatelliteChunkAsync(Vector3 chunkLocalPosition, Vector2Int chunkId, Transform parent, CancellationToken ct)
             {
@@ -118,7 +119,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             }
         }
 
-        private async UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
+        private UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, MapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
 
@@ -126,7 +127,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.ParcelsAtlas, chunkAtlas);
-            return;
+            return UniTask.CompletedTask;
 
             async UniTask<IChunkController> CreateChunkAsync(Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent, CancellationToken ct)
             {

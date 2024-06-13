@@ -20,6 +20,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<string> FilterCategoryEvent;
         public event Action<string> SearchEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
+        public event Action UnEquipAllEvent;
         event Action PublishProfileEvent;
 
         public void SendWearableSelect(IWearable equipWearable);
@@ -27,6 +28,8 @@ namespace DCL.Backpack.BackpackBus
         public void SendEquipWearable(IWearable equipWearable);
 
         public void SendUnEquipWearable(IWearable unEquipWearable);
+
+        public void SendUnEquipAll();
 
         public void SendForceRender(IReadOnlyCollection<string> forceRender);
 

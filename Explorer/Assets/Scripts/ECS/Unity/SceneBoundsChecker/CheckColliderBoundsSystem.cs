@@ -66,16 +66,17 @@ namespace ECS.Unity.SceneBoundsChecker
         private void CheckPrimitive(ref PrimitiveColliderComponent primitiveCollider)
         {
             Collider collider = primitiveCollider.Collider;
-            if (!collider) return;
 
-            collider.enabled = true;
-            collider.enabled = sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds);
+            if (!collider || !primitiveCollider.SDKCollider.IsActiveByEntity) return;
+
+            collider.enabled = true; // enable it to calculate
+            primitiveCollider.SDKCollider.ForceActiveBySceneBounds(sceneGeometry.CircumscribedPlanes.Intersects(collider.bounds));
         }
 
         [Query]
         private void CheckGltfAsset(ref GltfContainerComponent component, ref PartitionComponent partitionComponent)
         {
-            if (component.State.Value != LoadingState.Finished) return;
+            if (component.State != LoadingState.Finished) return;
 
             if (scenePartition.Bucket > BUCKET_THRESHOLD && partitionComponent.Bucket > BUCKET_THRESHOLD)
                 return;
@@ -100,7 +101,6 @@ namespace ECS.Unity.SceneBoundsChecker
 
                     // if sdk collider is disabled by entity it's not needed to process it
                     // it will be processed in the frame it's enabled again
-
                     if (!sdkCollider.IsActiveByEntity)
                         continue;
 
@@ -112,7 +112,7 @@ namespace ECS.Unity.SceneBoundsChecker
                     // While the collider remains inactive, the bounds will continue to be zero, causing incorrect calculations.
                     // Therefore, it is necessary to force the collider to be activated at least once
                     sdkCollider.ForceActiveBySceneBounds(colliderBounds.extents == Vector3.zero
-                                                        || sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds));
+                                                         || sceneGeometry.CircumscribedPlanes.Intersects(colliderBounds));
 
                     // write the structure back
                     colliders[i] = sdkCollider;

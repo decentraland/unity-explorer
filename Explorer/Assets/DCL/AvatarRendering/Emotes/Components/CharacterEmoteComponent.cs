@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using UnityEngine;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -7,9 +6,15 @@ namespace DCL.AvatarRendering.Emotes
     {
         public URN EmoteUrn;
         public bool EmoteLoop;
-        public AnimationClip? EmoteClip;
         public EmoteReferences? CurrentEmoteReference;
         public int CurrentAnimationTag;
         public bool StopEmote;
+
+        public void Reset()
+        {
+            EmoteLoop = false;
+            CurrentEmoteReference = null;
+            StopEmote = false;
+        }
     }
 }

@@ -7,13 +7,13 @@ using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
@@ -42,15 +42,10 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void PropagateComponent(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity, bool useSet = false)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-            {
-                if (useSet)
-                    sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
-                else
-                    sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
-            }
+            if (useSet)
+                sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+            else
+                sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
         }
     }
 }

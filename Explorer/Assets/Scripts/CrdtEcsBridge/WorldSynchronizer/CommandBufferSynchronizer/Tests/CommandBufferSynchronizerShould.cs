@@ -46,7 +46,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         {
             entity = world.Create(new TestComponent { Value = 100 });
 
-            commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentModified, new TestComponent { Value = 200 });
+            commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentModified, new TestComponent { Value = 200 }, false);
             commandBuffer.Playback(world);
 
             componentPool.Received(1).Release(Arg.Is<TestComponent>(t => t.Value == 100));
@@ -58,7 +58,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         {
             entity = world.Create();
 
-            commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentAdded, new TestComponent { Value = 300 });
+            commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentAdded, new TestComponent { Value = 300 }, false);
             commandBuffer.Playback(world);
 
             componentPool.DidNotReceive().Release(Arg.Any<TestComponent>());
@@ -70,7 +70,7 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBufferSynchronizer.Tests
         {
             entity = world.Create(new TestComponent { Value = 100 }, RemovedComponents.CreateDefault());
 
-            commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentDeleted, null);
+            commandBufferSynchronizer.Apply(world, commandBuffer, entity, CRDTReconciliationEffect.ComponentDeleted, null, false);
             commandBuffer.Playback(world);
 
             componentPool.Received(1).Release(Arg.Is<TestComponent>(t => t.Value == 100));

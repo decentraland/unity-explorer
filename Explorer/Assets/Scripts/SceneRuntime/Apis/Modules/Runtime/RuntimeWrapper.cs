@@ -8,34 +8,27 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules.Runtime
 {
-    public class RuntimeWrapper : IJsApiWrapper
+    public class RuntimeWrapper : JsApiWrapperBase<IRuntime>
     {
-        internal readonly IRuntime api;
-
         private readonly ISceneExceptionsHandler exceptionsHandler;
 
         private readonly CancellationTokenSource cancellationTokenSource;
 
-        public RuntimeWrapper(IRuntime api, ISceneExceptionsHandler exceptionsHandler)
+        public RuntimeWrapper(IRuntime api, ISceneExceptionsHandler exceptionsHandler) : base(api)
         {
-            this.api = api;
             this.exceptionsHandler = exceptionsHandler;
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public void Dispose()
+        protected override void DisposeInternal()
         {
-            // Dispose the engine API Implementation
-            // It will dispose its buffers
-            api.Dispose();
-
             cancellationTokenSource.SafeCancelAndDispose();
         }
 
         [UsedImplicitly]
         public object ReadFile(string fileName)
         {
-            try { return api.ReadFileAsync(fileName, cancellationTokenSource.Token).AsTask().ToPromise(); }
+            try { return api.ReadFileAsync(fileName, cancellationTokenSource.Token).ToDisconnectedPromise(); }
             catch (Exception e)
             {
                 // Report an uncategorized exception
@@ -46,11 +39,11 @@ namespace SceneRuntime.Apis.Modules.Runtime
 
         [UsedImplicitly]
         public object GetRealm() =>
-            api.GetRealmAsync(cancellationTokenSource.Token).ToPromise();
+            api.GetRealmAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
 
         [UsedImplicitly]
         public object GetWorldTime() =>
-            api.GetWorldTimeAsync(cancellationTokenSource.Token).ToPromise();
+            api.GetWorldTimeAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
 
         [UsedImplicitly]
         public object GetSceneInformation() =>

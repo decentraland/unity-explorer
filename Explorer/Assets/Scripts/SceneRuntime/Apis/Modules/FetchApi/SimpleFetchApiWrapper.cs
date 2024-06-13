@@ -8,23 +8,20 @@ using Utility;
 
 namespace SceneRuntime.Apis.Modules.FetchApi
 {
-    public class SimpleFetchApiWrapper : IJsApiWrapper
+    public class SimpleFetchApiWrapper : JsApiWrapperBase<ISimpleFetchApi>
     {
-        private readonly ISimpleFetchApi api;
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IWebRequestController webController;
 
-        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController)
+        public SimpleFetchApiWrapper(ISimpleFetchApi api, IWebRequestController webController) : base(api)
         {
-            this.api = api;
             cancellationTokenSource = new CancellationTokenSource();
             this.webController = webController;
         }
 
-        public void Dispose()
+        protected override void DisposeInternal()
         {
             cancellationTokenSource.SafeCancelAndDispose();
-            api.Dispose();
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/SimpleFetchApi.js")]
@@ -33,7 +30,7 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         {
             try
             {
-                return api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).ToPromise();
+                return api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).ToDisconnectedPromise();
             }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }

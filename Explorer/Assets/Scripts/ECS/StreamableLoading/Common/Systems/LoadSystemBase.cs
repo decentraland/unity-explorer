@@ -11,7 +11,6 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utility;
-using Utility.Multithreading;
 
 namespace ECS.StreamableLoading.Common.Systems
 {
@@ -31,20 +30,17 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
 
-        // asynchronous operations run independently on Update that is already synchronized
-        // so they require explicit synchronisation
-        private readonly MutexSync mutexSync;
-
         private readonly Query query;
 
         private CancellationTokenSource cancellationTokenSource;
 
         private bool systemIsDisposed;
 
-        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache, MutexSync mutexSync) : base(world)
+        protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
         {
             this.cache = cache;
-            this.mutexSync = mutexSync;
+
+            // this.mutexSync = mutexSync;
             query = World.Query(in CREATE_WEB_REQUEST);
 
             cachedInternalFlowDelegate = FlowInternalAsync;
@@ -57,10 +53,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         public override void Dispose()
         {
+            systemIsDisposed = true;
+
             cancellationTokenSource.Cancel();
             cancellationTokenSource.Dispose();
-
-            systemIsDisposed = true;
         }
 
         protected override void Update(float t)
@@ -112,7 +108,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 // if the request is cached wait for it
                 // If there is an ongoing request it means that the result is neither cached, nor failed
-                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.URL, out UniTaskCompletionSource<StreamableLoadingResult<TAsset>?> cachedSource))
+                if (cache.OngoingRequests.SyncTryGetValue(intention.CommonArguments.URL.GetCacheableURL(), out var cachedSource))
                 {
                     // Release budget immediately, if we don't do it and load a lot of bundles with dependencies sequentially, it will be a deadlock
                     acquiredBudget.Release();
@@ -121,15 +117,17 @@ namespace ECS.StreamableLoading.Common.Systems
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
                 }
 
-                // Try load from cache first
                 if (cache.TryGet(intention, out TAsset asset))
                 {
                     result = new StreamableLoadingResult<TAsset>(asset);
                     return;
                 }
 
+                // Try load from cache first
+
+
                 // If the given URL failed irrecoverably just return the failure
-                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL, out StreamableLoadingResult<TAsset> failure))
+                if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL.GetCacheableURL(), out var failure))
                 {
                     result = failure;
                     return;
@@ -138,6 +136,16 @@ namespace ECS.StreamableLoading.Common.Systems
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
                     result = await CacheableFlowAsync(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
+                else
+                {
+                    //This is in case we had OngoingRequests synced to the results of the first request.
+                    //They would not enter into any of these and go directly to the finalize,
+                    //without adding references to the cache thereby breaking the cleanup
+                    if (result is { Succeeded: true })
+                        AddToCache(in intention, result.Value.Asset);
+
+                    return;
+                }
 
                 if (!result.HasValue)
 
@@ -156,11 +164,13 @@ namespace ECS.StreamableLoading.Common.Systems
             finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
         }
 
+        protected virtual void DisposeAbandonedResult(TAsset asset) { }
+
         private void FinalizeLoading(in Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget acquiredBudget)
         {
-            using MutexSync.Scope sync = mutexSync.GetScope();
+            // using MutexSync.Scope sync = mutexSync.GetScope();
 
             if (systemIsDisposed || !World.IsAlive(entity))
             {
@@ -175,6 +185,7 @@ namespace ECS.StreamableLoading.Common.Systems
             if (!exists)
             {
                 ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
+
                 // it could be already disposed of, but it's safe to call it again
                 acquiredBudget.Dispose();
                 return;
@@ -192,6 +203,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (result.Value.Succeeded)
                 {
                     OnAssetSuccessfullyLoaded(result.Value.Asset);
+
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
                 }
             }
@@ -226,23 +238,15 @@ namespace ECS.StreamableLoading.Common.Systems
             var source = new UniTaskCompletionSource<StreamableLoadingResult<TAsset>?>(); //AutoResetUniTaskCompletionSource<StreamableLoadingResult<TAsset>?>.Create();
 
             // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncAdd {intention.CommonArguments.URL}");
-            cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL, source);
+            cache.OngoingRequests.SyncAdd(intention.CommonArguments.URL.GetCacheableURL(), source);
 
             var ongoingRequestRemoved = false;
 
-            void TryRemoveOngoingRequest()
-            {
-                if (!ongoingRequestRemoved)
-                {
-                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
-                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL);
-                    ongoingRequestRemoved = true;
-                }
-            }
+            StreamableLoadingResult<TAsset>? result = null;
 
             try
             {
-                StreamableLoadingResult<TAsset>? result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
+                result = await RepeatLoopAsync(intention, acquiredBudget, partition, ct);
 
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
@@ -251,6 +255,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 TryRemoveOngoingRequest();
+
                 source.TrySetResult(result);
 
                 if (!result.HasValue)
@@ -266,6 +271,9 @@ namespace ECS.StreamableLoading.Common.Systems
             }
             catch (OperationCanceledException operationCanceledException)
             {
+                if (result is { Succeeded: true })
+                    DisposeAbandonedResult(result.Value.Asset!);
+
                 // Remove from the ongoing requests immediately because finally will be called later than
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 TryRemoveOngoingRequest();
@@ -279,6 +287,16 @@ namespace ECS.StreamableLoading.Common.Systems
                 // We need to remove the request the same frame to prevent de-sync with new requests
                 TryRemoveOngoingRequest();
             }
+
+            void TryRemoveOngoingRequest()
+            {
+                if (!ongoingRequestRemoved)
+                {
+                    // ReportHub.Log(GetReportCategory(), $"OngoingRequests.SyncRemove {intention.CommonArguments.URL}");
+                    cache.OngoingRequests.SyncRemove(intention.CommonArguments.URL.GetCacheableURL());
+                    ongoingRequestRemoved = true;
+                }
+            }
         }
 
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
@@ -289,7 +307,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private StreamableLoadingResult<TAsset> SetIrrecoverableFailure(TIntention intention, StreamableLoadingResult<TAsset> failure)
         {
-            cache.IrrecoverableFailures.Add(intention.CommonArguments.URL, failure);
+            cache.IrrecoverableFailures.Add(intention.CommonArguments.URL.GetCacheableURL(), failure);
             return failure;
         }
 

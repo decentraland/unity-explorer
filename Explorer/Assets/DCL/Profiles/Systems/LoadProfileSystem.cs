@@ -25,9 +25,8 @@ namespace DCL.Profiles
 
         public LoadProfileSystem(World world,
             IStreamableCache<Profile, GetProfileIntention> cache,
-            MutexSync mutexSync,
             IProfileRepository profileRepository)
-            : base(world, cache, mutexSync)
+            : base(world, cache)
         {
             this.profileRepository = profileRepository;
         }

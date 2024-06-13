@@ -2,6 +2,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
 using DCL.Optimization.PerformanceBudgeting;
@@ -11,13 +12,14 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Roads.Systems
 {
-    [UpdateInGroup(typeof(RealmGroup))]
+    [UpdateInGroup(typeof(PreRenderingSystemGroup))]
     [LogCategory(ReportCategory.ROADS)]
     public partial class RoadInstantiatorSystem : BaseUnityLoopSystem
     {
@@ -25,13 +27,17 @@ namespace DCL.Roads.Systems
         private readonly IPerformanceBudget memoryBudget;
         private readonly IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions;
         private readonly IRoadAssetPool roadAssetPool;
+        private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly IScenesCache scenesCache;
 
-        internal RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool) : base(world)
+        internal RoadInstantiatorSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IReadOnlyDictionary<Vector2Int, RoadDescription> roadDescriptions, IRoadAssetPool roadAssetPool, ISceneReadinessReportQueue sceneReadinessReportQueue, IScenesCache scenesCache) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
             this.roadDescriptions = roadDescriptions;
             this.roadAssetPool = roadAssetPool;
+            this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
@@ -59,7 +65,6 @@ namespace DCL.Roads.Systems
 
                 //HACK: Since all original scene dont have the correct pivot, we move it here
                 roadAsset.localPosition = sceneDefinitionComponent.SceneGeometry.BaseParcelPosition + ParcelMathHelper.RoadPivotDeviation;
-                ;
                 roadAsset.localRotation = roadDescription.Rotation;
                 roadAsset.gameObject.SetActive(true);
 
@@ -72,6 +77,8 @@ namespace DCL.Roads.Systems
                     $"Road with coords for {sceneDefinitionComponent.Definition.metadata.scene.DecodedBase} do not have a description");
             }
             roadInfo.IsDirty = false;
+            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
+            LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
         }
 
 

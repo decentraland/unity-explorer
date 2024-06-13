@@ -31,7 +31,9 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.SceneLifeCycle.Components;
 using UnityEngine;
+using Utility;
 using MultiplayerPlugin = DCL.PluginSystem.World.MultiplayerPlugin;
 
 namespace Global
@@ -47,6 +49,7 @@ namespace Global
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly RealmData RealmData = new ();
+        public readonly PartitionDataContainer PartitionDataContainer = new ();
 
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
@@ -150,7 +153,8 @@ namespace Global
                .WithErrorTrace();
 
             container.AssetsProvisioner = addressablesProvisioner;
-            container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData);
+            var exposedPlayerTransform = new ExposedTransform();
+            container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
@@ -166,7 +170,8 @@ namespace Global
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
                 new FrameTimeCapBudget(staticSettings.FrameTimeCap, profilingProvider),
-                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds)
+                new MemoryBudget(new StandaloneSystemMemory(), profilingProvider, staticSettings.MemoryThresholds),
+                new SceneAssetLock()
             );
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.AssetsProvisioner);
@@ -187,7 +192,7 @@ namespace Global
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
-                new TransformsPlugin(sharedDependencies),
+                new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
@@ -199,14 +204,13 @@ namespace Global
                 new PrimitivesRenderingPlugin(sharedDependencies),
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
-                assetBundlePlugin,
-                new GltfContainerPlugin(sharedDependencies, container.CacheCleaner),
+                assetBundlePlugin, new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner, videoTexturePool, sharedDependencies.FrameTimeBudget),
+                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.AssetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new CharacterTriggerAreaPlugin(container.GlobalWorldProxy, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
                 new InteractionsAudioPlugin(addressablesProvisioner),
                 new MultiplayerPlugin(),

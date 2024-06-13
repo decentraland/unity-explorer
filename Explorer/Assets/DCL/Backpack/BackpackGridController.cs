@@ -42,11 +42,13 @@ namespace DCL.Backpack
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
+        private readonly BackpackEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IReadOnlyEquippedWearables equippedWearables;
+        private readonly BackpackSortController backpackSortController;
         private readonly PageSelectorController pageSelectorController;
         private readonly Dictionary<URN, BackpackItemView> usedPoolItems;
         private readonly List<(string, string)> requestParameters;
@@ -82,26 +84,40 @@ namespace DCL.Backpack
         {
             this.view = view;
             this.commandBus = commandBus;
+            this.eventBus = eventBus;
             this.web3IdentityCache = web3IdentityCache;
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.equippedWearables = equippedWearables;
+            this.backpackSortController = backpackSortController;
             this.world = world;
             this.thumbnailProvider = thumbnailProvider;
             this.gridItemsPool = gridItemsPool;
             pageSelectorController = new PageSelectorController(view.PageSelectorView, pageButtonView);
 
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
+            pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
+            requestParameters = new List<(string, string)>();
+            new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
+        }
+
+        public void Activate()
+        {
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
             backpackSortController.OnSortChanged += OnSortChanged;
             backpackSortController.OnCollectiblesOnlyChanged += OnCollectiblesOnlyChanged;
-            pageSelectorController.OnSetPage += RequestPage;
-            requestParameters = new List<(string, string)>();
-            new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
+        }
+
+        public void Deactivate()
+        {
+            eventBus.FilterCategoryEvent -= OnFilterCategory;
+            eventBus.SearchEvent -= OnSearch;
+            backpackSortController.OnSortChanged -= OnSortChanged;
+            backpackSortController.OnCollectiblesOnlyChanged -= OnCollectiblesOnlyChanged;
         }
 
         public static async UniTask<ObjectPool<BackpackItemView>> InitialiseAssetsAsync(IAssetsProvisioner assetsProvisioner, BackpackGridView view, CancellationToken ct)
@@ -177,18 +193,6 @@ namespace DCL.Backpack
             }
         }
 
-        public void RequestTotalNumber()
-        {
-            SetGridAsLoading();
-            BuildRequestParameters("0", "0");
-
-            var wearablesPromise = ParamPromise.Create(world,
-                new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, totalAmount),
-                PartitionComponent.TOP_PRIORITY);
-
-            AwaitWearablesPromiseForSizeAsync(wearablesPromise, cts.Token).Forget();
-        }
-
         private void EquipItem(string itemId) =>
             commandBus.SendCommand(new BackpackEquipWearableCommand(itemId));
 
@@ -216,29 +220,35 @@ namespace DCL.Backpack
 
         private void OnFilterCategory(string category)
         {
+            if(currentCategory == category)
+                return;
+
             currentCategory = category;
-            RequestTotalNumber();
+            RequestPage(1, true);
         }
 
         private void OnSearch(string searchText)
         {
+            if(currentSearch == searchText)
+                return;
+
             currentSearch = searchText;
-            RequestTotalNumber();
+            RequestPage(1, true);
         }
 
         private void OnSortChanged(BackpackGridSort sort)
         {
             currentSort = sort;
-            RequestTotalNumber();
+            RequestPage(1, true);
         }
 
         private void OnCollectiblesOnlyChanged(bool collectiblesOnly)
         {
             currentCollectiblesOnly = collectiblesOnly;
-            RequestTotalNumber();
+            RequestPage(1, true);
         }
 
-        private void RequestPage(int pageNumber)
+        public void RequestPage(int pageNumber, bool refreshPageSelector)
         {
             SetGridAsLoading();
             BuildRequestParameters(pageNumber.ToString(), CURRENT_PAGE_SIZE_STR);
@@ -248,15 +258,21 @@ namespace DCL.Backpack
                 new GetWearableByParamIntention(requestParameters, web3IdentityCache.Identity!.Address, results, totalAmount),
                 PartitionComponent.TOP_PRIORITY);
 
-            AwaitWearablesPromiseAsync(wearablesPromise, cts.Token).Forget();
+            AwaitWearablesPromiseAsync(wearablesPromise, refreshPageSelector, cts.Token).Forget();
         }
 
-        private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise, CancellationToken ct)
+        private async UniTaskVoid AwaitWearablesPromiseAsync(ParamPromise wearablesPromise, bool refreshPageSelector, CancellationToken ct)
         {
+            if (refreshPageSelector)
+                pageSelectorController.SetActive(false);
+
             AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
             if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
                 return;
+
+            if (refreshPageSelector)
+                pageSelectorController.Configure(uniTaskAsync.Result.Value.Asset.TotalAmount, CURRENT_PAGE_SIZE);
 
             currentPageWearables = uniTaskAsync.Result.Value.Asset.Wearables;
 
@@ -274,17 +290,6 @@ namespace DCL.Backpack
             }
 
             SetGridElements(currentPageWearables);
-        }
-
-        private async UniTaskVoid AwaitWearablesPromiseForSizeAsync(ParamPromise wearablesPromise, CancellationToken ct)
-        {
-            AssetPromise<WearablesResponse, GetWearableByParamIntention> uniTaskAsync = await wearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
-
-            if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
-                return;
-
-            pageSelectorController.Configure(uniTaskAsync.Result.Value.Asset.TotalAmount, CURRENT_PAGE_SIZE);
-            RequestPage(1);
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, BackpackItemView itemView, CancellationToken ct)
@@ -350,7 +355,7 @@ namespace DCL.Backpack
 
         private void UpdateBodyShapeCompatibility(IReadOnlyList<IWearable> wearables, IAvatarAttachment bodyShape)
         {
-            for (int i = wearables.Count - 1; i >= 0; i--)
+            for (int i = Math.Min(wearables.Count, loadingResults.Length) - 1; i >= 0; i--)
             {
                 IWearable wearable = wearables[i];
                 BackpackItemView? itemView = loadingResults[i];

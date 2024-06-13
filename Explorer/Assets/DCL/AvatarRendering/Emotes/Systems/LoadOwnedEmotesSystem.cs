@@ -3,7 +3,6 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables.Components;
-using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
@@ -14,7 +13,6 @@ using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Emotes
 {
@@ -31,8 +29,8 @@ namespace DCL.AvatarRendering.Emotes
             IRealmData realmData,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesResolution, GetOwnedEmotesFromRealmIntention> cache,
-            IEmoteCache emoteCache, MutexSync mutexSync)
-            : base(world, cache, mutexSync)
+            IEmoteCache emoteCache)
+            : base(world, cache)
         {
             this.realmData = realmData;
             this.emoteCache = emoteCache;
@@ -45,7 +43,10 @@ namespace DCL.AvatarRendering.Emotes
             LambdaOwnedEmoteElementList lambdaResponse =
                 await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
                         ct, GetReportCategory())
-                   .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+                   .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
+
+            // The following logic is not thread-safe!
+            // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
 
             if (lambdaResponse.elements.Count == 0)
                 return new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(Array.Empty<IEmote>(), lambdaResponse.totalAmount));
@@ -73,9 +74,6 @@ namespace DCL.AvatarRendering.Emotes
                             DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
-
-                WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, emote, World, partition);
-
                 emotes[i] = emote;
             }
 

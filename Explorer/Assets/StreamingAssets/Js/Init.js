@@ -60,7 +60,18 @@ globalThis.setImmediate = (fn) => Promise.resolve().then(fn)
 globalThis.require = require;
 globalThis.console = console;
 globalThis.WebSocket = require('~system/WebSocketApi').WebSocket;
-globalThis.fetch = require('~system/FetchApi').fetch;
+globalThis.fetch = async function executeFetch(url, init) {
+    if (init != undefined && init.body != undefined) {
+        init.body = JSON.parse(init.body)
+    }
+    
+    let message = {
+        url: url,
+        init: init
+    }
+    
+    return Promise.resolve(require('~system/FetchApi').fetch(message))
+}
 
 
 // disable WebAssembly

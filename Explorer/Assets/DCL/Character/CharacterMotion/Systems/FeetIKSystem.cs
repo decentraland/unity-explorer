@@ -82,7 +82,8 @@ namespace DCL.CharacterMotion.Systems
             in CharacterRigidTransform rigidTransform,
             in ICharacterControllerSettings settings,
             in StunComponent stunComponent,
-            in CharacterEmoteComponent emoteComponent
+            in CharacterEmoteComponent emoteComponent,
+            in CharacterPlatformComponent platformComponent
         )
         {
             // Debug stuff and enable/disable mechanic
@@ -95,16 +96,17 @@ namespace DCL.CharacterMotion.Systems
             Transform leftLegConstraint = avatarBase.LeftLegConstraint;
 
             // Enable flags: when disabled we lerp the IK weight towards 0
-            bool isEnabled = rigidTransform.IsGrounded
-                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck)
-                             && !stunComponent.IsStunned
-                             && emoteComponent.CurrentEmoteReference == null;
+            bool disableByPlatform = platformComponent.IsMovingPlatform;
 
-            // && !emotes?
+            bool isEnabled = rigidTransform.IsGrounded
+                             && (!rigidTransform.IsOnASteepSlope || rigidTransform.IsStuck) // disable IK while stuck or sliding
+                             && !stunComponent.IsStunned // disable IK while stunned
+                             && emoteComponent.CurrentEmoteReference == null // disable IK while doing an emote
+                             && !disableByPlatform; // disable IK on moving platforms
 
             // First: Raycast down from right/left constraints and update IK targets
-            ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt, settings.FeetIKVerticalAngleLimits, settings.FeetIKTwistAngleLimits);
-            ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x));
+            ApplyLegIK(rightLegConstraint, rightLegConstraint.forward, avatarBase.RightLegIKTarget, ref feetIKComponent.Right, settings, dt, settings.FeetIKVerticalAngleLimits, settings.FeetIKTwistAngleLimits, settings.FeetIKRightOffset, settings.FeetIKRightRotationOffset);
+            ApplyLegIK(leftLegConstraint, leftLegConstraint.forward, avatarBase.LeftLegIKTarget, ref feetIKComponent.Left, settings, dt, settings.FeetIKVerticalAngleLimits, new Vector2(settings.FeetIKTwistAngleLimits.y, settings.FeetIKTwistAngleLimits.x), settings.FeetIKLeftOffset, settings.FeetIKLeftRotationOffset);
 
             // Second: Calculate IK feet weight based on the constrained local-Y
             ApplyIKWeight(avatarBase.RightLegIK, rightLegConstraint.localPosition, ref feetIKComponent.Right, isEnabled, settings, dt);
@@ -166,7 +168,8 @@ namespace DCL.CharacterMotion.Systems
             ref FeetIKComponent.FeetComponent feetComponent,
             ICharacterControllerSettings settings,
             float dt,
-            Vector2 verticalLimits, Vector2 twistLimits)
+            Vector2 verticalLimits, Vector2 twistLimits,
+            Vector3 positionOffset, Vector3 rotationOffset)
         {
             float pullDist = settings.FeetIKHipsPullMaxDistance;
             Vector3 origin = legConstraintPosition.position;
@@ -178,20 +181,22 @@ namespace DCL.CharacterMotion.Systems
 
             if (Physics.SphereCast(rayOrigin, settings.FeetIKSphereSize, rayDirection, out RaycastHit hitInfo, rayDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
             {
+                Vector3 targetPosition = hitInfo.point + positionOffset;
                 // lerp towards the target position
-                legIKTarget.position = Vector3.MoveTowards(legIKTarget.position, hitInfo.point, settings.IKPositionSpeed * dt);
+                legIKTarget.position = Vector3.MoveTowards(legIKTarget.position, targetPosition, settings.IKPositionSpeed * dt);
                 var rotationCorrection = Quaternion.FromToRotation(Vector3.up, hitInfo.normal);
                 legConstraintForward.y = 0;
                 Quaternion targetRotation = rotationCorrection * Quaternion.LookRotation(legConstraintForward, Vector3.up);
 
                 // we first apply the rotation
                 legIKTarget.rotation = targetRotation;
+                legIKTarget.eulerAngles += rotationOffset;
 
                 // then we limit the angles using the local rotations
                 ApplyRotationLimit(legIKTarget, verticalLimits, twistLimits);
 
                 feetComponent.IsGrounded = true;
-                feetComponent.IsInsideMesh = hitInfo.point.y > origin.y;
+                feetComponent.IsInsideMesh = targetPosition.y > origin.y;
                 feetComponent.Distance = settings.FeetHeightCorrection + hitInfo.distance - pullDist - legConstraintPosition.localPosition.y;
                 return;
             }

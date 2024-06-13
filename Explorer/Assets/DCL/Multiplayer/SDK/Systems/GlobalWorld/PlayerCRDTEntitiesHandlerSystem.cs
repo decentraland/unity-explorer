@@ -1,16 +1,15 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Diagnostics;
-using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
@@ -19,8 +18,8 @@ using Utility;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     // Currently implemented to track reserved entities only on the CURRENT SCENE
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(MultiplayerProfilesSystem))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY)]
     public partial class PlayerCRDTEntitiesHandlerSystem : BaseUnityLoopSystem
     {
@@ -65,18 +64,12 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor;
 
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-            {
-                Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
-                var crdtEntity = new CRDTEntity(crdtEntityId);
+            Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
+            var crdtEntity = new CRDTEntity(crdtEntityId);
 
-                var playerCRDTEntity = new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity);
+            sceneEcsExecutor.World.Add(sceneWorldEntity, new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity));
 
-                sceneEcsExecutor.World.Add(sceneWorldEntity, playerCRDTEntity);
-
-                World.Add(entity, playerCRDTEntity);
-            }
+            World.Add(entity, new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity));
         }
 
         [Query]
@@ -106,13 +99,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-            {
-                // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
-                // as the scene-level Writer systems need it to know which CRDT Entity to affect
-                sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
-            }
+            // Remove from whichever scene it was added. PlayerCRDTEntity is not removed here,
+            // as the scene-level Writer systems need it to know which CRDT Entity to affect
+            sceneEcsExecutor.World.Add<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity);
 
             FreeReservedEntity(playerCRDTEntity.CRDTEntity.Id);
 

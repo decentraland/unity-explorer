@@ -25,7 +25,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
     ///         root system groups as we can't make dependencies between them directly
     ///     </para>
     /// </summary>
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
     public partial class WritePointerEventResultsSystem : BaseUnityLoopSystem
     {
@@ -36,6 +36,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private readonly IGlobalInputEvents globalInputEvents;
 
         private readonly IComponentPool<RaycastHit> raycastHitPool;
+
 
         internal WritePointerEventResultsSystem(World world, ISceneData sceneData, IECSToCRDTWriter ecsToCRDTWriter,
             ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents, IComponentPool<RaycastHit> raycastHitPool) : base(world)
@@ -50,8 +51,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         protected override void Update(float t)
         {
-            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition);
-            WriteGlobalEvents();
+            if (!sceneStateProvider.IsCurrent) return;
+
+            var messageSent = false;
+            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition, ref messageSent);
+
+            if (!messageSent)
+                WriteGlobalEvents();
         }
 
         private void WriteGlobalEvents()
@@ -66,7 +72,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void WriteResults([Data] Vector3 scenePosition, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        private void WriteResults([Data] Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
 
@@ -82,8 +88,24 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
             }
-
             pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
+
+            if (intent.ValidInputActions != null)
+            {
+                foreach (var inputAction in intent.ValidInputActions)
+                {
+                    RaycastHit raycastHit = raycastHitPool.Get();
+
+                    raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
+                        sdkEntity, intent.Ray.origin, intent.Ray.direction);
+
+                    AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
+
+                    //We dont consider hover events to disable global input messages
+                    if (inputAction.Value != PointerEventType.PetHoverEnter && inputAction.Value != PointerEventType.PetHoverLeave) { messageSent = true; }
+                }
+                pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
+            }
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)

@@ -65,11 +65,10 @@ namespace DCL.AvatarRendering.Emotes
         public LoadEmotesByPointersSystem(World world,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention> cache,
-            MutexSync mutexSync,
             IEmoteCache emoteCache,
             IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory)
-            : base(world, cache, mutexSync)
+            : base(world, cache)
         {
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
@@ -250,8 +249,7 @@ namespace DCL.AvatarRendering.Emotes
 
         [Query]
         private void FinalizeEmoteDTO(in Entity entity,
-            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise,
-            ref IPartitionComponent partitionComponent)
+            ref AssetPromise<EmotesDTOList, GetEmotesByPointersFromRealmIntention> promise)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -260,7 +258,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -276,7 +274,6 @@ namespace DCL.AvatarRendering.Emotes
                         component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
                         component.IsLoading = false;
 
-                        WearableComponentsUtils.CreateWearableThumbnailPromise(realmData, component, World, partitionComponent);
                     }
                 }
 
@@ -297,7 +294,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
             {
                 emote.ManifestResult = result;
                 emote.IsLoading = false;
@@ -316,7 +313,7 @@ namespace DCL.AvatarRendering.Emotes
                 return;
             }
 
-            if (promise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+            if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
                 if (result.Succeeded)
                 {
@@ -404,7 +401,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (promise.IsConsumed) return;
 
-            if (!promise.TryConsume(World, out StreamableLoadingResult<AudioClip> result))
+            if (!promise.SafeTryConsume(World, out StreamableLoadingResult<AudioClip> result))
                 return;
 
             if (result.Succeeded)

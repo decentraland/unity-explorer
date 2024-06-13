@@ -38,7 +38,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -2846649767180898789}
   - {fileID: 8138120187327749282}
-  m_RendererFeatureMap: 1bee3b731eab7ed8a21c1b593169f070
+  - {fileID: 2807433661055950781}
+  m_RendererFeatureMap: 1bee3b731eab7ed8a21c1b593169f070bddfb6510a02f626
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 3235692a041298c4f94f71909ca0b8a2, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -77,6 +78,25 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &2807433661055950781
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 32ece3c6636d58f4e9f925c9eb9b72c2, type: 3}
+  m_Name: HighlightRendererFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  m_Settings:
+    OutlineThickness: 1
+    DepthSensitivity: 0.05
+    NormalsSensitivity: 1
+    ColorSensitivity: 0.5
+    OutlineColor: {r: 1, g: 1, b: 1, a: 0.5}
 --- !u!114 &8138120187327749282
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -89,7 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 605e074de0654fb4838e725ec2818444, type: 3}
   m_Name: OutlineRendererFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   m_Settings:
     OutlineThickness: 1
     DepthSensitivity: 0.05

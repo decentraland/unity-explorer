@@ -13,6 +13,7 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.Unity.ColorComponent;
 using System;
+using UnityEngine;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution,
     DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
@@ -101,9 +102,14 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
                 avatarShapeComponent.EmotePromise.ForgetLoading(World);
 
             WearablePromise newPromise = CreateWearablePromise(profile, partition);
+            avatarShapeComponent.ID = profile.UserId;
+            avatarShapeComponent.Name = profile.Name;
             avatarShapeComponent.WearablePromise = newPromise;
             avatarShapeComponent.EmotePromise = CreateEmotePromise(profile, partition);
             avatarShapeComponent.BodyShape = profile.Avatar.BodyShape;
+            avatarShapeComponent.HairColor = profile.Avatar.HairColor;
+            avatarShapeComponent.SkinColor = profile.Avatar.SkinColor;
+            avatarShapeComponent.EyesColor = profile.Avatar.EyesColor;
             avatarShapeComponent.IsDirty = true;
         }
 

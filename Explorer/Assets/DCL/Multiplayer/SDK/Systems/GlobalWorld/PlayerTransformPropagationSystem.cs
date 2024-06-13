@@ -12,8 +12,8 @@ using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateInGroup(typeof(SyncedPostRenderingSystemGroup))]
-    // [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
+    [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+    // [UpdateBefore(typeof(CleanUpGroup))]
     // [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerTransformPropagationSystem : BaseUnityLoopSystem
     {
@@ -51,14 +51,10 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
                 Rotation = avatarTransform.transform.rotation
             };
 
-            // External world access should be always synchronized (Global World calls into Scene World)
-            using (sceneEcsExecutor.Sync.GetScope())
-            {
-                if (useSet)
-                    sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, sdkTransform);
-                else
-                    sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, sdkTransform);
-            }
+            if (useSet)
+                sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, sdkTransform);
+            else
+                sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, sdkTransform);
         }
     }
 }

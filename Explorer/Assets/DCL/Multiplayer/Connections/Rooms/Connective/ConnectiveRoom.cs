@@ -66,7 +66,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
         {
         }
 
-        public ConnectiveRoom(
+        private ConnectiveRoom(
             PrewarmAsyncDelegate prewarmAsync,
             CycleStepDelegate runConnectCycleStepAsync,
             Action<string> log
