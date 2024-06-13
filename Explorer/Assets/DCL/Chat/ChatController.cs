@@ -480,6 +480,7 @@ namespace DCL.Chat
         public override void Dispose()
         {
             chatMessagesBus.OnMessageAdded -= CreateChatEntry;
+            chatHistory.OnMessageAdded -= CreateChatEntry;
             chatHistory.OnCleared -= ChatHistoryOnOnCleared;
 
             if (emojiPanelController != null)
