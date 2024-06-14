@@ -894,8 +894,7 @@ PlayerSettings:
   scriptingBackend:
     Standalone: 1
   il2cppCompilerConfiguration: {}
-  il2cppCodeGeneration:
-    Standalone: 1
+  il2cppCodeGeneration: {}
   managedStrippingLevel:
     EmbeddedLinux: 1
     GameCoreScarlett: 1
@@ -905,7 +904,6 @@ PlayerSettings:
     PS5: 1
     QNX: 1
     Stadia: 1
-    Standalone: 1
     WebGL: 1
     Windows Store Apps: 1
     XboxOne: 1
