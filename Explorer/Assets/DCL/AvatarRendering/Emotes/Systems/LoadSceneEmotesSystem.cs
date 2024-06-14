@@ -140,88 +140,11 @@ namespace DCL.AvatarRendering.Emotes
             World.Add(entity, new StreamableResult(new EmotesResolution(new[] { emote }, 1)));
         }
 
-        // This is solved by LoadEmotesByPointersSystem
-        // [Query]
-        // private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise,
-        //     ref IEmote emote)
-        // {
-        //     if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-        //     {
-        //         emote.ManifestResult = null;
-        //         emote.IsLoading = false;
-        //         promise.ForgetLoading(World);
-        //         World.Destroy(entity);
-        //         return;
-        //     }
-        //
-        //     if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
-        //     {
-        //         emote.ManifestResult = result;
-        //         emote.IsLoading = false;
-        //         World.Destroy(entity);
-        //     }
-        // }
-
-        // This is solved by LoadEmotesByPointersSystem
-        // [Query]
-        // private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
-        // {
-        //     if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-        //     {
-        //         ResetEmoteResultOnCancellation(emote, bodyShape);
-        //         promise.ForgetLoading(World);
-        //         World.Destroy(entity);
-        //         return;
-        //     }
-        //
-        //     if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
-        //     {
-        //         if (result.Succeeded)
-        //         {
-        //             var asset = new StreamableLoadingResult<WearableRegularAsset>(result.ToRegularAsset());
-        //
-        //             if (emote.IsUnisex())
-        //             {
-        //                 // TODO: can an emote have different files for each gender?
-        //                 // if that the case, we should not set the same asset result for both body shapes
-        //                 emote.AssetResults[BodyShape.MALE] = asset;
-        //                 emote.AssetResults[BodyShape.FEMALE] = asset;
-        //             }
-        //             else
-        //                 emote.AssetResults[bodyShape] = asset;
-        //         }
-        //
-        //         emote.IsLoading = false;
-        //         World.Destroy(entity);
-        //     }
-        // }
-
-        // This is solved by LoadEmotesByPointersSystem
-        // [Query]
-        // private void FinalizeAudioClipPromise(in Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
-        // {
-        //     if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-        //     {
-        //         promise.ForgetLoading(World);
-        //         World.Destroy(entity);
-        //         return;
-        //     }
-        //
-        //     if (promise.IsConsumed) return;
-        //
-        //     if (!promise.SafeTryConsume(World, out StreamableLoadingResult<AudioClip> result))
-        //         return;
-        //
-        //     if (result.Succeeded)
-        //         emote.AudioAssetResults[bodyShape] = result;
-        //
-        //     World.Destroy(entity);
-        // }
-
         private bool CreateAssetBundlePromiseIfRequired(IEmote emote, in GetSceneEmoteFromRealmIntention intention, IPartitionComponent partitionComponent)
         {
             if (emote.AssetResults[intention.BodyShape] != null) return false;
 
+            // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
             var promise = AssetBundlePromise.Create(World,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
                     intention.Hash + PlatformUtils.GetPlatform(),

@@ -33,7 +33,6 @@ using Utility;
 using StreamableResult = ECS.StreamableLoading.Common.Components.StreamableLoadingResult<DCL.AvatarRendering.Emotes.EmotesResolution>;
 using EmotesFromRealmPromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesDTOList,
     DCL.AvatarRendering.Emotes.GetEmotesByPointersFromRealmIntention>;
-using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
 using AudioPromise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
@@ -80,9 +79,6 @@ namespace DCL.AvatarRendering.Emotes
 
             GetEmotesFromRealmQuery(World, t);
             FinalizeEmoteDTOQuery(World);
-            FinalizeAssetBundleManifestLoadingQuery(World);
-            FinalizeAssetBundleLoadingQuery(World);
-            FinalizeAudioClipPromiseQuery(World);
         }
 
         protected override async UniTask<StreamableLoadingResult<EmotesDTOList>> FlowInternalAsync(
@@ -278,60 +274,6 @@ namespace DCL.AvatarRendering.Emotes
             }
         }
 
-        [Query]
-        private void FinalizeAssetBundleManifestLoading(in Entity entity, ref AssetBundleManifestPromise promise,
-            ref IEmote emote)
-        {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                emote.ManifestResult = null;
-                emote.IsLoading = false;
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<SceneAssetBundleManifest> result))
-            {
-                emote.ManifestResult = result;
-                emote.IsLoading = false;
-                World.Destroy(entity);
-            }
-        }
-
-        [Query]
-        private void FinalizeAssetBundleLoading(in Entity entity, ref AssetBundlePromise promise, ref IEmote emote, ref BodyShape bodyShape)
-        {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                ResetEmoteResultOnCancellation(emote, bodyShape);
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
-            {
-                if (result.Succeeded)
-                {
-                    var asset = new StreamableLoadingResult<WearableRegularAsset>(result.ToRegularAsset());
-
-                    if (emote.IsUnisex())
-                    {
-                        // TODO: can an emote have different files for each gender?
-                        // if that the case, we should not set the same asset result for both body shapes
-                        emote.AssetResults[BodyShape.MALE] = asset;
-                        emote.AssetResults[BodyShape.FEMALE] = asset;
-                    }
-                    else
-                        emote.AssetResults[bodyShape] = asset;
-                }
-
-                emote.IsLoading = false;
-                World.Destroy(entity);
-            }
-        }
-
         private bool CreateAssetBundlePromiseIfRequired(IEmote component, in GetEmotesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
             // Manifest is required for Web loading only
@@ -339,7 +281,11 @@ namespace DCL.AvatarRendering.Emotes
                 && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB)
 
                 // Skip processing manifest for embedded emotes which do not start with 'urn'
-                && component.GetUrn().IsValid()) { return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent); }
+                && component.GetUrn().IsValid())
+            {
+                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
+                return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
+            }
 
             if (!component.TryGetMainFileHash(intention.BodyShape, out string? hash))
                 return false;
@@ -348,6 +294,7 @@ namespace DCL.AvatarRendering.Emotes
             {
                 SceneAssetBundleManifest? manifest = !EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB) ? null : component.ManifestResult?.Asset;
 
+                // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
                 var promise = AssetBundlePromise.Create(World,
                     GetAssetBundleIntention.FromHash(typeof(GameObject),
                         hash! + PlatformUtils.GetPlatform(),
@@ -381,38 +328,10 @@ namespace DCL.AvatarRendering.Emotes
                 urlBuilder.AppendDomain(realmData.Ipfs.ContentBaseUrl).AppendPath(new URLPath(item.hash));
                 URLAddress url = urlBuilder.Build();
 
+                // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
                 AudioPromise promise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, partitionComponent);
                 World.Create(promise, component, bodyShape);
             }
-        }
-
-        [Query]
-        private void FinalizeAudioClipPromise(in Entity entity, ref IEmote emote, ref AudioPromise promise, BodyShape bodyShape)
-        {
-            if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
-            {
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
-                return;
-            }
-
-            if (promise.IsConsumed) return;
-
-            if (!promise.SafeTryConsume(World, out StreamableLoadingResult<AudioClip> result))
-                return;
-
-            if (result.Succeeded)
-                emote.AudioAssetResults[bodyShape] = result;
-
-            World.Destroy(entity);
-        }
-
-        private static void ResetEmoteResultOnCancellation(IEmote emote, BodyShape bodyShape)
-        {
-            emote.IsLoading = false;
-
-            if (emote.AssetResults[bodyShape] is { IsInitialized: false })
-                emote.AssetResults[bodyShape] = null;
         }
     }
 }
