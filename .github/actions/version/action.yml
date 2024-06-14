@@ -24,6 +24,7 @@ runs:
       if: ${{ !inputs.tag }}
       id: get_latest_version_tag
       run: echo "tag=$(git describe --tags --match='v[0-9]*')" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Parse version tag
       id: parser
