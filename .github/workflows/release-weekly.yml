@@ -30,8 +30,7 @@ jobs:
   build:
     name: Build Unity Cloud
     needs: get-info
-    #uses: decentraland/unity-explorer/.github/workflows/build-unitycloud.yml@main
-    uses: ./.github/workflows/build-unitycloud.yml@feat/unity-cloud-build
+    uses: ./.github/workflows/build-unitycloud.yml
     with:
       profile: none
       cache: false
