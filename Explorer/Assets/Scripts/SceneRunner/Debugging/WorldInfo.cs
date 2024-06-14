@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Diagnostics;
 using System.Text;
 
 namespace SceneRunner.Debugging
@@ -42,7 +43,9 @@ namespace SceneRunner.Debugging
                 itemIndex++;
             }
 
-            return sb.ToString();
+            var result = sb.ToString();
+            ReportHub.Log(ReportCategory.DEBUG, result);
+            return result;
         }
 
         private struct FindMarker { }
