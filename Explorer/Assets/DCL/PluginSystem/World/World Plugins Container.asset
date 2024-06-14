@@ -23,6 +23,7 @@ MonoBehaviour:
   - rid: 758312499805421571
   - rid: 758312842344792066
   - rid: 857448815798779906
+  - rid: 4769369655026384898
   references:
     version: 2
     RefIds:
@@ -109,15 +110,15 @@ MonoBehaviour:
     - rid: 1268264040174714880
       type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <RaycastBucketThreshold>k__BackingField: 3
-        <RaycastFrameBudgetMs>k__BackingField: 3
-        <PlayerOriginRaycastMaxDistance>k__BackingField: 200
-        <GlobalInputPropagationBucketThreshold>k__BackingField: 3
         Data:
           m_AssetGUID: ea1f7da7c78c3d74bac70064dcc265a7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <RaycastBucketThreshold>k__BackingField: 3
+        <RaycastFrameBudgetMs>k__BackingField: 3
+        <PlayerOriginRaycastMaxDistance>k__BackingField: 200
+        <GlobalInputPropagationBucketThreshold>k__BackingField: 3
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
@@ -128,6 +129,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <StyleSheet>k__BackingField:
           m_AssetGUID: 295cf8ad8d171d849863eccaf581c9e7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 4769369655026384898
+      type: {class: MediaPlayerPlugin/MediaPlayerPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        MediaPlayerPrefab:
+          m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

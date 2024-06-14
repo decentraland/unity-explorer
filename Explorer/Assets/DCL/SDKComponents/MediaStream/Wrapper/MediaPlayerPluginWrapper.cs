@@ -10,11 +10,8 @@ using ECS.LifeCycle;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
-
-#if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-using DCL.ECSComponents;
 using RenderHeads.Media.AVProVideo;
-#endif
+using DCL.ECSComponents;
 
 namespace DCL.SDKComponents.MediaStream.Wrapper
 {
@@ -24,8 +21,15 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
         private readonly IWebRequestController webRequestController;
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
         private readonly IPerformanceBudget frameTimeBudget;
+        private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
 
-        public MediaPlayerPluginWrapper(IComponentPoolsRegistry componentPoolsRegistry, IWebRequestController webRequestController, CacheCleaner cacheCleaner, IExtendedObjectPool<Texture2D> videoTexturePool, IPerformanceBudget frameTimeBudget)
+        public MediaPlayerPluginWrapper(
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IWebRequestController webRequestController,
+            CacheCleaner cacheCleaner,
+            IExtendedObjectPool<Texture2D> videoTexturePool,
+            IPerformanceBudget frameTimeBudget,
+            MediaPlayer mediaPlayerPrefab)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
             this.componentPoolsRegistry = componentPoolsRegistry;
@@ -35,26 +39,36 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             this.frameTimeBudget = frameTimeBudget;
             cacheCleaner.Register(videoTexturePool);
 
-            componentPoolsRegistry.AddGameObjectPool<MediaPlayer>(
-                onGet: mp =>
-            {
-                mp.AutoOpen = false;
-                mp.enabled = true;
-            },
-                onRelease: mp =>
-            {
-                mp.CloseCurrentStream();
-                mp.enabled = false;
-            });
+            var parentContainer = new GameObject("MediaPlayerContainer");
 
-            cacheCleaner.Register(componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>());
+            mediaPlayerPool = componentPoolsRegistry.AddGameObjectPool(
+                creationHandler: () =>
+                {
+                    var mediaPlayer = Object.Instantiate(mediaPlayerPrefab);
+                    mediaPlayer.PlatformOptionsWindows.audioOutput = Windows.AudioOutput.Unity;
+                    mediaPlayer.PlatformOptionsMacOSX.audioMode = MediaPlayer.OptionsApple.AudioMode.Unity;
+                    //Add other options if we release on other platforms :D
+                    return mediaPlayer;
+                },
+                onGet: mediaPlayer =>
+                {
+                    mediaPlayer.transform.SetParent(parentContainer.transform);
+                    mediaPlayer.AutoOpen = false;
+                    mediaPlayer.enabled = true;
+                },
+                onRelease: mediaPlayer =>
+                {
+                    mediaPlayer.CloseCurrentStream();
+                    mediaPlayer.enabled = false;
+                });
+
+            cacheCleaner.Register(mediaPlayerPool);
 #endif
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IECSToCRDTWriter ecsToCrdtWriter, List<IFinalizeWorldSystem> finalizeWorldSystems)
         {
 #if AV_PRO_PRESENT && !UNITY_EDITOR_LINUX && !UNITY_STANDALONE_LINUX
-            IComponentPool<MediaPlayer> mediaPlayerPool = componentPoolsRegistry.GetReferenceTypePool<MediaPlayer>();
 
             CreateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, mediaPlayerPool, sceneStateProvider, frameTimeBudget);
             UpdateMediaPlayerSystem.InjectToWorld(ref builder, webRequestController, sceneData, sceneStateProvider, frameTimeBudget);
