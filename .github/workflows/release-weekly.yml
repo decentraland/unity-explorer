@@ -1,0 +1,33 @@
+name: Weekly Release
+
+on:
+  schedule:
+    - cron: '10 0 * * 1'
+  # For testing only!
+  push:
+    branches:
+      - feat/unity-cloud-build
+
+jobs:
+  # Run a clean build (no cache)
+  build:
+    uses: decentraland/unity-explorer/.github/workflows/build-unitycloud.yml@main
+    with:
+      profile: none
+      cache: false
+
+  generate-release-info:
+    name: Generate release info
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag release
+        run: echo "TODO - Tag main"
+        
+      - name: Create release notes
+        run: echo "TODO - Generate release notes automatically from previous week"

@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'Controls profiling, auto-connect and deep profiling options'
+        description: 'Select level of profiling'
         required: true
         default: 'none'
         type: choice
@@ -25,9 +25,17 @@ on:
           - profile
           - deep
       cache:
-        description: 'Use workspace caching in cloud runners'
+        description: 'Enable to use workspace caching in cloud runners'
         required: true
         default: true
+        type: boolean
+  workflow_call:
+    inputs:
+      profile:
+        required: true
+        type: string
+      cache:
+        required: true
         type: boolean
 
 jobs:
