@@ -17,15 +17,6 @@ namespace DCL.DebugUtilities
 
         IReadOnlyDictionary<string, DebugWidget> Widgets { get; }
 
-        void Build(UIDocument debugRootCanvas);
-    }
-
-    public static class DebugContainerBuilderExtensions
-    {
-        public static void BuildWithFlex(this IDebugContainerBuilder debugContainerBuilder, UIDocument debugRootCanvas)
-        {
-            debugRootCanvas.rootVisualElement!.style!.display = DisplayStyle.Flex;
-            debugContainerBuilder.Build(debugRootCanvas);
-        }
+        void BuildWithFlex(UIDocument debugRootCanvas);
     }
 }

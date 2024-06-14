@@ -62,12 +62,14 @@ namespace DCL.DebugUtilities
             return w;
         }
 
-        public void Build(UIDocument debugRootCanvas)
+        public void BuildWithFlex(UIDocument debugRootCanvas)
         {
             if (isBuilt)
                 throw new InvalidOperationException("Container has already been built");
 
             isBuilt = true;
+
+            debugRootCanvas.rootVisualElement!.style!.display = DisplayStyle.Flex;
 
             // Sort by name
             widgetBuilders.Sort(this);
