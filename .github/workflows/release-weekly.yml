@@ -11,7 +11,8 @@ on:
 jobs:
   # Run a clean build (no cache)
   build:
-    uses: decentraland/unity-explorer/.github/workflows/build-unitycloud.yml@main
+    #uses: decentraland/unity-explorer/.github/workflows/build-unitycloud.yml@main
+    uses: decentraland/unity-explorer/.github/workflows/build-unitycloud.yml@feat/unity-cloud-build
     with:
       profile: none
       cache: false
