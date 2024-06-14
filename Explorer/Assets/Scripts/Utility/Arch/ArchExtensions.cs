@@ -11,5 +11,11 @@ namespace Utility.Arch
             world.Remove<T>(entity);
             return true;
         }
+
+        public static void AddOrSet<T>(this World world, Entity entity, T component)
+        {
+            ref var existingComponent = ref world.AddOrGet(entity, component);
+            existingComponent = component;
+        }
     }
 }
