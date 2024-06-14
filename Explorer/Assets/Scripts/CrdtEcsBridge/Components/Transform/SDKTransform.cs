@@ -2,6 +2,7 @@
 using DCL.ECSComponents;
 using Google.Protobuf;
 using Google.Protobuf.Reflection;
+using JetBrains.Annotations;
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -42,5 +43,9 @@ namespace CrdtEcsBridge.Components.Transform
             Scale = Vector3.one;
             IsDirty = false;
         }
+
+        [NotNull]
+        public override string ToString() =>
+            $"{nameof(SDKTransform)} {ParentId} {Position} {Rotation} {Scale} {IsDirty}";
     }
 }

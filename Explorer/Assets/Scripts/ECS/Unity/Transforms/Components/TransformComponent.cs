@@ -98,5 +98,8 @@ namespace ECS.Unity.Transforms.Components
         {
             HashSetPool<EntityReference>.Release(Children);
         }
+
+        public override readonly string ToString() =>
+            $"{nameof(TransformComponent)} {Parent} {Transform.localPosition} {Transform.localRotation} {Transform.localScale}";
     }
 }
