@@ -1,4 +1,5 @@
 ﻿using DCL.CharacterCamera;
+using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using System;
 using Unity.Burst;
@@ -120,8 +121,7 @@ namespace ECS.Prioritization
                     ProcessCorners(corners1.maxXminZ, ref partition, ref CameraPosition, ref CameraForward);
                     ProcessCorners(corners1.maxXZ, ref partition, ref CameraPosition, ref CameraForward);
 
-                    partition.IsPlayerInScene = PlayerPosition.x >= corners1.minXZ.x && PlayerPosition.x <= corners1.maxXZ.x &&
-                                                PlayerPosition.y >= corners1.minXZ.z && PlayerPosition.y <= corners1.maxXZ.z;
+                    partition.IsPlayerInScene = PlayerPosition.IsInside(corners1);
                 }
 
                 // Find the bucket
