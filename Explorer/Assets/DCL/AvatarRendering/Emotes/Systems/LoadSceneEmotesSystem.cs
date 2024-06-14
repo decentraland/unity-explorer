@@ -58,6 +58,19 @@ namespace DCL.AvatarRendering.Emotes
 
             URN urn = GetUrn(intention.Hash, intention.Loop);
 
+            bool isTimeout = intention.ElapsedTime >= intention.Timeout;
+
+            if (isTimeout)
+            {
+                if (!World.Has<StreamableResult>(entity))
+                {
+                    ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
+                    World.Add(entity, new StreamableResult(new TimeoutException($"Scene emote timeout {urn}")));
+                }
+
+                return;
+            }
+
             if (!emoteCache.TryGetEmote(urn, out IEmote emote))
             {
                 if (!intention.IsModelProcessed)
@@ -124,18 +137,6 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             if (!intention.IsAssetBundleProcessed) return;
-
-            bool isTimeout = intention.ElapsedTime >= intention.Timeout;
-
-            if (isTimeout)
-            {
-                ReportHub.LogWarning(GetReportCategory(), $"Loading scenes emotes timed out {urn}");
-
-                if (!World.Has<StreamableResult>(entity))
-                    World.Add(entity, new StreamableResult(new TimeoutException($"Scene emote timeout {intention.Hash}")));
-
-                return;
-            }
 
             World.Add(entity, new StreamableResult(new EmotesResolution(new[] { emote }, 1)));
         }

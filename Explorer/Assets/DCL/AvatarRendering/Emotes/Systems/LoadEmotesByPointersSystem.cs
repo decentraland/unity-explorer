@@ -149,6 +149,20 @@ namespace DCL.AvatarRendering.Emotes
 
             intention.ElapsedTime += dt;
 
+            bool isTimeout = intention.ElapsedTime >= intention.Timeout;
+
+            if (isTimeout)
+            {
+                if (!World.Has<StreamableResult>(entity))
+                {
+                    var pointersStrLog = string.Join(",", intention.Pointers);
+                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {pointersStrLog}");
+                    World.Add(entity, new StreamableResult(new TimeoutException($"Emote intention timeout {pointersStrLog}")));
+                }
+
+                return;
+            }
+
             List<URN> missingPointersTmp = ListPool<URN>.Get();
             List<IEmote> resolvedEmotesTmp = ListPool<IEmote>.Get();
 
@@ -225,16 +239,10 @@ namespace DCL.AvatarRendering.Emotes
                 }
             }
 
-            bool isTimeout = intention.ElapsedTime >= intention.Timeout;
             bool isSucceeded = emotesWithResponse == intention.Pointers.Count;
 
-            if (isSucceeded || isTimeout)
-            {
-                if (isTimeout)
-                    ReportHub.LogWarning(GetReportCategory(), $"Loading emotes timed out, {string.Join(",", intention.Pointers)}");
-
+            if (isSucceeded)
                 World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
-            }
 
             ListPool<URN>.Release(missingPointersTmp);
             ListPool<IEmote>.Release(resolvedEmotesTmp);
@@ -266,7 +274,6 @@ namespace DCL.AvatarRendering.Emotes
                         IEmote component = emoteCache.GetOrAddEmoteByDTO(assetEntity);
                         component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
                         component.IsLoading = false;
-
                     }
                 }
 

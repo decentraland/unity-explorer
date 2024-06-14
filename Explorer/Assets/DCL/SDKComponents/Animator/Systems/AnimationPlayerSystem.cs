@@ -9,7 +9,6 @@ using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.Groups;
-using Google.Protobuf.Collections;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using UAnimator = UnityEngine.Animator;
