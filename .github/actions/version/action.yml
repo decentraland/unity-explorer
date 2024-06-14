@@ -40,7 +40,7 @@ runs:
           NAME="${BASH_REMATCH[4]}"
           COMMITS_SINCE="${BASH_REMATCH[5]}"
           
-          echo "Latest version match:"
+          echo "Version parsed match:"
           echo "[Major]: $MAJOR"
           echo "[Minor]: $MINOR"
           echo "[Build]: $BUILD"
@@ -58,11 +58,11 @@ runs:
           BRANCH_NAME=$(echo "$GITHUB_REF" | cut -d'/' -f 3)
         fi
           
-        FULLVER="v${MAJOR}.${MINOR}.${COMMITS_SINCE}-${NAME}-${BRANCH_NAME}"
+        FULLVER="v${MAJOR}.${MINOR}.$((BUILD + COMMITS_SINCE))-${NAME}-${BRANCH_NAME}"
         echo "Full version: $FULLVER"
         echo "full_version=$FULLVER" >> "$GITHUB_OUTPUT"
         
-        TAGVER="v${MAJOR}.${MINOR}.${COMMITS_SINCE}-${NAME}"
+        TAGVER="v${MAJOR}.${MINOR}.$((BUILD + COMMITS_SINCE))-${NAME}"
         echo "Tag version: $TAGVER"
         echo "tag_version=$TAGVER" >> "$GITHUB_OUTPUT"
         

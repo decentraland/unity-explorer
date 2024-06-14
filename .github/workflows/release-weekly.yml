@@ -17,22 +17,21 @@ jobs:
       full_version: ${{ steps.get_version.outputs.next_full_version }}
       tag_version: ${{ steps.get_version.outputs.next_tag_version }}
     steps:
-      - name: Get latest version tag
-        id: get_latest_version_tag
-        run: echo "tag=$(git describe --tags --match='v[0-9]*')" >> $GITHUB_OUTPUT
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get version
         id: get_version
-        uses: ./.github/actions/version@feat/unity-cloud-build
-        with:
-          tag: ${{ steps.get_latest_version_tag.outputs.tag }}
+        uses: ./.github/actions/version
 
   # Run a clean build (no cache)
   build:
     name: Build Unity Cloud
     needs: get-info
     #uses: decentraland/unity-explorer/.github/workflows/build-unitycloud.yml@main
-    uses: decentraland/unity-explorer/.github/workflows/build-unitycloud.yml@feat/unity-cloud-build
+    uses: ./.github/workflows/build-unitycloud.yml@feat/unity-cloud-build
     with:
       profile: none
       cache: false
@@ -45,6 +44,9 @@ jobs:
     needs: [build, get-info]
     timeout-minutes: 5
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Apply tag to branch
         run: echo ${{ needs.get-info.outputs.tag_version }}
 #        run: |
