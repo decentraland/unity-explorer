@@ -29,6 +29,11 @@ on:
         required: true
         default: true
         type: boolean
+      version:
+        description: 'Override for build version to use'
+        required: true
+        default: ''
+        type: string
   workflow_call:
     inputs:
       profile:
@@ -37,6 +42,9 @@ on:
       cache:
         required: true
         type: boolean
+      version:
+        required: true
+        type: string
 
 jobs:
   prebuild:
@@ -47,50 +55,29 @@ jobs:
     outputs:
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
-      version: ${{ steps.get_version.outputs.version }}
+      version: ${{ steps.get_version.outputs.full_version || github.event.inputs.version }}
       sentry_environment: ${{ steps.get_sentry.outputs.environment }}
       sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+#      - name: Checkout code
+#        uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+
+      - name: Get latest version tag
+        id: get_latest_version_tag
+        run: echo "tag=$(git describe --tags --match='v[0-9]*'))" >> $GITHUB_OUTPUT
+
+      - name: Get version
+        id: get_version
+        if: ${{ !github.event.inputs.version || github.event.inputs.version == '' }}
+        uses: ./.github/actions/version@feat/unity-cloud-build
         with:
-          fetch-depth: 0
+          tag: ${{ steps.get_latest_version_tag.outputs.tag }}
 
       - name: Get commit SHA
         id: get_commit_sha
         run: echo "commit_sha=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_OUTPUT
-
-      - name: Create Version
-        id: get_version
-        run: |
-          #!/bin/bash
-
-          # Get latest tag
-          latestTag=$(git describe --tags)
-
-          # Extract version components
-          if [[ $latestTag =~ ^v([0-9]+)\.([0-9]+)-([0-9]+)-(.+)$ ]]; then
-            version="${BASH_REMATCH[1]}"
-            minorVersion="${BASH_REMATCH[2]}"
-            build="${BASH_REMATCH[3]}"
-            commit="${BASH_REMATCH[4]}"
-            echo "Version: $version"
-            echo "Minor Version: $minorVersion"
-            echo "Build: $build"
-            echo "Commit: $commit"
-          else
-            echo "String does not match expected pattern. No Version Added!"
-          fi
-
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            branchName="$GITHUB_HEAD_REF"
-          else
-            branchName=$(echo "$GITHUB_REF" | cut -d'/' -f 3)
-          fi
-
-          semVer="v${version}.${minorVersion}.${build}-${commit}-${branchName}"
-          echo "Version: $semVer"
-          echo "version=$semVer" >> "$GITHUB_OUTPUT"
 
       - name: Get Sentry parameters
         id: get_sentry
