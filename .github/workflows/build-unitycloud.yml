@@ -59,10 +59,10 @@ jobs:
       sentry_environment: ${{ steps.get_sentry.outputs.environment }}
       sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
     steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get latest version tag
         id: get_latest_version_tag
