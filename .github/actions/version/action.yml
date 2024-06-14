@@ -2,8 +2,8 @@ name: 'Version'
 description: 'Parse, update and format the given tag for onward operations'
 inputs:
   tag:
-    description: 'Formated version tag'
-    required: true
+    description: 'Formated version tag. If not set it uses latest version tag (v[0-9]*)'
+    required: false
 outputs:
   full_version:
     description: 'v1.2.3-name-branch'
@@ -20,11 +20,16 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Get latest version tag
+      if: ${{ !inputs.tag }}
+      id: get_latest_version_tag
+      run: echo "tag=$(git describe --tags --match='v[0-9]*')" >> $GITHUB_OUTPUT
+
     - name: Parse version tag
       id: parser
       run: |
         #!/bin/bash
-        TAG=${{ inputs.tag }}
+        TAG=${{ inputs.tag || steps.get_latest_version_tag.outputs.tag }}
 
         # Extract version components (expecting v1.2.3-name-0-commitsha)
         if [[ $TAG =~ ^v([0-9]+)\.([0-9]+).([0-9]+)-(.+)-([0-9]+)-(.+)$ ]]; then
