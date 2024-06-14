@@ -15,6 +15,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         internal static readonly ListObjectPool<MeshFilter> MESH_FILTERS_POOL = new (listInstanceDefaultCapacity: 50);
         internal static readonly ListObjectPool<Renderer> RENDERERS_POOL = new (listInstanceDefaultCapacity: 50);
         internal static readonly ListObjectPool<Animation> ANIMATIONS_POOL = new (listInstanceDefaultCapacity: 50);
+        internal static readonly ListObjectPool<Animator> ANIMATORS_POOL = new (listInstanceDefaultCapacity: 50);
 
         public readonly GameObject Root;
 
@@ -32,9 +33,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public readonly List<Renderer> Renderers;
 
         /// <summary>
-        ///     Animation Components
+        ///     Animation Components (legacy and will be deprecated in the future)
         /// </summary>
         public readonly List<Animation> Animations;
+
+        public readonly List<Animator> Animators;
 
         /// <summary>
         ///     Visible meshes colliders are created on demand and then become a part of cached data.
@@ -43,7 +46,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public List<SDKCollider> VisibleMeshesColliders;
         private AssetBundleData assetBundleReference;
 
-        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders, List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations)
+        private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders,
+            List<MeshFilter> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
+            List<Animator> animators)
         {
             this.assetBundleReference = assetBundleReference;
 
@@ -52,6 +57,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             VisibleColliderMeshes = visibleColliderMeshes;
             Renderers = renderers;
             Animations = animations;
+            Animators = animators;
 
             ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
@@ -67,12 +73,15 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             if (VisibleMeshesColliders != null)
                 COLLIDERS_POOL.Release(VisibleMeshesColliders);
 
+            ANIMATIONS_POOL.Release(Animations);
+            ANIMATORS_POOL.Release(Animators);
+
             UnityObjectUtils.SafeDestroy(Root);
 
             ProfilingCounters.GltfContainerAssetsAmount.Value--;
         }
 
         public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>
-            new (root, assetBundleReference, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get());
+            new (root, assetBundleReference, COLLIDERS_POOL.Get(), MESH_FILTERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get());
     }
 }
