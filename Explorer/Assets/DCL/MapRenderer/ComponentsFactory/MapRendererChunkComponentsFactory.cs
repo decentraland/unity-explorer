@@ -80,9 +80,9 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
-                HandleTaskWithErrorHandlingAsync(sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken)),
-                HandleTaskWithErrorHandlingAsync(favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken)),
-                HandleTaskWithErrorHandlingAsync(hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken))
+                sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
+                favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);
@@ -96,21 +96,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             }
         }
 
-        //Some markers installers can fail due to network issues or APIs problems, we handle here the initialization errors to avoid
-        //breaking the whole map rendering process as an error in the UniTask.WhenAll would stop the execution of the other tasks.
-        private async UniTask HandleTaskWithErrorHandlingAsync(UniTask task)
-        {
-            try
-            {
-                await task;
-            }
-            catch (Exception ex)
-            {
-                ReportHub.LogError(new ReportData(ReportCategory.PLUGINS), $"Marker installation failed: {ex.Message}");
-            }
-        }
-
-        private async UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
+        private UniTask CreateSatelliteAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             const int GRID_SIZE = 8; // satellite images are provided by 8x8 grid.
             const int PARCELS_INSIDE_CHUNK = 40; // One satellite image contains 40 parcels.
@@ -120,7 +106,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.SatelliteAtlas, chunkAtlas);
-            return;
+            return UniTask.CompletedTask;
 
             async UniTask<IChunkController> CreateSatelliteChunkAsync(Vector3 chunkLocalPosition, Vector2Int chunkId, Transform parent, CancellationToken ct)
             {
@@ -133,7 +119,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             }
         }
 
-        private async UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
+        private UniTask CreateAtlasAsync(Dictionary<MapLayer, IMapLayerController> layers, MapRendererConfiguration configuration, ICoordsUtils coordsUtils, IMapCullingController cullingController, CancellationToken cancellationToken)
         {
             var chunkAtlas = new ParcelChunkAtlasController(configuration.AtlasRoot, MapRendererSettings.ATLAS_CHUNK_SIZE, coordsUtils, cullingController, chunkBuilder: CreateChunkAsync);
 
@@ -141,7 +127,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             chunkAtlas.InitializeAsync(cancellationToken).SuppressCancellationThrow().Forget();
 
             layers.Add(MapLayer.ParcelsAtlas, chunkAtlas);
-            return;
+            return UniTask.CompletedTask;
 
             async UniTask<IChunkController> CreateChunkAsync(Vector3 chunkLocalPosition, Vector2Int coordsCenter, Transform parent, CancellationToken ct)
             {
