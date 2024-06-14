@@ -22,7 +22,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -43,8 +45,7 @@ namespace Global.Dynamic
 
         [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
         private ContentServer remoteSceneContentServer = ContentServer.World;
-
-        [SerializeField] private bool soloSceneLoading;
+        
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -181,8 +182,6 @@ namespace Global.Dynamic
                     return;
                 }
 
-                staticContainer!.RealmPartitionSettings.SoloSceneLoading = soloSceneLoading;
-
                 bool shouldEnableLandscape = enableLandscape;
 
                 var hybridSceneParams = new HybridSceneParams();
@@ -220,10 +219,10 @@ namespace Global.Dynamic
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
-                        StartParcel = startingParcel,
-                        EnableLandscape = shouldEnableLandscape,
-                        EnableLOD = enableLOD,
-                        HybridSceneParams = hybridSceneParams,
+                        StartParcel = startingParcel, 
+                        EnableLandscape = shouldEnableLandscape, 
+                        EnableLOD = enableLOD, 
+                        HybridSceneParams = hybridSceneParams
                     }, backgroundMusic, ct
                 );
 
