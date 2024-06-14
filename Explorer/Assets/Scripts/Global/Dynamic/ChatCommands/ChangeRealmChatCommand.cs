@@ -5,6 +5,7 @@ using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using UnityEngine;
 using static DCL.Chat.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
@@ -22,7 +23,7 @@ namespace Global.Dynamic.ChatCommands
             { "sdk", IRealmNavigator.SDK_TEST_SCENES_URL },
             { "test", IRealmNavigator.TEST_SCENES_URL },
         };
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+)$", RegexOptions.Compiled);
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+?)(?:\s+(-?\d+),(-?\d+))?$", RegexOptions.Compiled);
 
         // Parameters to URL mapping
 
@@ -53,7 +54,11 @@ namespace Global.Dynamic.ChatCommands
 
             var realm = URLDomain.FromString(realmUrl!);
 
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct);
+            Vector2Int parcel = default;
+            if (match.Groups[3].Success && match.Groups[4].Success)
+                parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
+
+            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
