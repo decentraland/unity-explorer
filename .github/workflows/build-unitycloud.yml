@@ -71,7 +71,7 @@ jobs:
       - name: Get version
         id: get_version
         if: ${{ !github.event.inputs.version || github.event.inputs.version == '' }}
-        uses: ./.github/actions/version.yml@feat/unity-cloud-build
+        uses: ./.github/actions/version
         with:
           tag: ${{ steps.get_latest_version_tag.outputs.tag }}
 
