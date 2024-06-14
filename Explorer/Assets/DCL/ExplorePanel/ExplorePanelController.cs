@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading;
 using UnityEngine.InputSystem;
 using Utility;
+using Utility.Arch;
 
 namespace DCL.ExplorePanel
 {
@@ -216,15 +217,15 @@ namespace DCL.ExplorePanel
 
         private void BlockUnwantedActions()
         {
-            world.Add<CameraBlockerComponent>(playerEntity);
-            world.Add<MovementBlockerComponent>(playerEntity);
+            world.AddOrGet<CameraBlockerComponent>(playerEntity);
+            world.AddOrGet<MovementBlockerComponent>(playerEntity);
             dclInput.Camera.Disable();
         }
 
         private void UnblockUnwantedActions()
         {
-            world.Remove<CameraBlockerComponent>(playerEntity);
-            world.Remove<MovementBlockerComponent>(playerEntity);
+            world.TryRemove<CameraBlockerComponent>(playerEntity);
+            world.TryRemove<MovementBlockerComponent>(playerEntity);
             dclInput.Camera.Enable();
         }
 

@@ -56,8 +56,7 @@ namespace CrdtEcsBridge.RestrictedActions
                 return;
             }
 
-            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget);
-            globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
+            MoveAndRotatePlayerAsync(newAbsolutePosition, newAbsoluteCameraTarget).Forget();
         }
 
         public void TryTeleportTo(Vector2Int coords)
@@ -114,6 +113,14 @@ namespace CrdtEcsBridge.RestrictedActions
 
             OpenNftDialogAsync(contractAddress, tokenId).Forget();
             return true;
+        }
+
+        private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget)
+        {
+            await UniTask.SwitchToMainThread();
+
+            globalWorldActions.MoveAndRotatePlayer(newAbsolutePosition, newAbsoluteCameraTarget);
+            globalWorldActions.RotateCamera(newAbsoluteCameraTarget, newAbsolutePosition);
         }
 
         private async UniTask OpenUrlAsync(string url)

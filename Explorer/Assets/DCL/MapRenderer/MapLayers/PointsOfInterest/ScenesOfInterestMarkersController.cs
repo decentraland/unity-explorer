@@ -2,6 +2,8 @@
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.MapRenderer.Culling;
+using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -16,6 +18,8 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
     internal class ScenesOfInterestMarkersController : MapLayerControllerBase, IMapCullingListener<ISceneOfInterestMarker>, IMapLayerController, IZoomScalingLayer
     {
         private const string EMPTY_PARCEL_NAME = "Empty parcel";
+
+        private static readonly PoolExtensions.Scope<List<PlacesData.PlaceInfo>> EMPTY_PLACES = PoolExtensions.EmptyScope(new List<PlacesData.PlaceInfo>());
 
         internal delegate ISceneOfInterestMarker SceneOfInterestMarkerBuilder(
             IObjectPool<SceneOfInterestMarkerObject> objectsPool,
@@ -47,16 +51,21 @@ namespace DCL.MapRenderer.MapLayers.PointsOfInterest
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
-            IReadOnlyList<string> pointsOfInterestCoordsAsync = await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken);
+            IReadOnlyList<string> pointsOfInterestCoordsAsync =
+                await placesAPIService.GetPointsOfInterestCoordsAsync(cancellationToken)
+                                      .SuppressAnyExceptionWithFallback(Array.Empty<string>(), ReportCategory.UI);
             vectorCoords.Clear();
 
             foreach (var s in pointsOfInterestCoordsAsync)
             {
                 try { vectorCoords.Add(IpfsHelper.DecodePointer(s)); }
-                catch (Exception e) { ReportHub.LogException(e, ReportCategory.TEXTURES); }
+                catch (Exception e) { ReportHub.LogException(e, ReportCategory.UI); }
             }
 
-            using var placesByCoordsListAsync = await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true);
+            using var placesByCoordsListAsync =
+                await placesAPIService.GetPlacesByCoordsListAsync(vectorCoords, cancellationToken, true)
+                                      .SuppressAnyExceptionWithFallback(EMPTY_PLACES, ReportCategory.UI);
+
             // non-blocking retrieval of scenes of interest happens independently on the minimap rendering
             foreach (PlacesData.PlaceInfo placeInfo in placesByCoordsListAsync.Value)
             {

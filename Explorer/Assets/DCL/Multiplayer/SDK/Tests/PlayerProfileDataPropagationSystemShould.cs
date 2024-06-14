@@ -65,6 +65,9 @@ namespace DCL.Multiplayer.SDK.Tests
             profile.Name = "NewName";
             world.Set(entity, playerCRDTEntity, profile);
 
+            // we must remove the profile before adding it again in the system
+            sceneWorld.Remove<Profile>(playerCRDTEntity.SceneWorldEntity);
+
             system.Update(0);
 
             Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out sceneEntityProfile));

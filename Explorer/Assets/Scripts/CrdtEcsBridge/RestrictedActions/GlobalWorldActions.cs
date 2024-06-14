@@ -11,6 +11,7 @@ using SceneRunner.Scene;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Arch;
 using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
     DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
@@ -32,11 +33,11 @@ namespace CrdtEcsBridge.RestrictedActions
         public void MoveAndRotatePlayer(Vector3 newPlayerPosition, Vector3? newCameraTarget)
         {
             // Move player to new position (through InterpolateCharacterSystem -> TeleportPlayerQuery)
-            world.Add(playerEntity, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero));
+            world.AddOrSet(playerEntity, new PlayerTeleportIntent(newPlayerPosition, Vector2Int.zero));
 
             // Rotate player to look at camera target (through RotateCharacterSystem -> ForceLookAtQuery)
             if (newCameraTarget != null)
-                world.Add(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
+                world.AddOrSet(playerEntity, new PlayerLookAtIntent(newCameraTarget.Value));
         }
 
         public void RotateCamera(Vector3? newCameraTarget, Vector3 newPlayerPosition)
@@ -46,7 +47,7 @@ namespace CrdtEcsBridge.RestrictedActions
 
             // Rotate camera to look at new target (through ApplyCinemachineCameraInputSystem -> ForceLookAtQuery)
             var camera = world.CacheCamera();
-            world.Add(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
+            world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
         public async UniTask TriggerSceneEmoteAsync(SceneAssetBundleManifest abManifest, string hash, bool loop, CancellationToken ct)

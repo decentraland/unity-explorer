@@ -7,9 +7,9 @@ namespace ECS.Unity.SceneBoundsChecker
     /// </summary>
     public struct SDKCollider
     {
-        private bool isActiveByEntity;
-        private bool isActiveBySceneBounds;
+        public readonly Collider Collider;
 
+        private bool isActiveByEntity;
         public bool IsActiveByEntity
         {
             get => isActiveByEntity;
@@ -24,20 +24,7 @@ namespace ECS.Unity.SceneBoundsChecker
             }
         }
 
-        public void ForceActiveBySceneBounds(bool value)
-        {
-            isActiveBySceneBounds = value;
-            ResolveColliderActivity();
-        }
-
-        public bool IsActiveBySceneBounds => isActiveBySceneBounds;
-
-        private void ResolveColliderActivity()
-        {
-            Collider.enabled = isActiveByEntity && isActiveBySceneBounds;
-        }
-
-        public readonly Collider Collider;
+        public bool IsActiveBySceneBounds { get; private set; }
 
         /// <summary>
         ///     When the structure is created Collider is disabled by default
@@ -47,9 +34,20 @@ namespace ECS.Unity.SceneBoundsChecker
         {
             Collider = collider;
             isActiveByEntity = false;
-            isActiveBySceneBounds = false;
+            IsActiveBySceneBounds = false;
 
             ResolveColliderActivity();
+        }
+
+        public void ForceActiveBySceneBounds(bool value)
+        {
+            IsActiveBySceneBounds = value;
+            ResolveColliderActivity();
+        }
+
+        private void ResolveColliderActivity()
+        {
+            Collider.enabled = isActiveByEntity && IsActiveBySceneBounds;
         }
     }
 }
