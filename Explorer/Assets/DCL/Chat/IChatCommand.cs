@@ -8,6 +8,8 @@ namespace DCL.Chat
     {
         // Constants that shared between several ChatCommands
         const string COMMAND_GOTO = "goto";
+        const string PARAM_SOLO = "solo";
+        const string PARAM_ONLY = "only";
 
         UniTask<string> ExecuteAsync(Match match, CancellationToken ct);
     }

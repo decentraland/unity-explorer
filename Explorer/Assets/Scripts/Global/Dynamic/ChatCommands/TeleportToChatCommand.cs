@@ -14,10 +14,9 @@ namespace Global.Dynamic.ChatCommands
     public class TeleportToChatCommand : IChatCommand
     {
         private const string COMMAND_GOTO_LOCAL = "goto-local";
-        private const string COMMAND_GOTO_LOCAL_ONLY = "goto-local-only";
-        private const string PARAMETER_RANDOM = "random";
+        private const string PARAM_RANDOM = "random";
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL}|{COMMAND_GOTO_LOCAL_ONLY})\s+(?:(-?\d+),(-?\d+)|{PARAMETER_RANDOM})$",RegexOptions.Compiled);
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+),(-?\d+)|{PARAM_RANDOM})?(?:\s+({PARAM_SOLO}|{PARAM_ONLY}))?$",RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
         private readonly IRealmPartitionSettings realmPartitionSettings;
@@ -33,8 +32,7 @@ namespace Global.Dynamic.ChatCommands
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
-            realmPartitionSettings.SoloSceneLoading = match.Groups[1].Value is COMMAND_GOTO_LOCAL_ONLY;
-            bool isLocal = match.Groups[1].Value is COMMAND_GOTO_LOCAL or COMMAND_GOTO_LOCAL_ONLY;
+            bool isLocal = match.Groups[1].Value is COMMAND_GOTO_LOCAL;
 
             if (match.Groups[2].Success && match.Groups[3].Success)
             {
@@ -47,11 +45,13 @@ namespace Global.Dynamic.ChatCommands
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
 
+            realmPartitionSettings.SoloSceneLoading = match.Groups[4].Value is PARAM_SOLO or PARAM_ONLY;
+
             await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
 
             return ct.IsCancellationRequested
                 ? "🔴 Error. The operation was canceled!"
-                : $"🟢 You teleported to {x},{y} in Genesis City";
+                : $"🟢 You teleported to {x},{y}";
         }
     }
 }
