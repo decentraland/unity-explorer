@@ -25,6 +25,7 @@ def get_target(target):
         return response.json()
     elif response.status_code == 404:
         print(f'Target "{target}" does not exist (yet?)')
+        print("Response body:", response.text)
         return response.json()
     else:
         print("Failed to get target data with status code:", response.status_code)
