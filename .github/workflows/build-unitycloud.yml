@@ -55,7 +55,7 @@ jobs:
     outputs:
       commit_sha: ${{ steps.get_commit_sha.outputs.commit_sha }}
       options: ${{ steps.get_options.outputs.options }}
-      version: ${{ steps.get_version.outputs.full_version || github.event.inputs.version }}
+      version: ${{ github.event.inputs.version || inputs.version || steps.get_version.outputs.full_version }}
       sentry_environment: ${{ steps.get_sentry.outputs.environment }}
       sentry_upload_symbols: ${{ steps.get_sentry.outputs.upload_symbols }}
     steps:
@@ -66,7 +66,7 @@ jobs:
 
       - name: Get version
         id: get_version
-        if: ${{ github.event.inputs.version == '' }}
+        if: ${{ github.event.inputs.version == '' && inputs.version == '' }}
         uses: ./.github/actions/version
 
       - name: Get commit SHA
@@ -95,7 +95,7 @@ jobs:
           options=()
 
           # input.profile
-          profile="${{ github.event.inputs.profile }}"
+          profile="${{ github.event.inputs.profile || inputs.profile }}"
 
           if [[ "$profile" == "profile" || "$profile" == "deep" ]]; then
             options+=("Development")
@@ -145,7 +145,7 @@ jobs:
           POLL_TIME: 60 # In seconds (int)
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          USE_CACHE: ${{ github.event.inputs.cache }}
+          USE_CACHE: ${{ github.event.inputs.cache || inputs.cache }}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
