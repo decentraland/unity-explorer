@@ -17,6 +17,7 @@ jobs:
     with:
       profile: none
       cache: false
+    secrets: inherit
 
   generate-release-info:
     name: Generate release info
