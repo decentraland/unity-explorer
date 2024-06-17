@@ -1,14 +1,17 @@
 {
     "name": "DCL.Analytics",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
         "Segment.Analytics.CSharp.dll",
-        "Serialization.NET.dll"
+        "Serialization.NET.dll",
+        "Coroutine.NET.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
