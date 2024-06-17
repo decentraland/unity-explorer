@@ -10,6 +10,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 flushAt: 20,
                 flushInterval: 30);
             var analytics = new Segment.Analytics.Analytics(configuration);
+
+            analytics.Identify("E@-Test");
+            analytics.Track("track right after identify");
         }
     }
 }

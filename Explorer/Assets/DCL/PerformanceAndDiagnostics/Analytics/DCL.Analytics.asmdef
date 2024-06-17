@@ -7,7 +7,8 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
-        "Segment.Analytics.CSharp.dll"
+        "Segment.Analytics.CSharp.dll",
+        "Serialization.NET.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
