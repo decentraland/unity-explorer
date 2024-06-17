@@ -1,0 +1,19 @@
+{
+    "name": "DCL.FeatureFlags",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
