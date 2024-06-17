@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
+      latest_version: ${{ steps.get_version.outputs.latest_version }}
       full_version: ${{ steps.get_version.outputs.next_full_version }}
       tag_version: ${{ steps.get_version.outputs.next_tag_version }}
     steps:
@@ -47,14 +48,33 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Apply tag to branch
-        run: echo ${{ needs.get-info.outputs.tag_version }}
+        run: |
+          TAG=${{ needs.get-info.outputs.tag_version }}
+          git tag $TAG
+          git push origin $TAG
+
+#      - name: Aggregate commits since last tag
+#        id: get-commits
 #        run: |
-#          TAG=${{ needs.get-info.outputs.tag_version }}
-#          git tag $TAG
-#          git push origin $TAG
+#          LATEST_TAG=${{ needs.get-info.outputs.latest_version }}
+#          echo "Latest version tag is $LATEST_TAG"
+#
+#          COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h - %s (%an)")
+#          echo "$COMMITS"
+#          echo "commit_list=$COMMITS" >> "$GITHUB_OUTPUT"
 
-      - name: Create release notes
-        run: echo "TODO - Generate release notes automatically from previous week"
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
 
-      - name: Create release
-        run: echo "TODO - Generate a new release with the new tag"
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          #body: ${{ steps.get-commits.outputs.commit_list }} # manual release notes
+          #body_path: Path to file for release notes - for better formatting
+          generate_release_notes: true
+          draft: true # testing
+          tag_name: ${{ needs.get-info.outputs.tag_version }}
+          files: |
+            Decentraland_windows64.zip
+            Decentraland_macos.zip
+          fail_on_unmatched_files: true

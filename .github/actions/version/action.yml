@@ -5,6 +5,9 @@ inputs:
     description: 'Formated version tag. If not set it uses latest version tag (v[0-9]*)'
     required: false
 outputs:
+  latest_version:
+    description: 'Latest available version tag in repo'
+    value: ${{ steps.get_latest_version_tag.outputs.tag }}
   full_version:
     description: 'v1.2.3-name-branch'
     value: ${{ steps.parser.outputs.full_version }}
