@@ -63,10 +63,17 @@ jobs:
 #          echo "$COMMITS"
 #          echo "commit_list=$COMMITS" >> "$GITHUB_OUTPUT"
 
-      - name: Download artifacts
+      - name: Download Windows64 build
         uses: actions/download-artifact@v4
         with:
-          merge-multiple: true
+          name: Decentraland_windows64
+          path: ./Decentraland_windows64.zip
+
+      - name: Download MacOS build
+        uses: actions/download-artifact@v4
+        with:
+          name: Decentraland_macos
+          path: ./Decentraland_macos.zip
 
       - name: Ls root debug
         run: ls -lah .
