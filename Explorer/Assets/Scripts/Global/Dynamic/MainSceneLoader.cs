@@ -10,6 +10,7 @@ using DCL.ExplorePanel;
 using DCL.Minimap;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
@@ -45,7 +46,7 @@ namespace Global.Dynamic
 
         [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
         private ContentServer remoteSceneContentServer = ContentServer.World;
-        
+
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -76,6 +77,7 @@ namespace Global.Dynamic
 
         private void Awake()
         {
+            var a = new AnalyticsService();
             EnsureNotNull();
             SetupInitialConfig();
 
@@ -219,9 +221,9 @@ namespace Global.Dynamic
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
-                        StartParcel = startingParcel, 
-                        EnableLandscape = shouldEnableLandscape, 
-                        EnableLOD = enableLOD, 
+                        StartParcel = startingParcel,
+                        EnableLandscape = shouldEnableLandscape,
+                        EnableLOD = enableLOD,
                         HybridSceneParams = hybridSceneParams
                     }, backgroundMusic, ct
                 );
