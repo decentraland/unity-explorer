@@ -75,6 +75,6 @@ jobs:
           draft: true # testing
           tag_name: ${{ needs.get-info.outputs.tag_version }}
           files: |
-            Decentraland_windows64.zip
-            Decentraland_macos.zip
+            Decentraland_windows64/Decentraland_windows64.zip
+            Decentraland_macos/Decentraland_macos.zip
           fail_on_unmatched_files: true
