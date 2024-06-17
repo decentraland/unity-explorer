@@ -65,6 +65,12 @@ jobs:
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Ls root debug
+        run: ls -lah .
+        shell: bash
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -75,6 +81,6 @@ jobs:
           draft: true # testing
           tag_name: ${{ needs.get-info.outputs.tag_version }}
           files: |
-            Decentraland_windows64/Decentraland_windows64.zip
-            Decentraland_macos/Decentraland_macos.zip
+            Decentraland_windows64.zip
+            Decentraland_macos.zip
           fail_on_unmatched_files: true
