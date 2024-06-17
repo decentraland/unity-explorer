@@ -72,7 +72,8 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0"
+    "com.unity.modules.xr": "1.0.0",
+    "com.segment.analytics.csharp": "2.4.2"
   },
   "scopedRegistries": [
     {
@@ -84,7 +85,8 @@
         "com.atteneder.draco",
         "com.madsbangh.easybuttons",
         "com.brunomikoski",
-        "com.mackysoft"
+        "com.mackysoft",
+        "com.segment.analytics.csharp"
       ]
     }
   ]
