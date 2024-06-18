@@ -209,7 +209,7 @@ namespace Editor
 
             if (options.TryGetValue("segmentWriteKey", out string segmentWriteKey))
             {
-                Console.WriteLine("Setting SEGMENT_WRITE_KEY Environment Variable for the build.");
+                Console.WriteLine("Setting SEGMENT_WRITE_KEY for the Analytics...");
                 WriteSegmentKeyToAnalyticsConfig(segmentWriteKey);
             }
 
@@ -223,11 +223,14 @@ namespace Editor
             const string CONFIG_ASSET_PATH = "Assets/AnalyticsConfiguration.asset";
 
             AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(CONFIG_ASSET_PATH);
+
             if (config == null)
-                throw new InvalidOperationException($"{nameof(AnalyticsConfiguration)} asset not found at path: {CONFIG_ASSET_PATH}, when trying to load it from AssetDatabase.");
+            {
+                Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found at path: {CONFIG_ASSET_PATH}, when trying to load it from AssetDatabase. Creating SO config file...");
+                config = ScriptableObject.CreateInstance<AnalyticsConfiguration>();
+            }
 
             config.WriteKey = segmentWriteKey;
-
             AssetDatabase.SaveAssetIfDirty(config);
         }
 
