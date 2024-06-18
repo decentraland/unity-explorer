@@ -1,3 +1,5 @@
+using Segment.Serialization;
+
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class AnalyticsService
@@ -7,8 +9,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             var analytics = new Segment.Analytics.Analytics(configuration.SegmentConfiguration);
             Segment.Analytics.Analytics.Logger = new SegmentLogger();
 
-            analytics.Identify("E@-Test");
-            analytics.Track("track right after identify");
+            analytics.Identify("testUser-123", new JsonObject {
+                ["username"] = "Vitaly Popuzin",
+                ["runtime"] = "editor",
+            });
+            analytics.Track("Test right after identify");
         }
     }
 }
