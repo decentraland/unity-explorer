@@ -39,7 +39,7 @@ namespace DCL.Profiles
                 unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
+            ProfilingCounters.ProfilesInCache.Value = cache.Count;
 #endif
         }
 
@@ -52,7 +52,7 @@ namespace DCL.Profiles
                 cache.Remove(key);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
+            ProfilingCounters.ProfilesInCache.Value = cache.Count;
 #endif
         }
     }
