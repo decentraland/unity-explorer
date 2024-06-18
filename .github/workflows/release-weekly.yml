@@ -34,7 +34,8 @@ jobs:
     uses: ./.github/workflows/build-unitycloud.yml
     with:
       profile: none
-      cache: false
+      #cache: false
+      cache: true # Testing!
       version: ${{ needs.get-info.outputs.full_version }}
     secrets: inherit
 
@@ -63,17 +64,24 @@ jobs:
 #          echo "$COMMITS"
 #          echo "commit_list=$COMMITS" >> "$GITHUB_OUTPUT"
 
-      - name: Download Windows64 build
-        uses: actions/download-artifact@v4
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v6
         with:
-          name: Decentraland_windows64
-          path: ./Decentraland_windows64.zip
+          name: Decentraland_.*\.zip
+          name_is_regexp: true
+          skip_unpack: true
 
-      - name: Download MacOS build
-        uses: actions/download-artifact@v4
-        with:
-          name: Decentraland_macos
-          path: ./Decentraland_macos.zip
+      # - name: Download Windows64 build
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: Decentraland_windows64
+      #     path: ./Decentraland_windows64.zip
+
+      # - name: Download MacOS build
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: Decentraland_macos
+      #     path: ./Decentraland_macos.zip
 
       - name: Ls root debug
         run: ls -lah .
