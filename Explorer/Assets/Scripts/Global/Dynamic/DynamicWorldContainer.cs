@@ -237,7 +237,8 @@ namespace Global.Dynamic
                 container.RoomHub,
                 entityParticipantTable,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                queuePoolFullMovementMessage
+                queuePoolFullMovementMessage,
+                staticContainer.EntityCollidersGlobalCache
             );
 
             ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);

@@ -3,6 +3,8 @@ using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -29,14 +31,22 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly List<string> tempRemoveAll = new ();
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
+        private readonly Dictionary<string, Collider> collidersByWalletId = new ();
         private IComponentPool<Transform> transformPool = null!;
 
-        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemoteEntities(
+            IRoomHub roomHub,
+            IEntityParticipantTable entityParticipantTable,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
+            IEntityCollidersGlobalCache collidersGlobalCache)
         {
             this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.queuePool = queuePool;
+            this.collidersGlobalCache = collidersGlobalCache;
         }
 
         public void Initialize()
@@ -78,6 +88,12 @@ namespace DCL.Multiplayer.Profiles.Entities
                 return;
 
             var entity = entityParticipantTable.Entity(walletId);
+
+            if (collidersByWalletId.TryGetValue(walletId, out Collider collider))
+            {
+                collidersGlobalCache.RemoveAssociation(collider);
+                collidersByWalletId.Remove(walletId);
+            }
 
             world.AddOrGet(entity, new DeleteEntityIntention());
             entityParticipantTable.Release(walletId);
@@ -123,11 +139,12 @@ namespace DCL.Multiplayer.Profiles.Entities
             transform.rotation = Quaternion.identity;
             transform.localScale = Vector3.one;
 
-            var capsuleCollider = transform.gameObject.AddComponent<CapsuleCollider>();
-            capsuleCollider.isTrigger = true;
-            capsuleCollider.center = new Vector3(0, 1, 0);
-            capsuleCollider.radius = 0.5f;
-            capsuleCollider.height = 2f;
+            var avatarCollider = transform.gameObject.AddComponent<CapsuleCollider>();
+            avatarCollider.isTrigger = true;
+            avatarCollider.center = new Vector3(0, 1, 0);
+            avatarCollider.radius = 0.5f;
+            avatarCollider.height = 2f;
+            collidersByWalletId.TryAdd(profile.WalletId, avatarCollider);
 
             var transformComp = new CharacterTransform(transform);
 
@@ -140,6 +157,9 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new InterpolationComponent(),
                 new ExtrapolationComponent()
             );
+
+            // TODO: (Santi) We need to add the avatarCollider into the global colliders cache in order to be able to access to its entity info when we click on it
+            //collidersGlobalCache.Associate(avatarCollider, ...)
 
             ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
 
