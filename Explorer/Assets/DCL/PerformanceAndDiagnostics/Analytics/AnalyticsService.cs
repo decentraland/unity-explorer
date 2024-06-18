@@ -1,4 +1,5 @@
 using Segment.Serialization;
+using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -11,7 +12,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             analytics.Identify("testUser-123", new JsonObject {
                 ["username"] = "Vitaly Popuzin",
-                ["runtime"] = "editor",
+                ["runtime"] = Application.isEditor? "editor" : "build",
             });
             analytics.Track("Test right after identify");
         }
