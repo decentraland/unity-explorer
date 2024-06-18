@@ -21,6 +21,12 @@ namespace DCL.FeatureFlags
     [Serializable]
     public struct FeatureFlagsResultDto
     {
+        public static FeatureFlagsResultDto Empty => new()
+        {
+            flags = new Dictionary<string, bool>(),
+            variants = new Dictionary<string, FeatureFlagVariantDto>(),
+        };
+
         public Dictionary<string, bool> flags;
         public Dictionary<string, FeatureFlagVariantDto> variants;
     }

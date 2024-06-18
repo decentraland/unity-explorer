@@ -341,6 +341,7 @@ namespace Global.Dynamic
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
+                staticContainer!.FeatureFlagsCache.Configuration = new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty);
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
         }
