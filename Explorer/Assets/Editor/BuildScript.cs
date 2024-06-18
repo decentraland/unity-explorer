@@ -1,7 +1,4 @@
 ﻿using JetBrains.Annotations;
-using NBitcoin;
-using NUnit;
-using Sentry.Unity.Editor.ConfigurationWindow;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +21,7 @@ namespace Editor
             //Unity suggestion: 1793168
             //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
             EditorApplication.ExecuteMenuItem("File/Save Project");
-            
+
             // Gather values from args
             Dictionary<string, string> options = GetValidatedOptions();
 
@@ -207,6 +204,12 @@ namespace Editor
             if (isDeepProfilingBuild)
             {
                 buildPlayerOptions.options |= BuildOptions.EnableDeepProfilingSupport;
+            }
+
+            if (options.TryGetValue("segmentWriteKey", out string segmentWriteKey))
+            {
+                Console.WriteLine("Setting SEGMENT_WRITE_KEY Environment Variable for the build.");
+                Environment.SetEnvironmentVariable("SEGMENT_WRITE_KEY", segmentWriteKey);
             }
 
             BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
