@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -95,6 +96,7 @@ namespace Global
         public IEthereumApi EthereumApi { get; private set; }
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
+        public IFeatureFlagsCache FeatureFlagsCache { get; private set; }
 
         public void Dispose()
         {
@@ -145,6 +147,7 @@ namespace Global
 
             var container = new StaticContainer();
 
+            container.FeatureFlagsCache = new DefaultFeatureFlagsCache();
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);

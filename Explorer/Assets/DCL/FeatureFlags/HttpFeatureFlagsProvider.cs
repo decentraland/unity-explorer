@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
@@ -32,7 +33,7 @@ namespace DCL.FeatureFlags
             if (options.UserId.HasValue)
                 headers["X-Address-Hash"] = options.UserId;
 
-            var result = webRequestController.GetAsync(new CommonArguments(fetchUrl), ct, "FEATURE_FLAGS",
+            var result = webRequestController.GetAsync(new CommonArguments(fetchUrl), ct, ReportCategory.FEATURE_FLAGS,
                 new WebRequestHeadersInfo(headers));
 
             FeatureFlagsResultDto response = await result.CreateFromJson<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft);

@@ -7,24 +7,23 @@ using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Minimap;
-using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.PerformanceAndDiagnostics.DotNetLogging;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -45,7 +44,7 @@ namespace Global.Dynamic
 
         [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
         private ContentServer remoteSceneContentServer = ContentServer.World;
-        
+
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -219,9 +218,9 @@ namespace Global.Dynamic
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
-                        StartParcel = startingParcel, 
-                        EnableLandscape = shouldEnableLandscape, 
-                        EnableLOD = enableLOD, 
+                        StartParcel = startingParcel,
+                        EnableLandscape = shouldEnableLandscape,
+                        EnableLOD = enableLOD,
                         HybridSceneParams = hybridSceneParams
                     }, backgroundMusic, ct
                 );
@@ -237,6 +236,8 @@ namespace Global.Dynamic
 
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
                     identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
+
+                await InitializeFeatureFlags(webRequestController, ct);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -328,6 +329,20 @@ namespace Global.Dynamic
         {
             IRealmController realmController = dynamicWorldContainer!.RealmController;
             await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+        }
+
+        private async UniTask InitializeFeatureFlags(IWebRequestController webRequestController, CancellationToken ct)
+        {
+            try
+            {
+                var featureFlagsProvider = new HttpFeatureFlagsProvider(webRequestController);
+                var featureFlagsConfig = await featureFlagsProvider.GetAsync(FeatureFlagOptions.Default, ct);
+                staticContainer!.FeatureFlagsCache.Configuration = featureFlagsConfig;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
+            }
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
