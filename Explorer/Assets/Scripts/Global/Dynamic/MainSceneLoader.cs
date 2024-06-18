@@ -336,7 +336,8 @@ namespace Global.Dynamic
             try
             {
                 var featureFlagsProvider = new HttpFeatureFlagsProvider(webRequestController);
-                var featureFlagsConfig = await featureFlagsProvider.GetAsync(FeatureFlagOptions.Default, ct);
+                // TODO: use ORG or ZONE depending on the current network set in the web3 account
+                var featureFlagsConfig = await featureFlagsProvider.GetAsync(FeatureFlagOptions.ORG, ct);
                 staticContainer!.FeatureFlagsCache.Configuration = featureFlagsConfig;
             }
             catch (Exception e) when (e is not OperationCanceledException)

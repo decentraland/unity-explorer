@@ -29,6 +29,7 @@ namespace DCL.FeatureFlags
 
             headers.Clear();
             headers["X-Debug"] = options.Debug ? "true" : "false";
+			headers["referer"] = options.Hostname;
 
             if (options.UserId.HasValue)
                 headers["X-Address-Hash"] = options.UserId;
