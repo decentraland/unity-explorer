@@ -97,7 +97,7 @@ namespace Global.Static
 
                 if (!string.IsNullOrEmpty(ownProfileJson))
                 {
-                    var ownProfile = new Profile();
+                    var ownProfile = Profile.Create();
                     JsonUtility.FromJson<ProfileJsonDto>(ownProfileJson).CopyTo(ownProfile);
                     await memoryProfileRepository.SetAsync(ownProfile, ct);
                 }
