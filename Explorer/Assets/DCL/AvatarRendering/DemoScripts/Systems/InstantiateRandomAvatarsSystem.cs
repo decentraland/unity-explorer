@@ -1,7 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using CommunicationData.URLHelpers;
 using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.AvatarShape;
@@ -311,7 +310,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             foreach (string wearable in wearables)
                 wearablesURN.Add(new URN(wearable));
 
-            var avatarShape = new Profile(
+            var avatarShape = Profile.Create(
                 StringUtils.GenerateRandomString(5),
                 StringUtils.GenerateRandomString(5),
                 new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
