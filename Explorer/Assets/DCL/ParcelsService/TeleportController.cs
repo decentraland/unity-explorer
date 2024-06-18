@@ -238,7 +238,6 @@ namespace DCL.ParcelsService
             world?.AddOrGet(playerEntity, intent);
         }
 
-
         private void ForceCameraLookAt(CameraLookAtIntent intent)
         {
             world?.AddOrGet(cameraEntity, intent);
