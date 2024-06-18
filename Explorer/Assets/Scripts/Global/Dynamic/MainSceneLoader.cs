@@ -237,7 +237,7 @@ namespace Global.Dynamic
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
                     identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
 
-                await InitializeFeatureFlags(webRequestController, ct);
+                await InitializeFeatureFlagsAsync(webRequestController, ct);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -331,7 +331,7 @@ namespace Global.Dynamic
             await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
         }
 
-        private async UniTask InitializeFeatureFlags(IWebRequestController webRequestController, CancellationToken ct)
+        private async UniTask InitializeFeatureFlagsAsync(IWebRequestController webRequestController, CancellationToken ct)
         {
             try
             {
