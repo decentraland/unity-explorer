@@ -26,6 +26,7 @@ using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Utility;
@@ -77,7 +78,7 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-            var a = new AnalyticsService();
+            var a = new AnalyticsService(ScriptableObject.CreateInstance<AnalyticsConfiguration>());
             EnsureNotNull();
             SetupInitialConfig();
 

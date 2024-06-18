@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using DCL.PerformanceAndDiagnostics.Analytics;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -209,12 +210,25 @@ namespace Editor
             if (options.TryGetValue("segmentWriteKey", out string segmentWriteKey))
             {
                 Console.WriteLine("Setting SEGMENT_WRITE_KEY Environment Variable for the build.");
-                Environment.SetEnvironmentVariable("SEGMENT_WRITE_KEY", segmentWriteKey);
+                WriteSegmentKeyToAnalyticsConfig(segmentWriteKey);
             }
 
             BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
             ReportSummary(buildSummary);
             ExitWithResult(buildSummary.result);
+        }
+
+        private static void WriteSegmentKeyToAnalyticsConfig(string segmentWriteKey)
+        {
+            const string CONFIG_ASSET_PATH = "Assets/AnalyticsConfiguration.asset";
+
+            AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(CONFIG_ASSET_PATH);
+            if (config == null)
+                throw new InvalidOperationException($"{nameof(AnalyticsConfiguration)} asset not found at path: {CONFIG_ASSET_PATH}, when trying to load it from AssetDatabase.");
+
+            config.WriteKey = segmentWriteKey;
+
+            AssetDatabase.SaveAssetIfDirty(config);
         }
 
         private static void ReportSummary(BuildSummary summary)
