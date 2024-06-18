@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.SDK.Components;
+using DCL.Multiplayer.SDK.Systems.SceneWorld;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using ECS.LifeCycle;
@@ -30,6 +31,7 @@ namespace DCL.PluginSystem.World
             WriteSDKAvatarBaseSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEquippedDataSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
+            WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
 
             ResetDirtyFlagSystem<Profile>.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
