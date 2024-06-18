@@ -67,7 +67,7 @@ jobs:
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
-          name: Decentraland_.*\.zip
+          name: Decentraland_.*
           name_is_regexp: true
           skip_unpack: true
 
