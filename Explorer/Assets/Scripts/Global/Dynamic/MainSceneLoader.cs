@@ -337,7 +337,10 @@ namespace Global.Dynamic
             {
                 var featureFlagsProvider = new HttpFeatureFlagsProvider(webRequestController);
                 // TODO: use ORG or ZONE depending on the current network set in the web3 account
-                var featureFlagsConfig = await featureFlagsProvider.GetAsync(FeatureFlagOptions.ORG, ct);
+                FeatureFlagOptions options = FeatureFlagOptions.ORG;
+                // TODO: when the identity is not set, should we request the FFs again after the authentication process?
+                options.UserId = identityCache!.Identity?.Address;
+                var featureFlagsConfig = await featureFlagsProvider.GetAsync(options, ct);
                 staticContainer!.FeatureFlagsCache.Configuration = featureFlagsConfig;
             }
             catch (Exception e) when (e is not OperationCanceledException)
