@@ -78,7 +78,6 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-            var a = new AnalyticsService(ScriptableObject.CreateInstance<AnalyticsConfiguration>());
             EnsureNotNull();
             SetupInitialConfig();
 
@@ -228,6 +227,8 @@ namespace Global.Dynamic
                         HybridSceneParams = hybridSceneParams
                     }, backgroundMusic, ct
                 );
+
+                new AnalyticsService(Resources.FindObjectsOfTypeAll<AnalyticsConfiguration>().FirstOrDefault());
 
                 if (!isLoaded)
                 {

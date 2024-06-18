@@ -220,13 +220,11 @@ namespace Editor
 
         private static void WriteSegmentKeyToAnalyticsConfig(string segmentWriteKey)
         {
-            const string CONFIG_ASSET_PATH = "Assets/AnalyticsConfiguration.asset";
-
-            AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(CONFIG_ASSET_PATH);
+            AnalyticsConfiguration config = Resources.FindObjectsOfTypeAll<AnalyticsConfiguration>().FirstOrDefault();
 
             if (config == null)
             {
-                Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found at path: {CONFIG_ASSET_PATH}, when trying to load it from AssetDatabase. Creating SO config file...");
+                Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found , when trying to load it from AssetDatabase. Creating SO config file via {nameof(ScriptableObject.CreateInstance)}");
                 config = ScriptableObject.CreateInstance<AnalyticsConfiguration>();
             }
 
