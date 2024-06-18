@@ -39,12 +39,12 @@ namespace DCL.FeatureFlags
 
             FeatureFlagsResultDto response = await result.CreateFromJson<FeatureFlagsResultDto>(WRJsonParser.Newtonsoft);
 
-            response = RemoveAppNameFromKeys(options.AppName, response);
+            response = StripAppNameFromKeys(options.AppName, response);
 
             return new FeatureFlagsConfiguration(response);
         }
 
-        private static FeatureFlagsResultDto RemoveAppNameFromKeys(string name, FeatureFlagsResultDto response)
+        private static FeatureFlagsResultDto StripAppNameFromKeys(string name, FeatureFlagsResultDto response)
         {
             Dictionary<string, bool> flags = new ();
 

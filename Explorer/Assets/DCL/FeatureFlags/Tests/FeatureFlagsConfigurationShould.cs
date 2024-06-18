@@ -23,11 +23,27 @@ namespace DCL.FeatureFlags.Tests
             Assert.IsTrue(configuration.IsEnabled(id));
         }
 
+        [TestCase("text-ff", "energy")]
+        [TestCase("json-ff", "users")]
+        [TestCase("csv-ff", "names")]
+        public void GetFeatureFlagVariantEnabled(string id, string variant)
+        {
+            Assert.IsTrue(configuration.IsEnabled(id, variant));
+        }
+
         [TestCase("non-existing-feature")]
         [TestCase("disabled-ff-1")]
         public void GetFeatureFlagDisabled(string id)
         {
             Assert.IsFalse(configuration.IsEnabled(id));
+        }
+
+        [TestCase("text-ff", "bleh")]
+        [TestCase("json-ff", "cha")]
+        [TestCase("csv-ff", "non-existent")]
+        public void GetFeatureFlagVariantDisabled(string id, string variant)
+        {
+            Assert.IsFalse(configuration.IsEnabled(id, variant));
         }
 
         [Test]
