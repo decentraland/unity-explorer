@@ -56,7 +56,7 @@ namespace Global.Static
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
-                
+
                 if (useStoredCredentials
 
                     // avoid storing invalid credentials
@@ -95,7 +95,7 @@ namespace Global.Static
 
                 if (!string.IsNullOrEmpty(ownProfileJson))
                 {
-                    var ownProfile = new Profile();
+                    var ownProfile = Profile.Create();
                     JsonUtility.FromJson<ProfileJsonDto>(ownProfileJson).CopyTo(ownProfile);
                     await memoryProfileRepository.SetAsync(ownProfile, ct);
                 }
