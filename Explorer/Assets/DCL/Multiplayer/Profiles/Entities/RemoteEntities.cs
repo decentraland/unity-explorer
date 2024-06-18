@@ -1,4 +1,5 @@
 using Arch.Core;
+using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
@@ -116,10 +117,17 @@ namespace DCL.Multiplayer.Profiles.Entities
         private Entity CreateCharacter(RemoteProfile profile, World world)
         {
             var transform = transformPool.Get()!;
+            transform.gameObject.layer = PhysicsLayers.OTHER_AVATARS_LAYER;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
             transform.SetParent(null);
             transform.rotation = Quaternion.identity;
             transform.localScale = Vector3.one;
+
+            var capsuleCollider = transform.gameObject.AddComponent<CapsuleCollider>();
+            capsuleCollider.isTrigger = true;
+            capsuleCollider.center = new Vector3(0, 1, 0);
+            capsuleCollider.radius = 0.5f;
+            capsuleCollider.height = 2f;
 
             var transformComp = new CharacterTransform(transform);
 
@@ -134,7 +142,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             );
 
             ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
-            
+
             return entity;
         }
 
@@ -142,15 +150,15 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             var entity = entityParticipantTable.Entity(remoteProfile.WalletId);
             var profile = remoteProfile.Profile;
-            
+
             if (world.TryGet(entity, out Profile? existingProfile))
                 if (existingProfile!.Version == profile.Version)
                     return;
-                
+
             world.Set(entity, profile);
             // Force to update the avatar through the profile
             profile.IsDirty = true;
-                
+
             ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
         }
     }
