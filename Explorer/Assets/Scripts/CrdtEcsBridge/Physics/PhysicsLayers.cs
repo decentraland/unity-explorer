@@ -32,7 +32,6 @@ namespace CrdtEcsBridge.Physics
         public static readonly int OTHER_AVATARS_LAYER = LayerMask.NameToLayer("OtherAvatars");
 
         public static readonly LayerMask PLAYER_ORIGIN_RAYCAST_MASK = (1 << ON_POINTER_EVENT_LAYER) | (1 << DEFAULT_LAYER) | (1 << OTHER_AVATARS_LAYER);
-
         public static readonly LayerMask CHARACTER_ONLY_MASK = (1 << DEFAULT_LAYER) | (1 << FLOOR_LAYER) | (1 << CHARACTER_ONLY_LAYER);
 
         public static bool LayerMaskHasAnySDKCustomLayer(ColliderLayer layerMask) =>
