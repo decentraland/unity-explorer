@@ -1,12 +1,13 @@
 name: Weekly Release
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: '10 0 * * 1'
-  # For testing only!
-  push:
-    branches:
-      - feat/unity-cloud-build
+  ## For testing only!
+  # push:
+  #   branches:
+  #     - feat/unity-cloud-build
 
 jobs:
   get-info:
@@ -34,8 +35,7 @@ jobs:
     uses: ./.github/workflows/build-unitycloud.yml
     with:
       profile: none
-      #cache: false
-      cache: true # Testing!
+      cache: false
       version: ${{ needs.get-info.outputs.full_version }}
     secrets: inherit
 
@@ -54,16 +54,6 @@ jobs:
           git tag $TAG
           git push origin $TAG
 
-#      - name: Aggregate commits since last tag
-#        id: get-commits
-#        run: |
-#          LATEST_TAG=${{ needs.get-info.outputs.latest_version }}
-#          echo "Latest version tag is $LATEST_TAG"
-#
-#          COMMITS=$(git log $LATEST_TAG..HEAD --pretty=format:"%h - %s (%an)")
-#          echo "$COMMITS"
-#          echo "commit_list=$COMMITS" >> "$GITHUB_OUTPUT"
-
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
@@ -71,29 +61,11 @@ jobs:
           name_is_regexp: true
           skip_unpack: true
 
-      # - name: Download Windows64 build
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: Decentraland_windows64
-      #     path: ./Decentraland_windows64.zip
-
-      # - name: Download MacOS build
-      #   uses: actions/download-artifact@v4
-      #   with:
-      #     name: Decentraland_macos
-      #     path: ./Decentraland_macos.zip
-
-      - name: Ls root debug
-        run: ls -lah .
-        shell: bash
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          #body: ${{ steps.get-commits.outputs.commit_list }} # manual release notes
-          #body_path: Path to file for release notes - for better formatting
           generate_release_notes: true
-          draft: true # testing
+          draft: true # Swap to auto-release!
           tag_name: ${{ needs.get-info.outputs.tag_version }}
           target_commitish: ${{ github.sha }}
           files: |
