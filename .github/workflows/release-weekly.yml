@@ -87,7 +87,8 @@ jobs:
           generate_release_notes: true
           draft: true # testing
           tag_name: ${{ needs.get-info.outputs.tag_version }}
+          target_commitish: ${{ github.sha }}
           files: |
-            Decentraland_windows64.zip
-            Decentraland_macos.zip
+            ./Decentraland_windows64.zip
+            ./Decentraland_macos.zip
           fail_on_unmatched_files: true
