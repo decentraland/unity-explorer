@@ -158,8 +158,7 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new ExtrapolationComponent()
             );
 
-            // TODO: (Santi) We need to add the avatarCollider into the global colliders cache in order to be able to access to its entity info when we click on it
-            //collidersGlobalCache.Associate(avatarCollider, ...)
+            collidersGlobalCache.Associate(avatarCollider, world.Reference(entity));
 
             ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
 

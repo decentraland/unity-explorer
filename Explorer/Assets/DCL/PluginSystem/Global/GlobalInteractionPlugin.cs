@@ -72,7 +72,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var playerInteractionEntity = new PlayerInteractionEntity(
-                builder.World.Create(new PlayerOriginRaycastResult(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
+                builder.World.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
                 builder.World);
 
             PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, dclInput.Camera.Point, entityCollidersGlobalCache,
