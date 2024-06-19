@@ -36,18 +36,6 @@ namespace Global.Dynamic
         [Header("Startup Config")]
         [SerializeField] private RealmLaunchSettings launchSettings;
 
-        // [SerializeField] private InitialRealm initialRealm;
-        // [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK, (int)InitialRealm.Goerli, (int)InitialRealm.StreamingWorld, (int)InitialRealm.TestScenes)] [SDKParcelPositionHelper]
-        // private Vector2Int targetScene;
-        // [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
-        // [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = IRealmNavigator.GOERLI_URL;
-        //
-        // [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
-        // private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
-        //
-        // [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
-        // private ContentServer remoteSceneContentServer = ContentServer.World;
-
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
