@@ -79,13 +79,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
                 if (collidersGlobalCache.TryGetSceneEntity(hitInfo.collider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
                     raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance);
-                else if (collidersGlobalCache.TryGetGlobalEntity(hitInfo.collider, out GlobalColliderGlobalEntityInfo globalEntityInfo))
+                else
+                    raycastResultForSceneEntities.Reset();
+
+                if (collidersGlobalCache.TryGetGlobalEntity(hitInfo.collider, out GlobalColliderGlobalEntityInfo globalEntityInfo))
                     raycastResultForGlobalEntities.SetupHit(hitInfo, globalEntityInfo, distance);
                 else
-                {
-                    raycastResultForSceneEntities.Reset();
                     raycastResultForGlobalEntities.Reset();
-                }
             }
             else
             {

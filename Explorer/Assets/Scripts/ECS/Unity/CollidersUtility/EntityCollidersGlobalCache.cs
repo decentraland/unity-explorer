@@ -10,7 +10,7 @@ namespace DCL.Interaction.Utility
     {
         private readonly Dictionary<IEntityCollidersSceneCache, SceneEcsExecutor> scenesInfo = new (PoolConstants.SCENES_COUNT);
         private readonly Dictionary<Collider, GlobalColliderSceneEntityInfo> colliderSceneEntityInfos = new (100 * PoolConstants.SCENES_COUNT);
-        private readonly Dictionary<Collider, GlobalColliderGlobalEntityInfo> colliderGlobalEntityInfos = new (100 * PoolConstants.SCENES_COUNT);
+        private readonly Dictionary<Collider, GlobalColliderGlobalEntityInfo> colliderGlobalEntityInfos = new (100 * PoolConstants.GLOBAL_WORLD_COUNT);
 
         public bool TryGetSceneEntity(Collider collider, out GlobalColliderSceneEntityInfo sceneEntity) =>
             colliderSceneEntityInfos.TryGetValue(collider, out sceneEntity);
