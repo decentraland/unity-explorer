@@ -167,9 +167,10 @@ namespace DCL.AuthenticationScreenFlow
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
         {
-            if (featureFlagsCache.Configuration == null
-                || !featureFlagsCache.Configuration.TryGetCsvPayload("user-allow-list", "wallets", out List<List<string>>? allowedUsersCsv))
-                return false;
+            if (featureFlagsCache.Configuration == null) return true;
+            if (!featureFlagsCache.Configuration.IsEnabled("user-allow-list", "wallets")) return true;
+            if (!featureFlagsCache.Configuration.TryGetCsvPayload("user-allow-list", "wallets", out List<List<string>>? allowedUsersCsv))
+                return true;
 
             bool isUserAllowed = allowedUsersCsv![0]
                .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
