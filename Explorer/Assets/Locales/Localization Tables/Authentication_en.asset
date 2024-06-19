@@ -93,6 +93,24 @@ MonoBehaviour:
     m_Metadata:
       m_Items:
       - rid: 1095376860581462025
+  - m_Id: 65641274080747520
+    m_Localized: Apply for alpha access
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65641370348412928
+    m_Localized: Use a different account
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65641847559544832
+    m_Localized: Please log in with a wallet address that has been granted access
+      to the private alpha of Desktop Client 2.0 or apply to join the alpha group
+      below.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65642051994116096
+    m_Localized: You Do Not Have Alpha Access
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds:
