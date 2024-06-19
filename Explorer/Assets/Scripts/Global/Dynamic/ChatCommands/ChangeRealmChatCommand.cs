@@ -32,15 +32,13 @@ namespace Global.Dynamic.ChatCommands
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
         private readonly IRealmNavigator realmNavigator;
-        private readonly IRealmController realmController;
 
         private string? worldName;
         private string? realmUrl;
 
-        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IRealmController realmController)
+        public ChangeRealmChatCommand(IRealmNavigator realmNavigator)
         {
             this.realmNavigator = realmNavigator;
-            this.realmController = realmController;
         }
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
@@ -61,9 +59,8 @@ namespace Global.Dynamic.ChatCommands
             if (match.Groups[3].Success && match.Groups[4].Success)
                 parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
 
-            realmController.IsSoloSceneLoading = match.Groups[5].Value is PARAM_SOLO or PARAM_ONLY;
-
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
+            bool isSoloSceneLoading = match.Groups[5].Value is PARAM_SOLO or PARAM_ONLY;
+            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct, isSoloSceneLoading, parcel);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";

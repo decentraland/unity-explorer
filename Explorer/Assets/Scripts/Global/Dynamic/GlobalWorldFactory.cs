@@ -25,6 +25,7 @@ using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.OneSceneLoading.Systems;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
@@ -134,6 +135,7 @@ namespace Global.Dynamic
                 partitionSettings);
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmController, realmPartitionSettings);
+            ResolveSoloSceneStateSystem.InjectToWorld(ref builder, playerEntity);
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 

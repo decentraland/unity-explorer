@@ -118,8 +118,8 @@ namespace Global.Dynamic
         {
             debugContainerBuilder.AddWidget("Realm")
                                  .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(string.Empty,
-                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
-                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
+                                      evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None, false).Forget(); }), string.Empty), null)
+                                 .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None, false).Forget(); });
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -272,8 +272,8 @@ namespace Global.Dynamic
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator, container.RealmController) },
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator, container.RealmController) },
+                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
+                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
             };
 
@@ -374,7 +374,7 @@ namespace Global.Dynamic
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
                     dclCursor,
-                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
+                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), false, CancellationToken.None).Forget()),
                 new NftPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),

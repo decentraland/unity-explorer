@@ -11,13 +11,11 @@ namespace Global.Dynamic
         GlobalWorld GlobalWorld { get; set; }
         Entity RealmEntity { get; }
 
-        UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
+        UniTask SetRealmAsync(URLDomain realm, bool isSolo, CancellationToken ct);
 
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
 
         IRealmData GetRealm();
-
-        bool IsSoloSceneLoading { get; set; }
 
         /// <summary>
         ///     Gracefully unload the current realm

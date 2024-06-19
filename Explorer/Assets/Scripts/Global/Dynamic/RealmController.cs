@@ -19,6 +19,7 @@ using System.Threading;
 using DCL.LOD.Components;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using ECS.SceneLifeCycle.OneSceneLoading;
 using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
 using UnityEngine;
@@ -79,7 +80,7 @@ namespace Global.Dynamic
             this.partitionDataContainer = partitionDataContainer;
         }
 
-        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
+        public async UniTask SetRealmAsync(URLDomain realm, bool isSolo, CancellationToken ct)
         {
             World world = globalWorld!.EcsWorld;
 
@@ -107,6 +108,9 @@ namespace Global.Dynamic
 
             if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, RealmEntity);
+            
+            if(isSolo)
+                world.Add<SoloScenePointers>(RealmEntity);
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;
@@ -120,8 +124,6 @@ namespace Global.Dynamic
 
         public IRealmData GetRealm() =>
             realmData;
-
-        public bool IsSoloSceneLoading { get; set; }
 
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {

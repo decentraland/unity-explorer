@@ -1,6 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using Arch.Core;
+using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using ECS.Prioritization;
+using ECS.SceneLifeCycle.OneSceneLoading;
 using ECS.SceneLifeCycle.Realm;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -19,15 +21,13 @@ namespace Global.Dynamic.ChatCommands
         public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+),(-?\d+)|{PARAM_RANDOM})?(?:\s+({PARAM_SOLO}|{PARAM_ONLY}))?$",RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
-        private readonly IRealmController realmController;
 
         private int x;
         private int y;
 
-        public TeleportToChatCommand(IRealmNavigator realmNavigator, IRealmController realmController)
+        public TeleportToChatCommand(IRealmNavigator realmNavigator)
         {
             this.realmNavigator = realmNavigator;
-            this.realmController = realmController;
         }
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
@@ -45,9 +45,9 @@ namespace Global.Dynamic.ChatCommands
                 y = Random.Range(GenesisCityData.MIN_PARCEL.y, GenesisCityData.MAX_SQUARE_CITY_PARCEL.y);
             }
 
-            realmController.IsSoloSceneLoading = match.Groups[4].Value is PARAM_SOLO or PARAM_ONLY;
+            bool isSoloSceneLoading = match.Groups[4].Value is PARAM_SOLO or PARAM_ONLY;
 
-            await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+            await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isSoloSceneLoading, isLocal);
 
             return ct.IsCancellationRequested
                 ? "🔴 Error. The operation was canceled!"

@@ -45,7 +45,7 @@ namespace Global.Dynamic
 
         [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
         private ContentServer remoteSceneContentServer = ContentServer.World;
-        
+
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -219,9 +219,9 @@ namespace Global.Dynamic
                     {
                         StaticLoadPositions = settings.StaticLoadPositions,
                         Realms = settings.Realms,
-                        StartParcel = startingParcel, 
-                        EnableLandscape = shouldEnableLandscape, 
-                        EnableLOD = enableLOD, 
+                        StartParcel = startingParcel,
+                        EnableLandscape = shouldEnableLandscape,
+                        EnableLOD = enableLOD,
                         HybridSceneParams = hybridSceneParams
                     }, backgroundMusic, ct
                 );
@@ -327,7 +327,7 @@ namespace Global.Dynamic
         private async UniTask ChangeRealmAsync(CancellationToken ct)
         {
             IRealmController realmController = dynamicWorldContainer!.RealmController;
-            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), false, ct);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
