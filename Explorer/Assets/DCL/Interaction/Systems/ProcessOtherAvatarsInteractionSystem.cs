@@ -3,30 +3,34 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
+using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
-using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
 using DCL.Profiles;
 using ECS.Abstract;
+using UnityEngine;
 
 namespace DCL.Interaction.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(PlayerOriginatedRaycastSystem))]
+    [UpdateAfter(typeof(ProcessPointerEventsSystem))]
     [LogCategory(ReportCategory.INPUT)]
     public partial class ProcessOtherAvatarsInteractionSystem : BaseUnityLoopSystem
     {
-        private readonly IEntityCollidersGlobalCache entityCollidersGlobalCache;
-        private readonly IEventSystem eventSystem;
+        private const string VIEW_PROFILE_TOOLTIP = "View Profile";
 
-        internal ProcessOtherAvatarsInteractionSystem(
-            World world,
-            IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            IEventSystem eventSystem) : base(world)
+        private readonly IEventSystem eventSystem;
+        private readonly DCLInput dclInput;
+        private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip = new (VIEW_PROFILE_TOOLTIP, InputAction.IaPointer);
+        private Profile? currentProfileHovered;
+
+        private ProcessOtherAvatarsInteractionSystem(World world, IEventSystem eventSystem, DCLInput dclInput) : base(world)
         {
-            this.entityCollidersGlobalCache = entityCollidersGlobalCache;
             this.eventSystem = eventSystem;
+            this.dclInput = dclInput;
+
+            dclInput.Player.Pointer.performed += OnPointerClick;
         }
 
         protected override void Update(float t)
@@ -34,9 +38,18 @@ namespace DCL.Interaction.Systems
             ProcessRaycastResultQuery(World);
         }
 
-        [Query]
-        private void ProcessRaycastResult(ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities)
+        public override void Dispose()
         {
+            dclInput.Player.Pointer.performed -= OnPointerClick;
+            base.Dispose();
+        }
+
+        [Query]
+        private void ProcessRaycastResult(ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities, ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
+        {
+            currentProfileHovered = null;
+            hoverFeedbackComponent.Tooltips.Remove(viewProfileTooltip);
+
             bool canHover = !eventSystem.IsPointerOverGameObject();
             GlobalColliderGlobalEntityInfo? entityInfo = raycastResultForGlobalEntities.GetEntityInfo();
 
@@ -45,10 +58,24 @@ namespace DCL.Interaction.Systems
 
             EntityReference entityRef = entityInfo.Value.EntityReference;
 
-            if (entityRef.IsAlive(World) && World.TryGet(entityRef, out Profile? profile))
-            {
-                // TODO (Santi): Continue here...
-            }
+            if (!entityRef.IsAlive(World) || !World.TryGet(entityRef, out Profile? profile))
+                return;
+
+            currentProfileHovered = profile;
+
+            hoverStateComponent.LastHitCollider = raycastResultForGlobalEntities.GetCollider();
+            hoverStateComponent.HasCollider = true;
+            hoverStateComponent.IsAtDistance = true;
+
+            hoverFeedbackComponent.Tooltips.Add(viewProfileTooltip);
+        }
+
+        private void OnPointerClick(UnityEngine.InputSystem.InputAction.CallbackContext context)
+        {
+            if (currentProfileHovered == null)
+                return;
+
+            Debug.LogError($"[SANTI LOG] Profile clicked: {currentProfileHovered.UserId}");
         }
     }
 }
