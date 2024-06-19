@@ -32,15 +32,15 @@ namespace Global.Dynamic.ChatCommands
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
         private readonly IRealmNavigator realmNavigator;
-        private readonly IRealmPartitionSettings realmPartitionSettings;
+        private readonly IRealmController realmController;
 
         private string? worldName;
         private string? realmUrl;
 
-        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IRealmPartitionSettings realmPartitionSettings)
+        public ChangeRealmChatCommand(IRealmNavigator realmNavigator, IRealmController realmController)
         {
             this.realmNavigator = realmNavigator;
-            this.realmPartitionSettings = realmPartitionSettings;
+            this.realmController = realmController;
         }
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
@@ -61,7 +61,7 @@ namespace Global.Dynamic.ChatCommands
             if (match.Groups[3].Success && match.Groups[4].Success)
                 parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
 
-            realmPartitionSettings.SoloSceneLoading = match.Groups[5].Value is PARAM_SOLO or PARAM_ONLY;
+            realmController.IsSoloSceneLoading = match.Groups[5].Value is PARAM_SOLO or PARAM_ONLY;
 
             bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct, parcel);
 

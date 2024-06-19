@@ -272,8 +272,8 @@ namespace Global.Dynamic
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator, staticContainer.RealmPartitionSettings) },
-                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator, staticContainer.RealmPartitionSettings) },
+                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator, container.RealmController) },
+                { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator, container.RealmController) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
             };
 
@@ -397,7 +397,8 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                dynamicWorldParams.HybridSceneParams);
+                dynamicWorldParams.HybridSceneParams,
+                container.RealmController);
 
             container.GlobalPlugins = globalPlugins;
 

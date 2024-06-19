@@ -121,6 +121,8 @@ namespace Global.Dynamic
         public IRealmData GetRealm() =>
             realmData;
 
+        public bool IsSoloSceneLoading { get; set; }
+
         private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
             world.Add(realmEntity, VolatileScenePointers.Create());

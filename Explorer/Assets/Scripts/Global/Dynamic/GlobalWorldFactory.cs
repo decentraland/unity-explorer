@@ -57,6 +57,7 @@ namespace Global.Dynamic
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
         private readonly CharacterContainer characterContainer;
+        private readonly IRealmController realmController;
 
         private readonly HybridSceneParams hybridSceneParams;
 
@@ -64,7 +65,7 @@ namespace Global.Dynamic
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, HybridSceneParams hybridSceneParams)
+            IScenesCache scenesCache, HybridSceneParams hybridSceneParams, IRealmController realmController)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -73,6 +74,7 @@ namespace Global.Dynamic
             staticSettings = staticContainer.StaticSettings;
             characterContainer = staticContainer.CharacterContainer;
             realmPartitionSettings = staticContainer.RealmPartitionSettings;
+            this.realmController = realmController;
 
             this.cameraSamplingData = cameraSamplingData;
             this.realmSamplingData = realmSamplingData;
@@ -99,7 +101,6 @@ namespace Global.Dynamic
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
             builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
-
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
@@ -132,7 +133,7 @@ namespace Global.Dynamic
             LoadPointersByIncreasingRadiusSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings,
                 partitionSettings);
 
-            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
+            ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmController, realmPartitionSettings);
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 

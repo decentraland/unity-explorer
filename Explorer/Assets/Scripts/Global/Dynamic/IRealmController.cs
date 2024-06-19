@@ -1,10 +1,8 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using ECS;
 using System.Threading;
-using UnityEngine;
 
 namespace Global.Dynamic
 {
@@ -18,6 +16,8 @@ namespace Global.Dynamic
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
 
         IRealmData GetRealm();
+
+        bool IsSoloSceneLoading { get; set; }
 
         /// <summary>
         ///     Gracefully unload the current realm

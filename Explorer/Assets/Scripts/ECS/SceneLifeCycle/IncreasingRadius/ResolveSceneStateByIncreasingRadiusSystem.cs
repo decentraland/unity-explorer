@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.LOD.Components;
 using DCL.Roads.Components;
+using Global.Dynamic;
 using Unity.Collections;
 using Unity.Jobs;
 using Utility;
@@ -35,14 +36,16 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
             .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo>();
 
+        private readonly IRealmController realmController;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
         internal JobHandle? sortingJobHandle;
 
         private NativeList<OrderedData> orderedData;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmController realmController, IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
+            this.realmController = realmController;
             this.realmPartitionSettings = realmPartitionSettings;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings
@@ -134,7 +137,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
 
-                    if (partitionComponent.IsPlayerInScene || partitionComponent.RawSqrDistance < maxLoadingSqrDistance)
+                    bool shouldLoad = realmController.IsSoloSceneLoading? partitionComponent.IsPlayerInScene : partitionComponent.RawSqrDistance < maxLoadingSqrDistance;
+                    if (shouldLoad)
                         orderedData.Add(new OrderedData
                         {
                             Entity = entity,
