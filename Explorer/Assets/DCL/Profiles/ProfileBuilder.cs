@@ -111,7 +111,7 @@ namespace DCL.Profiles
             this.bodyShape = bodyShape;
             return this;
         }
-        
+
         public ProfileBuilder WithVersion(int version)
         {
             this.version = version;
@@ -120,7 +120,7 @@ namespace DCL.Profiles
 
         public Profile Build()
         {
-            var profile = new Profile();
+            var profile = Profile.Create();
             profile.RealName = realName ?? "";
             profile.UserId = userId!;
             profile.Version = version;
