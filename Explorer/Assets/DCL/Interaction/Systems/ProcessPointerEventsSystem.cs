@@ -72,12 +72,12 @@ namespace DCL.Interaction.Systems
             if (raycastResultForSceneEntities.IsValidHit && canHover && entityInfo != null)
             {
                 SceneEcsExecutor ecsExecutor = entityInfo.Value.EcsExecutor;
-                ColliderEntityInfo colliderInfo = entityInfo.Value.ColliderEntityInfo;
+                ColliderSceneEntityInfo colliderSceneInfo = entityInfo.Value.ColliderSceneEntityInfo;
 
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
                 World world = ecsExecutor.World;
-                EntityReference entityRef = colliderInfo.EntityReference;
+                EntityReference entityRef = colliderSceneInfo.EntityReference;
 
                 // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
                 if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
@@ -86,7 +86,7 @@ namespace DCL.Interaction.Systems
                     hoverStateComponent.HasCollider = true;
 
                     bool newEntityWasHovered = !candidateForHoverLeaveIsValid
-                                               || (previousEntityInfo.EcsExecutor.World != world && previousEntityInfo.ColliderEntityInfo.EntityReference != entityRef);
+                                               || (previousEntityInfo.EcsExecutor.World != world && previousEntityInfo.ColliderSceneEntityInfo.EntityReference != entityRef);
 
                     // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
                     if (candidateForHoverLeaveIsValid && !newEntityWasHovered)

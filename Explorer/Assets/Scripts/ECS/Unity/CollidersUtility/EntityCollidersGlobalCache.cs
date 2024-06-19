@@ -28,10 +28,10 @@ namespace DCL.Interaction.Utility
             scenesInfo.Remove(entityCollidersSceneCache);
         }
 
-        public void Associate(Collider collider, IEntityCollidersSceneCache sceneCache, ColliderEntityInfo colliderEntityInfo)
+        public void Associate(Collider collider, IEntityCollidersSceneCache sceneCache, ColliderSceneEntityInfo colliderSceneEntityInfo)
         {
             if (scenesInfo.TryGetValue(sceneCache, out SceneEcsExecutor ecsExecutor))
-                colliderSceneEntityInfos[collider] = new GlobalColliderSceneEntityInfo(ecsExecutor, colliderEntityInfo);
+                colliderSceneEntityInfos[collider] = new GlobalColliderSceneEntityInfo(ecsExecutor, colliderSceneEntityInfo);
         }
 
         public void Associate(Collider collider, EntityReference entityReference)

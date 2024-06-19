@@ -17,6 +17,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
+using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -98,6 +99,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, entityCollidersGlobalCache, eventSystem);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }

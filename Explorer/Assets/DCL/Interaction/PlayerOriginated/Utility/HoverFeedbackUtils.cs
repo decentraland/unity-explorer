@@ -13,8 +13,8 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             World world = previousSceneEntityInfo.EcsExecutor.World;
 
             // Entity died or PointerEvents component was removed, nothing to do
-            if (!previousSceneEntityInfo.ColliderEntityInfo.EntityReference.IsAlive(world) ||
-                !world.TryGet(previousSceneEntityInfo.ColliderEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
+            if (!previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference.IsAlive(world) ||
+                !world.TryGet(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
                 return;
 
             TryAppendHoverInput(ref pbPointerEvents, in raycastResultForSceneEntities, PointerEventType.PetHoverLeave);

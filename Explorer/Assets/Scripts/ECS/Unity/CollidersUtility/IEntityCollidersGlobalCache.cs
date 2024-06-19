@@ -21,7 +21,7 @@ namespace DCL.Interaction.Utility
         ///     Associate a collider with a SCENE cache
         ///     where the information about the entity itself is stored
         /// </summary>
-        void Associate(Collider collider, IEntityCollidersSceneCache sceneCache, ColliderEntityInfo colliderEntityInfo);
+        void Associate(Collider collider, IEntityCollidersSceneCache sceneCache, ColliderSceneEntityInfo colliderSceneEntityInfo);
 
         /// <summary>
         ///     Associate a collider with the GLOBAL WORLD cache

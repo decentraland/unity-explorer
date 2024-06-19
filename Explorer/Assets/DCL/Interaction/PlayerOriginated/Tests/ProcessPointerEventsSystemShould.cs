@@ -56,7 +56,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
+            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
             PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(99);
 
@@ -82,7 +82,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
+            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
             PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(150);
 
@@ -121,11 +121,11 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
+            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
             PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(50);
 
-            world.Destroy(previousColliderSceneInfo.ColliderEntityInfo.EntityReference);
+            world.Destroy(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference);
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
@@ -134,7 +134,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
         private GlobalColliderSceneEntityInfo CreateColliderInfo() =>
             new (new SceneEcsExecutor(world),
-                new ColliderEntityInfo(world.Reference(world.Create(new CRDTEntity(123))), 123, ColliderLayer.ClPhysics));
+                new ColliderSceneEntityInfo(world.Reference(world.Create(new CRDTEntity(123))), 123, ColliderLayer.ClPhysics));
 
         private static PlayerOriginRaycastResultForSceneEntities GetRaycastAt(float distance)
         {

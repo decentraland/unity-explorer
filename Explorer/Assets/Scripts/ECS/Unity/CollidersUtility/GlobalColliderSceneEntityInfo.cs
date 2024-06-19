@@ -5,12 +5,12 @@ namespace DCL.Interaction.Utility
     public readonly struct GlobalColliderSceneEntityInfo
     {
         public readonly SceneEcsExecutor EcsExecutor;
-        public readonly ColliderEntityInfo ColliderEntityInfo;
+        public readonly ColliderSceneEntityInfo ColliderSceneEntityInfo;
 
-        public GlobalColliderSceneEntityInfo(SceneEcsExecutor ecsExecutor, ColliderEntityInfo colliderEntityInfo)
+        public GlobalColliderSceneEntityInfo(SceneEcsExecutor ecsExecutor, ColliderSceneEntityInfo colliderSceneEntityInfo)
         {
             EcsExecutor = ecsExecutor;
-            ColliderEntityInfo = colliderEntityInfo;
+            ColliderSceneEntityInfo = colliderSceneEntityInfo;
         }
     }
 }
