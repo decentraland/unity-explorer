@@ -327,7 +327,7 @@ namespace Global.Dynamic
         private async UniTask ChangeRealmAsync(CancellationToken ct)
         {
             IRealmController realmController = dynamicWorldContainer!.RealmController;
-            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), false, ct);
+            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

@@ -88,7 +88,7 @@ namespace Global.Dynamic
             this.globalWorldProxy = globalWorldProxy;
         }
 
-        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading, Vector2Int parcelToTeleport = default)
+        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false, Vector2Int parcelToTeleport = default)
         {
             if (realm == CurrentRealm || realm == realmController.GetRealm().Ipfs.CatalystBaseUrl)
             {
@@ -117,7 +117,7 @@ namespace Global.Dynamic
                         // By removing the CameraSamplingData, we stop the ring calculation
                         world.Remove<CameraSamplingData>(cameraEntity.Object);
 
-                        await ChangeRealmAsync(realm, isSoloSceneLoading, ct);
+                        await ChangeRealmAsync(realm, ct, isSoloSceneLoading);
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
 
                         AsyncLoadProcessReport? landscapeLoadReport
@@ -244,9 +244,9 @@ namespace Global.Dynamic
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
-        private async UniTask ChangeRealmAsync(URLDomain realm, bool isSoloSceneLoading, CancellationToken ct)
+        private async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false)
         {
-            await realmController.SetRealmAsync(realm, isSoloSceneLoading, ct);
+            await realmController.SetRealmAsync(realm, ct, isSoloSceneLoading);
             CurrentRealm = realm;
 
             await SwitchMiscVisibilityAsync();

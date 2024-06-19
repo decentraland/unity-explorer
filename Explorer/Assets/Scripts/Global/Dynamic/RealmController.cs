@@ -51,6 +51,7 @@ namespace Global.Dynamic
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
             set
             {
                 globalWorld = value;
@@ -80,7 +81,7 @@ namespace Global.Dynamic
             this.partitionDataContainer = partitionDataContainer;
         }
 
-        public async UniTask SetRealmAsync(URLDomain realm, bool isSolo, CancellationToken ct)
+        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false)
         {
             World world = globalWorld!.EcsWorld;
 
@@ -91,7 +92,7 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(
@@ -108,9 +109,11 @@ namespace Global.Dynamic
 
             if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, RealmEntity);
-            
-            if(isSolo)
+
+            if (isSoloSceneLoading && !world.Has<SoloScenePointers>(RealmEntity))
                 world.Add<SoloScenePointers>(RealmEntity);
+            else if (world.Has<SoloScenePointers>(RealmEntity))
+                world.Remove<SoloScenePointers>(RealmEntity);
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;

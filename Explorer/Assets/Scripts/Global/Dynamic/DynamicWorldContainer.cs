@@ -374,7 +374,7 @@ namespace Global.Dynamic
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
                     dclCursor,
-                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), false, CancellationToken.None).Forget()),
+                    realmUrl => container.RealmController.SetRealmAsync(URLDomain.FromString(realmUrl), CancellationToken.None).Forget()),
                 new NftPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, nftInfoAPIClient, staticContainer.WebRequestsContainer.WebRequestController, dclCursor),
                 staticContainer.CharacterContainer.CreateGlobalPlugin(),
                 staticContainer.QualityContainer.CreatePlugin(),
