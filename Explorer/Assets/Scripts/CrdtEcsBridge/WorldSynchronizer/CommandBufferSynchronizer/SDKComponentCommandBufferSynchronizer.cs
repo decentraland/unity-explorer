@@ -50,17 +50,9 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                     }
                     else
                     {
-                        try
-                        {
-                            ref T pointerToPrevObj = ref world.Get<T>(entity);
-                            componentPool.Release(pointerToPrevObj);
-                            pointerToPrevObj = c;
-                        }
-                        catch (Exception)
-                        {
-                            {}
-                            throw;
-                        }
+                        ref T pointerToPrevObj = ref world.Get<T>(entity);
+                        componentPool.Release(pointerToPrevObj);
+                        pointerToPrevObj = c;
                     }
 
                     break;
