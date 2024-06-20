@@ -51,15 +51,6 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
-        private void AddSceneVisualState([Data] Vector2Int parcel, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            // We need to force partition.IsDirty, so VisualSceneState will be added in the respective system
-            if (sceneDefinitionComponent.Parcels.Contains(parcel))
-                partition.IsDirty = true;
-        }
-
-        [Query]
         [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
         private void StartLoadingScene([Data] Vector2Int parcel, [Data] IIpfsRealm ipfsRealm, Entity entity,
             ref SceneDefinitionComponent sceneDefinitionComponent, in VisualSceneState visualSceneState, in PartitionComponent partitionComponent)
@@ -80,6 +71,15 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
                         break;
                 }
             }
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
+        private void AddSceneVisualState([Data] Vector2Int parcel, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            // We need to force partition.IsDirty for contained scene, so VisualSceneState will be added in the respective system
+            if (sceneDefinitionComponent.Parcels.Contains(parcel))
+                partition.IsDirty = true;
         }
 
         [Query]

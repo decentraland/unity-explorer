@@ -26,5 +26,7 @@ namespace Global.Dynamic
         ///     Dispose everything on application quit
         /// </summary>
         void DisposeGlobalWorld();
+
+        void SetSoloSceneLoading(bool isSolo);
     }
 }

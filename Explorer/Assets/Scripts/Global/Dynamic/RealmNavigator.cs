@@ -175,6 +175,8 @@ namespace Global.Dynamic
                 if (!isLocal && !isGenesis) { await TryChangeRealmAsync(genesisDomain, ct, isSoloSceneLoading, parcel); }
                 else
                 {
+                    realmController.SetSoloSceneLoading(isSoloSceneLoading);
+
                     await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
                         ct.ThrowIfCancellationRequested();

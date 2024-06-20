@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
@@ -20,9 +19,7 @@ using DCL.LOD.Components;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using ECS.SceneLifeCycle.OneSceneLoading;
-using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
-using UnityEngine;
 using Utility.Arch;
 
 namespace Global.Dynamic
@@ -111,16 +108,23 @@ namespace Global.Dynamic
             if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, RealmEntity);
 
-            if (isSoloSceneLoading)
-                world.TryAddSingle<SoloScenePointers>(RealmEntity);
-            else
-                world.TryRemove<SoloScenePointers>(RealmEntity);
+            SetSoloSceneLoading(isSoloSceneLoading);
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
             partitionDataContainer.Restart();
+        }
+
+        public void SetSoloSceneLoading(bool isSolo)
+        {
+            World world = globalWorld!.EcsWorld;
+
+            if (isSolo)
+                world.TryAddSingle<SoloScenePointers>(RealmEntity);
+            else
+                world.TryRemove<SoloScenePointers>(RealmEntity);
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
