@@ -1,3 +1,4 @@
+using DCL.CharacterPreview;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,5 +12,8 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public Button BackgroundButton { get; private set; }
+
+        [field: SerializeField]
+        public CharacterPreviewView CharacterPreviewView { get; private set; }
     }
 }
