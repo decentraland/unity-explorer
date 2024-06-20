@@ -461,12 +461,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3d1aa6130624aef8f718d1dc5f139a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialRealm: 0
-  targetScene: {x: 0, y: 0}
-  targetWorld: MetadyneLabs.dcl.eth
-  customRealm: https://peer.decentraland.org
-  remoteSceneID: bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q
-  remoteSceneContentServer: 0
+  launchSettings:
+    initialRealm: 0
+    targetScene: {x: 145, y: 60}
+    predefinedScenes:
+      enabled: 1
+      parcels:
+      - {x: 145, y: 60}
+    targetWorld: MetadyneLabs.dcl.eth
+    customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
+    remoteSceneID: bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q
+    remoteSceneContentServer: 0
   debugViewsCatalog:
     <Widget>k__BackingField: {fileID: 9197481963319205126, guid: f3bf08b2b62097d4aa0574f7bafa4a86, type: 3}
     <ControlContainer>k__BackingField: {fileID: 9197481963319205126, guid: 6da3ff28c8a87e0428fa07019c15fa2f, type: 3}

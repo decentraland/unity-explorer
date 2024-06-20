@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character.Components;
@@ -9,6 +10,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
 using DCL.Multiplayer.Movement;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -66,8 +68,8 @@ namespace DCL.Character.Plugin
             bucketPropagationLimit = settings.sceneBucketPropagationLimit;
         }
 
-        public WorldPlugin CreateWorldPlugin() =>
-            new (transform, exposedCameraData, bucketPropagationLimit);
+        public WorldPlugin CreateWorldPlugin(IComponentPoolsRegistry componentPoolsRegistry) =>
+            new (transform, exposedCameraData, componentPoolsRegistry, bucketPropagationLimit);
 
         public GlobalPlugin CreateGlobalPlugin() =>
             new (transform);
@@ -102,18 +104,21 @@ namespace DCL.Character.Plugin
             private readonly byte bucketPropagationLimit;
             private readonly IExposedCameraData exposedCameraData;
             private readonly ExposedTransform exposedTransform;
+            private readonly IComponentPool<SDKTransform> sdkTransformPool;
 
-            public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData, byte bucketPropagationLimit)
+            public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
+                IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
             {
                 this.exposedTransform = exposedTransform;
                 this.bucketPropagationLimit = bucketPropagationLimit;
                 this.exposedCameraData = exposedCameraData;
+                sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
             {
                 WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
-                    exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit);
+                    exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
                     sharedDependencies.ScenePartition, bucketPropagationLimit);

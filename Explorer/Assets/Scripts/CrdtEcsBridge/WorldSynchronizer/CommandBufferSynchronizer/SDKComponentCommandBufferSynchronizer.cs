@@ -4,6 +4,7 @@ using CRDT.Protocol;
 using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using JetBrains.Annotations;
+using System;
 using UnityEngine;
 
 namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer

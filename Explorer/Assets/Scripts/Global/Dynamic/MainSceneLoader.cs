@@ -33,17 +33,7 @@ namespace Global.Dynamic
     public class MainSceneLoader : MonoBehaviour
     {
         [Header("Startup Config")]
-        [SerializeField] private InitialRealm initialRealm;
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK, (int)InitialRealm.Goerli, (int)InitialRealm.StreamingWorld, (int)InitialRealm.TestScenes)] [SDKParcelPositionHelper]
-        private Vector2Int targetScene;
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = IRealmNavigator.GOERLI_URL;
-
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
-        private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
-
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
-        private ContentServer remoteSceneContentServer = ContentServer.World;
+        [SerializeField] private RealmLaunchSettings launchSettings;
 
         [Space]
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
@@ -189,23 +179,6 @@ namespace Global.Dynamic
 
                 bool shouldEnableLandscape = enableLandscape;
 
-                var hybridSceneParams = new HybridSceneParams();
-
-                if (initialRealm == InitialRealm.Localhost)
-                {
-                    hybridSceneParams.EnableHybridScene = true;
-                    hybridSceneParams.HybridSceneID = remoteSceneID;
-
-                    hybridSceneParams.HybridSceneContent =
-                        remoteSceneContentServer switch
-                        {
-                            ContentServer.Genesis => IRealmNavigator.GENESIS_CONTENT_URL,
-                            ContentServer.Goerli => IRealmNavigator.GOERLI_CONTENT_URL,
-                            ContentServer.World => IRealmNavigator.WORLDS_CONTENT_URL,
-                            _ => throw new ArgumentOutOfRangeException()
-                        };
-                }
-
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
                     {
@@ -221,12 +194,12 @@ namespace Global.Dynamic
                     },
                     new DynamicWorldParams
                     {
-                        StaticLoadPositions = settings.StaticLoadPositions,
+                        StaticLoadPositions = launchSettings.GetPredefinedParcels(),
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
                         EnableLandscape = shouldEnableLandscape,
                         EnableLOD = enableLOD,
-                        HybridSceneParams = hybridSceneParams
+                        HybridSceneParams = launchSettings.CreateHybridSceneParams(),
                     },
                     backgroundMusic,
                     ct
@@ -305,21 +278,8 @@ namespace Global.Dynamic
 
         private void SetupInitialConfig()
         {
-            startingRealm = initialRealm switch
-                            {
-                                InitialRealm.GenesisCity => IRealmNavigator.GENESIS_URL,
-                                InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
-                                InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
-                                InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
-                                InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,
-                                InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + "/" + targetWorld,
-                                InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
-                                InitialRealm.Custom => customRealm,
-                                _ => startingRealm,
-                            };
-
-            bool hasTargetScene = initialRealm is InitialRealm.SDK or InitialRealm.Goerli or InitialRealm.StreamingWorld or InitialRealm.TestScenes;
-            startingParcel = hasTargetScene ? targetScene : settings.StartPosition;
+            startingRealm = launchSettings.GetStartingRealm();
+            startingParcel = launchSettings.TargetScene;
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)

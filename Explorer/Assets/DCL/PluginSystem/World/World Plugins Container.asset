@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e7669db769f7224e94ce1be19e8677e, type: 3}
+  m_Script: {fileID: 11500000, guid: 2aed5320fe8649ef96f822d64d030b2a, type: 3}
   m_Name: World Plugins Container
   m_EditorClassIdentifier: 
   settings:
