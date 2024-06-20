@@ -19,7 +19,6 @@ namespace ECS.Prioritization
             public bool IsDirty;
             public byte Bucket;
             public bool IsBehind;
-            public bool IsPlayerInScene;
             public bool OutOfRange;
             public float RawSqrDistance;
         }
@@ -65,7 +64,6 @@ namespace ECS.Prioritization
         public struct ScenePartitionParallelJob : IJobParallelFor
         {
             public float3 CameraPosition;
-            public float2 PlayerPosition;
             public float3 CameraForward;
             public float UnloadingSqrDistance;
             [ReadOnly] public NativeArray<int> SqrDistanceBuckets;
@@ -77,7 +75,6 @@ namespace ECS.Prioritization
                 this.partitions = partitions;
                 ParcelCorners = default(UnsafeList<ParcelCornersData>);
                 CameraPosition = default;
-                PlayerPosition = default;
                 CameraForward = default;
                 SqrDistanceBuckets = default(NativeArray<int>);
                 UnloadingSqrDistance = default;
@@ -95,7 +92,6 @@ namespace ECS.Prioritization
 
                 // Is Behind must be calculated for each parcel the scene contains
                 partition.IsBehind = true;
-                partition.IsPlayerInScene = false;
 
                 float minSqrMagnitude = float.MaxValue;
 
@@ -120,8 +116,6 @@ namespace ECS.Prioritization
                     ProcessCorners(parcelCorners.minXmaxZ, ref partition, ref CameraPosition, ref CameraForward);
                     ProcessCorners(parcelCorners.maxXminZ, ref partition, ref CameraPosition, ref CameraForward);
                     ProcessCorners(parcelCorners.maxXZ, ref partition, ref CameraPosition, ref CameraForward);
-
-                    partition.IsPlayerInScene = PlayerPosition.IsInside(parcelCorners);
                 }
 
                 // Find the bucket

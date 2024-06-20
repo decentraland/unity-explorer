@@ -37,16 +37,14 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             .WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>()
             .WithNone<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>, SceneLODInfo, RoadInfo>();
 
-        private readonly IRealmController realmController;
         private readonly IRealmPartitionSettings realmPartitionSettings;
 
         internal JobHandle? sortingJobHandle;
 
         private NativeList<OrderedData> orderedData;
 
-        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmController realmController, IRealmPartitionSettings realmPartitionSettings) : base(world)
+        internal ResolveSceneStateByIncreasingRadiusSystem(World world, IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
-            this.realmController = realmController;
             this.realmPartitionSettings = realmPartitionSettings;
 
             // Set initial capacity to 1/3 of the total capacity required for all rings

@@ -164,7 +164,7 @@ namespace Global.Dynamic
             await waitForSceneReadiness;
         }
 
-        public async UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isSoloSceneLoading, bool isLocal = false)
+        public async UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isSoloSceneLoading = false, bool isLocal = false)
         {
             ct.ThrowIfCancellationRequested();
 

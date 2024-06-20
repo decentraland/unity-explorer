@@ -26,9 +26,9 @@ namespace ECS.SceneLifeCycle.Realm
 
         URLDomain CurrentRealm { get; }
 
-        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading, Vector2Int parcelToTeleport = default);
+        UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false, Vector2Int parcelToTeleport = default);
 
-        UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isSoloSceneLoading, bool isLocal = false);
+        UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isSoloSceneLoading = false, bool isLocal = false);
 
         UniTask InitializeTeleportToSpawnPointAsync(AsyncLoadProcessReport teleportLoadReport, CancellationToken ct, Vector2Int parcelToTeleport = default);
 

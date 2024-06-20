@@ -46,14 +46,12 @@ namespace ECS.SceneLifeCycle.Systems
         private bool isRunningJob;
 
         internal PartitionSceneEntitiesSystem(World world,
-            ICharacterObject playerCharacter,
             IComponentPool<PartitionComponent> partitionComponentPool,
             IPartitionSettings partitionSettings,
             IReadOnlyCameraSamplingData readOnlyCameraSamplingData,
             PartitionDataContainer partitionDataContainer,
             IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
-            this.playerCharacter = playerCharacter;
             this.partitionComponentPool = partitionComponentPool;
             this.readOnlyCameraSamplingData = readOnlyCameraSamplingData;
             this.partitionDataContainer = partitionDataContainer;
@@ -95,7 +93,7 @@ namespace ECS.SceneLifeCycle.Systems
                 float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
                                           * PARCEL_SIZE;
                 float unloadingSqrDistance = unloadingDistance * unloadingDistance;
-                partitionJobHandle = partitionDataContainer.ScheduleJob(playerCharacter.Position.ToFloat2(), readOnlyCameraSamplingData, unloadingSqrDistance);
+                partitionJobHandle = partitionDataContainer.ScheduleJob(readOnlyCameraSamplingData, unloadingSqrDistance);
                 isRunningJob = true;
             }
         }

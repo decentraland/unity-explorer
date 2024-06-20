@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Tests
             componentPool.Get().Returns(_ => new PartitionComponent());
             var realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
 
-            system = new PartitionSceneEntitiesSystem(world, null, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
+            system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
             system.partitionDataContainer.Restart();
         }
 

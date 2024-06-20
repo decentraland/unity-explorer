@@ -61,7 +61,7 @@ namespace DCL.TeleportPrompt
                 if (result != TeleportPromptResultType.Approved)
                     return;
 
-                realmNavigator.TryInitializeTeleportToParcelAsync(inputData.Coords, new CancellationToken(), false).Forget();
+                realmNavigator.TryInitializeTeleportToParcelAsync(inputData.Coords, new CancellationToken()).Forget();
             });
         }
 

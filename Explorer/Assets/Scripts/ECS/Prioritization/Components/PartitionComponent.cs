@@ -13,7 +13,6 @@ namespace ECS.Prioritization.Components
         {
             Bucket = 0,
             IsBehind = false,
-            IsPlayerInScene = false,
         };
 
         /// <summary>
@@ -41,7 +40,6 @@ namespace ECS.Prioritization.Components
         ///     Indicates if entity position is counted as behind the forward vector of the camera
         /// </summary>
         public bool IsBehind { get; set; }
-        public bool IsPlayerInScene { get; set; }
 
         public bool Equals(IPartitionComponent other) =>
             Bucket == other.Bucket && IsBehind == other.IsBehind;

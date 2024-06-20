@@ -37,21 +37,31 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
 
-            ProcessRealmQuery(World, parcel);
+            ProcessRealmWithSoloLoadingQuery(World, parcel);
             StartUnloadingQuery(World, parcel);
         }
 
         [Query]
         [All(typeof(SoloScenePointers))]
         [None(typeof(StaticScenePointers))]
-        private void ProcessRealm([Data] Vector2Int parcel, ref RealmComponent realm)
+        private void ProcessRealmWithSoloLoading([Data] Vector2Int parcel, ref RealmComponent realm)
         {
             StartLoadingSceneQuery(World, parcel, realm.Ipfs);
+            AddSceneVisualStateQuery(World, parcel);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
+        private void AddSceneVisualState([Data] Vector2Int parcel, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
+        {
+            // We need to force partition.IsDirty, so VisualSceneState will be added in the respective system
+            if (sceneDefinitionComponent.Parcels.Contains(parcel))
+                partition.IsDirty = true;
         }
 
         [Query]
         [None(typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
-        private void StartLoadingScene([Data] Vector2Int parcel, [Data] IIpfsRealm ipfsRealm ,Entity entity,
+        private void StartLoadingScene([Data] Vector2Int parcel, [Data] IIpfsRealm ipfsRealm, Entity entity,
             ref SceneDefinitionComponent sceneDefinitionComponent, in VisualSceneState visualSceneState, in PartitionComponent partitionComponent)
         {
             if (sceneDefinitionComponent.Parcels.Contains(parcel))
@@ -77,10 +87,7 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
         [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(RoadInfo))]
         private void StartUnloading([Data] Vector2Int parcel, in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!sceneDefinitionComponent.Parcels.Contains(parcel))
-            {
-                World.Add(entity, DeleteEntityIntention.DeferredDeletion);
-            }
+            if (!sceneDefinitionComponent.Parcels.Contains(parcel)) { World.Add(entity, DeleteEntityIntention.DeferredDeletion); }
         }
     }
 }

@@ -23,6 +23,7 @@ using ECS.SceneLifeCycle.OneSceneLoading;
 using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
 using UnityEngine;
+using Utility.Arch;
 
 namespace Global.Dynamic
 {
@@ -110,10 +111,10 @@ namespace Global.Dynamic
             if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, RealmEntity);
 
-            if (isSoloSceneLoading && !world.Has<SoloScenePointers>(RealmEntity))
-                world.Add<SoloScenePointers>(RealmEntity);
-            else if (world.Has<SoloScenePointers>(RealmEntity))
-                world.Remove<SoloScenePointers>(RealmEntity);
+            if (isSoloSceneLoading)
+                world.TryAddSingle<SoloScenePointers>(RealmEntity);
+            else
+                world.TryRemove<SoloScenePointers>(RealmEntity);
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;

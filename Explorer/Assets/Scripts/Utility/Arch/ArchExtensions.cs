@@ -12,6 +12,14 @@ namespace Utility.Arch
             return true;
         }
 
+        public static bool TryAddSingle<T>(this World world, Entity entity)
+        {
+            if (!world.Has<T>(entity)) return false;
+
+            world.Add<T>(entity);
+            return true;
+        }
+
         public static void AddOrSet<T>(this World world, Entity entity, T component)
         {
             ref var existingComponent = ref world.AddOrGet(entity, component);
