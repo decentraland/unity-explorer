@@ -167,6 +167,9 @@ namespace DCL.AuthenticationScreenFlow
 
         private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
         {
+#if UNITY_EDITOR
+            return true;
+#else
             if (featureFlagsCache.Configuration == null) return true;
             if (!featureFlagsCache.Configuration.IsEnabled("user-allow-list", "wallets")) return true;
             if (!featureFlagsCache.Configuration.TryGetCsvPayload("user-allow-list", "wallets", out List<List<string>>? allowedUsersCsv))
@@ -176,6 +179,7 @@ namespace DCL.AuthenticationScreenFlow
                .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
 
             return isUserAllowed;
+#endif
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
