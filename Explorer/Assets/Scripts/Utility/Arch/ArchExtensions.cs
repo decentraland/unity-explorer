@@ -14,10 +14,13 @@ namespace Utility.Arch
 
         public static bool TryAddSingle<T>(this World world, Entity entity)
         {
-            if (!world.Has<T>(entity)) return false;
+            if (!world.Has<T>(entity))
+            {
+                world.Add<T>(entity);
+                return true;
+            }
 
-            world.Add<T>(entity);
-            return true;
+            return false;
         }
 
         public static void AddOrSet<T>(this World world, Entity entity, T component)

@@ -38,7 +38,6 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
 
             ProcessRealmWithSoloLoadingQuery(World, parcel);
-            StartUnloadingQuery(World, parcel);
         }
 
         [Query]
@@ -48,6 +47,7 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
         {
             StartLoadingSceneQuery(World, parcel, realm.Ipfs);
             AddSceneVisualStateQuery(World, parcel);
+            StartUnloadingQuery(World, parcel);
         }
 
         [Query]
@@ -87,7 +87,8 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
         [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(RoadInfo))]
         private void StartUnloading([Data] Vector2Int parcel, in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!sceneDefinitionComponent.Parcels.Contains(parcel)) { World.Add(entity, DeleteEntityIntention.DeferredDeletion); }
+            if (!sceneDefinitionComponent.Parcels.Contains(parcel))
+                World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
     }
 }

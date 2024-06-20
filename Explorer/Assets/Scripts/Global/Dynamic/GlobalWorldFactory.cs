@@ -134,6 +134,7 @@ namespace Global.Dynamic
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
             ResolveSoloSceneStateSystem.InjectToWorld(ref builder, playerEntity);
+
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
