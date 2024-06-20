@@ -3,13 +3,14 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Diagnostics;
-using DCL.ECSComponents;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
 using DCL.Profiles;
 using ECS.Abstract;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using InputAction = DCL.ECSComponents.InputAction;
 
 namespace DCL.Interaction.Systems
 {
@@ -30,7 +31,7 @@ namespace DCL.Interaction.Systems
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
 
-            dclInput.Player.Pointer.performed += OnPointerClick;
+            dclInput.Player.Pointer.performed += OpenPassport;
         }
 
         protected override void Update(float t)
@@ -40,7 +41,7 @@ namespace DCL.Interaction.Systems
 
         public override void Dispose()
         {
-            dclInput.Player.Pointer.performed -= OnPointerClick;
+            dclInput.Player.Pointer.performed -= OpenPassport;
             base.Dispose();
         }
 
@@ -70,9 +71,9 @@ namespace DCL.Interaction.Systems
             hoverFeedbackComponent.Tooltips.Add(viewProfileTooltip);
         }
 
-        private void OnPointerClick(UnityEngine.InputSystem.InputAction.CallbackContext context)
+        private void OpenPassport(UnityEngine.InputSystem.InputAction.CallbackContext context)
         {
-            if (currentProfileHovered == null)
+            if (context.control.IsPressed() || currentProfileHovered == null)
                 return;
 
             Debug.LogError($"[SANTI LOG] Profile clicked: {currentProfileHovered.UserId}");
