@@ -68,6 +68,6 @@ namespace Global.Dynamic
                    };
         }
 
-        public bool IsSoloSceneLoading => IsSoloSceneLoading;
+        public bool IsSoloSceneLoading => isSoloSceneLoading;
     }
 }
