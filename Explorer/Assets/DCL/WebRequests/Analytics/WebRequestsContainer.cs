@@ -57,8 +57,8 @@ namespace DCL.WebRequests.Analytics
             public readonly IElementBinding<float> Delay;
 
             public ElementBindingOptions() : this(
-                new PersistentElementBinding<bool>(PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false).WithCached()),
-                new PersistentElementBinding<float>(PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10).WithCached())
+                new PersistentElementBinding<bool>(PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false)),
+                new PersistentElementBinding<float>(PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10))
             ) { }
 
             public ElementBindingOptions(IElementBinding<bool> enable, IElementBinding<float> delay)

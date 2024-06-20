@@ -28,7 +28,7 @@ namespace Utility.Storage
             return new PersistentSetting<int>(key, defaultValue);
         }
 
-        public static PersistentSetting<T> WithSetForceDefaultValue<T>(this PersistentSetting<T> persistentSetting) where T : IEquatable<T>
+        public static PersistentSetting<T> WithSetForceDefaultValue<T>(this PersistentSetting<T> persistentSetting) where T: IEquatable<T>
         {
             persistentSetting.Value = persistentSetting.defaultValue;
             return persistentSetting;
@@ -100,15 +100,10 @@ namespace Utility.Storage
         }
     }
 
-    public interface ISetting<T>
-    {
-        T Value { get; set; }
-    }
-
     /// <summary>
     ///     Value which is stored in PlayerPrefs at runtime and can override values coming from presets
     /// </summary>
-    public readonly struct PersistentSetting<T> : ISetting<T> where T : IEquatable<T>
+    public readonly struct PersistentSetting<T>
     {
         private static Func<string, T, T>? getValue;
         private static Action<string, T>? setValue;
@@ -149,42 +144,11 @@ namespace Utility.Storage
             }
         }
 
-        public CachedSetting<T, PersistentSetting<T>> WithCached() =>
-            new (this);
-
         [Conditional("DEBUG")]
         private void EnsureMainThread()
         {
             if (PlayerLoopHelper.IsMainThread == false)
                 throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread, key: {key}, current thread: {Thread.CurrentThread.ManagedThreadId}, main thread: {PlayerLoopHelper.MainThreadId}");
-        }
-    }
-
-    public struct CachedSetting<T, TK> : ISetting<T> where TK: ISetting<T> where T: IEquatable<T>
-    {
-        private TK origin;
-        private T? cache;
-
-        public CachedSetting(TK origin) : this()
-        {
-            this.origin = origin;
-        }
-
-        public T Value
-        {
-            get
-            {
-                if (cache == null || cache.Equals(default(T)!))
-                    cache = origin.Value;
-
-                return cache;
-            }
-
-            set
-            {
-                origin.Value = value;
-                cache = default(T?);
-            }
         }
     }
 }

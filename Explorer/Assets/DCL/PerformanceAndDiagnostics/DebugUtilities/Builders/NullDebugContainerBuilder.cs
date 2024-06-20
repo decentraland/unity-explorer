@@ -18,7 +18,7 @@ namespace DCL.DebugUtilities
 
         public IReadOnlyDictionary<string, DebugWidget> Widgets { get; } = new Dictionary<string, DebugWidget>();
 
-        public void Build(UIDocument debugRootCanvas)
+        public void BuildWithFlex(UIDocument debugRootCanvas)
         {
             //ignore
         }
