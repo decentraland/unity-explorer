@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Global.Dynamic
 {
@@ -20,6 +21,7 @@ namespace Global.Dynamic
         [SerializeField] private InitialRealm initialRealm;
         [SerializeField] private Vector2Int targetScene;
         [SerializeField] private PredefinedScenes predefinedScenes;
+        [SerializeField] private bool isSoloSceneLoading;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] private string customRealm = IRealmNavigator.GOERLI_URL;
         [SerializeField] private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
@@ -65,5 +67,7 @@ namespace Global.Dynamic
                        _ => IRealmNavigator.GENESIS_URL,
                    };
         }
+
+        public bool IsSoloSceneLoading => IsSoloSceneLoading;
     }
 }

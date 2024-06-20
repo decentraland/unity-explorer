@@ -17,6 +17,7 @@ namespace Global.Editor
         private const string REMOTE_SCENE_ID_FIELD_NAME = "remoteSceneID";
         private const string REMOTE_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteSceneContentServer";
         private const string PREDEFINED_SCENES_FIELD_NAME = "predefinedScenes";
+        private const string IS_SOLO_SCENE_LOADING_FIELD_NAME = "isSoloSceneLoading";
 
         private static readonly Dictionary<string, Vector2Int> SCENES = new ()
         {
@@ -167,8 +168,17 @@ namespace Global.Editor
             position = DrawCustomRealm(position, property, initialRealmValue);
             position = DrawLocalhost(position, property, initialRealmValue);
             position = DrawPredefinedScenes(position, property);
+            position = DrawIsSoloSceneLoading(position, property);
 
             EditorGUI.EndProperty();
+        }
+
+        private static Rect DrawIsSoloSceneLoading(Rect position, SerializedProperty parent)
+        {
+            SerializedProperty property = parent.FindPropertyRelative(IS_SOLO_SCENE_LOADING_FIELD_NAME);
+            EditorGUI.PropertyField(position, property);
+            position.y += singleLineHeight;
+            return position;
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -189,7 +199,7 @@ namespace Global.Editor
                     break;
             }
 
-            float height = fieldsCount * singleLineHeight;
+            float height = (fieldsCount * singleLineHeight) + singleLineHeight;
 
             SerializedProperty predefinedList = property.FindPropertyRelative(PREDEFINED_SCENES_FIELD_NAME);
 
