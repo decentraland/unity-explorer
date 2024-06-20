@@ -2,13 +2,15 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.Utility;
+using DCL.Passport;
 using DCL.Profiles;
 using ECS.Abstract;
-using UnityEngine;
+using MVC;
 using UnityEngine.InputSystem;
 using InputAction = DCL.ECSComponents.InputAction;
 
@@ -23,13 +25,19 @@ namespace DCL.Interaction.Systems
 
         private readonly IEventSystem eventSystem;
         private readonly DCLInput dclInput;
+        private readonly IMVCManager mvcManager;
         private readonly HoverFeedbackComponent.Tooltip viewProfileTooltip = new (VIEW_PROFILE_TOOLTIP, InputAction.IaPointer);
         private Profile? currentProfileHovered;
 
-        private ProcessOtherAvatarsInteractionSystem(World world, IEventSystem eventSystem, DCLInput dclInput) : base(world)
+        private ProcessOtherAvatarsInteractionSystem(
+            World world,
+            IEventSystem eventSystem,
+            DCLInput dclInput,
+            IMVCManager mvcManager) : base(world)
         {
             this.eventSystem = eventSystem;
             this.dclInput = dclInput;
+            this.mvcManager = mvcManager;
 
             dclInput.Player.Pointer.performed += OpenPassport;
         }
@@ -76,7 +84,15 @@ namespace DCL.Interaction.Systems
             if (context.control.IsPressed() || currentProfileHovered == null)
                 return;
 
-            Debug.LogError($"[SANTI LOG] Profile clicked: {currentProfileHovered.UserId}");
+            OpenPassportAsync(currentProfileHovered.UserId).Forget();
+        }
+
+        private async UniTask OpenPassportAsync(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+                return;
+
+            await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)));
         }
     }
 }

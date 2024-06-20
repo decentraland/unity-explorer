@@ -319,7 +319,7 @@ namespace Global.Dynamic
                 ),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, container.DebugContainer.Builder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
-                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
+                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, container.MvcManager),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dclInput),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog), new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, staticContainer.AssetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, ASSET_BUNDLES_URL),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
@@ -384,7 +384,8 @@ namespace Global.Dynamic
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
-                new RealmDataDirtyFlagPlugin(staticContainer.RealmData)
+                new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
+                new PassportPlugin(staticContainer.AssetsProvisioner, container.MvcManager, dclCursor),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

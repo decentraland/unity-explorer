@@ -38,6 +38,7 @@ MonoBehaviour:
   - rid: 6697045322133929986
   - rid: 4132209997426458630
   - rid: 758312859982102531
+  - rid: 6338833433605439490
   references:
     version: 2
     RefIds:
@@ -427,6 +428,14 @@ MonoBehaviour:
       data:
         <spatialStateSettings>k__BackingField:
           m_AssetGUID: 495d936d8dfe78444abfd5ff3e260159
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 6338833433605439490
+      type: {class: PassportPlugin/PassportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        PassportPrefab:
+          m_AssetGUID: bf1104b23d6ed8f4ab84e9a0da93e10d
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
