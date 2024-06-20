@@ -1,9 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using DCL.Character;
 using DCL.Optimization.Pools;
-using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
@@ -12,7 +10,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
-using Utility;
 using static ECS.Prioritization.ScenesPartitioningUtils;
 using static Utility.ParcelMathHelper;
 
@@ -33,7 +30,6 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private const int DEPLOYED_SCENES_LIMIT = 90000; // 300x300 scenes (without empty)
 
-        private readonly ICharacterObject playerCharacter;
         private readonly IComponentPool<PartitionComponent> partitionComponentPool;
         private readonly IReadOnlyCameraSamplingData readOnlyCameraSamplingData;
         private readonly IRealmPartitionSettings realmPartitionSettings;
