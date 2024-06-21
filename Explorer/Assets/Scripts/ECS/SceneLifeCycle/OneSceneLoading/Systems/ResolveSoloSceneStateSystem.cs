@@ -47,8 +47,7 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
         {
             StartLoadingSceneQuery(World, parcel, realm.Ipfs);
             StartUnloadingQuery(World, parcel);
-            AddSceneVisualStateQuery(World, parcel);
-            DebugingQuery(World, parcel);
+            // DebugingQuery(World, parcel);
         }
 
         [Query]
@@ -73,7 +72,7 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
                 if (World.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity))
                 {
                     AssetPromise<ISceneFacade, GetSceneFacadeIntention> a = World.Get<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-                    Debug.Log($"VVV  {sceneDefinitionComponent.SceneGeometry.BaseParcelPosition} AssetPromise {a.IsConsumed} {a.Result != null}");
+                    Debug.Log($"VVV  {sceneDefinitionComponent.SceneGeometry.BaseParcelPosition} AssetPromise {a.IsConsumed} {a.Result != null} ");
                 }
 
                 if (World.Has<ISceneFacade>(entity))
@@ -105,15 +104,6 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
                         break;
                 }
             }
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention), typeof(VisualSceneState), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>))]
-        private void AddSceneVisualState([Data] Vector2Int parcel, ref PartitionComponent partition, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            // We need to force partition.IsDirty for contained scene, so VisualSceneState will be added in the respective system
-            if (sceneDefinitionComponent.Parcels.Contains(parcel))
-                partition.IsDirty = true;
         }
 
         [Query]
