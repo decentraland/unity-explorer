@@ -271,7 +271,10 @@ namespace Global.Dynamic
                 loadingScreen
             );
 
-            var worldInfoHub = new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping);
+            var worldInfoHub = new LocationBasedWorldInfoHub(
+                new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
+                staticContainer.CharacterContainer.CharacterObject
+            );
 
             var chatHistory = new ChatHistory();
 
