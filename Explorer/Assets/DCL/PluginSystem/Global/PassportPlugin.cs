@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.CharacterPreview;
+using DCL.Chat;
 using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
@@ -20,29 +21,32 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ICursor cursor,
             IProfileRepository profileRepository,
-            ICharacterPreviewFactory characterPreviewFactory)
+            ICharacterPreviewFactory characterPreviewFactory,
+            ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
+            this.chatEntryConfiguration = chatEntryConfiguration;
         }
 
         public async UniTask InitializeAsync(PassportSettings promptSettings, CancellationToken ct)
         {
             passportController = new PassportController(
-                PassportController.CreateLazily(
-                    (await assetsProvisioner.ProvideMainAssetAsync(promptSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>(), null),
+                PassportController.CreateLazily((await assetsProvisioner.ProvideMainAssetAsync(promptSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>(), null),
                 cursor,
                 profileRepository,
-                characterPreviewFactory);
+                characterPreviewFactory,
+                chatEntryConfiguration);
 
             mvcManager.RegisterController(passportController);
         }

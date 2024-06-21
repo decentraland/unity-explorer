@@ -385,7 +385,7 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
-                new PassportPlugin(staticContainer.AssetsProvisioner, container.MvcManager, dclCursor, container.ProfileRepository, characterPreviewFactory),
+                new PassportPlugin(staticContainer.AssetsProvisioner, container.MvcManager, dclCursor, container.ProfileRepository, characterPreviewFactory, chatEntryConfiguration),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
