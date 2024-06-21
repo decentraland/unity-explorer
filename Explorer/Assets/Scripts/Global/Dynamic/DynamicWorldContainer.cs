@@ -55,6 +55,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
@@ -261,11 +262,16 @@ namespace Global.Dynamic
                 loadingScreen
             );
 
+            var reloadSceneController = new ReloadSceneController();
+
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
                 { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
+                {
+                    ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(reloadSceneController)
+                }
             };
 
             container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
@@ -273,6 +279,7 @@ namespace Global.Dynamic
                                        .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
+            reloadSceneController.chatMessagesBus = container.ChatMessagesBus;
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
@@ -388,7 +395,8 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                dynamicWorldParams.HybridSceneParams);
+                dynamicWorldParams.HybridSceneParams,
+                reloadSceneController);
 
             container.GlobalPlugins = globalPlugins;
 
