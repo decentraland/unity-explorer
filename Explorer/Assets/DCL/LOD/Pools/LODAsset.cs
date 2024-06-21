@@ -25,6 +25,8 @@ namespace DCL.LOD
         private readonly ILODAssetsPool Pool;
         internal AssetBundleData AssetBundleReference;
 
+        public bool setup;
+
         public enum LOD_STATE
         {
             UNINTIALIZED,
@@ -92,7 +94,7 @@ namespace DCL.LOD
 
             if (State == LOD_STATE.SUCCESS)
             {
-                Root.SetActive(true);
+                //Root.SetActive(true);
                 ProfilingCounters.LODInstantiatedInCache.Value--;
                 ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
             }
@@ -108,7 +110,7 @@ namespace DCL.LOD
 
             if (State == LOD_STATE.SUCCESS)
             {
-                Root.SetActive(false);
+                //Root.SetActive(false);
                 ProfilingCounters.LODInstantiatedInCache.Value++;
                 ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value--;
             }
