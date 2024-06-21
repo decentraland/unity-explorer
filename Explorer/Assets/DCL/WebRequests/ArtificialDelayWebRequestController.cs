@@ -22,17 +22,17 @@ namespace DCL.WebRequests
             where TWebRequestArgs: struct
             where TWebRequestOp: IWebRequestOp<TWebRequest, TResult>
         {
-            if (options.UseDelay)
-                await UniTask.Delay(TimeSpan.FromSeconds(options.ArtificialDelaySeconds));
+            (float delaySeconds, bool useDelay) = await options.GetOptionsAsync();
+
+            if (useDelay)
+                await UniTask.Delay(TimeSpan.FromSeconds(delaySeconds));
 
             return await origin.SendAsync<TWebRequest, TWebRequestArgs, TWebRequestOp, TResult>(envelope, op);
         }
 
         public interface IReadOnlyOptions
         {
-            public float ArtificialDelaySeconds { get; }
-
-            public bool UseDelay { get; }
+            UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync();
         }
     }
 }

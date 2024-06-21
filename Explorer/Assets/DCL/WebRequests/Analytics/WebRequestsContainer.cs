@@ -1,7 +1,9 @@
+using Cysharp.Threading.Tasks;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
+using Utility.Multithreading;
 using Utility.Storage;
 
 namespace DCL.WebRequests.Analytics
@@ -42,17 +44,13 @@ namespace DCL.WebRequests.Analytics
 
             var webRequestController = new WebRequestController(analyticsContainer, web3IdentityProvider)
                                       .WithLog()
-                                      .WithArtificialDelay(options)
-                                      .WithSafeMainThread();
+                                      .WithArtificialDelay(options);
 
             return new WebRequestsContainer(webRequestController, analyticsContainer);
         }
 
         private class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
         {
-            public float ArtificialDelaySeconds => Delay.Value;
-            public bool UseDelay => Enable.Value;
-
             public readonly IElementBinding<bool> Enable;
             public readonly IElementBinding<float> Delay;
 
@@ -65,6 +63,12 @@ namespace DCL.WebRequests.Analytics
             {
                 this.Enable = enable;
                 this.Delay = delay;
+            }
+
+            public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync()
+            {
+                await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
+                    return (Delay.Value, Enable.Value);
             }
         }
     }
