@@ -6,6 +6,7 @@ using DCL.AssetsProvision.Provisions;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
@@ -133,6 +134,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            IDebugContainerBuilder debugContainerBuilder,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
@@ -184,7 +186,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, debugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);

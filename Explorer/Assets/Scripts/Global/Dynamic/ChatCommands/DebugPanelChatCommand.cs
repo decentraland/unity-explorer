@@ -11,11 +11,11 @@ namespace Global.Dynamic.ChatCommands
     {
         public static readonly Regex REGEX = new (@"^/debug(?:\s+(\w+))?$", RegexOptions.Compiled);
 
-        private readonly DebugContainerBuilder debugContainerBuilder;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private string? param;
 
-        public DebugPanelChatCommand(DebugContainerBuilder debugContainerBuilder)
+        public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder)
         {
             this.debugContainerBuilder = debugContainerBuilder;
         }

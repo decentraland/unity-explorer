@@ -72,8 +72,6 @@ namespace Global.Dynamic
 
         public MVCManager MvcManager { get; private set; } = null!;
 
-        public DebugUtilitiesContainer DebugContainer { get; private set; } = null!;
-
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
 
         public LODContainer LODContainer { get; private set; } = null!;
@@ -93,15 +91,11 @@ namespace Global.Dynamic
         // TODO move multiplayer related dependencies to a separate container
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
 
-        public IEmotesMessageBus EmotesMessageBus { get; } = null!;
-
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
 
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
-        public IRoomHub RoomHub { get; private set; }
-
-        public MultiplayerMovementMessageBus MultiplayerMovementMessageBus { get; } = null!;
+        public IRoomHub RoomHub { get; private set; } = null!;
 
         public void Dispose()
         {
@@ -111,11 +105,8 @@ namespace Global.Dynamic
             MessagePipesHub.Dispose();
         }
 
-        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct)
-        {
-            DebugContainer = DebugUtilitiesContainer.Create(settings.DebugViewsCatalog);
-            return UniTask.CompletedTask;
-        }
+        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct) =>
+            UniTask.CompletedTask;
 
         private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
         {
@@ -135,6 +126,7 @@ namespace Global.Dynamic
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
+            var debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -143,7 +135,7 @@ namespace Global.Dynamic
 
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
-                container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, container.DebugContainer.Builder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
+                container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
@@ -156,7 +148,6 @@ namespace Global.Dynamic
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
 
-            DebugContainerBuilder debugBuilder = container.DebugContainer.Builder.EnsureNotNull();
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
             var realmSamplingData = new RealmSamplingData();
@@ -282,7 +273,7 @@ namespace Global.Dynamic
             {
                 { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
-                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(container.DebugContainer.Builder) },
+                { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
             };
@@ -328,7 +319,7 @@ namespace Global.Dynamic
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
-                new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, container.DebugContainer.Builder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
+                new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
                 new CharacterCameraPlugin(staticContainer.AssetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dclInput),
                 new WearablePlugin(staticContainer.AssetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog), new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, staticContainer.AssetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, ASSET_BUNDLES_URL),
