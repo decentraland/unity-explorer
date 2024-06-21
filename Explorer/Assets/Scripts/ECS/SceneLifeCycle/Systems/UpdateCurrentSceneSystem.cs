@@ -53,8 +53,11 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
-            if (scenesCache.TryGetByParcel(parcel, out var currentScene))
-                sceneAssetLock.IsLocked = !currentScene.IsSceneReady();
+            if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
+                return;
+
+            sceneAssetLock.IsLocked = !currentScene.IsSceneReady();
+            currentScene.SetIsCurrent(true);
         }
 
         private void UpdateCurrentScene(Vector2Int parcel)
@@ -65,12 +68,9 @@ namespace ECS.SceneLifeCycle.Systems
             scenesCache.TryGetByParcel(parcel, out var currentScene);
 
             if (lastProcessedScene != currentScene)
-            {
                 lastProcessedScene?.SetIsCurrent(false);
-                currentScene?.SetIsCurrent(true);
-            }
-            else
-                currentScene?.SetIsCurrent(true);
+
+            currentScene?.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
         }
