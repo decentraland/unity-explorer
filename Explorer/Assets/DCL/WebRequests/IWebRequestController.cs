@@ -183,9 +183,6 @@ namespace DCL.WebRequests
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
             controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
 
-        public static IWebRequestController WithSafeMainThread(this IWebRequestController origin) =>
-            new SafeMainThreadWebRequestController(origin);
-
         public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
             new ArtificialDelayWebRequestController(origin, options);
 
