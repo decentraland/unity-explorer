@@ -57,7 +57,7 @@ namespace DCL.LOD.Systems
             CancellationToken ct)
         {
             var container = new LODContainer(staticContainer.AssetsProvisioner);
-            
+
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
@@ -66,7 +66,7 @@ namespace DCL.LOD.Systems
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
                 var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
-                
+
                 // Create plugins
                 c.RoadPlugin = new RoadPlugin(staticContainer.CacheCleaner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
@@ -77,7 +77,8 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
-                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, lodEnabled);
+                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
+                    lodEnabled);
 
                 return UniTask.CompletedTask;
             });

@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables.Systems;
 using DCL.Ipfs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Profiles;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
@@ -67,7 +68,7 @@ namespace DCL.GlobalPartitioning
 
         protected override void Update(float t)
         {
-            if (sceneAssetLock.IsLocked) return;
+            if (sceneAssetLock.IsLockedBy != null) return;
             base.Update(t);
         }
     }
