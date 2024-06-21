@@ -167,7 +167,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 

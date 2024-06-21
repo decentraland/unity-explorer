@@ -42,7 +42,6 @@ namespace Global.Dynamic
         private readonly TeleportController teleportController;
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
-        private readonly SceneAssetLock sceneAssetLock;
 
         private GlobalWorld? globalWorld;
         public Entity RealmEntity { get; private set; }
@@ -67,8 +66,7 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions,
             RealmData realmData,
             IScenesCache scenesCache,
-            PartitionDataContainer partitionDataContainer,
-            SceneAssetLock sceneAssetLock)
+            PartitionDataContainer partitionDataContainer)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -79,7 +77,6 @@ namespace Global.Dynamic
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
-            this.sceneAssetLock = sceneAssetLock;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false)
@@ -176,7 +173,6 @@ namespace Global.Dynamic
             realmData.Invalidate();
 
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
-            sceneAssetLock.IsLockedBy = null;
 
             // Collect garbage, good moment to do it
             GC.Collect();

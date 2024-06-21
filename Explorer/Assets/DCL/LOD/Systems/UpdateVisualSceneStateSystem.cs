@@ -39,17 +39,15 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ContinuationMethod<AssetPromise<ISceneFacade, GetSceneFacadeIntention>> scenePromiseToLODContinuation;
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
-        private readonly SceneAssetLock sceneAssetLock;
 
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool,
-            ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
+
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.lodAssetsPool = lodAssetsPool;
             this.lodSettingsAsset = lodSettingsAsset;
             this.visualSceneStateResolver = visualSceneStateResolver;
-            this.sceneAssetLock = sceneAssetLock;
             sceneFacadeToLODContinuation = SwapSceneFacadeToLOD;
             scenePromiseToLODContinuation = SwapScenePromiseToLOD;
             sceneLODToScenePromiseContinuation = SwapLODToScenePromise;
@@ -155,7 +153,7 @@ namespace ECS.SceneLifeCycle.Systems
                 var sceneLODInfo = SceneLODInfo.Create();
 
                 //Dispose scene
-                switchComponent.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, sceneAssetLock);
+                switchComponent.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
 
                 visualSceneState.IsDirty = false;
 

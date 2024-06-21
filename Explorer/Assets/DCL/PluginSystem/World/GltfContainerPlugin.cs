@@ -13,7 +13,7 @@ using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
-using ECS.SceneLifeCycle;
+using DCL.Optimization.PerformanceBudgeting;
 
 namespace DCL.PluginSystem.World
 {

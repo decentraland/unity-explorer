@@ -221,8 +221,7 @@ namespace Global.Dynamic
                 dynamicWorldParams.StaticLoadPositions,
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
-                staticContainer.PartitionDataContainer,
-                staticContainer.SingletonSharedDependencies.SceneAssetLock);
+                staticContainer.PartitionDataContainer);
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);

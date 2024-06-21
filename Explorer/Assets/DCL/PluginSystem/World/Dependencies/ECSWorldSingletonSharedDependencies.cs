@@ -4,7 +4,6 @@ using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
-using ECS.SceneLifeCycle;
 
 namespace DCL.PluginSystem.World.Dependencies
 {
