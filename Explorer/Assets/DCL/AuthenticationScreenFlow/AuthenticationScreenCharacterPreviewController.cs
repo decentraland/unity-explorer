@@ -12,7 +12,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly HashSet<URN> shortenedEmotes = new ();
 
         public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
-            : base(view, previewFactory, world) { }
+            : base(view, previewFactory, world, true) { }
 
         public override void Initialize(Avatar avatar)
         {

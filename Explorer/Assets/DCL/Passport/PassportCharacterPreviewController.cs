@@ -12,7 +12,7 @@ namespace DCL.Passport
         private readonly HashSet<URN> shortenedEmotes = new ();
 
         public PassportCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
-            : base(view, previewFactory, world) { }
+            : base(view, previewFactory, world, false) { }
 
         public override void Initialize(Avatar avatar)
         {
@@ -35,6 +35,7 @@ namespace DCL.Passport
             previewAvatarModel.Emotes = shortenedEmotes;
 
             base.Initialize(avatar);
+            base.PlayEmote("wave");
         }
     }
 }

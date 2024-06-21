@@ -31,12 +31,14 @@ namespace DCL.CharacterPreview
         private bool initialized;
         private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
+        private bool isPreviewPlatformActive;
 
-        protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
+        protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, bool isPreviewPlatformActive)
         {
             this.view = view;
             this.previewFactory = previewFactory;
             this.world = world;
+            this.isPreviewPlatformActive = isPreviewPlatformActive;
 
             if (view.EnableZooming)
                 view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
@@ -155,6 +157,8 @@ namespace DCL.CharacterPreview
                 OnModelUpdated();
             }
             else if (previewAvatarModel.Initialized) { Initialize(); }
+
+            previewController?.SetPreviewPlatformActive(isPreviewPlatformActive);
         }
 
         public void OnHide()
@@ -182,6 +186,7 @@ namespace DCL.CharacterPreview
 
             DisableSpinner(spinner);
         }
+
 
         private void DisableSpinner(GameObject spinner)
         {

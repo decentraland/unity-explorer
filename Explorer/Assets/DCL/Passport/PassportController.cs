@@ -6,7 +6,9 @@ using DCL.Profiles;
 using JetBrains.Annotations;
 using MVC;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Passport
@@ -16,7 +18,7 @@ namespace DCL.Passport
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
-        private PassportCharacterPreviewController? characterPreviewController;
+        private PassportCharacterPreviewController characterPreviewController;
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
 
@@ -37,10 +39,11 @@ namespace DCL.Passport
 
         protected override void OnViewInstantiated()
         {
-            base.OnViewInstantiated();
-
             Assert.IsNotNull(world);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
+
+            viewInstance.CopyUserNameButton.onClick.AddListener(() => CopyToClipboard(viewInstance.UserNameText.text));
+            viewInstance.CopyWalletAddressButton.onClick.AddListener(() => CopyToClipboard(currentUserId));
         }
 
         protected override void OnViewShow()
@@ -50,6 +53,9 @@ namespace DCL.Passport
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadCharacterPreviewAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
         }
+
+        protected override void OnViewClose() =>
+            characterPreviewController.OnHide();
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.WhenAny(
@@ -64,8 +70,9 @@ namespace DCL.Passport
         public override void Dispose()
         {
             characterPreviewLoadingCts.SafeCancelAndDispose();
-            characterPreviewController?.Dispose();
-            base.Dispose();
+            characterPreviewController.Dispose();
+            viewInstance.CopyUserNameButton.onClick.RemoveAllListeners();
+            viewInstance.CopyWalletAddressButton.onClick.RemoveAllListeners();
         }
 
         private async UniTaskVoid LoadCharacterPreviewAsync(string userId, CancellationToken ct)
@@ -74,7 +81,18 @@ namespace DCL.Passport
             if (profile == null)
                 return;
 
-            characterPreviewController?.Initialize(profile.Avatar);
+            characterPreviewController.Initialize(profile.Avatar);
+            characterPreviewController.OnShow();
+
+            viewInstance.UserNameText.text = profile.Name;
+            viewInstance.VerifiedMark.SetActive(profile.HasClaimedName);
+            viewInstance.UserWalletAddressText.text = $"{profile.UserId[..3]}...{profile.UserId[^3..]}";
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(viewInstance.UserNameContainer);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(viewInstance.WalletAddressContainer);
         }
+
+        private void CopyToClipboard(string text) =>
+            GUIUtility.systemCopyBuffer = text;
     }
 }
