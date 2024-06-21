@@ -130,6 +130,9 @@ namespace Global.Dynamic
 #endif
 #endif
 
+            var analytics = new DebugAnalyticsService(); // new SegmentAnalyticsService(Resources.FindObjectsOfTypeAll<AnalyticsConfiguration>().FirstOrDefault());
+            analytics.SendSystemInfo();
+
             // Hides the debug UI during the initial flow
             debugUiRoot.rootVisualElement.style.display = DisplayStyle.None;
 
@@ -227,8 +230,6 @@ namespace Global.Dynamic
                         HybridSceneParams = hybridSceneParams
                     }, backgroundMusic, ct
                 );
-
-                new AnalyticsService(Resources.FindObjectsOfTypeAll<AnalyticsConfiguration>().FirstOrDefault());
 
                 if (!isLoaded)
                 {
