@@ -39,7 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly UIDocument canvas;
         private readonly MVCManager mvcManager;
-        private readonly DebugContainerBuilder debugContainerBuilder;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument cursorUIDocument;
         private CrosshairCanvas crosshairCanvas = null!;
@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.Global
             UIDocument canvas,
             MultiplayerEmotesMessageBus messageBus,
             MVCManager mvcManager,
-            DebugContainerBuilder debugContainerBuilder,
+            IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument cursorUIDocument)
         {

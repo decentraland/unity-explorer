@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility.Multithreading;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
 
 namespace DCL.PluginSystem.Global
@@ -34,7 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
-        private readonly DebugContainerBuilder debugBuilder;
+        private readonly IDebugContainerBuilder debugBuilder;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
@@ -50,7 +49,7 @@ namespace DCL.PluginSystem.Global
             IEmoteCache emoteCache,
             IRealmData realmData,
             IEmotesMessageBus messageBus,
-            DebugContainerBuilder debugBuilder,
+            IDebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,

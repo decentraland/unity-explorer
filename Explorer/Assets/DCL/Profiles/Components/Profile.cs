@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.ECSComponents;
+using DCL.Optimization.ThreadSafePool;
 using ECS.StreamableLoading.Common.Components;
 using System;
 using System.Collections.Generic;
@@ -9,9 +10,12 @@ using UnityEngine;
 
 namespace DCL.Profiles
 {
-    public class Profile : IDirtyMarker
+    public class Profile : IDirtyMarker, IDisposable
     {
         private static readonly Regex VALID_NAME_CHARACTERS = new ("[a-zA-Z0-9]");
+        private static readonly ThreadSafeObjectPool<Profile> POOL = new (
+            () => new Profile(),
+            actionOnRelease: profile => profile.Clear());
 
         internal HashSet<string>? blocked;
         internal List<string>? interests;
@@ -59,19 +63,19 @@ namespace DCL.Profiles
         }
 
         public bool HasConnectedWeb3 { get; internal set; }
-        public string Description { get; internal set; }
+        public string? Description { get; internal set; }
         public int TutorialStep { get; internal set; }
-        public string Email { get; internal set; }
-        public string Country { get; internal set; }
-        public string EmploymentStatus { get; internal set; }
-        public string Gender { get; internal set; }
-        public string Pronouns { get; internal set; }
-        public string RelationshipStatus { get; internal set; }
-        public string SexualOrientation { get; internal set; }
-        public string Language { get; internal set; }
-        public string Profession { get; internal set; }
-        public string RealName { get; internal set; }
-        public string Hobbies { get; internal set; }
+        public string? Email { get; internal set; }
+        public string? Country { get; internal set; }
+        public string? EmploymentStatus { get; internal set; }
+        public string? Gender { get; internal set; }
+        public string? Pronouns { get; internal set; }
+        public string? RelationshipStatus { get; internal set; }
+        public string? SexualOrientation { get; internal set; }
+        public string? Language { get; internal set; }
+        public string? Profession { get; internal set; }
+        public string? RealName { get; internal set; }
+        public string? Hobbies { get; internal set; }
         public DateTime? Birthdate { get; internal set; }
         public int Version { get; internal set; }
         public Avatar Avatar { get; internal set; }
@@ -85,14 +89,67 @@ namespace DCL.Profiles
         public IReadOnlyCollection<string>? Interests => interests;
         public IReadOnlyCollection<string>? Links => links;
 
-        public Profile() { }
+        public static Profile Create() =>
+            POOL.Get();
 
-        public Profile(string userId, string name, Avatar avatar)
+        public static Profile Create(string userId, string name, Avatar avatar)
+        {
+            Profile profile = Create();
+            profile.UserId = userId;
+            profile.Name = name;
+            profile.Avatar = avatar;
+            return profile;
+        }
+
+        internal Profile() { }
+
+        internal Profile(string userId, string name, Avatar avatar)
         {
             UserId = userId;
             Name = name;
             Avatar = avatar;
         }
+
+        public void Clear()
+        {
+            this.blocked?.Clear();
+            this.interests?.Clear();
+            this.links?.Clear();
+            this.Birthdate = null;
+            this.Avatar.Clear();
+            this.Country = default(string?);
+            this.Email = default(string?);
+            this.Gender = default(string?);
+            this.Description = default(string?);
+            this.Hobbies = default(string?);
+            this.Language = default(string?);
+            this.Profession = default(string?);
+            this.Pronouns = default(string?);
+            this.Version = default(int);
+            this.HasClaimedName = default(bool);
+            this.EmploymentStatus = default(string?);
+            this.UserId = "";
+            this.Name = "";
+            this.TutorialStep = default(int);
+            this.HasConnectedWeb3 = default(bool);
+            this.IsDirty = false;
+        }
+
+        public static Profile NewRandomProfile(string? userId) =>
+            new (
+                userId ?? IProfileRepository.GUEST_RANDOM_ID,
+                IProfileRepository.PLAYER_RANDOM_ID,
+                new Avatar(
+                    BodyShape.MALE,
+                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
+                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
+                    WearablesConstants.DefaultColors.GetRandomHairColor(),
+                    WearablesConstants.DefaultColors.GetRandomSkinColor()
+                )
+            );
+
+        public void Dispose() =>
+            POOL.Release(this);
 
         private string GenerateDisplayName()
         {
@@ -109,18 +166,5 @@ namespace DCL.Profiles
 
             return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
         }
-
-        public static Profile NewRandomProfile(string? userId) =>
-            new (
-                userId ?? IProfileRepository.GUEST_RANDOM_ID,
-                IProfileRepository.PLAYER_RANDOM_ID,
-                new Avatar(
-                    BodyShape.MALE,
-                    WearablesConstants.DefaultWearables.GetDefaultWearablesForBodyShape(BodyShape.MALE),
-                    WearablesConstants.DefaultColors.GetRandomEyesColor(),
-                    WearablesConstants.DefaultColors.GetRandomHairColor(),
-                    WearablesConstants.DefaultColors.GetRandomSkinColor()
-                )
-            );
     }
 }
