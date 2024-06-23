@@ -99,7 +99,7 @@ def set_parameters(params):
 def run_build(branch):
     body = {
         'branch': branch,
-        'commit': f'{os.getenv('COMMIT_SHA')}',
+        # 'commit': f'{os.getenv('COMMIT_SHA')}',
     }
     response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
 
