@@ -12,7 +12,6 @@ on:
   push:
     branches:
       - main
-      - feat/unity-cloud-build
   workflow_dispatch:
     inputs:
       profile:
