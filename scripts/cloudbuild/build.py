@@ -64,6 +64,11 @@ def clone_current_target():
 
     if response.status_code == 200 or response.status_code == 201:
         os.environ['TARGET'] = new_target_name
+    elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
+        print('Target failed to clone as it already exists! Possible race condition with another build')
+        print('BuildOptions may not be set correctly if the created target has different settings already set!')
+        print('Ignoring error and continuing...')
+        os.environ['TARGET'] = new_target_name
     else:
         print('Target failed to clone with status code:', response.status_code)
         print('Response body:', response.text)
@@ -94,7 +99,7 @@ def set_parameters(params):
 def run_build(branch):
     body = {
         'branch': branch,
-        # 'commit': '7d6423555eb96a1e7208adec2b8b7e2f74f1a18f'
+        # 'commit': f'{os.getenv('COMMIT_SHA')}',
     }
     response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
 
@@ -217,6 +222,25 @@ def delete_build(id):
         print('Response body:', response.text)
         sys.exit(1)
 
+def get_any_running_builds_on_current_target(trueOnError = True):
+    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds?buildStatus=created,queued,sentToBuilder,started,restarted', headers=HEADERS)
+
+    if response.status_code == 200:
+        response_json = response.json()
+        if response_json == []:
+            return False
+        else:
+            print('Found at least one running build on build target')
+            return True;
+    else:
+        print('Failed to check running builds on build target with status code:', response.status_code)
+        print('Response body:', response.text)
+        if trueOnError:
+            print('Failover - Assuming at least one running, returning True')
+            return True
+        else:
+            sys.exit(1)
+
 def delete_current_target():
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=HEADERS)
 
@@ -279,6 +303,10 @@ download_artifact(id)
 download_log(id)
 
 # Cleanup
-#delete_build(id) Deleting the parent target also removes all builds
-delete_current_target()
+if get_any_running_builds_on_current_target():
+    delete_build(id)
+else:
+    # Deleting the parent target also removes all builds
+    delete_current_target()
+
 utils.delete_build_info()
