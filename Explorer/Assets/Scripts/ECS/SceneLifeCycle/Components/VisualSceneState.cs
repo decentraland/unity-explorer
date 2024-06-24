@@ -1,8 +1,4 @@
-﻿using System;
-using UnityEngine;
-using UnityEngine.Serialization;
-
-namespace ECS.SceneLifeCycle.Components
+﻿namespace ECS.SceneLifeCycle.Components
 {
     public struct VisualSceneState
     {
@@ -17,5 +13,5 @@ namespace ECS.SceneLifeCycle.Components
         SHOWING_LOD,
         ROAD
     }
-    
+
 }

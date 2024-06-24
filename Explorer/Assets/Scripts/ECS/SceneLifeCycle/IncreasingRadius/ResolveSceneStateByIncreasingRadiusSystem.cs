@@ -166,18 +166,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 var components
                     = World.Get<SceneDefinitionComponent, PartitionComponent, VisualSceneState>(data.Entity);
 
-                switch (components.t2.Value.CurrentVisualSceneState)
-                {
-                    case VisualSceneStateEnum.SHOWING_LOD:
-                        World.Add(data.Entity, SceneLODInfo.Create());
-                        break;
-                    case VisualSceneStateEnum.ROAD:
-                        World.Add(data.Entity, RoadInfo.Create());
-                        break;
-                    default:
-                        CreateSceneFacadePromise.Execute(World, data.Entity, ipfsRealm, components.t0, components.t1.Value);
-                        break;
-                }
+                SceneLoadingFactory.CreateVisualScene(World, data.Entity, components.t2.Value.CurrentVisualSceneState,
+                    ipfsRealm, components.t0.Value, components.t1.Value);
 
                 promisesCreated++;
             }

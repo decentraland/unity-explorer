@@ -51,21 +51,8 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
             ref SceneDefinitionComponent sceneDefinitionComponent, in VisualSceneState visualSceneState, in PartitionComponent partitionComponent)
         {
             if (sceneDefinitionComponent.Parcels.Contains(parcel))
-            {
-                // REFACTOR IT!: Copy-pasted from ResolveSceneStateByIncreasingRadiusSystem.cs
-                switch (visualSceneState.CurrentVisualSceneState)
-                {
-                    case VisualSceneStateEnum.SHOWING_LOD:
-                        World.Add(entity, SceneLODInfo.Create());
-                        break;
-                    case VisualSceneStateEnum.ROAD:
-                        World.Add(entity, RoadInfo.Create());
-                        break;
-                    default:
-                        CreateSceneFacadePromise.Execute(World, entity, ipfsRealm, in sceneDefinitionComponent, partitionComponent);
-                        break;
-                }
-            }
+                SceneLoadingFactory.CreateVisualScene(World, entity, visualSceneState.CurrentVisualSceneState,
+                    ipfsRealm, sceneDefinitionComponent, partitionComponent);
         }
 
         [Query]
