@@ -1,13 +1,6 @@
-﻿using CRDT.Memory;
-using CRDT.Protocol;
-using CrdtEcsBridge.OutgoingMessages;
-using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.WorldSynchronizer;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
-using DCL.Interaction.Utility;
 using Microsoft.ClearScript;
-using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime;
@@ -48,7 +41,7 @@ namespace SceneRunner
 
         public void Dispose()
         {
-            AssertMainThread(nameof(Dispose), true);
+            MultithreadingUtility.AssertMainThread(nameof(Dispose), true);
 
             SceneStateProvider.State = SceneState.Disposing;
             runtimeInstance.SetIsDisposing();
@@ -87,7 +80,7 @@ namespace SceneRunner
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
-            AssertMainThread(nameof(StartUpdateLoopAsync));
+            MultithreadingUtility.AssertMainThread(nameof(StartUpdateLoopAsync));
 
             if (SceneStateProvider.State != SceneState.NotStarted)
                 throw new ThreadStateException($"{nameof(StartUpdateLoopAsync)} is already started!");
@@ -111,7 +104,7 @@ namespace SceneRunner
                 return;
             }
 
-            AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
+            MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.StartScene));
 
             var stopWatch = new Stopwatch();
             var deltaTime = 0f;
@@ -141,7 +134,7 @@ namespace SceneRunner
 
                     SceneStateProvider.TickNumber++;
 
-                    AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
+                    MultithreadingUtility.AssertMainThread(nameof(SceneRuntimeImpl.UpdateScene));
 
                     // Passing ct to Task.Delay allows to break the loop immediately
                     // as, otherwise, due to 0 or low FPS it can spin for much longer
@@ -154,7 +147,7 @@ namespace SceneRunner
                     // We can't use Thread.Sleep as EngineAPI is called on the same thread
                     // We can't use UniTask.Delay as this loop has nothing to do with the Unity Player Loop
                     await Task.Delay(sleepMS, ct);
-                    AssertMainThread(nameof(Task.Delay));
+                    MultithreadingUtility.AssertMainThread(nameof(Task.Delay));
                     deltaTime = stopWatch.ElapsedMilliseconds / 1000f;
                 }
             }
@@ -185,17 +178,6 @@ namespace SceneRunner
             }
 
             return true;
-        }
-
-        /// <summary>
-        ///     Must ensure that the execution does not jump between different threads
-        /// </summary>
-        [Conditional("UNITY_EDITOR")]
-        [Conditional("DEBUG")]
-        private static void AssertMainThread(string funcName, bool isMainThread = false)
-        {
-            if (PlayerLoopHelper.IsMainThread != isMainThread)
-                throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
         }
 
         public void SetIsCurrent(bool isCurrent)

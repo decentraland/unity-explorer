@@ -7,7 +7,9 @@ using DCL.Landscape;
 using DCL.Landscape.Config;
 using DCL.Landscape.Settings;
 using DCL.Landscape.Systems;
+using DCL.Landscape.Utils;
 using DCL.MapRenderer.ComponentsFactory;
+using DCL.WebRequests;
 using ECS.Prioritization;
 using System.Threading;
 using Unity.Collections;
@@ -31,9 +33,16 @@ namespace DCL.PluginSystem.Global
         private ProvidedAsset<ParcelData> parcelData;
         private NativeList<int2> emptyParcels;
         private NativeParallelHashSet<int2> ownedParcels;
+        private readonly LandscapeParcelService parcelService;
 
-        public LandscapePlugin(SatelliteFloor floor, TerrainGenerator terrainGenerator, WorldTerrainGenerator worldTerrainGenerator, IAssetsProvisioner assetsProvisioner, IDebugContainerBuilder debugContainerBuilder,
-            MapRendererTextureContainer textureContainer, bool enableLandscape)
+        public LandscapePlugin(SatelliteFloor floor,
+            TerrainGenerator terrainGenerator,
+            WorldTerrainGenerator worldTerrainGenerator,
+            IAssetsProvisioner assetsProvisioner,
+            IDebugContainerBuilder debugContainerBuilder,
+            MapRendererTextureContainer textureContainer,
+            IWebRequestController webRequestController,
+            bool enableLandscape)
         {
             this.floor = floor;
             this.assetsProvisioner = assetsProvisioner;
@@ -43,6 +52,8 @@ namespace DCL.PluginSystem.Global
 
             this.terrainGenerator = terrainGenerator;
             this.worldTerrainGenerator = worldTerrainGenerator;
+
+            parcelService = new LandscapeParcelService(webRequestController);
         }
 
         public void Dispose()
@@ -65,10 +76,22 @@ namespace DCL.PluginSystem.Global
 
             realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.realmPartitionSettings, ct);
 
-            emptyParcels = parcelData.Value.GetEmptyParcels();
-            ownedParcels = parcelData.Value.GetOwnedParcels();
+            FetchParcelResult fetchParcelResult = await parcelService.LoadManifestAsync(ct);
+            string parcelChecksum = string.Empty;
 
-            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels);
+            if (!fetchParcelResult.Succeeded)
+            {
+                emptyParcels = parcelData.Value.GetEmptyParcels();
+                ownedParcels = parcelData.Value.GetOwnedParcels();
+            }
+            else
+            {
+                emptyParcels = fetchParcelResult.Manifest.GetEmptyParcels();
+                ownedParcels = fetchParcelResult.Manifest.GetOwnedParcels();
+                parcelChecksum = fetchParcelResult.Checksum;
+            }
+
+            terrainGenerator.Initialize(landscapeData.Value.terrainData, ref emptyParcels, ref ownedParcels, parcelChecksum);
             worldTerrainGenerator.Initialize(landscapeData.Value.worldsTerrainData);
         }
 

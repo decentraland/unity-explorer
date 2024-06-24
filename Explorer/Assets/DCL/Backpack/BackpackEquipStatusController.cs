@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -11,6 +12,7 @@ using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack
@@ -52,6 +54,7 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent += PublishProfile;
             backpackEventBus.EquipEmoteEvent += EquipEmote;
             backpackEventBus.UnEquipEmoteEvent += UnEquipEmote;
+            backpackEventBus.ChangeColorEvent += ChangeColor;
             backpackEventBus.ForceRenderEvent += SetForceRender;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
         }
@@ -63,6 +66,7 @@ namespace DCL.Backpack
             backpackEventBus.PublishProfileEvent -= PublishProfile;
             backpackEventBus.EquipEmoteEvent -= EquipEmote;
             backpackEventBus.UnEquipEmoteEvent -= UnEquipEmote;
+            backpackEventBus.ChangeColorEvent -= ChangeColor;
             backpackEventBus.ForceRenderEvent -= SetForceRender;
             backpackEventBus.UnEquipAllEvent -= UnEquipAll;
             publishProfileCts?.SafeCancelAndDispose();
@@ -101,6 +105,22 @@ namespace DCL.Backpack
 
             foreach (string category in categories)
                 forceRender.Add(category);
+        }
+
+        private void ChangeColor(Color newColor, string category)
+        {
+            switch (category)
+            {
+                case WearablesConstants.Categories.EYES:
+                    equippedWearables.SetEyesColor(newColor);
+                    break;
+                case WearablesConstants.Categories.HAIR:
+                    equippedWearables.SetHairColor(newColor);
+                    break;
+                case WearablesConstants.Categories.BODY_SHAPE:
+                    equippedWearables.SetBodyshapeColor(newColor);
+                    break;
+            }
         }
 
         private void PublishProfile()

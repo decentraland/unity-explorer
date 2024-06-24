@@ -80,7 +80,11 @@ namespace DCL.Backpack
             PageButtonView pageButtonView,
             IObjectPool<BackpackItemView> gridItemsPool,
             World world,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            ColorToggleView colorToggle,
+            ColorPresetsSO hairColors,
+            ColorPresetsSO eyesColors,
+            ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
             this.commandBus = commandBus;
@@ -99,7 +103,7 @@ namespace DCL.Backpack
             usedPoolItems = new Dictionary<URN, BackpackItemView>();
             pageSelectorController.OnSetPage += (int page) => RequestPage(page, false);
             requestParameters = new List<(string, string)>();
-            new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons);
+            new BackpackBreadCrumbController(view.BreadCrumbView, eventBus, commandBus, categoryIcons, colorToggle, hairColors, eyesColors, bodyshapeColors);
             eventBus.EquipWearableEvent += OnEquip;
             eventBus.UnEquipWearableEvent += OnUnequip;
         }

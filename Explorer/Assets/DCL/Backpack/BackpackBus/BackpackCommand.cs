@@ -2,6 +2,7 @@ using DCL.CharacterPreview;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -110,6 +111,18 @@ namespace DCL.Backpack.BackpackBus
         public BackpackSearchCommand(string searchText)
         {
             SearchText = searchText;
+        }
+    }
+
+    public readonly struct BackpackChangeColorCommand
+    {
+        public readonly Color NewColor;
+        public readonly string Category;
+
+        public BackpackChangeColorCommand(Color newColor, string category)
+        {
+            NewColor = newColor;
+            Category = category;
         }
     }
 

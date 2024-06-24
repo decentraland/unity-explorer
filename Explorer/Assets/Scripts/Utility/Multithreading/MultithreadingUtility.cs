@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using System.Diagnostics;
 using System.Threading;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -41,6 +42,17 @@ namespace Utility.Multithreading
 
             while (Volatile.Read(ref isPaused))
                 Thread.Sleep(10);
+        }
+
+        /// <summary>
+        ///     Must ensure that the execution does not jump between different threads
+        /// </summary>
+        [Conditional("UNITY_EDITOR")]
+        [Conditional("DEBUG")]
+        public static void AssertMainThread(string funcName, bool isMainThread = false)
+        {
+            if (PlayerLoopHelper.IsMainThread != isMainThread)
+                throw new ThreadStateException($"Execution after calling {funcName} must be {(isMainThread ? "on" : "off")} the main thread");
         }
 
         private class FrameCounter : IPlayerLoopItem

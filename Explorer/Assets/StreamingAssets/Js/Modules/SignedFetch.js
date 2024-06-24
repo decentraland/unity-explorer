@@ -1,3 +1,5 @@
+const fetchApi = require('~system/FetchApi');
+
 module.exports.signedFetch = async function(message) {
     let body = ''
     let headers = ''
@@ -8,7 +10,12 @@ module.exports.signedFetch = async function(message) {
         method = message.init.method ?? ''
     }
     
-    return UnitySignedFetch.SignedFetch(message.url, body, headers, method)
+    let response = await UnitySignedFetch.SignedFetch(message.url, body, headers, method);
+    
+    response = { ...response };
+    response.headers = new fetchApi.RequestHeaders(response.headers);
+    
+    return response;
 }
 
 module.exports.getHeaders = async function(message) {

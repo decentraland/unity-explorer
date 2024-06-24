@@ -27,7 +27,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ExposedCameraData exposedCameraData;
-        private readonly DebugContainerBuilder debugBuilder;
+        private readonly IDebugContainerBuilder debugBuilder;
         private readonly DCLInput input;
         private readonly RealmSamplingData realmSamplingData;
         private ProvidedInstance<CinemachinePreset> providedCinemachinePreset;
@@ -37,7 +37,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             RealmSamplingData realmSamplingData,
             ExposedCameraData exposedCameraData,
-            DebugContainerBuilder debugBuilder,
+            IDebugContainerBuilder debugBuilder,
             DCLInput input)
         {
             this.assetsProvisioner = assetsProvisioner;

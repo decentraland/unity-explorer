@@ -82,12 +82,13 @@ namespace DCL.Profiles.Self
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
             var newProfile = profileBuilder.From(profile)
-                                    .WithBodyShape(bodyShape)
-                                    .WithWearables(uniqueWearables)
-                                    .WithEmotes(uniqueEmotes)
-                                    .WithForceRender(forceRender)
-                                    .WithVersion(profile!.Version + 1)
-                                    .Build();
+                                           .WithBodyShape(bodyShape)
+                                           .WithWearables(uniqueWearables)
+                                           .WithColors(equippedWearables.GetColors())
+                                           .WithEmotes(uniqueEmotes)
+                                           .WithForceRender(forceRender)
+                                           .WithVersion(profile!.Version + 1)
+                                           .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 
@@ -95,7 +96,10 @@ namespace DCL.Profiles.Self
             if (newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
                 && newProfile.Avatar.wearables.SetEquals(profile.Avatar.wearables)
                 && newProfile.Avatar.emotes.EqualsContentInOrder(profile.Avatar.emotes)
-                && newProfile.Avatar.forceRender.SetEquals(profile.Avatar.forceRender))
+                && newProfile.Avatar.forceRender.SetEquals(profile.Avatar.forceRender)
+                && newProfile.Avatar.HairColor.Equals(profile.Avatar.HairColor)
+                && newProfile.Avatar.EyesColor.Equals(profile.Avatar.EyesColor)
+                && newProfile.Avatar.SkinColor.Equals(profile.Avatar.SkinColor))
                 return profile;
 
             await profileRepository.SetAsync(newProfile, ct);

@@ -89,6 +89,14 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithColors((Color hair, Color eyes, Color bodyshape) colors)
+        {
+            this.hairColor = colors.hair;
+            this.eyesColor = colors.eyes;
+            this.skinColor = colors.bodyshape;
+            return this;
+        }
+
         public ProfileBuilder WithEmotes(IReadOnlyCollection<URN> emotes)
         {
             this.emotes = emotes;

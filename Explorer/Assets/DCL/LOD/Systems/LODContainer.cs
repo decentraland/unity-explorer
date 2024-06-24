@@ -13,7 +13,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.LOD.Systems
 {
@@ -52,12 +51,12 @@ namespace DCL.LOD.Systems
             IPluginSettingsContainer settingsContainer,
             RealmData realmData,
             TextureArrayContainerFactory textureArrayContainerFactory,
-            DebugContainerBuilder debugBuilder,
+            IDebugContainerBuilder debugBuilder,
             bool lodEnabled,
             CancellationToken ct)
         {
             var container = new LODContainer(staticContainer.AssetsProvisioner);
-            
+
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
@@ -66,7 +65,7 @@ namespace DCL.LOD.Systems
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
                 var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
-                
+
                 // Create plugins
                 c.RoadPlugin = new RoadPlugin(staticContainer.CacheCleaner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,

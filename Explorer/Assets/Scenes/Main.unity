@@ -463,15 +463,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   launchSettings:
     initialRealm: 0
-    targetScene: {x: 145, y: 60}
+    targetScene: {x: 0, y: 0}
     predefinedScenes:
-      enabled: 1
+      enabled: 0
       parcels:
       - {x: 145, y: 60}
     targetWorld: MetadyneLabs.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteSceneID: bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q
     remoteSceneContentServer: 0
+  debugViewsCatalog:
+    <Widget>k__BackingField: {fileID: 9197481963319205126, guid: f3bf08b2b62097d4aa0574f7bafa4a86, type: 3}
+    <ControlContainer>k__BackingField: {fileID: 9197481963319205126, guid: 6da3ff28c8a87e0428fa07019c15fa2f, type: 3}
+    <Button>k__BackingField: {fileID: 9197481963319205126, guid: 207e926de905f974395ae4f2ddbc5a75, type: 3}
+    <Toggle>k__BackingField: {fileID: 9197481963319205126, guid: 5139c1685feccad419a708be6686e120, type: 3}
+    <ConstLabel>k__BackingField: {fileID: 9197481963319205126, guid: f95cd467ad82d3d468902ab089f3ad7b, type: 3}
+    <SetOnlyLabel>k__BackingField: {fileID: 9197481963319205126, guid: 391c36caf5881234296430ab678bc270, type: 3}
+    <Hint>k__BackingField: {fileID: 9197481963319205126, guid: 6db404a6800b10a428f41e5938693101, type: 3}
+    <TextField>k__BackingField: {fileID: 9197481963319205126, guid: 9ffae7c4dbb654f4bb5cd3419ceda579, type: 3}
+    <LongMarker>k__BackingField: {fileID: 9197481963319205126, guid: 55d7d168269ae5c46a702ea7abff1944, type: 3}
+    <IntField>k__BackingField: {fileID: 9197481963319205126, guid: de80afad302843447b618cd6ca98f3ed, type: 3}
+    <IntSlider>k__BackingField: {fileID: 9197481963319205126, guid: ef1076a0aebac6c4c84b891d303e85ec, type: 3}
+    <FloatField>k__BackingField: {fileID: 9197481963319205126, guid: 3f2e0e33e167f85488492c41409dc34a, type: 3}
+    <FloatSlider>k__BackingField: {fileID: 9197481963319205126, guid: ff6253c6bd224de4aaf597f510466a41, type: 3}
+    <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
+    <Vector3Field>k__BackingField: {fileID: 0}
+    <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   showSplash: 1
   showAuthentication: 1
   showLoading: 1

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.PluginSystem.Validatables;
+using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,11 +17,11 @@ namespace DCL.PluginSystem
     {
         // We should initialize this by a custom inspector
         // ReSharper disable once CollectionNeverUpdated.Global
-        [SerializeReference] [PluginSettingsTitle] internal List<IDCLPluginSettings> settings;
+        [SerializeReference] [PluginSettingsTitle] internal List<IDCLPluginSettings> settings = new ();
 
         public T GetSettings<T>() where T: IDCLPluginSettings
         {
-            var typeSettings = (T)settings.Find(x => x.GetType() == typeof(T));
+            var typeSettings = (T)settings.Find(x => x.GetType() == typeof(T)).EnsureNotNull($"Settings with type {typeof(T).Name} not found");
 
             if (typeSettings == null)
                 throw new NullReferenceException("Settings not found for type " + typeof(T).Name);

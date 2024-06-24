@@ -3,6 +3,7 @@ using DCL.Diagnostics;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using System;
+using Utility.Multithreading;
 
 namespace DCL.WebRequests
 {
@@ -24,7 +25,9 @@ namespace DCL.WebRequests
             where TWebRequest: struct, ITypedWebRequest
             where TWebRequestOp : IWebRequestOp<TWebRequest, TResult>
         {
-            int attemptsLeft = envelope.CommonArguments.TotalAttempts();
+            await using var scope = await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync();
+
+                int attemptsLeft = envelope.CommonArguments.TotalAttempts();
 
             // ensure disposal of headersInfo
             using var _ = envelope;

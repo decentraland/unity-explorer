@@ -1,7 +1,6 @@
 ﻿using DCL.DebugUtilities.UIBindings;
 using DCL.DebugUtilities.Views;
 using DCL.Optimization.Pools;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
@@ -31,12 +30,15 @@ namespace DCL.DebugUtilities
         /// <param name="right">Right can be null if left is not null</param>
         /// <param name="debugHintDef">Can be null</param>
         /// <returns></returns>
-        public DebugWidgetBuilder AddControl(IDebugElementDef left, IDebugElementDef right, DebugHintDef? debugHintDef = null)
+        public DebugWidgetBuilder AddControl(IDebugElementDef? left, IDebugElementDef? right, DebugHintDef? debugHintDef = null)
         {
             placements ??= DEF_POOL.Get();
             placements!.Add(new ElementPlacement(left, right, debugHintDef));
             return this;
         }
+
+        public DebugWidgetBuilder AddControlWithLabel(string label, IDebugElementDef? right, DebugHintDef? debugHintDef = null) =>
+            AddControl(new DebugConstLabelDef(label), right, debugHintDef);
 
         /// <summary>
         ///     Set the control of the activity of the whole widget
@@ -88,13 +90,13 @@ namespace DCL.DebugUtilities
             return widget;
         }
 
-        private DebugControl CreateControl(
+        private static DebugControl CreateControl(
             Func<DebugControl> controlFactoryMethod,
             IReadOnlyDictionary<Type, IDebugElementFactory> factories,
-            IDebugElementDef left,
-            IDebugElementDef right)
+            IDebugElementDef? left,
+            IDebugElementDef? right)
         {
-            DebugControl debugControl = controlFactoryMethod();
+            DebugControl debugControl = controlFactoryMethod()!;
 
             VisualElement CreateElement(IDebugElementDef def)
             {
@@ -118,8 +120,8 @@ namespace DCL.DebugUtilities
 
         internal readonly struct ElementPlacement
         {
-            public readonly IDebugElementDef Left;
-            public readonly IDebugElementDef Right;
+            public readonly IDebugElementDef? Left;
+            public readonly IDebugElementDef? Right;
             public readonly DebugHintDef? HintDef;
 
             public ElementPlacement(IDebugElementDef left, IDebugElementDef right, DebugHintDef? hintDef)
