@@ -242,7 +242,7 @@ def delete_build(id):
         sys.exit(1)
 
 def get_any_running_builds(target, trueOnError = True):
-    response = requests.delete(f'{URL}/buildtargets/{target}/builds?buildStatus=created,queued,sentToBuilder,started,restarted', headers=HEADERS)
+    response = requests.get(f'{URL}/buildtargets/{target}/builds?buildStatus=created,queued,sentToBuilder,started,restarted', headers=HEADERS)
 
     if response.status_code == 200:
         response_json = response.json()
