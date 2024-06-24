@@ -50,7 +50,7 @@ def clone_current_target():
             if 'buildTargetCopyCache' in body['settings']:
                 del body['settings']['buildTargetCopyCache']
 
-        retun body
+        return body
 
     # Set target name based on branch
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'

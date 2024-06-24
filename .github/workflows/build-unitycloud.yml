@@ -30,7 +30,7 @@ on:
         type: boolean
       version:
         description: 'Override for build version to use'
-        required: true
+        required: false
         default: ''
         type: string
   workflow_call:
