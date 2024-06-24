@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
@@ -9,7 +8,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
-using UnityEngine.Pool;
 using Utility;
 
 namespace DCL.SceneLoadingScreens
@@ -24,6 +22,7 @@ namespace DCL.SceneLoadingScreens
         private CancellationTokenSource? tipsRotationCancellationToken;
         private CancellationTokenSource? tipsFadeCancellationToken;
         private IntVariable? progressLabel;
+        private readonly List<UniTask> fadingTasks = new ();
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,
@@ -193,6 +192,18 @@ namespace DCL.SceneLoadingScreens
 
         private void ShowTipWithFade(int index)
         {
+            const float DURATION = 0.3f;
+
+            UniTask FadeOthers(CancellationToken ct)
+            {
+                fadingTasks.Clear();
+
+                for (var i = 0; i < tips.Tips.Count; i++)
+                    fadingTasks.Add(viewInstance.HideTipWithFadeAsync(i, DURATION, ct));
+
+                return UniTask.WhenAll(fadingTasks);
+            }
+
             async UniTaskVoid ShowTipWithFadeAsync(CancellationToken ct)
             {
                 if (index < 0)
@@ -200,16 +211,14 @@ namespace DCL.SceneLoadingScreens
 
                 index %= tips.Tips.Count;
 
-                int prevTip = currentTip;
                 currentTip = index;
 
-
-                await viewInstance.HideTipWithFadeAsync(prevTip, 0.3f, ct);
+                await FadeOthers(ct);
 
                 await UniTask.WhenAll
                 (
-                    viewInstance.ChangeBackgroundColorFadeAsync(tips.Tips[index].BackgroundColor, 0.3f, ct),
-                    viewInstance.ShowTipWithFadeAsync(index, 0.3f, ct)
+                    viewInstance.ChangeBackgroundColorFadeAsync(tips.Tips[index].BackgroundColor, DURATION, ct),
+                    viewInstance.ShowTipWithFadeAsync(index, DURATION, ct)
                 );
             }
 

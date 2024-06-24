@@ -128,7 +128,7 @@ namespace DCL.Profiles
 
         public Profile Build()
         {
-            var profile = new Profile();
+            var profile = Profile.Create();
             profile.RealName = realName ?? "";
             profile.UserId = userId!;
             profile.Version = version;

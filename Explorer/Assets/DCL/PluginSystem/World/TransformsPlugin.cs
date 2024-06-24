@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Transform;
 using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -19,6 +20,7 @@ namespace DCL.PluginSystem.World
         private readonly ExposedTransform exposedPlayerTransform;
         private readonly ExposedCameraData exposedCameraData;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
+        private readonly IComponentPool<Transform> transformPool;
 
         public TransformsPlugin(
             ECSWorldSingletonSharedDependencies singletonSharedDependencies,
@@ -30,7 +32,7 @@ namespace DCL.PluginSystem.World
 
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
 
-            componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
+            transformPool = componentPoolsRegistry.AddGameObjectPool<Transform>(onRelease: transform =>
             {
                 transform.ResetLocalTRS();
                 transform.gameObject.layer = 0;
@@ -71,7 +73,7 @@ namespace DCL.PluginSystem.World
 
         private Transform GetNewTransform(ECSWorldInstanceSharedDependencies sharedDependencies, Transform? transform = null)
         {
-            Transform sceneRootTransform = componentPoolsRegistry.GetReferenceTypePool<Transform>().Get();
+            Transform sceneRootTransform = transformPool.Get();
             sceneRootTransform.SetParent(transform);
             sceneRootTransform.position = sharedDependencies.SceneData.Geometry.BaseParcelPosition;
             sceneRootTransform.rotation = Quaternion.identity;

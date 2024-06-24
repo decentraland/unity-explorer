@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
@@ -32,18 +33,12 @@ namespace Global.Dynamic
     public class MainSceneLoader : MonoBehaviour
     {
         [Header("Startup Config")]
-        [SerializeField] private InitialRealm initialRealm;
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.SDK, (int)InitialRealm.Goerli, (int)InitialRealm.StreamingWorld, (int)InitialRealm.TestScenes)] [SDKParcelPositionHelper]
-        private Vector2Int targetScene;
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.World)] private string targetWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] [ShowIfEnum("initialRealm", (int)InitialRealm.Custom)] private string customRealm = IRealmNavigator.GOERLI_URL;
+        [SerializeField] private RealmLaunchSettings launchSettings;
 
-        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
-        private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
+        [Space]
+        [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
-        [SerializeField]  [ShowIfEnum("initialRealm", (int)InitialRealm.Localhost)]
-        private ContentServer remoteSceneContentServer = ContentServer.World;
-
+        [Space]
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -60,7 +55,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
-        [SerializeField] private AudioClipConfig backgroundMusic;
+        [SerializeField] private AudioClipConfig backgroundMusic = null!;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -127,7 +122,7 @@ namespace Global.Dynamic
 #endif
 
             // Hides the debug UI during the initial flow
-            debugUiRoot.rootVisualElement.style.display = DisplayStyle.None;
+            debugUiRoot.rootVisualElement.EnsureNotNull().style.display = DisplayStyle.None;
 
             try
             {
@@ -172,7 +167,9 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
+                var debugUtilitiesContainer = DebugUtilitiesContainer.Create(debugViewsCatalog);
+
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(debugUtilitiesContainer.Builder, globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {
@@ -182,28 +179,10 @@ namespace Global.Dynamic
 
                 bool shouldEnableLandscape = enableLandscape;
 
-                var hybridSceneParams = new HybridSceneParams();
-                if (initialRealm == InitialRealm.Localhost)
-                {
-                    hybridSceneParams.EnableHybridScene = true;
-                    hybridSceneParams.HybridSceneID = remoteSceneID;
-                    switch (remoteSceneContentServer)
-                    {
-                        case ContentServer.Genesis:
-                            hybridSceneParams.HybridSceneContent = IRealmNavigator.GENESIS_CONTENT_URL;
-                            break;
-                        case ContentServer.Goerli:
-                            hybridSceneParams.HybridSceneContent = IRealmNavigator.GOERLI_CONTENT_URL;
-                            break;
-                        case ContentServer.World:
-                            hybridSceneParams.HybridSceneContent = IRealmNavigator.WORLDS_CONTENT_URL;
-                            break;
-                    }
-                }
-
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
                     {
+                        DebugContainerBuilder = debugUtilitiesContainer.Builder,
                         StaticContainer = staticContainer!,
                         SettingsContainer = scenePluginSettingsContainer,
                         RootUIDocument = uiToolkitRoot,
@@ -215,13 +194,15 @@ namespace Global.Dynamic
                     },
                     new DynamicWorldParams
                     {
-                        StaticLoadPositions = settings.StaticLoadPositions,
+                        StaticLoadPositions = launchSettings.GetPredefinedParcels(),
                         Realms = settings.Realms,
                         StartParcel = startingParcel,
                         EnableLandscape = shouldEnableLandscape,
                         EnableLOD = enableLOD,
-                        HybridSceneParams = hybridSceneParams
-                    }, backgroundMusic, ct
+                        HybridSceneParams = launchSettings.CreateHybridSceneParams(),
+                    },
+                    backgroundMusic,
+                    ct
                 );
 
                 if (!isLoaded)
@@ -233,8 +214,16 @@ namespace Global.Dynamic
                 IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
                 IRoomHub roomHub = dynamicWorldContainer!.RoomHub;
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
+                sceneSharedContainer = SceneSharedContainer.Create(
+                    in staticContainer!,
+                    dynamicWorldContainer!.MvcManager,
+                    identityCache,
+                    dynamicWorldContainer.ProfileRepository,
+                    webRequestController,
+                    roomHub,
+                    dynamicWorldContainer.RealmController.GetRealm(),
+                    dynamicWorldContainer.MessagePipesHub
+                );
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -245,8 +234,8 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
-                await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+                await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
                 if (anyFailure)
                 {
@@ -258,8 +247,7 @@ namespace Global.Dynamic
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
 
-                debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
-                dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
+                debugUtilitiesContainer.Builder.BuildWithFlex(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
                 await ChangeRealmAsync(ct);
@@ -290,21 +278,8 @@ namespace Global.Dynamic
 
         private void SetupInitialConfig()
         {
-            startingRealm = initialRealm switch
-                            {
-                                InitialRealm.GenesisCity => IRealmNavigator.GENESIS_URL,
-                                InitialRealm.SDK => IRealmNavigator.SDK_TEST_SCENES_URL,
-                                InitialRealm.Goerli => IRealmNavigator.GOERLI_URL,
-                                InitialRealm.StreamingWorld => IRealmNavigator.STREAM_WORLD_URL,
-                                InitialRealm.TestScenes => IRealmNavigator.TEST_SCENES_URL,
-                                InitialRealm.World => IRealmNavigator.WORLDS_DOMAIN + "/" + targetWorld,
-                                InitialRealm.Localhost => IRealmNavigator.LOCALHOST,
-                                InitialRealm.Custom => customRealm,
-                                _ => startingRealm,
-                            };
-
-            bool hasTargetScene = initialRealm is InitialRealm.SDK or InitialRealm.Goerli or InitialRealm.StreamingWorld or InitialRealm.TestScenes;
-            startingParcel = hasTargetScene ? targetScene : settings.StartPosition;
+            startingRealm = launchSettings.GetStartingRealm();
+            startingParcel = launchSettings.TargetScene;
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
