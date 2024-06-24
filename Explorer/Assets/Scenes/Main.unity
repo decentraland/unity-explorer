@@ -463,9 +463,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   launchSettings:
     initialRealm: 0
-    targetScene: {x: 145, y: 60}
+    targetScene: {x: 0, y: 0}
     predefinedScenes:
-      enabled: 1
+      enabled: 0
       parcels:
       - {x: 145, y: 60}
     targetWorld: MetadyneLabs.dcl.eth

@@ -15,8 +15,6 @@ namespace DCL.UI
         [field: SerializeField]
         public Button Button { get; private set; }
 
-        public event Action OnClicked;
-
         public void SetColor(Color c, bool on)
         {
             ColorPicker.color = c;
