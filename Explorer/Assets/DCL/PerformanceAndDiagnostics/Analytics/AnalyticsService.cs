@@ -15,11 +15,22 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
     public class DebugAnalyticsService : IAnalyticsService
     {
-        public void Identify(string userId, JsonObject traits = null) =>
+        public void Identify(string userId, JsonObject traits = null)
+        {
             ReportHub.Log(ReportCategory.ANALYTICS, $"Identify: userId = {userId} | traits = {traits}");
+        }
 
-        public void Track(string eventName, JsonObject properties = null) =>
-            ReportHub.Log(ReportCategory.ANALYTICS,$"Track: eventName = {eventName} | properties = {properties}");
+        public void Track(string eventName, JsonObject properties = null)
+        {
+            var message = $"Track: eventName = {eventName}";
+
+            foreach (var pair in properties.Content)
+                message += $" \n {pair.Key} = {pair.Value}";
+
+            message += "\n";
+
+            ReportHub.Log(ReportCategory.ANALYTICS, message);
+        }
     }
 
     public class SegmentAnalyticsService : IAnalyticsService

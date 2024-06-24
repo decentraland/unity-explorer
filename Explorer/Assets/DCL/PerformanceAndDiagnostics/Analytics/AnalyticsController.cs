@@ -1,12 +1,10 @@
-﻿using CommunicationData.URLHelpers;
-using DCL.Character;
+﻿using DCL.Character;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using Segment.Serialization;
 using System;
-using System.Security.Cryptography;
-using System.Text;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -20,86 +18,48 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly ICharacterObject playerCharacter;
         private readonly IWeb3IdentityCache identityCache;
 
-        private readonly JsonObject commonFields;
-
-        public JsonObject CommonFields
+        private readonly IDictionary<string, JsonElement> commonParamsValues;
+        private IDictionary<string, JsonElement> commonParams
         {
             get
             {
-                commonFields["dcl_eth_address"] = identityCache.Identity == null ? UNDEFINED : identityCache.Identity.Address.ToString();
-                commonFields["realm"] = realmNavigator == null ? UNDEFINED : realmNavigator.CurrentRealm.ToString();
-                commonFields["position"] = playerCharacter == null ? UNDEFINED : playerCharacter.Position.ToShortString();
+                commonParamsValues["dcl_eth_address"] = identityCache?.Identity == null ? UNDEFINED : identityCache.Identity.Address.ToString();
+                commonParamsValues["realm"] = realmNavigator?.CurrentRealm == null ? UNDEFINED : realmNavigator.CurrentRealm.ToString();
+                commonParamsValues["position"] = playerCharacter == null ? UNDEFINED : playerCharacter.Position.ToShortString();
 
-                return commonFields;
+                return commonParamsValues;
             }
         }
 
-        private readonly JsonElement[] staticCommonFields;
-
-        public AnalyticsController(IAnalyticsService analyticsService, IRealmNavigator realmNavigator,
-            ICharacterObject playerCharacter, IWeb3IdentityCache identityCache)
+        public AnalyticsController(IAnalyticsService analyticsService,
+            IWeb3IdentityCache identityCache, IRealmNavigator realmNavigator, ICharacterObject playerCharacter)
         {
-            analytics = analyticsService;
+            this.analytics = analyticsService;
+
+            this.identityCache = identityCache;
             this.realmNavigator = realmNavigator;
             this.playerCharacter = playerCharacter;
-            this.identityCache = identityCache;
 
-            commonFields = CreateCommonFields();
-            staticCommonFields = new JsonElement[]
+            commonParamsValues = new Dictionary<string, JsonElement>
             {
-                commonFields["dcl_eth_address"],
-                commonFields["realm"],
-                commonFields["position"],
-                commonFields["dcl_renderer_type"],
-                commonFields["session_id"],
-                commonFields["renderer_version"],
-                commonFields["runtime"],
-            };
-
-            SendSystemInfo();
-        }
-
-        private JsonObject CreateCommonFields() =>
-            new ()
-            {
-                ["dcl_eth_address"] = identityCache.Identity != null ? identityCache.Identity.Address.ToString() : "not defined yet",
-                ["realm"] = realmNavigator.CurrentRealm.ToString(),
-                ["position"] = playerCharacter.Position.ToShortString(),
+                // Dynamic common parameters, updated on call
+                ["dcl_eth_address"] = UNDEFINED,
+                ["realm"] = UNDEFINED,
+                ["position"] = UNDEFINED,
+                // Static common parameters
                 ["dcl_renderer_type"] = SystemInfo.deviceType.ToString(), // Desktop, Console, Handeheld (Mobile), Unknown
-                ["session_id"] = GenerateSessionId(),
+                ["session_id"] = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff"),
                 ["renderer_version"] = Application.version,
                 ["runtime"] = Application.isEditor ? "editor" : "build", // do we need it❓
             };
 
-
-        private static string GenerateSessionId()
-        {
-            string deviceId = SystemInfo.deviceUniqueIdentifier;
-            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmssfff");
-
-            string rawSessionID = deviceId + timestamp;
-
-            return ComputeSha256Hash(rawSessionID);
-
-            string ComputeSha256Hash(string rawData)
-            {
-                using var sha256Hash = SHA256.Create();
-
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
-
-                var builder = new StringBuilder();
-
-                foreach (byte b in bytes)
-                    builder.Append(b.ToString("x2"));
-
-                return builder.ToString();
-            }
+            for (int i = 0; i < 3; i++)
+                SendSystemInfo();
         }
 
         private void SendSystemInfo()
         {
-
-            analytics.Track("system_info_report", new JsonObject
+            analytics.Track("system_info_report", new Dictionary<string, JsonElement>
             {
                 ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
                 ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"
@@ -112,7 +72,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 ["graphics_memory_size"] = SystemInfo.graphicsMemorySize, // 3965 in [MB]
                 ["graphics_device_type"] = SystemInfo.graphicsDeviceType.ToString(), // "Direct3D11", Vulkan, OpenGLCore, XBoxOne...
                 ["graphics_device_version"] = SystemInfo.graphicsDeviceVersion, // "Direct3D 11.0 [level 11.1]"
-            });
+            }.BuildWithPrefix(commonParams));
+        }
+    }
+
+    public static class JsonObjectUtils
+    {
+        public static JsonObject BuildWithPrefix(this IDictionary<string, JsonElement> origin, IDictionary<string, JsonElement> prefix)
+        {
+            foreach (KeyValuePair<string,JsonElement> element in origin)
+                prefix.Add(element);
+
+            var result = new JsonObject(prefix);
+
+            foreach (KeyValuePair<string,JsonElement> element in origin)
+                prefix.Remove(element);
+
+            return result;
         }
     }
 }
