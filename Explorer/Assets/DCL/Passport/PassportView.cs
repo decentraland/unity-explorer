@@ -15,6 +15,9 @@ namespace DCL.Passport
         public Button BackgroundButton { get; private set; }
 
         [field: SerializeField]
+        public Image BackgroundImage { get; private set; }
+
+        [field: SerializeField]
         public CharacterPreviewView CharacterPreviewView { get; private set; }
 
         [field: SerializeField]

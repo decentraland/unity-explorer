@@ -1,11 +1,12 @@
 using DCL.Chat;
 using DCL.Profiles;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.Passport.Modules
 {
-    public class UserBasicInfo_PassportModuleController : IPassportModuleController
+    public class UserBasicInfo_PassportModuleController : IDisposable
     {
         private UserBasicInfo_PassportModuleView view;
         private Profile currentProfile;

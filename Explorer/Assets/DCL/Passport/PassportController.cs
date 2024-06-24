@@ -8,6 +8,7 @@ using DCL.Profiles;
 using JetBrains.Annotations;
 using MVC;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
 
@@ -15,6 +16,8 @@ namespace DCL.Passport
 {
     public partial class PassportController : ControllerBase<PassportView, PassportController.Params>
     {
+        private static readonly int BG_SHADER_COLOR_1 = Shader.PropertyToID("_Color1");
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
         private readonly ICursor cursor;
@@ -26,8 +29,8 @@ namespace DCL.Passport
         private CancellationTokenSource characterPreviewLoadingCts;
         private World? world;
         private PassportCharacterPreviewController characterPreviewController;
-        private IPassportModuleController userBasicInfoModuleController;
-        private IPassportModuleController userDetailedInfoModuleController;
+        private UserBasicInfo_PassportModuleController userBasicInfoModuleController;
+        private UserDetailedInfo_PassportModuleController userDetailedInfoModuleController;
 
         public PassportController(
             [NotNull] ViewFactoryMethod viewFactory,
@@ -55,12 +58,13 @@ namespace DCL.Passport
             currentUserId = inputData.UserId;
             cursor.Unlock();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
-            LoadCharacterPreviewAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
+            LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
         }
 
         protected override void OnViewClose()
         {
             characterPreviewController.OnHide();
+            userDetailedInfoModuleController.ClearAdditionalFields();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -79,12 +83,14 @@ namespace DCL.Passport
             userDetailedInfoModuleController.Dispose();
         }
 
-        private async UniTaskVoid LoadCharacterPreviewAsync(string userId, CancellationToken ct)
+        private async UniTaskVoid LoadUserProfileAsync(string userId, CancellationToken ct)
         {
             // Load user profile
             var profile = await profileRepository.GetAsync(userId, 0, ct);
             if (profile == null)
                 return;
+
+            viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, chatEntryConfiguration.GetNameColor(profile.Name));
 
             // Load avatar preview
             characterPreviewController.Initialize(profile.Avatar);
