@@ -1,10 +1,12 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using UnityEngine;
 using static DCL.Chat.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
@@ -13,7 +15,9 @@ namespace Global.Dynamic.ChatCommands
     {
         private const string COMMAND_WORLD = "world";
         private const string WORLD_SUFFIX = ".dcl.eth";
-        private static readonly Dictionary<string, string> PARAMETER_URLS = new ()
+
+        // Parameters to URL mapping
+        private static readonly Dictionary<string, string> PARAM_URLS = new ()
         {
             { "genesis", IRealmNavigator.GENESIS_URL },
             { "goerli", IRealmNavigator.GOERLI_URL },
@@ -22,9 +26,7 @@ namespace Global.Dynamic.ChatCommands
             { "sdk", IRealmNavigator.SDK_TEST_SCENES_URL },
             { "test", IRealmNavigator.TEST_SCENES_URL },
         };
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+)$", RegexOptions.Compiled);
-
-        // Parameters to URL mapping
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+?)(?:\s+(-?\d+),(-?\d+))?(?:\s+({PARAM_SOLO}|{PARAM_ONLY}))?$", RegexOptions.Compiled);
 
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
@@ -43,7 +45,7 @@ namespace Global.Dynamic.ChatCommands
         {
             worldName = match.Groups[2].Value;
 
-            if (!PARAMETER_URLS.TryGetValue(worldName, out realmUrl))
+            if (!PARAM_URLS.TryGetValue(worldName, out realmUrl))
             {
                 if (!worldName.EndsWith(WORLD_SUFFIX))
                     worldName += WORLD_SUFFIX;
@@ -53,7 +55,12 @@ namespace Global.Dynamic.ChatCommands
 
             var realm = URLDomain.FromString(realmUrl!);
 
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct);
+            Vector2Int parcel = default;
+            if (match.Groups[3].Success && match.Groups[4].Success)
+                parcel = new Vector2Int(int.Parse(match.Groups[3].Value), int.Parse(match.Groups[4].Value));
+
+            bool isSoloSceneLoading = match.Groups[5].Value is PARAM_SOLO or PARAM_ONLY;
+            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct, isSoloSceneLoading, parcel);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";

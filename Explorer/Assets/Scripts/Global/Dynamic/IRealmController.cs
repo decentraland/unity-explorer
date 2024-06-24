@@ -1,10 +1,8 @@
 using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using ECS;
 using System.Threading;
-using UnityEngine;
 
 namespace Global.Dynamic
 {
@@ -13,7 +11,7 @@ namespace Global.Dynamic
         GlobalWorld GlobalWorld { get; set; }
         Entity RealmEntity { get; }
 
-        UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
+        UniTask SetRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false);
 
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
 
@@ -28,5 +26,7 @@ namespace Global.Dynamic
         ///     Dispose everything on application quit
         /// </summary>
         void DisposeGlobalWorld();
+
+        void SetSoloSceneLoading(bool isSolo);
     }
 }

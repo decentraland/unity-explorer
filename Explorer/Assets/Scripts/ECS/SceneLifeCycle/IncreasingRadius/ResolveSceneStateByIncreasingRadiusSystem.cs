@@ -15,12 +15,11 @@ using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using DCL.LOD.Components;
-using System;
-using DCL.LOD;
 using DCL.Roads.Components;
+using ECS.SceneLifeCycle.OneSceneLoading;
+using Global.Dynamic;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -86,18 +85,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         }
 
         [Query]
-        [None(typeof(StaticScenePointers), typeof(FixedScenePointers))]
+        [None(typeof(StaticScenePointers), typeof(FixedScenePointers), typeof(SoloScenePointers))]
         private void ProcessVolatileRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realm)
         {
             StartScenesLoading(ref realm, maxLoadingSqrDistance);
-        }
-
-        [Query]
-        [None(typeof(StaticScenePointers))]
-        [All(typeof(RealmComponent))]
-        private void ProcessScenesUnloadingInRealm()
-        {
-            StartUnloadingQuery(World);
         }
 
         /// <summary>
@@ -105,11 +96,19 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         ///     weigh them against each other, and may start loading distant scenes first
         /// </summary>
         [Query]
-        [None(typeof(StaticScenePointers), typeof(VolatileScenePointers))]
+        [None(typeof(StaticScenePointers), typeof(VolatileScenePointers), typeof(SoloScenePointers))]
         private void ProcessesFixedRealm([Data] float maxLoadingSqrDistance, ref RealmComponent realmComponent, ref FixedScenePointers fixedScenePointers)
         {
             if (fixedScenePointers.AllPromisesResolved)
                 StartScenesLoading(ref realmComponent, maxLoadingSqrDistance);
+        }
+
+        [Query]
+        [None(typeof(StaticScenePointers), typeof(SoloScenePointers))]
+        [All(typeof(RealmComponent))]
+        private void ProcessScenesUnloadingInRealm()
+        {
+            StartUnloadingQuery(World);
         }
 
         private void StartScenesLoading(ref RealmComponent realmComponent, float maxLoadingSqrDistance)
@@ -137,13 +136,12 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirst, entityIndex);
 
-                    if (partitionComponent.RawSqrDistance >= maxLoadingSqrDistance) continue;
-
-                    orderedData.Add(new OrderedData
-                    {
-                        Entity = entity,
-                        Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind),
-                    });
+                    if (partitionComponent.RawSqrDistance < maxLoadingSqrDistance)
+                        orderedData.Add(new OrderedData
+                        {
+                            Entity = entity,
+                            Data = new DistanceBasedComparer.DataSurrogate(partitionComponent.RawSqrDistance, partitionComponent.IsBehind),
+                        });
                 }
             }
 

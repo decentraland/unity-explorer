@@ -1,4 +1,5 @@
 ﻿using DCL.CharacterCamera;
+using DCL.Utilities.Extensions;
 using ECS.Prioritization.Components;
 using System;
 using Unity.Burst;
@@ -81,7 +82,7 @@ namespace ECS.Prioritization
 
             public void Execute(int index)
             {
-                ParcelCornersData corners = ParcelCorners[index];
+                ParcelCornersData cornersData = ParcelCorners[index];
                 PartitionData partition = partitions[index];
                 byte bucket = partition.Bucket;
                 bool isBehind = partition.IsBehind;
@@ -94,7 +95,7 @@ namespace ECS.Prioritization
 
                 float minSqrMagnitude = float.MaxValue;
 
-                for (var i = 0; i < corners.Corners.Length; i++)
+                for (var i = 0; i < cornersData.Corners.Length; i++)
                 {
                     void ProcessCorners(float3 corner, ref PartitionData partitionData, ref float3 position, ref float3 forward)
                     {
@@ -110,11 +111,11 @@ namespace ECS.Prioritization
                             partitionData.IsBehind = Vector3.Dot(forward, vectorToCamera) < 0;
                     }
 
-                    ParcelCorners corners1 = corners.Corners[i];
-                    ProcessCorners(corners1.minXZ, ref partition, ref CameraPosition, ref CameraForward);
-                    ProcessCorners(corners1.minXmaxZ, ref partition, ref CameraPosition, ref CameraForward);
-                    ProcessCorners(corners1.maxXminZ, ref partition, ref CameraPosition, ref CameraForward);
-                    ProcessCorners(corners1.maxXZ, ref partition, ref CameraPosition, ref CameraForward);
+                    ParcelCorners parcelCorners = cornersData.Corners[i];
+                    ProcessCorners(parcelCorners.minXZ, ref partition, ref CameraPosition, ref CameraForward);
+                    ProcessCorners(parcelCorners.minXmaxZ, ref partition, ref CameraPosition, ref CameraForward);
+                    ProcessCorners(parcelCorners.maxXminZ, ref partition, ref CameraPosition, ref CameraForward);
+                    ProcessCorners(parcelCorners.maxXZ, ref partition, ref CameraPosition, ref CameraForward);
                 }
 
                 // Find the bucket

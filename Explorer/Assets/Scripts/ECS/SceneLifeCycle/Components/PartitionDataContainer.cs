@@ -56,7 +56,7 @@ namespace ECS.SceneLifeCycle.Components
         {
             partitions.Dispose();
             parcelCorners.Dispose();
-            
+
             CurrentPartitionIndex = 0;
 
             // Hard limit of the real scenes that can exist

@@ -10,7 +10,6 @@ using ECS.SceneLifeCycle.SceneDefinition;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
-using Utility;
 using static ECS.Prioritization.ScenesPartitioningUtils;
 using static Utility.ParcelMathHelper;
 
@@ -54,11 +53,8 @@ namespace ECS.SceneLifeCycle.Systems
             this.partitionDataContainer = partitionDataContainer;
             this.realmPartitionSettings = realmPartitionSettings;
 
-
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
             emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
-            
-
         }
 
         public override void Dispose()

@@ -88,7 +88,7 @@ namespace Global.Dynamic
             this.globalWorldProxy = globalWorldProxy;
         }
 
-        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default)
+        public async UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false, Vector2Int parcelToTeleport = default)
         {
             if (realm == CurrentRealm || realm == realmController.GetRealm().Ipfs.CatalystBaseUrl)
             {
@@ -117,7 +117,7 @@ namespace Global.Dynamic
                         // By removing the CameraSamplingData, we stop the ring calculation
                         world.Remove<CameraSamplingData>(cameraEntity.Object);
 
-                        await ChangeRealmAsync(realm, ct);
+                        await ChangeRealmAsync(realm, ct, isSoloSceneLoading);
                         parentLoadReport.SetProgress(RealFlowLoadingStatus.PROGRESS[ProfileLoaded]);
 
                         AsyncLoadProcessReport? landscapeLoadReport
@@ -164,7 +164,7 @@ namespace Global.Dynamic
             await waitForSceneReadiness;
         }
 
-        public async UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isLocal = false)
+        public async UniTask TryInitializeTeleportToParcelAsync(Vector2Int parcel, CancellationToken ct, bool isSoloSceneLoading = false, bool isLocal = false)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -172,9 +172,11 @@ namespace Global.Dynamic
             {
                 bool isGenesis = !realmController.GetRealm().ScenesAreFixed;
 
-                if (!isLocal && !isGenesis) { await TryChangeRealmAsync(genesisDomain, ct, parcel); }
+                if (!isLocal && !isGenesis) { await TryChangeRealmAsync(genesisDomain, ct, isSoloSceneLoading, parcel); }
                 else
                 {
+                    realmController.SetSoloSceneLoading(isSoloSceneLoading);
+
                     await loadingScreen.ShowWhileExecuteTaskAsync(async parentLoadReport =>
                     {
                         ct.ThrowIfCancellationRequested();
@@ -244,9 +246,9 @@ namespace Global.Dynamic
             return waitForSceneReadiness.ToUniTask(ct);
         }
 
-        private async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct)
+        private async UniTask ChangeRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false)
         {
-            await realmController.SetRealmAsync(realm, ct);
+            await realmController.SetRealmAsync(realm, ct, isSoloSceneLoading);
             CurrentRealm = realm;
 
             await SwitchMiscVisibilityAsync();

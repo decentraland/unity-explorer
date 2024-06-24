@@ -26,7 +26,6 @@ using System.Threading;
 using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility;
 
 namespace Global.Dynamic
 {
@@ -66,6 +65,7 @@ namespace Global.Dynamic
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
         private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
+        private bool isSoloSceneLoading;
 
         private void Awake()
         {
@@ -279,6 +279,7 @@ namespace Global.Dynamic
         private void SetupInitialConfig()
         {
             startingRealm = launchSettings.GetStartingRealm();
+            isSoloSceneLoading = launchSettings.IsSoloSceneLoading;
             startingParcel = launchSettings.TargetScene;
         }
 
@@ -300,7 +301,7 @@ namespace Global.Dynamic
         private async UniTask ChangeRealmAsync(CancellationToken ct)
         {
             IRealmController realmController = dynamicWorldContainer!.RealmController;
-            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct, isSoloSceneLoading);
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

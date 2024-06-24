@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.Optimization.Pools;
@@ -17,11 +16,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using ECS.SceneLifeCycle.Reporting;
+using ECS.SceneLifeCycle.OneSceneLoading;
 using Unity.Mathematics;
-using UnityEngine;
+using Utility.Arch;
 
 namespace Global.Dynamic
 {
@@ -43,6 +43,7 @@ namespace Global.Dynamic
         private readonly TeleportController teleportController;
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
+        private readonly SceneAssetLock sceneAssetLock;
 
         private GlobalWorld? globalWorld;
         public Entity RealmEntity { get; private set; }
@@ -50,6 +51,7 @@ namespace Global.Dynamic
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
             set
             {
                 globalWorld = value;
@@ -66,7 +68,8 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions,
             RealmData realmData,
             IScenesCache scenesCache,
-            PartitionDataContainer partitionDataContainer)
+            PartitionDataContainer partitionDataContainer,
+            SceneAssetLock sceneAssetLock)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -77,9 +80,10 @@ namespace Global.Dynamic
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
+            this.sceneAssetLock = sceneAssetLock;
         }
 
-        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
+        public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct, bool isSoloSceneLoading = false)
         {
             World world = globalWorld!.EcsWorld;
 
@@ -90,7 +94,7 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(
@@ -108,11 +112,23 @@ namespace Global.Dynamic
             if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
                 ComplimentWithVolatilePointers(world, RealmEntity);
 
+            SetSoloSceneLoading(isSoloSceneLoading);
+
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
             partitionDataContainer.Restart();
+        }
+
+        public void SetSoloSceneLoading(bool isSolo)
+        {
+            World world = globalWorld!.EcsWorld;
+
+            if (isSolo)
+                world.TryAddSingle<SoloScenePointers>(RealmEntity);
+            else
+                world.TryRemove<SoloScenePointers>(RealmEntity);
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
@@ -161,6 +177,7 @@ namespace Global.Dynamic
             realmData.Invalidate();
 
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+            sceneAssetLock.IsLocked = false;
 
             // Collect garbage, good moment to do it
             GC.Collect();

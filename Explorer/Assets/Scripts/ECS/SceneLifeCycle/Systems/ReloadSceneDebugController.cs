@@ -19,7 +19,7 @@ using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    public class ReloadSceneDebugController 
+    public class ReloadSceneDebugController
     {
         private readonly Entity playerEntity;
         private readonly IScenesCache scenesCache;
@@ -67,7 +67,5 @@ namespace ECS.SceneLifeCycle.Systems
             //Forcing a fake dirtyness to force a reload of the scene
             world.Get<PartitionComponent>(entity).IsDirty = true;
         }
-
-
     }
 }

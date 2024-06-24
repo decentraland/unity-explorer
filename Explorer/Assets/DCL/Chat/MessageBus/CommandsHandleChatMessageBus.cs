@@ -37,7 +37,7 @@ namespace DCL.Chat.MessageBus
                 return;
             }
 
-            if (chatCommandsHandler.StartsLikeCommand(message))
+            if (ChatCommandsHandler.StartsLikeCommand(message))
             {
                 SendFromSystem($"🔴 Command not found: '{message}'");
                 return;

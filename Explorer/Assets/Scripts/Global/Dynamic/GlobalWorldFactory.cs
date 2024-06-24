@@ -25,6 +25,7 @@ using ECS.Prioritization.Systems;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.IncreasingRadius;
+using ECS.SceneLifeCycle.OneSceneLoading.Systems;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
@@ -99,7 +100,6 @@ namespace Global.Dynamic
 
             var builder = new ArchSystemsWorldBuilder<World>(world);
             builder.InjectCustomGroup(new SyncedPreRenderingSystemGroup(null, globalSceneStateProvider));
-
             Entity playerEntity = characterContainer.CreatePlayerEntity(world);
 
             IReleasablePerformanceBudget sceneBudget = new ConcurrentLoadingPerformanceBudget(staticSettings.ScenesLoadingBudget);
@@ -114,7 +114,7 @@ namespace Global.Dynamic
             else
                 loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
 
-            
+
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
                 new LoadEmptySceneSystemLogic(),
@@ -133,6 +133,8 @@ namespace Global.Dynamic
                 partitionSettings);
 
             ResolveSceneStateByIncreasingRadiusSystem.InjectToWorld(ref builder, realmPartitionSettings);
+            ResolveSoloSceneStateSystem.InjectToWorld(ref builder, playerEntity);
+
             //Removed, since we now have landscape surrounding the world
             //CreateEmptyPointersInFixedRealmSystem.InjectToWorld(ref builder, jobsMathHelper, realmPartitionSettings);
 
