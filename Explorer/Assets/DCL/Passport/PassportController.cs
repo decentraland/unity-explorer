@@ -27,6 +27,7 @@ namespace DCL.Passport
         private World? world;
         private PassportCharacterPreviewController characterPreviewController;
         private IPassportModuleController userBasicInfoModuleController;
+        private IPassportModuleController userDetailedInfoModuleController;
 
         public PassportController(
             [NotNull] ViewFactoryMethod viewFactory,
@@ -46,6 +47,7 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration);
+            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView);
         }
 
         protected override void OnViewShow()
@@ -54,6 +56,11 @@ namespace DCL.Passport
             cursor.Unlock();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadCharacterPreviewAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
+        }
+
+        protected override void OnViewClose()
+        {
+            characterPreviewController.OnHide();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -69,6 +76,7 @@ namespace DCL.Passport
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController.Dispose();
             userBasicInfoModuleController.Dispose();
+            userDetailedInfoModuleController.Dispose();
         }
 
         private async UniTaskVoid LoadCharacterPreviewAsync(string userId, CancellationToken ct)
@@ -84,6 +92,7 @@ namespace DCL.Passport
 
             // Load passport modules
             userBasicInfoModuleController.Setup(profile);
+            userDetailedInfoModuleController.Setup(profile);
         }
     }
 }

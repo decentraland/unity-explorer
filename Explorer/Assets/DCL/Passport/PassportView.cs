@@ -19,5 +19,8 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public UserBasicInfo_PassportModuleView UserBasicInfoModuleView { get; private set; }
+
+        [field: SerializeField]
+        public UserDetailedInfo_PassportModuleView UserDetailedInfoModuleView { get; private set; }
     }
 }
