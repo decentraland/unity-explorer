@@ -39,7 +39,7 @@ def clone_current_target():
     def generate_body(template_target, name, branch, options, cache):
         body = get_target(template_target)
 
-        body['name'] = new_name
+        body['name'] = name
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
 
