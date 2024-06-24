@@ -31,7 +31,7 @@ namespace DCL.Minimap
 {
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
-        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers;
+        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
         private const float ANIMATION_TIME = 0.2f;
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
@@ -183,7 +183,7 @@ namespace DCL.Minimap
             bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
             bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
             viewInstance.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
-            
+
             return;
 
             async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
@@ -199,7 +199,7 @@ namespace DCL.Minimap
                         PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(playerParcelPosition, cts.Token);
                         viewInstance.placeNameText.text = placeInfo?.title ?? "Unknown place";
                     }
-                    
+
                 }
                 catch (NotAPlaceException notAPlaceException)
                 {
