@@ -56,11 +56,8 @@ namespace Global.Static
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
-                
-                if (useStoredCredentials
 
-                    // avoid storing invalid credentials
-                    && useRealAuthentication)
+                if (useStoredCredentials && useRealAuthentication) // avoid storing invalid credentials
                     identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
                 else

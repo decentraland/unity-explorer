@@ -2,7 +2,12 @@
     "name": "DCL.Analytics",
     "rootNamespace": "",
     "references": [
-        "GUID:101b8b6ebaf64668909b49c4b7a1420d"
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:c80c82a8f4e04453b85fbab973d6774a",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

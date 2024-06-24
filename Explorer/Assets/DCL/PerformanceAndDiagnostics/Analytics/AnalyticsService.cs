@@ -1,5 +1,5 @@
+using DCL.Diagnostics;
 using Segment.Serialization;
-using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -16,10 +16,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class DebugAnalyticsService : IAnalyticsService
     {
         public void Identify(string userId, JsonObject traits = null) =>
-            Debug.Log($"Identify: userId={userId}, traits={traits}");
+            ReportHub.Log(ReportCategory.ANALYTICS, $"Identify: userId = {userId} | traits = {traits}");
 
         public void Track(string eventName, JsonObject properties = null) =>
-            Debug.Log($"Track: eventName={eventName}, properties={properties}");
+            ReportHub.Log(ReportCategory.ANALYTICS,$"Track: eventName = {eventName} | properties = {properties}");
     }
 
     public class SegmentAnalyticsService : IAnalyticsService
@@ -30,17 +30,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             analytics = new Segment.Analytics.Analytics(configuration.SegmentConfiguration);
             Segment.Analytics.Analytics.Logger = new SegmentLogger();
-
-            // Identify("testUser-123", new JsonObject
-            // {
-            //     ["username"] = "Vitaly Popuzin",
-            //     ["runtime"] = Application.isEditor ? "editor" : "build",
-            // });
-            //
-            // Track("testEvent", new JsonObject
-            // {
-            //     ["runtime"] = Application.isEditor ? "editor" : "build",
-            // });
         }
 
         public void Identify(string userId, JsonObject traits = null) =>
