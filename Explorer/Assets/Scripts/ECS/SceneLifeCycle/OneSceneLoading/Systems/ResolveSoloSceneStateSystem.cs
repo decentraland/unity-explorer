@@ -33,11 +33,7 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
 
         protected override void Update(float t)
         {
-            // REFACTOR IT!: Copy-paste
-            Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
-            Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
-
-            ProcessRealmWithSoloLoadingQuery(World, parcel);
+            ProcessRealmWithSoloLoadingQuery(World, World.Get<CharacterTransform>(playerEntity).Parcel);
         }
 
         [Query]
@@ -47,40 +43,6 @@ namespace ECS.SceneLifeCycle.OneSceneLoading.Systems
         {
             StartLoadingSceneQuery(World, parcel, realm.Ipfs);
             StartUnloadingQuery(World, parcel);
-            // DebugingQuery(World, parcel);
-        }
-
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void Debuging([Data] Vector2Int parcel, Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (sceneDefinitionComponent.Parcels.Contains(parcel))
-            {
-                Debug.Log($"VVV --- {sceneDefinitionComponent.SceneGeometry.BaseParcelPosition}");
-                if (World.Has<PartitionComponent>(entity))
-                {
-                    PartitionComponent a = World.Get<PartitionComponent>(entity);
-                    Debug.Log($"VVV  {sceneDefinitionComponent.SceneGeometry.BaseParcelPosition} Partition {a.IsDirty}");
-                }
-
-                if (World.Has<VisualSceneState>(entity))
-                {
-                    VisualSceneState a = World.Get<VisualSceneState>(entity);
-                    Debug.Log($"VVV  {sceneDefinitionComponent.SceneGeometry.BaseParcelPosition} Visual {a.IsDirty} {a.CurrentVisualSceneState}");
-                }
-
-                if (World.Has<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity))
-                {
-                    AssetPromise<ISceneFacade, GetSceneFacadeIntention> a = World.Get<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-                    Debug.Log($"VVV  {sceneDefinitionComponent.SceneGeometry.BaseParcelPosition} AssetPromise {a.IsConsumed} {a.Result != null} ");
-                }
-
-                if (World.Has<ISceneFacade>(entity))
-                {
-                    ISceneFacade a = World.Get<ISceneFacade>(entity);
-                    Debug.Log($"VVV  {sceneDefinitionComponent.SceneGeometry.BaseParcelPosition} ISceneFacade {a.Info.BaseParcel}");
-                }
-            }
         }
 
         [Query]
