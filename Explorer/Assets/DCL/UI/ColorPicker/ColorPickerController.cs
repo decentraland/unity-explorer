@@ -38,16 +38,16 @@ namespace DCL.UI
                 actionOnRelease:(toggle) => toggle.gameObject.SetActive(false));
 
             view.SliderHue.Slider.onValueChanged.AddListener(_ => SetColor());
-            view.SliderHue.IncreaseButton.onClick.AddListener(() => ChangeProperty("hue", INCREMENT_AMOUNT));
-            view.SliderHue.DecreaseButton.onClick.AddListener(() => ChangeProperty("hue", -INCREMENT_AMOUNT));
+            view.SliderHue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, INCREMENT_AMOUNT));
+            view.SliderHue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderHue, -INCREMENT_AMOUNT));
 
             view.SliderSaturation.Slider.onValueChanged.AddListener(_ => SetColor());
-            view.SliderSaturation.IncreaseButton.onClick.AddListener(() => ChangeProperty("sat", INCREMENT_AMOUNT));
-            view.SliderSaturation.DecreaseButton.onClick.AddListener(() => ChangeProperty("sat", -INCREMENT_AMOUNT));
+            view.SliderSaturation.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderSaturation, INCREMENT_AMOUNT));
+            view.SliderSaturation.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderSaturation, -INCREMENT_AMOUNT));
 
             view.SliderValue.Slider.onValueChanged.AddListener(_ => SetColor());
-            view.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty("val", INCREMENT_AMOUNT));
-            view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty("val", -INCREMENT_AMOUNT));
+            view.SliderValue.IncreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, INCREMENT_AMOUNT));
+            view.SliderValue.DecreaseButton.onClick.AddListener(() => ChangeProperty(view.SliderValue, -INCREMENT_AMOUNT));
 
             view.ToggleButton.onClick.AddListener(() => TogglePanel());
         }
@@ -116,23 +116,10 @@ namespace DCL.UI
             usedColorToggles.Clear();
         }
 
-        private void ChangeProperty(string a, float amount)
+        private void ChangeProperty(SliderView slider, float amount)
         {
-            switch (a)
-            {
-                case "hue":
-                    view.SliderHue.Slider.value += amount;
-                    CheckButtonInteractivity(view.SliderHue);
-                    break;
-                case "sat":
-                    view.SliderSaturation.Slider.value += amount;
-                    CheckButtonInteractivity(view.SliderSaturation);
-                    break;
-                case "val":
-                    view.SliderValue.Slider.value += amount;
-                    CheckButtonInteractivity(view.SliderValue);
-                    break;
-            }
+            slider.Slider.value += amount;
+            CheckButtonInteractivity(slider);
         }
 
         private static void CheckButtonInteractivity(SliderView sliderComponent)

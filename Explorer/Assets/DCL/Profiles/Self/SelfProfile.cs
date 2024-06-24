@@ -84,9 +84,7 @@ namespace DCL.Profiles.Self
             var newProfile = profileBuilder.From(profile)
                                            .WithBodyShape(bodyShape)
                                            .WithWearables(uniqueWearables)
-                                           .WithColors(equippedWearables.GetColors().Item1,
-                                                equippedWearables.GetColors().Item2,
-                                                equippedWearables.GetColors().Item3)
+                                           .WithColors(equippedWearables.GetColors())
                                            .WithEmotes(uniqueEmotes)
                                            .WithForceRender(forceRender)
                                            .WithVersion(profile!.Version + 1)
