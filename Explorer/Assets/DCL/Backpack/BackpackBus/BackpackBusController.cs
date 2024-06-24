@@ -47,6 +47,7 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.FilterCategoryMessageReceived += HandleFilterCategoryCommand;
             this.backpackCommandBus.SearchMessageReceived += HandleSearchCommand;
             this.backpackCommandBus.PublishProfileReceived += HandlePublishProfile;
+            this.backpackCommandBus.ChangeColorMessageReceived += HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived += HandleUnequipAll;
             this.backpackCommandBus.EmoteSlotSelectMessageReceived += HandleEmoteSlotSelectCommand;
         }
@@ -63,6 +64,7 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.FilterCategoryMessageReceived -= HandleFilterCategoryCommand;
             backpackCommandBus.SearchMessageReceived -= HandleSearchCommand;
             backpackCommandBus.PublishProfileReceived -= HandlePublishProfile;
+            this.backpackCommandBus.ChangeColorMessageReceived -= HandleChangeColor;
             this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
         }
@@ -75,6 +77,11 @@ namespace DCL.Backpack.BackpackBus
         private void HandleUnequipAll(BackpackUnEquipAllCommand obj)
         {
             backpackEventBus.SendUnEquipAll();
+        }
+
+        private void HandleChangeColor(BackpackChangeColorCommand command)
+        {
+            backpackEventBus.SendChangeColor(command.NewColor, command.Category);
         }
 
         private void HandleSearchCommand(BackpackSearchCommand command)

@@ -4,11 +4,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
+using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.CharacterPreview
@@ -29,6 +32,7 @@ namespace DCL.Backpack.CharacterPreview
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
             backpackEventBus.EquipWearableEvent += OnWearableEquipped;
+            backpackEventBus.ChangeColorEvent += OnColorChange;
             backpackEventBus.UnEquipWearableEvent += OnWearableUnequipped;
             backpackEventBus.UnEquipAllEvent += UnEquipAll;
             backpackEventBus.EquipEmoteEvent += OnEmoteEquipped;
@@ -72,6 +76,7 @@ namespace DCL.Backpack.CharacterPreview
             base.Dispose();
 
             backpackEventBus.EquipWearableEvent -= OnWearableEquipped;
+            backpackEventBus.ChangeColorEvent -= OnColorChange;
             backpackEventBus.UnEquipWearableEvent -= OnWearableUnequipped;
             backpackEventBus.EquipEmoteEvent -= OnEmoteEquipped;
             backpackEventBus.UnEquipEmoteEvent -= OnEmoteUnEquipped;
@@ -107,6 +112,23 @@ namespace DCL.Backpack.CharacterPreview
                 previewAvatarModel.BodyShape = i.GetUrn();
             else previewAvatarModel.Wearables.Add(i.GetUrn());
 
+            OnModelUpdated();
+        }
+
+        private void OnColorChange(Color newColor, string category)
+        {
+            switch (category)
+            {
+                case WearablesConstants.Categories.EYES:
+                    previewAvatarModel.EyesColor = newColor;
+                    break;
+                case WearablesConstants.Categories.HAIR:
+                    previewAvatarModel.HairColor = newColor;
+                    break;
+                case WearablesConstants.Categories.BODY_SHAPE:
+                    previewAvatarModel.SkinColor = newColor;
+                    break;
+            }
             OnModelUpdated();
         }
 

@@ -4,6 +4,7 @@ using DCL.CharacterPreview;
 using DCL.UI;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -20,6 +21,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<string> FilterCategoryEvent;
         public event Action<string> SearchEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
+        public event Action<Color,string>? ChangeColorEvent;
         public event Action UnEquipAllEvent;
         event Action PublishProfileEvent;
 
@@ -30,6 +32,8 @@ namespace DCL.Backpack.BackpackBus
         public void SendUnEquipWearable(IWearable unEquipWearable);
 
         public void SendUnEquipAll();
+
+        public void SendChangeColor(Color newColor, string category);
 
         public void SendForceRender(IReadOnlyCollection<string> forceRender);
 
