@@ -237,7 +237,7 @@ namespace Global.Dynamic
                 sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
                     identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
 
-                await InitializeFeatureFlagsAsync(webRequestController, ct);
+                await InitializeFeatureFlagsAsync(ct);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -331,12 +331,10 @@ namespace Global.Dynamic
             await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
         }
 
-        private async UniTask InitializeFeatureFlagsAsync(IWebRequestController webRequestController, CancellationToken ct)
+        private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
             try
             {
-                var featureFlagsProvider = new HttpFeatureFlagsProvider(webRequestController);
-
                 FeatureFlagOptions options = FeatureFlagOptions.ORG;
                 URLDomain? programArgsUrl = GetUrlFromProgramArgs();
 
@@ -345,12 +343,11 @@ namespace Global.Dynamic
 
                 // TODO: when the identity is not set, should we request the FFs again after the authentication process?
                 options.UserId = identityCache!.Identity?.Address;
-                var featureFlagsConfig = await featureFlagsProvider.GetAsync(options, ct);
-                staticContainer!.FeatureFlagsCache.Configuration = featureFlagsConfig;
+
+                await staticContainer!.FeatureFlagsProvider.GetAsync(options, ct);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                staticContainer!.FeatureFlagsCache.Configuration = new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty);
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
 
