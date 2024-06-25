@@ -73,8 +73,6 @@ namespace DCL.SDKComponents.Tween.Systems
         };
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly List<DG.Tweening.Tween> transformTweens = new ();
-        private Tweener tempTweener;
 
         public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
         {
@@ -134,19 +132,18 @@ namespace DCL.SDKComponents.Tween.Systems
                 Transform entityTransform = transformComponent.Transform;
                 float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-                SetupTweener(transformComponent, ref sdkTweenComponent, entityTransform, pbTween, durationInSeconds, isPlaying, sdkTransform);
+                SetupTweener(ref sdkTweenComponent, entityTransform, pbTween, durationInSeconds, isPlaying, sdkTransform);
 
-                sdkTweenComponent.Tweener = tempTweener;
                 sdkTweenComponent.IsDirty = false;
 
                 if (isPlaying)
                 {
-                    sdkTweenComponent.Tweener.Play();
+                    sdkTweenComponent.CustomTweener.Play();
                     sdkTweenComponent.TweenStateStatus = sdkTweenComponent.CustomTweener.Finished ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
                 }
                 else
                 {
-                    sdkTweenComponent.Tweener.Pause();
+                    sdkTweenComponent.CustomTweener.Pause();
                     sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
                 }
             }
@@ -165,9 +162,7 @@ namespace DCL.SDKComponents.Tween.Systems
             }
 
             if (sdkTweenComponent.IsPlaying)
-            {
                 tweenStateDirty = true;
-            }
 
             if (!tweenStateDirty) return;
 
@@ -176,20 +171,23 @@ namespace DCL.SDKComponents.Tween.Systems
 
             var currentResult = sdkTweenComponent.CustomTweener.GetResult();
             sdkTransform.IsDirty = true;
-            sdkTransform.Position = currentResult.Item1;
-            sdkTransform.Rotation = currentResult.Item2;
-            sdkTransform.Scale = currentResult.Item3;
+            sdkTransform.Position = currentResult.Position;
+            sdkTransform.Rotation = currentResult.Rotation;
+            sdkTransform.Scale = currentResult.Scale;
         }
 
-        private void SetupTweener(TransformComponent transformComponent, ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, PBTween tweenModel, float durationInSeconds, bool isPlaying, SDKTransform sdkTransform)
+        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, PBTween tweenModel, float durationInSeconds, bool isPlaying, SDKTransform sdkTransform)
         {
-            tempTweener = sdkTweenComponent.Tweener;
-
             //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
             // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
-            //TODO: Juani (this is not longer supported)
-            DOTween.TweensByTarget(entityTransform, true, transformTweens);
-            if (transformTweens.Count > 0) transformTweens[0].Rewind(false);
+            if (sdkTweenComponent.CustomTweener is { Finished: false })
+            {
+                sdkTweenComponent.CustomTweener.Rewind();
+                var result = sdkTweenComponent.CustomTweener.GetResult();
+                entityTransform.transform.position = result.Position;
+                entityTransform.transform.rotation = result.Rotation;
+                entityTransform.transform.localScale = result.Scale;
+            }
 
             if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
                 ease = Linear;
@@ -211,7 +209,8 @@ namespace DCL.SDKComponents.Tween.Systems
                     var startPosition = PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.Start);
                     var endPosition = PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.End);
 
-                    if (tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection) entityTransform.forward = (endPosition - startPosition).normalized;
+                    if (tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection)
+                        entityTransform.forward = (endPosition - startPosition).normalized;
                     sdkTweenComponent.CustomTweener = new PositionTweener(entityTransform, startPosition, endPosition, durationInSeconds);
                     break;
             }
@@ -222,24 +221,15 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
         {
-            sdkTweenComponent.Tweener.Kill();
+            sdkTweenComponent.Dispose();
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
-        }
-
-        private void SetupPositionTween(Transform entityTransform, Vector3 startPosition,
-            Vector3 endPosition, float durationInSeconds, Ease ease, bool faceDirection,
-            ref SDKTweenComponent tweenComponent)
-        {
-
         }
 
         private TweenStateStatus GetCurrentTweenState(bool finished, bool isPlaying)
         {
             if (!isPlaying) { return TweenStateStatus.TsPaused; }
-
             return finished ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
         }
-
 
     }
 }

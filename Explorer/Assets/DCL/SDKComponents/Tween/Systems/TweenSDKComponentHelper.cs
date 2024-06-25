@@ -22,9 +22,9 @@ namespace DCL.SDKComponents.Tween.Helpers
                 {
                     var currentResult = customTweener.GetResult();
                     component.IsDirty = true;
-                    component.Position = currentResult.Item1;
-                    component.Rotation = currentResult.Item2;
-                    component.Scale = currentResult.Item3;
+                    component.Position = currentResult.Position;
+                    component.Rotation = currentResult.Rotation;
+                    component.Scale = currentResult.Scale;
                     component.ParentId = customTweener.ParentId;
                 }, sdkEntity, customTweener);
         }
