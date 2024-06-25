@@ -22,7 +22,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private string segmentWriteKey;
         private Configuration segmentConfiguration;
 
-        public Configuration SegmentConfiguration => segmentConfiguration ??= new Configuration(WriteKey, new ErrorHandler(), flushSize, flushInterval);
+        public Configuration SegmentConfiguration => segmentConfiguration ??=
+            new Configuration(WriteKey, new ErrorHandler(), flushSize, flushInterval);
 
         public string WriteKey
         {

@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
 
         public AnalyticsController(IAnalyticsService analyticsService,
-            IWeb3IdentityCache identityCache, IRealmNavigator realmNavigator, ICharacterObject playerCharacter)
+            IWeb3IdentityCache identityCache = null, IRealmNavigator realmNavigator = null, ICharacterObject playerCharacter = null)
         {
             this.analytics = analyticsService;
 
@@ -53,8 +53,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 ["runtime"] = Application.isEditor ? "editor" : "build", // do we need it❓
             };
 
-            for (int i = 0; i < 3; i++)
-                SendSystemInfo();
+            SendSystemInfo();
         }
 
         private void SendSystemInfo()

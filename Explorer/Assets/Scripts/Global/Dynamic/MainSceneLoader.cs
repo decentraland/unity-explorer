@@ -130,10 +130,9 @@ namespace Global.Dynamic
 #endif
 #endif
 
-            var analytics = new AnalyticsController(
-                // new DebugAnalyticsService(),
-                new SegmentAnalyticsService(Resources.FindObjectsOfTypeAll<AnalyticsConfiguration>().FirstOrDefault()),
-                null, null, null);
+            // var analytics = new AnalyticsController(
+            //     // new DebugAnalyticsService(),
+            //     new SegmentAnalyticsService(Resources.FindObjectsOfTypeAll<AnalyticsConfiguration>().FirstOrDefault()));
 
             // Hides the debug UI during the initial flow
             debugUiRoot.rootVisualElement.style.display = DisplayStyle.None;
