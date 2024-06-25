@@ -1,4 +1,5 @@
-﻿using DCL.PluginSystem;
+﻿using DCL.DebugUtilities;
+using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -11,6 +12,7 @@ namespace Global.Dynamic
 {
     public struct DynamicWorldDependencies
     {
+        public IDebugContainerBuilder DebugContainerBuilder;
         public StaticContainer StaticContainer;
         public IPluginSettingsContainer SettingsContainer;
         public UIDocument RootUIDocument;

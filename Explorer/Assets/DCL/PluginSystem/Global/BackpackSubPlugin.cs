@@ -107,7 +107,13 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityBackgroundsMapping, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
+            (ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.HairColors, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.EyesColors, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.BodyshapeColors, ct));
+
             PageButtonView pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>().EnsureNotNull();
+            ColorToggleView colorToggle = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.ColorToggle, ct)).Value.GetComponent<ColorToggleView>().EnsureNotNull();
 
             AvatarView avatarView = view.GetComponentInChildren<AvatarView>().EnsureNotNull();
 
@@ -153,7 +159,7 @@ namespace DCL.PluginSystem.Global
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
                     equippedWearables, sortController, pageButtonView, gridPool, world,
-                    thumbnailProvider
+                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors
                 );
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
