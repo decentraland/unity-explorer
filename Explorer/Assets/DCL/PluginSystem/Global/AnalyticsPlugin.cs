@@ -2,7 +2,9 @@
 using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
 using DCL.AssetsProvision;
+using DCL.Character;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Web3.Identities;
 using ECS;
 using System;
 using System.Threading;
@@ -15,21 +17,26 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IRealmData realmData;
+        private readonly ICharacterObject characterObject;
+        private readonly IWeb3IdentityCache identityCache;
 
         private AnalyticsController analytics;
 
-        public AnalyticsPlugin(IAssetsProvisioner assetsProvisioner, IRealmData realmData)
+        public AnalyticsPlugin(IAssetsProvisioner assetsProvisioner, IRealmData realmData, ICharacterObject characterObject, IWeb3IdentityCache identityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.realmData = realmData;
+            this.characterObject = characterObject;
+            this.identityCache = identityCache;
         }
 
         public async UniTask InitializeAsync(AnalyticsSettings settings, CancellationToken ct)
         {
             var analyticsConfig = await assetsProvisioner.ProvideMainAssetAsync(settings.AnalyticsConfigRef, ct);
             analytics = new AnalyticsController(
-                // new DebugAnalyticsService()
-                new SegmentAnalyticsService(analyticsConfig.Value)
+                new DebugAnalyticsService(),
+                // new SegmentAnalyticsService(analyticsConfig.Value),
+                realmData, characterObject.Transform, identityCache
                 );
         }
 

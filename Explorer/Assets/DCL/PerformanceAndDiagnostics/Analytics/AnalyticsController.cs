@@ -1,7 +1,6 @@
-﻿using DCL.Character;
-using DCL.Utilities.Extensions;
+﻿using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
-using ECS.SceneLifeCycle.Realm;
+using ECS;
 using Segment.Serialization;
 using System;
 using System.Collections.Generic;
@@ -14,8 +13,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private const string UNDEFINED = "undefined";
 
         private readonly IAnalyticsService analytics;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly ICharacterObject playerCharacter;
+        private readonly IRealmData realmData;
+        private readonly Transform playerTransform;
         private readonly IWeb3IdentityCache identityCache;
 
         private readonly IDictionary<string, JsonElement> commonParamsValues;
@@ -24,28 +23,28 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             get
             {
                 commonParamsValues["dcl_eth_address"] = identityCache?.Identity == null ? UNDEFINED : identityCache.Identity.Address.ToString();
-                commonParamsValues["realm"] = realmNavigator?.CurrentRealm == null ? UNDEFINED : realmNavigator.CurrentRealm.ToString();
-                commonParamsValues["position"] = playerCharacter == null ? UNDEFINED : playerCharacter.Position.ToShortString();
+                commonParamsValues["realm"] = realmData.Configured ? realmData.RealmName : UNDEFINED;
+                commonParamsValues["position"] = playerTransform == null ? UNDEFINED : playerTransform.position.ToShortString();
 
                 return commonParamsValues;
             }
         }
 
         public AnalyticsController(IAnalyticsService analyticsService,
-            IWeb3IdentityCache identityCache = null, IRealmNavigator realmNavigator = null, ICharacterObject playerCharacter = null)
+            IRealmData realmData, Transform playerTransform, IWeb3IdentityCache identityCache)
         {
             this.analytics = analyticsService;
+            this.realmData = realmData;
 
             this.identityCache = identityCache;
-            this.realmNavigator = realmNavigator;
-            this.playerCharacter = playerCharacter;
+            this.playerTransform = playerTransform;
 
             commonParamsValues = new Dictionary<string, JsonElement>
             {
                 // Dynamic common parameters, updated on call
                 ["dcl_eth_address"] = UNDEFINED,
-                ["realm"] = UNDEFINED,
-                ["position"] = UNDEFINED,
+                ["realm"] = realmData.Configured ? realmData.RealmName : UNDEFINED,
+                ["position"] = playerTransform != null ? playerTransform.position.ToShortString() : UNDEFINED,
                 // Static common parameters
                 ["dcl_renderer_type"] = SystemInfo.deviceType.ToString(), // Desktop, Console, Handeheld (Mobile), Unknown
                 ["session_id"] = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff"),

@@ -197,8 +197,6 @@ namespace Global.Dynamic
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
 
-
-
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
 
@@ -299,7 +297,7 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new AnalyticsPlugin(staticContainer.AssetsProvisioner, staticContainer.RealmData),
+                new AnalyticsPlugin(staticContainer.AssetsProvisioner, staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, identityCache),
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
@@ -384,7 +382,7 @@ namespace Global.Dynamic
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
-                new RealmDataDirtyFlagPlugin(staticContainer.RealmData)
+                new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
