@@ -1,7 +1,6 @@
 using DCL.Profiles;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
@@ -38,14 +37,6 @@ namespace DCL.Passport.Modules
             LoadAdditionalFields();
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
-        }
-
-        public void ClearAdditionalFields()
-        {
-            foreach (AdditionalField_PassportFieldView additionalField in instantiatedAdditionalFields)
-                additionalFieldsPool.Release(additionalField);
-
-            instantiatedAdditionalFields.Clear();
         }
 
         public void Dispose()
@@ -90,6 +81,14 @@ namespace DCL.Passport.Modules
             }
 
             instantiatedAdditionalFields.Add(newAdditionalField);
+        }
+
+        public void ClearAdditionalFields()
+        {
+            foreach (AdditionalField_PassportFieldView additionalField in instantiatedAdditionalFields)
+                additionalFieldsPool.Release(additionalField);
+
+            instantiatedAdditionalFields.Clear();
         }
     }
 }
