@@ -17,11 +17,13 @@ namespace DCL.SDKComponents.Tween.Helpers
 
         public static void WriteTweenResult(ref SDKTransform sdkTransform, ICustomTweener customTweener)
         {
+            sdkTransform.IsDirty = true;
+            sdkTransform.ParentId = customTweener.ParentId;
+
             var currentResult = customTweener.GetResult();
             sdkTransform.Position = currentResult.Position;
             sdkTransform.Rotation = currentResult.Rotation;
             sdkTransform.Scale = currentResult.Scale;
-            sdkTransform.ParentId = customTweener.ParentId;
         }
 
         public static void WriteTweenResultInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, ICustomTweener customTweener)
