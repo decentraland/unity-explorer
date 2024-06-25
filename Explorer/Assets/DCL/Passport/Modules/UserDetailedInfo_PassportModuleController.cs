@@ -1,12 +1,11 @@
 using DCL.Profiles;
-using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
 namespace DCL.Passport.Modules
 {
-    public class UserDetailedInfo_PassportModuleController : IDisposable
+    public class UserDetailedInfo_PassportModuleController : IPassportModuleController
     {
         private const string NO_INTRO_TEXT = "No intro.";
         private const int MAX_CONCURRENT_ADDITIONAL_FIELDS = 11;
@@ -39,10 +38,16 @@ namespace DCL.Passport.Modules
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
         }
 
-        public void Dispose()
+        public void Clear()
         {
-            ClearAdditionalFields();
+            foreach (AdditionalField_PassportFieldView additionalField in instantiatedAdditionalFields)
+                additionalFieldsPool.Release(additionalField);
+
+            instantiatedAdditionalFields.Clear();
         }
+
+        public void Dispose() =>
+            Clear();
 
         private AdditionalField_PassportFieldView InstantiateAdditionalField()
         {
@@ -59,8 +64,6 @@ namespace DCL.Passport.Modules
                 AddAdditionalField(AdditionalFieldType.COUNTRY, currentProfile.Country);
 
             // TODO: Add more fields here...
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.AdditionalInfoContainer);
         }
 
         private void AddAdditionalField(AdditionalFieldType type, string value)
@@ -81,14 +84,6 @@ namespace DCL.Passport.Modules
             }
 
             instantiatedAdditionalFields.Add(newAdditionalField);
-        }
-
-        public void ClearAdditionalFields()
-        {
-            foreach (AdditionalField_PassportFieldView additionalField in instantiatedAdditionalFields)
-                additionalFieldsPool.Release(additionalField);
-
-            instantiatedAdditionalFields.Clear();
         }
     }
 }

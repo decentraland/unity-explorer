@@ -1,12 +1,11 @@
 using DCL.Chat;
 using DCL.Profiles;
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.Passport.Modules
 {
-    public class UserBasicInfo_PassportModuleController : IDisposable
+    public class UserBasicInfo_PassportModuleController : IPassportModuleController
     {
         private UserBasicInfo_PassportModuleView view;
         private Profile currentProfile;
@@ -34,10 +33,13 @@ namespace DCL.Passport.Modules
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.WalletAddressContainer);
         }
 
+        public void Clear() { }
+
         public void Dispose()
         {
             view.CopyUserNameButton.onClick.RemoveAllListeners();
             view.CopyWalletAddressButton.onClick.RemoveAllListeners();
+            Clear();
         }
 
         private void CopyToClipboard(string text) =>

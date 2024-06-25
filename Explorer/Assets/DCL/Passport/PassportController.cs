@@ -29,8 +29,9 @@ namespace DCL.Passport
         private CancellationTokenSource characterPreviewLoadingCts;
         private World? world;
         private PassportCharacterPreviewController characterPreviewController;
-        private UserBasicInfo_PassportModuleController userBasicInfoModuleController;
-        private UserDetailedInfo_PassportModuleController userDetailedInfoModuleController;
+        private IPassportModuleController userBasicInfoModuleController;
+        private IPassportModuleController userDetailedInfoModuleController;
+        private IPassportModuleController equippedItemsModuleController;
 
         public PassportController(
             [NotNull] ViewFactoryMethod viewFactory,
@@ -51,6 +52,7 @@ namespace DCL.Passport
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration);
             userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView);
+            equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView);
         }
 
         protected override void OnViewShow()
@@ -64,7 +66,9 @@ namespace DCL.Passport
         protected override void OnViewClose()
         {
             characterPreviewController.OnHide();
-            userDetailedInfoModuleController.ClearAdditionalFields();
+            userBasicInfoModuleController.Clear();
+            userDetailedInfoModuleController.Clear();
+            equippedItemsModuleController.Clear();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -81,6 +85,7 @@ namespace DCL.Passport
             characterPreviewController.Dispose();
             userBasicInfoModuleController.Dispose();
             userDetailedInfoModuleController.Dispose();
+            equippedItemsModuleController.Dispose();
         }
 
         private async UniTaskVoid LoadUserProfileAsync(string userId, CancellationToken ct)
@@ -99,6 +104,7 @@ namespace DCL.Passport
             // Load passport modules
             userBasicInfoModuleController.Setup(profile);
             userDetailedInfoModuleController.Setup(profile);
+            equippedItemsModuleController.Setup(profile);
         }
     }
 }
