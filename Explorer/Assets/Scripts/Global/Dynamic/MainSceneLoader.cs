@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.Chat;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
@@ -26,7 +27,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility;
 
 namespace Global.Dynamic
 {
@@ -35,6 +35,10 @@ namespace Global.Dynamic
         [Header("Startup Config")]
         [SerializeField] private RealmLaunchSettings launchSettings;
 
+        [Space]
+        [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
+
+        [Space]
         [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
@@ -51,7 +55,7 @@ namespace Global.Dynamic
         [SerializeField] private DynamicSettings dynamicSettings = null!;
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
-        [SerializeField] private AudioClipConfig backgroundMusic;
+        [SerializeField] private AudioClipConfig backgroundMusic = null!;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -118,7 +122,7 @@ namespace Global.Dynamic
 #endif
 
             // Hides the debug UI during the initial flow
-            debugUiRoot.rootVisualElement.style.display = DisplayStyle.None;
+            debugUiRoot.rootVisualElement.EnsureNotNull().style.display = DisplayStyle.None;
 
             try
             {
@@ -163,7 +167,9 @@ namespace Global.Dynamic
                 // First load the common global plugin
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
+                var debugUtilitiesContainer = DebugUtilitiesContainer.Create(debugViewsCatalog);
+
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(debugUtilitiesContainer.Builder, globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {
@@ -176,6 +182,7 @@ namespace Global.Dynamic
                 (dynamicWorldContainer, isLoaded) = await DynamicWorldContainer.CreateAsync(
                     new DynamicWorldDependencies
                     {
+                        DebugContainerBuilder = debugUtilitiesContainer.Builder,
                         StaticContainer = staticContainer!,
                         SettingsContainer = scenePluginSettingsContainer,
                         RootUIDocument = uiToolkitRoot,
@@ -193,7 +200,9 @@ namespace Global.Dynamic
                         EnableLandscape = shouldEnableLandscape,
                         EnableLOD = enableLOD,
                         HybridSceneParams = launchSettings.CreateHybridSceneParams(),
-                    }, backgroundMusic, ct
+                    },
+                    backgroundMusic,
+                    ct
                 );
 
                 if (!isLoaded)
@@ -205,10 +214,18 @@ namespace Global.Dynamic
                 IWebRequestController webRequestController = staticContainer!.WebRequestsContainer.WebRequestController;
                 IRoomHub roomHub = dynamicWorldContainer!.RoomHub;
 
-                sceneSharedContainer = SceneSharedContainer.Create(in staticContainer!, dynamicWorldContainer!.MvcManager,
-                    identityCache, dynamicWorldContainer.ProfileRepository, webRequestController, roomHub, dynamicWorldContainer.RealmController.GetRealm(), dynamicWorldContainer.MessagePipesHub);
+                sceneSharedContainer = SceneSharedContainer.Create(
+                    in staticContainer!,
+                    dynamicWorldContainer!.MvcManager,
+                    identityCache,
+                    dynamicWorldContainer.ProfileRepository,
+                    webRequestController,
+                    roomHub,
+                    dynamicWorldContainer.RealmController.GetRealm(),
+                    dynamicWorldContainer.MessagePipesHub
+                );
 
-                await InitializeFeatureFlagsAsync(webRequestController, ct);
+                await InitializeFeatureFlagsAsync(ct);
 
                 // Initialize global plugins
                 var anyFailure = false;
@@ -219,8 +236,8 @@ namespace Global.Dynamic
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
-                await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)));
+                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+                await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
                 if (anyFailure)
                 {
@@ -232,8 +249,7 @@ namespace Global.Dynamic
 
                 (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
 
-                debugUiRoot.rootVisualElement.style.display = DisplayStyle.Flex;
-                dynamicWorldContainer.DebugContainer.Builder.Build(debugUiRoot);
+                debugUtilitiesContainer.Builder.BuildWithFlex(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
                 await ChangeRealmAsync(ct);
@@ -289,22 +305,44 @@ namespace Global.Dynamic
             await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
         }
 
-        private async UniTask InitializeFeatureFlagsAsync(IWebRequestController webRequestController, CancellationToken ct)
+        private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
             try
             {
-                var featureFlagsProvider = new HttpFeatureFlagsProvider(webRequestController);
-                // TODO: use ORG or ZONE depending on the current network set in the web3 account
                 FeatureFlagOptions options = FeatureFlagOptions.ORG;
+                URLDomain? programArgsUrl = GetUrlFromProgramArgs();
+
+                if (programArgsUrl != null)
+                    options.URL = programArgsUrl.Value;
+
                 // TODO: when the identity is not set, should we request the FFs again after the authentication process?
                 options.UserId = identityCache!.Identity?.Address;
-                var featureFlagsConfig = await featureFlagsProvider.GetAsync(options, ct);
-                staticContainer!.FeatureFlagsCache.Configuration = featureFlagsConfig;
+
+                await staticContainer!.FeatureFlagsProvider.GetAsync(options, ct);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                staticContainer!.FeatureFlagsCache.Configuration = new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty);
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
+            }
+
+            return;
+
+            // #!/bin/bash
+            // ./Decentraland.app --feature-flags-url https://feature-flags.decentraland.zone
+            URLDomain? GetUrlFromProgramArgs()
+            {
+                string[] programArgs = Environment.GetCommandLineArgs();
+                URLDomain? result = null;
+
+                for (var i = 0; i < programArgs.Length - 1; i++)
+                {
+                    string arg = programArgs[i];
+
+                    if (arg == "--feature-flags-url")
+                        result = URLDomain.FromString(programArgs[i + 1]);
+                }
+
+                return result;
             }
         }
 

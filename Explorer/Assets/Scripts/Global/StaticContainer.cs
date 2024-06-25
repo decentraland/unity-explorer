@@ -6,6 +6,7 @@ using DCL.AssetsProvision.Provisions;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
@@ -96,7 +97,8 @@ namespace Global
         public IEthereumApi EthereumApi { get; private set; }
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
-        public IFeatureFlagsCache FeatureFlagsCache { get; private set; }
+        public FeatureFlagsCache FeatureFlagsCache { get; private set; }
+        public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
 
         public void Dispose()
         {
@@ -134,6 +136,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            IDebugContainerBuilder debugContainerBuilder,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
@@ -147,7 +150,6 @@ namespace Global
 
             var container = new StaticContainer();
 
-            container.FeatureFlagsCache = new DefaultFeatureFlagsCache();
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
@@ -185,8 +187,12 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, debugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
+
+            container.FeatureFlagsCache = new FeatureFlagsCache();
+            container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
+                container.FeatureFlagsCache);
 
             var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);

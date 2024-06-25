@@ -24,6 +24,11 @@ namespace Utility.Multithreading
             return new ExecuteOnMainThreadScope(true);
         }
 
+        public static async UniTask<ExecuteOnMainThreadScope> NewScopeWithReturnOnOriginalThreadAsync() =>
+            PlayerLoopHelper.IsMainThread
+                ? new ExecuteOnMainThreadScope(false)
+                : await NewScopeWithReturnOnThreadPoolAsync();
+
         public async ValueTask DisposeAsync()
         {
             if (returnOnThreadPoolOnDispose)
