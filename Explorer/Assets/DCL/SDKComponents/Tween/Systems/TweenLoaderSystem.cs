@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
                 {
-                IsDirty = true, HelperSDKTransform = new SDKTransform()
+                IsDirty = true
                 };
 
             World.Add(entity, sdkTweenComponent);

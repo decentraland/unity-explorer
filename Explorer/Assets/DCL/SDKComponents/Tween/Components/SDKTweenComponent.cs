@@ -1,49 +1,116 @@
+using CRDT;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DG.Tweening;
 using DG.Tweening.Core;
+using DG.Tweening.CustomPlugins;
+using DG.Tweening.Plugins.Core;
 using DG.Tweening.Plugins.Options;
 using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public class Vector3Tweener
+    public interface ICustomTweener
     {
-        public Vector3 startValue = new (0, 0, 0);
-        public Vector3 endValue = new (10, 10, 10);
-        public float duration = 5f;
+        float ElapsedPercentage();
+        public (Vector3, Quaternion, Vector3) GetResult();
+        public CRDTEntity ParentId { get; set; }
+        void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying);
+        bool Finished { get; }
+    }
 
-        public Vector3 currentValue;
+    public abstract class CustomTweener<T, TU> : ICustomTweener
+        where T : struct
+        where TU : struct, IPlugOptions
+    {
+        protected TweenerCore<T, T, TU> core;
+        protected T CurrentValue { get;  set; }
 
-        private TweenerCore<Vector3, Vector3, VectorOptions> core;
+        protected Transform StartTransform;
+        public bool Finished { get; private set;  }
 
-        public void TransformVector3(Vector3 start, Vector3 end, float duration, Ease ease)
+        public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            currentValue = start;
-            core = DOTween.To(() => currentValue, x => currentValue = x, end, duration)
-                .SetEase(ease)
-                .SetAutoKill(false)
-                .OnUpdate(() =>
-                {
-                    // This code is executed every frame while the tween is running
-                    Debug.Log("Current Value: " + currentValue);
-
-                    // You can add any logic here that you need to execute every frame
-                    // For example, updating a UI element or another variable
-                })
-                .OnComplete(() =>
-                {
-                    // This code is executed once when the tween completes
-                    Debug.Log("Tween completed");
-                });
+            core.SetEase(ease).SetAutoKill(false).OnComplete(() => { Finished = true; });
+            core.Goto(tweenModelCurrentTime, isPlaying);
         }
+
 
         public float ElapsedPercentage()
         {
             if (core != null)
                 return core.ElapsedPercentage();
             return 0;
+        }
+
+        protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
+
+        public abstract (Vector3, Quaternion, Vector3) GetResult();
+        public CRDTEntity ParentId { get; set; }
+    }
+
+    public abstract class Vector3CustomTweener : CustomTweener<Vector3, VectorOptions>
+    {
+        public Vector3CustomTweener(Transform startTransform, Vector3 start, Vector3 end, float duration)
+        {
+            StartTransform = startTransform;
+            core = CreateTweener(start, end, duration);
+        }
+
+        protected sealed override TweenerCore<Vector3, Vector3, VectorOptions> CreateTweener(Vector3 start, Vector3 end, float duration)
+        {
+            CurrentValue = start;
+            return DOTween.To(() => CurrentValue, x => CurrentValue = x, end, duration);
+        }
+
+        public abstract override (Vector3, Quaternion, Vector3) GetResult();
+    }
+
+    public class PositionTweener : Vector3CustomTweener
+    {
+        public PositionTweener(Transform startTransform, Vector3 start, Vector3 end, float duration) : base(startTransform, start, end, duration)
+        {
+            startTransform.localPosition = start;
+        }
+
+        public override (Vector3, Quaternion, Vector3) GetResult()
+        {
+            return (CurrentValue, StartTransform.localRotation, StartTransform.localScale);
+        }
+    }
+
+    public class ScaleTweener : Vector3CustomTweener
+    {
+        public ScaleTweener(Transform startTransform, Vector3 start, Vector3 end, float duration) : base(startTransform, start, end, duration)
+        {
+            startTransform.localScale = start;
+        }
+
+        public override (Vector3, Quaternion, Vector3) GetResult()
+        {
+            return (StartTransform.localPosition, StartTransform.localRotation, CurrentValue);
+        }
+    }
+
+    public class RotationTweener : CustomTweener<Quaternion, NoOptions>
+    {
+        public RotationTweener(Transform startTransform, Quaternion start, Quaternion end, float duration)
+        {
+            StartTransform = startTransform;
+            startTransform.localRotation = start;
+            core = CreateTweener(start, end, duration);
+        }
+
+        protected sealed override TweenerCore<Quaternion, Quaternion, NoOptions> CreateTweener(Quaternion start, Quaternion end, float duration)
+        {
+            CurrentValue = start;
+            return DOTween.To(PureQuaternionPlugin.Plug(), () => CurrentValue, x => CurrentValue = x, end, duration);
+        }
+
+        public override (Vector3, Quaternion, Vector3) GetResult()
+        {
+            return (StartTransform.localPosition, CurrentValue, StartTransform.localScale);
         }
     }
     
@@ -52,11 +119,10 @@ namespace DCL.SDKComponents.Tween.Components
     {
         public bool IsDirty { get; set; }
         public bool IsPlaying { get; set; }
-        public float CurrentTime { get; set; }
         public Tweener Tweener { get; set; }
-        public SDKTransform HelperSDKTransform { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
-        public Vector3Tweener Vector3Tweener { get; set; }
+        public ICustomTweener CustomTweener { get; set; }
+
     }
     
 }

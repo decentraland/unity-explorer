@@ -3,7 +3,6 @@ using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using ECS.Unity.Transforms.Components;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Helpers
@@ -16,17 +15,18 @@ namespace DCL.SDKComponents.Tween.Helpers
                 static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenStateStatus);
         }
 
-        public static void WriteTweenTransform(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, SDKTransform transformHelper)
+        public static void WriteTweenTransform(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, ICustomTweener customTweener)
         {
-            ecsToCrdtWriter.PutMessage<SDKTransform, SDKTransform>(
-                static (component, transformHelper) =>
+            ecsToCrdtWriter.PutMessage<SDKTransform, ICustomTweener>(
+                static (component, customTweener) =>
                 {
+                    var currentResult = customTweener.GetResult();
                     component.IsDirty = true;
-                    component.Position = transformHelper.Position;
-                    component.Rotation = transformHelper.Rotation;
-                    component.Scale = transformHelper.Scale;
-                    component.ParentId = transformHelper.ParentId;
-                }, sdkEntity, transformHelper);
+                    component.Position = currentResult.Item1;
+                    component.Rotation = currentResult.Item2;
+                    component.Scale = currentResult.Item3;
+                    component.ParentId = customTweener.ParentId;
+                }, sdkEntity, customTweener);
         }
 
         public static bool AreSameModels(PBTween modelA, PBTween modelB)

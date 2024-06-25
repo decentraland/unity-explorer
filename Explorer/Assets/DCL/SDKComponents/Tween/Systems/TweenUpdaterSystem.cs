@@ -23,6 +23,7 @@ using ECS.Unity.Transforms.Systems;
 using UnityEngine;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
+using Scale = UnityEngine.UIElements.Scale;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
@@ -133,16 +134,15 @@ namespace DCL.SDKComponents.Tween.Systems
                 Transform entityTransform = transformComponent.Transform;
                 float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-                SetupTweener(transformComponent, ref sdkTweenComponent, entityTransform, pbTween, durationInSeconds, isPlaying);
+                SetupTweener(transformComponent, ref sdkTweenComponent, entityTransform, pbTween, durationInSeconds, isPlaying, sdkTransform);
 
                 sdkTweenComponent.Tweener = tempTweener;
-                sdkTweenComponent.CurrentTime = pbTween.CurrentTime;
                 sdkTweenComponent.IsDirty = false;
 
                 if (isPlaying)
                 {
                     sdkTweenComponent.Tweener.Play();
-                    sdkTweenComponent.TweenStateStatus = sdkTweenComponent.CurrentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+                    sdkTweenComponent.TweenStateStatus = sdkTweenComponent.CustomTweener.Finished ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
                 }
                 else
                 {
@@ -154,14 +154,8 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private void UpdateTweenState(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
-            //float currentTime = sdkTweenComponent.Tweener.ElapsedPercentage();
-            float currentTime = 0;
-            if (sdkTweenComponent.Vector3Tweener != null)
-            {
-                currentTime = sdkTweenComponent.Vector3Tweener.ElapsedPercentage();
-            }
             var tweenStateDirty = false;
-            TweenStateStatus newState = GetCurrentTweenState(currentTime, sdkTweenComponent.IsPlaying);
+            var newState = GetCurrentTweenState(sdkTweenComponent.CustomTweener.Finished, sdkTweenComponent.IsPlaying);
 
             //We only update the state if we changed status OR if the tween is playing and the current time has changed
             if (newState != sdkTweenComponent.TweenStateStatus)
@@ -170,38 +164,24 @@ namespace DCL.SDKComponents.Tween.Systems
                 tweenStateDirty = true;
             }
 
-            if (sdkTweenComponent.IsPlaying && !sdkTweenComponent.CurrentTime.Equals(currentTime))
+            if (sdkTweenComponent.IsPlaying)
             {
-                sdkTweenComponent.CurrentTime = currentTime;
                 tweenStateDirty = true;
             }
 
             if (!tweenStateDirty) return;
 
-            //Debug.Log($"JUANI 2 {sdkTweenComponent.HelperTransform.localRotation.eulerAngles}");
-
-
-            if (sdkTweenComponent.Vector3Tweener != null)
-            {
-                sdkTweenComponent.HelperSDKTransform.Position = sdkTweenComponent.Vector3Tweener.currentValue;
-                Debug.Log($"JUANI {sdkTweenComponent.Vector3Tweener.currentValue}");
-            }
-
-            //sdkTweenComponent.HelperSDKTransform.Rotation = sdkTweenComponent.HelperTransform.localRotation;
-            //sdkTweenComponent.HelperSDKTransform.Scale = sdkTweenComponent.HelperTransform.localScale;
-
             TweenSDKComponentHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
-            TweenSDKComponentHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.HelperSDKTransform);
+            TweenSDKComponentHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.CustomTweener);
 
+            var currentResult = sdkTweenComponent.CustomTweener.GetResult();
             sdkTransform.IsDirty = true;
-            if (sdkTweenComponent.Vector3Tweener != null)
-                sdkTransform.Position = sdkTweenComponent.Vector3Tweener.currentValue;
-
-            //sdkTransform.Rotation = sdkTweenComponent.HelperTransform.localRotation;
-            //sdkTransform.Scale = sdkTweenComponent.HelperTransform.localScale;
+            sdkTransform.Position = currentResult.Item1;
+            sdkTransform.Rotation = currentResult.Item2;
+            sdkTransform.Scale = currentResult.Item3;
         }
 
-        private void SetupTweener(TransformComponent transformComponent, ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, PBTween tweenModel, float durationInSeconds, bool isPlaying)
+        private void SetupTweener(TransformComponent transformComponent, ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, PBTween tweenModel, float durationInSeconds, bool isPlaying, SDKTransform sdkTransform)
         {
             tempTweener = sdkTweenComponent.Tweener;
 
@@ -217,32 +197,27 @@ namespace DCL.SDKComponents.Tween.Systems
             switch (tweenModel.ModeCase)
             {
                 case PBTween.ModeOneofCase.Rotate:
-                    tempTweener = SetupRotationTween(transformComponent.Transform,
+                    sdkTweenComponent.CustomTweener = new RotationTweener(entityTransform,
                         PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
-                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.End),
-                        durationInSeconds, ease,
-                        ref sdkTweenComponent);
-
+                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.End), durationInSeconds);
                     break;
                 case PBTween.ModeOneofCase.Scale:
-                    tempTweener = SetupScaleTween(transformComponent.Transform,
+                    sdkTweenComponent.CustomTweener = new ScaleTweener(entityTransform,
                         PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.Start),
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.End),
-                        durationInSeconds, ease);
-
+                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.End), durationInSeconds);
                     break;
                 case PBTween.ModeOneofCase.Move:
                 default:
-                    SetupPositionTween(transformComponent.Transform,
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.Start),
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.End),
-                        durationInSeconds, ease, tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection,
-                        ref sdkTweenComponent);
+                    var startPosition = PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.Start);
+                    var endPosition = PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.End);
 
+                    if (tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection) entityTransform.forward = (endPosition - startPosition).normalized;
+                    sdkTweenComponent.CustomTweener = new PositionTweener(entityTransform, startPosition, endPosition, durationInSeconds);
                     break;
             }
 
-            tempTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
+            sdkTweenComponent.CustomTweener.ParentId = sdkTransform.ParentId;
+            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
@@ -255,35 +230,16 @@ namespace DCL.SDKComponents.Tween.Systems
             Vector3 endPosition, float durationInSeconds, Ease ease, bool faceDirection,
             ref SDKTweenComponent tweenComponent)
         {
-            if (faceDirection) entityTransform.forward = (endPosition - startPosition).normalized;
 
-            entityTransform.localPosition = startPosition;
-
-            tweenComponent.Vector3Tweener = new Vector3Tweener();
-            tweenComponent.Vector3Tweener.TransformVector3(startPosition, endPosition, durationInSeconds, ease);
-            //return tweenComponent.HelperTransform.DOLocalMove(endPosition, durationInSeconds).SetEase(ease).SetAutoKill(false);
         }
 
-        private TweenStateStatus GetCurrentTweenState(float currentTime, bool isPlaying)
+        private TweenStateStatus GetCurrentTweenState(bool finished, bool isPlaying)
         {
             if (!isPlaying) { return TweenStateStatus.TsPaused; }
 
-            return currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+            return finished ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
         }
 
-        private Tweener SetupRotationTween(Transform entityTransform, Quaternion startRotation,
-            Quaternion endRotation, float durationInSeconds, Ease ease, ref SDKTweenComponent tweenComponent)
-        {
-            entityTransform.localRotation = startRotation;
-            //tweenComponent.HelperTransform.DOLocalRotateQuaternion(endRotation, durationInSeconds).SetEase(ease).SetAutoKill(false);
-            return entityTransform.DOLocalRotateQuaternion(endRotation, durationInSeconds).SetEase(ease).SetAutoKill(false);
-        }
 
-        private Tweener SetupScaleTween(Transform entityTransform, Vector3 startScale,
-            Vector3 endScale, float durationInSeconds, Ease ease)
-        {
-            entityTransform.localScale = startScale;
-            return entityTransform.DOScale(endScale, durationInSeconds).SetEase(ease).SetAutoKill(false);
-        }
     }
 }
