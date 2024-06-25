@@ -24,7 +24,6 @@ MonoBehaviour:
   - rid: 758312842344792066
   - rid: 857448815798779906
   - rid: 4769369655026384898
-  - rid: 6657635841002700803
   references:
     version: 2
     RefIds:
@@ -138,14 +137,6 @@ MonoBehaviour:
       data:
         MediaPlayerPrefab:
           m_AssetGUID: c7939fa59480e654a8537b6fc2f007e3
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 6657635841002700803
-      type: {class: AnalyticsSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        AnalyticsConfigRef:
-          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

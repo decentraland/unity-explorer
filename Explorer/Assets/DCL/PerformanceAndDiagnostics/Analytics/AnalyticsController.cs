@@ -53,12 +53,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 ["runtime"] = Application.isEditor ? "editor" : "build", // do we need it❓
             };
 
-            SendSystemInfo();
+            // SendSystemInfo();
+        }
+
+        public void Track(string eventName, Dictionary<string, JsonElement> properties = null)
+        {
+            analytics.Track(eventName, properties.BuildWithPrefix(commonParams));
         }
 
         private void SendSystemInfo()
         {
-            analytics.Track("system_info_report", new Dictionary<string, JsonElement>
+            Track("system_info_report", new Dictionary<string, JsonElement>
             {
                 ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
                 ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"
@@ -71,7 +76,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 ["graphics_memory_size"] = SystemInfo.graphicsMemorySize, // 3965 in [MB]
                 ["graphics_device_type"] = SystemInfo.graphicsDeviceType.ToString(), // "Direct3D11", Vulkan, OpenGLCore, XBoxOne...
                 ["graphics_device_version"] = SystemInfo.graphicsDeviceVersion, // "Direct3D 11.0 [level 11.1]"
-            }.BuildWithPrefix(commonParams));
+            });
         }
     }
 

@@ -192,7 +192,6 @@ namespace Global
 
             container.ECSWorldPlugins = new IDCLWorldPlugin[]
             {
-                new AnalyticsPlugin(container.AssetsProvisioner),
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
                 new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
