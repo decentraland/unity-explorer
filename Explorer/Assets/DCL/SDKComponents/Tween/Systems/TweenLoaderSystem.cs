@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CrdtEcsBridge.Components.Transform;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -35,8 +36,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
                 {
-                    IsDirty = true,
-                    CurrentTweenModel = new SDKTweenModel(pbTween),
+                IsDirty = true, CurrentTweenModel = new SDKTweenModel(pbTween), HelperSDKTransform = new SDKTransform()
                 };
 
             World.Add(entity, sdkTweenComponent);
