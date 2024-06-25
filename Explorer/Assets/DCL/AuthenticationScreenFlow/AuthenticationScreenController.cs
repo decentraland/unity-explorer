@@ -43,7 +43,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
-        private readonly IFeatureFlagsCache featureFlagsCache;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -62,7 +62,7 @@ namespace DCL.AuthenticationScreenFlow
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
-            IFeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -170,7 +170,6 @@ namespace DCL.AuthenticationScreenFlow
 #if UNITY_EDITOR
             return true;
 #else
-            if (featureFlagsCache.Configuration == null) return true;
             if (!featureFlagsCache.Configuration.IsEnabled("user-allow-list", "wallets")) return true;
             if (!featureFlagsCache.Configuration.TryGetCsvPayload("user-allow-list", "wallets", out List<List<string>>? allowedUsersCsv))
                 return true;

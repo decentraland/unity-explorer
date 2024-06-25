@@ -29,7 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
-        private readonly IFeatureFlagsCache featureFlagsCache;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -45,7 +45,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
-            IFeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
