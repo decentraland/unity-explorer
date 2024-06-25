@@ -9,12 +9,14 @@ namespace DCL.SDKComponents.Tween.Components
         public TweenResult GetResult();
         public CRDTEntity ParentId { get; set; }
         void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying);
-        bool Finished { get; }
 
         void Play();
         void Pause();
         void Kill();
         void Rewind();
+        bool IsPaused();
+        bool IsFinished();
+        bool IsActive();
     }
 
     public struct TweenResult

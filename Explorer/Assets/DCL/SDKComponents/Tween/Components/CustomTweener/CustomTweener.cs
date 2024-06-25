@@ -14,7 +14,7 @@ namespace DCL.SDKComponents.Tween.Components
         protected T CurrentValue { get;  set; }
 
         protected Transform StartTransform;
-        public bool Finished { get; private set;  }
+        private bool Finished;
 
         public void Play()
         {
@@ -36,10 +36,24 @@ namespace DCL.SDKComponents.Tween.Components
             core.Rewind();
         }
 
+        public bool IsPaused()
+        {
+            return !core.IsPlaying();
+        }
+
+        public bool IsFinished()
+        {
+            return Finished;
+        }
+
+        public bool IsActive()
+        {
+            return !core.IsPlaying() && !Finished;
+        }
+
         public void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying)
         {
-            core.SetEase(ease).SetAutoKill(false).OnComplete(() => { Finished = true; });
-            core.Goto(tweenModelCurrentTime, isPlaying);
+            core.SetEase(ease).SetAutoKill(false).OnComplete(() => { Finished = true; }).Goto(tweenModelCurrentTime, isPlaying);
         }
 
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
