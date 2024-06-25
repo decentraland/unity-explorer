@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.UI;
 using System;
 using UnityEngine;
 
@@ -10,19 +11,27 @@ namespace DCL.Backpack.Breadcrumb
         private readonly BackpackBreadCrumbView view;
         private readonly IBackpackCommandBus commandBus;
         private readonly NftTypeIconSO categoryIcons;
+        private readonly ColorPickerController colorPickerController;
 
-        public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons)
+        public BackpackBreadCrumbController(BackpackBreadCrumbView view, IBackpackEventBus eventBus, IBackpackCommandBus commandBus, NftTypeIconSO categoryIcons, ColorToggleView colorToggle, ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors)
         {
             this.view = view;
             this.commandBus = commandBus;
             this.categoryIcons = categoryIcons;
-
+            colorPickerController = new ColorPickerController(view.ColorPickerView, colorToggle, hairColors, eyesColors, bodyshapeColors);
+            colorPickerController.OnColorChanged += OnColorChanged;
             eventBus.FilterCategoryEvent += OnFilterCategory;
             eventBus.SearchEvent += OnSearch;
+            eventBus.ChangeColorEvent += UpdateColorPickerColors;
 
             view.SearchButton.ExitButton.onClick.AddListener(OnExitSearch);
             view.FilterButton.ExitButton.onClick.AddListener(OnExitFilter);
             view.AllButton.NavigateButton.onClick.AddListener(OnAllFilter);
+        }
+
+        private void UpdateColorPickerColors(Color newColor, string category)
+        {
+            colorPickerController.SetCurrentColor(newColor, category);
         }
 
         private void OnAllFilter()
@@ -32,15 +41,14 @@ namespace DCL.Backpack.Breadcrumb
             SetAllButtonColor(true);
         }
 
-        private void OnExitSearch()
-        {
+        private void OnExitSearch() =>
             commandBus.SendCommand(new BackpackSearchCommand(""));
-        }
 
-        private void OnExitFilter()
-        {
+        private void OnExitFilter() =>
             commandBus.SendCommand(new BackpackFilterCategoryCommand(""));
-        }
+
+        private void OnColorChanged(Color newColor, string category) =>
+            commandBus.SendCommand(new BackpackChangeColorCommand(newColor, category));
 
         private void OnSearch(string searchString)
         {
@@ -59,6 +67,7 @@ namespace DCL.Backpack.Breadcrumb
 
         private void OnFilterCategory(string category)
         {
+            colorPickerController.SetColorPickerStatus(category.ToLower());
             if (string.IsNullOrEmpty(category))
             {
                 view.FilterButton.gameObject.SetActive(false);

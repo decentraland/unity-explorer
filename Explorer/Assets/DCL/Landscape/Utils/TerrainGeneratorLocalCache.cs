@@ -1,4 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -43,6 +45,7 @@ namespace DCL.Landscape.Utils
     public class TerrainLocalCache
     {
         private bool isValid;
+        private string checksum;
         private const string FILE_NAME = "/terrain_cache";
         private static readonly BinaryFormatter FORMATTER = new ();
 
@@ -69,9 +72,10 @@ namespace DCL.Landscape.Utils
 
         private TerrainLocalCache() { }
 
-        public void SaveToFile(int seed, int chunkSize, int version)
+        public void SaveToFile(int seed, int chunkSize, int version, string parcelChecksum)
         {
             string path = GetPath(seed, chunkSize, version);
+            checksum = parcelChecksum;
 
             if (File.Exists(path))
                 File.Delete(path);
@@ -89,9 +93,12 @@ namespace DCL.Landscape.Utils
                 isValid = false
             };
 
-        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version, bool force)
+        public static async UniTask<TerrainLocalCache> LoadAsync(int seed, int chunkSize, int version, string parcelChecksum, bool force)
         {
-            var localCache = new TerrainLocalCache();
+            var emptyCache = new TerrainLocalCache
+            {
+                checksum = parcelChecksum,
+            };
 
             string path = GetPath(seed, chunkSize, version);
 
@@ -99,13 +106,16 @@ namespace DCL.Landscape.Utils
                 File.Delete(path);
 
             if (!File.Exists(path))
-                return localCache;
+                return emptyCache;
 
-            await using (var fileStream = new FileStream(path, FileMode.Open))
-                localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
+            await using var fileStream = new FileStream(path, FileMode.Open);
+
+            TerrainLocalCache? localCache = await UniTask.RunOnThreadPool(() => (TerrainLocalCache)FORMATTER.Deserialize(fileStream));
+
+            if (localCache.checksum != parcelChecksum)
+                return emptyCache;
 
             localCache.isValid = true;
-
             return localCache;
         }
 
@@ -119,22 +129,25 @@ namespace DCL.Landscape.Utils
         private readonly int seed;
         private readonly int chunkSize;
         private readonly int version;
+        private readonly string parcelChecksum;
 
-        public TerrainGeneratorLocalCache(int seed, int chunkSize, int version)
+        public TerrainGeneratorLocalCache(int seed, int chunkSize, int version, string parcelChecksum)
         {
             this.seed = seed;
             this.chunkSize = chunkSize;
             this.version = version;
+            this.parcelChecksum = parcelChecksum;
         }
 
         public async UniTask LoadAsync(bool force)
         {
-            localCache = await TerrainLocalCache.LoadAsync(seed, chunkSize, version, force);
+            localCache = await TerrainLocalCache.LoadAsync(seed, chunkSize, version, parcelChecksum, force);
+            ReportHub.Log(ReportCategory.LANDSCAPE, "Landscape cache loaded and its validity status is: " + localCache.IsValid());
         }
 
         public void Save()
         {
-            localCache.SaveToFile(seed, chunkSize, version);
+            localCache.SaveToFile(seed, chunkSize, version, parcelChecksum);
         }
 
         public bool IsValid() =>

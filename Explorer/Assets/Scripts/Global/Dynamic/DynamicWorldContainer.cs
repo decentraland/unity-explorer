@@ -178,7 +178,7 @@ namespace Global.Dynamic
             var genesisTerrain = new TerrainGenerator();
             var worldsTerrain = new WorldTerrainGenerator();
             var satelliteView = new SatelliteFloor();
-            var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, dynamicWorldParams.EnableLandscape);
+            var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, staticContainer.AssetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
