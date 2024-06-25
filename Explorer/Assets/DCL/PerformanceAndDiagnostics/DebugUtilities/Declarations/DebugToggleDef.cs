@@ -8,14 +8,14 @@ namespace DCL.DebugUtilities
     /// </summary>
     public class DebugToggleDef : IDebugElementDef
     {
-        public readonly ElementBinding<bool> Binding;
+        public readonly IElementBinding<bool> Binding;
 
         public DebugToggleDef(EventCallback<ChangeEvent<bool>> onToggle, bool initialState)
         {
             Binding = new ElementBinding<bool>(initialState, onToggle);
         }
 
-        public DebugToggleDef(ElementBinding<bool> binding)
+        public DebugToggleDef(IElementBinding<bool> binding)
         {
             Binding = binding;
         }
