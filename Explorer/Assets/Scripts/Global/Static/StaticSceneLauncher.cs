@@ -59,8 +59,6 @@ namespace Global.Static
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
 
-                if (useStoredCredentials
-
                 if (useStoredCredentials && useRealAuthentication) // avoid storing invalid credentials
                     identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
