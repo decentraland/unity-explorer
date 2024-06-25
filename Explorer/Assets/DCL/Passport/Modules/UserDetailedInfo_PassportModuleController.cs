@@ -1,4 +1,5 @@
 using DCL.Profiles;
+using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -8,7 +9,7 @@ namespace DCL.Passport.Modules
     public class UserDetailedInfo_PassportModuleController : IPassportModuleController
     {
         private const string NO_INTRO_TEXT = "No intro.";
-        private const int MAX_CONCURRENT_ADDITIONAL_FIELDS = 11;
+        private const int ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY = 11;
 
         private readonly UserDetailedInfo_PassportModuleView view;
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
@@ -21,8 +22,8 @@ namespace DCL.Passport.Modules
             this.view = view;
 
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
-                InstantiateAdditionalField,
-                defaultCapacity: MAX_CONCURRENT_ADDITIONAL_FIELDS,
+                InstantiateAdditionalFieldPrefab,
+                defaultCapacity: ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
                 actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
             );
@@ -49,10 +50,10 @@ namespace DCL.Passport.Modules
         public void Dispose() =>
             Clear();
 
-        private AdditionalField_PassportFieldView InstantiateAdditionalField()
+        private AdditionalField_PassportFieldView InstantiateAdditionalFieldPrefab()
         {
-            AdditionalField_PassportFieldView backpackItemView = UnityEngine.Object.Instantiate(view.AdditionalFieldsConfiguration.additionalInfoFieldPrefab, view.AdditionalInfoContainer);
-            return backpackItemView;
+            AdditionalField_PassportFieldView additionalFieldView = UnityEngine.Object.Instantiate(view.AdditionalFieldsConfiguration.additionalInfoFieldPrefab, view.AdditionalInfoContainer);
+            return additionalFieldView;
         }
 
         private void LoadAdditionalFields()
@@ -63,13 +64,39 @@ namespace DCL.Passport.Modules
             if (!string.IsNullOrEmpty(currentProfile.Country))
                 AddAdditionalField(AdditionalFieldType.COUNTRY, currentProfile.Country);
 
-            // TODO: Add more fields here...
+            if (currentProfile.Birthdate != null && currentProfile.Birthdate.Value != new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc))
+                AddAdditionalField(AdditionalFieldType.BIRTH_DATE, currentProfile.Birthdate.Value.ToString("dd/MM/yyyy"));
+
+            if (!string.IsNullOrEmpty(currentProfile.Pronouns))
+                AddAdditionalField(AdditionalFieldType.PRONOUNS, currentProfile.Pronouns);
+
+            if (!string.IsNullOrEmpty(currentProfile.RelationshipStatus))
+                AddAdditionalField(AdditionalFieldType.RELATIONSHIP_STATUS, currentProfile.RelationshipStatus);
+
+            if (!string.IsNullOrEmpty(currentProfile.SexualOrientation))
+                AddAdditionalField(AdditionalFieldType.SEXUAL_ORIENTATION, currentProfile.SexualOrientation);
+
+            if (!string.IsNullOrEmpty(currentProfile.Language))
+                AddAdditionalField(AdditionalFieldType.LANGUAGE, currentProfile.Language);
+
+            if (!string.IsNullOrEmpty(currentProfile.Profession))
+                AddAdditionalField(AdditionalFieldType.PROFESSION, currentProfile.Profession);
+
+            if (!string.IsNullOrEmpty(currentProfile.EmploymentStatus))
+                AddAdditionalField(AdditionalFieldType.EMPLOYMENT_STATUS, currentProfile.EmploymentStatus);
+
+            if (!string.IsNullOrEmpty(currentProfile.Hobbies))
+                AddAdditionalField(AdditionalFieldType.HOBBIES, currentProfile.Hobbies);
+
+            if (!string.IsNullOrEmpty(currentProfile.RealName))
+                AddAdditionalField(AdditionalFieldType.REAL_NAME, currentProfile.RealName);
         }
 
         private void AddAdditionalField(AdditionalFieldType type, string value)
         {
             var newAdditionalField = additionalFieldsPool.Get();
             newAdditionalField.transform.parent = view.AdditionalInfoContainer;
+            newAdditionalField.transform.SetAsLastSibling();
             newAdditionalField.Value.text = value;
             newAdditionalField.Title.text = type.ToString();
             newAdditionalField.Logo.sprite = null;
