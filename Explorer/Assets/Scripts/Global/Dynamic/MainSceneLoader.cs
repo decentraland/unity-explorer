@@ -336,8 +336,13 @@ namespace Global.Dynamic
             try
             {
                 var featureFlagsProvider = new HttpFeatureFlagsProvider(webRequestController);
-                // TODO: use ORG or ZONE depending on the current network set in the web3 account
+
                 FeatureFlagOptions options = FeatureFlagOptions.ORG;
+                URLDomain? programArgsUrl = GetUrlFromProgramArgs();
+
+                if (programArgsUrl != null)
+                    options.URL = programArgsUrl.Value;
+
                 // TODO: when the identity is not set, should we request the FFs again after the authentication process?
                 options.UserId = identityCache!.Identity?.Address;
                 var featureFlagsConfig = await featureFlagsProvider.GetAsync(options, ct);
@@ -347,6 +352,26 @@ namespace Global.Dynamic
             {
                 staticContainer!.FeatureFlagsCache.Configuration = new FeatureFlagsConfiguration(FeatureFlagsResultDto.Empty);
                 ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
+            }
+
+            return;
+
+            // #!/bin/bash
+            // ./Decentraland.app --feature-flags-url https://feature-flags.decentraland.zone
+            URLDomain? GetUrlFromProgramArgs()
+            {
+                string[] programArgs = Environment.GetCommandLineArgs();
+                URLDomain? result = null;
+
+                for (var i = 0; i < programArgs.Length - 1; i++)
+                {
+                    string arg = programArgs[i];
+
+                    if (arg == "--feature-flags-url")
+                        result = URLDomain.FromString(programArgs[i + 1]);
+                }
+
+                return result;
             }
         }
 
