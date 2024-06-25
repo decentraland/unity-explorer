@@ -15,18 +15,20 @@ namespace DCL.SDKComponents.Tween.Helpers
                 static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenStateStatus);
         }
 
-        public static void WriteTweenTransform(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, ICustomTweener customTweener)
+        public static void WriteTweenResult(ref SDKTransform sdkTransform, ICustomTweener customTweener)
+        {
+            var currentResult = customTweener.GetResult();
+            sdkTransform.Position = currentResult.Position;
+            sdkTransform.Rotation = currentResult.Rotation;
+            sdkTransform.Scale = currentResult.Scale;
+            sdkTransform.ParentId = customTweener.ParentId;
+        }
+
+        public static void WriteTweenResultInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, ICustomTweener customTweener)
         {
             ecsToCrdtWriter.PutMessage<SDKTransform, ICustomTweener>(
-                static (component, customTweener) =>
-                {
-                    var currentResult = customTweener.GetResult();
-                    component.IsDirty = true;
-                    component.Position = currentResult.Position;
-                    component.Rotation = currentResult.Rotation;
-                    component.Scale = currentResult.Scale;
-                    component.ParentId = customTweener.ParentId;
-                }, sdkEntity, customTweener);
+                static (component, customTweener) => WriteTweenResult(ref component, customTweener),
+                sdkEntity, customTweener);
         }
 
         public static bool AreSameModels(PBTween modelA, PBTween modelB)

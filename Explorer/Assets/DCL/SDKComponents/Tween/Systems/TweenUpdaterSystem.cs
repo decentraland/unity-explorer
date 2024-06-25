@@ -29,8 +29,6 @@ namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(UpdateTransformSystem))]
-    /*[UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateAfter(typeof(TweenLoaderSystem))]*/
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
@@ -167,19 +165,15 @@ namespace DCL.SDKComponents.Tween.Systems
             if (!tweenStateDirty) return;
 
             TweenSDKComponentHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
-            TweenSDKComponentHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.CustomTweener);
-
-            var currentResult = sdkTweenComponent.CustomTweener.GetResult();
-            sdkTransform.IsDirty = true;
-            sdkTransform.Position = currentResult.Position;
-            sdkTransform.Rotation = currentResult.Rotation;
-            sdkTransform.Scale = currentResult.Scale;
+            TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, sdkTweenComponent.CustomTweener);
+            TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.CustomTweener);
         }
 
         private void SetupTweener(ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, PBTween tweenModel, float durationInSeconds, bool isPlaying, SDKTransform sdkTransform)
         {
             //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
             // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
+            // This modifies the entityTransform directly, which is strongly discouraged
             if (sdkTweenComponent.CustomTweener is { Finished: false })
             {
                 sdkTweenComponent.CustomTweener.Rewind();
