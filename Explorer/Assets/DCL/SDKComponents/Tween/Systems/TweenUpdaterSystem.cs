@@ -119,7 +119,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
         [Query]
         [All(typeof(SDKTweenComponent))]
-        private void UpdateTweenSequence(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity, ref SDKTransform sdkTransform)
+        private void UpdateTweenSequence(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity, ref SDKTransform sdkTransform)
         {
             if (!sdkTweenComponent.IsDirty)
             {
@@ -127,17 +127,16 @@ namespace DCL.SDKComponents.Tween.Systems
             }
             else
             {
-                SDKTweenModel tweenModel = sdkTweenComponent.CurrentTweenModel;
-                bool isPlaying = tweenModel.IsPlaying;
+                bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
                 sdkTweenComponent.IsPlaying = isPlaying;
 
                 Transform entityTransform = transformComponent.Transform;
-                float durationInSeconds = tweenModel.Duration / MILLISECONDS_CONVERSION_INT;
+                float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-                SetupTweener(transformComponent, ref sdkTweenComponent, entityTransform, tweenModel, durationInSeconds, isPlaying);
+                SetupTweener(transformComponent, ref sdkTweenComponent, entityTransform, pbTween, durationInSeconds, isPlaying);
 
                 sdkTweenComponent.Tweener = tempTweener;
-                sdkTweenComponent.CurrentTime = tweenModel.CurrentTime;
+                sdkTweenComponent.CurrentTime = pbTween.CurrentTime;
                 sdkTweenComponent.IsDirty = false;
 
                 if (isPlaying)
@@ -202,7 +201,7 @@ namespace DCL.SDKComponents.Tween.Systems
             //sdkTransform.Scale = sdkTweenComponent.HelperTransform.localScale;
         }
 
-        private void SetupTweener(TransformComponent transformComponent, ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, SDKTweenModel tweenModel, float durationInSeconds, bool isPlaying)
+        private void SetupTweener(TransformComponent transformComponent, ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, PBTween tweenModel, float durationInSeconds, bool isPlaying)
         {
             tempTweener = sdkTweenComponent.Tweener;
 

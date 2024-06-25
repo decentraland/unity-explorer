@@ -36,7 +36,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
                 {
-                IsDirty = true, CurrentTweenModel = new SDKTweenModel(pbTween), HelperSDKTransform = new SDKTransform()
+                IsDirty = true, HelperSDKTransform = new SDKTransform()
                 };
 
             World.Add(entity, sdkTweenComponent);
@@ -47,11 +47,15 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CurrentTweenModel))
+            if (pbTween.IsDirty)
+                tweenComponent.IsDirty = true;
+
+            //TODO: Juani: Do we need the AreSameModels? Should the dirty flag be enough?
+            /*if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CurrentTweenModel))
             {
                 tweenComponent.CurrentTweenModel = new SDKTweenModel(pbTween);
                 tweenComponent.IsDirty = true;
-            }
+            }*/
         }
     }
 }

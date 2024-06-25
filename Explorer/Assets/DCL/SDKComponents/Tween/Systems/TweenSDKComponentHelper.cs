@@ -29,7 +29,7 @@ namespace DCL.SDKComponents.Tween.Helpers
                 }, sdkEntity, transformHelper);
         }
 
-        public static bool AreSameModels(PBTween modelA, SDKTweenModel modelB)
+        public static bool AreSameModels(PBTween modelA, PBTween modelB)
         {
             if (modelA == null)
                 return false;
@@ -38,7 +38,7 @@ namespace DCL.SDKComponents.Tween.Helpers
                 || modelB.EasingFunction != modelA.EasingFunction
                 || !modelB.CurrentTime.Equals(modelA.CurrentTime)
                 || !modelB.Duration.Equals(modelA.Duration)
-                || !modelB.IsPlaying.Equals(!modelA.HasPlaying || modelA.Playing))
+                || !(!modelB.HasPlaying || modelB.Playing).Equals(!modelA.HasPlaying || modelA.Playing))
                 return false;
 
             return modelA.ModeCase switch
