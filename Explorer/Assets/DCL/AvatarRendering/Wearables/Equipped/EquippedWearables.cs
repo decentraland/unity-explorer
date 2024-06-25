@@ -2,12 +2,16 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.AvatarRendering.Wearables.Equipped
 {
     public class EquippedWearables : IEquippedWearables
     {
         private readonly Dictionary<string, IWearable?> wearables = new ();
+        private Color hairColor;
+        private Color eyesColor;
+        private Color bodyshapeColor;
 
         public EquippedWearables()
         {
@@ -17,6 +21,9 @@ namespace DCL.AvatarRendering.Wearables.Equipped
 
         public IWearable? Wearable(string category) =>
             wearables[category];
+
+        public (Color, Color, Color) GetColors() =>
+            (hairColor, eyesColor, bodyshapeColor);
 
         public bool IsEquipped(IWearable wearable) =>
             wearables[wearable.GetCategory()] == wearable;
@@ -37,6 +44,15 @@ namespace DCL.AvatarRendering.Wearables.Equipped
             foreach (string category in WearablesConstants.CATEGORIES_PRIORITY)
                 wearables[category] = null;
         }
+
+        public void SetHairColor(Color newColor) =>
+            hairColor = newColor;
+
+        public void SetEyesColor(Color newColor) =>
+            eyesColor = newColor;
+
+        public void SetBodyshapeColor(Color newColor) =>
+            bodyshapeColor = newColor;
 
         public IReadOnlyDictionary<string, IWearable?> Items() =>
             wearables;
