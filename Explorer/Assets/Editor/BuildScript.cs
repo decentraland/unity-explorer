@@ -220,7 +220,20 @@ namespace Editor
 
         private static void WriteSegmentKeyToAnalyticsConfig(string segmentWriteKey)
         {
-            AnalyticsConfiguration config = Resources.FindObjectsOfTypeAll<AnalyticsConfiguration>().FirstOrDefault();
+            string[] guids = AssetDatabase.FindAssets($"t:{nameof(AnalyticsConfiguration)}");
+
+            switch (guids.Length)
+            {
+                case 0:
+                    Debug.LogError($"{nameof(AnalyticsConfiguration)} asset not found!");
+                    return;
+                case > 1:
+                    Debug.LogWarning($"Multiple {nameof(AnalyticsConfiguration)} assets found. Using the first one.");
+                    break;
+            }
+
+            string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(assetPath);
 
             if (config == null)
             {
