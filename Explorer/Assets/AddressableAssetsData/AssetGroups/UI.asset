@@ -82,8 +82,18 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bf1104b23d6ed8f4ab84e9a0da93e10d
-    m_Address: Passport
+  - m_GUID: 5af318126b38647fea34ff22fba4ef17
+    m_Address: Assets/DCL/UI/ColorPicker/BodyShapeColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a00387527d7ddda41b9eb524b4a8662c
+    m_Address: Assets/DCL/UI/ColorPicker/EyesColors.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2668240d360264034b2ee70e645aab92
+    m_Address: Assets/DCL/UI/ColorPicker/HairColors.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

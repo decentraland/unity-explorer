@@ -26,7 +26,7 @@ namespace DCL.Landscape
         private const float ROOT_VERTICAL_SHIFT = -0.01f; // fix for not clipping with scene (potential) floor
 
         // increment this number if we want to force the users to generate a new terrain cache
-        private const int CACHE_VERSION = 5;
+        private const int CACHE_VERSION = 6;
 
         private const float PROGRESS_COUNTER_EMPTY_PARCEL_DATA = 0.1f;
         private const float PROGRESS_COUNTER_TERRAIN_DATA = 0.3f;
@@ -84,7 +84,7 @@ namespace DCL.Landscape
             terrains = new List<Terrain>();
         }
 
-        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels)
+        public void Initialize(TerrainGenerationData terrainGenData, ref NativeList<int2> emptyParcels, ref NativeParallelHashSet<int2> ownedParcels, string parcelChecksum)
         {
             this.ownedParcels = ownedParcels;
             this.emptyParcels = emptyParcels;
@@ -92,7 +92,7 @@ namespace DCL.Landscape
 
             parcelSize = terrainGenData.parcelSize;
             factory = new TerrainFactory(terrainGenData);
-            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION);
+            localCache = new TerrainGeneratorLocalCache(terrainGenData.seed, this.terrainGenData.chunkSize, CACHE_VERSION, parcelChecksum);
 
             chunkDataGenerator = new TerrainChunkDataGenerator(localCache, timeProfiler, terrainGenData, reportData);
             boundariesGenerator = new TerrainBoundariesGenerator(factory, parcelSize);
@@ -228,7 +228,6 @@ namespace DCL.Landscape
 
                 emptyParcels.Dispose();
                 ownedParcels.Dispose();
-
             }
         }
 
@@ -472,7 +471,6 @@ namespace DCL.Landscape
             {
                 emptyParcelsNeighborData.Dispose();
                 emptyParcelsData.Dispose();
-                emptyParcels.Dispose();
             }
 
             noiseGenCache.Dispose();
