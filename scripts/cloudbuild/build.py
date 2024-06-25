@@ -54,8 +54,8 @@ def clone_current_target():
 
     # Set target name based on branch
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
-    # Append commit SHA to target:
-    new_target_name = f'{new_target_name}_{os.getenv('COMMIT_SHA')}'
+    # Append commit SHA to target and lowercase all:
+    new_target_name = f'{new_target_name}_{os.getenv('COMMIT_SHA')}'.lower()
 
     # Generate request body
     body = generate_body(
