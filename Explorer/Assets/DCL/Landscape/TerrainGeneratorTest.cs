@@ -74,7 +74,7 @@ namespace DCL.Landscape
             else
             {
                 gen = new TerrainGenerator(true, clearCache);
-                gen.Initialize(genData, ref emptyParcels, ref ownedParcels);
+                gen.Initialize(genData, ref emptyParcels, ref ownedParcels, "");
                 await gen.GenerateTerrainAndShowAsync(worldSeed, digHoles, hideTrees, hideDetails);
             }
 

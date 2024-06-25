@@ -6,6 +6,7 @@ using DCL.AssetsProvision.Provisions;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
+using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
@@ -135,6 +136,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            IDebugContainerBuilder debugContainerBuilder,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
@@ -185,7 +187,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, debugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
@@ -214,7 +216,7 @@ namespace Global
                 assetBundlePlugin, new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner),
                 new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
-                container.CharacterContainer.CreateWorldPlugin(),
+                container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
                 new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.AssetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),

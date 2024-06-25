@@ -40,8 +40,8 @@ namespace DCL.CharacterMotion.Systems
         [Query]
         private void TeleportPlayer(in Entity entity, in CharacterController controller, ref CharacterPlatformComponent platformComponent, in PlayerTeleportIntent teleportIntent)
         {
-            if (teleportIntent.LoadReport != null && teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus() == UniTaskStatus.Pending)
-                return;
+            if (teleportIntent.LoadReport == null || teleportIntent.LoadReport.CompletionSource.UnsafeGetStatus() != UniTaskStatus.Pending)
+                World.Remove<PlayerTeleportIntent>(entity);
 
             playerHasJustTeleported = true;
 
@@ -50,8 +50,6 @@ namespace DCL.CharacterMotion.Systems
 
             // Reset the current platform so we dont bounce back if we are touching the world plane
             platformComponent.CurrentPlatform = null;
-
-            World.Remove<PlayerTeleportIntent>(entity);
         }
 
         [Query]
