@@ -89,6 +89,14 @@ namespace DCL.Profiles
             return this;
         }
 
+        public ProfileBuilder WithColors((Color hair, Color eyes, Color bodyshape) colors)
+        {
+            this.hairColor = colors.hair;
+            this.eyesColor = colors.eyes;
+            this.skinColor = colors.bodyshape;
+            return this;
+        }
+
         public ProfileBuilder WithEmotes(IReadOnlyCollection<URN> emotes)
         {
             this.emotes = emotes;
@@ -111,7 +119,7 @@ namespace DCL.Profiles
             this.bodyShape = bodyShape;
             return this;
         }
-        
+
         public ProfileBuilder WithVersion(int version)
         {
             this.version = version;
@@ -120,7 +128,7 @@ namespace DCL.Profiles
 
         public Profile Build()
         {
-            var profile = new Profile();
+            var profile = Profile.Create();
             profile.RealName = realName ?? "";
             profile.UserId = userId!;
             profile.Version = version;
