@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -114,10 +115,12 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                new NullDebugContainerBuilder(),
                 globalSettingsContainer,
                 web3IdentityCache,
                 ethereumApi,
-                ct);
+                ct
+            );
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

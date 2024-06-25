@@ -1,13 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Cinemachine;
 using DCL.CharacterCamera;
 using DCL.CharacterCamera.Components;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using ECS.Abstract;
-using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -24,7 +22,7 @@ namespace DCL.Character.CharacterCamera.Systems
         private float currentSens;
         private bool cameraNoise;
 
-        public ApplyCinemachineSettingsSystem(World world, DebugContainerBuilder debugBuilder) : base(world)
+        public ApplyCinemachineSettingsSystem(World world, IDebugContainerBuilder debugBuilder) : base(world)
         {
             currentSens = PlayerPrefs.GetFloat(PPREF_SENS, 10);
             sensitivitySlider = new ElementBinding<float>(currentSens);

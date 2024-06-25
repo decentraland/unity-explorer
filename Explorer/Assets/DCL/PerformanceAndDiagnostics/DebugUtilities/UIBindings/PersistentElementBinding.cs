@@ -6,17 +6,17 @@ namespace DCL.DebugUtilities.UIBindings
     public class PersistentElementBinding<T> : IElementBinding<T>
     {
         private readonly ElementBinding<T> elementBinding;
-        private readonly PersistentSetting<T> persistentSetting;
+        private readonly PersistentSetting<T> setting;
 
-        public T Value => persistentSetting.Value;
+        public T Value => setting.Value;
 
-        public PersistentElementBinding(PersistentSetting<T> persistentSetting)
+        public PersistentElementBinding(PersistentSetting<T> setting)
         {
-            this.persistentSetting = persistentSetting;
+            this.setting = setting;
 
             elementBinding = new ElementBinding<T>(
-                this.persistentSetting.Value,
-                changeEvent => this.persistentSetting.Value = changeEvent.newValue
+                this.setting.Value,
+                changeEvent => this.setting.Value = changeEvent.newValue
             );
         }
 

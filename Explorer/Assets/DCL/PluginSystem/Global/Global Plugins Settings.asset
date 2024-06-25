@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e7669db769f7224e94ce1be19e8677e, type: 3}
+  m_Script: {fileID: 11500000, guid: 51436ed3f6d6419fbffde48f5d096965, type: 3}
   m_Name: Global Plugins Settings
   m_EditorClassIdentifier: 
   settings:
@@ -159,8 +159,28 @@ MonoBehaviour:
             m_SubObjectName: 
             m_SubObjectType: 
             m_EditorAssetChanged: 0
+          <HairColors>k__BackingField:
+            m_AssetGUID: 2668240d360264034b2ee70e645aab92
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <EyesColors>k__BackingField:
+            m_AssetGUID: a00387527d7ddda41b9eb524b4a8662c
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <BodyshapeColors>k__BackingField:
+            m_AssetGUID: 5af318126b38647fea34ff22fba4ef17
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
           <PageButtonView>k__BackingField:
             m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
+            m_SubObjectName: 
+            m_SubObjectType: 
+            m_EditorAssetChanged: 0
+          <ColorToggle>k__BackingField:
+            m_AssetGUID: 90c5ebf3fa8f7a643976616957cc83a2
             m_SubObjectName: 
             m_SubObjectType: 
             m_EditorAssetChanged: 0
