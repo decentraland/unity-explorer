@@ -19,6 +19,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                  + "Even if the queue does not reach the flushSize limit, messages will still be sent after this interval has passed.")]
         private int flushInterval = 30;
 
+        [field: SerializeField]
+        [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
+        public float PerformanceReportInterval { get; } = 1.0f;
+
         private string segmentWriteKey;
         private Configuration segmentConfiguration;
 
