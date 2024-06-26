@@ -7,7 +7,7 @@ on:
     types:
       - "completed"
     workflows:
-      - "Unity Windows Build IL2CPP"
+      - "Unity Cloud Build"
     branches-ignore:
       - "main"
 
@@ -35,15 +35,25 @@ jobs:
           echo "Previous Suite ID: $SUITE_ID"
           echo "SUITE_ID=$SUITE_ID" >> "$GITHUB_ENV"
           
-          ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
+          WINDOWS_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq ".artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name==\"Decentraland\") |
+            select(.name==\"Decentraland_windows64\") |
             .id")
           
-          echo "Artifact ID: $ARTIFACT_ID"
-          echo "ARTIFACT_ID=$ARTIFACT_ID" >> "$GITHUB_ENV"
+          echo "Windows Artifact ID: WINDOWS_ARTIFACT_ID"
+          echo "WINDOWS_ARTIFACT_ID=WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
+          
+          MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
+            --jq ".artifacts.[] |
+            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
+            select(.expired==false) |
+            select(.name==\"Decentraland_macos\") |
+            .id")
+          
+          echo "Windows Artifact ID: MAC_ARTIFACT_ID"
+          echo "MAC_ARTIFACT_ID=MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
           
           PR_NUMBER=$(jq -r '.pull_requests[0].number' \
             <<< "$WORKFLOW_RUN_EVENT_OBJ")
@@ -70,7 +80,8 @@ jobs:
       - name: Update Comment
         env:
           JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
-          ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.ARTIFACT_ID }}"
+          WINDOWS_ARTIFACT_ID: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
+          MAC_ARTIFACT_ID: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
           HEAD_SHA: "${{ env.HEAD_SHA }}"
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -78,15 +89,17 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body: |-
-            ![badge]
+            ![badge] ![DecentralandLogo]
             
-            Windows build successfull! You can find a link to the downloadable artifact below.
+            Windows and Mac (UNITY CLOUD) build successfull! You can find a link to the downloadable artifact below.
             
-            | Name     | Link                    |
-            | -------- | ----------------------- |
-            | Commit   | ${{ env.HEAD_SHA }}     |
-            | Logs     | ${{ env.JOB_PATH }}     |
-            | Download | ${{ env.ARTIFACT_URL }} |
-            | Built on | ${{ env.BUILD_DATE }} |
+            | Name             | Link                    |
+            | --------         | ----------------------- |
+            | Commit           | ${{ env.HEAD_SHA }}     |
+            | Logs             | ${{ env.JOB_PATH }}     |
+            | Download Windows | ${{ env.WINDOWS_ARTIFACT_ID }} |
+            | Download Mac     | ${{ env.MAC_ARTIFACT_ID }} |
+            | Built on         | ${{ env.BUILD_DATE }} |
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
+            [DecentralandLogo]: data:image/svg+xml;charset=utf-8;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczNicgaGVpZ2h0PSczNicgdmlld0JveD0nMCAwIDM2IDM2Jz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9J3ByZWZpeF9fYScgeDE9Jzg1LjM1NSUnIHgyPScxNC42NDUlJyB5MT0nMTQuNjQ1JScgeTI9Jzg1LjM1NSUnPjxzdG9wIG9mZnNldD0nMCUnIHN0b3AtY29sb3I9JyNGRjJENTUnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyNGRkJDNUInLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0ncHJlZml4X19iJyB4MT0nNDkuOTY2JScgeDI9JzQ5Ljk2NiUnIHkxPScwJScgeTI9JzEwMCUnPjxzdG9wIG9mZnNldD0nMCUnIHN0b3AtY29sb3I9JyNBNTI0QjMnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyNGRjJENTUnLz48L2xpbmVhckdyYWRpZW50PjxsaW5lYXJHcmFkaWVudCBpZD0ncHJlZml4X19jJyB4MT0nNDkuOTY2JScgeDI9JzQ5Ljk2NiUnIHkxPScwJScgeTI9JzEwMCUnPjxzdG9wIG9mZnNldD0nMCUnIHN0b3AtY29sb3I9JyNBNTI0QjMnLz48c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyNGRjJENTUnLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48ZyBmaWxsPSdub25lJyBmaWxsLXJ1bGU9J2V2ZW5vZGQnPjxjaXJjbGUgY3g9JzE4JyBjeT0nMTgnIHI9JzE4JyBmaWxsPSd1cmwoI3ByZWZpeF9fYSknLz48ZyB0cmFuc2Zvcm09J3RyYW5zbGF0ZSgxLjQ0IDExLjcpJz48cG9seWdvbiBmaWxsPSd1cmwoI3ByZWZpeF9fYiknIHBvaW50cz0nMTEuMzEzIDAgMTEuMzEzIDEzLjUgMjIuNTYzIDEzLjUnLz48cG9seWdvbiBmaWxsPScjRkZGJyBwb2ludHM9Jy4wNjMgMTMuNSAxMS4zMTMgMTMuNSAxMS4zMTMgMCcvPjwvZz48cGF0aCBmaWxsPScjRkYyRDU1JyBkPSdNNy4yIDMyLjRBMTcuOTI1IDE3LjkyNSAwIDAgMCAxOCAzNmM0LjA1IDAgNy43OTQtMS4zNDEgMTAuOC0zLjZINy4yWicvPjxwYXRoIGZpbGw9JyNGQzk5NjUnIGQ9J00zLjYgMjguOGExOC40MzUgMTguNDM1IDAgMCAwIDMuNiAzLjZoMjEuNmExOC40MzUgMTguNDM1IDAgMCAwIDMuNi0zLjZIMy42WicvPjxwYXRoIGZpbGw9JyNGRkJDNUInIGQ9J00yNC4xNDcgMjUuMkgxLjUwM0ExNy45MjMgMTcuOTIzIDAgMCAwIDMuNiAyOC44aDIwLjU1NnYtMy42aC0uMDA5WicvPjxnIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDE1Ljg0IDE4LjkpJz48cG9seWdvbiBmaWxsPSd1cmwoI3ByZWZpeF9fYyknIHBvaW50cz0nOC4zMDcgMCA4LjMwNyA5LjkgMTYuNTYgOS45Jy8+PHBvbHlnb24gZmlsbD0nI0ZGRicgcG9pbnRzPScuMDYzIDkuOSA4LjMwNyA5LjkgOC4zMDcgMCcvPjwvZz48Y2lyY2xlIGN4PScyNC4xNDcnIGN5PScxMS43JyByPSc0LjUnIGZpbGw9JyNGRkM5NUInLz48Y2lyY2xlIGN4PScxMi43NTMnIGN5PSc2Ljc1JyByPScyLjI1JyBmaWxsPScjRkZDOTVCJy8+PC9nPjwvc3ZnPg==
