@@ -258,7 +258,9 @@ namespace Global.Dynamic
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
                 realmNavigator,
-                loadingScreen
+                loadingScreen,
+                staticContainer.FeatureFlagsProvider,
+                identityCache
             );
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
