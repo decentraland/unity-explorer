@@ -52,7 +52,7 @@ jobs:
             select(.name==\"Decentraland_macos\") |
             .id")
           
-          echo "Windows Artifact ID: $MAC_ARTIFACT_ID"
+          echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
           echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
           
           PR_NUMBER=$(jq -r '.pull_requests[0].number' \
