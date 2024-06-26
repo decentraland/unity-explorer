@@ -57,7 +57,7 @@ namespace SceneRuntime
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
-            engine.Execute(initCode.validateCode!);
+            // engine.Execute(initCode.validateCode!);
             engine.Execute(initCode.jsInitCode!);
 
             // Setup unitask resolver
@@ -140,6 +140,13 @@ namespace SceneRuntime
 
         public ITypedArray<byte> CreateUint8Array(int length) =>
             (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()").EnsureNotNull();
+
+        public ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory)
+        {
+            var jsArray = CreateUint8Array(memory.Length);
+            jsArray.Write(memory, (ulong)memory.Length, 0);
+            return jsArray;
+        }
 
         public object ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays)
         {

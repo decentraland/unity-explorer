@@ -1,25 +1,25 @@
 class WebSocket {
-    
-    static CLOSED = 1
+
+    static CONNECTING = 0
+    static OPEN = 1
     static CLOSING = 2
-    static CONNECTING = 3
-    static OPEN = 4
+    static CLOSED = 3
 
     #url;
-    #readyState;
+    //#readyState;
     webSocketId;
-    onopen = null;
     onmessage = null;
+    onopen = null;
     onerror = null;
     onclose = null;
 
     constructor(url, protocols) {
         //TODO: add checks if Scene can actually use WebSocket
-
+        
         if (url.toString().toLowerCase().substr(0, 4) !== 'wss:') {
                 throw new Error("Can't connect to unsafe WebSocket server")
             }
-          
+
         this.webSocketId = UnityWebSocketApi.Create(url);
         this.#url = url;
         this.#connect().then(() => {
@@ -29,14 +29,15 @@ class WebSocket {
         }).catch(error => {
             console.error('Error connecting:', error);
         });
+
+        console.log("WS: ", `${url} contructor has finished`);
     }
 
-
     #connect() {
-        this.#readyState = WebSocket.CONNECTING;
+        //this.#readyState = WebSocket.CONNECTING;
         return UnityWebSocketApi.ConnectAsync(this.webSocketId, this.#url).then(() => {
+           // this.#readyState = WebSocket.OPEN
             if (typeof this.onopen === 'function') {
-               this.#readyState = WebSocket.OPEN
                this.onopen({ type: "open" });
             }
         }).catch(error => {
@@ -46,21 +47,25 @@ class WebSocket {
         });
     }  
 
-   async send(data) {
-    if (this.#readyState !== WebSocket.OPEN){
-        const errorMessage = `WebSocket state is ${this.#readyState}, cannot send data`;
-        return Promise.reject(new Error(errorMessage));
+   send(data) {       
+   const thisReadyState = this.readyState;
+   console.log("WebSocket.send is called", data.constructor.name, `State is ${thisReadyState}`);
+
+    if (thisReadyState !== WebSocket.OPEN){
+        const errorMessage = `WebSocket state is ${thisReadyState}, cannot send data`;
+        throw new Error(errorMessage);
     }
 
     let sendPromise;
     if (typeof data === 'string') {
-        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, { type: 'Text', data });
+        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, data);
     } else if (data instanceof Uint8Array || data instanceof ArrayBuffer || Array.isArray(data)) {
-        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, { type: 'Binary', data });
+        console.log("WS: WebSocket.send binary is called", data.constructor.name, `length is ${data.length}`);
+        sendPromise = UnityWebSocketApi.SendAsync(this.webSocketId, data);
     }
     else {
         console.error(`Unsupported data type: ${typeof data}`, data);
-        return Promise.reject(new Error("Unsupported data type"));
+        throw new new Error("Unsupported data type");
     }
 
     sendPromise.catch(error => {
@@ -68,28 +73,30 @@ class WebSocket {
             this.onerror(error);
         }
     });
-    return sendPromise;
 }
-    
+
    #receive() {
+      const self = this;
+
       return new Promise((resolve, reject) => {
           const receiveData = () => {
-            UnityWebSocketApi.ReceiveAsync(this.webSocketId).then(data => {
-                  if (typeof this.onmessage === 'function') {
-                    let messageType, parsedData;
+            UnityWebSocketApi.ReceiveAsync(self.webSocketId).then(data => {
+                console.log("WS: Received binary data", typeof data.data, data.data.length);
+
+                  if (typeof self.onmessage === 'function') {
+                    let messageType;
                     if (data.type === 'Binary'){
-                        parsedData = new Uint8Array(data.data);
                         messageType = "binary";
                     } else {
-                        parsedData = data.data;
                         messageType = "text";
                      }
-                      this.onmessage({type: messageType, data: parsedData});
+                    
+                     self.onmessage({type: messageType, data: data.data});
                   }
                   receiveData();
               }).catch(error => {
-                  if (typeof this.onerror === 'function') {
-                      this.onerror(error);
+                  if (typeof self.onerror === 'function') {
+                      self.onerror(error);
                   }
                   reject(error);
               });
@@ -98,14 +105,16 @@ class WebSocket {
       });
     }
 
-    async close(code = undefined, reason = undefined) {
-        if (this.#readyState === WebSocket.OPEN || this.#readyState === WebSocket.CONNECTING) {
-            this.#readyState = WebSocket.CLOSING;
-    
+    close(code = undefined, reason = undefined) {
+        const thisReadyState = this.readyState; 
+        
+        if (thisReadyState === WebSocket.OPEN || thisReadyState === WebSocket.CONNECTING) {
+            //this.#readyState = WebSocket.CLOSING;
+
             UnityWebSocketApi.CloseAsync(this.webSocketId)
                 .then(() => {
                     console.log("WebSocket connection closed");
-                    this.#readyState = WebSocket.CLOSED;
+                    //this.#readyState = WebSocket.CLOSED;
                     if (typeof this.onclose === 'function') {
                         this.onclose({ type: "close"});
                     }
@@ -113,18 +122,16 @@ class WebSocket {
                 .catch(error => {
                     console.error("Error closing WebSocket connection:", error);
                 });
-    
-            return Promise.resolve();
         } else {
-            const errorMessage = `WebSocket state is ${this.#readyState}, cannot close`;
+            const errorMessage = `WebSocket state is ${thisReadyState}, cannot close`;
             console.error(errorMessage);
-            return Promise.reject(new Error(errorMessage));
+            throw new Error(errorMessage);
         }
     }
-        
 
     get readyState() {
-        return this.#readyState
+        // can't store the state in JS as it can be modified from the managed side without any notification
+        return UnityWebSocketApi.GetState(this.webSocketId);
     }
 
     get binaryType() {
@@ -155,4 +162,4 @@ class WebSocket {
     }
 }
 
-module.exports.WebSocket = (url, protocols) => new WebSocket(url, protocols)
+module.exports.WebSocket = WebSocket

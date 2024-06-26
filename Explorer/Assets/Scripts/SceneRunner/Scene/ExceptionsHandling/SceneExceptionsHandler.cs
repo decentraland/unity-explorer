@@ -1,11 +1,10 @@
 using Arch.SystemGroups;
-using CRDT.Protocol;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
 using System;
 using System.Linq;
-using UnityEngine;
 
 namespace SceneRunner.Scene.ExceptionsHandling
 {
@@ -20,9 +19,9 @@ namespace SceneRunner.Scene.ExceptionsHandling
         private static readonly ThreadSafeObjectPool<SceneExceptionsHandler> POOL = new (() => new SceneExceptionsHandler(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
         private readonly ExceptionEntry?[] ecsExceptionsBag = new ExceptionEntry?[ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE];
+        private SceneShortInfo sceneShortInfo;
 
         private ISceneStateProvider? sceneState;
-        private SceneShortInfo sceneShortInfo;
 
         private SceneExceptionsHandler() { }
 
@@ -52,6 +51,41 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
             if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber)) != ISystemGroupExceptionHandler.Action.Continue)
                 sceneState!.State = SceneState.JavaScriptError;
+        }
+
+        public async UniTask<T> ReportAndRethrowException<T>(UniTask<T> task)
+        {
+            try { return await task; }
+            catch (OperationCanceledException)
+            {
+                // don't report cancellation exceptions
+                throw;
+            }
+            catch (Exception e)
+            {
+                ReportApiException(e);
+                throw;
+            }
+        }
+
+        public async UniTask ReportAndRethrowException(UniTask task)
+        {
+            try { await task; }
+            catch (OperationCanceledException)
+            {
+                // don't report cancellation exceptions
+                throw;
+            }
+            catch (Exception e)
+            {
+                ReportApiException(e);
+                throw;
+            }
+        }
+
+        public void ReportApiException(Exception e)
+        {
+            ReportHub.LogException(e, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState!.TickNumber));
         }
 
         public static SceneExceptionsHandler Create(ISceneStateProvider sceneState, SceneShortInfo sceneShortInfo)
