@@ -84,7 +84,7 @@ namespace DCL.AvatarRendering.Emotes
                             emoteDataADR74 = new EmoteDTO.Metadata.Data
                             {
                                 loop = intention.Loop,
-                                category = "scene",
+                                category = "emote",
                                 hides = Array.Empty<string>(),
                                 replaces = Array.Empty<string>(),
                                 tags = Array.Empty<string>(),
