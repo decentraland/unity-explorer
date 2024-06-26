@@ -41,7 +41,7 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTween(in Entity enitity, ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
+        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
