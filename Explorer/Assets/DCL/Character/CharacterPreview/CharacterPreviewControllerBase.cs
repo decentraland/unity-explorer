@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Experimental.Rendering;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -69,13 +70,15 @@ namespace DCL.CharacterPreview
             //Temporal solution to fix issue with render format in Mac VS Windows
             Vector2 sizeDelta = view.RawImage.rectTransform.sizeDelta;
 
-            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, TextureUtilities.GetColorSpaceFormat())
+            var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, SystemInfo.GetGraphicsFormat(DefaultFormat.LDR))//TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
+                antiAliasing = 8,
+                useDynamicScale = true,
+                autoGenerateMips = true,
+                filterMode = FilterMode.Bilinear
             };
 
-            newTexture.antiAliasing = 8;
-            newTexture.useDynamicScale = true;
             newTexture.Create();
 
             view.RawImage.texture = newTexture;
