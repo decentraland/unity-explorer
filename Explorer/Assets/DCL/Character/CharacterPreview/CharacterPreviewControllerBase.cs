@@ -73,10 +73,7 @@ namespace DCL.CharacterPreview
             var newTexture = new RenderTexture((int)sizeDelta.x, (int)sizeDelta.y, 0, SystemInfo.GetGraphicsFormat(DefaultFormat.LDR))//TextureUtilities.GetColorSpaceFormat())
             {
                 name = "Preview Texture",
-                antiAliasing = 8,
                 useDynamicScale = true,
-                autoGenerateMips = true,
-                filterMode = FilterMode.Bilinear
             };
 
             newTexture.Create();
