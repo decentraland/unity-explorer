@@ -45,19 +45,22 @@ namespace DCL.Analytics.Systems
         {
             analytics.Track("performance_report", new Dictionary<string, JsonElement>
             {
+                ["total_used_memory"] = profilingProvider.TotalUsedMemoryInBytes * BYTES_TO_MEGABYTES,
+                ["gc_allocated_in_frame"] = profilingProvider.GcAllocatedInFrameRecorder,
+
+                ["gpu_frame_time"] = profilingProvider.CurrentGPUFrameTimeValueInNS * BYTES_TO_MEGABYTES,
+
                 ["current_frame_time"] = profilingProvider.CurrentFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
                 ["min_frame_time"] = profilingProvider.MinFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
+
                 ["average_frame_time"] = profilingProvider.AverageFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
-                ["total_used_memory"] = profilingProvider.TotalUsedMemoryInBytes * BYTES_TO_MEGABYTES,
+                ["average_frame_time_samples"] = profilingProvider.AverageFameTimeSamples,
 
-                ["hiccupCountInBuffer"] = profilingProvider.HiccupCountInBuffer,
+                ["hiccup_count_in_buffer"] = profilingProvider.HiccupCountInBuffer,
+                ["hiccup_buffer_size"] = profilingProvider.HiccupCountBufferSize,
 
-                // ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
-                // ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"
-                // ["system_memory_size"] = SystemInfo.systemMemorySize, // 65220 in [MB]
-                // ["processor_type"] = SystemInfo.processorType, // "12th Gen Intel(R) Core(TM) i7-12700H"
-                // ["graphics_device_name"] = SystemInfo.graphicsDeviceName, // "NVIDIA GeForce RTX 3050 Laptop GPU"
-                // ["graphics_device_version"] = SystemInfo.graphicsDeviceVersion, // "Direct3D 11.0 [level 11.1]"
+                // TODO: include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
+                ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()]
             });
         }
     }

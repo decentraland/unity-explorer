@@ -15,16 +15,26 @@ namespace DCL.Profiling
 
         private readonly ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         private readonly ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
+        private readonly ProfilerRecorder gpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", 15);
+        private readonly ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
 
-        public ulong TotalUsedMemoryInBytes => (ulong)totalUsedMemoryRecorder.LastValue;
+        // private readonly ProfilerRecorder drawCallsRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
+
+        public ulong TotalUsedMemoryInBytes => (ulong)totalUsedMemoryRecorder.CurrentValue;
 
         public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.CurrentValue;
+        public long CurrentGPUFrameTimeValueInNS => gpuRecorder.LastValue;
 
         public double AverageFrameTimeValueInNS => GetRecorderAverage(mainThreadTimeRecorder);
+        public int AverageFameTimeSamples => mainThreadTimeRecorder.Capacity;
+
         public long MinFrameTimeValueInNS => hiccupBufferCounter.MaxFrameTimeInNS;
         public long MaxFrameTimeValueInNS => hiccupBufferCounter.MinFrameTimeInNS;
 
         public ulong HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
+        public int HiccupCountBufferSize => hiccupBufferCounter.BufferSize;
+
+        public float GcAllocatedInFrameRecorder => gcAllocatedInFrameRecorder.LastValue / 1024f; // in [KB]
 
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
