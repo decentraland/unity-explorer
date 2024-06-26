@@ -459,6 +459,26 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityInfoPanelBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 6697045322133929986
       type: {class: EmotePlugin/EmoteSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

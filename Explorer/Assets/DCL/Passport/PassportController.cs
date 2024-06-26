@@ -1,5 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Wearables;
+using DCL.Backpack;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
@@ -24,10 +26,14 @@ namespace DCL.Passport
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly NftTypeIconSO rarityBackgrounds;
+        private readonly NFTColorsSO rarityColors;
+        private readonly NftTypeIconSO categoryIcons;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
-        private World? world;
+        private World world;
+        private IThumbnailProvider thumbnailProvider;
         private PassportCharacterPreviewController characterPreviewController;
         private IPassportModuleController userBasicInfoModuleController;
         private IPassportModuleController userDetailedInfoModuleController;
@@ -38,21 +44,27 @@ namespace DCL.Passport
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration) : base(viewFactory)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            NftTypeIconSO rarityBackgrounds,
+            NFTColorsSO rarityColors,
+            NftTypeIconSO categoryIcons) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.rarityBackgrounds = rarityBackgrounds;
+            this.rarityColors = rarityColors;
+            this.categoryIcons = categoryIcons;
         }
 
         protected override void OnViewInstantiated()
         {
             Assert.IsNotNull(world);
-            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
+            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration);
             userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView);
-            equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView);
+            equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider);
         }
 
         protected override void OnViewShow()
@@ -76,8 +88,11 @@ namespace DCL.Passport
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.BackgroundButton.OnClickAsync(ct));
 
-        public void SetWorld(World world) =>
-            this.world = world;
+        public void SetParamsFromWorld(World worldParam, ECSThumbnailProvider thumbnailProviderParam)
+        {
+            this.world = worldParam;
+            this.thumbnailProvider = thumbnailProviderParam;
+        }
 
         public override void Dispose()
         {

@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.UI;
@@ -41,6 +42,9 @@ namespace DCL.Passport.Modules
         public Image FlapBackground { get; private set; }
 
         [field: SerializeField]
+        public RectTransform RarityLabelContainer { get; private set; }
+
+        [field: SerializeField]
         public TMP_Text RarityLabelText { get; private set; }
 
         [field: SerializeField]
@@ -57,6 +61,8 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public AudioClipConfig HoverAudio { get; private set; }
+
+        public URN ItemId { get; set; }
 
         private CancellationTokenSource cts;
 
@@ -80,11 +86,22 @@ namespace DCL.Passport.Modules
             AnimateExit();
         }
 
+        public void SetAsLoading(bool isLoading)
+        {
+            AssetNameText.gameObject.SetActive(!isLoading);
+            RarityLabelText.gameObject.SetActive(!isLoading);
+
+            if (isLoading)
+                LoadingView.StartLoadingAnimation(FullEquippedItemItem);
+            else
+                LoadingView.FinishLoadingAnimation(FullEquippedItemItem);
+        }
+
         private void AnimateHover()
         {
             cts?.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
-            HoverBackgroundTransform.localScale = Vector3.zero;
+            HoverBackgroundTransform.localScale = Vector3.one;
             HoverBackgroundTransform.gameObject.SetActive(true);
             ContainerTransform.DOScale(hoveredScale, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);
             HoverBackgroundTransform.DOScale(Vector3.one, ANIMATION_TIME).SetEase(Ease.Flash).ToUniTask(cancellationToken: cts.Token);

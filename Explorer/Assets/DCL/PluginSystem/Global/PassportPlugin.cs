@@ -1,11 +1,16 @@
 using Arch.SystemGroups;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AvatarRendering.Wearables;
+using DCL.Backpack;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.WebRequests;
+using ECS;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -22,6 +27,9 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileRepository profileRepository;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IRealmData realmData;
+        private readonly URLDomain assetBundleURL;
+        private readonly IWebRequestController webRequestController;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -29,7 +37,10 @@ namespace DCL.PluginSystem.Global
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            IRealmData realmData,
+            URLDomain assetBundleURL,
+            IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -37,23 +48,36 @@ namespace DCL.PluginSystem.Global
             this.profileRepository = profileRepository;
             this.characterPreviewFactory = characterPreviewFactory;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.realmData = realmData;
+            this.assetBundleURL = assetBundleURL;
+            this.webRequestController = webRequestController;
         }
 
-        public async UniTask InitializeAsync(PassportSettings promptSettings, CancellationToken ct)
+        public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
         {
+            (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityColorMappings, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.CategoryIconsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
+
             passportController = new PassportController(
-                PassportController.CreateLazily((await assetsProvisioner.ProvideMainAssetAsync(promptSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>(), null),
+                PassportController.CreateLazily((await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>(), null),
                 cursor,
                 profileRepository,
                 characterPreviewFactory,
-                chatEntryConfiguration);
+                chatEntryConfiguration,
+                rarityBackgroundsMapping,
+                rarityColorMappings,
+                categoryIconsMapping);
 
             mvcManager.RegisterController(passportController);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            passportController.SetWorld(builder.World);
+            ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
+            passportController.SetParamsFromWorld(builder.World, thumbnailProvider);
         }
 
         public void Dispose() =>
@@ -65,6 +89,18 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject PassportPrefab;
+
+            [field: SerializeField]
+            public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NftTypeIconSO> RarityInfoPanelBackgroundsMapping { get; set; }
         }
     }
 }
