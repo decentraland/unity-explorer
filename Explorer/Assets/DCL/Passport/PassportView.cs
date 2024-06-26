@@ -12,6 +12,9 @@ namespace DCL.Passport
         public Button CloseButton { get; private set; }
 
         [field: SerializeField]
+        public ScrollRect MainScroll { get; private set; }
+
+        [field: SerializeField]
         public Button BackgroundButton { get; private set; }
 
         [field: SerializeField]

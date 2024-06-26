@@ -73,6 +73,7 @@ namespace DCL.Passport
             cursor.Unlock();
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
+            viewInstance.MainScroll.verticalNormalizedPosition = 1;
         }
 
         protected override void OnViewClose()
