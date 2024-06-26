@@ -11,7 +11,6 @@ using DCL.ExplorePanel;
 using DCL.Minimap;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
@@ -25,11 +24,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility;
 
 namespace Global.Dynamic
 {
