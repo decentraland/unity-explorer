@@ -63,6 +63,11 @@ namespace CrdtEcsBridge.RestrictedActions
 
             URN urn = promise.Result!.Value.Asset.Emotes[0].GetUrn();
 
+            TriggerEmote(urn);
+        }
+
+        public void TriggerEmote(URN urn)
+        {
             world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true });
         }
     }

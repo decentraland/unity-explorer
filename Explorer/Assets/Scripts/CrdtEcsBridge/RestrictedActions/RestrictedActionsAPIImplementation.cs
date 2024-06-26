@@ -81,7 +81,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return;
 
-            // TODO: Implement emote triggering (blocked until emotes are implemented)...
+            globalWorldActions.TriggerEmote(predefinedEmote);
         }
 
         public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct)
