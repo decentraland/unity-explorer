@@ -7,7 +7,7 @@ on:
     types:
       - "completed"
     workflows:
-      - "Unity Windows Build IL2CPP"
+      - "Unity Cloud Build"
     branches-ignore:
       - "main"
 
@@ -35,15 +35,25 @@ jobs:
           echo "Previous Suite ID: $SUITE_ID"
           echo "SUITE_ID=$SUITE_ID" >> "$GITHUB_ENV"
           
-          ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
+          WINDOWS_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq ".artifacts.[] |
             select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
             select(.expired==false) |
-            select(.name==\"Decentraland\") |
+            select(.name==\"Decentraland_windows64\") |
             .id")
           
-          echo "Artifact ID: $ARTIFACT_ID"
-          echo "ARTIFACT_ID=$ARTIFACT_ID" >> "$GITHUB_ENV"
+          echo "Windows Artifact ID: WINDOWS_ARTIFACT_ID"
+          echo "WINDOWS_ARTIFACT_ID=WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
+          
+          MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
+            --jq ".artifacts.[] |
+            select(.workflow_run.id==${PREVIOUS_JOB_ID}) |
+            select(.expired==false) |
+            select(.name==\"Decentraland_macos\") |
+            .id")
+          
+          echo "Windows Artifact ID: MAC_ARTIFACT_ID"
+          echo "MAC_ARTIFACT_ID=MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
           
           PR_NUMBER=$(jq -r '.pull_requests[0].number' \
             <<< "$WORKFLOW_RUN_EVENT_OBJ")
@@ -70,7 +80,8 @@ jobs:
       - name: Update Comment
         env:
           JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
-          ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.ARTIFACT_ID }}"
+          WINDOWS_ARTIFACT_ID: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
+          MAC_ARTIFACT_ID: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
           HEAD_SHA: "${{ env.HEAD_SHA }}"
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -80,13 +91,14 @@ jobs:
           body: |-
             ![badge]
             
-            Windows build successfull! You can find a link to the downloadable artifact below.
+            Windows and Mac build successfull in Unity Cloud! You can find a link to the downloadable artifact below.
             
-            | Name     | Link                    |
-            | -------- | ----------------------- |
-            | Commit   | ${{ env.HEAD_SHA }}     |
-            | Logs     | ${{ env.JOB_PATH }}     |
-            | Download | ${{ env.ARTIFACT_URL }} |
-            | Built on | ${{ env.BUILD_DATE }} |
+            | Name             | Link                    |
+            | --------         | ----------------------- |
+            | Commit           | ${{ env.HEAD_SHA }}     |
+            | Logs             | ${{ env.JOB_PATH }}     |
+            | Download Windows | ${{ env.WINDOWS_ARTIFACT_ID }} |
+            | Download Mac     | ${{ env.MAC_ARTIFACT_ID }} |
+            | Built on         | ${{ env.BUILD_DATE }} |
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
