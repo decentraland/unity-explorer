@@ -42,8 +42,8 @@ jobs:
             select(.name==\"Decentraland_windows64\") |
             .id")
           
-          echo "Windows Artifact ID: WINDOWS_ARTIFACT_ID"
-          echo "WINDOWS_ARTIFACT_ID=WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
+          echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID"
+          echo "WINDOWS_ARTIFACT_ID=$WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
           
           MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq ".artifacts.[] |
@@ -52,8 +52,8 @@ jobs:
             select(.name==\"Decentraland_macos\") |
             .id")
           
-          echo "Windows Artifact ID: MAC_ARTIFACT_ID"
-          echo "MAC_ARTIFACT_ID=MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
+          echo "Mac Artifact ID: $MAC_ARTIFACT_ID"
+          echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
           
           PR_NUMBER=$(jq -r '.pull_requests[0].number' \
             <<< "$WORKFLOW_RUN_EVENT_OBJ")
@@ -80,8 +80,8 @@ jobs:
       - name: Update Comment
         env:
           JOB_PATH: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ env.PREVIOUS_JOB_ID }}"
-          WINDOWS_ARTIFACT_ID: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
-          MAC_ARTIFACT_ID: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
+          WINDOWS_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.WINDOWS_ARTIFACT_ID }}"
+          MAC_ARTIFACT_URL: "${{ github.server_url }}/${{ github.repository }}/suites/${{ env.SUITE_ID }}/artifacts/${{ env.MAC_ARTIFACT_ID }}"
           HEAD_SHA: "${{ env.HEAD_SHA }}"
         uses: peter-evans/create-or-update-comment@v3
         with:
@@ -89,7 +89,7 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body: |-
-            ![badge]
+            ![badge]  <img src="https://cryptologos.cc/logos/decentraland-mana-logo.svg?v=032" width="30"> 
             
             Windows and Mac build successfull in Unity Cloud! You can find a link to the downloadable artifact below.
             
@@ -97,8 +97,8 @@ jobs:
             | --------         | ----------------------- |
             | Commit           | ${{ env.HEAD_SHA }}     |
             | Logs             | ${{ env.JOB_PATH }}     |
-            | Download Windows | ${{ env.WINDOWS_ARTIFACT_ID }} |
-            | Download Mac     | ${{ env.MAC_ARTIFACT_ID }} |
+            | Download Windows | ${{ env.WINDOWS_ARTIFACT_URL }} |
+            | Download Mac     | ${{ env.MAC_ARTIFACT_URL }} |
             | Built on         | ${{ env.BUILD_DATE }} |
 
             [badge]: https://img.shields.io/badge/Build-Success!-3fb950?logo=github&style=for-the-badge
