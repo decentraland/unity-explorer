@@ -228,7 +228,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.28",
+      "version": "3.0.31",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -336,8 +336,8 @@
       }
     },
     "com.unity.render-pipelines.universal": {
-      "version": "14.0.10",
-      "depth": 1,
+      "version": "14.0.8",
+      "depth": 0,
       "source": "builtin",
       "dependencies": {
         "com.unity.mathematics": "1.2.1",
@@ -349,7 +349,7 @@
     },
     "com.unity.render-pipelines.universal-config": {
       "version": "14.0.9",
-      "depth": 2,
+      "depth": 1,
       "source": "builtin",
       "dependencies": {
         "com.unity.render-pipelines.core": "14.0.9"
