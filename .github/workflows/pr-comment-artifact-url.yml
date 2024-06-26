@@ -89,7 +89,7 @@ jobs:
           comment-id: ${{ steps.find-comment.outputs.comment-id }}
           edit-mode: replace
           body: |-
-            ![badge]
+            ![badge]  <img src="https://cryptologos.cc/logos/decentraland-mana-logo.svg?v=032" width="30"> 
             
             Windows and Mac build successfull in Unity Cloud! You can find a link to the downloadable artifact below.
             
