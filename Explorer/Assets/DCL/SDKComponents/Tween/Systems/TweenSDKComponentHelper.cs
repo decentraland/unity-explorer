@@ -33,6 +33,28 @@ namespace DCL.SDKComponents.Tween.Helpers
                 sdkEntity, customTweener);
         }
 
+        public static bool AreSameModels(PBTween modelA, PBTween modelB)
+        {
+            if (modelA == null)
+                return false;
+
+            if (modelB.ModeCase != modelA.ModeCase
+                || modelB.EasingFunction != modelA.EasingFunction
+                || !modelB.CurrentTime.Equals(modelA.CurrentTime)
+                || !modelB.Duration.Equals(modelA.Duration)
+                || !(!modelA.HasPlaying || modelA.Playing).Equals(!modelA.HasPlaying || modelA.Playing))
+                return false;
+
+            return modelA.ModeCase switch
+            {
+                PBTween.ModeOneofCase.Scale => modelB.Scale.Start.Equals(modelA.Scale.Start) && modelB.Scale.End.Equals(modelA.Scale.End),
+                PBTween.ModeOneofCase.Rotate => modelB.Rotate.Start.Equals(modelA.Rotate.Start) && modelB.Rotate.End.Equals(modelA.Rotate.End),
+                PBTween.ModeOneofCase.Move => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
+                PBTween.ModeOneofCase.None => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End),
+                _ => modelB.Move.Start.Equals(modelA.Move.Start) && modelB.Move.End.Equals(modelA.Move.End)
+            };
+        }
+
        
 
     }

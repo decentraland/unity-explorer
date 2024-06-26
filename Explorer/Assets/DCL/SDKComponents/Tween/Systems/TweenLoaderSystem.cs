@@ -5,6 +5,7 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
+using DCL.SDKComponents.Tween.Helpers;
 using ECS.Abstract;
 using ECS.Unity.Groups;
 
@@ -33,7 +34,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
             SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
             {
-                IsDirty = true
+                IsDirty = true, CachedTween = new PBTween(pbTween)
             };
 
             World.Add(entity, sdkTweenComponent);
@@ -44,8 +45,13 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            if (pbTween.IsDirty)
+            // (Juani & Fran): Im not happy to leaave this AreSameModels check. But apparently its required as SDK might not mark the tween component as dirty.
+            // Its present in the old renderer. If this was not needed, the CurrentTween field can be deleted
+            if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CachedTween))
+            {
+                tweenComponent.CachedTween = pbTween;
                 tweenComponent.IsDirty = true;
+            }
         }
     }
 }
