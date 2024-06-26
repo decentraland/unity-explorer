@@ -91,7 +91,7 @@ jobs:
           body: |-
             ![badge]
             
-            Windows and Mac (UNITY CLOUD) build successfull! You can find a link to the downloadable artifact below.
+            Windows and Mac build successfull in Unity Cloud! You can find a link to the downloadable artifact below.
             
             | Name             | Link                    |
             | --------         | ----------------------- |
