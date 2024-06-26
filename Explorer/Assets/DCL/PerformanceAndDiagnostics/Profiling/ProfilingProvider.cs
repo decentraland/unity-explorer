@@ -22,19 +22,19 @@ namespace DCL.Profiling
 
         public ulong TotalUsedMemoryInBytes => (ulong)totalUsedMemoryRecorder.CurrentValue;
 
-        public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.CurrentValue;
+        public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.LastValue;
         public long CurrentGPUFrameTimeValueInNS => gpuRecorder.LastValue;
 
         public double AverageFrameTimeValueInNS => GetRecorderAverage(mainThreadTimeRecorder);
         public int AverageFameTimeSamples => mainThreadTimeRecorder.Capacity;
 
-        public long MinFrameTimeValueInNS => hiccupBufferCounter.MaxFrameTimeInNS;
-        public long MaxFrameTimeValueInNS => hiccupBufferCounter.MinFrameTimeInNS;
+        public long MinFrameTimeValueInNS => hiccupBufferCounter.MinFrameTimeInNS;
+        public long MaxFrameTimeValueInNS => hiccupBufferCounter.MaxFrameTimeInNS;
 
         public ulong HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
         public int HiccupCountBufferSize => hiccupBufferCounter.BufferSize;
 
-        public float GcAllocatedInFrameRecorder => gcAllocatedInFrameRecorder.LastValue / 1024f; // in [KB]
+        public float GcAllocatedInFrameRecorder => gcAllocatedInFrameRecorder.CurrentValue / 1024f; // in [KB]
 
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
