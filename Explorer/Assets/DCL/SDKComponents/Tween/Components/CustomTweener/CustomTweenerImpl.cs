@@ -1,4 +1,6 @@
-﻿using DG.Tweening;
+﻿using CrdtEcsBridge.Components.Conversion;
+using DCL.ECSComponents;
+using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.CustomPlugins;
 using DG.Tweening.Plugins.Options;
@@ -8,11 +10,6 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public abstract class Vector3CustomTweener : CustomTweener<Vector3, VectorOptions>
     {
-        public Vector3CustomTweener(Transform startTransform, Vector3 start, Vector3 end, float duration)
-        {
-            StartTransform = startTransform;
-            core = CreateTweener(start, end, duration);
-        }
 
         protected sealed override TweenerCore<Vector3, Vector3, VectorOptions> CreateTweener(Vector3 start, Vector3 end, float duration)
         {
@@ -25,11 +22,6 @@ namespace DCL.SDKComponents.Tween.Components
 
     public class PositionTweener : Vector3CustomTweener
     {
-        public PositionTweener(Transform startTransform, Vector3 start, Vector3 end, float duration) : base(startTransform, start, end, duration)
-        {
-            startTransform.localPosition = start;
-        }
-
         public override TweenResult GetResult()
         {
             return new TweenResult
@@ -37,15 +29,20 @@ namespace DCL.SDKComponents.Tween.Components
                 Position = CurrentValue, Rotation = StartTransform.localRotation, Scale = StartTransform.localScale
             };
         }
+
+        public override void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds)
+        {
+            Dispose();
+            StartTransform = startTransform;
+            var start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.Start);
+            var end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Move.End);
+            core = CreateTweener(start, end, durationInSeconds);
+            startTransform.localPosition = start;
+        }
     }
 
     public class ScaleTweener : Vector3CustomTweener
     {
-        public ScaleTweener(Transform startTransform, Vector3 start, Vector3 end, float duration) : base(startTransform, start, end, duration)
-        {
-            startTransform.localScale = start;
-        }
-
         public override TweenResult GetResult()
         {
             return new TweenResult
@@ -53,17 +50,20 @@ namespace DCL.SDKComponents.Tween.Components
                 Position = StartTransform.localPosition, Rotation = StartTransform.localRotation, Scale = CurrentValue
             };
         }
+
+        public override void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds)
+        {
+            Dispose();
+            StartTransform = startTransform;
+            var start = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.Start);
+            var end = PrimitivesConversionExtensions.PBVectorToUnityVector(pbTween.Scale.End);
+            core = CreateTweener(start, end, durationInSeconds);
+            startTransform.localScale = start;
+        }
     }
 
     public class RotationTweener : CustomTweener<Quaternion, NoOptions>
     {
-        public RotationTweener(Transform startTransform, Quaternion start, Quaternion end, float duration)
-        {
-            StartTransform = startTransform;
-            startTransform.localRotation = start;
-            core = CreateTweener(start, end, duration);
-        }
-
         protected sealed override TweenerCore<Quaternion, Quaternion, NoOptions> CreateTweener(Quaternion start, Quaternion end, float duration)
         {
             CurrentValue = start;
@@ -76,6 +76,16 @@ namespace DCL.SDKComponents.Tween.Components
             {
                 Position = StartTransform.localPosition, Rotation = CurrentValue, Scale = StartTransform.localScale
             };
+        }
+
+        public override void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds)
+        {
+            Dispose();
+            StartTransform = startTransform;
+            var start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
+            var end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
+            core = CreateTweener(start, end, durationInSeconds);
+            startTransform.localRotation = start;
         }
     }
 }

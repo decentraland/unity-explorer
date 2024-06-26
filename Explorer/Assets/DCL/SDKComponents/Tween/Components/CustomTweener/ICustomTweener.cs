@@ -1,10 +1,12 @@
-﻿using CRDT;
+﻿using System;
+using CRDT;
+using DCL.ECSComponents;
 using DG.Tweening;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public interface ICustomTweener
+    public interface ICustomTweener : IDisposable
     {
         public TweenResult GetResult();
         public CRDTEntity ParentId { get; set; }
@@ -12,11 +14,12 @@ namespace DCL.SDKComponents.Tween.Components
 
         void Play();
         void Pause();
-        void Kill();
         void Rewind();
         bool IsPaused();
         bool IsFinished();
         bool IsActive();
+
+        void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds);
     }
 
     public struct TweenResult

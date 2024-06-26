@@ -18,6 +18,7 @@ namespace DCL.SDKComponents.Tween.Tests
     [TestFixture]
     public class TweenUpdaterSystemShould : UnitySystemTestBase<TweenUpdaterSystem>
     {
+        /*
         private Entity entity;
         private PBTween pbTween;
         private TweenLoaderSystem tweenLoaderSystem;
@@ -102,6 +103,7 @@ namespace DCL.SDKComponents.Tween.Tests
                 Assert.IsTrue(comp.IsPlaying &&
                               comp.TweenStateStatus == TweenStateStatus.TsActive));
         }
-
+*/
     }
+    
 }

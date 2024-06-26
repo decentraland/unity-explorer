@@ -10,6 +10,7 @@ namespace DCL.SDKComponents.Tween.Components
         public TweenStateStatus TweenStateStatus { get; set; }
         public ICustomTweener CustomTweener { get; set; }
 
+        public PBTween CachedTween { get; set; } 
 
         public bool IsActive()
         {

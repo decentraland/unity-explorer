@@ -1,4 +1,5 @@
 ﻿using CRDT;
+using DCL.ECSComponents;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
@@ -26,11 +27,6 @@ namespace DCL.SDKComponents.Tween.Components
             core.Pause();
         }
 
-        public void Kill()
-        {
-            core.Kill();
-        }
-
         public void Rewind()
         {
             core.Rewind();
@@ -56,9 +52,16 @@ namespace DCL.SDKComponents.Tween.Components
             core.SetEase(ease).SetAutoKill(false).OnComplete(() => { Finished = true; }).Goto(tweenModelCurrentTime, isPlaying);
         }
 
+        public void Dispose()
+        {
+            core?.Kill();
+        }
+
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
 
         public abstract TweenResult GetResult();
+
+        public abstract void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds);
         public CRDTEntity ParentId { get; set; }
     }
 }
