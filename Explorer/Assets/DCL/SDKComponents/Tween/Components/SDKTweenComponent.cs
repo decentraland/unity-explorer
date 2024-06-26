@@ -4,18 +4,12 @@ using NUnit.Framework.Constraints;
 
 namespace DCL.SDKComponents.Tween.Components
 {
-    public struct SDKTweenComponent : IDisposable
+    public struct SDKTweenComponent
     {
         public bool IsDirty { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
         public ICustomTweener CustomTweener { get; set; }
 
-
-        public void Dispose()
-        {
-            if (CustomTweener != null)
-                CustomTweener.Kill();
-        }
 
         public bool IsActive()
         {

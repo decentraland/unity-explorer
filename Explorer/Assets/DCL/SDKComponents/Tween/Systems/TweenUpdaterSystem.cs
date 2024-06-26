@@ -20,10 +20,10 @@ using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Groups;
 using ECS.Unity.Transforms.Systems;
+using NSubstitute;
 using UnityEngine;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
-using Scale = UnityEngine.UIElements.Scale;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
@@ -34,6 +34,8 @@ namespace DCL.SDKComponents.Tween.Systems
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
+        private readonly TweenerPool tweenerPool;
+        
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
         {
@@ -72,8 +74,9 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
         {
+            this.tweenerPool = tweenerPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
@@ -115,7 +118,7 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTweenSequence(in Entity entity, ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity, ref SDKTransform sdkTransform)
+        private void UpdateTweenSequence(ref PBTween pbTween, ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity, ref SDKTransform sdkTransform)
         {
             if (sdkTweenComponent.IsDirty)
                 SetupTween(sdkEntity, ref sdkTweenComponent, ref pbTween, ref transformComponent, ref sdkTransform);
@@ -152,18 +155,29 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             var newState = GetCurrentTweenState(sdkTweenComponent);
 
-            if (newState == TweenStateStatus.TsActive)
-            {
-                TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, sdkTweenComponent.CustomTweener);
-                TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.CustomTweener);
-            }
-
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
+            }
+            else if (newState == TweenStateStatus.TsActive)
+            {
+                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             }
         }
+
+        private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
+        {
+            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+            UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
+        }
+
+        private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
+        {
+            TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, sdkTweenComponent.CustomTweener);
+            TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.CustomTweener);
+        }
+
 
         private void SetupTweener(CRDTEntity entity, ref SDKTweenComponent sdkTweenComponent, Transform entityTransform, PBTween tweenModel, float durationInSeconds, bool isPlaying, SDKTransform sdkTransform)
         {
@@ -174,42 +188,20 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.Rewind();
                 TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, sdkTweenComponent.CustomTweener);
                 TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, entity, sdkTweenComponent.CustomTweener);
-                sdkTweenComponent.Dispose();
+                tweenerPool.Return(sdkTweenComponent);
             }
 
             if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
                 ease = Linear;
 
-            switch (tweenModel.ModeCase)
-            {
-                case PBTween.ModeOneofCase.Rotate:
-                    sdkTweenComponent.CustomTweener = new RotationTweener(entityTransform,
-                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
-                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.End), durationInSeconds);
-                    break;
-                case PBTween.ModeOneofCase.Scale:
-                    sdkTweenComponent.CustomTweener = new ScaleTweener(entityTransform,
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.Start),
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.End), durationInSeconds);
-                    break;
-                case PBTween.ModeOneofCase.Move:
-                default:
-                    var startPosition = PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.Start);
-                    var endPosition = PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.End);
-
-                    if (tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection)
-                        entityTransform.forward = (endPosition - startPosition).normalized;
-                    sdkTweenComponent.CustomTweener = new PositionTweener(entityTransform, startPosition, endPosition, durationInSeconds);
-                    break;
-            }
-
+            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, entityTransform, durationInSeconds);
             sdkTweenComponent.CustomTweener.ParentId = sdkTransform.ParentId;
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
         {
-            sdkTweenComponent.Dispose();
+            tweenerPool.Return(sdkTweenComponent);
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
         }
 
