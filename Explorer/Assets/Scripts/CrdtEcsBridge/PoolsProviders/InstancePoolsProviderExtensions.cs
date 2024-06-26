@@ -18,7 +18,7 @@ namespace CrdtEcsBridge.PoolsProviders
                 lastInput.Dispose();
 
                 // Rent a new one
-                lastInput = instancePoolsProvider.GetCrdtRawDataPool(intLength);
+                lastInput = instancePoolsProvider.GetAPIRawDataPool(intLength);
             }
             // Otherwise set the desired length to the existing array so it provides a correct span
             else
@@ -43,7 +43,7 @@ namespace CrdtEcsBridge.PoolsProviders
                 return lastInput;
             }
 
-            var newArray = instancePoolsProvider.GetCrdtRawDataPool(newSize);
+            var newArray = instancePoolsProvider.GetAPIRawDataPool(newSize);
 
             lastInput.Array.CopyTo(newArray.Array, 0);
             lastInput.Dispose();

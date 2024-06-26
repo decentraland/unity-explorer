@@ -60,7 +60,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             var bytesCount = (int)data.Size;
             if (bytesCount == 0) return;
 
-            using PoolableByteArray poolableArray = instancePoolsProvider.GetCrdtRawDataPool(bytesCount);
+            using PoolableByteArray poolableArray = instancePoolsProvider.GetAPIRawDataPool(bytesCount);
 
             data.ReadBytes(0, data.Size, poolableArray.Array, 0);
             await CHUNK_TRANSMISSION.SendAsync(webSocket, poolableArray.Memory, WebSocketMessageType.Binary, ct);
@@ -74,7 +74,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
             if (utfBytesCount == 0) return;
 
-            using PoolableByteArray poolableArray = instancePoolsProvider.GetCrdtRawDataPool(utfBytesCount);
+            using PoolableByteArray poolableArray = instancePoolsProvider.GetAPIRawDataPool(utfBytesCount);
 
             Encoding.UTF8.GetBytes(data, poolableArray.Memory.Span);
             await CHUNK_TRANSMISSION.SendAsync(webSocket, poolableArray.Memory, WebSocketMessageType.Text, ct);
@@ -182,31 +182,41 @@ namespace CrdtEcsBridge.JsModulesImplementation
             public async Task<(PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)> ReceiveAsync(ClientWebSocket webSocket, IInstancePoolsProvider instancePoolsProvider, CancellationToken ct)
             {
                 PoolableByteArray finalBuffer = PoolableByteArray.EMPTY;
-                using PoolableByteArray chunkBuffer = instancePoolsProvider.GetCrdtRawDataPool(receiveChunkSize);
 
-                WebSocketMessageType messageType;
-
-                while (true)
+                try
                 {
-                    WebSocketReceiveResult? chunkResult = await webSocket.ReceiveAsync(chunkBuffer.Array, ct).ConfigureAwait(false);
+                    using PoolableByteArray chunkBuffer = instancePoolsProvider.GetAPIRawDataPool(receiveChunkSize);
 
-                    if (chunkResult.CloseStatus != null && chunkResult.CloseStatus != WebSocketCloseStatus.Empty)
-                        return (finalBuffer, WebSocketMessageType.Close, chunkResult.CloseStatus!.Value);
+                    WebSocketMessageType messageType;
 
-                    int oldLength = finalBuffer.Length;
+                    while (true)
+                    {
+                        WebSocketReceiveResult? chunkResult = await webSocket.ReceiveAsync(chunkBuffer.Array, ct).ConfigureAwait(false);
 
-                    finalBuffer = instancePoolsProvider.Expand(finalBuffer, oldLength + chunkResult.Count);
+                        if (chunkResult.CloseStatus != null && chunkResult.CloseStatus != WebSocketCloseStatus.Empty)
+                            return (finalBuffer, WebSocketMessageType.Close, chunkResult.CloseStatus!.Value);
 
-                    // copy new data starting from the oldLength
-                    Array.Copy(chunkBuffer.Array, 0, finalBuffer.Array, oldLength, chunkResult.Count);
+                        int oldLength = finalBuffer.Length;
 
-                    messageType = chunkResult.MessageType;
+                        finalBuffer = instancePoolsProvider.Expand(finalBuffer, oldLength + chunkResult.Count);
 
-                    if (chunkResult.EndOfMessage)
-                        break;
+                        // copy new data starting from the oldLength
+                        Array.Copy(chunkBuffer.Array, 0, finalBuffer.Array, oldLength, chunkResult.Count);
+
+                        messageType = chunkResult.MessageType;
+
+                        if (chunkResult.EndOfMessage)
+                            break;
+                    }
+
+                    return (finalBuffer, messageType, WebSocketCloseStatus.Empty);
                 }
-
-                return (finalBuffer, messageType, WebSocketCloseStatus.Empty);
+                catch (Exception)
+                {
+                    // if exception occurs we need to dispose the buffer here, otherwise it's returned to the upper layer
+                    finalBuffer.Dispose();
+                    throw;
+                }
             }
         }
 
