@@ -39,8 +39,8 @@ namespace DCL.PluginSystem.Global
             analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.AnalyticsConfigRef, ct)).Value;
 
             analytics = new AnalyticsController(
-                new DebugAnalyticsService(),
-                // new SegmentAnalyticsService(analyticsConfig.Value),
+                // new DebugAnalyticsService(),
+                new SegmentAnalyticsService(analyticsConfig),
                 realmData, characterObject.Transform, identityCache
                 );
         }
