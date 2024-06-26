@@ -1,6 +1,14 @@
+using Arch.Core;
+using Arch.System;
+using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
+using DCL.SDKComponents.MapPins.Components;
+using ECS.StreamableLoading.Common.Components;
+using MVC;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -8,7 +16,7 @@ using UnityEngine.Pool;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
-    internal class PinMarkerController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
+    internal partial class PinMarkerController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
         internal delegate IPinMarker PinMarkerBuilder(
             IObjectPool<PinMarkerObject> objectsPool,
@@ -17,9 +25,11 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private readonly IObjectPool<PinMarkerObject> objectsPool;
         private readonly PinMarkerBuilder builder;
 
-        private readonly Dictionary<Vector2Int, IPinMarker> markers = new ();
-        private readonly List<Vector2Int> vectorCoords = new ();
-        private Vector2Int decodePointer;
+        private readonly Dictionary<Entity, IPinMarker> markers = new ();
+
+        private MapPinPlacementSystem system;
+        private MapPinTextureResolverSystem textureResolverSystem;
+        private World world;
 
         private bool isEnabled;
 
@@ -37,6 +47,64 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public async UniTask InitializeAsync(CancellationToken cancellationToken)
         {
+        }
+
+        public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
+        {
+            world = builder.World;
+            system = MapPinPlacementSystem.InjectToWorld(ref builder);
+            textureResolverSystem = MapPinTextureResolverSystem.InjectToWorld(ref builder);
+
+            system.SetQueryMethod(SetMapPinPlacementQuery);
+            textureResolverSystem.SetQueryMethod(SetMapPinTextureQuery);
+            system.Activate();
+            textureResolverSystem.Activate();
+        }
+
+        [All(typeof(MapPinComponent), typeof(PBMapPin))]
+        [Query]
+        private void SetMapPinPlacement(in Entity e, ref MapPinComponent mapPinComponent, in PBMapPin pbMapPin)
+        {
+            if (!mapPinComponent.IsDirty)
+                return;
+
+            IPinMarker marker;
+            if (markers.TryGetValue(e, out IPinMarker pinMarker))
+            {
+                marker = pinMarker;
+            }
+            else
+            {
+                marker = builder(objectsPool, mapCullingController);
+                markers.Add(e, marker);
+            }
+            marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position));
+
+            if (isEnabled)
+                mapCullingController.StartTracking(marker, this);
+
+            mapPinComponent.IsDirty = false;
+        }
+
+        [All(typeof(MapPinComponent))]
+        [Query]
+        private void SetMapPinTexture(in Entity e, ref MapPinComponent mapPinComponent)
+        {
+            if(mapPinComponent.TexturePromise is null or { IsConsumed: true })
+                return;
+
+            IPinMarker marker;
+            if (markers.TryGetValue(e, out IPinMarker pinMarker))
+            {
+                marker = pinMarker;
+            }
+            else
+            {
+                marker = builder(objectsPool, mapCullingController);
+                markers.Add(e, marker);
+            }
+            if (mapPinComponent.TexturePromise.Value.TryConsume(world, out StreamableLoadingResult<Texture2D> texture))
+                marker.SetTexture(texture.Asset);
         }
 
         protected override void DisposeImpl()
@@ -94,5 +162,17 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
             return UniTask.CompletedTask;
         }
+    }
+
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    public partial class MapPinPlacementSystem : ControllerECSBridgeSystem
+    {
+        internal MapPinPlacementSystem(World world) : base(world) { }
+    }
+
+    [UpdateInGroup(typeof(PresentationSystemGroup))]
+    public partial class MapPinTextureResolverSystem : ControllerECSBridgeSystem
+    {
+        internal MapPinTextureResolverSystem(World world) : base(world) { }
     }
 }

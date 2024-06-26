@@ -8,7 +8,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
     {
         bool IsVisible { get; }
 
-        void SetData(string title, Vector3 position);
+        void SetPosition(Vector2 position);
+
+        void SetTexture(Texture2D texture);
 
         void OnBecameVisible();
 

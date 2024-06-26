@@ -36,10 +36,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             cullingController.StopTracking(this);
         }
 
-        public void SetData(string title, Vector3 position)
+        public void SetPosition(Vector2 position)
         {
             poolableBehavior.SetCurrentPosition(position);
-            this.title = title.Length > MAX_TITLE_LENGTH ? title.Substring(0, MAX_TITLE_LENGTH) : title;
+        }
+
+        public void SetTexture(Texture2D texture)
+        {
+            poolableBehavior.instance.SetTexture(texture);
         }
 
         public void OnBecameVisible()

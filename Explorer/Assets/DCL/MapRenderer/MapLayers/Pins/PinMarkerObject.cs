@@ -1,11 +1,13 @@
 using TMPro;
 using UnityEngine;
+using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarkerObject : MapRendererMarkerBase
     {
         [field: SerializeField] internal TextMeshPro title { get; set; }
+        [field: SerializeField] internal SpriteRenderer mapPinIcon { get; set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
 
         private float titleBaseScale;
@@ -35,6 +37,11 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
             float textScaleFactor = baseScale / newScale; // Calculate the inverse scale factor
             title.transform.localScale = new Vector3(titleBaseScale * textScaleFactor, titleBaseScale * textScaleFactor, 1f);
+        }
+
+        public void SetTexture(Texture2D texture)
+        {
+            mapPinIcon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, 50, 0, SpriteMeshType.FullRect, Vector4.one, false);
         }
     }
 }
