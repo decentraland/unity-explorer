@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Arch.Core;
 using UnityEngine;
 
@@ -12,6 +13,6 @@ namespace SceneRunner.Mapping
 
     public interface ISceneMapping : IReadOnlySceneMapping
     {
-        void Register(string sceneName, Vector2Int coordinates, World world);
+        void Register(string sceneName, IReadOnlyList<Vector2Int> coordinates, World world);
     }
 }

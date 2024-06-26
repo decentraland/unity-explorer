@@ -24,10 +24,13 @@ namespace SceneRunner.Mapping
             return world;
         }
 
-        public void Register(string sceneName, Vector2Int coordinates, World world)
+        public void Register(string sceneName, IReadOnlyList<Vector2Int> coordinates, World world)
         {
             worlds[sceneName] = world;
-            worldsByCoordinates[coordinates] = world;
+            foreach (var parcelCoordinate in coordinates)
+            {
+                worldsByCoordinates[parcelCoordinate] = world;
+            }
         }
     }
 }
