@@ -9,8 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f3967b8e51a47b980705438d27c26e6, type: 3}
-  m_Name: BackpackColorPickerPresetsForSkin
+  m_Script: {fileID: 11500000, guid: 1d61a246b15ce4d988f6d575253b95f9, type: 3}
+  m_Name: BodyShapeColors
   m_EditorClassIdentifier: 
   colors:
   - {r: 1, g: 0.89411765, b: 0.7764706, a: 1}
