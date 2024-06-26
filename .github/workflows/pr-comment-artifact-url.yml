@@ -42,8 +42,8 @@ jobs:
             select(.name==\"Decentraland_windows64\") |
             .id")
           
-          echo "Windows Artifact ID: WINDOWS_ARTIFACT_ID"
-          echo "WINDOWS_ARTIFACT_ID=WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
+          echo "Windows Artifact ID: $WINDOWS_ARTIFACT_ID"
+          echo "WINDOWS_ARTIFACT_ID=$WINDOWS_ARTIFACT_ID" >> "$GITHUB_ENV"
           
           MAC_ARTIFACT_ID=$(gh api "/repos/$OWNER/$REPO/actions/artifacts" \
             --jq ".artifacts.[] |
@@ -52,8 +52,8 @@ jobs:
             select(.name==\"Decentraland_macos\") |
             .id")
           
-          echo "Windows Artifact ID: MAC_ARTIFACT_ID"
-          echo "MAC_ARTIFACT_ID=MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
+          echo "Windows Artifact ID: $MAC_ARTIFACT_ID"
+          echo "MAC_ARTIFACT_ID=$MAC_ARTIFACT_ID" >> "$GITHUB_ENV"          
           
           PR_NUMBER=$(jq -r '.pull_requests[0].number' \
             <<< "$WORKFLOW_RUN_EVENT_OBJ")
