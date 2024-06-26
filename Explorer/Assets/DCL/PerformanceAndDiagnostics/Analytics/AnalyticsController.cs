@@ -52,7 +52,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 ["runtime"] = Application.isEditor ? "editor" : "build", // do we need it❓
             };
 
-            // SendSystemInfo();
+            SendSystemInfo();
         }
 
         public void Track(string eventName, Dictionary<string, JsonElement> properties = null)

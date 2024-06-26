@@ -293,6 +293,7 @@ namespace Global.Dynamic
                     staticContainer.ProfilingProvider,
                     staticContainer.RealmData,
                     staticContainer.CharacterContainer.CharacterObject,
+                    staticContainer.ScenesCache,
                     identityCache),
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,

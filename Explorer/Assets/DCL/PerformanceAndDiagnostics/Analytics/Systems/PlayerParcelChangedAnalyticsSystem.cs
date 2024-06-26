@@ -5,6 +5,8 @@ using DCL.Character.Components;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
+using ECS.SceneLifeCycle;
+using SceneRunner.Scene;
 using Segment.Serialization;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,14 +21,18 @@ namespace DCL.Analytics.Systems
 
         private readonly AnalyticsController analytics;
         private readonly IRealmData realmData;
+        private readonly IScenesCache scenesCache;
+
         private readonly Entity playerEntity;
 
         private Vector2Int oldParcel;
+        private ISceneFacade lastScene;
 
-        public PlayerParcelChangedAnalyticsSystem(World world, AnalyticsController analytics, IRealmData realmData, in Entity playerEntity) : base(world)
+        public PlayerParcelChangedAnalyticsSystem(World world, AnalyticsController analytics, IRealmData realmData, IScenesCache scenesCache, in Entity playerEntity) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;
+            this.scenesCache = scenesCache;
             this.playerEntity = playerEntity;
 
             ResetOldParcel();
@@ -58,6 +64,17 @@ namespace DCL.Analytics.Systems
                     });
 
                 oldParcel = newParcel;
+
+                if (scenesCache.TryGetByParcel(newParcel, out var currentScene) && currentScene != lastScene)
+                {
+                    analytics.Track("visit_scene",
+                        new Dictionary<string, JsonElement>
+                        {
+                            { "scene name", currentScene.Info.Name },
+                        });
+
+                    lastScene = currentScene;
+                }
             }
         }
     }
