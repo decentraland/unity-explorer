@@ -73,51 +73,40 @@ namespace DCL.AvatarRendering.Emotes
 
             if (!emoteCache.TryGetEmote(urn, out IEmote emote))
             {
-                if (!intention.IsModelProcessed)
+                var dto = new EmoteDTO
                 {
-                    var dto = new EmoteDTO
+                    id = urn,
+                    metadata = new EmoteDTO.Metadata
                     {
                         id = urn,
-                        metadata = new EmoteDTO.Metadata
+                        emoteDataADR74 = new EmoteDTO.Metadata.Data
                         {
-                            id = urn,
-                            emoteDataADR74 = new EmoteDTO.Metadata.Data
+                            loop = intention.Loop,
+                            category = "emote",
+                            hides = Array.Empty<string>(),
+                            replaces = Array.Empty<string>(),
+                            tags = Array.Empty<string>(),
+                            removesDefaultHiding = Array.Empty<string>(),
+                            representations = new AvatarAttachmentDTO.Representation[]
                             {
-                                loop = intention.Loop,
-                                category = "emote",
-                                hides = Array.Empty<string>(),
-                                replaces = Array.Empty<string>(),
-                                tags = Array.Empty<string>(),
-                                removesDefaultHiding = Array.Empty<string>(),
-                                representations = new AvatarAttachmentDTO.Representation[]
+                                new ()
                                 {
-                                    new ()
+                                    contents = Array.Empty<string>(),
+                                    bodyShapes = new[]
                                     {
-                                        contents = Array.Empty<string>(),
-                                        bodyShapes = new[]
-                                        {
-                                            BodyShape.MALE.ToString(),
-                                            BodyShape.FEMALE.ToString(),
-                                        },
-                                        overrideHides = Array.Empty<string>(),
-                                        overrideReplaces = Array.Empty<string>(),
-                                        mainFile = "",
+                                        BodyShape.MALE.Value,
+                                        BodyShape.FEMALE.Value,
                                     },
+                                    overrideHides = Array.Empty<string>(),
+                                    overrideReplaces = Array.Empty<string>(),
+                                    mainFile = "",
                                 },
                             },
                         },
-                    };
+                    },
+                };
 
-                    emote = new Emote
-                    {
-                        Model = new StreamableLoadingResult<EmoteDTO>(dto),
-                        IsLoading = false,
-                    };
-
-                    emoteCache.Set(urn, emote);
-
-                    intention.IsModelProcessed = true;
-                }
+                emote = emoteCache.GetOrAddEmoteByDTO(dto);
             }
 
             if (emote.IsLoading) return;

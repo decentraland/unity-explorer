@@ -95,6 +95,7 @@ namespace CrdtEcsBridge.RestrictedActions
             if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL)
                 return false;
 
+            await UniTask.SwitchToMainThread();
             await globalWorldActions.TriggerSceneEmoteAsync(sceneData.AssetBundleManifest, hash, loop, ct);
 
             return true;

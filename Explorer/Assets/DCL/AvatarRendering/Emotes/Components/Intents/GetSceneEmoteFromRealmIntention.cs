@@ -17,7 +17,6 @@ namespace DCL.AvatarRendering.Emotes
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
         public int Timeout { get; }
-        public bool IsModelProcessed { get; set; }
         public bool IsAssetBundleProcessed { get; set; }
         public float ElapsedTime { get; set; }
 
