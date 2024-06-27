@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -34,6 +35,8 @@ namespace Global.Dynamic.ChatCommands
         private string? worldName;
         private string? realmUrl;
 
+        public event Action? Executed;
+
         public ChangeRealmChatCommand(IRealmNavigator realmNavigator)
         {
             this.realmNavigator = realmNavigator;
@@ -54,6 +57,8 @@ namespace Global.Dynamic.ChatCommands
             var realm = URLDomain.FromString(realmUrl!);
 
             bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct);
+
+            Executed?.Invoke();
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";

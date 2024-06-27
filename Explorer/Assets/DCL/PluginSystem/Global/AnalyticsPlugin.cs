@@ -3,6 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Chat;
+using DCL.Chat.Commands;
+using DCL.Chat.MessageBus;
 using DCL.ExplorePanel;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
@@ -27,13 +29,14 @@ namespace DCL.PluginSystem.Global
         private readonly MVCManager mvcManager;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IChatCommand teleportToCommand;
 
         private AnalyticsController analytics;
         private AnalyticsConfiguration analyticsConfig;
 
         public AnalyticsPlugin(IAssetsProvisioner assetsProvisioner, IProfilingProvider profilingProvider, IRealmData realmData,
             ICharacterObject characterObject, IScenesCache scenesCache,
-            MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IWeb3IdentityCache identityCache)
+            MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IWeb3IdentityCache identityCache, IChatCommand teleportToCommand)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.profilingProvider = profilingProvider;
@@ -43,6 +46,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
             this.identityCache = identityCache;
+            this.teleportToCommand = teleportToCommand;
         }
 
         public async UniTask InitializeAsync(AnalyticsSettings settings, CancellationToken ct)
@@ -69,7 +73,7 @@ namespace DCL.PluginSystem.Global
             {
                 case ChatController chatController:
                 {
-                    var chatAnalytics = new ChatAnalytics(analytics, chatController, chatMessagesBus);
+                    var chatAnalytics = new ChatAnalytics(analytics, chatController, chatMessagesBus, teleportToCommand);
                     break;
                 }
                 case ExplorePanelController explorePanelController:

@@ -269,9 +269,10 @@ namespace Global.Dynamic
 
             var chatHistory = new ChatHistory();
 
+            var teleportToChatCommand = new TeleportToChatCommand(realmNavigator);
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
+                { TeleportToChatCommand.REGEX, () => teleportToChatCommand },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
@@ -308,7 +309,8 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache,
                     container.MvcManager,
                     container.ChatMessagesBus,
-                    identityCache),
+                    identityCache,
+                    teleportToChatCommand),
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
