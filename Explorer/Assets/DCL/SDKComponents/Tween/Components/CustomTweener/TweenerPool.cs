@@ -12,9 +12,9 @@ namespace DCL.SDKComponents.Tween.Components
 
         public TweenerPool()
         {
-            rotationTweenersPool = new ObjectPool<RotationTweener>(() => new RotationTweener(), actionOnRelease: tweener => tweener.Dispose());
-            positionTweenersPool = new ObjectPool<PositionTweener>(() => new PositionTweener(), actionOnRelease: tweener => tweener.Dispose());
-            scaleTweenersPool = new ObjectPool<ScaleTweener>(() => new ScaleTweener(), actionOnRelease: tweener => tweener.Dispose());
+            rotationTweenersPool = new ObjectPool<RotationTweener>(() => new RotationTweener());
+            positionTweenersPool = new ObjectPool<PositionTweener>(() => new PositionTweener());
+            scaleTweenersPool = new ObjectPool<ScaleTweener>(() => new ScaleTweener());
         }
 
         public ICustomTweener GetTweener(PBTween pbTween, Transform entityTransform, float durationInSeconds)

@@ -56,11 +56,6 @@ namespace DCL.SDKComponents.Tween.Components
             core.SetEase(ease).SetAutoKill(false).OnComplete(() => { Finished = true; }).Goto(tweenModelCurrentTime, isPlaying);
         }
 
-        public void Dispose()
-        {
-            core?.Kill();
-        }
-
         public TweenResult GetResult()
         {
             return CurrentValue;
@@ -69,6 +64,7 @@ namespace DCL.SDKComponents.Tween.Components
         protected void InternalInit(Transform transform, T start, T end, float durationInSeconds)
         {
             core?.Kill();
+            Finished = false;
             CurrentValue = new TweenResult
             {
                 Position = transform.localPosition, Rotation = transform.localRotation, Scale = transform.localScale
