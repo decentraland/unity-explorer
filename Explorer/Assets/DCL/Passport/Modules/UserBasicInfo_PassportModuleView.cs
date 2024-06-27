@@ -1,3 +1,4 @@
+using DCL.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,6 +20,9 @@ namespace DCL.Passport.Modules
         public Button CopyUserNameButton { get; private set; }
 
         [field: SerializeField]
+        public WarningNotificationView CopyNameWarningNotification { get; private set; }
+
+        [field: SerializeField]
         public RectTransform WalletAddressContainer { get; private set; }
 
         [field: SerializeField]
@@ -26,5 +30,8 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public Button CopyWalletAddressButton { get; private set; }
+
+        [field: SerializeField]
+        public WarningNotificationView CopyWalletWarningNotification { get; private set; }
     }
 }

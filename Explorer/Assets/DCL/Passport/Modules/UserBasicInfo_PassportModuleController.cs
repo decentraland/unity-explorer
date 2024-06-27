@@ -1,23 +1,42 @@
+using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Profiles;
+using DCL.UI;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+using Utility;
 
 namespace DCL.Passport.Modules
 {
     public class UserBasicInfo_PassportModuleController : IPassportModuleController
     {
-        private UserBasicInfo_PassportModuleView view;
-        private Profile currentProfile;
+        private readonly UserBasicInfo_PassportModuleView view;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+
+        private Profile currentProfile;
+        private CancellationTokenSource copyNameCts;
+        private CancellationTokenSource copyWalletCts;
 
         public UserBasicInfo_PassportModuleController(UserBasicInfo_PassportModuleView view, ChatEntryConfigurationSO chatEntryConfiguration)
         {
             this.view = view;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            view.CopyNameWarningNotification.Hide(true);
+            view.CopyWalletWarningNotification.Hide(true);
 
-            view.CopyUserNameButton.onClick.AddListener(() => CopyToClipboard(view.UserNameText.text));
-            view.CopyWalletAddressButton.onClick.AddListener(() => CopyToClipboard(currentProfile?.UserId));
+            view.CopyUserNameButton.onClick.AddListener(() =>
+            {
+                CopyToClipboard(view.UserNameText.text);
+                copyNameCts = copyNameCts.SafeRestart();
+                ShowCopyWarningAsync(view.CopyNameWarningNotification, copyNameCts.Token).Forget();
+            });
+            view.CopyWalletAddressButton.onClick.AddListener(() =>
+            {
+                CopyToClipboard(currentProfile?.UserId);
+                copyWalletCts = copyWalletCts.SafeRestart();
+                ShowCopyWarningAsync(view.CopyWalletWarningNotification, copyWalletCts.Token).Forget();
+            });
         }
 
         public void Setup(Profile profile)
@@ -39,10 +58,19 @@ namespace DCL.Passport.Modules
         {
             view.CopyUserNameButton.onClick.RemoveAllListeners();
             view.CopyWalletAddressButton.onClick.RemoveAllListeners();
+            view.CopyNameWarningNotification.Hide(true);
+            view.CopyWalletWarningNotification.Hide(true);
             Clear();
         }
 
         private void CopyToClipboard(string text) =>
             GUIUtility.systemCopyBuffer = text;
+
+        private async UniTaskVoid ShowCopyWarningAsync(WarningNotificationView notificationView, CancellationToken ct)
+        {
+            notificationView.Show();
+            await UniTask.Delay(1000, cancellationToken: ct);
+            notificationView.Hide();
+        }
     }
 }
