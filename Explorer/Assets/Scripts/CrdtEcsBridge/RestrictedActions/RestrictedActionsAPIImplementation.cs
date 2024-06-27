@@ -7,7 +7,6 @@ using DCL.TeleportPrompt;
 using DCL.Utilities;
 using MVC;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using UnityEngine;
 using Utility;
@@ -107,7 +106,6 @@ namespace CrdtEcsBridge.RestrictedActions
 
             OpenNftDialogAsync(contractAddress, tokenId).Forget();
             return true;
-
         }
 
         private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget)
@@ -126,7 +124,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
-            var parcelToCheck = ParcelMathHelper.FloorToParcel(floorPosition);
+            Vector2Int parcelToCheck = ParcelMathHelper.FloorToParcel(floorPosition);
+
             foreach (Vector2Int sceneParcel in sceneData.Parcels)
             {
                 if (sceneParcel == parcelToCheck)

@@ -191,7 +191,8 @@ namespace SceneRunner
                     identityCache,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
-                    runtimeDeps.SimpleFetchApi);
+                    runtimeDeps.SimpleFetchApi,
+                    runtimeDeps.PortableExperiencesApi);
             }
             else
             {
@@ -211,7 +212,8 @@ namespace SceneRunner
                     identityCache,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
-                    runtimeDeps.SimpleFetchApi);
+                    runtimeDeps.SimpleFetchApi,
+                    runtimeDeps.PortableExperiencesApi);
             }
 
             sceneRuntime.ExecuteSceneJson();

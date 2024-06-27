@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using System;
 using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
@@ -13,9 +12,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             this.api = api;
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
         [UsedImplicitly]
         public bool OpenExternalUrl(string url) =>

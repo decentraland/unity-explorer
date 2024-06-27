@@ -75,6 +75,8 @@ namespace Global.Dynamic
 
         public IRealmController RealmController { get; private set; } = null!;
 
+        public IPortableExperiencesController PortableExperiencesController { get; private set; } = null!;
+
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
@@ -123,7 +125,7 @@ namespace Global.Dynamic
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
-            var debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
+            IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -188,8 +190,6 @@ namespace Global.Dynamic
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
 
-
-
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
 
@@ -209,6 +209,15 @@ namespace Global.Dynamic
                 parcelServiceContainer.TeleportController,
                 parcelServiceContainer.RetrieveSceneFromFixedRealm,
                 parcelServiceContainer.RetrieveSceneFromVolatileWorld,
+                dynamicWorldParams.StaticLoadPositions,
+                staticContainer.RealmData,
+                staticContainer.ScenesCache,
+                staticContainer.PartitionDataContainer);
+
+            container.PortableExperiencesController = new PortableExperiencesController(
+                identityCache,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                parcelServiceContainer.TeleportController,
                 dynamicWorldParams.StaticLoadPositions,
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
@@ -374,7 +383,7 @@ namespace Global.Dynamic
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
-                new RealmDataDirtyFlagPlugin(staticContainer.RealmData)
+                new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
