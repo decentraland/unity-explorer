@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
+using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Systems;
 
 namespace Global.Dynamic.ChatCommands
