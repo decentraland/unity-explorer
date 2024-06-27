@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using System.Threading;
 
-namespace DCL.Chat
+namespace DCL.Chat.Commands
 {
     public interface IChatCommand
     {

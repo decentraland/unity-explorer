@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat.Commands;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
