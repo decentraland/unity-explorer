@@ -24,6 +24,7 @@ namespace DCL.Chat.MessageBus
             this.origin = origin;
             this.forbiddenChars = forbiddenChars;
             this.origin.OnMessageAdded += OriginOnOnMessageAdded;
+            this.origin.MessageSent += OnMessageSent;
         }
 
         private void OriginOnOnMessageAdded(ChatMessage obj)
@@ -32,7 +33,13 @@ namespace DCL.Chat.MessageBus
                 OnMessageAdded?.Invoke(obj);
         }
 
+        private void OnMessageSent(string obj)
+        {
+            MessageSent?.Invoke(obj);
+        }
+
         public event Action<ChatMessage>? OnMessageAdded;
+        public event Action<string>? MessageSent;
 
         public void Send(string message)
         {
@@ -47,6 +54,7 @@ namespace DCL.Chat.MessageBus
         public void Dispose()
         {
             origin.OnMessageAdded -= OriginOnOnMessageAdded;
+            origin.MessageSent -= OnMessageSent;
             origin.Dispose();
         }
 

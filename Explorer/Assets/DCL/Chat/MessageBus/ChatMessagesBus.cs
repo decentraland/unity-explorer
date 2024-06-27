@@ -8,6 +8,7 @@ namespace DCL.Chat
     public class ChatMessagesBus : IChatMessagesBus
     {
         public event Action<ChatMessage> OnMessageAdded;
+        public event Action<string>? MessageSent;
 
         public ChatMessagesBus(IDebugContainerBuilder debugBuilder)
         {

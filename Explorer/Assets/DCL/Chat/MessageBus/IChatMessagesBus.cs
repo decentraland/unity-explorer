@@ -12,7 +12,7 @@ namespace DCL.Chat
     public interface IChatMessagesBus : IDisposable
     {
         public event Action<ChatMessage> OnMessageAdded;
-
+        public event Action<string> MessageSent;
         public void Send(string message);
     }
 

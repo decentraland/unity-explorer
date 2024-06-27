@@ -295,6 +295,7 @@ namespace Global.Dynamic
                     staticContainer.CharacterContainer.CharacterObject,
                     staticContainer.ScenesCache,
                     container.MvcManager,
+                    container.ChatMessagesBus,
                     identityCache),
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,

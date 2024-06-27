@@ -15,18 +15,28 @@ namespace DCL.Chat.MessageBus
         private (IChatCommand command, Match param) commandTuple;
 
         public event Action<ChatMessage>? OnMessageAdded;
+        public event Action<string>? MessageSent;
 
         public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory)
         {
             this.origin = origin;
             this.chatCommandsHandler = new ChatCommandsHandler(commandsFactory);
             origin.OnMessageAdded += OriginOnOnMessageAdded;
+            origin.MessageSent += OnMessageSent;
         }
 
         public void Dispose()
         {
+            origin.OnMessageAdded -= OriginOnOnMessageAdded;
+            origin.MessageSent -= OnMessageSent;
+
             origin.Dispose();
             commandCts.SafeCancelAndDispose();
+        }
+
+        private void OnMessageSent(string message)
+        {
+            MessageSent?.Invoke(message);
         }
 
         public void Send(string message)

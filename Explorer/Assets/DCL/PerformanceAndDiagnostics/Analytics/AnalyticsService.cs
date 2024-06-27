@@ -22,7 +22,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void Track(string eventName, JsonObject properties = null)
         {
-            var message = $"Track: eventName = {eventName}";
+            var message = $"Track: {eventName}";
 
             foreach (var pair in properties.Content)
                 message += $" \n {pair.Key} = {pair.Value}";

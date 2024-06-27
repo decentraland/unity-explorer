@@ -25,7 +25,6 @@ namespace DCL.Chat
     public class ChatController : ControllerBase<ChatView>
     {
         private const int MAX_MESSAGE_LENGTH = 250;
-
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 

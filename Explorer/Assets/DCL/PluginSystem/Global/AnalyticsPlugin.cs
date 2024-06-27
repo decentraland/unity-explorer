@@ -25,6 +25,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICharacterObject characterObject;
         private readonly IScenesCache scenesCache;
         private readonly MVCManager mvcManager;
+        private readonly IChatMessagesBus chatMessagesBus;
         private readonly IWeb3IdentityCache identityCache;
 
         private AnalyticsController analytics;
@@ -32,7 +33,7 @@ namespace DCL.PluginSystem.Global
 
         public AnalyticsPlugin(IAssetsProvisioner assetsProvisioner, IProfilingProvider profilingProvider, IRealmData realmData,
             ICharacterObject characterObject, IScenesCache scenesCache,
-            MVCManager mvcManager, IWeb3IdentityCache identityCache)
+            MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IWeb3IdentityCache identityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.profilingProvider = profilingProvider;
@@ -40,6 +41,7 @@ namespace DCL.PluginSystem.Global
             this.characterObject = characterObject;
             this.scenesCache = scenesCache;
             this.mvcManager = mvcManager;
+            this.chatMessagesBus = chatMessagesBus;
             this.identityCache = identityCache;
         }
 
@@ -67,7 +69,7 @@ namespace DCL.PluginSystem.Global
             {
                 case ChatController chatController:
                 {
-                    var chatAnalytics = new ChatAnalytics(analytics, chatController);
+                    var chatAnalytics = new ChatAnalytics(analytics, chatController, chatMessagesBus);
                     break;
                 }
                 case ExplorePanelController explorePanelController:

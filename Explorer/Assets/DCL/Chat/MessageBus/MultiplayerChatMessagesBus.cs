@@ -55,6 +55,7 @@ namespace DCL.Chat.MessageBus
         }
 
         public event Action<ChatMessage>? OnMessageAdded;
+        public event Action<string>? MessageSent;
 
         public void Send(string message)
         {
@@ -64,9 +65,11 @@ namespace DCL.Chat.MessageBus
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             SendTo(message, timestamp, messagePipesHub.IslandPipe());
             SendTo(message, timestamp, messagePipesHub.ScenePipe());
+
+            MessageSent?.Invoke(message);
         }
 
-        private  void SendTo(string message, double timestamp, IMessagePipe messagePipe)
+        private void SendTo(string message, double timestamp, IMessagePipe messagePipe)
         {
             var chat = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Chat>();
             chat.Payload.Message = message;
