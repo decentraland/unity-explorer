@@ -42,12 +42,18 @@ namespace DCL.SDKComponents.Tween.Components
             if (sdkTweenComponent.CustomTweener == null)
                 return;
 
-            if (sdkTweenComponent.CustomTweener is PositionTweener)
-                positionTweenersPool.Release((PositionTweener)sdkTweenComponent.CustomTweener);
-            else if (sdkTweenComponent.CustomTweener is RotationTweener)
-                rotationTweenersPool.Release((RotationTweener)sdkTweenComponent.CustomTweener);
-            else if (sdkTweenComponent.CustomTweener is ScaleTweener)
-                scaleTweenersPool.Release((ScaleTweener)sdkTweenComponent.CustomTweener);
+            switch (sdkTweenComponent.CustomTweener)
+            {
+                case PositionTweener positionTweener:
+                    positionTweenersPool.Release(positionTweener);
+                    break;
+                case RotationTweener rotationTweener:
+                    rotationTweenersPool.Release(rotationTweener);
+                    break;
+                case ScaleTweener scaleTweener:
+                    scaleTweenersPool.Release(scaleTweener);
+                    break;
+            }
         }
     }
 }

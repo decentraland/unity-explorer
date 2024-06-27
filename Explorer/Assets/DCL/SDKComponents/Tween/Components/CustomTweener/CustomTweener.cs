@@ -11,12 +11,16 @@ namespace DCL.SDKComponents.Tween.Components
         where T : struct
         where TU : struct, IPlugOptions
     {
-        protected TweenerCore<T, T, TU> core;
-        protected T CurrentValue { get;  set; }
-
-        protected Transform StartTransform;
         private bool Finished;
+        protected TweenResult CurrentValue;
 
+        protected TweenerCore<T, T, TU> core;
+        protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
+
+        public abstract void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds);
+
+        public CRDTEntity ParentId { get; set; }
+        
         public void Play()
         {
             core.Play();
@@ -57,11 +61,28 @@ namespace DCL.SDKComponents.Tween.Components
             core?.Kill();
         }
 
-        protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
+        public TweenResult GetResult()
+        {
+            return CurrentValue;
+        }
 
-        public abstract TweenResult GetResult();
+        protected void InternalInit(Transform transform, T start, T end, float durationInSeconds)
+        {
+            core?.Kill();
+            CurrentValue = new TweenResult
+            {
+                Position = transform.localPosition, Rotation = transform.localRotation, Scale = transform.localScale
+            };
+            core = CreateTweener(start, end, durationInSeconds);
+        }
 
-        public abstract void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds);
-        public CRDTEntity ParentId { get; set; }
+        protected void WriteResult(Vector3 position, Quaternion rotation, Vector3 scale)
+        {
+            CurrentValue.Position = position;
+            CurrentValue.Rotation = rotation;
+            CurrentValue.Scale = CurrentValue.Scale;
+        }
+
+
     }
 }

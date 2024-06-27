@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.Tween.Helpers
                 || modelB.EasingFunction != modelA.EasingFunction
                 || !modelB.CurrentTime.Equals(modelA.CurrentTime)
                 || !modelB.Duration.Equals(modelA.Duration)
-                || !(!modelA.HasPlaying || modelA.Playing).Equals(!modelA.HasPlaying || modelA.Playing))
+                || !(!modelB.HasPlaying || modelB.Playing).Equals(!modelA.HasPlaying || modelA.Playing))
                 return false;
 
             return modelA.ModeCase switch

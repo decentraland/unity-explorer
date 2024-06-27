@@ -49,7 +49,7 @@ namespace DCL.SDKComponents.Tween.Systems
             // Its present in the old renderer. If this was not needed, the CurrentTween field can be deleted
             if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CachedTween))
             {
-                tweenComponent.CachedTween = pbTween;
+                tweenComponent.CachedTween = new PBTween(pbTween);
                 tweenComponent.IsDirty = true;
             }
         }
