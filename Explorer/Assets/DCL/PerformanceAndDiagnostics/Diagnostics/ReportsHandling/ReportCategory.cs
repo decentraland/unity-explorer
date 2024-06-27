@@ -273,6 +273,11 @@
         public const string PLUGINS = nameof(PLUGINS);
 
         /// <summary>
+        ///     To show intended debug messages
+        /// </summary>
+        public const string DEBUG = nameof(DEBUG);
+
+        /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log
         /// </summary>
         public const string UNSPECIFIED = nameof(UNSPECIFIED);
