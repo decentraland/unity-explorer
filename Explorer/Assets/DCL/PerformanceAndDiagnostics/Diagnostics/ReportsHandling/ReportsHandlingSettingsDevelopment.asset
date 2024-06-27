@@ -254,6 +254,14 @@ MonoBehaviour:
       Severity: 4
     - Category: PLUGINS
       Severity: 0
+    - Category: DEBUG
+      Severity: 3
+    - Category: DEBUG
+      Severity: 0
+    - Category: DEBUG
+      Severity: 2
+    - Category: DEBUG
+      Severity: 4
   sentryMatrix:
     entries:
     - Category: ENGINE
