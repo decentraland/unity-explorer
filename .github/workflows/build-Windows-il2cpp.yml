@@ -1,15 +1,6 @@
 name: Unity Windows Build IL2CPP
 
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - ready_for_review
-      - labeled
-  merge_group: {}
-  push: { branches: [main] }
   workflow_dispatch:
     inputs:
       profile:
