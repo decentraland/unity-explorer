@@ -1,13 +1,14 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Analytics.Systems;
 using DCL.AssetsProvision;
 using DCL.Character;
+using DCL.Chat;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
+using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -22,19 +23,22 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly ICharacterObject characterObject;
         private readonly IScenesCache scenesCache;
+        private readonly MVCManager mvcManager;
         private readonly IWeb3IdentityCache identityCache;
 
         private AnalyticsController analytics;
         private AnalyticsConfiguration analyticsConfig;
 
         public AnalyticsPlugin(IAssetsProvisioner assetsProvisioner, IProfilingProvider profilingProvider, IRealmData realmData,
-            ICharacterObject characterObject, IScenesCache scenesCache, IWeb3IdentityCache identityCache)
+            ICharacterObject characterObject, IScenesCache scenesCache,
+            MVCManager mvcManager, IWeb3IdentityCache identityCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.profilingProvider = profilingProvider;
             this.realmData = realmData;
             this.characterObject = characterObject;
             this.scenesCache = scenesCache;
+            this.mvcManager = mvcManager;
             this.identityCache = identityCache;
         }
 
@@ -47,6 +51,9 @@ namespace DCL.PluginSystem.Global
                 // new SegmentAnalyticsService(analyticsConfig),
                 realmData, characterObject.Transform, identityCache
                 );
+
+            var chatAnalytics = new ChatAnalytics(analytics, mvcManager.Controllers[typeof(ChatController)] as ChatController);
+            // var mapAnalytics = new MapAnalytics(analytics, (mvcManager.Controllers[typeof(ExplorePanelController)] as ExplorePanelController)?.NavmapController);
         }
 
         public void Dispose()
@@ -55,10 +62,10 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+            // PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
+            // WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
             // PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, analyticsConfig, profilingProvider);
-            TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
+            // TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
         }
     }
 

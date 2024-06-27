@@ -7,7 +7,6 @@ using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
-using DCL.Profiles;
 using ECS.Abstract;
 using MVC;
 using SuperScrollView;
@@ -59,6 +58,8 @@ namespace DCL.Chat
         private IReadOnlyList<RaycastResult> raycastResults;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
+        public event Action<bool>? ChatBubbleVisibilityChanged;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -197,6 +198,8 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
             viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
             nametagsData.showChatBubbles = isToggled;
+
+            ChatBubbleVisibilityChanged?.Invoke(isToggled);
         }
 
         private void AddEmojiToInput(string emoji)

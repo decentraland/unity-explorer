@@ -294,6 +294,7 @@ namespace Global.Dynamic
                     staticContainer.RealmData,
                     staticContainer.CharacterContainer.CharacterObject,
                     staticContainer.ScenesCache,
+                    container.MvcManager,
                     identityCache),
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,

@@ -1,7 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Audio;
 using DCL.Chat;
 using DCL.Emoji;
 using DCL.Input;
@@ -9,8 +8,6 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
