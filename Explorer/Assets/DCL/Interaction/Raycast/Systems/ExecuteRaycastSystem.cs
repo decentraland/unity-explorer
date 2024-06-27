@@ -21,6 +21,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ECS.LifeCycle;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -30,7 +31,7 @@ namespace DCL.Interaction.Raycast.Systems
 {
     [UpdateInGroup(typeof(RaycastGroup))]
     [UpdateAfter(typeof(InitializeRaycastSystem))]
-    public partial class ExecuteRaycastSystem : BaseUnityLoopSystem
+    public partial class ExecuteRaycastSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private static readonly RaycastHit[] SHARED_RAYCAST_HIT_ARRAY = new RaycastHit[10];
 
@@ -45,6 +46,8 @@ namespace DCL.Interaction.Raycast.Systems
 
         private readonly ISceneData sceneData;
         private List<RaycastData> orderedRaycastData;
+
+        private static readonly PBRaycastResult EMPTY_RAYCAST_RESULT = new();
 
         internal ExecuteRaycastSystem(World world,
             ISceneData sceneData,
@@ -80,6 +83,8 @@ namespace DCL.Interaction.Raycast.Systems
 
         protected override void Update(float t)
         {
+            if (!sceneStateProvider.IsCurrent) return;
+            
             BudgetAndExecute(sceneData.Geometry.BaseParcelPosition);
         }
 
@@ -274,6 +279,34 @@ namespace DCL.Interaction.Raycast.Systems
             public CRDTEntity CRDTEntity;
             public PBRaycast SDKComponent;
             public PBRaycastResult RaycastResult;
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if (!value)
+            {
+                ClearSpecialEntitiesRaycastQuery(World);
+                ClearRaycastIntentsQuery(World);
+            }
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention), typeof(PartitionComponent))]
+        private void ClearSpecialEntitiesRaycast(ref CRDTEntity crdtEntity,
+            ref PBRaycast raycast, ref RaycastComponent raycastComponent, ref TransformComponent transformComponent)
+        {
+            if (crdtEntity.Id != SpecialEntitiesID.PLAYER_ENTITY &&
+                crdtEntity.Id != SpecialEntitiesID.CAMERA_ENTITY) return;
+
+            ecsToCRDTWriter.PutMessage(EMPTY_RAYCAST_RESULT, crdtEntity);
+        }
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ClearRaycastIntents(ref CRDTEntity crdtEntity, ref PartitionComponent partitionComponent,
+            ref PBRaycast raycast, ref RaycastComponent raycastComponent, ref TransformComponent transformComponent)
+        {
+            ecsToCRDTWriter.PutMessage(EMPTY_RAYCAST_RESULT, crdtEntity);
         }
     }
 }

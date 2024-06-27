@@ -15,6 +15,7 @@ using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using ECS.LifeCycle;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -25,7 +26,7 @@ namespace DCL.Interaction.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
-    public partial class InteractionHighlightSystem : BaseUnityLoopSystem
+    public partial class InteractionHighlightSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly InteractionSettingsData settingsData;
         private readonly ISceneStateProvider sceneStateProvider;
@@ -41,6 +42,16 @@ namespace DCL.Interaction.Systems
             if (!sceneStateProvider.IsCurrent) return;
 
             UpdateHighlightsQuery(World);
+        }
+
+        [Query]
+        private void ResetHighlightComponent(ref HighlightComponent highlightComponent)
+        {
+            if (highlightComponent.IsEmpty())
+                return;
+
+            RemoveHighlight(highlightComponent.CurrentEntityOrNull());
+            highlightComponent.MoveNextAndRemoveMaterial();
         }
 
         [Query]
@@ -160,6 +171,14 @@ namespace DCL.Interaction.Systems
 
             if (loadingResult.Asset?.Renderers != null)
                 renderers.AddRange(loadingResult.Asset.Renderers);
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if (!value)
+            {
+                ResetHighlightComponentQuery(World);
+            }
         }
     }
 }
