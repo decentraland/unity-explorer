@@ -263,13 +263,13 @@ namespace Global.Dynamic
                 loadingScreen
             );
 
-            var reloadSceneController = new ReloadSceneController();
             var worldInfoHub = new LocationBasedWorldInfoHub(
                 new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
                 staticContainer.CharacterContainer.CharacterObject
             );
 
             var chatHistory = new ChatHistory();
+            var reloadSceneController = new ReloadSceneController();
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -286,6 +286,7 @@ namespace Global.Dynamic
                                        .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
+            reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(

@@ -2,6 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Character.Components;
 using DCL.Chat;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -9,43 +11,55 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
+using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
 {
     public class ReloadSceneController
     {
+        private Entity playerEntity;
         private IScenesCache scenesCache;
+        private IDebugContainerBuilder debugBuilder;
         private World world;
-        public IChatMessagesBus chatMessagesBus;
+        private IChatMessagesBus chatMessagesBus;
 
-
-        public void Initialize(IScenesCache scenesCache, World world, IDebugContainerBuilder debugBuilder)
+        public void Initialize(World world, Entity playerEntity, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder)
         {
-            this.scenesCache = scenesCache;
             this.world = world;
+            this.playerEntity = playerEntity;
+            this.scenesCache = scenesCache;
+            this.debugBuilder = debugBuilder;
 
             debugBuilder.AddWidget("Scene Reload")
-                .AddSingleButton("Reload Scene", () => chatMessagesBus.Send("/reload"));
+                .AddSingleButton("Reload Scene", () =>  chatMessagesBus.Send("/reload"));
+        }
+
+        public void InitializeChatMessageBus(IChatMessagesBus containerChatMessagesBus)
+        {
+            chatMessagesBus = containerChatMessagesBus;
         }
 
         public async UniTask<bool> TryReloadSceneAsync()
         {
-            foreach (var sceneAnalyzed in scenesCache.Scenes)
+            var playerPos = world.Get<CharacterTransform>(playerEntity).Transform.position;
+            var parcel = ParcelMathHelper.FloorToParcel(playerPos);
+            if (scenesCache.TryGetByParcel(parcel, out var sceneInCache))
             {
-                if (sceneAnalyzed.SceneStateProvider.IsCurrent)
-                {
-                    var foundEntity = new Entity();
-                    world.Query(in new QueryDescription().WithAll<ISceneFacade, SceneDefinitionComponent>(),
-                        (Entity entity, ref ISceneFacade sceneFacade) =>
+                var foundEntity = Entity.Null;
+                world.Query(in new QueryDescription().WithAll<ISceneFacade, SceneDefinitionComponent>(),
+                    (Entity entity, ref ISceneFacade sceneFacade) =>
+                    {
+                        if (sceneFacade.Equals(sceneInCache))
                         {
-                            if (sceneFacade.Equals(sceneAnalyzed))
-                                foundEntity = entity;
-                        });
-                    await DisposeAndRestartAsync(foundEntity, sceneAnalyzed);
+                            foundEntity = entity;
+                        }
+                    });
+                if (foundEntity != Entity.Null)
+                {
+                    await DisposeAndRestartAsync(foundEntity, sceneInCache);
                     return true;
                 }
             }
-
             return false;
         }
 
@@ -61,5 +75,7 @@ namespace ECS.SceneLifeCycle.Systems
             //Forcing a fake dirtyness to force a reload of the scene
             world.Get<PartitionComponent>(entity).IsDirty = true;
         }
+
+
     }
 }
