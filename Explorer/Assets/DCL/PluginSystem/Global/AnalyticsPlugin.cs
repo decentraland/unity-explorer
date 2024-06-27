@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Chat;
+using DCL.ExplorePanel;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Web3.Identities;
@@ -52,12 +53,29 @@ namespace DCL.PluginSystem.Global
                 realmData, characterObject.Transform, identityCache
                 );
 
-            var chatAnalytics = new ChatAnalytics(analytics, mvcManager.Controllers[typeof(ChatController)] as ChatController);
-            // var mapAnalytics = new MapAnalytics(analytics, (mvcManager.Controllers[typeof(ExplorePanelController)] as ExplorePanelController)?.NavmapController);
+            mvcManager.ControllerRegistered += OnControllerRegistered;
         }
 
         public void Dispose()
         {
+            mvcManager.ControllerRegistered -= OnControllerRegistered;
+        }
+
+        private void OnControllerRegistered(IController controller)
+        {
+            switch (controller)
+            {
+                case ChatController chatController:
+                {
+                    var chatAnalytics = new ChatAnalytics(analytics, chatController);
+                    break;
+                }
+                case ExplorePanelController explorePanelController:
+                {
+                    var mapAnalytics = new MapAnalytics(analytics, explorePanelController.NavmapController);
+                    break;
+                }
+            }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

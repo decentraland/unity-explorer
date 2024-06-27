@@ -1,5 +1,7 @@
 ﻿using DCL.Chat;
+using Segment.Serialization;
 using System;
+using System.Collections.Generic;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -23,9 +25,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnChatBubbleVisibilityChanged(bool isVisible)
         {
-            if (isVisible) return;
-
-            analytics.Track("chat_bubble_turned_off");
+            analytics.Track("chat_bubble_switched", new Dictionary<string, JsonElement>
+            {
+                { "is_visible", isVisible },
+            });
         }
     }
 }

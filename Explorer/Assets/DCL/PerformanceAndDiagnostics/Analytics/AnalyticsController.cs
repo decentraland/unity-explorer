@@ -83,6 +83,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         public static JsonObject BuildWithPrefix(this IDictionary<string, JsonElement> origin, IDictionary<string, JsonElement> prefix)
         {
+            if (origin == null) return new JsonObject(prefix);
+
             foreach (KeyValuePair<string,JsonElement> element in origin)
                 prefix.Add(element);
 
