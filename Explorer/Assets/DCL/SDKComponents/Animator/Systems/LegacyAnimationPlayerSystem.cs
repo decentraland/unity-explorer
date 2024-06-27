@@ -58,20 +58,19 @@ namespace DCL.SDKComponents.Animator.Systems
                     IsDirty = true,
                 };
 
-            World.Add(entity, sdkAnimatorComponent);
+            World.Add(entity, sdkAnimatorComponent, new LegacySDKAnimator());
             // The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
             // or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
             pbAnimator.IsDirty = false;
         }
 
         [Query]
+        [All(typeof(LegacySDKAnimator))]
         private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
-            if (gltfContainerComponent.Promise.Result?.Asset == null) return;
-            if (gltfContainerComponent.Promise.Result.Value.Asset.Animations.Count == 0) return;
 
-            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
+            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animations;
 
             sdkAnimatorComponent.IsDirty = false;
 
@@ -83,14 +82,11 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
+        [All(typeof(LegacySDKAnimator))]
         [None(typeof(PBAnimator), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            // If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
-            if (gltfContainerComponent.Promise.Result?.Asset == null) return;
-            if (gltfContainerComponent.Promise.Result.Value.Asset.Animations.Count == 0) return;
-
-            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animations;
+            List<Animation> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animations;
 
             foreach (Animation animation in gltfAnimations)
                 InitializeAnimation(animation);

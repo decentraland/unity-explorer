@@ -65,13 +65,12 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
+        [None(typeof(LegacySDKAnimator))]
         private void UpdateAnimationState([Data] float dt, ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
-            if (gltfContainerComponent.Promise.Result?.Asset == null) return;
-            if (gltfContainerComponent.Promise.Result.Value.Asset.Animators.Count == 0) return;
 
-            List<UAnimator> animators = gltfContainerComponent.Promise.Result.Value.Asset.Animators;
+            List<UAnimator> animators = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
             sdkAnimatorComponent.IsDirty = false;
 
             foreach (var animator in animators)
@@ -79,14 +78,10 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
-        [None(typeof(PBAnimator), typeof(DeleteEntityIntention))]
+        [None(typeof(PBAnimator), typeof(DeleteEntityIntention), typeof(LegacySDKAnimator))]
         private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
-            //If the Animator is removed, the animation should behave as if there was no animator, so play automatically and in a loop
-            if (gltfContainerComponent.Promise.Result?.Asset == null) return;
-            if (gltfContainerComponent.Promise.Result.Value.Asset.Animators.Count == 0) return;
-
-            List<UAnimator> gltfAnimations = gltfContainerComponent.Promise.Result.Value.Asset.Animators;
+            List<UAnimator> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
 
             foreach (UAnimator animator in gltfAnimations)
                 InitializeAnimator(animator);
