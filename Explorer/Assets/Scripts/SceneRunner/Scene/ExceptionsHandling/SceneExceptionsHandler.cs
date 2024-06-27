@@ -53,7 +53,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
                 sceneState!.State = SceneState.JavaScriptError;
         }
 
-        public async UniTask<T> ReportAndRethrowException<T>(UniTask<T> task)
+        public async UniTask<T> ReportAndRethrowExceptionAsync<T>(UniTask<T> task)
         {
             try { return await task; }
             catch (OperationCanceledException)
@@ -68,7 +68,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
             }
         }
 
-        public async UniTask ReportAndRethrowException(UniTask task)
+        public async UniTask ReportAndRethrowExceptionAsync(UniTask task)
         {
             try { await task; }
             catch (OperationCanceledException)

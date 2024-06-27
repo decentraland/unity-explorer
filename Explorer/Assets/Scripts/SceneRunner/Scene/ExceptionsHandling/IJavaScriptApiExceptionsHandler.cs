@@ -12,12 +12,12 @@ namespace SceneRunner.Scene.ExceptionsHandling
         /// <summary>
         ///     Reports exception and rethrow as a part of the async process
         /// </summary>
-        UniTask<T> ReportAndRethrowException<T>(UniTask<T> task);
+        UniTask<T> ReportAndRethrowExceptionAsync<T>(UniTask<T> task);
 
         /// <summary>
-        ///     <inheritdoc cref="ReportAndRethrowException{T}" />
+        ///     <inheritdoc cref="ReportAndRethrowExceptionAsync{T}" />
         /// </summary>
-        UniTask ReportAndRethrowException(UniTask task);
+        UniTask ReportAndRethrowExceptionAsync(UniTask task);
 
         void ReportApiException(Exception e);
     }

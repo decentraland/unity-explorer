@@ -25,10 +25,10 @@ namespace SceneRunner.Scene.ExceptionsHandling
             throw exception;
         }
 
-        public UniTask<T> ReportAndRethrowException<T>(UniTask<T> task) =>
+        public UniTask<T> ReportAndRethrowExceptionAsync<T>(UniTask<T> task) =>
             task;
 
-        public UniTask ReportAndRethrowException(UniTask task) =>
+        public UniTask ReportAndRethrowExceptionAsync(UniTask task) =>
             task;
 
         public void ReportApiException(Exception e)
