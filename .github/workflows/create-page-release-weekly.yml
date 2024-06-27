@@ -10,7 +10,6 @@ jobs:
   generate-release-info:
     name: Generate release info
     runs-on: ubuntu-latest
-    needs: [build, get-info]
     timeout-minutes: 5
     steps:
       - name: Checkout code
