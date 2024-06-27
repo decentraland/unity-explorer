@@ -21,6 +21,9 @@ namespace DCL.Passport.Modules
         public RectTransform ContainerTransform { get; private set; }
 
         [field: SerializeField]
+        public RectTransform SubContainerTransform { get; private set; }
+
+        [field: SerializeField]
         public RectTransform HoverBackgroundTransform { get; private set; }
 
         [field: SerializeField]
@@ -96,6 +99,9 @@ namespace DCL.Passport.Modules
             else
                 LoadingView.FinishLoadingAnimation(FullEquippedItemItem);
         }
+
+        public void SetInvisible(bool isInvisible) =>
+            SubContainerTransform.gameObject.SetActive(!isInvisible);
 
         private void AnimateHover()
         {

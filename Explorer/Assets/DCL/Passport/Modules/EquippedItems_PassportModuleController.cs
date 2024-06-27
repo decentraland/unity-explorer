@@ -21,6 +21,7 @@ namespace DCL.Passport.Modules
     {
         private const int EQUIPPED_ITEMS_POOL_DEFAULT_CAPACITY = 28;
         private const int LOADING_ITEMS_POOL_DEFAULT_CAPACITY = 12;
+        private const int GRID_ITEMS_PER_ROW = 6;
 
         private readonly EquippedItems_PassportModuleView view;
         private readonly World world;
@@ -32,6 +33,8 @@ namespace DCL.Passport.Modules
         private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
         private readonly List<EquippedItem_PassportFieldView> instantiatedEquippedItems = new();
+        private readonly IObjectPool<EquippedItem_PassportFieldView> emptyItemsPool;
+        private readonly List<EquippedItem_PassportFieldView> instantiatedEmptyItems = new();
 
         private Profile currentProfile;
         private CancellationTokenSource cts;
@@ -76,6 +79,17 @@ namespace DCL.Passport.Modules
                     equippedItemView.gameObject.transform.SetAsFirstSibling();
                 },
                 actionOnRelease: equippedItemView => equippedItemView.gameObject.SetActive(false));
+
+            emptyItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
+                InstantiateEquippedItemPrefab,
+                defaultCapacity: GRID_ITEMS_PER_ROW - 1,
+                actionOnGet: emptyItemView =>
+                {
+                    emptyItemView.gameObject.SetActive(true);
+                    emptyItemView.SetInvisible(true);
+                    emptyItemView.gameObject.transform.SetAsFirstSibling();
+                },
+                actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
         }
 
         public void Setup(Profile profile)
@@ -89,6 +103,7 @@ namespace DCL.Passport.Modules
         {
             ClearLoadingItems();
             ClearEquippedItems();
+            ClearEmptyItems();
         }
 
         public void Dispose() =>
@@ -119,6 +134,7 @@ namespace DCL.Passport.Modules
             for (var i = 0; i < LOADING_ITEMS_POOL_DEFAULT_CAPACITY; i++)
             {
                 var loadingItem = loadingItemsPool.Get();
+                loadingItem.gameObject.name = "LoadingItem";
                 instantiatedLoadingItems.Add(loadingItem);
             }
 
@@ -129,8 +145,17 @@ namespace DCL.Passport.Modules
         {
             ClearLoadingItems();
 
+            HashSet<string> hidesList = Wearable.ComposeHiddenCategories(currentProfile.Avatar.BodyShape, gridWearables);
+            var elementsAddedInTheGird = 0;
+
             foreach (IWearable wearable in gridWearables)
             {
+                if (wearable.GetCategory() == WearablesConstants.Categories.BODY_SHAPE)
+                    continue;
+
+                if (hidesList.Contains(wearable.GetCategory()))
+                    continue;
+
                 string rarityName = wearable.GetRarity();
                 Sprite raritySprite = rarityBackgrounds.GetTypeImage(rarityName);
                 Color rarityColor = rarityColors.GetColor(rarityName);
@@ -148,9 +173,25 @@ namespace DCL.Passport.Modules
                 LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
                 WaitForThumbnailAsync(wearable, equippedWearableItem, cts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
+                elementsAddedInTheGird++;
+            }
+
+            int missingEmptyItems = CalculateMissingEmptyItems(elementsAddedInTheGird);
+            for (var i = 0; i < missingEmptyItems; i++)
+            {
+                var emptyItem = emptyItemsPool.Get();
+                emptyItem.gameObject.name = "EmptyItem";
+                instantiatedEmptyItems.Add(emptyItem);
             }
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.EquippedItemsContainer);
+        }
+
+        private int CalculateMissingEmptyItems(int totalItems)
+        {
+            int remainder = totalItems % 6;
+            int missingItems = (remainder == 0) ? 0 : 6 - remainder;
+            return missingItems;
         }
 
         private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, CancellationToken ct)
@@ -188,6 +229,14 @@ namespace DCL.Passport.Modules
                 equippedItemsPool.Release(equippedItem);
 
             instantiatedEquippedItems.Clear();
+        }
+
+        private void ClearEmptyItems()
+        {
+            foreach (EquippedItem_PassportFieldView emptyItem in instantiatedEmptyItems)
+                emptyItemsPool.Release(emptyItem);
+
+            instantiatedEmptyItems.Clear();
         }
     }
 }
