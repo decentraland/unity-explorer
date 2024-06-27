@@ -76,7 +76,7 @@ namespace DCL.SDKComponents.Tween.Components
         {
             CurrentValue.Position = position;
             CurrentValue.Rotation = rotation;
-            CurrentValue.Scale = CurrentValue.Scale;
+            CurrentValue.Scale = scale;
         }
 
 
