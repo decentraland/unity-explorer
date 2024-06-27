@@ -61,7 +61,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct)
             {
                 try { return await api.TryTriggerSceneEmoteAsync(src, loop, ct); }
-                catch (Exception) { return false; }
+                catch (Exception e) when (e is not OperationCanceledException) { return false; }
             }
 
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
