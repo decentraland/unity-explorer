@@ -8,10 +8,8 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public interface ICustomTweener : IDisposable
     {
-        public TweenResult GetResult();
         public CRDTEntity ParentId { get; set; }
         void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying);
-
         void Play();
         void Pause();
         void Rewind();
@@ -20,6 +18,8 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsActive();
 
         void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds);
+        TweenResult GetResult();
+
     }
 
     public struct TweenResult
