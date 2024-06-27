@@ -1,0 +1,41 @@
+name: Create Page Weekly Release
+
+on:
+  workflow_run:
+    workflows: ["Build Weekly Release"]
+    types:
+      - completed
+
+jobs:
+  generate-release-info:
+    name: Generate release info
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Apply tag to branch
+        run: |
+          TAG=${{ needs.get-info.outputs.tag_version }}
+          git tag $TAG
+          git push origin $TAG
+
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          name: Decentraland_.*
+          name_is_regexp: true
+          skip_unpack: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: true # Swap to auto-release!
+          tag_name: ${{ needs.get-info.outputs.tag_version }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            ./Decentraland_windows64.zip
+            ./Decentraland_macos.zip
+          fail_on_unmatched_files: true
