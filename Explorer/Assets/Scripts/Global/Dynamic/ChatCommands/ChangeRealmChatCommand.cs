@@ -1,11 +1,11 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
+using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
-using static DCL.Chat.IChatCommand;
+using static DCL.Chat.Commands.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
