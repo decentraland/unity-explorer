@@ -47,6 +47,11 @@ namespace DCL.Interaction.Systems
         [Query]
         private void ResetHighlightComponent(ref HighlightComponent highlightComponent)
         {
+            ResetHighlight(ref highlightComponent);
+        }
+
+        private void ResetHighlight(ref HighlightComponent highlightComponent)
+        {
             if (highlightComponent.IsEmpty())
                 return;
 
@@ -72,11 +77,7 @@ namespace DCL.Interaction.Systems
             }
             else
             {
-                if (highlightComponent.IsEmpty())
-                    return;
-
-                RemoveHighlight(highlightComponent.CurrentEntityOrNull());
-                highlightComponent.MoveNextAndRemoveMaterial();
+                ResetHighlight(ref highlightComponent);
             }
         }
 
