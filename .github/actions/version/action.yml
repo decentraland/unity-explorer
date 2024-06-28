@@ -50,7 +50,7 @@ runs:
           echo "[Name]: $NAME"
           echo "Commits since tag: $COMMITS_SINCE"
         else
-          echo "Tag does not match expected format. Failing!"
+          echo "Failling! Tag does not match expected format: $TAG"
           exit 1
         fi
 
