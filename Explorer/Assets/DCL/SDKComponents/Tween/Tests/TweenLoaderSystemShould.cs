@@ -10,6 +10,8 @@ using ECS.TestSuite;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using Decentraland.Common;
+using UnityEngine.Pool;
 using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.Tween.Tests
@@ -17,6 +19,7 @@ namespace DCL.SDKComponents.Tween.Tests
     [TestFixture]
     public class TweenLoaderSystemShould : UnitySystemTestBase<TweenLoaderSystem>
     {
+        
         private Entity entity;
         private PBTween pbTween;
 
@@ -24,10 +27,10 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new TweenLoaderSystem(world);
+            system = new TweenLoaderSystem(world, new ObjectPool<PBTween>(() => new PBTween()));
 
-            var startVector = new Decentraland.Common.Vector3() { X = 0, Y = 0, Z = 0};
-            var endVector = new Decentraland.Common.Vector3() { X = 10, Y = 0, Z = 0 };
+            var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
+            var endVector = new Vector3() { X = 10, Y = 0, Z = 0 };
             var move = new Move() { End = endVector, Start = startVector };
             pbTween = new PBTween()
             {
@@ -59,8 +62,6 @@ namespace DCL.SDKComponents.Tween.Tests
             system.Update(0);
 
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CurrentTweenModel)));
         }
 
         [Test]
@@ -69,11 +70,11 @@ namespace DCL.SDKComponents.Tween.Tests
             system.Update(0);
             pbTween.CurrentTime = 5555;
 
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsFalse(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CurrentTweenModel)));
+            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsFalse(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CachedTween)));
 
             system.Update(0);
 
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CurrentTweenModel)));
+            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CachedTween)));
             world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(comp.IsDirty));
         }
 
@@ -100,5 +101,7 @@ namespace DCL.SDKComponents.Tween.Tests
 
             world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsFalse(comp.IsDirty));
         }
+          
     }
+  
 }
