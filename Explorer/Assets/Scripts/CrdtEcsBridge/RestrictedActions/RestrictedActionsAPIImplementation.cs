@@ -96,7 +96,9 @@ namespace CrdtEcsBridge.RestrictedActions
                 return false;
 
             await UniTask.SwitchToMainThread();
-            await globalWorldActions.TriggerSceneEmoteAsync(sceneData.AssetBundleManifest, hash, loop, ct);
+            await globalWorldActions.TriggerSceneEmoteAsync(
+                sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
+                sceneData.AssetBundleManifest, hash, loop, ct);
 
             return true;
         }

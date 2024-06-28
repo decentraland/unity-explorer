@@ -8,7 +8,6 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common.Components;
 using System;
 using UnityEngine;
 using Utility;
@@ -49,14 +48,14 @@ namespace DCL.AvatarRendering.Emotes
             if (intention.CancellationTokenSource.IsCancellationRequested)
             {
                 if (!World.Has<StreamableResult>(entity))
-                    World.Add(entity, new StreamableResult(new OperationCanceledException($"Scene emote request cancelled {intention.Hash}")));
+                    World.Add(entity, new StreamableResult(new OperationCanceledException($"Scene emote request cancelled {intention.EmoteHash}")));
 
                 return;
             }
 
             intention.ElapsedTime += dt;
 
-            URN urn = GetUrn(intention.Hash, intention.Loop);
+            URN urn = GetUrn(intention.SceneId, intention.EmoteHash, intention.Loop);
 
             bool isTimeout = intention.ElapsedTime >= intention.Timeout;
 
@@ -137,7 +136,7 @@ namespace DCL.AvatarRendering.Emotes
             // The resolution of the AB promise will be finalized by FinalizeEmoteAssetBundleSystem
             var promise = AssetBundlePromise.Create(World,
                 GetAssetBundleIntention.FromHash(typeof(GameObject),
-                    intention.Hash + PlatformUtils.GetPlatform(),
+                    intention.EmoteHash + PlatformUtils.GetPlatform(),
                     permittedSources: intention.PermittedSources,
                     customEmbeddedSubDirectory: customStreamingSubdirectory,
                     cancellationTokenSource: intention.CancellationTokenSource,
@@ -150,7 +149,7 @@ namespace DCL.AvatarRendering.Emotes
             return true;
         }
 
-        private static URN GetUrn(string hash, bool loop) =>
-            new ($"{SCENE_EMOTE_PREFIX}:{hash}-{loop.ToString().ToLower()}");
+        private static URN GetUrn(string sceneId, string emoteHash, bool loop) =>
+            new ($"{SCENE_EMOTE_PREFIX}:{sceneId}-{emoteHash}-{loop.ToString().ToLower()}");
     }
 }

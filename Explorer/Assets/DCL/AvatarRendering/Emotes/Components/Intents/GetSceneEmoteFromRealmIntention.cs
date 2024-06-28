@@ -11,8 +11,9 @@ namespace DCL.AvatarRendering.Emotes
     public struct GetSceneEmoteFromRealmIntention : IEquatable<GetSceneEmoteFromRealmIntention>, IAssetIntention
     {
         public CancellationTokenSource CancellationTokenSource { get; }
+        public string SceneId { get; }
         public SceneAssetBundleManifest AssetBundleManifest { get; }
-        public string Hash { get; }
+        public string EmoteHash { get; }
         public bool Loop { get; }
         public AssetSource PermittedSources { get; }
         public BodyShape BodyShape { get; }
@@ -20,15 +21,17 @@ namespace DCL.AvatarRendering.Emotes
         public bool IsAssetBundleProcessed { get; set; }
         public float ElapsedTime { get; set; }
 
-        public GetSceneEmoteFromRealmIntention(SceneAssetBundleManifest assetBundleManifest,
-            string hash,
+        public GetSceneEmoteFromRealmIntention(string sceneId,
+            SceneAssetBundleManifest assetBundleManifest,
+            string emoteHash,
             bool loop,
             BodyShape bodyShape,
             AssetSource permittedSources = AssetSource.ALL,
             int timeout = StreamableLoadingDefaults.TIMEOUT) : this()
         {
+            SceneId = sceneId;
             AssetBundleManifest = assetBundleManifest;
-            Hash = hash;
+            EmoteHash = emoteHash;
             Loop = loop;
             CancellationTokenSource = new CancellationTokenSource();
             PermittedSources = permittedSources;
@@ -37,6 +40,6 @@ namespace DCL.AvatarRendering.Emotes
         }
 
         public bool Equals(GetSceneEmoteFromRealmIntention other) =>
-            Hash == other.Hash && Loop == other.Loop && BodyShape.Equals(other.BodyShape);
+            EmoteHash == other.EmoteHash && Loop == other.Loop && BodyShape.Equals(other.BodyShape);
     }
 }

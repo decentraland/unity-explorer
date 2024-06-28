@@ -50,13 +50,13 @@ namespace CrdtEcsBridge.RestrictedActions
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
         }
 
-        public async UniTask TriggerSceneEmoteAsync(SceneAssetBundleManifest abManifest, string hash, bool loop, CancellationToken ct)
+        public async UniTask TriggerSceneEmoteAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
         {
             if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
                 throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
 
             var promise = SceneEmotePromise.Create(world,
-               new GetSceneEmoteFromRealmIntention(abManifest, hash, loop, avatarShape.BodyShape),
+               new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
                PartitionComponent.TOP_PRIORITY);
 
             promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
