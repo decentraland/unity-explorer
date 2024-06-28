@@ -221,7 +221,7 @@ namespace SceneRunner
                     new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData),
                     new RuntimeImplementation(jsOperations, syncDeps.sceneData, syncDeps.worldTimeProvider, realmData),
                     new SceneApiImplementation(syncDeps.sceneData),
-                    new WebSocketApiImplementation(),
+                    new ClientWebSocketApiImplementation(syncDeps.PoolsProvider, jsOperations),
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation()),
                     new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator, syncDeps.ecsWorldSharedDependencies.SceneStateProvider),
                     syncDeps,

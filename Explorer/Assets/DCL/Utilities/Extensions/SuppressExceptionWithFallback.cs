@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.Utilities.Extensions
 {
-    public struct SuppressExceptionWithFallback
+    public static class SuppressExceptionWithFallback
     {
         [Flags]
         public enum Behaviour

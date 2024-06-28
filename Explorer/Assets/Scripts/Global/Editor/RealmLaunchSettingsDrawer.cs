@@ -1,5 +1,7 @@
 using Global.Dynamic;
+using SceneRuntime.Factory.JsSceneSourceCode;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -152,6 +154,50 @@ namespace Global.Editor
             return position;
         }
 
+        private static Rect DrawOverridenScenes(Rect position)
+        {
+            var overridenScenes = GetOverridenScenes();
+
+            if (overridenScenes.Count > 0)
+            {
+                EditorGUI.LabelField(position, "Overriden scenes:", EditorStyles.boldLabel);
+
+                position.y += singleLineHeight;
+
+                EditorGUI.BeginDisabledGroup(true);
+                foreach (var scene in overridenScenes)
+                {
+                    var asset = AssetDatabase.LoadAssetAtPath(scene.assetDatabasePath, typeof(DefaultAsset));
+
+                    EditorGUI.ObjectField(position, new GUIContent(scene.coordinate), asset, typeof(DefaultAsset), false);
+                    position.y += singleLineHeight;
+                }
+                EditorGUI.EndDisabledGroup();
+            }
+
+            return position;
+        }
+
+        private static IReadOnlyList<(string coordinate, string assetDatabasePath)> GetOverridenScenes()
+        {
+            string directory = StreamingAssetsJsSceneLocalSourceCode.DIRECTORY_PATH;
+
+            var overridenScenes =
+                Directory.GetFiles(directory)
+                         .Select(file => (GetDatabaseNormalizedPath(file), StreamingAssetsJsSceneLocalSourceCode.SCENE_NAME_PATTERN.Match(Path.GetFileName(file))))
+                         .Where(data => data.Item2.Success)
+                         .Select(data => ($"{data.Item2.Groups["x"].Value}, {data.Item2.Groups["y"].Value}", data.Item1))
+                         .ToList();
+
+            return overridenScenes;
+        }
+
+        private static string GetDatabaseNormalizedPath(string fileAbsolutePath)
+        {
+            fileAbsolutePath = fileAbsolutePath.Replace("\\", "/");
+            return fileAbsolutePath.Replace(Application.dataPath, "Assets");
+        }
+
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
@@ -167,6 +213,7 @@ namespace Global.Editor
             position = DrawCustomRealm(position, property, initialRealmValue);
             position = DrawLocalhost(position, property, initialRealmValue);
             position = DrawPredefinedScenes(position, property);
+            position = DrawOverridenScenes(position);
 
             EditorGUI.EndProperty();
         }
@@ -194,6 +241,11 @@ namespace Global.Editor
             SerializedProperty predefinedList = property.FindPropertyRelative(PREDEFINED_SCENES_FIELD_NAME);
 
             if (predefinedList.FindPropertyRelative("enabled").boolValue) { height += EditorGUI.GetPropertyHeight(predefinedList.FindPropertyRelative("parcels"), true); }
+
+            var overridenScenes = GetOverridenScenes();
+
+            if (overridenScenes.Count > 0)
+                height += singleLineHeight * (overridenScenes.Count + 1);
 
             return height;
         }
