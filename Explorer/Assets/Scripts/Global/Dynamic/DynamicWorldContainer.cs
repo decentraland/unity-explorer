@@ -10,6 +10,8 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Chat.Commands;
+using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
@@ -50,6 +52,7 @@ using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using MVC;
 using MVC.PopupsController.PopupCloser;
+using SceneRunner.Debugging.Hub;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -188,8 +191,6 @@ namespace Global.Dynamic
             var forceRender = new List<string>();
             var selfProfile = new SelfProfile(container.ProfileRepository, identityCache, equippedWearables, wearableCatalog, emotesCache, equippedEmotes, forceRender);
 
-
-
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
 
@@ -258,14 +259,25 @@ namespace Global.Dynamic
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
                 realmNavigator,
-                loadingScreen
+                loadingScreen,
+                staticContainer.FeatureFlagsProvider,
+                identityCache
             );
+
+            var worldInfoHub = new LocationBasedWorldInfoHub(
+                new WorldInfoHub(staticContainer.SingletonSharedDependencies.SceneMapping),
+                staticContainer.CharacterContainer.CharacterObject
+            );
+
+            var chatHistory = new ChatHistory();
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
                 { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
+                { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
+                { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
             };
 
             container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
@@ -307,6 +319,7 @@ namespace Global.Dynamic
                     staticContainer.ScenesCache,
                     emotesCache
                 ),
+                new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(staticContainer.AssetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, staticContainer.AssetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, staticContainer.AssetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
@@ -330,7 +343,7 @@ namespace Global.Dynamic
                     wearableCatalog
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()), new MapRendererPlugin(mapRendererContainer.MapRenderer), new MinimapPlugin(staticContainer.AssetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache),
-                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, entityParticipantTable, nametagsData, dclInput, unityEventSystem),
+                new ChatPlugin(staticContainer.AssetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem),
                 new ExplorePanelPlugin(
                     staticContainer.AssetsProvisioner,
                     container.MvcManager,
