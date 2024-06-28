@@ -4,6 +4,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
+using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;

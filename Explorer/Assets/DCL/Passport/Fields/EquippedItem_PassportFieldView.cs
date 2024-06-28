@@ -10,7 +10,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utility;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport.Fields
 {
     public class EquippedItem_PassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {

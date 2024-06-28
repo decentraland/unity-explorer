@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport.Fields
 {
     public class AdditionalField_PassportFieldView : MonoBehaviour
     {

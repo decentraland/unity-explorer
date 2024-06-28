@@ -1,8 +1,9 @@
+using DCL.Passport.Fields;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport
 {
     [CreateAssetMenu(fileName = "PassportAdditionalFieldsConfiguration", menuName = "SO/PassportAdditionalFieldsConfiguration")]
     public class PassportAdditionalFieldsConfigurationSO : ScriptableObject

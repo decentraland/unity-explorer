@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.ExternalUrlPrompt;
+using DCL.Passport.Fields;
 using DCL.Profiles;
 using MVC;
 using System;
