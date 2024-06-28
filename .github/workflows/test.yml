@@ -26,6 +26,12 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+      - name: Initial disk space check
+        run: |
+          echo "Initial Disk Space:"
+          df -h
+          echo "Top space occupiers:"
+          du -hs /* 2>/dev/null | sort -rh | head -n 5
 
       - name: Checkout code
         uses: actions/checkout@v3
@@ -51,6 +57,13 @@ jobs:
         with:
           path: Explorer/Library
           key: Library-Explorer-Windows
+
+      - name: Restore Library cache disk space check
+        run: |
+          echo "Initial Disk Space:"
+          df -h
+          echo "Top space occupiers:"
+          du -hs /* 2>/dev/null | sort -rh | head -n 5
           
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.8.0
@@ -81,7 +94,13 @@ jobs:
             # Display the content of manifest.json
             cat "$jsonFilePath"
 
-
+      - name:  Clone Packages To Use Locally cache disk space check
+        run: |
+          echo "Initial Disk Space:"
+          df -h
+          echo "Top space occupiers:"
+          du -hs /* 2>/dev/null | sort -rh | head -n 5
+          
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.1.1
         id: testRunner
@@ -90,6 +109,13 @@ jobs:
         with:
           projectPath: Explorer
           testMode: all      
+
+      - name:  Configure test runner cache disk space check
+        run: |
+          echo "Initial Disk Space:"
+          df -h
+          echo "Top space occupiers:"
+          du -hs /* 2>/dev/null | sort -rh | head -n 5
 
       - name: Convert NUnit to JUnit
         if: always()
