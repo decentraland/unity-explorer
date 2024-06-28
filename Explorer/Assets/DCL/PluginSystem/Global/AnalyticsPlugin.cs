@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Analytics.Systems;
 using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Chat;
@@ -54,8 +55,8 @@ namespace DCL.PluginSystem.Global
             analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.AnalyticsConfigRef, ct)).Value;
 
             analytics = new AnalyticsController(
-                new DebugAnalyticsService(),
-                // new SegmentAnalyticsService(analyticsConfig),
+                // new DebugAnalyticsService(),
+                new SegmentAnalyticsService(analyticsConfig),
                 realmData, characterObject.Transform, identityCache
                 );
 
@@ -86,10 +87,10 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            // PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            // WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
-            // PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, analyticsConfig, profilingProvider);
-            // TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
+            PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
+            WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, analyticsConfig, profilingProvider);
+            TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
         }
     }
 
