@@ -162,7 +162,7 @@ namespace SceneRuntime
 
         private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi));
+            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
 
         private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider)

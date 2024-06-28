@@ -30,7 +30,7 @@ namespace SceneRuntime.Tests
         {
             sceneExceptionsHandler = new RethrowSceneExceptionsHandler();
             poolsProvider = Substitute.For<IInstancePoolsProvider>();
-            poolsProvider.GetCrdtRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
+            poolsProvider.GetAPIRawDataPool(Arg.Any<int>()).Returns(c => new PoolableByteArray(new byte[c.Arg<int>()], c.Arg<int>(), null));
         }
 
         private static SceneRuntimeFactory NewSceneRuntimeFactory() =>

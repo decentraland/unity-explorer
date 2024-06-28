@@ -51,6 +51,6 @@ namespace DCL.Web3
             !x.Equals(y);
 
         public static implicit operator string(Web3Address source) =>
-            source.address;
+            source.ToString();
     }
 }
