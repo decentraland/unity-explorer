@@ -34,6 +34,7 @@ namespace DCL.SDKComponents.Animator.Systems
 
         [Query]
         [None(typeof(SDKAnimatorComponent))]
+        [All(typeof(LegacyGltfAnimation))]
         private void LoadAnimator(in Entity entity, ref PBAnimator pbAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
             // Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
@@ -58,14 +59,14 @@ namespace DCL.SDKComponents.Animator.Systems
                     IsDirty = true,
                 };
 
-            World.Add(entity, sdkAnimatorComponent, new LegacySDKAnimator());
+            World.Add(entity, sdkAnimatorComponent);
             // The PBAnimator is only dirtied on SDK side either on Create/CreateOrReplace
             // or when doing changes to it when triggered by events on the scene, so we never set it to true on the client.
             pbAnimator.IsDirty = false;
         }
 
         [Query]
-        [All(typeof(LegacySDKAnimator))]
+        [All(typeof(LegacyGltfAnimation))]
         private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
@@ -82,7 +83,7 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
-        [All(typeof(LegacySDKAnimator))]
+        [All(typeof(LegacyGltfAnimation))]
         [None(typeof(PBAnimator), typeof(DeleteEntityIntention))]
         private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
         {

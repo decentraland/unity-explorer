@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
-        [None(typeof(SDKAnimatorComponent))]
+        [None(typeof(SDKAnimatorComponent), typeof(LegacyGltfAnimation))]
         private void LoadAnimator(in Entity entity, ref PBAnimator pbAnimator, ref GltfContainerComponent gltfContainerComponent)
         {
             // Until the GLTF Container is not fully loaded (and it has at least one animation) we do not create the SDKAnimator
@@ -65,7 +65,7 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
-        [None(typeof(LegacySDKAnimator))]
+        [None(typeof(LegacyGltfAnimation))]
         private void UpdateAnimationState([Data] float dt, ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
@@ -78,7 +78,7 @@ namespace DCL.SDKComponents.Animator.Systems
         }
 
         [Query]
-        [None(typeof(PBAnimator), typeof(DeleteEntityIntention), typeof(LegacySDKAnimator))]
+        [None(typeof(PBAnimator), typeof(DeleteEntityIntention), typeof(LegacyGltfAnimation))]
         private void HandleComponentRemoval(ref GltfContainerComponent gltfContainerComponent, ref SDKAnimatorComponent sdkAnimatorComponent)
         {
             List<UAnimator> gltfAnimations = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
