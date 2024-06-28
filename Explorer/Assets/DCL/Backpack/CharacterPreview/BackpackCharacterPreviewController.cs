@@ -26,8 +26,9 @@ namespace DCL.Backpack.CharacterPreview
             ICharacterPreviewFactory previewFactory,
             BackpackEventBus backpackEventBus,
             World world,
-            IEquippedEmotes equippedEmotes)
-            : base(view, previewFactory, world, true)
+            IEquippedEmotes equippedEmotes,
+            CharacterPreviewEventBus characterPreviewEventBus)
+            : base(view, previewFactory, world, true, CharacterPreviewType.BACKPACK, characterPreviewEventBus)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;

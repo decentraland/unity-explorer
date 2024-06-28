@@ -55,6 +55,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteCache emoteCache;
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -88,7 +89,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IRealmData realmData,
             IProfileCache profileCache,
-            URLDomain assetBundleURL)
+            URLDomain assetBundleURL,
+            CharacterPreviewEventBus characterPreviewEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -112,6 +114,7 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
+            this.characterPreviewEventBus = characterPreviewEventBus;
         }
 
 
@@ -139,7 +142,8 @@ namespace DCL.PluginSystem.Global
                 realmData,
                 dclInput,
                 assetBundleURL,
-                webRequestController
+                webRequestController,
+                characterPreviewEventBus
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

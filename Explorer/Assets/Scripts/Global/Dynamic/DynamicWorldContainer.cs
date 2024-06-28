@@ -301,6 +301,8 @@ namespace Global.Dynamic
                 new RemotePoses(container.RoomHub)
             );
 
+            var characterPreviewEventBus = new CharacterPreviewEventBus();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -367,11 +369,12 @@ namespace Global.Dynamic
                     dclInput,
                     staticContainer.RealmData,
                     profileCache,
-                    ASSET_BUNDLES_URL
+                    ASSET_BUNDLES_URL,
+                    characterPreviewEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator, characterPreviewEventBus),
                 new StylizedSkyboxPlugin(staticContainer.AssetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, dclCursor), new TeleportPromptPlugin(staticContainer.AssetsProvisioner, realmNavigator, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor),
@@ -389,7 +392,7 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
-                new PassportPlugin(staticContainer.AssetsProvisioner, container.MvcManager, dclCursor, container.ProfileRepository, characterPreviewFactory, chatEntryConfiguration, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.WebRequestsContainer.WebRequestController),
+                new PassportPlugin(staticContainer.AssetsProvisioner, container.MvcManager, dclCursor, container.ProfileRepository, characterPreviewFactory, chatEntryConfiguration, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.WebRequestsContainer.WebRequestController, characterPreviewEventBus),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

@@ -10,8 +10,8 @@ namespace DCL.Passport
     {
         private readonly List<URN> shortenedWearables = new ();
 
-        public PassportCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
-            : base(view, previewFactory, world, false) { }
+        public PassportCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
+            : base(view, previewFactory, world, false, CharacterPreviewType.PASSPORT, characterPreviewEventBus) { }
 
         public override void Initialize(Avatar avatar)
         {

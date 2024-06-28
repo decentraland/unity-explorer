@@ -29,6 +29,7 @@ namespace DCL.Passport
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
@@ -47,7 +48,8 @@ namespace DCL.Passport
             ChatEntryConfigurationSO chatEntryConfiguration,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
-            NftTypeIconSO categoryIcons) : base(viewFactory)
+            NftTypeIconSO categoryIcons,
+            CharacterPreviewEventBus characterPreviewEventBus) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -56,12 +58,13 @@ namespace DCL.Passport
             this.rarityBackgrounds = rarityBackgrounds;
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
+            this.characterPreviewEventBus = characterPreviewEventBus;
         }
 
         protected override void OnViewInstantiated()
         {
             Assert.IsNotNull(world);
-            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world);
+            characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration);
             userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView);
             equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider);

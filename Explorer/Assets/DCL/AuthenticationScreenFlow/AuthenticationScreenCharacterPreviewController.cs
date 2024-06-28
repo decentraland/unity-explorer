@@ -11,8 +11,8 @@ namespace DCL.AuthenticationScreenFlow
         private readonly List<URN> shortenedWearables = new ();
         private readonly HashSet<URN> shortenedEmotes = new ();
 
-        public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
-            : base(view, previewFactory, world, true) { }
+        public AuthenticationScreenCharacterPreviewController(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world, CharacterPreviewEventBus characterPreviewEventBus)
+            : base(view, previewFactory, world, true, CharacterPreviewType.AUTHENTICATION_SCREEN, characterPreviewEventBus) { }
 
         public override void Initialize(Avatar avatar)
         {

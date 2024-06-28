@@ -39,6 +39,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -56,7 +57,8 @@ namespace DCL.AuthenticationScreenFlow
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            Animator splashScreenAnimator)
+            Animator splashScreenAnimator,
+            CharacterPreviewEventBus characterPreviewEventBus)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -65,6 +67,7 @@ namespace DCL.AuthenticationScreenFlow
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
+            this.characterPreviewEventBus = characterPreviewEventBus;
         }
 
         public override void Dispose()
@@ -95,7 +98,7 @@ namespace DCL.AuthenticationScreenFlow
 #endif
 
             Assert.IsNotNull(world);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!, characterPreviewEventBus);
         }
 
         protected override void OnBeforeViewShow()
