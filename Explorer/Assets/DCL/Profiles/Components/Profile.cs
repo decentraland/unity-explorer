@@ -19,7 +19,7 @@ namespace DCL.Profiles
 
         internal HashSet<string>? blocked;
         internal List<string>? interests;
-        internal List<string>? links;
+        internal List<LinkJsonDto>? links;
 
         private string userId;
         private string name;
@@ -87,7 +87,7 @@ namespace DCL.Profiles
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
-        public IReadOnlyCollection<string>? Links => links;
+        public IReadOnlyCollection<LinkJsonDto>? Links => links;
 
         public static Profile Create() =>
             POOL.Get();

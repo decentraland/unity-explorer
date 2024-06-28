@@ -16,5 +16,14 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public RectTransform AdditionalInfoContainer { get; private set; }
+
+        [field: SerializeField]
+        public Link_PassportFieldView LinkPrefab { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform LinksContainer { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text NoLinksLabel { get; private set; }
     }
 }

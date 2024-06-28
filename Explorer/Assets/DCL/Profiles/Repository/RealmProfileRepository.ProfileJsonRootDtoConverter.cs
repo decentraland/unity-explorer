@@ -66,10 +66,32 @@ namespace DCL.Profiles
                 profile.realName = jObject["realName"]?.Value<string>() ?? "";
                 profile.hobbies = jObject["hobbies"]?.Value<string>() ?? "";
                 profile.birthdate = jObject["birthdate"]?.Value<long>() ?? 0;
+                DeserializeLinks(jObject["links"]!, ref profile.links);
                 DeserializeArrayToList(jObject["blocked"], ref profile.blocked);
                 DeserializeArrayToList(jObject["interests"], ref profile.interests);
 
                 return profile;
+            }
+
+            private void DeserializeLinks(JToken? root, ref List<LinkJsonDto>? list)
+            {
+                if (root is { Type: JTokenType.Array })
+                {
+                    list ??= new List<LinkJsonDto>();
+                    list.Clear();
+
+                    foreach (JToken? item in root.Children())
+                        list.Add(DeserializeLink(item, new LinkJsonDto()));
+                }
+                else
+                    list?.Clear();
+            }
+
+            private LinkJsonDto DeserializeLink(JToken item, LinkJsonDto link)
+            {
+                link.title = item["title"]?.Value<string>() ?? "";
+                link.url = item["url"]?.Value<string>() ?? "";
+                return link;
             }
 
             private AvatarJsonDto DeserializeAvatar(JToken jObject, AvatarJsonDto avatar)

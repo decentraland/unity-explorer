@@ -73,7 +73,8 @@ namespace DCL.PluginSystem.Global
                 rarityBackgroundsMapping,
                 rarityColorMappings,
                 categoryIconsMapping,
-                characterPreviewEventBus);
+                characterPreviewEventBus,
+                mvcManager);
 
             mvcManager.RegisterController(passportController);
         }

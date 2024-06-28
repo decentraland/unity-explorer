@@ -30,6 +30,7 @@ namespace DCL.Passport
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly IMVCManager mvcManager;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
@@ -49,7 +50,8 @@ namespace DCL.Passport
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            CharacterPreviewEventBus characterPreviewEventBus) : base(viewFactory)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IMVCManager mvcManager) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -59,6 +61,7 @@ namespace DCL.Passport
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.mvcManager = mvcManager;
         }
 
         protected override void OnViewInstantiated()
@@ -66,7 +69,7 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration);
-            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView);
+            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager);
             equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider);
         }
 

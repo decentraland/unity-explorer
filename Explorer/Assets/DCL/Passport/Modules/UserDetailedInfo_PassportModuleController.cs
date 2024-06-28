@@ -1,4 +1,7 @@
+using Cysharp.Threading.Tasks;
+using DCL.ExternalUrlPrompt;
 using DCL.Profiles;
+using MVC;
 using System;
 using System.Collections.Generic;
 using UnityEngine.Pool;
@@ -9,17 +12,25 @@ namespace DCL.Passport.Modules
     public class UserDetailedInfo_PassportModuleController : IPassportModuleController
     {
         private const string NO_INTRO_TEXT = "No intro.";
+        private const string NO_LINKS_TEXT = "No links.";
         private const int ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY = 11;
+        private const int LINK_POOL_DEFAULT_CAPACITY = 5;
 
         private readonly UserDetailedInfo_PassportModuleView view;
+        private readonly IMVCManager mvcManager;
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFields = new();
+        private readonly IObjectPool<Link_PassportFieldView> linksPool;
+        private readonly List<Link_PassportFieldView> instantiatedLinks = new();
 
         private Profile currentProfile;
 
-        public UserDetailedInfo_PassportModuleController(UserDetailedInfo_PassportModuleView view)
+        public UserDetailedInfo_PassportModuleController(
+            UserDetailedInfo_PassportModuleView view,
+            IMVCManager mvcManager)
         {
             this.view = view;
+            this.mvcManager = mvcManager;
 
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
@@ -27,14 +38,29 @@ namespace DCL.Passport.Modules
                 actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
                 actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
             );
+
+            linksPool = new ObjectPool<Link_PassportFieldView>(
+                InstantiateLinkPrefab,
+                defaultCapacity: LINK_POOL_DEFAULT_CAPACITY,
+                actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
+                actionOnRelease: buttonView =>
+                {
+                    buttonView.LinkButton.onClick.RemoveAllListeners();
+                    buttonView.gameObject.SetActive(false);
+                }
+            );
+
+            view.NoLinksLabel.text = NO_LINKS_TEXT;
         }
 
         public void Setup(Profile profile)
         {
             currentProfile = profile;
 
-            view.Description.text = !string.IsNullOrEmpty(profile.Description) ? profile.Description : NO_INTRO_TEXT;
             LoadAdditionalFields();
+            LoadLinks();
+
+            view.Description.text = !string.IsNullOrEmpty(profile.Description) || instantiatedAdditionalFields.Count > 0 ? profile.Description : NO_INTRO_TEXT;
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
         }
@@ -45,6 +71,11 @@ namespace DCL.Passport.Modules
                 additionalFieldsPool.Release(additionalField);
 
             instantiatedAdditionalFields.Clear();
+
+            foreach (Link_PassportFieldView link in instantiatedLinks)
+                linksPool.Release(link);
+
+            instantiatedLinks.Clear();
         }
 
         public void Dispose() =>
@@ -54,6 +85,12 @@ namespace DCL.Passport.Modules
         {
             AdditionalField_PassportFieldView additionalFieldView = UnityEngine.Object.Instantiate(view.AdditionalFieldsConfiguration.additionalInfoFieldPrefab, view.AdditionalInfoContainer);
             return additionalFieldView;
+        }
+
+        private Link_PassportFieldView InstantiateLinkPrefab()
+        {
+            Link_PassportFieldView linkView = UnityEngine.Object.Instantiate(view.LinkPrefab, view.LinksContainer);
+            return linkView;
         }
 
         private void LoadAdditionalFields()
@@ -90,12 +127,25 @@ namespace DCL.Passport.Modules
 
             if (!string.IsNullOrEmpty(currentProfile.RealName))
                 AddAdditionalField(AdditionalFieldType.REAL_NAME, currentProfile.RealName);
+
+            view.AdditionalInfoContainer.gameObject.SetActive(instantiatedAdditionalFields.Count > 0);
+        }
+
+        private void LoadLinks()
+        {
+            view.NoLinksLabel.gameObject.SetActive(currentProfile.Links == null || currentProfile.Links.Count == 0);
+            view.LinksContainer.gameObject.SetActive(currentProfile.Links is { Count: > 0 });
+
+            if (currentProfile.Links == null)
+                return;
+
+            foreach (var link in currentProfile.Links)
+                AddLink(link.title, link.url);
         }
 
         private void AddAdditionalField(AdditionalFieldType type, string value)
         {
             var newAdditionalField = additionalFieldsPool.Get();
-            newAdditionalField.transform.parent = view.AdditionalInfoContainer;
             newAdditionalField.transform.SetAsLastSibling();
             newAdditionalField.Value.text = value;
             newAdditionalField.Title.text = type.ToString();
@@ -111,6 +161,22 @@ namespace DCL.Passport.Modules
             }
 
             instantiatedAdditionalFields.Add(newAdditionalField);
+        }
+
+        private void AddLink(string title, string url)
+        {
+            var newLink = linksPool.Get();
+            newLink.Title.text = title;
+            newLink.Link = url;
+            newLink.LinkButton.onClick.AddListener(() => OpenUrlAsync(url).Forget());
+            instantiatedLinks.Add(newLink);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(newLink.Container);
+        }
+
+        private async UniTask OpenUrlAsync(string url)
+        {
+            await UniTask.SwitchToMainThread();
+            await mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
         }
     }
 }
