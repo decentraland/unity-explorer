@@ -260,7 +260,9 @@ namespace Global.Dynamic
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
                 realmNavigator,
-                loadingScreen
+                loadingScreen,
+                staticContainer.FeatureFlagsProvider,
+                identityCache
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(

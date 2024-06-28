@@ -5,6 +5,8 @@
     /// </summary>
     public static class ReportCategory
     {
+        public const string FEATURE_FLAGS = nameof(FEATURE_FLAGS);
+
         /// <summary>
         ///     Everything connected to raw assets and addressables
         /// </summary>
