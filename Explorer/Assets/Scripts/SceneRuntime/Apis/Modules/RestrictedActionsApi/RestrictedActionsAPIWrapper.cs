@@ -58,14 +58,14 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         [UsedImplicitly]
         public object TriggerSceneEmote(string src, bool loop)
         {
+            triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
+            return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise();
+
             async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct)
             {
                 try { return await api.TryTriggerSceneEmoteAsync(src, loop, ct); }
-                catch (Exception e) when (e is not OperationCanceledException) { return false; }
+                catch (Exception) { return false; }
             }
-
-            triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
-            return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise();
         }
 
         [UsedImplicitly]
