@@ -1,7 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Chat;
+using DCL.Chat.MessageBus;
 using DCL.Minimap;
 using DCL.PlacesAPIService;
 using ECS;
