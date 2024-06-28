@@ -178,4 +178,4 @@ class Headers {
 }
 
 module.exports.fetch = restrictedFetch
-module.exports.RequestHeaders = params => new Headers(params)
+module.exports.RequestHeaders = Headers

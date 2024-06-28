@@ -58,6 +58,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
@@ -259,7 +260,9 @@ namespace Global.Dynamic
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
                 realmNavigator,
-                loadingScreen
+                loadingScreen,
+                staticContainer.FeatureFlagsProvider,
+                identityCache
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -268,6 +271,7 @@ namespace Global.Dynamic
             );
 
             var chatHistory = new ChatHistory();
+            var reloadSceneController = new ReloadSceneController();
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -276,6 +280,7 @@ namespace Global.Dynamic
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
+                { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(reloadSceneController) },
             };
 
             container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
@@ -283,6 +288,7 @@ namespace Global.Dynamic
                                        .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
+            reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
@@ -399,7 +405,8 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                dynamicWorldParams.HybridSceneParams);
+                dynamicWorldParams.HybridSceneParams,
+                reloadSceneController);
 
             container.GlobalPlugins = globalPlugins;
 
