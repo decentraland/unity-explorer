@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace CrdtEcsBridge.JsModulesImplementation
 {
     /// <summary>
-    /// Uses raw .NET ClientWebSocket under the hood
+    ///     Uses raw .NET ClientWebSocket under the hood
     /// </summary>
     public class ClientWebSocketApiImplementation : IWebSocketApi
     {
@@ -98,8 +98,18 @@ namespace CrdtEcsBridge.JsModulesImplementation
             // by creating a JS array here we can free the result array immediately
             using (result)
             {
+                if (messageType == WebSocketMessageType.Close)
+
+                    // Normal closure does not require an exception
+                    return new IWebSocketApi.ReceiveResponse
+                    {
+                        type = "Close",
+                        data = jsOperations.CreateUint8Array(Memory<byte>.Empty),
+                    };
+
+                // This closure is abnormal
                 if (closeStatus != WebSocketCloseStatus.Empty)
-                    throw new WebSocketException((int)closeStatus, $"WebSocket with id {websocketId} is already closed");
+                    throw new WebSocketException((int)closeStatus, $"WebSocket with id {websocketId} is already closed with status {closeStatus}");
 
                 return new IWebSocketApi.ReceiveResponse
                 {
