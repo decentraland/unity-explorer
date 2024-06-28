@@ -20,7 +20,9 @@ using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Groups;
 using ECS.Unity.Transforms.Systems;
+using NSubstitute;
 using UnityEngine;
+using UnityEngine.Pool;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -34,6 +36,7 @@ namespace DCL.SDKComponents.Tween.Systems
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
         private readonly TweenerPool tweenerPool;
+        private readonly IObjectPool<PBTween> pbTweenPool;
         
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
@@ -73,9 +76,10 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, IObjectPool<PBTween> pbTweenPool) : base(world)
         {
             this.tweenerPool = tweenerPool;
+            this.pbTweenPool = pbTweenPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
@@ -199,6 +203,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent)
         {
             ReturnTweenToPool(ref sdkTweenComponent);
+            pbTweenPool.Release(sdkTweenComponent.CachedTween);
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
         }
 

@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using Arch.Core;
 using Decentraland.Common;
+using UnityEngine.Pool;
 using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.Tween.Tests
@@ -34,9 +35,9 @@ namespace DCL.SDKComponents.Tween.Tests
         public void SetUp()
         {
             tweneerPool = new TweenerPool();
-            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool);
+            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, new ObjectPool<PBTween>(() => new PBTween()));
             var crdtEntity = new CRDTEntity(1);
-            tweenLoaderSystem = new TweenLoaderSystem(world);
+            tweenLoaderSystem = new TweenLoaderSystem(world, new ObjectPool<PBTween>(() => new PBTween()));
 
             var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
             var endVector = new Vector3() { X = 10, Y = 0, Z = 0 };

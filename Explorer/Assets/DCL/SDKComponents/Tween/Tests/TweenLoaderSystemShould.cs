@@ -11,6 +11,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using Decentraland.Common;
+using UnityEngine.Pool;
 using Entity = Arch.Core.Entity;
 
 namespace DCL.SDKComponents.Tween.Tests
@@ -26,7 +27,7 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new TweenLoaderSystem(world);
+            system = new TweenLoaderSystem(world, new ObjectPool<PBTween>(() => new PBTween()));
 
             var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
             var endVector = new Vector3() { X = 10, Y = 0, Z = 0 };
