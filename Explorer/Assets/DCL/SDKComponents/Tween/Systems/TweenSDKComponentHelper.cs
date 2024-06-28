@@ -15,22 +15,22 @@ namespace DCL.SDKComponents.Tween.Helpers
                 static (component, tweenStateStatus) => component.State = tweenStateStatus, sdkEntity, tweenStateStatus);
         }
 
-        public static void WriteTweenResult(ref SDKTransform sdkTransform, ICustomTweener customTweener)
+        public static void WriteTweenResult(ref SDKTransform sdkTransform, (ICustomTweener, CRDTEntity) tweenResult)
         {
             sdkTransform.IsDirty = true;
-            sdkTransform.ParentId = customTweener.ParentId;
+            sdkTransform.ParentId = tweenResult.Item2;
 
-            var currentResult = customTweener.GetResult();
+            var currentResult = tweenResult.Item1.GetResult();
             sdkTransform.Position = currentResult.Position;
             sdkTransform.Rotation = currentResult.Rotation;
             sdkTransform.Scale = currentResult.Scale;
         }
 
-        public static void WriteTweenResultInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, ICustomTweener customTweener)
+        public static void WriteTweenResultInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, (ICustomTweener, CRDTEntity) result)
         {
-            ecsToCrdtWriter.PutMessage<SDKTransform, ICustomTweener>(
-                static (component, customTweener) => WriteTweenResult(ref component, customTweener),
-                sdkEntity, customTweener);
+            ecsToCrdtWriter.PutMessage<SDKTransform, (ICustomTweener, CRDTEntity)>(
+                static (component, result) => WriteTweenResult(ref component, result),
+                sdkEntity, result);
         }
 
         public static bool AreSameModels(PBTween modelA, PBTween modelB)

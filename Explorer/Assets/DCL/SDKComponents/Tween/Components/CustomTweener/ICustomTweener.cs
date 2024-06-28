@@ -8,7 +8,6 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public interface ICustomTweener
     {
-        public CRDTEntity ParentId { get; set; }
         void DoTween(Ease ease, float tweenModelCurrentTime, bool isPlaying);
         void Play();
         void Pause();

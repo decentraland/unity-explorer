@@ -171,8 +171,8 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
-            TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, sdkTweenComponent.CustomTweener);
-            TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.CustomTweener);
+            TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+            TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
         }
 
 
@@ -183,8 +183,8 @@ namespace DCL.SDKComponents.Tween.Systems
             if (sdkTweenComponent.IsActive())
             {
                 sdkTweenComponent.Rewind();
-                TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, sdkTweenComponent.CustomTweener);
-                TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, entity, sdkTweenComponent.CustomTweener);
+                TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+                TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, entity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
             }
 
             ReturnTweenToPool(ref sdkTweenComponent);
@@ -193,7 +193,6 @@ namespace DCL.SDKComponents.Tween.Systems
                 ease = Linear;
 
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, entityTransform, durationInSeconds);
-            sdkTweenComponent.CustomTweener.ParentId = sdkTransform.ParentId;
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
