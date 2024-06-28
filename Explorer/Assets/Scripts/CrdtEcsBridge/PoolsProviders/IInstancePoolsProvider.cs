@@ -9,7 +9,12 @@ namespace CrdtEcsBridge.PoolsProviders
     /// </summary>
     public interface IInstancePoolsProvider : IDisposable
     {
-        PoolableByteArray GetCrdtRawDataPool(int size);
+        /// <summary>
+        ///     Get a poolable byte array for usage in JS API implementations and wrappers
+        /// </summary>
+        /// <param name="size"></param>
+        /// <returns></returns>
+        PoolableByteArray GetAPIRawDataPool(int size);
 
         List<CRDTMessage> GetDeserializationMessagesPool();
 
