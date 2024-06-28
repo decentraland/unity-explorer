@@ -27,13 +27,19 @@ namespace DCL.Passport.Modules
 
             view.CopyUserNameButton.onClick.AddListener(() =>
             {
-                CopyToClipboard(view.UserNameText.text);
+                if (currentProfile == null)
+                    return;
+
+                CopyToClipboard(currentProfile.HasClaimedName ? view.UserNameText.text : $"{currentProfile.Name}#{currentProfile.UserId[^4..]}");
                 copyNameCts = copyNameCts.SafeRestart();
                 ShowCopyWarningAsync(view.CopyNameWarningNotification, copyNameCts.Token).Forget();
             });
             view.CopyWalletAddressButton.onClick.AddListener(() =>
             {
-                CopyToClipboard(currentProfile?.UserId);
+                if (currentProfile == null)
+                    return;
+                
+                CopyToClipboard(currentProfile.UserId);
                 copyWalletCts = copyWalletCts.SafeRestart();
                 ShowCopyWarningAsync(view.CopyWalletWarningNotification, copyWalletCts.Token).Forget();
             });
@@ -45,6 +51,8 @@ namespace DCL.Passport.Modules
 
             view.UserNameText.text = profile.Name;
             view.UserNameText.color = chatEntryConfiguration.GetNameColor(profile.Name);
+            view.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
+            view.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             view.VerifiedMark.SetActive(profile.HasClaimedName);
             view.UserWalletAddressText.text = $"{profile.UserId[..3]}...{profile.UserId[^3..]}";
 
