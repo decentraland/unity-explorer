@@ -144,7 +144,8 @@ namespace SceneRuntime
         public ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory)
         {
             var jsArray = CreateUint8Array(memory.Length);
-            jsArray.Write(memory, (ulong)memory.Length, 0);
+            if (!memory.IsEmpty)
+                jsArray.Write(memory, (ulong)memory.Length, 0);
             return jsArray;
         }
 

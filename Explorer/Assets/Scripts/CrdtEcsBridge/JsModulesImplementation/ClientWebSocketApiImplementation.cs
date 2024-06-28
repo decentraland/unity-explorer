@@ -92,29 +92,44 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             WebSocketRental webSocket = GetInstanceOrThrow(websocketId);
 
-            (PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)
-                = await CHUNK_TRANSMISSION.ReceiveAsync(webSocket.WebSocket, instancePoolsProvider, ct);
-
-            // by creating a JS array here we can free the result array immediately
-            using (result)
+            try
             {
-                if (messageType == WebSocketMessageType.Close)
+                (PoolableByteArray result, WebSocketMessageType messageType, WebSocketCloseStatus closeStatus)
+                    = await CHUNK_TRANSMISSION.ReceiveAsync(webSocket.WebSocket, instancePoolsProvider, ct);
 
-                    // Normal closure does not require an exception
+                // by creating a JS array here we can free the result array immediately
+                using (result)
+                {
+                    if (messageType == WebSocketMessageType.Close)
+
+                        // Normal closure does not require an exception
+                        return new IWebSocketApi.ReceiveResponse
+                        {
+                            type = "Close",
+                            data = jsOperations.CreateUint8Array(Memory<byte>.Empty),
+                        };
+
+                    // This closure is abnormal
+                    if (closeStatus != WebSocketCloseStatus.Empty)
+                        throw new WebSocketException((int)closeStatus, $"WebSocket with id {websocketId} is already closed with status {closeStatus}");
+
                     return new IWebSocketApi.ReceiveResponse
                     {
-                        type = "Close",
-                        data = jsOperations.CreateUint8Array(Memory<byte>.Empty),
+                        type = messageType == WebSocketMessageType.Text ? "Text" : "Binary",
+                        data = jsOperations.CreateUint8Array(result.Memory),
                     };
-
-                // This closure is abnormal
-                if (closeStatus != WebSocketCloseStatus.Empty)
-                    throw new WebSocketException((int)closeStatus, $"WebSocket with id {websocketId} is already closed with status {closeStatus}");
-
+                }
+            }
+            catch (Exception e) when (e is OperationCanceledException or ObjectDisposedException
+                                      || e.InnerException is ObjectDisposedException)
+            {
+                // it is expected if the web socket was already disposed of (from Dispose method)
+                // or cancellation was requested from the wrapper layer,
+                // finish gracefully
                 return new IWebSocketApi.ReceiveResponse
                 {
-                    type = messageType == WebSocketMessageType.Text ? "Text" : "Binary",
-                    data = jsOperations.CreateUint8Array(result.Memory),
+                    type = "Close"
+                    // don't call any other APIs as they can be already disposed of
                 };
             }
         }
