@@ -131,18 +131,6 @@ namespace DCL.Passport.Modules
             view.AdditionalInfoContainer.gameObject.SetActive(instantiatedAdditionalFields.Count > 0);
         }
 
-        private void LoadLinks()
-        {
-            view.NoLinksLabel.gameObject.SetActive(currentProfile.Links == null || currentProfile.Links.Count == 0);
-            view.LinksContainer.gameObject.SetActive(currentProfile.Links is { Count: > 0 });
-
-            if (currentProfile.Links == null)
-                return;
-
-            foreach (var link in currentProfile.Links)
-                AddLink(link.title, link.url);
-        }
-
         private void AddAdditionalField(AdditionalFieldType type, string value)
         {
             var newAdditionalField = additionalFieldsPool.Get();
@@ -163,9 +151,22 @@ namespace DCL.Passport.Modules
             instantiatedAdditionalFields.Add(newAdditionalField);
         }
 
+        private void LoadLinks()
+        {
+            view.NoLinksLabel.gameObject.SetActive(currentProfile.Links == null || currentProfile.Links.Count == 0);
+            view.LinksContainer.gameObject.SetActive(currentProfile.Links is { Count: > 0 });
+
+            if (currentProfile.Links == null)
+                return;
+
+            foreach (var link in currentProfile.Links)
+                AddLink(link.title, link.url);
+        }
+
         private void AddLink(string title, string url)
         {
             var newLink = linksPool.Get();
+            newLink.transform.SetAsLastSibling();
             newLink.Title.text = title;
             newLink.Link = url;
             newLink.LinkButton.onClick.AddListener(() => OpenUrlAsync(url).Forget());
