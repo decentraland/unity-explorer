@@ -204,7 +204,7 @@ def download_artifact(id):
     try:
         artifact_url = response_json['links']['download_primary']['href']
     except KeyError:
-        print(f'Failed to locate build artifacts with ID {id} - Nothing to download')
+        print(f'Failed to locate any build artifacts - Nothing to download')
         return
 
     download_dir = 'build'
@@ -332,8 +332,7 @@ download_artifact(id)
 download_log(id)
 
 if not build_healthy:
-    print(f'For help, check the downloaded logs (if any) or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
-    print('Build unhealthy, failing script execution...')
+    print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
     sys.exit(1)
 
 # Cleanup (only if build is healthy)
