@@ -14,6 +14,8 @@ URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
 
+build_healthy = True
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
 parser.add_argument('--cancel', help='Cancel a running build stored in build_info.json', action='store_true')
@@ -145,7 +147,7 @@ def cancel_build(id):
 def poll_build(id):
     if id == -1:
         print('Error: No build ID known (-1)')
-        return
+        sys.exit(1)
 
     retries = 0
     max_retries = 5
@@ -169,6 +171,7 @@ def poll_build(id):
         print('Response body:', response.text)
         sys.exit(1)
 
+    global build_healthy
     response_json = response.json()
 
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
@@ -182,7 +185,7 @@ def poll_build(id):
             return False
         case 'failure' | 'canceled' | 'unknown':
             print(f'Build error! Last known status: "{status}"')
-            sys.exit(1)
+            build_healthy = False
             return False
         case _:
             print(f'Build status is not known!: "{status}"')
@@ -198,7 +201,11 @@ def download_artifact(id):
         sys.exit(1)
 
     response_json = response.json()
-    artifact_url = response_json['links']['download_primary']['href']
+    try:
+        artifact_url = response_json['links']['download_primary']['href']
+    except KeyError:
+        print(f'Failed to locate build artifacts with ID {id} - Nothing to download')
+        return
 
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
@@ -324,7 +331,12 @@ download_artifact(id)
 # Handle build log
 download_log(id)
 
-# Cleanup
+if not build_healthy:
+    print(f'For help, check the downloaded logs (if any) or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+    print('Build unhealthy, failing script execution...')
+    sys.exit(1)
+
+# Cleanup (only if build is healthy)
 if get_any_running_builds(os.getenv('TARGET')):
     delete_build(id)
 else:
