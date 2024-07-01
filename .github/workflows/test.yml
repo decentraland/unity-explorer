@@ -31,7 +31,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Create LFS file list
-        run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+        run: |
+          git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
+          echo "::debug::LFS file list created: $(cat .lfs-assets-id)"
 
       - name: Restore LFS cache
         uses: actions/cache@v3
@@ -39,6 +41,10 @@ jobs:
         with:
           path: .git/lfs
           key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
+
+      - name: Debug LFS cache restore
+        run: |
+          echo "::debug::LFS cache hit: ${{ steps.lfs-cache.outputs.cache-hit }}"
 
       - name: Git LFS Pull
         run: |
@@ -48,39 +54,42 @@ jobs:
 
       - name: Restore Library cache
         uses: actions/cache@v3
+        id: library-cache
         with:
           path: Explorer/Library
           key: Library-Explorer-Windows
-          
+
+      - name: Debug Library cache restore
+        run: |
+          echo "::debug::Library cache hit: ${{ steps.library-cache.outputs.cache-hit }}"
+
       - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       
-      - name: 'Add GitHub to the SSH known hosts file'
+      - name: Add GitHub to the SSH known hosts file
         run: |
-              sshPath="$HOME/.ssh"
-              if [ ! -d "$sshPath" ]; then
-                mkdir -p "$sshPath"
-              fi
-              
-              knownHostsPath="$sshPath/known_hosts"
-              curl -s 'https://api.github.com/meta' | jq -r '.ssh_keys[] | "github.com " + .' >> "$knownHostsPath"
-              chmod 600 "$knownHostsPath"
+          sshPath="$HOME/.ssh"
+          if [ ! -d "$sshPath" ]; then
+            mkdir -p "$sshPath"
+          fi
+          knownHostsPath="$sshPath/known_hosts"
+          curl -s 'https://api.github.com/meta' | jq -r '.ssh_keys[] | "github.com " + .' >> "$knownHostsPath"
+          chmod 600 "$knownHostsPath"
           
       - name: Clone Packages To Use Locally
         run: |
-            git clone git@github.com:decentraland/unity-explorer-packages.git            
-            jsonFilePath="Explorer/Packages/manifest.json"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
-            sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask|file:../../unity-explorer-packages/SoftMask|' "$jsonFilePath"
-            ls -l
-            # Display the content of manifest.json
-            cat "$jsonFilePath"
-
+          git clone git@github.com:decentraland/unity-explorer-packages.git            
+          jsonFilePath="Explorer/Packages/manifest.json"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|' "$jsonFilePath"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|' "$jsonFilePath"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|' "$jsonFilePath"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|' "$jsonFilePath"
+          sed -i 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask|file:../../unity-explorer-packages/SoftMask|' "$jsonFilePath"
+          ls -l
+          # Display the content of manifest.json
+          cat "$jsonFilePath"
 
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.1.1
@@ -101,8 +110,7 @@ jobs:
           sudo xsltproc \
             --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/playmode-results-junit.xml \
             .github/workflows/nunit-to-junit.xsl \
-            ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml \
-
+            ${{ steps.testRunner.outputs.artifactsPath }}/playmode-results.xml 
           sudo xsltproc \
             --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml \
             .github/workflows/nunit-to-junit.xsl \
