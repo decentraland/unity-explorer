@@ -27,21 +27,26 @@ jobs:
     runs-on: Ubuntu-Big
     steps:
 
+      - name: Check disk usage before checkout
+        run: df -h
       - name: Checkout code
         uses: actions/checkout@v3
-
+      - name: Check disk usage after checkout
+        run: df -h
       - name: Create LFS file list
         run: |
           git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
           echo "::debug::LFS file list created: $(cat .lfs-assets-id)"
-
+      - name: Check disk usage after LFS creation
+        run: df -h
       - name: Restore LFS cache
         uses: actions/cache@v3
         id: lfs-cache
         with:
           path: .git/lfs
           key: ${{ runner.os }}-lfs-${{ hashFiles('.lfs-assets-id') }}
-
+      - name: Check disk usage after restore LFS cache
+        run: df -h
       - name: Debug LFS cache restore
         run: |
           echo "::debug::LFS cache hit: ${{ steps.lfs-cache.outputs.cache-hit }}"
@@ -51,14 +56,16 @@ jobs:
           git lfs pull
           git add .
           git reset --hard
-
+      - name: Check disk usage after LFS pull
+        run: df -h
       - name: Restore Library cache
         uses: actions/cache@v3
         id: library-cache
         with:
           path: Explorer/Library
           key: Library-Explorer-Windows
-
+      - name: Check disk usage after restore Library cache
+        run: df -h
       - name: Debug Library cache restore
         run: |
           echo "::debug::Library cache hit: ${{ steps.library-cache.outputs.cache-hit }}"
@@ -67,7 +74,8 @@ jobs:
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      
+      - name: Check disk usage after SSH setup
+        run: df -h
       - name: Add GitHub to the SSH known hosts file
         run: |
           sshPath="$HOME/.ssh"
@@ -90,7 +98,8 @@ jobs:
           ls -l
           # Display the content of manifest.json
           cat "$jsonFilePath"
-
+      - name: Check disk usage after clone packages
+        run: df -h
       # Configure test runner
       - uses: game-ci/unity-test-runner@v4.1.1
         id: testRunner
@@ -99,7 +108,8 @@ jobs:
         with:
           projectPath: Explorer
           testMode: all      
-
+      - name: Check disk usage after unity test
+        run: df -h
       - name: Convert NUnit to JUnit
         if: always()
         run: |
@@ -115,7 +125,8 @@ jobs:
             --output ${{ steps.testRunner.outputs.artifactsPath }}-junit/editmode-results-junit.xml \
             .github/workflows/nunit-to-junit.xsl \
             ${{ steps.testRunner.outputs.artifactsPath }}/editmode-results.xml
-
+      - name: Check disk usage after JUnit
+        run: df -h
       - name: Report test results
         uses: kuruk-mm/test-reporting@0.2
         if: always()
