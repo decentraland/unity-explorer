@@ -6,9 +6,10 @@ on:
     types:
       - completed
 
-jobs:
+jobs:  
   get-info:
     name: Get Info
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -27,6 +28,7 @@ jobs:
         
   generate-release-info:
     name: Generate release info
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: get-info
