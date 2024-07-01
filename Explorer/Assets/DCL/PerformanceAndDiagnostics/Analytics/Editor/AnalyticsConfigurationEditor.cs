@@ -11,26 +11,54 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Editor
     public class AnalyticsConfigurationEditor : UnityEditor.Editor
     {
         private readonly Dictionary<string, bool> foldoutStates = new ();
+        private readonly Dictionary<string, bool> groupEnabledStates = new ();
 
         public override void OnInspectorGUI()
         {
-            AnalyticsConfiguration config = (AnalyticsConfiguration)target;
+            var config = (AnalyticsConfiguration)target;
 
             DrawDefaultInspectorExceptGroups();
 
-            if (GUILayout.Button("Refresh Events"))
-                RefreshEvents(config);
+            EditorGUILayout.Space();
+            EditorGUILayout.Space();
+
+            EditorGUILayout.LabelField("ANALYTICS EVENTS", EditorStyles.boldLabel);
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Refresh Events")) { RefreshEvents(config); }
+            if (GUILayout.Button("Expand All")) { SetAllFoldoutStates(true); }
+            if (GUILayout.Button("Collapse All")) { SetAllFoldoutStates(false); }
+            EditorGUILayout.EndHorizontal();
 
             // Custom inspector for groups
-            foreach (var group in config.groups)
+            foreach (AnalyticsConfiguration.AnalyticsGroup group in config.groups)
             {
                 foldoutStates.TryAdd(group.groupName, true);
-                foldoutStates[group.groupName] = EditorGUILayout.Foldout(foldoutStates[group.groupName], group.groupName);
+
+                if (!groupEnabledStates.ContainsKey(group.groupName))
+                    groupEnabledStates[group.groupName] = AreAllEventsEnabled(group.events);
+
+                EditorGUILayout.BeginHorizontal();
+
+                bool previousGroupState = groupEnabledStates[group.groupName];
+                groupEnabledStates[group.groupName] = EditorGUILayout.Toggle(groupEnabledStates[group.groupName], GUILayout.Width(15));
+
+                var style = new GUIStyle(EditorStyles.boldLabel);
+                string groupName = group.groupName.ToUpper();
+
+                if (GUILayout.Button(groupName, style, GUILayout.ExpandWidth(true)))
+                    foldoutStates[group.groupName] = !foldoutStates[group.groupName];
+
+                EditorGUILayout.EndHorizontal();
+
+                if (groupEnabledStates[group.groupName] != previousGroupState)
+                    SetAllEventsEnabled(group.events, groupEnabledStates[group.groupName]);
 
                 if (foldoutStates[group.groupName])
                 {
                     EditorGUI.indentLevel++;
-                    foreach (var toggle in group.events)
+
+                    foreach (AnalyticsConfiguration.AnalyticsEventToggle toggle in group.events)
                         toggle.isEnabled = EditorGUILayout.ToggleLeft(toggle.eventName, toggle.isEnabled);
 
                     EditorGUI.indentLevel--;
@@ -38,7 +66,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Editor
             }
 
             if (GUI.changed)
+            {
+                serializedObject.ApplyModifiedProperties();
                 EditorUtility.SetDirty(config);
+            }
         }
 
         private void DrawDefaultInspectorExceptGroups()
@@ -57,12 +88,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Editor
         {
             Dictionary<string, List<string>> allGroups = GetAnalyticsEvents();
 
-            // Remove old groups and events that no longer exist
             config.groups.RemoveAll(group => !allGroups.ContainsKey(group.groupName));
 
             foreach (AnalyticsConfiguration.AnalyticsGroup group in config.groups) { group.events.RemoveAll(toggle => !allGroups[group.groupName].Contains(toggle.eventName)); }
 
-            // Add new groups and events
             foreach (string groupName in allGroups.Keys)
             {
                 AnalyticsConfiguration.AnalyticsGroup group = config.groups.Find(g => g.groupName == groupName);
@@ -74,19 +103,36 @@ namespace DCL.PerformanceAndDiagnostics.Analytics.Editor
                 }
 
                 foreach (string eventName in allGroups[groupName])
-                {
                     if (!group.events.Exists(toggle => toggle.eventName == eventName))
-                    {
                         group.events.Add(new AnalyticsConfiguration.AnalyticsEventToggle
                         {
                             eventName = eventName,
                             isEnabled = true, // Default to enabled
                         });
-                    }
-                }
             }
 
             EditorUtility.SetDirty(config);
+        }
+
+        private static bool AreAllEventsEnabled(List<AnalyticsConfiguration.AnalyticsEventToggle> events)
+        {
+            foreach (AnalyticsConfiguration.AnalyticsEventToggle toggle in events)
+                if (!toggle.isEnabled)
+                    return false;
+
+            return true;
+        }
+
+        private void SetAllEventsEnabled(List<AnalyticsConfiguration.AnalyticsEventToggle> events, bool isEnabled)
+        {
+            foreach (AnalyticsConfiguration.AnalyticsEventToggle toggle in events) { toggle.isEnabled = isEnabled; }
+        }
+
+        private void SetAllFoldoutStates(bool state)
+        {
+            var keys = new List<string>(foldoutStates.Keys);
+
+            foreach (string key in keys) { foldoutStates[key] = state; }
         }
 
         private static Dictionary<string, List<string>> GetAnalyticsEvents()
