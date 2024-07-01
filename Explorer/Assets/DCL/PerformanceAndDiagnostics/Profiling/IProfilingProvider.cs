@@ -18,8 +18,6 @@ namespace DCL.Profiling
 
         long MaxFrameTimeValueInNS { get; }
 
-        float GcAllocatedInFrameRecorder { get; }
-
         void CheckHiccup();
     }
 }

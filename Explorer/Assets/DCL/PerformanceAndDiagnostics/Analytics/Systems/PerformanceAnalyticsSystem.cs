@@ -46,7 +46,6 @@ namespace DCL.Analytics.Systems
             analytics.Track("performance_report", new Dictionary<string, JsonElement>
             {
                 ["total_used_memory"] = profilingProvider.TotalUsedMemoryInBytes * BYTES_TO_MEGABYTES,
-                ["gc_allocated_in_frame"] = profilingProvider.GcAllocatedInFrameRecorder,
 
                 ["gpu_frame_time"] = profilingProvider.CurrentGPUFrameTimeValueInNS * BYTES_TO_MEGABYTES,
 

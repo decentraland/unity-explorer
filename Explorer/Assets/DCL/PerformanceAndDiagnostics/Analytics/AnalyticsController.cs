@@ -54,7 +54,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, Transform playerTransform)
         {
             this.realmData = realmData;
-
             this.identityCache = identityCache;
             this.playerTransform = playerTransform;
         }

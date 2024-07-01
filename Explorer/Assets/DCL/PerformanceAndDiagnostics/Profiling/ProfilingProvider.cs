@@ -16,9 +16,6 @@ namespace DCL.Profiling
         private readonly ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         private readonly ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
         private readonly ProfilerRecorder gpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", 15);
-        private readonly ProfilerRecorder gcAllocatedInFrameRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
-
-        // private readonly ProfilerRecorder drawCallsRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
 
         public ulong TotalUsedMemoryInBytes => (ulong)totalUsedMemoryRecorder.CurrentValue;
 
@@ -33,8 +30,6 @@ namespace DCL.Profiling
 
         public ulong HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
         public int HiccupCountBufferSize => hiccupBufferCounter.BufferSize;
-
-        public float GcAllocatedInFrameRecorder => gcAllocatedInFrameRecorder.CurrentValue / 1024f; // in [KB]
 
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);

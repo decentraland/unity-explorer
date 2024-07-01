@@ -18,6 +18,8 @@ namespace Global.Dynamic
     public class BootstrapAnalyticsDecorator : IBootstrap
     {
         private const string TRACK_NAME = "initial_loading";
+        private const string STAGE_KEY = "state";
+        private const string RESULT_KEY = "result";
 
         private readonly Bootstrap core;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -25,8 +27,6 @@ namespace Global.Dynamic
 
         private AnalyticsController analytics;
         private AnalyticsConfiguration analyticsConfig;
-        private string STAGE_KEY = "state";
-        private string RESULT_KEY = "result";
 
         public DynamicWorldDependencies DynamicWorldDependencies { get; }
 
@@ -56,7 +56,7 @@ namespace Global.Dynamic
 
             analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { STAGE_KEY, "initialization started" },
+                { STAGE_KEY, "started" },
             });
 
             core.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, ct);
@@ -106,15 +106,15 @@ namespace Global.Dynamic
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct)
         {
-            bool result = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, ct);
+            bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, ct);
 
             analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "plugins initialized" },
-                { RESULT_KEY, result ? "success" : "failure" },
+                { RESULT_KEY, !anyFailure ? "success" : "failure" },
             });
 
-            return result;
+            return anyFailure;
         }
 
         public UniTask InitializeFeatureFlagsAsync(StaticContainer staticContainer, CancellationToken ct)
@@ -160,7 +160,7 @@ namespace Global.Dynamic
 
             analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { STAGE_KEY, "completed" },
+                { STAGE_KEY, "end" },
             });
         }
 

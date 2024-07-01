@@ -9,7 +9,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public SegmentAnalyticsService(AnalyticsConfiguration configuration)
         {
             analytics = new Segment.Analytics.Analytics(configuration.SegmentConfiguration);
-            Segment.Analytics.Analytics.Logger = new SegmentLogger();
+
+            // Our ReportHub logger via is causing "System.FormatException" for JsonObject because of "{{" and "}}". Solution is expensive - message.ToString().Replace("{", "{{").Replace("}", "}}");
+            // Segment.Analytics.Analytics.Logger = new SegmentLogger();
         }
 
         public void Identify(string userId, JsonObject traits = null) =>
