@@ -5,17 +5,6 @@ using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class AnalyticsGroup
-    {
-        public string Name;
-        public List<AnalyticsEvent> Events;
-    }
-
-    public class AnalyticsEvent
-    {
-        public string Name;
-    }
-
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/AnalyticsConfiguration", order = 0)]
     public class AnalyticsConfiguration : ScriptableObject
     {
@@ -37,6 +26,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private string segmentWriteKey;
         private Configuration segmentConfiguration;
+
+        [SerializeField]
+        private List<AnalyticsEventToggle> eventToggles;
 
         public Configuration SegmentConfiguration => segmentConfiguration ??=
             new Configuration(WriteKey, new ErrorHandler(), flushSize, flushInterval);
@@ -61,7 +53,18 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public bool EventIsEnabled(string eventName)
         {
-            return true;
+            foreach (var toggle in eventToggles)
+                if (toggle.eventName == eventName)
+                    return toggle.isEnabled;
+
+            return false;
+        }
+
+        [Serializable]
+        public class AnalyticsEventToggle
+        {
+            public string eventName;
+            public bool isEnabled;
         }
     }
 }

@@ -49,8 +49,8 @@ namespace Global.Dynamic
             analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, ct)).Value;
 
             analytics = new AnalyticsController(
-                // new DebugAnalyticsService()
-                new SegmentAnalyticsService(analyticsConfig),
+                new DebugAnalyticsService(),
+                // new SegmentAnalyticsService(analyticsConfig),
                 analyticsConfig
             );
 
