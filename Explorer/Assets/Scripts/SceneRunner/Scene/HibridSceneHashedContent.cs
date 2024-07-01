@@ -27,7 +27,7 @@ namespace SceneRunner.Scene
 
         private readonly string[] filesToGetFromLocalHost =
         {
-            "bin/index.js", "scene.json", "main.crdt"
+            "bin/index.js", "scene.json", "main.crdt", "bin/game.js"
         };
 
         public HibridSceneHashedContent(IWebRequestController webRequestController,
