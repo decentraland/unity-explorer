@@ -50,7 +50,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var sdkComponent = new PBGltfContainer
             {
-                Src = GltfContainerTestResources.SIMPLE_RENDERER,
+                Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM,
                 InvisibleMeshesCollisionMask = (uint)(ColliderLayer.ClPhysics | ColliderLayer.ClPointer),
                 VisibleMeshesCollisionMask = (uint)ColliderLayer.ClPointer,
             };
@@ -60,8 +60,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             system.Update(0);
 
             Assert.That(world.TryGet(entity, out GltfContainerComponent component), Is.True);
-            Assert.That(component.Source, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
-            Assert.That(component.Promise.LoadingIntention.Name, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
+            Assert.That(component.Source, Is.EqualTo(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM));
+            Assert.That(component.Promise.LoadingIntention.Name, Is.EqualTo(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM));
             Assert.That(component.VisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClPointer));
             Assert.That(component.InvisibleMeshesCollisionMask, Is.EqualTo(ColliderLayer.ClPhysics | ColliderLayer.ClPointer));
             Assert.That(component.State, Is.EqualTo(LoadingState.Loading));
@@ -127,14 +127,14 @@ namespace ECS.Unity.GLTFContainer.Tests
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
                     world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
-            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.SIMPLE_RENDERER, IsDirty = true }, PartitionComponent.TOP_PRIORITY);
+            Entity e = world.Create(component, new PBGltfContainer { Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, IsDirty = true }, PartitionComponent.TOP_PRIORITY);
             AddTransformToEntity(e);
 
             system.Update(0);
 
             component = world.Get<GltfContainerComponent>(e);
 
-            Assert.That(component.Source, Is.EqualTo(GltfContainerTestResources.SIMPLE_RENDERER));
+            Assert.That(component.Source, Is.EqualTo(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM));
             Assert.That(component.State, Is.EqualTo(LoadingState.Loading));
 
             Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
