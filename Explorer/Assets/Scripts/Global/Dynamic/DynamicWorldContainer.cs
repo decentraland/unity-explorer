@@ -58,6 +58,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
+using ECS.SceneLifeCycle.Systems;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
@@ -271,6 +272,7 @@ namespace Global.Dynamic
             );
 
             var chatHistory = new ChatHistory();
+            var reloadSceneController = new ReloadSceneController();
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -279,6 +281,7 @@ namespace Global.Dynamic
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
                 { ClearChatCommand.REGEX, () => new ClearChatCommand(chatHistory) },
+                { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(reloadSceneController) },
             };
 
             container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
@@ -286,6 +289,7 @@ namespace Global.Dynamic
                                        .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
+            reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
@@ -374,7 +378,7 @@ namespace Global.Dynamic
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, staticContainer.AssetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator, characterPreviewEventBus),
+                new Web3AuthenticationPlugin(staticContainer.AssetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator, characterPreviewEventBus, staticContainer.FeatureFlagsCache),
                 new StylizedSkyboxPlugin(staticContainer.AssetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(staticContainer.AssetsProvisioner, container.MvcManager),
                 new ExternalUrlPromptPlugin(staticContainer.AssetsProvisioner, webBrowser, container.MvcManager, dclCursor), new TeleportPromptPlugin(staticContainer.AssetsProvisioner, realmNavigator, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor),
@@ -406,7 +410,8 @@ namespace Global.Dynamic
                 globalPlugins,
                 debugBuilder,
                 staticContainer.ScenesCache,
-                dynamicWorldParams.HybridSceneParams);
+                dynamicWorldParams.HybridSceneParams,
+                reloadSceneController);
 
             container.GlobalPlugins = globalPlugins;
 
