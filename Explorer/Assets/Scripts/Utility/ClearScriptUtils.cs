@@ -15,13 +15,13 @@ namespace Utility
             return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source.AsReadOnlySpan(), (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
         }
 
-        public static int Write<T>(this ITypedArray<T> clearScriptArray, Memory<byte> source, ulong length, ulong index)
+        public static int Write<T>(this ITypedArray<T> clearScriptArray, ReadOnlyMemory<byte> source, ulong length, ulong index)
         {
             ulong totalLength = clearScriptArray.Length;
 
             if (index >= totalLength) { throw new ArgumentOutOfRangeException(nameof(index)); }
 
-            return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory((ReadOnlySpan<byte>)source.Span, (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
+            return clearScriptArray.InvokeWithDirectAccess(pData => WriteByteArrayToUnmanagedMemory(source.Span, (int)Math.Min(length, totalLength - index), clearScriptArray.GetPtrWithIndex(pData, index)));
         }
 
         private static IntPtr GetPtrWithIndex<T>(this ITypedArray<T> clearScriptArray, IntPtr pData, ulong index)
