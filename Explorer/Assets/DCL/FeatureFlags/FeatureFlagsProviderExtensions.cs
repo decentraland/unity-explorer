@@ -14,31 +14,36 @@ namespace DCL.FeatureFlags
             CancellationToken ct)
         {
             FeatureFlagOptions options = FeatureFlagOptions.ORG;
-            URLDomain? programArgsUrl = GetUrlFromProgramArgs();
+            GetOptionsFromProgramArgs(out URLDomain? programArgsUrl, out string? programArgsHostName);
 
             if (programArgsUrl != null)
                 options.URL = programArgsUrl.Value;
+
+            if (programArgsHostName != null)
+                options.Hostname = programArgsHostName;
 
             options.UserId = userAddress;
 
             return await featureFlagsProvider.GetAsync(options, ct);
 
             // #!/bin/bash
-            // ./Decentraland.app --feature-flags-url https://feature-flags.decentraland.zone
-            URLDomain? GetUrlFromProgramArgs()
+            // ./Decentraland.app --feature-flags-url https://feature-flags.decentraland.zone --feature-flags-hostname localhost
+            void GetOptionsFromProgramArgs(out URLDomain? url, out string? hostname)
             {
+                url = null;
+                hostname = null;
+
                 string[] programArgs = Environment.GetCommandLineArgs();
-                URLDomain? result = null;
 
                 for (var i = 0; i < programArgs.Length - 1; i++)
                 {
                     string arg = programArgs[i];
 
                     if (arg == "--feature-flags-url")
-                        result = URLDomain.FromString(programArgs[i + 1]);
+                        url = URLDomain.FromString(programArgs[i + 1]);
+                    else if (arg == "--feature-flags-hostname")
+                        hostname = programArgs[i + 1];
                 }
-
-                return result;
             }
         }
     }
