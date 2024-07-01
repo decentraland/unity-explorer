@@ -56,7 +56,7 @@ namespace DCL.Analytics.Systems
 
             if (newParcel != oldParcel)
             {
-                analytics.Track("move_to_parcel",
+                analytics.Track(AnalyticsEvents.MOVE_TO_PARCEL,
                     new Dictionary<string, JsonElement>
                     {
                         { "old parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
@@ -67,7 +67,7 @@ namespace DCL.Analytics.Systems
 
                 if (scenesCache.TryGetByParcel(newParcel, out var currentScene) && currentScene != lastScene)
                 {
-                    analytics.Track("visit_scene",
+                    analytics.Track(AnalyticsEvents.VISIT_SCENE,
                         new Dictionary<string, JsonElement>
                         {
                             { "scene name", currentScene.Info.Name },

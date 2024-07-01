@@ -17,7 +17,6 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-
     public class MainSceneLoader : MonoBehaviour
     {
         [Header("Startup Config")]
@@ -32,6 +31,7 @@ namespace Global.Dynamic
         [SerializeField] private bool showLoading;
         [SerializeField] private bool enableLandscape;
         [SerializeField] private bool enableLOD;
+        [SerializeField] private bool analyticsEnabled;
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -53,12 +53,12 @@ namespace Global.Dynamic
 
         private void Awake()
         {
-            var assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
+            ErrorTraceAssetsProvisioner assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
+            var coreBootstrap = new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
 
-            Bootstrap coreBootstrap = new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
-            bootstrap =
-                new BootstrapAnalyticsDecorator(coreBootstrap, assetsProvisioner, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>());
-                // coreBootstrap;
+            bootstrap = analyticsEnabled
+                ? new BootstrapAnalyticsDecorator(coreBootstrap, assetsProvisioner, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>())
+                : coreBootstrap;
 
             InitializeFlowAsync(assetsProvisioner, destroyCancellationToken).Forget();
         }
@@ -77,6 +77,7 @@ namespace Global.Dynamic
 
                 dynamicWorldContainer.SafeDispose(ReportCategory.ENGINE);
             }
+
             if (staticContainer != null)
             {
                 // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
@@ -98,6 +99,7 @@ namespace Global.Dynamic
                 await bootstrap!.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
 
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(globalPluginSettingsContainer, settings, assetsProvisioner, ct);
+
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
@@ -106,6 +108,7 @@ namespace Global.Dynamic
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, destroyCancellationToken);
+
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
@@ -113,6 +116,7 @@ namespace Global.Dynamic
                 }
 
                 await bootstrap.InitializeFeatureFlagsAsync(staticContainer!, ct);
+
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
                     GameReports.PrintIsDead();

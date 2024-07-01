@@ -5,12 +5,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class SegmentAnalyticsService : IAnalyticsService
     {
         private readonly Segment.Analytics.Analytics analytics;
+        private readonly AnalyticsConfiguration configuration;
 
         public SegmentAnalyticsService(AnalyticsConfiguration configuration)
         {
+            this.configuration = configuration;
             analytics = new Segment.Analytics.Analytics(configuration.SegmentConfiguration);
 
-            // Our ReportHub logger via is causing "System.FormatException" for JsonObject because of "{{" and "}}". Solution is expensive - message.ToString().Replace("{", "{{").Replace("}", "}}");
+            // Our ReportHub logger is causing "System.FormatException" for JsonObject because of "{{" and "}}" in resulting string. Solution is expensive - message.ToString().Replace("{", "{{").Replace("}", "}}");
             // Segment.Analytics.Analytics.Logger = new SegmentLogger();
         }
 

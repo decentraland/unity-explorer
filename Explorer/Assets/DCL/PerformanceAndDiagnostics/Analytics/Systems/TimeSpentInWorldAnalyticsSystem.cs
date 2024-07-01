@@ -24,13 +24,19 @@ namespace DCL.Analytics.Systems
             this.realmData = realmData;
         }
 
+        public override void Dispose()
+        {
+            SendAnalytics();
+            base.Dispose();
+        }
+
         protected override void Update(float t)
         {
             if (!realmData.Configured) return;
 
             if (realmData.RealmName != worldName)
             {
-                if(!string.IsNullOrEmpty(worldName))
+                if (!string.IsNullOrEmpty(worldName))
                     SendAnalytics();
 
                 timeSpentInWorld = 0;
@@ -42,17 +48,11 @@ namespace DCL.Analytics.Systems
 
         private void SendAnalytics()
         {
-            analytics.Track("time_spent_in_world", new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.TIME_SPENT_IN_WORLD, new Dictionary<string, JsonElement>
             {
                 ["time_spent"] = timeSpentInWorld,
                 ["world_name"] = worldName,
             });
-        }
-
-        public override void Dispose()
-        {
-            SendAnalytics();
-            base.Dispose();
         }
     }
 }

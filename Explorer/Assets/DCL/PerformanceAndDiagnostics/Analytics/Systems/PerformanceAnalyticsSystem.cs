@@ -43,7 +43,7 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            analytics.Track("performance_report", new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.PERFORMANCE_REPORT, new Dictionary<string, JsonElement>
             {
                 ["total_used_memory"] = profilingProvider.TotalUsedMemoryInBytes * BYTES_TO_MEGABYTES,
 

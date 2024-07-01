@@ -2,12 +2,13 @@
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using Segment.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class ChatAnalytics
+    public class ChatAnalytics: IDisposable
     {
         private static readonly Regex EMOJI_PATTERN = new (@"\\U[0-9A-Fa-f]{8}");
 
@@ -30,7 +31,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             teleportToCommand.Executed += OnTeleportedViaGoTo;
         }
 
-        ~ChatAnalytics()
+        public void Dispose()
         {
             chatController.ChatBubbleVisibilityChanged -= OnChatBubbleVisibilityChanged;
             chatMessagesBus.MessageSent -= OnMessageSent;
@@ -39,7 +40,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnMessageSent(string message)
         {
-            analytics.Track("chat_message_sent", new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.Chat.MESSAGE_SENT, new Dictionary<string, JsonElement>
             {
                 { "message", message },
                 { "emojis_amount", EMOJI_PATTERN.Matches(message).Count },
@@ -48,18 +49,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnTeleportedViaGoTo()
         {
-            analytics.Track("goto_teleport");
+            analytics.Track(AnalyticsEvents.Chat.GOTO_TELEPORT);
         }
 
         private void OnChatBubbleVisibilityChanged(bool isVisible)
         {
+            // Skip initialization of chat bubble visibility
             if (isInitChatBubble)
             {
                 isInitChatBubble = false;
                 return;
             }
 
-            analytics.Track("chat_bubble_switched", new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.Chat.BUBBLE_SWITCHED, new Dictionary<string, JsonElement>
             {
                 { "is_visible", isVisible },
             });

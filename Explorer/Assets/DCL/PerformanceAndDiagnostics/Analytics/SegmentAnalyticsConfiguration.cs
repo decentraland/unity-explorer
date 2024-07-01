@@ -1,9 +1,21 @@
 ﻿using Segment.Analytics;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
+    public class AnalyticsGroup
+    {
+        public string Name;
+        public List<AnalyticsEvent> Events;
+    }
+
+    public class AnalyticsEvent
+    {
+        public string Name;
+    }
+
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/AnalyticsConfiguration", order = 0)]
     public class AnalyticsConfiguration : ScriptableObject
     {
@@ -21,7 +33,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         [field: SerializeField]
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
-        public float PerformanceReportInterval { get; } = 1.0f;
+        public float PerformanceReportInterval { get; private set; } = 1.0f;
 
         private string segmentWriteKey;
         private Configuration segmentConfiguration;
@@ -45,6 +57,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             }
 
             set => segmentWriteKey = value;
+        }
+
+        public bool EventIsEnabled(string eventName)
+        {
+            return true;
         }
     }
 }

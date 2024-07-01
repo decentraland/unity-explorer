@@ -46,7 +46,7 @@ namespace DCL.Analytics.Systems
 
         public override void Dispose()
         {
-            analytics.Track("walked_distance", new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.WALKED_DISTANCE, new Dictionary<string, JsonElement>
             {
                 ["distance"] = Mathf.Sqrt(totalDistanceSquared),
             });

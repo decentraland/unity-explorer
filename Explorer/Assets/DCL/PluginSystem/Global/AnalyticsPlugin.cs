@@ -29,9 +29,12 @@ namespace DCL.PluginSystem.Global
         private readonly AnalyticsController analytics;
         private readonly AnalyticsConfiguration analyticsConfig;
 
-        public AnalyticsPlugin(AnalyticsController analytics,  AnalyticsConfiguration analyticsConfig,
+        private MapAnalytics? mapAnalytics;
+        private ChatAnalytics? chatAnalytics;
+
+        public AnalyticsPlugin(AnalyticsController analytics, AnalyticsConfiguration analyticsConfig,
             IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache,
-                                                                                                                                                                               MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
+            MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
         {
             this.analytics = analytics;
             this.analyticsConfig = analyticsConfig;
@@ -52,6 +55,9 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             mvcManager.ControllerRegistered -= OnControllerRegistered;
+
+            chatAnalytics?.Dispose();
+            mapAnalytics?.Dispose();
         }
 
         private void OnControllerRegistered(IController controller)
@@ -60,12 +66,12 @@ namespace DCL.PluginSystem.Global
             {
                 case ChatController chatController:
                 {
-                    var chatAnalytics = new ChatAnalytics(analytics, chatController, chatMessagesBus, teleportToCommand);
+                    chatAnalytics = new ChatAnalytics(analytics, chatController, chatMessagesBus, teleportToCommand);
                     break;
                 }
                 case ExplorePanelController explorePanelController:
                 {
-                    var mapAnalytics = new MapAnalytics(analytics, explorePanelController.NavmapController);
+                    mapAnalytics = new MapAnalytics(analytics, explorePanelController.NavmapController);
                     break;
                 }
             }
@@ -75,6 +81,7 @@ namespace DCL.PluginSystem.Global
         {
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
             WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+
             // PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, analyticsConfig, profilingProvider);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
         }

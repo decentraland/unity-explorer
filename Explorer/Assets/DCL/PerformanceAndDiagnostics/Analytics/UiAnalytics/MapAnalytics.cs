@@ -26,7 +26,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnJumpIn(Vector2Int parcel)
         {
-            analytics.Track("map_jump_in", new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.Map.JUMP_IN, new Dictionary<string, JsonElement>
             {
                 { "parcel", parcel.ToString() },
             });

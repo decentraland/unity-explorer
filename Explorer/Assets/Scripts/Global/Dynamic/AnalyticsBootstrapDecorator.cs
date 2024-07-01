@@ -17,7 +17,6 @@ namespace Global.Dynamic
 {
     public class BootstrapAnalyticsDecorator : IBootstrap
     {
-        private const string TRACK_NAME = "initial_loading";
         private const string STAGE_KEY = "state";
         private const string RESULT_KEY = "result";
 
@@ -51,10 +50,26 @@ namespace Global.Dynamic
 
             analytics = new AnalyticsController(
                 // new DebugAnalyticsService()
-                new SegmentAnalyticsService(analyticsConfig)
+                new SegmentAnalyticsService(analyticsConfig),
+                analyticsConfig
             );
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.SYSTEM_INFO_REPORT, new Dictionary<string, JsonElement>
+            {
+                ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
+                ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"
+                ["system_memory_size"] = SystemInfo.systemMemorySize, // 65220 in [MB]
+
+                ["processor_type"] = SystemInfo.processorType, // "12th Gen Intel(R) Core(TM) i7-12700H"
+                ["processor_count"] = SystemInfo.processorCount, // 20
+
+                ["graphics_device_name"] = SystemInfo.graphicsDeviceName, // "NVIDIA GeForce RTX 3050 Laptop GPU"
+                ["graphics_memory_size"] = SystemInfo.graphicsMemorySize, // 3965 in [MB]
+                ["graphics_device_type"] = SystemInfo.graphicsDeviceType.ToString(), // "Direct3D11", Vulkan, OpenGLCore, XBoxOne...
+                ["graphics_device_version"] = SystemInfo.graphicsDeviceVersion, // "Direct3D 11.0 [level 11.1]"
+            });
+
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "started" },
             });
@@ -68,7 +83,7 @@ namespace Global.Dynamic
 
             analytics.SetCommonParam(result.container.RealmData, core.IdentityCache, result.container.CharacterContainer.CharacterObject.Transform);
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "static container loaded" },
                 { RESULT_KEY, result.isSuccess ? "success" : "failure" },
@@ -95,7 +110,7 @@ namespace Global.Dynamic
                     result.container.GoToChatCommand)
             );
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "dynamic container loaded" },
                 { RESULT_KEY, result.Item2 ? "success" : "failure" },
@@ -108,7 +123,7 @@ namespace Global.Dynamic
         {
             bool anyFailure = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, ct);
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "plugins initialized" },
                 { RESULT_KEY, !anyFailure ? "success" : "failure" },
@@ -121,7 +136,7 @@ namespace Global.Dynamic
         {
             UniTask result = core.InitializeFeatureFlagsAsync(staticContainer, ct);
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "feature flag initialized" },
             });
@@ -133,7 +148,7 @@ namespace Global.Dynamic
         {
             (GlobalWorld, Entity) result = core.CreateGlobalWorldAndPlayer(staticContainer, dynamicWorldContainer, debugUiRoot);
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "global world and player created" },
             });
@@ -145,7 +160,7 @@ namespace Global.Dynamic
         {
             await core.LoadStartingRealmAsync(dynamicWorldContainer, ct);
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "realm loaded" },
             });
@@ -158,7 +173,7 @@ namespace Global.Dynamic
             await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
             dynamicWorldContainer.RealFlowLoadingStatus.StageChanged -= OnLoadingStageChanged;
 
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
                 { STAGE_KEY, "end" },
             });
@@ -166,9 +181,9 @@ namespace Global.Dynamic
 
         private void OnLoadingStageChanged(RealFlowLoadingStatus.Stage stage)
         {
-            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
-                { STAGE_KEY, "loading screen: " + stage },
+                { STAGE_KEY, $"loading screen: {stage}"},
             });
         }
     }
