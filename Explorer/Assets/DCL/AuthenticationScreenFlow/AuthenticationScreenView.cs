@@ -14,7 +14,7 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenView : ViewBase, IView, IPointerClickHandler
     {
-        [SerializeField] private LocalizeStringEvent countdownLabel;
+        [SerializeField] private LocalizeStringEvent countdownLabel = null!;
 
         private StringVariable? countdownLabelParameter;
         [field: SerializeField]
@@ -45,7 +45,7 @@ namespace DCL.AuthenticationScreenFlow
         public Button JumpIntoWorldButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public Button UseAnotherAccountButton { get; private set; } = null!;
+        public Button[] UseAnotherAccountButton { get; private set; } = null!;
 
         [field: SerializeField]
         public LocalizeStringEvent ProfileNameLabel { get; private set; } = null!;
@@ -76,6 +76,12 @@ namespace DCL.AuthenticationScreenFlow
 
         [field: SerializeField]
         public TMP_Text VersionText { get; private set; } = null!;
+
+        [field: SerializeField]
+        public GameObject RestrictedUserContainer { get; private set; } = null!;
+
+        [field: SerializeField]
+        public Button RequestAlphaAccessButton { get; private set; } = null!;
 
         public async UniTaskVoid StartVerificationCountdownAsync(DateTime expiration, CancellationToken ct)
         {
