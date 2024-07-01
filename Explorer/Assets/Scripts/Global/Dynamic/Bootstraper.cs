@@ -1,12 +1,15 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.Browser;
 using DCL.Chat;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Minimap;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
@@ -24,7 +27,7 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    public class Bootstrap : IDisposable
+    public class Bootstrap : IBootstrap
     {
         private readonly bool showSplash = true;
         private readonly bool showAuthentication = true;
@@ -40,6 +43,8 @@ namespace Global.Dynamic
         private LogWeb3IdentityCache identityCache;
         private DappWeb3Authenticator web3VerifiedAuthenticator;
         private ProxyVerifiedWeb3Authenticator web3Authenticator;
+
+        public DynamicWorldDependencies DynamicWorldDependencies { get; private set; }
 
         public Bootstrap(bool showSplash, bool showAuthentication, bool showLoading, bool enableLOD, bool enableLandscape)
         {
@@ -78,8 +83,8 @@ namespace Global.Dynamic
             debugUtilitiesContainer = DebugUtilitiesContainer.Create(debugViewsCatalog);
         }
 
-        public async UniTask<(StaticContainer?, bool)> LoadStaticContainer(PluginSettingsContainer globalPluginSettingsContainer,
-            DynamicSceneLoaderSettings settings, CancellationToken ct)
+        public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(PluginSettingsContainer globalPluginSettingsContainer,
+            DynamicSceneLoaderSettings settings, IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
             identityCache = new LogWeb3IdentityCache(
                 new ProxyIdentityCache(
@@ -98,29 +103,32 @@ namespace Global.Dynamic
 
             web3Authenticator = new ProxyVerifiedWeb3Authenticator(web3VerifiedAuthenticator, identityCache);
 
-            return await StaticContainer.CreateAsync(debugUtilitiesContainer.Builder, globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
+            return await StaticContainer.CreateAsync(assetsProvisioner, debugUtilitiesContainer.Builder, globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
             // Allow devUrl only in DebugBuilds (Debug.isDebugBuild is always true in Editor)
             string GetAuthUrl(string releaseUrl, string devUrl) =>
                 Application.isEditor || !Debug.isDebugBuild ? releaseUrl : devUrl;
         }
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainer(StaticContainer staticContainer,
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, Animator splashScreenAnimation, AudioClipConfig backgroundMusic, CancellationToken ct) =>
-            await DynamicWorldContainer.CreateAsync(
-                new DynamicWorldDependencies
-                {
-                    DebugContainerBuilder = debugUtilitiesContainer.Builder,
-                    StaticContainer = staticContainer!,
-                    SettingsContainer = scenePluginSettingsContainer,
-                    RootUIDocument = uiToolkitRoot,
-                    CursorUIDocument = cursorRoot,
-                    DynamicSettings = dynamicSettings,
-                    Web3Authenticator = web3Authenticator,
-                    Web3IdentityCache = identityCache,
-                    SplashAnimator = splashScreenAnimation,
-                },
+            UIDocument uiToolkitRoot, UIDocument cursorRoot, Animator splashScreenAnimation, AudioClipConfig backgroundMusic, CancellationToken ct)
+        {
+            DynamicWorldDependencies = new DynamicWorldDependencies
+            {
+                DebugContainerBuilder = debugUtilitiesContainer.Builder,
+                StaticContainer = staticContainer!,
+                SettingsContainer = scenePluginSettingsContainer,
+                RootUIDocument = uiToolkitRoot,
+                CursorUIDocument = cursorRoot,
+                DynamicSettings = dynamicSettings,
+                Web3Authenticator = web3Authenticator,
+                Web3IdentityCache = identityCache,
+                SplashAnimator = splashScreenAnimation,
+            };
+
+            return await DynamicWorldContainer.CreateAsync(
+                DynamicWorldDependencies,
                 new DynamicWorldParams
                 {
                     StaticLoadPositions = launchSettings.GetPredefinedParcels(),
@@ -133,8 +141,9 @@ namespace Global.Dynamic
                 backgroundMusic,
                 ct
             );
+        }
 
-        public async UniTask<bool> InitializePlugins(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
+        public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
             PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer,
             CancellationToken ct)
         {
@@ -150,6 +159,18 @@ namespace Global.Dynamic
             }
 
             return anyFailure;
+        }
+
+        public async UniTask InitializeFeatureFlagsAsync(StaticContainer staticContainer, CancellationToken ct)
+        {
+            try
+            {
+                await staticContainer!.FeatureFlagsProvider.InitializeAsync(identityCache!.Identity?.Address, ct);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
+            }
         }
 
         public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, UIDocument debugUiRoot)

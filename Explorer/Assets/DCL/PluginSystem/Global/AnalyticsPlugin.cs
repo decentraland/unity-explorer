@@ -1,15 +1,12 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
-using DCL.AssetsProvision;
-using DCL.Character;
 using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.ExplorePanel;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
-using DCL.Web3.Identities;
 using ECS;
 using ECS.SceneLifeCycle;
 using MVC;
@@ -20,48 +17,37 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class AnalyticsPlugin : IDCLGlobalPlugin<AnalyticsSettings>
+    public class AnalyticsPlugin : IDCLGlobalPlugin
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IProfilingProvider profilingProvider;
         private readonly IRealmData realmData;
-        private readonly ICharacterObject characterObject;
         private readonly IScenesCache scenesCache;
         private readonly MVCManager mvcManager;
         private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IWeb3IdentityCache identityCache;
         private readonly IChatCommand teleportToCommand;
 
-        private AnalyticsController analytics;
-        private AnalyticsConfiguration analyticsConfig;
+        private readonly AnalyticsController analytics;
+        private readonly AnalyticsConfiguration analyticsConfig;
 
-        public AnalyticsPlugin(IAssetsProvisioner assetsProvisioner, IProfilingProvider profilingProvider, IRealmData realmData,
-            ICharacterObject characterObject, IScenesCache scenesCache,
-            MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IWeb3IdentityCache identityCache, IChatCommand teleportToCommand)
+        public AnalyticsPlugin(AnalyticsController analytics,  AnalyticsConfiguration analyticsConfig,
+            IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache,
+                                                                                                                                                                               MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
         {
-            this.assetsProvisioner = assetsProvisioner;
+            this.analytics = analytics;
             this.profilingProvider = profilingProvider;
             this.realmData = realmData;
-            this.characterObject = characterObject;
             this.scenesCache = scenesCache;
             this.mvcManager = mvcManager;
             this.chatMessagesBus = chatMessagesBus;
-            this.identityCache = identityCache;
             this.teleportToCommand = teleportToCommand;
         }
 
-        public async UniTask InitializeAsync(AnalyticsSettings settings, CancellationToken ct)
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
         {
-            analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.AnalyticsConfigRef, ct)).Value;
-
-            analytics = new AnalyticsController(
-                // new DebugAnalyticsService(),
-                new SegmentAnalyticsService(analyticsConfig),
-                realmData, characterObject.Transform, identityCache
-                );
-
             mvcManager.ControllerRegistered += OnControllerRegistered;
+            return UniTask.CompletedTask;
         }
+
 
         public void Dispose()
         {
@@ -84,6 +70,7 @@ namespace DCL.PluginSystem.Global
                 }
             }
         }
+
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {

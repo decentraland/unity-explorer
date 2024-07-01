@@ -81,7 +81,7 @@ namespace Global.Dynamic
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
-        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
+        public List<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
 
         public IProfileRepository ProfileRepository { get; private set; } = null!;
 
@@ -97,6 +97,8 @@ namespace Global.Dynamic
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; } = null!;
+
+        public IChatCommand GoToChatCommand { get; private set; } = null!;
 
         public void Dispose()
         {
@@ -273,10 +275,10 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();
 
-            var teleportToChatCommand = new TeleportToChatCommand(realmNavigator);
+            container.GoToChatCommand = new TeleportToChatCommand(realmNavigator);
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { TeleportToChatCommand.REGEX, () => teleportToChatCommand },
+                { TeleportToChatCommand.REGEX, () => container.GoToChatCommand },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
@@ -307,16 +309,16 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                new AnalyticsPlugin(
-                    staticContainer.AssetsProvisioner,
-                    staticContainer.ProfilingProvider,
-                    staticContainer.RealmData,
-                    staticContainer.CharacterContainer.CharacterObject,
-                    staticContainer.ScenesCache,
-                    container.MvcManager,
-                    container.ChatMessagesBus,
-                    identityCache,
-                    teleportToChatCommand),
+                // new AnalyticsPlugin(
+                //     staticContainer.AssetsProvisioner,
+                //     staticContainer.ProfilingProvider,
+                //     staticContainer.RealmData,
+                //     staticContainer.CharacterContainer.CharacterObject,
+                //     staticContainer.ScenesCache,
+                //     container.MvcManager,
+                //     container.ChatMessagesBus,
+                //     identityCache,
+                //     teleportToChatCommand),
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,

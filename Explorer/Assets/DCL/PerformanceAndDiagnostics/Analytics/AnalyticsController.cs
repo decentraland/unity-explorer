@@ -13,9 +13,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private const string UNDEFINED = "undefined";
 
         private readonly IAnalyticsService analytics;
-        private readonly IRealmData realmData;
-        private readonly Transform playerTransform;
-        private readonly IWeb3IdentityCache identityCache;
+        private  IRealmData realmData;
+        private  Transform playerTransform;
+        private  IWeb3IdentityCache identityCache;
 
         private readonly IDictionary<string, JsonElement> commonParamsValues;
         private IDictionary<string, JsonElement> commonParams
@@ -23,28 +23,23 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             get
             {
                 commonParamsValues["dcl_eth_address"] = identityCache?.Identity == null ? UNDEFINED : identityCache.Identity.Address.ToString();
-                commonParamsValues["realm"] = realmData.Configured ? realmData.RealmName : UNDEFINED;
+                commonParamsValues["realm"] = realmData is not { Configured: true } ? UNDEFINED : realmData.RealmName;
                 commonParamsValues["position"] = playerTransform == null ? UNDEFINED : playerTransform.position.ToShortString();
 
                 return commonParamsValues;
             }
         }
 
-        public AnalyticsController(IAnalyticsService analyticsService,
-            IRealmData realmData, Transform playerTransform, IWeb3IdentityCache identityCache)
+        public AnalyticsController(IAnalyticsService analyticsService)
         {
             this.analytics = analyticsService;
-            this.realmData = realmData;
-
-            this.identityCache = identityCache;
-            this.playerTransform = playerTransform;
 
             commonParamsValues = new Dictionary<string, JsonElement>
             {
                 // Dynamic common parameters, updated on call
                 ["dcl_eth_address"] = UNDEFINED,
-                ["realm"] = realmData.Configured ? realmData.RealmName : UNDEFINED,
-                ["position"] = playerTransform != null ? playerTransform.position.ToShortString() : UNDEFINED,
+                ["realm"] = UNDEFINED,
+                ["position"] = UNDEFINED,
                 // Static common parameters
                 ["dcl_renderer_type"] = SystemInfo.deviceType.ToString(), // Desktop, Console, Handeheld (Mobile), Unknown
                 ["session_id"] = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff"),
@@ -53,6 +48,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             };
 
             SendSystemInfo();
+        }
+
+        public void SetCommonParam(IRealmData realmData, Transform playerTransform, IWeb3IdentityCache identityCache)
+        {
+            this.realmData = realmData;
+
+            this.identityCache = identityCache;
+            this.playerTransform = playerTransform;
         }
 
         public void Track(string eventName, Dictionary<string, JsonElement> properties = null)

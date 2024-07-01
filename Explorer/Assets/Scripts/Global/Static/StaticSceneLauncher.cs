@@ -1,4 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AssetsProvision.Provisions;
 using DCL.Browser;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -125,6 +127,7 @@ namespace Global.Static
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                new AddressablesProvisioner().WithErrorTrace(),
                 new NullDebugContainerBuilder(),
                 globalSettingsContainer,
                 web3IdentityProvider,

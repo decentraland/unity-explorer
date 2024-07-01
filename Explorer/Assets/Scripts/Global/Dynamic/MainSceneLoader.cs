@@ -1,21 +1,13 @@
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Audio;
-using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.EmotesWheel;
-using DCL.ExplorePanel;
-using DCL.Minimap;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
-using DCL.Utilities.Extensions;
-using DCL.Web3.Authenticators;
-using DCL.Web3.Identities;
-using ECS.SceneLifeCycle.Realm;
-using MVC;
 using System;
 using System.Linq;
 using System.Threading;
@@ -56,11 +48,24 @@ namespace Global.Dynamic
         private GlobalWorld? globalWorld;
         private StaticContainer? staticContainer;
 
-        private Bootstrap? bootstrap;
+        private IBootstrap? bootstrap;
 
-        private void Awake()
+        private IAssetsProvisioner assetsProvisioner;
+
+        private async void Awake()
         {
-            bootstrap = new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
+            assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
+
+            AnalyticsSettings analyticsSettings = globalPluginSettingsContainer.GetSettings<AnalyticsSettings>();
+            var analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, destroyCancellationToken)).Value;
+
+            var analytics = new AnalyticsController(
+                new DebugAnalyticsService()
+                // new SegmentAnalyticsService(analyticsConfig)
+            );
+
+            bootstrap = new BootstrapAnalyticsDecorator(new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape), analytics);
+                // new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
             bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog);
 
             InitializeFlowAsync(destroyCancellationToken).Forget();
@@ -98,14 +103,14 @@ namespace Global.Dynamic
             {
                 bool isLoaded;
 
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainer(globalPluginSettingsContainer, settings, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(globalPluginSettingsContainer, settings, assetsProvisioner, ct);
                 if (!isLoaded)
                 {
                     GameReports.PrintIsDead();
                     return;
                 }
 
-                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainer(staticContainer!, scenePluginSettingsContainer, settings,
+                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, destroyCancellationToken);
                 if (!isLoaded)
                 {
@@ -113,7 +118,9 @@ namespace Global.Dynamic
                     return;
                 }
 
-                if (await bootstrap.InitializePlugins(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
+                await bootstrap.InitializeFeatureFlagsAsync(staticContainer!, ct);
+
+                if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
                     GameReports.PrintIsDead();
                     return;
