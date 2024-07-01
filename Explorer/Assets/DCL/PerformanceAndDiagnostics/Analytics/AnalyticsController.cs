@@ -13,11 +13,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private const string UNDEFINED = "undefined";
 
         private readonly IAnalyticsService analytics;
+        private readonly IDictionary<string, JsonElement> commonParamsValues;
+
         private  IRealmData realmData;
         private  Transform playerTransform;
         private  IWeb3IdentityCache identityCache;
 
-        private readonly IDictionary<string, JsonElement> commonParamsValues;
         private IDictionary<string, JsonElement> commonParams
         {
             get

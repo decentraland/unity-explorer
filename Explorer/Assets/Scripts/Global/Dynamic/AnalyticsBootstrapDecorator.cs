@@ -6,6 +6,7 @@ using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.UserInAppInitializationFlow;
 using Segment.Serialization;
 using System.Collections.Generic;
 using System.Threading;
@@ -16,12 +17,16 @@ namespace Global.Dynamic
 {
     public class BootstrapAnalyticsDecorator : IBootstrap
     {
+        private const string TRACK_NAME = "initial_loading";
+
         private readonly Bootstrap core;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly AnalyticsSettings analyticsSettings;
 
-        private  AnalyticsController analytics;
+        private AnalyticsController analytics;
         private AnalyticsConfiguration analyticsConfig;
+        private string STAGE_KEY = "state";
+        private string RESULT_KEY = "result";
 
         public DynamicWorldDependencies DynamicWorldDependencies { get; }
 
@@ -31,7 +36,6 @@ namespace Global.Dynamic
             this.assetsProvisioner = assetsProvisioner;
             this.analyticsSettings = analyticsSettings;
 
-
             DynamicWorldDependencies = core.DynamicWorldDependencies;
         }
 
@@ -40,19 +44,21 @@ namespace Global.Dynamic
             core.Dispose();
         }
 
-        public async UniTask PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, DebugViewsCatalog debugViewsCatalog, CancellationToken ct)
+        public async UniTask PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, DebugViewsCatalog debugViewsCatalog,
+            CancellationToken ct)
         {
             analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, ct)).Value;
+
             analytics = new AnalyticsController(
                 new DebugAnalyticsService()
+
                 // new SegmentAnalyticsService(analyticsConfig)
             );
 
-            analytics.Track("initial_loading", new Dictionary<string, JsonElement>
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { "state", "initialization started" },
+                { STAGE_KEY, "initialization started" },
             });
-
 
             core.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, ct);
         }
@@ -63,10 +69,10 @@ namespace Global.Dynamic
 
             analytics.SetCommonParam(result.container.RealmData, core.IdentityCache, result.container.CharacterContainer.CharacterObject.Transform);
 
-            analytics.Track("initial_loading", new Dictionary<string, JsonElement>
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { "state", "static container loaded" },
-                { "result", result.isSuccess? "success" : "failure" },
+                { STAGE_KEY, "static container loaded" },
+                { RESULT_KEY, result.isSuccess ? "success" : "failure" },
             });
 
             return result;
@@ -88,12 +94,12 @@ namespace Global.Dynamic
                     result.container.MvcManager,
                     result.container.ChatMessagesBus,
                     result.container.GoToChatCommand)
-                );
+            );
 
-            analytics.Track("initial_loading", new Dictionary<string, JsonElement>
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { "state", "dynamic container loaded" },
-                { "result", result.Item2? "success" : "failure" },
+                { STAGE_KEY, "dynamic container loaded" },
+                { RESULT_KEY, result.Item2 ? "success" : "failure" },
             });
 
             return result;
@@ -103,10 +109,10 @@ namespace Global.Dynamic
         {
             bool result = await core.InitializePluginsAsync(staticContainer, dynamicWorldContainer, scenePluginSettingsContainer, globalPluginSettingsContainer, ct);
 
-            analytics.Track("initial_loading", new Dictionary<string, JsonElement>
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { "state", "plugins initialized" },
-                { "result", result? "success" : "failure" },
+                { STAGE_KEY, "plugins initialized" },
+                { RESULT_KEY, result ? "success" : "failure" },
             });
 
             return result;
@@ -114,11 +120,11 @@ namespace Global.Dynamic
 
         public UniTask InitializeFeatureFlagsAsync(StaticContainer staticContainer, CancellationToken ct)
         {
-            var result = core.InitializeFeatureFlagsAsync(staticContainer, ct);
+            UniTask result = core.InitializeFeatureFlagsAsync(staticContainer, ct);
 
-            analytics.Track("initial_loading", new Dictionary<string, JsonElement>
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { "state", "feature flag initialized" },
+                { STAGE_KEY, "feature flag initialized" },
             });
 
             return result;
@@ -126,24 +132,44 @@ namespace Global.Dynamic
 
         public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, UIDocument debugUiRoot)
         {
-            var result = core.CreateGlobalWorldAndPlayer(staticContainer, dynamicWorldContainer, debugUiRoot);
+            (GlobalWorld, Entity) result = core.CreateGlobalWorldAndPlayer(staticContainer, dynamicWorldContainer, debugUiRoot);
 
-            analytics.Track("initial_loading", new Dictionary<string, JsonElement>
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { "state", "global world and player created" },
+                { STAGE_KEY, "global world and player created" },
             });
 
             return result;
         }
 
-        public async UniTask LoadStartingRealmAndUserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld? globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot,
+        public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
+        {
+            await core.LoadStartingRealmAsync(dynamicWorldContainer, ct);
+
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            {
+                { STAGE_KEY, "realm loaded" },
+            });
+        }
+
+        public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld? globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot,
             CancellationToken ct)
         {
-            await core.LoadStartingRealmAndUserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
+            dynamicWorldContainer.RealFlowLoadingStatus.StageChanged += OnLoadingStageChanged;
+            await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
+            dynamicWorldContainer.RealFlowLoadingStatus.StageChanged -= OnLoadingStageChanged;
 
-            analytics.Track("initial_loading", new Dictionary<string, JsonElement>
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
             {
-                { "state", "completed" },
+                { STAGE_KEY, "completed" },
+            });
+        }
+
+        private void OnLoadingStageChanged(RealFlowLoadingStatus.Stage stage)
+        {
+            analytics.Track(TRACK_NAME, new Dictionary<string, JsonElement>
+            {
+                { STAGE_KEY, "loading screen: " + stage },
             });
         }
     }

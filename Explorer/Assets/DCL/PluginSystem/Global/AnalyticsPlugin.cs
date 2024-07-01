@@ -49,7 +49,6 @@ namespace DCL.PluginSystem.Global
             return UniTask.CompletedTask;
         }
 
-
         public void Dispose()
         {
             mvcManager.ControllerRegistered -= OnControllerRegistered;
@@ -71,7 +70,6 @@ namespace DCL.PluginSystem.Global
                 }
             }
         }
-
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {

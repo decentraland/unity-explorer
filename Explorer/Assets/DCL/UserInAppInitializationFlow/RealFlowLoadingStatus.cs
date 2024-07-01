@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Utility;
 
 namespace DCL.UserInAppInitializationFlow
@@ -27,9 +28,13 @@ namespace DCL.UserInAppInitializationFlow
 
         public Stage CurrentStage { get; private set; }
 
+        public event Action<Stage>? StageChanged;
+
         public float SetStage(Stage stage)
         {
             CurrentStage = stage;
+            StageChanged?.Invoke(stage);
+
             return PROGRESS[stage];
         }
     }

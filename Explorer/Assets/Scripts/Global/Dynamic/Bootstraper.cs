@@ -199,11 +199,14 @@ namespace Global.Dynamic
             return (globalWorld, playerEntity);
         }
 
-        public async UniTask LoadStartingRealmAndUserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
-            GlobalWorld? globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot, CancellationToken ct)
+        public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
             await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+        }
 
+        public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
+            GlobalWorld? globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot, CancellationToken ct)
+        {
             if (showSplash)
                 await UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1, cancellationToken: ct);
             splashScreenAnimation.transform.SetSiblingIndex(1);

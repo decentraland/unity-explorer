@@ -120,7 +120,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
         }
-        
+
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
             try

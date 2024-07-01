@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AssetsProvision.Provisions;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -50,26 +51,16 @@ namespace Global.Dynamic
 
         private IBootstrap? bootstrap;
 
-        private IAssetsProvisioner assetsProvisioner;
-
-        private async void Awake()
+        private void Awake()
         {
-            assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            //
-            // AnalyticsSettings analyticsSettings = globalPluginSettingsContainer.GetSettings<AnalyticsSettings>();
-            // var analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, destroyCancellationToken)).Value;
-            //
-            // var analytics = new AnalyticsController(
-            //     new DebugAnalyticsService()
-            //     // new SegmentAnalyticsService(analyticsConfig)
-            // );
+            var assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
 
-            bootstrap = new BootstrapAnalyticsDecorator(new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape),
-                assetsProvisioner, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>());
-                // new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
-            await bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
+            Bootstrap coreBootstrap = new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
+            bootstrap =
+                new BootstrapAnalyticsDecorator(coreBootstrap, assetsProvisioner, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>());
+                // coreBootstrap;
 
-            InitializeFlowAsync(destroyCancellationToken).Forget();
+            InitializeFlowAsync(assetsProvisioner, destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
@@ -98,11 +89,13 @@ namespace Global.Dynamic
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
-        private async UniTask InitializeFlowAsync(CancellationToken ct)
+        private async UniTask InitializeFlowAsync(ErrorTraceAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
             try
             {
                 bool isLoaded;
+
+                await bootstrap!.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
 
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(globalPluginSettingsContainer, settings, assetsProvisioner, ct);
                 if (!isLoaded)
@@ -120,7 +113,6 @@ namespace Global.Dynamic
                 }
 
                 await bootstrap.InitializeFeatureFlagsAsync(staticContainer!, ct);
-
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
                     GameReports.PrintIsDead();
@@ -129,8 +121,8 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
                 (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(staticContainer!, dynamicWorldContainer!, debugUiRoot);
-
-                await bootstrap.LoadStartingRealmAndUserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
+                await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
             }
             catch (OperationCanceledException)
             {

@@ -100,6 +100,8 @@ namespace Global.Dynamic
 
         public IChatCommand GoToChatCommand { get; private set; } = null!;
 
+        public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
+
         public void Dispose()
         {
             MvcManager.Dispose();
@@ -185,7 +187,7 @@ namespace Global.Dynamic
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
-            var realFlowLoadingStatus = new RealFlowLoadingStatus();
+            container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
             var emotesCache = new MemoryEmotesCache();
             staticContainer.CacheCleaner.Register(emotesCache);
@@ -255,7 +257,7 @@ namespace Global.Dynamic
             );
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
-                realFlowLoadingStatus,
+                container.RealFlowLoadingStatus,
                 container.MvcManager,
                 selfProfile,
                 dynamicWorldParams.StartParcel,
@@ -309,16 +311,6 @@ namespace Global.Dynamic
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
-                // new AnalyticsPlugin(
-                //     staticContainer.AssetsProvisioner,
-                //     staticContainer.ProfilingProvider,
-                //     staticContainer.RealmData,
-                //     staticContainer.CharacterContainer.CharacterObject,
-                //     staticContainer.ScenesCache,
-                //     container.MvcManager,
-                //     container.ChatMessagesBus,
-                //     identityCache,
-                //     teleportToChatCommand),
                 new MultiplayerPlugin(
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
@@ -326,7 +318,7 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
-                    realFlowLoadingStatus,
+                    container.RealFlowLoadingStatus,
                     entityParticipantTable,
                     container.MessagePipesHub,
                     remotePoses,
