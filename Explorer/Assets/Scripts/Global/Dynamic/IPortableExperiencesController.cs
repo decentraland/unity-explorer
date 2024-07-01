@@ -10,7 +10,7 @@ namespace Global.Dynamic
     public interface IPortableExperiencesController
     {
         GlobalWorld GlobalWorld { get; set; }
-        List<Entity> RealmEntities { get; }
+        Dictionary<string, Entity> PortableExperienceEntities { get; }
 
         UniTask CreatePortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct);
 
@@ -21,11 +21,6 @@ namespace Global.Dynamic
         /// <summary>
         ///     Gracefully unload the current realm
         /// </summary>
-        UniTask UnloadCurrentRealmAsync();
-
-        /// <summary>
-        ///     Dispose everything on application quit
-        /// </summary>
-        void DisposeGlobalWorld();
+        UniTask UnloadPortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct);
     }
 }

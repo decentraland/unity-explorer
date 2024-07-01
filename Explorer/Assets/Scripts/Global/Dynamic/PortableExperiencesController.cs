@@ -36,13 +36,13 @@ namespace Global.Dynamic
         private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
-        private readonly RealmData realmData;
         private readonly TeleportController teleportController;
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
 
         private GlobalWorld? globalWorld;
-        public List<Entity> RealmEntities { get; } = new (); //Probably should be a dictionary using the url as key?
+        public Dictionary<string,Entity> PortableExperienceEntities { get; } = new (); //Probably should be a dictionary using the url as key?
+        private RealmData realmData = new RealmData();
 
         public GlobalWorld GlobalWorld
         {
@@ -66,7 +66,6 @@ namespace Global.Dynamic
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
-            this.realmData = realmData;
             this.teleportController = teleportController;
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
@@ -76,24 +75,35 @@ namespace Global.Dynamic
         {
             World world = globalWorld!.EcsWorld;
 
-            try { await UnloadCurrentRealmAsync(); }
-            catch (ObjectDisposedException) { }
-
             await UniTask.SwitchToMainThread();
 
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
-
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
-            realmData.Reconfigure(
-                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
-                result.configurations.realmName.EnsureNotNull("Realm name not found"),
-                result.configurations.networkId,
-                result.comms?.adapter ?? string.Empty
-            );
+            try {
+                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+                if (result.configurations.scenesUrn.Count == 0)
+                {
+                    //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
+                    return;
+                }
 
-            RealmEntities.Add(world.Create(new PortableExperienceComponent(realmData)));
+                realmData.Reconfigure(
+                    new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
+                    result.configurations.realmName.EnsureNotNull("Realm name not found"),
+                    result.configurations.networkId,
+                    result.comms?.adapter ?? string.Empty
+                );
+
+                PortableExperienceEntities.Add(portableExperiencePath.Value, world.Create(new PortableExperienceComponent(realmData)));
+            }
+            catch (Exception e)
+            {
+                //Handle exception properly
+                Console.WriteLine(e);
+                throw;
+            }
+
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
@@ -102,13 +112,13 @@ namespace Global.Dynamic
         public IRealmData GetRealm() =>
             realmData;
 
-        public async UniTask UnloadCurrentRealmAsync()
+        public async UniTask UnloadPortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct)
         {
             if (globalWorld == null) return;
 
             World world = globalWorld.EcsWorld;
 
-            FindLoadedScenes();
+            //ScenesCache.TryGetByURL
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
@@ -121,41 +131,12 @@ namespace Global.Dynamic
 
             globalWorld.Clear();
 
-            teleportController.InvalidateRealm();
             realmData.Invalidate();
 
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
 
             // Collect garbage, good moment to do it
             GC.Collect();
-        }
-
-        public void DisposeGlobalWorld()
-        {
-            if (globalWorld != null)
-            {
-                World world = globalWorld.EcsWorld;
-                FindLoadedScenes();
-                world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
-
-                // Destroy everything without awaiting as it's Application Quit
-                globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
-            }
-
-            foreach (ISceneFacade scene in allScenes)
-
-                // Scene Info is contained in the ReportData, don't include it into the exception
-                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
-                    static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
-        }
-
-        private void FindLoadedScenes()
-        {
-            allScenes.Clear();
-            allScenes.AddRange(scenesCache.Scenes);
-
-            // Dispose all scenes
-            scenesCache.Clear();
         }
     }
 }

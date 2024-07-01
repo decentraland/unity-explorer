@@ -253,8 +253,10 @@ namespace Global.Dynamic
 
                 await ChangeRealmAsync(ct);
 
-                //Load all the URLS from wherever to create the permanent PX
-                var pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/shibu.dcl.eth");
+                //Load all the URLS from wherever to create the permanent PXs
+                //var pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/PizzaPie.dcl.eth");
+                //await dynamicWorldContainer!.PortableExperiencesController.CreatePortableExperienceAsync(pXURLDomain, ct);
+                var pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/pejo.dcl.eth");
                 await dynamicWorldContainer!.PortableExperiencesController.CreatePortableExperienceAsync(pXURLDomain, ct);
 
                 if (showSplash)
