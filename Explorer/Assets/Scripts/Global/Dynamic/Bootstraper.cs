@@ -40,10 +40,10 @@ namespace Global.Dynamic
         private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
 
-        private LogWeb3IdentityCache identityCache;
         private DappWeb3Authenticator web3VerifiedAuthenticator;
         private ProxyVerifiedWeb3Authenticator web3Authenticator;
 
+        public LogWeb3IdentityCache IdentityCache { get; private set; }
         public DynamicWorldDependencies DynamicWorldDependencies { get; private set; }
 
         public Bootstrap(bool showSplash, bool showAuthentication, bool showLoading, bool enableLOD, bool enableLandscape)
@@ -63,8 +63,8 @@ namespace Global.Dynamic
             web3Authenticator.Dispose();
         }
 
-        public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
-            GameObject splashRoot, DebugViewsCatalog debugViewsCatalog)
+        public UniTask PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
+            GameObject splashRoot, DebugViewsCatalog debugViewsCatalog, CancellationToken _)
         {
             splashRoot.SetActive(showSplash);
 
@@ -81,12 +81,14 @@ namespace Global.Dynamic
             DotNetLoggingPlugin.Initialize();
 
             debugUtilitiesContainer = DebugUtilitiesContainer.Create(debugViewsCatalog);
+
+            return UniTask.CompletedTask;
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(PluginSettingsContainer globalPluginSettingsContainer,
             DynamicSceneLoaderSettings settings, IAssetsProvisioner assetsProvisioner, CancellationToken ct)
         {
-            identityCache = new LogWeb3IdentityCache(
+            IdentityCache = new LogWeb3IdentityCache(
                 new ProxyIdentityCache(
                     new MemoryWeb3IdentityCache(),
                     new PlayerPrefsIdentityProvider(
@@ -98,12 +100,12 @@ namespace Global.Dynamic
             web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
                 serverUrl: GetAuthUrl(settings.AuthWebSocketUrl, settings.AuthWebSocketUrlDev),
                 signatureUrl: GetAuthUrl(settings.AuthSignatureUrl, settings.AuthSignatureUrlDev),
-                identityCache,
+                IdentityCache,
                 new HashSet<string>(settings.Web3WhitelistMethods));
 
-            web3Authenticator = new ProxyVerifiedWeb3Authenticator(web3VerifiedAuthenticator, identityCache);
+            web3Authenticator = new ProxyVerifiedWeb3Authenticator(web3VerifiedAuthenticator, IdentityCache);
 
-            return await StaticContainer.CreateAsync(assetsProvisioner, debugUtilitiesContainer.Builder, globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
+            return await StaticContainer.CreateAsync(assetsProvisioner, debugUtilitiesContainer.Builder, globalPluginSettingsContainer, IdentityCache, web3VerifiedAuthenticator, ct);
 
             // Allow devUrl only in DebugBuilds (Debug.isDebugBuild is always true in Editor)
             string GetAuthUrl(string releaseUrl, string devUrl) =>
@@ -123,7 +125,7 @@ namespace Global.Dynamic
                 CursorUIDocument = cursorRoot,
                 DynamicSettings = dynamicSettings,
                 Web3Authenticator = web3Authenticator,
-                Web3IdentityCache = identityCache,
+                Web3IdentityCache = IdentityCache,
                 SplashAnimator = splashScreenAnimation,
             };
 
@@ -165,7 +167,7 @@ namespace Global.Dynamic
         {
             try
             {
-                await staticContainer!.FeatureFlagsProvider.InitializeAsync(identityCache!.Identity?.Address, ct);
+                await staticContainer!.FeatureFlagsProvider.InitializeAsync(IdentityCache!.Identity?.Address, ct);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
@@ -181,7 +183,7 @@ namespace Global.Dynamic
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer!,
                 dynamicWorldContainer!.MvcManager,
-                identityCache,
+                IdentityCache,
                 dynamicWorldContainer.ProfileRepository,
                 staticContainer!.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer!.RoomHub,

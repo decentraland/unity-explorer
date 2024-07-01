@@ -14,8 +14,8 @@ namespace Global.Dynamic
 {
     public interface IBootstrap: IDisposable
     {
-        void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
-            GameObject splashRoot, DebugViewsCatalog debugViewsCatalog);
+        UniTask PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
+            GameObject splashRoot, DebugViewsCatalog debugViewsCatalog, CancellationToken ct);
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(PluginSettingsContainer globalPluginSettingsContainer,  DynamicSceneLoaderSettings settings,
             IAssetsProvisioner assetsProvisioner, CancellationToken ct);
@@ -34,7 +34,5 @@ namespace Global.Dynamic
 
         UniTask LoadStartingRealmAndUserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
             GlobalWorld? globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot, CancellationToken ct);
-
-        DynamicWorldDependencies DynamicWorldDependencies { get;  }
     }
 }

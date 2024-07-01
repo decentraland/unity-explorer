@@ -55,18 +55,19 @@ namespace Global.Dynamic
         private async void Awake()
         {
             assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
+            //
+            // AnalyticsSettings analyticsSettings = globalPluginSettingsContainer.GetSettings<AnalyticsSettings>();
+            // var analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, destroyCancellationToken)).Value;
+            //
+            // var analytics = new AnalyticsController(
+            //     new DebugAnalyticsService()
+            //     // new SegmentAnalyticsService(analyticsConfig)
+            // );
 
-            AnalyticsSettings analyticsSettings = globalPluginSettingsContainer.GetSettings<AnalyticsSettings>();
-            var analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, destroyCancellationToken)).Value;
-
-            var analytics = new AnalyticsController(
-                new DebugAnalyticsService()
-                // new SegmentAnalyticsService(analyticsConfig)
-            );
-
-            bootstrap = new BootstrapAnalyticsDecorator(new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape), analytics);
+            bootstrap = new BootstrapAnalyticsDecorator(new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape),
+                assetsProvisioner, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>());
                 // new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
-            bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog);
+            await bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
 
             InitializeFlowAsync(destroyCancellationToken).Forget();
         }

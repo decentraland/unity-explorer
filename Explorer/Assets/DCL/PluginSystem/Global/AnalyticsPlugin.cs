@@ -34,6 +34,7 @@ namespace DCL.PluginSystem.Global
                                                                                                                                                                                MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
         {
             this.analytics = analytics;
+            this.analyticsConfig = analyticsConfig;
             this.profilingProvider = profilingProvider;
             this.realmData = realmData;
             this.scenesCache = scenesCache;

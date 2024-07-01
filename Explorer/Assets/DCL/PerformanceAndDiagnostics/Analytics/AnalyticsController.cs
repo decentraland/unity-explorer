@@ -50,7 +50,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             SendSystemInfo();
         }
 
-        public void SetCommonParam(IRealmData realmData, Transform playerTransform, IWeb3IdentityCache identityCache)
+        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, Transform playerTransform)
         {
             this.realmData = realmData;
 
