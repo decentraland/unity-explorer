@@ -24,7 +24,7 @@ jobs:
   test:
     if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build')
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: Ubuntu-Big
     steps:
 
       - name: Checkout code
