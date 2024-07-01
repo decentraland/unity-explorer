@@ -8,6 +8,9 @@ namespace DCL.FeatureFlags
 {
     public static class FeatureFlagsProviderExtensions
     {
+        private const string ARG_URL = "--feature-flags-url";
+        private const string ARG_HOSTNAME = "--feature-flags-hostname";
+
         public static async UniTask<FeatureFlagsConfiguration> InitializeAsync(
             this IFeatureFlagsProvider featureFlagsProvider,
             Web3Address? userAddress,
@@ -39,10 +42,10 @@ namespace DCL.FeatureFlags
                 {
                     switch (programArgs[i])
                     {
-                        case "--feature-flags-url":
+                        case ARG_URL:
                             url = URLDomain.FromString(programArgs[i + 1]);
                             break;
-                        case "--feature-flags-hostname":
+                        case ARG_HOSTNAME:
                             hostname = programArgs[i + 1];
                             break;
                     }
