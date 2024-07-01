@@ -2,15 +2,20 @@
 {
     public static class AnalyticsEvents
     {
-        public const string SYSTEM_INFO_REPORT = "system_info_report";
-        public const string INITIAL_LOADING = "initial_loading";
-        public const string PERFORMANCE_REPORT = "performance_report";
+        public static class General
+        {
+            public const string SYSTEM_INFO_REPORT = "system_info_report";
+            public const string INITIAL_LOADING = "initial_loading";
+            public const string PERFORMANCE_REPORT = "performance_report";
+        }
 
-        // Spatial Movement
-        public const string MOVE_TO_PARCEL = "move_to_parcel";
-        public const string VISIT_SCENE = "visit_scene";
-        public const string WALKED_DISTANCE = "walked_distance";
-        public const string TIME_SPENT_IN_WORLD = "time_spent_in_world";
+        public static class World
+        {
+            public const string MOVE_TO_PARCEL = "move_to_parcel";
+            public const string VISIT_SCENE = "visit_scene";
+            public const string WALKED_DISTANCE = "walked_distance";
+            public const string TIME_SPENT_IN_WORLD = "time_spent_in_world";
+        }
 
         public static class Chat
         {

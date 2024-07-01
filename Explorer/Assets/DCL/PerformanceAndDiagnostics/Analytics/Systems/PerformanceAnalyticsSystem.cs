@@ -8,6 +8,8 @@ using ECS.Abstract;
 using Segment.Serialization;
 using System.Collections.Generic;
 using UnityEngine;
+using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
+using World = Arch.Core.World;
 
 namespace DCL.Analytics.Systems
 {
@@ -43,7 +45,7 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            analytics.Track(AnalyticsEvents.PERFORMANCE_REPORT, new Dictionary<string, JsonElement>
+            analytics.Track(General.PERFORMANCE_REPORT, new Dictionary<string, JsonElement>
             {
                 ["total_used_memory"] = profilingProvider.TotalUsedMemoryInBytes * BYTES_TO_MEGABYTES,
 

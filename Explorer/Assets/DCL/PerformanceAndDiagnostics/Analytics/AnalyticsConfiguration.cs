@@ -24,11 +24,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
         public float PerformanceReportInterval { get; private set; } = 1.0f;
 
+        [SerializeField]
+        internal List<AnalyticsGroup> groups;
+
         private string segmentWriteKey;
         private Configuration segmentConfiguration;
-
-        [SerializeField]
-        private List<AnalyticsEventToggle> eventToggles;
 
         public Configuration SegmentConfiguration => segmentConfiguration ??=
             new Configuration(WriteKey, new ErrorHandler(), flushSize, flushInterval);
@@ -53,7 +53,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public bool EventIsEnabled(string eventName)
         {
-            foreach (var toggle in eventToggles)
+            foreach (var group in groups)
+            foreach (var toggle in group.events)
                 if (toggle.eventName == eventName)
                     return toggle.isEnabled;
 
@@ -65,6 +66,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             public string eventName;
             public bool isEnabled;
+        }
+
+        [Serializable]
+        public class AnalyticsGroup
+        {
+            public string groupName;
+            public List<AnalyticsEventToggle> events = new ();
         }
     }
 }

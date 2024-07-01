@@ -14,3 +14,35 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   flushSize: 20
   flushInterval: 30
+  <PerformanceReportInterval>k__BackingField: 1
+  groups:
+  - groupName: General
+    events:
+    - eventName: system_info_report
+      isEnabled: 1
+    - eventName: initial_loading
+      isEnabled: 1
+    - eventName: performance_report
+      isEnabled: 1
+  - groupName: Chat
+    events:
+    - eventName: chat_message_sent
+      isEnabled: 1
+    - eventName: goto_teleport
+      isEnabled: 0
+    - eventName: chat_bubble_switched
+      isEnabled: 1
+  - groupName: Map
+    events:
+    - eventName: map_jump_in
+      isEnabled: 1
+  - groupName: World
+    events:
+    - eventName: move_to_parcel
+      isEnabled: 0
+    - eventName: visit_scene
+      isEnabled: 1
+    - eventName: walked_distance
+      isEnabled: 1
+    - eventName: time_spent_in_world
+      isEnabled: 1
