@@ -37,12 +37,15 @@ namespace DCL.FeatureFlags
 
                 for (var i = 0; i < programArgs.Length - 1; i++)
                 {
-                    string arg = programArgs[i];
-
-                    if (arg == "--feature-flags-url")
-                        url = URLDomain.FromString(programArgs[i + 1]);
-                    else if (arg == "--feature-flags-hostname")
-                        hostname = programArgs[i + 1];
+                    switch (programArgs[i])
+                    {
+                        case "--feature-flags-url":
+                            url = URLDomain.FromString(programArgs[i + 1]);
+                            break;
+                        case "--feature-flags-hostname":
+                            hostname = programArgs[i + 1];
+                            break;
+                    }
                 }
             }
         }
