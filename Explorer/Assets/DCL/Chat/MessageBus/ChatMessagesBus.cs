@@ -1,3 +1,4 @@
+using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using System;
 using Utility;

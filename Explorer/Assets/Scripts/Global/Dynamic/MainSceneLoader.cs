@@ -8,45 +8,44 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.ExplorePanel;
+using DCL.FeatureFlags;
 using DCL.Minimap;
-using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using DCL.WebRequests;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Utility;
 
 namespace Global.Dynamic
 {
     public class MainSceneLoader : MonoBehaviour
     {
-        [Header("Startup Config")]
-        [SerializeField] private RealmLaunchSettings launchSettings;
+        [Header("Startup Config")] [SerializeField]
+        private RealmLaunchSettings launchSettings;
 
-        [Space]
-        [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
+        [Space] [SerializeField] private DebugViewsCatalog debugViewsCatalog = new();
 
-        [Space]
-        [SerializeField] private bool showSplash;
+        [Space] [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
         [SerializeField] private bool showLoading;
         [SerializeField] private bool enableLandscape;
         [SerializeField] private bool enableLOD;
 
-        [Header("References")]
-        [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
+        [Header("References")] [SerializeField]
+        private PluginSettingsContainer globalPluginSettingsContainer = null!;
+
         [SerializeField] private PluginSettingsContainer scenePluginSettingsContainer = null!;
         [SerializeField] private UIDocument uiToolkitRoot = null!;
         [SerializeField] private UIDocument cursorRoot = null!;
@@ -93,7 +92,8 @@ namespace Global.Dynamic
             if (staticContainer != null)
             {
                 // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
-                foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer.SharedPlugins))
+                foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer
+                             .SharedPlugins))
                     worldPlugin.SafeDispose(ReportCategory.ENGINE);
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
@@ -169,7 +169,8 @@ namespace Global.Dynamic
 
                 var debugUtilitiesContainer = DebugUtilitiesContainer.Create(debugViewsCatalog);
 
-                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(debugUtilitiesContainer.Builder, globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
+                (staticContainer, isLoaded) = await StaticContainer.CreateAsync(debugUtilitiesContainer.Builder,
+                    globalPluginSettingsContainer, identityCache, web3VerifiedAuthenticator, ct);
 
                 if (!isLoaded)
                 {
@@ -225,17 +226,24 @@ namespace Global.Dynamic
                     dynamicWorldContainer.MessagePipesHub
                 );
 
+                await InitializeFeatureFlagsAsync(ct);
+
                 // Initialize global plugins
                 var anyFailure = false;
 
-                void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
+                void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result)
+                    where TPluginInterface : IDCLPlugin
                 {
                     if (!result.success)
                         anyFailure = true;
                 }
 
-                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-                await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+                await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp =>
+                        scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized))
+                    .EnsureNotNull());
+                await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp =>
+                        globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized))
+                    .EnsureNotNull());
 
                 if (anyFailure)
                 {
@@ -245,7 +253,8 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
 
-                (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
+                (globalWorld, playerEntity) =
+                    dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
 
                 debugUtilitiesContainer.Builder.BuildWithFlex(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
@@ -286,7 +295,8 @@ namespace Global.Dynamic
         {
             // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
+            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct)
+                .Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }
@@ -301,6 +311,18 @@ namespace Global.Dynamic
         {
             IRealmController realmController = dynamicWorldContainer!.RealmController;
             await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+        }
+
+        private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
+        {
+            try
+            {
+                await staticContainer!.FeatureFlagsProvider.InitializeAsync(identityCache!.Identity?.Address, ct);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
+            }
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

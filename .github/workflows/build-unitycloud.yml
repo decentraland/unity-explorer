@@ -12,7 +12,6 @@ on:
   push:
     branches:
       - main
-      - feat/unity-cloud-build
   workflow_dispatch:
     inputs:
       profile:
@@ -31,7 +30,7 @@ on:
         type: boolean
       version:
         description: 'Override for build version to use'
-        required: true
+        required: false
         default: ''
         type: string
   workflow_call:
@@ -169,17 +168,21 @@ jobs:
             !build/**/*_BurstDebugInformation_DoNotShip
           if-no-files-found: error
 
+      # Will run always (even if failing)
       - name: Upload cloud logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}_unity_log
           path: unity_cloud_log.log
           if-no-files-found: error
 
+      # Will run always (even if failing)
       - name: Print cloud logs
+        if: always()
         run: cat unity_cloud_log.log
 
-      # Will run on cancel or timeout
+      # Will run on cancel or timeout only
       - name: Cancel Unity Cloud build
         if: ${{ cancelled() }}
         env:

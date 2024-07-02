@@ -18,7 +18,7 @@ namespace CrdtEcsBridge.PoolsProviders
 
         private readonly IObjectPool<List<CRDTMessage>> crdtMessagesPool = new ListObjectPool<CRDTMessage>(listInstanceDefaultCapacity: 256);
 
-        private readonly ArrayPool<byte> crdtRawDataPool = ArrayPool<byte>.Create(16_777_216, 8); // 16 MB, 8 buckets, if the requested array is more than 16 mb than a new instance is simply returned
+        private readonly ArrayPool<byte> apiRawDataPool = ArrayPool<byte>.Create(16_777_216, 8); // 16 MB, 8 buckets, if the requested array is more than 16 mb than a new instance is simply returned
 
         private readonly Action<byte[]> releaseFuncCached;
 
@@ -36,12 +36,12 @@ namespace CrdtEcsBridge.PoolsProviders
         public static IInstancePoolsProvider Create() =>
             POOL.Get();
 
-        public PoolableByteArray GetCrdtRawDataPool(int size) =>
-            new (crdtRawDataPool.Rent(size), size, releaseFuncCached);
+        public PoolableByteArray GetAPIRawDataPool(int size) =>
+            new (apiRawDataPool.Rent(size), size, releaseFuncCached);
 
         private void ReleaseCrdtRawDataPool(byte[] bytes)
         {
-            crdtRawDataPool.Return(bytes);
+            apiRawDataPool.Return(bytes);
         }
 
         public List<CRDTMessage> GetDeserializationMessagesPool() =>
