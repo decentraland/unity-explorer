@@ -130,9 +130,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 {
                     GameObject go = skinnedMeshRenderer.gameObject;
 
-                    // Gather invisible colliders
-                    // CreateAndAddMeshCollider(result.InvisibleColliders, go, skinnedMeshRenderer.sharedMesh, false);
-
                     // Always considered as visible collider
                     AddVisibleMeshCollider(result, go, skinnedMeshRenderer.sharedMesh);
                 }
