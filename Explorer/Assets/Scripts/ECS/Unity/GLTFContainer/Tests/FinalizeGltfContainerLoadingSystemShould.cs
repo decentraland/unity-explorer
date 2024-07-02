@@ -92,13 +92,13 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
             component.State = LoadingState.Loading;
 
-            await InstantiateAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER, component.Promise.Entity);
+            await InstantiateAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, component.Promise.Entity);
 
-            Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.SIMPLE_RENDERER });
+            Entity e = world.Create(component, new CRDTEntity(100), new PBGltfContainer { Src = GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM });
             TransformComponent transform = AddTransformToEntity(e);
 
             system.Update(0);
@@ -109,7 +109,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             // Check events buffer
             Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(e, component)));
 
-            Assert.That(component.Promise.Result.Value.Asset.Root.transform.parent, Is.EqualTo(transform.Transform));
+            Assert.That(component.Promise.Result!.Value.Asset!.Root.transform.parent, Is.EqualTo(transform.Transform));
             Assert.That(component.Promise.Result.Value.Asset.Root.activeSelf, Is.EqualTo(true));
         }
 

@@ -57,7 +57,8 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
 
             sceneAssetLock.IsLocked = !currentScene.IsSceneReady();
-            currentScene.SetIsCurrent(true);
+            if (!currentScene.SceneStateProvider.IsCurrent)
+                currentScene.SetIsCurrent(true);
         }
 
         private void UpdateCurrentScene(Vector2Int parcel)
@@ -70,7 +71,8 @@ namespace ECS.SceneLifeCycle.Systems
             if (lastProcessedScene != currentScene)
                 lastProcessedScene?.SetIsCurrent(false);
 
-            currentScene?.SetIsCurrent(true);
+            if (currentScene is { SceneStateProvider: { IsCurrent: false } })
+                currentScene.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
         }

@@ -7,8 +7,9 @@ using DCL.TeleportPrompt;
 using DCL.Utilities;
 using MVC;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
+using System;
+using System.Threading;
 using UnityEngine;
 using Utility;
 
@@ -81,15 +82,34 @@ namespace CrdtEcsBridge.RestrictedActions
             if (!sceneStateProvider.IsCurrent)
                 return;
 
-            // TODO: Implement emote triggering (blocked until emotes are implemented)...
+            globalWorldActions.TriggerEmote(predefinedEmote);
         }
 
-        public bool TryTriggerSceneEmote(string src, bool loop)
+        public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct)
         {
             if (!sceneStateProvider.IsCurrent)
                 return false;
 
-            // TODO: Implement scene emote triggering (blocked until emotes are implemented)...
+            if (!sceneData.SceneContent.TryGetHash(src, out string hash))
+                return false;
+
+            if (sceneData.AssetBundleManifest == SceneAssetBundleManifest.NULL)
+                return false;
+
+            try
+            {
+                await UniTask.SwitchToMainThread();
+
+                await globalWorldActions.TriggerSceneEmoteAsync(
+                    sceneData.SceneEntityDefinition.id ?? sceneData.SceneEntityDefinition.metadata.scene.DecodedBase.ToString(),
+                    sceneData.AssetBundleManifest, hash, loop, ct);
+            }
+            catch (OperationCanceledException) { return false; }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.EMOTE, sceneShortInfo: sceneData.SceneShortInfo));
+                return false;
+            }
 
             return true;
         }
@@ -107,7 +127,6 @@ namespace CrdtEcsBridge.RestrictedActions
 
             OpenNftDialogAsync(contractAddress, tokenId).Forget();
             return true;
-
         }
 
         private async UniTask MoveAndRotatePlayerAsync(Vector3 newAbsolutePosition, Vector3? newAbsoluteCameraTarget)
@@ -127,6 +146,7 @@ namespace CrdtEcsBridge.RestrictedActions
         private bool IsPositionValid(Vector3 floorPosition)
         {
             var parcelToCheck = ParcelMathHelper.FloorToParcel(floorPosition);
+
             foreach (Vector2Int sceneParcel in sceneData.Parcels)
             {
                 if (sceneParcel == parcelToCheck)
