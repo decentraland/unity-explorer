@@ -5,6 +5,12 @@ using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
+    public enum AnalyticsMode
+    {
+        DEBUG_LOG,
+        SEGMENT,
+    }
+
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/AnalyticsConfiguration", order = 0)]
     public class AnalyticsConfiguration : ScriptableObject
     {
@@ -24,14 +30,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
         public float PerformanceReportInterval { get; private set; } = 1.0f;
 
+        [field: SerializeField]
+        public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
+
         [SerializeField]
         internal List<AnalyticsGroup> groups;
 
         private string segmentWriteKey;
         private Configuration segmentConfiguration;
 
+        private Dictionary<string, AnalyticsEventToggle> eventToggles;
+
         public Configuration SegmentConfiguration => segmentConfiguration ??=
-            new Configuration(WriteKey, new ErrorHandler(), flushSize, flushInterval);
+            new Configuration(WriteKey, new SegmentErrorHandler(), flushSize, flushInterval);
 
         public string WriteKey
         {
@@ -53,12 +64,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public bool EventIsEnabled(string eventName)
         {
-            foreach (var group in groups)
-            foreach (var toggle in group.events)
-                if (toggle.eventName == eventName)
-                    return toggle.isEnabled;
+            if (eventToggles == null)
+            {
+                eventToggles = new Dictionary<string, AnalyticsEventToggle>();
 
-            return false;
+                foreach (AnalyticsGroup group in groups)
+                foreach (AnalyticsEventToggle eventToggle in group.events)
+                    eventToggles.Add(eventToggle.eventName, eventToggle);
+            }
+
+            return eventToggles.TryGetValue(eventName, out AnalyticsEventToggle toggle) && toggle.isEnabled;
         }
 
         [Serializable]

@@ -4,7 +4,7 @@ using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    internal class ErrorHandler : ICoroutineExceptionHandler
+    internal class SegmentErrorHandler : ICoroutineExceptionHandler
     {
         public void OnExceptionThrown(Exception e)
         {

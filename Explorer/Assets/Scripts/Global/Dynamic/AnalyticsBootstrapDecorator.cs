@@ -8,6 +8,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.UserInAppInitializationFlow;
 using Segment.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -49,11 +50,14 @@ namespace Global.Dynamic
         {
             analyticsConfig = (await assetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, ct)).Value;
 
-            analytics = new AnalyticsController(
-                new DebugAnalyticsService(),
-                // new SegmentAnalyticsService(analyticsConfig),
-                analyticsConfig
-            );
+            IAnalyticsService service = analyticsConfig.Mode switch
+                                        {
+                                            AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig),
+                                            AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
+                                            _ => throw new ArgumentOutOfRangeException()
+                                        };
+
+            analytics = new AnalyticsController(service, analyticsConfig);
 
             analytics.Track(General.SYSTEM_INFO_REPORT, new Dictionary<string, JsonElement>
             {
@@ -184,7 +188,7 @@ namespace Global.Dynamic
         {
             analytics.Track(General.INITIAL_LOADING, new Dictionary<string, JsonElement>
             {
-                { STAGE_KEY, $"loading screen: {stage}"},
+                { STAGE_KEY, $"loading screen: {stage}" },
             });
         }
     }

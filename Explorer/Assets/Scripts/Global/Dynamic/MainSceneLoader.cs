@@ -5,7 +5,6 @@ using DCL.AssetsProvision.Provisions;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
@@ -56,7 +55,7 @@ namespace Global.Dynamic
             ErrorTraceAssetsProvisioner assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
             var coreBootstrap = new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
 
-            bootstrap = analyticsEnabled
+            bootstrap = !Debug.isDebugBuild || analyticsEnabled
                 ? new BootstrapAnalyticsDecorator(coreBootstrap, assetsProvisioner, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>())
                 : coreBootstrap;
 

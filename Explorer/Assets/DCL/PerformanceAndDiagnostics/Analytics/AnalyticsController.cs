@@ -57,6 +57,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.realmData = realmData;
             this.identityCache = identityCache;
             this.playerTransform = playerTransform;
+
+            commonParamsValues["dcl_eth_address"] = identityCache?.Identity == null ? UNDEFINED : identityCache.Identity.Address.ToString();
+            commonParamsValues["realm"] = realmData is not { Configured: true } ? UNDEFINED : realmData.RealmName;
+            commonParamsValues["position"] = playerTransform == null ? UNDEFINED : playerTransform.position.ToShortString();
+
+            // analytics.Identify();
         }
 
         public void Track(string eventName, Dictionary<string, JsonElement> properties = null)

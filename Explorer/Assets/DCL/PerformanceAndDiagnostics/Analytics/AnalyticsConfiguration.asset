@@ -15,6 +15,7 @@ MonoBehaviour:
   flushSize: 20
   flushInterval: 30
   <PerformanceReportInterval>k__BackingField: 1
+  <Mode>k__BackingField: 0
   groups:
   - groupName: General
     events:
@@ -23,13 +24,13 @@ MonoBehaviour:
     - eventName: initial_loading
       isEnabled: 1
     - eventName: performance_report
-      isEnabled: 1
+      isEnabled: 0
   - groupName: Chat
     events:
     - eventName: chat_message_sent
       isEnabled: 1
     - eventName: goto_teleport
-      isEnabled: 0
+      isEnabled: 1
     - eventName: chat_bubble_switched
       isEnabled: 1
   - groupName: Map
@@ -39,7 +40,7 @@ MonoBehaviour:
   - groupName: World
     events:
     - eventName: move_to_parcel
-      isEnabled: 0
+      isEnabled: 1
     - eventName: visit_scene
       isEnabled: 1
     - eventName: walked_distance
