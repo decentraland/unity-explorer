@@ -191,6 +191,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             elementStyle.position = new StyleEnum<Position>(Position.Absolute);
             elementStyle.justifyContent = new StyleEnum<Justify>(Justify.Center);
             elementStyle.alignItems = new StyleEnum<Align>(Align.Center);
+            elementStyle.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
         }
 
         public static void ReleaseUIElement(VisualElement visualElement) =>
