@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEngine;
+using Utility;
 
 namespace DCL.Rendering.Menus
 {
@@ -18,10 +20,54 @@ namespace DCL.Rendering.Menus
         [MenuItem("Decentraland/Shaders/Compile \"Scene\" Shader Variants")]
         public static void ExecuteMenuItem()
         {
+            string sPlatform = PlatformUtils.GetPlatform();
+            BuildTarget bt = BuildTarget.StandaloneWindows64; // default
+            switch (sPlatform)
+            {
+                case "_windows":
+                {
+                    bt = BuildTarget.StandaloneWindows64;
+                    break;
+                }
+                case "_mac":
+                {
+                    bt = BuildTarget.StandaloneOSX;
+                    break;
+                }
+                case "_linux":
+                {
+                    bt = BuildTarget.StandaloneLinux64;
+                    break;
+                }
+            }
+
+            CompileTheSceneShader(bt);
+        }
+
+        public static void CompileTheSceneShader(BuildTarget bt)
+        {
             // Set the name of the asset bundle
             string shaderAssetName = "Scene";
             string assetVariant = "SceneVariants";
-            string bundleName = "scene_ignore_windows";
+            string bundleName = "scene_ignore";
+            switch (bt)
+            {
+                case BuildTarget.StandaloneWindows64:
+                {
+                    bundleName += "_windows";
+                    break;
+                }
+                case BuildTarget.StandaloneOSX:
+                {
+                    bundleName += "_mac";
+                    break;
+                }
+                case BuildTarget.StandaloneLinux64:
+                {
+                    bundleName += "_linux";
+                    break;
+                }
+            }
 
             // Mark the asset for inclusion in the asset bundle
             string shaderAssetPath = "Assets/git-submodules/unity-shared-dependencies/Runtime/Shaders/SceneRendering/" + shaderAssetName + ".shader";
