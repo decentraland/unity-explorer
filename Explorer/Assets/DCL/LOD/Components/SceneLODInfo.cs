@@ -12,10 +12,13 @@ namespace DCL.LOD.Components
     public struct SceneLODInfo
     {
         public byte CurrentLODLevel;
+        public LODGroup LodGroup;
+        public UnityEngine.LOD [] lods;
         public LODAsset CurrentLOD;
         public LODAsset CurrentVisibleLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public bool IsDirty;
+        
         
         public void Dispose(World world)
         {
@@ -28,11 +31,25 @@ namespace DCL.LOD.Components
         public static SceneLODInfo Create() =>
             new()
             {
-                CurrentLODLevel = byte.MaxValue
+                CurrentLODLevel = byte.MaxValue, LodGroup = new GameObject().AddComponent<LODGroup>(), lods = new UnityEngine.LOD[2]
             };
 
-        public void SetCurrentLOD(LODAsset newLod)
+        public void SetCurrentLOD(LODAsset newLod, Transform lodTransformParent)
         {
+            if (!newLod.setup && newLod.Root != null)
+            {
+                LodGroup.fadeMode = LODFadeMode.CrossFade;
+                LodGroup.animateCrossFading = true;
+                LodGroup.transform.SetParent(lodTransformParent);
+                newLod.Root.transform.SetParent(LodGroup.transform);
+                var lod = new UnityEngine.LOD(newLod.LodKey.Level == 0 ? 0.5f : 0.05f,
+                    newLod.Root.GetComponentsInChildren<Renderer>());
+                lods[newLod.LodKey.Level] = lod;
+                LodGroup.SetLODs(lods);
+            }
+
+            newLod.setup = true;
+            
             CurrentLOD = newLod;
             UpdateCurrentVisibleLOD();
         }

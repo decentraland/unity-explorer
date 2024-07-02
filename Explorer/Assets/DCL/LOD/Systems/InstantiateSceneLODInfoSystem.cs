@@ -89,7 +89,7 @@ namespace DCL.LOD.Systems
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
                 }
 
-                sceneLODInfo.SetCurrentLOD(newLod);
+                sceneLODInfo.SetCurrentLOD(newLod, lodsTransformParent);
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }

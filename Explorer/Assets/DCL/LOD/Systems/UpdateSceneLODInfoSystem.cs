@@ -135,7 +135,7 @@ namespace DCL.LOD.Systems
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
-                sceneLODInfo.SetCurrentLOD(cachedAsset);
+                sceneLODInfo.SetCurrentLOD(cachedAsset, null);
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                 return;
             }
