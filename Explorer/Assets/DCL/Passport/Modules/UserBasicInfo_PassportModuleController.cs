@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.UI;
 using System.Threading;
 using UnityEngine;
@@ -13,15 +14,22 @@ namespace DCL.Passport.Modules
     {
         private readonly UserBasicInfo_PassportModuleView view;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly ISelfProfile selfProfile;
 
         private Profile currentProfile;
         private CancellationTokenSource copyNameCts;
         private CancellationTokenSource copyWalletCts;
+        private CancellationTokenSource checkEditionAvailabilityCts;
 
-        public UserBasicInfo_PassportModuleController(UserBasicInfo_PassportModuleView view, ChatEntryConfigurationSO chatEntryConfiguration)
+        public UserBasicInfo_PassportModuleController(
+            UserBasicInfo_PassportModuleView view,
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            ISelfProfile selfProfile)
         {
             this.view = view;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.selfProfile = selfProfile;
+
             view.CopyNameWarningNotification.Hide(true);
             view.CopyWalletWarningNotification.Hide(true);
 
@@ -38,7 +46,7 @@ namespace DCL.Passport.Modules
             {
                 if (currentProfile == null)
                     return;
-                
+
                 CopyToClipboard(currentProfile.UserId);
                 copyWalletCts = copyWalletCts.SafeRestart();
                 ShowCopyWarningAsync(view.CopyWalletWarningNotification, copyWalletCts.Token).Forget();
@@ -58,6 +66,9 @@ namespace DCL.Passport.Modules
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.UserNameContainer);
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.WalletAddressContainer);
+
+            checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
+            CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
         }
 
         public void Clear() { }
@@ -79,6 +90,14 @@ namespace DCL.Passport.Modules
             notificationView.Show();
             await UniTask.Delay(1000, cancellationToken: ct);
             notificationView.Hide();
+        }
+
+        private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
+        {
+            view.EditionButton.gameObject.SetActive(false);
+            var ownProfile = await selfProfile.ProfileAsync(ct);
+            if (ownProfile?.UserId == currentProfile.UserId)
+                view.EditionButton.gameObject.SetActive(true);
         }
     }
 }

@@ -396,7 +396,7 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
-                new PassportPlugin(staticContainer.AssetsProvisioner, container.MvcManager, dclCursor, container.ProfileRepository, characterPreviewFactory, chatEntryConfiguration, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.WebRequestsContainer.WebRequestController, characterPreviewEventBus),
+                new PassportPlugin(staticContainer.AssetsProvisioner, container.MvcManager, dclCursor, container.ProfileRepository, characterPreviewFactory, chatEntryConfiguration, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.WebRequestsContainer.WebRequestController, characterPreviewEventBus, selfProfile),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

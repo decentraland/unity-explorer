@@ -36,5 +36,8 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public WarningNotificationView CopyWalletWarningNotification { get; private set; }
+
+        [field: SerializeField]
+        public Button EditionButton { get; private set; }
     }
 }

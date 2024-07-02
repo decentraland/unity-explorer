@@ -7,6 +7,7 @@ using DCL.Chat;
 using DCL.Input;
 using DCL.Passport.Modules;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using JetBrains.Annotations;
 using MVC;
 using System.Threading;
@@ -31,6 +32,7 @@ namespace DCL.Passport
         private readonly NftTypeIconSO categoryIcons;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IMVCManager mvcManager;
+        private readonly ISelfProfile selfProfile;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
@@ -51,7 +53,8 @@ namespace DCL.Passport
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             CharacterPreviewEventBus characterPreviewEventBus,
-            IMVCManager mvcManager) : base(viewFactory)
+            IMVCManager mvcManager,
+            ISelfProfile selfProfile) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -62,14 +65,15 @@ namespace DCL.Passport
             this.categoryIcons = categoryIcons;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mvcManager = mvcManager;
+            this.selfProfile = selfProfile;
         }
 
         protected override void OnViewInstantiated()
         {
             Assert.IsNotNull(world);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration);
-            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager);
+            userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile);
+            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile);
             equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider);
         }
 

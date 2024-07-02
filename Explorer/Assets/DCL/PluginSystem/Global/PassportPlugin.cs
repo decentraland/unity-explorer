@@ -9,6 +9,7 @@ using DCL.Chat;
 using DCL.Input;
 using DCL.Passport;
 using DCL.Profiles;
+using DCL.Profiles.Self;
 using DCL.WebRequests;
 using ECS;
 using MVC;
@@ -31,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly ISelfProfile selfProfile;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -42,7 +44,8 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            ISelfProfile selfProfile)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -54,6 +57,7 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.selfProfile = selfProfile;
         }
 
         public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
@@ -74,7 +78,8 @@ namespace DCL.PluginSystem.Global
                 rarityColorMappings,
                 categoryIconsMapping,
                 characterPreviewEventBus,
-                mvcManager);
+                mvcManager,
+                selfProfile);
 
             mvcManager.RegisterController(passportController);
         }

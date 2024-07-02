@@ -1,6 +1,7 @@
 using DCL.Passport.Fields;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.Passport.Modules
 {
@@ -11,6 +12,9 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public TMP_Text Description { get; private set; }
+
+        [field: SerializeField]
+        public TMP_InputField DescriptionForEditMode { get; private set; }
 
         [field: SerializeField]
         public PassportAdditionalFieldsConfigurationSO AdditionalFieldsConfiguration { get; private set; }
@@ -26,5 +30,20 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public TMP_Text NoLinksLabel { get; private set; }
+
+        [field: SerializeField]
+        public Button InfoEditionButton { get; private set; }
+
+        [field: SerializeField]
+        public Button LinksEditionButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject InfoSectionSaveButtonsContainer { get; private set; }
+
+        [field: SerializeField]
+        public Button SaveInfoButton { get; private set; }
+
+        [field: SerializeField]
+        public Button CancelInfoButton { get; private set; }
     }
 }
