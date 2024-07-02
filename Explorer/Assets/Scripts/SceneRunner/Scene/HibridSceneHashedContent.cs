@@ -25,18 +25,19 @@ namespace SceneRunner.Scene
         private readonly URLDomain remoteContentDomain;
 
 
-        private readonly string[] filesToGetFromLocalHost =
+        private readonly List<string> filesToGetFromLocalHost = new()
         {
-            "bin/index.js", "scene.json", "main.crdt", "bin/game.js"
+            "scene.json", "main.crdt"
         };
 
         public HibridSceneHashedContent(IWebRequestController webRequestController,
-            IReadOnlyList<ContentDefinition> contentDefinitions, URLDomain contentBaseUrl,
+            SceneEntityDefinition contentDefinitions, URLDomain contentBaseUrl,
             URLDomain abDomain, URLDomain remoteContentDomain,
             string remoteSceneID)
         {
-            fileToHash = new Dictionary<string, string>(contentDefinitions.Count, StringComparer.OrdinalIgnoreCase);
-            foreach (var contentDefinition in contentDefinitions) fileToHash[contentDefinition.file] = contentDefinition.hash;
+            filesToGetFromLocalHost.Add(contentDefinitions.metadata.main);
+            fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Count, StringComparer.OrdinalIgnoreCase);
+            foreach (var contentDefinition in contentDefinitions.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
             this.contentBaseUrl = contentBaseUrl;
             this.abDomain = abDomain;
