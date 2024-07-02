@@ -1,8 +1,19 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.AvatarShape.Components;
+using DCL.AvatarRendering.Emotes;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common;
+using SceneRunner.Scene;
+using System;
+using System.Threading;
 using UnityEngine;
 using Utility.Arch;
+using SceneEmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution,
+    DCL.AvatarRendering.Emotes.GetSceneEmoteFromRealmIntention>;
 
 namespace CrdtEcsBridge.RestrictedActions
 {
@@ -37,6 +48,27 @@ namespace CrdtEcsBridge.RestrictedActions
             // Rotate camera to look at new target (through ApplyCinemachineCameraInputSystem -> ForceLookAtQuery)
             var camera = world.CacheCamera();
             world.AddOrSet(camera, new CameraLookAtIntent(newCameraTarget.Value, newPlayerPosition));
+        }
+
+        public async UniTask TriggerSceneEmoteAsync(string sceneId, SceneAssetBundleManifest abManifest, string emoteHash, bool loop, CancellationToken ct)
+        {
+            if (!world.TryGet(playerEntity, out AvatarShapeComponent avatarShape))
+                throw new Exception("Cannot resolve body shape of current player because its missing AvatarShapeComponent");
+
+            var promise = SceneEmotePromise.Create(world,
+               new GetSceneEmoteFromRealmIntention(sceneId, abManifest, emoteHash, loop, avatarShape.BodyShape),
+               PartitionComponent.TOP_PRIORITY);
+
+            promise = await promise.ToUniTaskAsync(world, cancellationToken: ct);
+
+            URN urn = promise.Result!.Value.Asset.Emotes[0].GetUrn();
+
+            TriggerEmote(urn);
+        }
+
+        public void TriggerEmote(URN urn)
+        {
+            world.Add(playerEntity, new CharacterEmoteIntent { EmoteId = urn, Spatial = true });
         }
     }
 }
