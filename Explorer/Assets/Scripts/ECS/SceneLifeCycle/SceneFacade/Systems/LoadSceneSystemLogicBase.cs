@@ -40,7 +40,7 @@ namespace ECS.SceneLifeCycle.Systems
                 ? intention.IpfsRealm.ContentBaseUrl
                 : ipfsPath.BaseUrl;
 
-            var hashedContent = await GetSceneHashedContentAsync(definition.content, contentBaseUrl, reportCategory);
+            var hashedContent = await GetSceneHashedContentAsync(definition, contentBaseUrl, reportCategory);
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
             var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
@@ -62,7 +62,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);
 
-        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(List<ContentDefinition>? definition, URLDomain contentBaseUrl, string reportCategory);
+        protected abstract UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory);
 
         protected async UniTask<ReadOnlyMemory<byte>> LoadMainCrdtAsync(ISceneContent sceneContent, string reportCategory, CancellationToken ct)
         {

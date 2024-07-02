@@ -24,7 +24,7 @@ namespace ECS.SceneLifeCycle.Systems
             return hibridSceneID;
         }
 
-        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(List<ContentDefinition>? definition, URLDomain contentBaseUrl, string reportCategory)
+        protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory)
         {
             var hibridSceneHashedContent = new HibridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL , URLDomain.FromString(hibridSceneContentServer), hibridSceneID);
             await hibridSceneHashedContent.GetRemoteSceneDefinitionAsync(new CancellationToken(), reportCategory);
