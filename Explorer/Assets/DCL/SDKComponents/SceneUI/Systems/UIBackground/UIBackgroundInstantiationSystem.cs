@@ -10,6 +10,7 @@ using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
+using DCL.SDKComponents.VideoPlayer.Utils;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
@@ -128,7 +129,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             // If data inside promise has not changed just reuse the same promise
             // as creating and waiting for a new one can be expensive
-            if (Equals(ref textureComponentValue, ref promise))
+            if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise))
                 return;
 
             // If component is being reused forget the previous promise
@@ -151,19 +152,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             // Nullify the entity reference
             promise = null;
-        }
-
-        private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
-        {
-            if (promise == null)
-                return false;
-
-            Promise promiseValue = promise.Value;
-            GetTextureIntention intention = promiseValue.LoadingIntention;
-
-            return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
-                   textureComponent.WrapMode == intention.WrapMode &&
-                   textureComponent.FilterMode == intention.FilterMode;
         }
     }
 }

@@ -25,6 +25,7 @@ namespace DCL.MapRenderer.ComponentsFactory
     {
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
+        private PinMarkerInstaller pinMarkerInstaller { get; }
         private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
         private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
 
@@ -81,6 +82,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
+                pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken)
                 /* List of other creators that can be executed in parallel */);

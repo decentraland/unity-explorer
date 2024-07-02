@@ -13,6 +13,7 @@
         internal const int FRIEND_USER_MARKERS = 13;
         internal const int SCENES_OF_INTEREST = 15;
         internal const int FAVORITES = 17;
+        internal const int PIN_MARKER = 18;
         internal const int PLAYER_MARKER = 19;
         internal const int PARCEL_HIGHLIGHT = 30;
 
