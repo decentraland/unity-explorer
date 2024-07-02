@@ -86,6 +86,13 @@ namespace Utility
             return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
         }
 
+        public static ParcelCorners CalculateMaxCorners() =>
+            new (
+                minXZ: new Vector3(float.MinValue, 0, float.MinValue),
+                minXmaxZ: new Vector3(float.MinValue, 0, float.MaxValue),
+                maxXZ: new Vector3(float.MaxValue, 0, float.MaxValue),
+                maxXminZ: new Vector3(float.MaxValue, 0, float.MinValue));
+
         public static Vector2Int FloorToParcel(Vector3 position) =>
             new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
 

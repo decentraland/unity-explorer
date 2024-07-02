@@ -29,13 +29,19 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public SceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false)
         {
             Definition = definition;
-            ParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(definition.metadata.scene.DecodedParcels.Select(ParcelMathHelper.CalculateCorners));
+
+            IsPortableExperience = definition.metadata.isPortableExperience || isPortableExperience;
+
+            ParcelsCorners = IsPortableExperience ?
+                new List<ParcelMathHelper.ParcelCorners>() { ParcelMathHelper.CalculateMaxCorners() } :
+                new List<ParcelMathHelper.ParcelCorners>(definition.metadata.scene.DecodedParcels.Select(ParcelMathHelper.CalculateCorners));
             IpfsPath = ipfsPath;
             Parcels = definition.metadata.scene.DecodedParcels;
             IsEmpty = false;
             IsSDK7 = definition.metadata.runtimeVersion == "7";
+
             //For now this is a method to force any world to be a PX, this should be removed as scenes not declared as PX should not be loaded as such
-            IsPortableExperience = definition.metadata.isPortableExperience || isPortableExperience;
+
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
             InternalJobIndex = -1;
         }
