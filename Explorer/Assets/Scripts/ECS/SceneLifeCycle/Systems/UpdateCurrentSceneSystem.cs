@@ -44,7 +44,7 @@ namespace ECS.SceneLifeCycle.Systems
                 ResetProcessedParcel();
                 return;
             }
-            
+
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
             UpdateSceneReadiness(parcel);
@@ -53,6 +53,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
+
             if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
                 return;
 

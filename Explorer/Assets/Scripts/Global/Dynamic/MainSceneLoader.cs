@@ -60,11 +60,11 @@ namespace Global.Dynamic
         private GlobalWorld? globalWorld;
         private IWeb3IdentityCache? identityCache;
         private SceneSharedContainer? sceneSharedContainer;
+        private Vector2Int startingParcel;
+        private string startingRealm = IRealmNavigator.GENESIS_URL;
         private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
-        private string startingRealm = IRealmNavigator.GENESIS_URL;
-        private Vector2Int startingParcel;
 
         private void Awake()
         {
@@ -258,8 +258,15 @@ namespace Global.Dynamic
 
                 debugUtilitiesContainer.Builder.BuildWithFlex(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
+                dynamicWorldContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
                 await ChangeRealmAsync(ct);
+
+                //Load all the URLS from wherever to create the permanent PXs
+                var pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/PizzaPie.dcl.eth");
+                await dynamicWorldContainer!.PortableExperiencesController.CreatePortableExperienceAsync(pXURLDomain, ct);
+                pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/pejo.dcl.eth");
+                await dynamicWorldContainer!.PortableExperiencesController.CreatePortableExperienceAsync(pXURLDomain, ct);
 
                 if (showSplash)
                     await WaitUntilSplashAnimationEndsAsync(ct);

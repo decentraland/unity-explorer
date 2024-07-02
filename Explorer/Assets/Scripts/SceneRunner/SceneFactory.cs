@@ -191,7 +191,8 @@ namespace SceneRunner
                     identityCache,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
-                    runtimeDeps.SimpleFetchApi);
+                    runtimeDeps.SimpleFetchApi,
+                    runtimeDeps.PortableExperiencesApi);
             }
             else
             {
@@ -211,15 +212,26 @@ namespace SceneRunner
                     identityCache,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
-                    runtimeDeps.SimpleFetchApi);
+                    runtimeDeps.SimpleFetchApi,
+                    runtimeDeps.PortableExperiencesApi);
             }
 
             sceneRuntime.ExecuteSceneJson();
 
-            return new SceneFacade(
-                sceneData,
-                runtimeDeps
-            );
+            if (sceneData.IsPortableExperience())
+            {
+                return new PortableExperienceSceneFacade(
+                    sceneData,
+                    runtimeDeps
+                );
+            }
+            else
+            {
+                return new SceneFacade(
+                    sceneData,
+                    runtimeDeps
+                );
+            }
         }
     }
 }

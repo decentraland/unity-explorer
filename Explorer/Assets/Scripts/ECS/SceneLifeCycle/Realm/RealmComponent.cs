@@ -1,5 +1,4 @@
 ﻿using DCL.Ipfs;
-using Ipfs;
 
 namespace ECS
 {
@@ -8,19 +7,17 @@ namespace ECS
     /// </summary>
     public readonly struct RealmComponent
     {
-        public IIpfsRealm Ipfs => realmData.Ipfs;
-        public IRealmData RealmData => realmData;
+        public IIpfsRealm Ipfs => RealmData.Ipfs;
+        public IRealmData RealmData { get; }
 
         /// <summary>
         ///     Indicates that the realm contains a fixed number of scenes
         /// </summary>
-        public bool ScenesAreFixed => realmData.ScenesAreFixed;
-
-        private readonly IRealmData realmData;
+        public bool ScenesAreFixed => RealmData.ScenesAreFixed;
 
         public RealmComponent(IRealmData realmData)
         {
-            this.realmData = realmData;
+            this.RealmData = realmData;
         }
     }
 }

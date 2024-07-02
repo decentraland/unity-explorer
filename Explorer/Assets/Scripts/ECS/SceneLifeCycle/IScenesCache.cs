@@ -1,7 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using SceneRunner.Scene;
 using System.Collections.Generic;
-using DCL.LOD.Components;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle
@@ -13,6 +12,8 @@ namespace ECS.SceneLifeCycle
         void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
         void AddNonRealScene(IReadOnlyList<Vector2Int> parcels);
+        void AddPortableExperienceScene(ISceneFacade sceneFacade, string sceneUrn);
+
         void RemoveNonRealScene(IReadOnlyList<Vector2Int> parcels);
 
         void RemoveSceneFacade(IReadOnlyList<Vector2Int> parcels);
@@ -28,7 +29,7 @@ namespace ECS.SceneLifeCycle
     {
         private readonly Dictionary<Vector2Int, ISceneFacade> scenesByParcels = new (PoolConstants.SCENES_COUNT * 2);
         private readonly HashSet<Vector2Int> nonRealSceneByParcel = new (PoolConstants.SCENES_COUNT * 2);
-
+        private readonly Dictionary<string, ISceneFacade> portableExperienceScenesByUrn = new (PoolConstants.SCENES_COUNT/2);
 
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
 
@@ -64,6 +65,11 @@ namespace ECS.SceneLifeCycle
                     scenesByParcels.Remove(parcels[i]);
                 }
             }
+        }
+
+        public void AddPortableExperienceScene(ISceneFacade sceneFacade, string sceneUrn)
+        {
+            portableExperienceScenesByUrn.TryAdd(sceneUrn, sceneFacade);
         }
 
 

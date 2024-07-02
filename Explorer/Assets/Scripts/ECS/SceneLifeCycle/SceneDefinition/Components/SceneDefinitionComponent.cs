@@ -24,15 +24,24 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         public readonly bool IsSDK7;
         public readonly ParcelMathHelper.SceneGeometry SceneGeometry;
         public int InternalJobIndex;
+        public readonly bool IsPortableExperience;
 
-        public SceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath)
+        public SceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false)
         {
             Definition = definition;
-            ParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(definition.metadata.scene.DecodedParcels.Select(ParcelMathHelper.CalculateCorners));
+
+            IsPortableExperience = definition.metadata.isPortableExperience || isPortableExperience;
+
+            ParcelsCorners = IsPortableExperience ?
+                new List<ParcelMathHelper.ParcelCorners>() { ParcelMathHelper.CalculateMaxCorners() } :
+                new List<ParcelMathHelper.ParcelCorners>(definition.metadata.scene.DecodedParcels.Select(ParcelMathHelper.CalculateCorners));
             IpfsPath = ipfsPath;
             Parcels = definition.metadata.scene.DecodedParcels;
             IsEmpty = false;
-            IsSDK7 = definition.metadata?.runtimeVersion == "7";
+            IsSDK7 = definition.metadata.runtimeVersion == "7";
+
+            //For now this is a method to force any world to be a PX, this should be removed as scenes not declared as PX should not be loaded as such
+
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
             InternalJobIndex = -1;
         }
@@ -56,6 +65,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                     main = "bin/game.js",
                     scene = EMPTY_METADATA,
                 }
+
                 // content will be filled by the loading system
             );
 
@@ -64,6 +74,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
 
             InternalJobIndex = -1;
+            IsPortableExperience = false;
         }
     }
 }

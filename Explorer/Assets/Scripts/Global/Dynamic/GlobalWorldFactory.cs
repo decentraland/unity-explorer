@@ -116,7 +116,7 @@ namespace Global.Dynamic
             else
                 loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
 
-            
+
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
                 new LoadEmptySceneSystemLogic(),
@@ -126,6 +126,7 @@ namespace Global.Dynamic
 
             LoadStaticPointersSystem.InjectToWorld(ref builder);
             LoadFixedPointersSystem.InjectToWorld(ref builder);
+            LoadPortableExperiencePointersSystem.InjectToWorld(ref builder);
 
             // are replace by increasing radius
             var jobsMathHelper = new ParcelMathJobifiedHelper();

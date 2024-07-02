@@ -14,6 +14,7 @@ using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Apis.Modules.Players;
+using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
@@ -57,7 +58,8 @@ namespace SceneRuntime
             IWeb3IdentityCache web3IdentityCache,
             ICommunicationsControllerAPI communicationsControllerAPI,
             IInstancePoolsProvider instancePoolsProvider,
-            ISimpleFetchApi simpleFetchApi
+            ISimpleFetchApi simpleFetchApi,
+            IPortableExperiencesApi portableExperiencesApi
         )
         {
             sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, exceptionsHandler);
@@ -72,6 +74,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
+            sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesApi);
         }
 
         public static void RegisterAll(this ISceneRuntime sceneRuntime,
@@ -89,7 +92,8 @@ namespace SceneRuntime
             IWeb3IdentityCache web3IdentityCache,
             ICommunicationsControllerAPI communicationsControllerAPI,
             IInstancePoolsProvider instancePoolsProvider,
-            ISimpleFetchApi simpleFetchApi
+            ISimpleFetchApi simpleFetchApi,
+            IPortableExperiencesApi portableExperiencesApi
         )
         {
             sceneRuntime.RegisterEngineAPI(engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
@@ -104,6 +108,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
+            sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesApi);
         }
 
         internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
@@ -178,6 +183,11 @@ namespace SceneRuntime
         public static void RegisterSDKMessageBusCommsApi(this ISceneRuntime sceneRuntime, ISDKMessageBusCommsControllerAPI api)
         {
             sceneRuntime.Register("UnitySDKMessageBusCommsControllerApi", new SDKMessageBusCommsControllerAPIWrapper(api));
+        }
+
+        private static void RegisterPortableExperiencesApi(this ISceneRuntime sceneRuntime, IPortableExperiencesApi api)
+        {
+            sceneRuntime.Register("UnityPortableExperiencesApi", new PortableExperiencesApiWrapper(api));
         }
     }
 }
