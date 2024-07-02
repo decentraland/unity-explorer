@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using DCL.Rendering.Menus;
+using JetBrains.Annotations;
 using NBitcoin;
 using NUnit;
 using Sentry.Unity.Editor.ConfigurationWindow;
@@ -208,6 +209,8 @@ namespace Editor
             {
                 buildPlayerOptions.options |= BuildOptions.EnableDeepProfilingSupport;
             }
+
+            CompileSceneShader.CompileTheSceneShader(buildTarget);
 
             BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
             ReportSummary(buildSummary);
