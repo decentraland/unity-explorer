@@ -14,6 +14,7 @@ namespace DCL.Chat.MessageBus
         private readonly IProfileRepository profileRepository;
 
         public event Action<ChatMessage>? OnMessageAdded;
+        public event Action<string>? MessageSent;
 
         public SelfResendChatMessageBus(MultiplayerChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository)
         {
@@ -21,11 +22,13 @@ namespace DCL.Chat.MessageBus
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
             this.origin.OnMessageAdded += OriginOnOnMessageAdded;
+            this.origin.MessageSent += OriginOnMessageSent;
         }
 
         ~SelfResendChatMessageBus()
         {
             this.origin.OnMessageAdded -= OriginOnOnMessageAdded;
+            this.origin.MessageSent -= OriginOnMessageSent;
         }
 
         public void Dispose()
@@ -36,6 +39,10 @@ namespace DCL.Chat.MessageBus
         private void OriginOnOnMessageAdded(ChatMessage obj)
         {
             OnMessageAdded?.Invoke(obj);
+        }
+        private void OriginOnMessageSent(string message)
+        {
+            MessageSent?.Invoke(message);
         }
 
         public void Send(string message)

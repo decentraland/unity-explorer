@@ -17,6 +17,7 @@ env:
   UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
   UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -227,7 +228,7 @@ jobs:
           buildName: Decentraland
           versioning: Custom
           version: ${{ steps.create-version.outputs.version }}
-          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }}
+          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }} -segmentWriteKey ${{ secrets.SEGMENT_WRITE_KEY }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
 

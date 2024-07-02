@@ -17,7 +17,6 @@ namespace DCL.ExplorePanel
 {
     public class ExplorePanelController : ControllerBase<ExplorePanelView, ExplorePanelParameter>
     {
-        private readonly NavmapController navmapController;
         private readonly SettingsController settingsController;
         private readonly BackpackController backpackController;
         private readonly Entity playerEntity;
@@ -37,6 +36,8 @@ namespace DCL.ExplorePanel
 
         private bool isControlClosing;
 
+        public NavmapController NavmapController { get; }
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public ExplorePanelController(ViewFactoryMethod viewFactory,
@@ -50,7 +51,7 @@ namespace DCL.ExplorePanel
             DCLInput dclInput)
             : base(viewFactory)
         {
-            this.navmapController = navmapController;
+            this.NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
             this.playerEntity = playerEntity;
@@ -72,7 +73,7 @@ namespace DCL.ExplorePanel
         {
             exploreSections = new Dictionary<ExploreSections, ISection>
             {
-                { ExploreSections.Navmap, navmapController },
+                { ExploreSections.Navmap, NavmapController },
                 { ExploreSections.Settings, settingsController },
                 { ExploreSections.Backpack, backpackController },
             };

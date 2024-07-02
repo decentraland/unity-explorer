@@ -2,6 +2,7 @@
 using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.Views;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -14,6 +15,8 @@ namespace Global.Dynamic.ChatCommands
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private string? param;
+
+        public event Action? Executed;
 
         public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder)
         {

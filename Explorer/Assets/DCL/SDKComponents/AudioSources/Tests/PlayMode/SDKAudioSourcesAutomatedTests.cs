@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -115,6 +116,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                new AddressablesProvisioner().WithErrorTrace(),
                 new NullDebugContainerBuilder(),
                 globalSettingsContainer,
                 web3IdentityCache,

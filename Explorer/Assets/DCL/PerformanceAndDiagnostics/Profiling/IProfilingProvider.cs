@@ -6,9 +6,13 @@ namespace DCL.Profiling
 
         ulong CurrentFrameTimeValueInNS { get; }
 
+        long CurrentGPUFrameTimeValueInNS { get; }
+
         double AverageFrameTimeValueInNS { get; }
+        int AverageFameTimeSamples { get; }
 
         ulong HiccupCountInBuffer { get; }
+        int HiccupCountBufferSize { get; }
 
         long MinFrameTimeValueInNS { get; }
 

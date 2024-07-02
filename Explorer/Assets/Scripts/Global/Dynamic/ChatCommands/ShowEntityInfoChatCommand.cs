@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using SceneRunner.Debugging;
 using SceneRunner.Debugging.Hub;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -16,6 +17,8 @@ namespace Global.Dynamic.ChatCommands
 
         private readonly IWorldInfoHub worldInfoHub;
 
+        public event Action? Executed;
+
         public ShowEntityInfoChatCommand(IWorldInfoHub worldInfoHub)
         {
             this.worldInfoHub = worldInfoHub;
@@ -27,6 +30,7 @@ namespace Global.Dynamic.ChatCommands
         private string Execute(string text)
         {
             (IWorldInfo? world, int id, string? errorMessage) = ArgsFromCommand(text);
+            Executed?.Invoke();
             return errorMessage ?? world!.EntityComponentsInfo(id);
         }
 

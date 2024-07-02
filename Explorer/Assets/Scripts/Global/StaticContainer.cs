@@ -137,6 +137,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            IAssetsProvisioner addressablesProvisioner,
             IDebugContainerBuilder debugContainerBuilder,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -155,8 +156,6 @@ namespace Global
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
-            ErrorTraceAssetsProvisioner addressablesProvisioner = new AddressablesProvisioner()
-               .WithErrorTrace();
 
             container.AssetsProvisioner = addressablesProvisioner;
             var exposedPlayerTransform = new ExposedTransform();

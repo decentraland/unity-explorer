@@ -1,4 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
+using DCL.AssetsProvision.Provisions;
 using DCL.Browser;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -59,10 +61,7 @@ namespace Global.Static
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
 
-                if (useStoredCredentials
-
-                    // avoid storing invalid credentials
-                    && useRealAuthentication)
+                if (useStoredCredentials && useRealAuthentication) // avoid storing invalid credentials
                     identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
                 else
@@ -128,6 +127,7 @@ namespace Global.Static
         {
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                new AddressablesProvisioner().WithErrorTrace(),
                 new NullDebugContainerBuilder(),
                 globalSettingsContainer,
                 web3IdentityProvider,

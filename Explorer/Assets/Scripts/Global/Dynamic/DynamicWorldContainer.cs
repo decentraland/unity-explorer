@@ -81,7 +81,7 @@ namespace Global.Dynamic
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
-        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
+        public List<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
 
         public IProfileRepository ProfileRepository { get; private set; } = null!;
 
@@ -97,6 +97,10 @@ namespace Global.Dynamic
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; } = null!;
+
+        public IChatCommand GoToChatCommand { get; private set; } = null!;
+
+        public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
         public void Dispose()
         {
@@ -183,7 +187,7 @@ namespace Global.Dynamic
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
-            var realFlowLoadingStatus = new RealFlowLoadingStatus();
+            container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
             var emotesCache = new MemoryEmotesCache();
             staticContainer.CacheCleaner.Register(emotesCache);
@@ -253,7 +257,7 @@ namespace Global.Dynamic
             );
 
             container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
-                realFlowLoadingStatus,
+                container.RealFlowLoadingStatus,
                 container.MvcManager,
                 selfProfile,
                 dynamicWorldParams.StartParcel,
@@ -273,9 +277,10 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();
 
+            container.GoToChatCommand = new TeleportToChatCommand(realmNavigator);
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { TeleportToChatCommand.REGEX, () => new TeleportToChatCommand(realmNavigator) },
+                { TeleportToChatCommand.REGEX, () => container.GoToChatCommand },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
@@ -313,7 +318,7 @@ namespace Global.Dynamic
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
-                    realFlowLoadingStatus,
+                    container.RealFlowLoadingStatus,
                     entityParticipantTable,
                     container.MessagePipesHub,
                     remotePoses,
@@ -391,7 +396,7 @@ namespace Global.Dynamic
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
-                new RealmDataDirtyFlagPlugin(staticContainer.RealmData)
+                new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

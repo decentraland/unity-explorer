@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Systems;
+using System;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -12,6 +13,8 @@ namespace Global.Dynamic.ChatCommands
 
         private readonly ReloadSceneController reloadSceneController;
 
+        public event Action? Executed;
+
         public ReloadSceneChatCommand(ReloadSceneController reloadSceneController)
         {
             this.reloadSceneController = reloadSceneController;
@@ -19,9 +22,11 @@ namespace Global.Dynamic.ChatCommands
 
         public async UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
+            Executed?.Invoke();
+
             if (await reloadSceneController.TryReloadSceneAsync())
-                return "\ud83d\udfe2 Current scene has been reloaded";
-            return "\ud83d\udd34 You need to be in a SDK7 scene to reload it.";
+                return "🟢 Current scene has been reloaded";
+            return "🔴 You need to be in a SDK7 scene to reload it.";
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
@@ -15,12 +16,14 @@ namespace Global.Dynamic.ChatCommands
         private const string COMMAND_GOTO_LOCAL = "goto-local";
         private const string PARAMETER_RANDOM = "random";
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+),(-?\d+)|{PARAMETER_RANDOM})$",RegexOptions.Compiled);
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_GOTO}|{COMMAND_GOTO_LOCAL})\s+(?:(-?\d+),(-?\d+)|{PARAMETER_RANDOM})$", RegexOptions.Compiled);
 
         private readonly IRealmNavigator realmNavigator;
 
         private int x;
         private int y;
+
+        public event Action? Executed;
 
         public TeleportToChatCommand(IRealmNavigator realmNavigator)
         {
@@ -43,6 +46,7 @@ namespace Global.Dynamic.ChatCommands
             }
 
             await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
+            Executed?.Invoke();
 
             return ct.IsCancellationRequested
                 ? "🔴 Error. The operation was canceled!"
