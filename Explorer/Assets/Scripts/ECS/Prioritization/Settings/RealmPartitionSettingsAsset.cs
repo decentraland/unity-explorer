@@ -20,7 +20,7 @@ namespace ECS.Prioritization
 
         public int MaxLoadingDistanceInParcels
         {
-            get => Mathf.Min(maxLoadingDistanceInParcels, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
+            get => Mathf.Min(1, ParcelMathJobifiedHelper.RADIUS_HARD_LIMIT);
 
             set
             {

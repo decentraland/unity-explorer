@@ -266,6 +266,10 @@ MonoBehaviour:
       Severity: 2
     - Category: DEBUG
       Severity: 4
+    - Category: JAVASCRIPT
+      Severity: 3
+    - Category: JAVASCRIPT
+      Severity: 2
   sentryMatrix:
     entries:
     - Category: ENGINE
@@ -358,6 +362,10 @@ MonoBehaviour:
       Severity: 1
     - Category: UNSPECIFIED
       Severity: 1
+    - Category: JAVASCRIPT
+      Severity: 3
+    - Category: JAVASCRIPT
+      Severity: 2
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1
