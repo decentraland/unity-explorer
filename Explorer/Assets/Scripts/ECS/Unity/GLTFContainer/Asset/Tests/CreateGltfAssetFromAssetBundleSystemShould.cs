@@ -36,9 +36,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task ResolveSimpleScene()
         {
-            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER);
+            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM);
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource()), ab);
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, new CancellationTokenSource()), ab);
 
             system.Update(0);
 
@@ -90,11 +90,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task DoNothingIfCancelled()
         {
-            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SIMPLE_RENDERER);
+            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM);
 
             var canceledSource = new CancellationTokenSource();
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, canceledSource), ab);
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, canceledSource), ab);
 
             canceledSource.Cancel();
 
@@ -122,7 +122,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             var exception = new ArgumentException();
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.SIMPLE_RENDERER, new CancellationTokenSource()),
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, new CancellationTokenSource()),
                 new StreamableLoadingResult<AssetBundleData>(exception));
 
             system.Update(0);
