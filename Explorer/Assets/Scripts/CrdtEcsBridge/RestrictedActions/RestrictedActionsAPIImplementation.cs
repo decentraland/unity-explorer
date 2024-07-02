@@ -77,14 +77,6 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
-        public void TryTriggerEmote(string predefinedEmote)
-        {
-            if (!sceneStateProvider.IsCurrent)
-                return;
-
-            globalWorldActions.TriggerEmote(predefinedEmote);
-        }
-
         public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct)
         {
             if (!sceneStateProvider.IsCurrent)
@@ -145,6 +137,8 @@ namespace CrdtEcsBridge.RestrictedActions
 
         private bool IsPositionValid(Vector3 floorPosition)
         {
+            var parcelToCheck = ParcelMathHelper.FloorToParcel(floorPosition);
+
             foreach (Vector2Int sceneParcel in sceneData.Parcels)
             {
                 if (sceneParcel == parcelToCheck)
