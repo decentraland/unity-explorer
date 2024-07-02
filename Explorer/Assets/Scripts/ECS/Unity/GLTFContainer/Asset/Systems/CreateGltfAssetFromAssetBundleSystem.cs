@@ -147,7 +147,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             });
         }
 
-        private static void CreateAndAddMeshCollider(List<SDKCollider> results, GameObject go, Mesh mesh, bool checkGameObjectNaming = true)
+        private static void CreateAndAddMeshCollider(List<SDKCollider> results, GameObject go, Mesh mesh)
         {
             // Asset Bundle converter creates Colliders during the processing in some cases
             Collider collider = go.GetComponent<Collider>();
@@ -161,7 +161,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            if (checkGameObjectNaming && !IsNamedAsCollider(go))
+            if (!IsNamedAsCollider(go))
                 return;
 
             MeshCollider newCollider = go.AddComponent<MeshCollider>();
