@@ -1,4 +1,3 @@
-using CommunityToolkit.HighPerformance.Helpers;
 using Cysharp.Threading.Tasks;
 using DCL.ExternalUrlPrompt;
 using DCL.Passport.Fields;
@@ -24,6 +23,7 @@ namespace DCL.Passport.Modules
         private readonly UserDetailedInfo_PassportModuleView view;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
+        private readonly IProfileRepository profileRepository;
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFields = new();
         private readonly IObjectPool<Link_PassportFieldView> linksPool;
@@ -31,15 +31,18 @@ namespace DCL.Passport.Modules
 
         private Profile currentProfile;
         private CancellationTokenSource checkEditionAvailabilityCts;
+        private CancellationTokenSource saveInfoCts;
 
         public UserDetailedInfo_PassportModuleController(
             UserDetailedInfo_PassportModuleView view,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            IProfileRepository profileRepository)
         {
             this.view = view;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
+            this.profileRepository = profileRepository;
 
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
@@ -63,13 +66,14 @@ namespace DCL.Passport.Modules
 
             view.InfoEditionButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(true));
             view.CancelInfoButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(false));
-            view.SaveInfoButton.onClick.AddListener(SaveInfo);
+            view.SaveInfoButton.onClick.AddListener(SaveInfoSection);
         }
 
         public void Setup(Profile profile)
         {
             currentProfile = profile;
 
+            SetInfoSectionAsEditionMode(false);
             LoadAdditionalFields();
             LoadLinks();
 
@@ -99,6 +103,8 @@ namespace DCL.Passport.Modules
             view.InfoEditionButton.onClick.RemoveAllListeners();
             view.CancelInfoButton.onClick.RemoveAllListeners();
             view.SaveInfoButton.onClick.RemoveAllListeners();
+            checkEditionAvailabilityCts.SafeCancelAndDispose();
+            saveInfoCts.SafeCancelAndDispose();
             Clear();
         }
 
@@ -203,7 +209,6 @@ namespace DCL.Passport.Modules
 
         private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
         {
-            SetInfoSectionAsEditionMode(false);
             view.InfoEditionButton.gameObject.SetActive(false);
             view.LinksEditionButton.gameObject.SetActive(false);
             var ownProfile = await selfProfile.ProfileAsync(ct);
@@ -216,20 +221,46 @@ namespace DCL.Passport.Modules
 
         private void SetInfoSectionAsEditionMode(bool isEditMode)
         {
-            if (isEditMode)
-                view.DescriptionForEditMode.text = view.Description.text;
+            foreach (var editionObj in view.InfoEditionObjects)
+                editionObj.SetActive(isEditMode);
 
-            view.InfoEditionButton.gameObject.SetActive(!isEditMode);
-            view.Description.gameObject.SetActive(!isEditMode);
-            view.DescriptionForEditMode.gameObject.SetActive(isEditMode);
-            view.InfoSectionSaveButtonsContainer.SetActive(isEditMode);
+            foreach (var readOnlyObj in view.InfoReadOnlyObjects)
+                readOnlyObj.SetActive(!isEditMode);
+
+            if (isEditMode)
+            {
+                SetInfoSectionAsSavingStatus(false);
+                view.DescriptionForEditMode.text = view.Description.text;
+            }
+            else
+                saveInfoCts.SafeCancelAndDispose();
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
         }
 
-        private void SaveInfo()
+        private void SaveInfoSection()
         {
-            SetInfoSectionAsEditionMode(false);
+            saveInfoCts = saveInfoCts.SafeRestart();
+            SaveInfoAsync(saveInfoCts.Token).Forget();
+            return;
+
+            async UniTaskVoid SaveInfoAsync(CancellationToken ct)
+            {
+                SetInfoSectionAsSavingStatus(true);
+                currentProfile.Description = view.DescriptionForEditMode.text;
+                await profileRepository.SetAsync(currentProfile, ct);
+                var updatedProfile = await profileRepository.GetAsync(currentProfile.UserId, 0, ct);
+                view.Description.text = updatedProfile?.Description;
+                SetInfoSectionAsEditionMode(false);
+            }
+        }
+
+        private void SetInfoSectionAsSavingStatus(bool isSaving)
+        {
+            view.SaveInfoButtonLoading.SetActive(isSaving);
+            view.CancelInfoButton.gameObject.SetActive(!isSaving);
+            view.SaveInfoButton.gameObject.SetActive(!isSaving);
+            view.DescriptionForEditMode.interactable = !isSaving;
         }
     }
 }

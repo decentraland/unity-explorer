@@ -33,11 +33,11 @@ namespace DCL.Passport
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
+        private readonly World world;
+        private readonly IThumbnailProvider thumbnailProvider;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
-        private World world;
-        private IThumbnailProvider thumbnailProvider;
         private PassportCharacterPreviewController characterPreviewController;
         private IPassportModuleController userBasicInfoModuleController;
         private IPassportModuleController userDetailedInfoModuleController;
@@ -54,7 +54,9 @@ namespace DCL.Passport
             NftTypeIconSO categoryIcons,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMVCManager mvcManager,
-            ISelfProfile selfProfile) : base(viewFactory)
+            ISelfProfile selfProfile,
+            World world,
+            IThumbnailProvider thumbnailProvider) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -66,6 +68,8 @@ namespace DCL.Passport
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
+            this.world = world;
+            this.thumbnailProvider = thumbnailProvider;
         }
 
         protected override void OnViewInstantiated()
@@ -73,7 +77,7 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile);
-            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile);
+            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository);
             equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider);
         }
 
@@ -98,12 +102,6 @@ namespace DCL.Passport
             UniTask.WhenAny(
                 viewInstance.CloseButton.OnClickAsync(ct),
                 viewInstance.BackgroundButton.OnClickAsync(ct));
-
-        public void SetParamsFromWorld(World worldParam, ECSThumbnailProvider thumbnailProviderParam)
-        {
-            this.world = worldParam;
-            this.thumbnailProvider = thumbnailProviderParam;
-        }
 
         public override void Dispose()
         {

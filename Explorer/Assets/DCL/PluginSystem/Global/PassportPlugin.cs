@@ -19,7 +19,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class PassportPlugin : IDCLGlobalPlugin<PassportPlugin.PassportSettings>
+    public class PassportPlugin : DCLGlobalPluginBase<PassportPlugin.PassportSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
@@ -60,7 +60,9 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
         }
 
-        public async UniTask InitializeAsync(PassportSettings passportSettings, CancellationToken ct)
+        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
+
+        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(PassportSettings passportSettings, CancellationToken ct)
         {
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityColorMappings, ct),
@@ -68,30 +70,36 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityBackgroundsMapping, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(passportSettings.RarityInfoPanelBackgroundsMapping, ct));
 
-            passportController = new PassportController(
-                PassportController.CreateLazily((await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>(), null),
-                cursor,
-                profileRepository,
-                characterPreviewFactory,
-                chatEntryConfiguration,
-                rarityBackgroundsMapping,
-                rarityColorMappings,
-                categoryIconsMapping,
-                characterPreviewEventBus,
-                mvcManager,
-                selfProfile);
+            PassportView chatView = (await assetsProvisioner.ProvideMainAssetAsync(passportSettings.PassportPrefab, ct: ct)).Value.GetComponent<PassportView>();
 
-            mvcManager.RegisterController(passportController);
+            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
+            {
+                ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
+
+                passportController = new PassportController(
+                    PassportController.CreateLazily(chatView, null),
+                    cursor,
+                    profileRepository,
+                    characterPreviewFactory,
+                    chatEntryConfiguration,
+                    rarityBackgroundsMapping,
+                    rarityColorMappings,
+                    categoryIconsMapping,
+                    characterPreviewEventBus,
+                    mvcManager,
+                    selfProfile,
+                    builder.World,
+                    thumbnailProvider);
+
+                mvcManager.RegisterController(passportController);
+            };
         }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        public override void Dispose()
         {
-            ECSThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
-            passportController.SetParamsFromWorld(builder.World, thumbnailProvider);
-        }
-
-        public void Dispose() =>
             passportController.Dispose();
+            base.Dispose();
+        }
 
         public class PassportSettings : IDCLPluginSettings
         {

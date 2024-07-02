@@ -1,4 +1,5 @@
 using DCL.Passport.Fields;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -38,12 +39,18 @@ namespace DCL.Passport.Modules
         public Button LinksEditionButton { get; private set; }
 
         [field: SerializeField]
-        public GameObject InfoSectionSaveButtonsContainer { get; private set; }
-
-        [field: SerializeField]
         public Button SaveInfoButton { get; private set; }
 
         [field: SerializeField]
+        public GameObject SaveInfoButtonLoading { get; private set; }
+
+        [field: SerializeField]
         public Button CancelInfoButton { get; private set; }
+
+        [field: SerializeField]
+        public List<GameObject> InfoReadOnlyObjects { get; private set; }
+
+        [field: SerializeField]
+        public List<GameObject> InfoEditionObjects { get; private set; }
     }
 }
