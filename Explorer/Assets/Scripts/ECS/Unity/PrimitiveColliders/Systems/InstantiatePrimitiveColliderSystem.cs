@@ -106,7 +106,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             sdkCollider.IsActiveByEntity = enabled;
             sdkCollider.Collider.enabled = enabled;
 
-            entityCollidersCache.Associate(sdkCollider.Collider, new ColliderEntityInfo(World.Reference(entity), sdkEntity, colliderLayer));
+            entityCollidersCache.Associate(sdkCollider.Collider, new ColliderSceneEntityInfo(World.Reference(entity), sdkEntity, colliderLayer));
 
             return enabled;
         }

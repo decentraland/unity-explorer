@@ -1,7 +1,10 @@
 using Arch.Core;
+using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.ECSComponents;
+using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Profiles.RemoteProfiles;
@@ -28,14 +31,22 @@ namespace DCL.Multiplayer.Profiles.Entities
         private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly List<string> tempRemoveAll = new ();
+        private readonly IEntityCollidersGlobalCache collidersGlobalCache;
+        private readonly Dictionary<string, Collider> collidersByWalletId = new ();
         private IComponentPool<Transform> transformPool = null!;
 
-        public RemoteEntities(IRoomHub roomHub, IEntityParticipantTable entityParticipantTable, IComponentPoolsRegistry componentPoolsRegistry, IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemoteEntities(
+            IRoomHub roomHub,
+            IEntityParticipantTable entityParticipantTable,
+            IComponentPoolsRegistry componentPoolsRegistry,
+            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
+            IEntityCollidersGlobalCache collidersGlobalCache)
         {
             this.roomHub = roomHub;
             this.entityParticipantTable = entityParticipantTable;
             this.componentPoolsRegistry = componentPoolsRegistry;
             this.queuePool = queuePool;
+            this.collidersGlobalCache = collidersGlobalCache;
         }
 
         public void Initialize()
@@ -78,6 +89,12 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             var entity = entityParticipantTable.Entity(walletId);
 
+            if (collidersByWalletId.TryGetValue(walletId, out Collider collider))
+            {
+                collidersGlobalCache.RemoveAssociation(collider);
+                collidersByWalletId.Remove(walletId);
+            }
+
             world.AddOrGet(entity, new DeleteEntityIntention());
             entityParticipantTable.Release(walletId);
         }
@@ -116,10 +133,18 @@ namespace DCL.Multiplayer.Profiles.Entities
         private Entity CreateCharacter(RemoteProfile profile, World world)
         {
             var transform = transformPool.Get()!;
+            transform.gameObject.layer = PhysicsLayers.OTHER_AVATARS_LAYER;
             transform.name = $"REMOTE_ENTITY_{profile.WalletId}";
             transform.SetParent(null);
             transform.rotation = Quaternion.identity;
             transform.localScale = Vector3.one;
+
+            var avatarCollider = transform.gameObject.AddComponent<CapsuleCollider>();
+            avatarCollider.isTrigger = true;
+            avatarCollider.center = new Vector3(0, 1, 0);
+            avatarCollider.radius = 0.5f;
+            avatarCollider.height = 2f;
+            collidersByWalletId.TryAdd(profile.WalletId, avatarCollider);
 
             var transformComp = new CharacterTransform(transform);
 
@@ -133,8 +158,10 @@ namespace DCL.Multiplayer.Profiles.Entities
                 new ExtrapolationComponent()
             );
 
+            collidersGlobalCache.Associate(avatarCollider, world.Reference(entity));
+
             ProfileUtils.CreateProfilePicturePromise(profile.Profile, world, PartitionComponent.TOP_PRIORITY);
-            
+
             return entity;
         }
 
@@ -142,15 +169,15 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             var entity = entityParticipantTable.Entity(remoteProfile.WalletId);
             var profile = remoteProfile.Profile;
-            
+
             if (world.TryGet(entity, out Profile? existingProfile))
                 if (existingProfile!.Version == profile.Version)
                     return;
-                
+
             world.Set(entity, profile);
             // Force to update the avatar through the profile
             profile.IsDirty = true;
-                
+
             ProfileUtils.CreateProfilePicturePromise(profile, world, PartitionComponent.TOP_PRIORITY);
         }
     }

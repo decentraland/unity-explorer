@@ -17,15 +17,15 @@ namespace DCL.Interaction.Utility
             GltfContainerAsset asset = gltfContainerComponent.Promise.Result.Value.Asset;
 
             if (asset.VisibleMeshesColliders != null)
-                cache.Associate(asset.VisibleMeshesColliders, new ColliderEntityInfo(entityReference, sdkEntity, gltfContainerComponent.VisibleMeshesCollisionMask));
+                cache.Associate(asset.VisibleMeshesColliders, new ColliderSceneEntityInfo(entityReference, sdkEntity, gltfContainerComponent.VisibleMeshesCollisionMask));
 
-            cache.Associate(asset.InvisibleColliders, new ColliderEntityInfo(entityReference, sdkEntity, gltfContainerComponent.InvisibleMeshesCollisionMask));
+            cache.Associate(asset.InvisibleColliders, new ColliderSceneEntityInfo(entityReference, sdkEntity, gltfContainerComponent.InvisibleMeshesCollisionMask));
         }
 
-        public static void Associate(this IEntityCollidersSceneCache cache, IReadOnlyList<SDKCollider> colliders, ColliderEntityInfo entityInfo)
+        public static void Associate(this IEntityCollidersSceneCache cache, IReadOnlyList<SDKCollider> colliders, ColliderSceneEntityInfo sceneEntityInfo)
         {
             for (var i = 0; i < colliders.Count; i++)
-                cache.Associate(colliders[i].Collider, entityInfo);
+                cache.Associate(colliders[i].Collider, sceneEntityInfo);
         }
 
         public static void Remove(this IEntityCollidersSceneCache cache, IReadOnlyList<SDKCollider> colliders)

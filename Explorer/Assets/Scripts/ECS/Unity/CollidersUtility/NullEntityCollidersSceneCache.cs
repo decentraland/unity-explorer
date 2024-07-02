@@ -11,15 +11,15 @@ namespace DCL.Interaction.Utility
 
         public void Dispose() { }
 
-        public bool TryGetEntity(Collider collider, out ColliderEntityInfo entity)
+        public bool TryGetEntity(Collider collider, out ColliderSceneEntityInfo sceneEntity)
         {
-            entity = default(ColliderEntityInfo);
+            sceneEntity = default(ColliderSceneEntityInfo);
             return false;
         }
 
-        public void Associate(Collider collider, ColliderEntityInfo entityInfo) { }
+        public void Associate(Collider collider, ColliderSceneEntityInfo sceneEntityInfo) { }
 
-        public void Associate(IEnumerable<Collider> colliders, ColliderEntityInfo entityInfo) { }
+        public void Associate(IEnumerable<Collider> colliders, ColliderSceneEntityInfo sceneEntityInfo) { }
 
         public void Remove(Collider collider) { }
 

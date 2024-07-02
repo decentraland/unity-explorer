@@ -11,6 +11,13 @@ using UnityEngine.Pool;
 namespace DCL.Profiles
 {
     [Serializable]
+    public struct LinkJsonDto
+    {
+        public string title;
+        public string url;
+    }
+
+    [Serializable]
     public struct EmoteJsonDto
     {
         public int slot;
@@ -205,7 +212,7 @@ namespace DCL.Profiles
         public string realName;
         public string hobbies;
         public long birthdate;
-        public List<string> links;
+        public List<LinkJsonDto>? links;
 
         public void Dispose()
         {
@@ -270,13 +277,13 @@ namespace DCL.Profiles
 
             if (links != null)
             {
-                profile.links ??= ListPool<string>.Get();
+                profile.links ??= ListPool<LinkJsonDto>.Get();
                 profile.links.Clear();
                 profile.links.AddRange(links);
             }
             else if (profile.links != null)
             {
-                ListPool<string>.Release(profile.links);
+                ListPool<LinkJsonDto>.Release(profile.links);
                 profile.links = null;
             }
         }
@@ -332,13 +339,13 @@ namespace DCL.Profiles
 
             if (profile.links != null)
             {
-                links ??= ListPool<string>.Get();
+                links ??= ListPool<LinkJsonDto>.Get();
                 links.Clear();
                 links.AddRange(profile.links);
             }
             else if (links != null)
             {
-                ListPool<string>.Release(links);
+                ListPool<LinkJsonDto>.Release(links);
                 links = null;
             }
         }

@@ -43,6 +43,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackEquipStatusController backpackEquipStatusController;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private BackpackBusController? busController;
         private Arch.Core.World? world;
@@ -62,7 +63,10 @@ namespace DCL.PluginSystem.Global
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
             IRealmData realmData,
-            DCLInput dclInput, URLDomain assetBundleURL, IWebRequestController webRequestController)
+            DCLInput dclInput,
+            URLDomain assetBundleURL,
+            IWebRequestController webRequestController,
+            CharacterPreviewEventBus characterPreviewEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -76,6 +80,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
+            this.characterPreviewEventBus = characterPreviewEventBus;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -170,7 +175,7 @@ namespace DCL.PluginSystem.Global
                     new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);
 
                 var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
-                    characterPreviewFactory, backpackEventBus, world, equippedEmotes);
+                    characterPreviewFactory, backpackEventBus, world, equippedEmotes, characterPreviewEventBus);
 
                 backpackController = new BackpackController(
                     view,

@@ -35,7 +35,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             entityCollidersGlobalCache = Substitute.For<IEntityCollidersGlobalCache>();
 
             system = new PlayerOriginatedRaycastSystem(world, pointer, entityCollidersGlobalCache,
-                playerInteractionEntity = new PlayerInteractionEntity(world.Create(new PlayerOriginRaycastResult()), world), 1000);
+                playerInteractionEntity = new PlayerInteractionEntity(world.Create(new PlayerOriginRaycastResultForSceneEntities()), world), 1000);
 
             var cameraGo = new GameObject("Camera GO");
             cameraGo.transform.ResetLocalTRS();
@@ -63,18 +63,18 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
             collider.size = Vector3.one;
 
-            entityCollidersGlobalCache.TryGetEntity(collider, out Arg.Any<GlobalColliderEntityInfo>())
+            entityCollidersGlobalCache.TryGetSceneEntity(collider, out Arg.Any<GlobalColliderSceneEntityInfo>())
                                       .Returns(x =>
                                        {
-                                           x[1] = new GlobalColliderEntityInfo();
+                                           x[1] = new GlobalColliderSceneEntityInfo();
                                            return true;
                                        });
 
             system.Update(0);
 
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
-            Assert.That(raycastResult.IsValidHit, Is.True);
-            Assert.That(raycastResult.GetCollider(), Is.EqualTo(collider));
+            ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(raycastResultForSceneEntities.IsValidHit, Is.True);
+            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.EqualTo(collider));
         }
 
         [Test]
@@ -87,10 +87,10 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
             collider.size = Vector3.one;
 
-            entityCollidersGlobalCache.TryGetEntity(collider, out Arg.Any<GlobalColliderEntityInfo>())
+            entityCollidersGlobalCache.TryGetSceneEntity(collider, out Arg.Any<GlobalColliderSceneEntityInfo>())
                                       .Returns(x =>
                                        {
-                                           x[1] = new GlobalColliderEntityInfo();
+                                           x[1] = new GlobalColliderSceneEntityInfo();
                                            return true;
                                        });
 
@@ -99,9 +99,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
-            Assert.That(raycastResult.IsValidHit, Is.True);
-            Assert.That(raycastResult.GetCollider(), Is.EqualTo(collider));
+            ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(raycastResultForSceneEntities.IsValidHit, Is.True);
+            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.EqualTo(collider));
         }
 
         [Test]
@@ -114,18 +114,18 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
             collider.size = Vector3.one;
 
-            entityCollidersGlobalCache.TryGetEntity(collider, out Arg.Any<GlobalColliderEntityInfo>())
+            entityCollidersGlobalCache.TryGetSceneEntity(collider, out Arg.Any<GlobalColliderSceneEntityInfo>())
                                       .Returns(x =>
                                        {
-                                           x[1] = new GlobalColliderEntityInfo();
+                                           x[1] = new GlobalColliderSceneEntityInfo();
                                            return true;
                                        });
 
             system.Update(0);
 
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
-            Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.GetEntityInfo(), Is.Null);
+            ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
+            Assert.That(raycastResultForSceneEntities.GetEntityInfo(), Is.Null);
         }
 
         [Test]
@@ -138,18 +138,18 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
             collider.size = Vector3.one;
 
-            entityCollidersGlobalCache.TryGetEntity(collider, out Arg.Any<GlobalColliderEntityInfo>())
+            entityCollidersGlobalCache.TryGetSceneEntity(collider, out Arg.Any<GlobalColliderSceneEntityInfo>())
                                       .Returns(x =>
                                        {
-                                           x[1] = new GlobalColliderEntityInfo();
+                                           x[1] = new GlobalColliderSceneEntityInfo();
                                            return true;
                                        });
 
             system.Update(0);
 
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
-            Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.GetCollider(), Is.Null);
+            ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
+            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.Null);
         }
 
         [Test]
@@ -164,9 +164,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
-            Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.GetEntityInfo(), Is.Null);
+            ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
+            Assert.That(raycastResultForSceneEntities.GetEntityInfo(), Is.Null);
         }
 
         [Test]
@@ -179,10 +179,10 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             BoxCollider collider = colliderGo.AddComponent<BoxCollider>();
             collider.size = Vector3.one;
 
-            entityCollidersGlobalCache.TryGetEntity(collider, out Arg.Any<GlobalColliderEntityInfo>())
+            entityCollidersGlobalCache.TryGetSceneEntity(collider, out Arg.Any<GlobalColliderSceneEntityInfo>())
                                       .Returns(x =>
                                        {
-                                           x[1] = new GlobalColliderEntityInfo();
+                                           x[1] = new GlobalColliderSceneEntityInfo();
                                            return true;
                                        });
 
@@ -191,9 +191,9 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             system.Update(0);
 
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
-            Assert.That(raycastResult.IsValidHit, Is.False);
-            Assert.That(raycastResult.GetCollider(), Is.Null);
+            ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
+            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.Null);
         }
     }
 }

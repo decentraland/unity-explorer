@@ -29,6 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
 
         private CancellationTokenSource? cancellationTokenSource;
@@ -45,6 +46,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
+            CharacterPreviewEventBus characterPreviewEventBus,
             FeatureFlagsCache featureFlagsCache)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -57,6 +59,7 @@ namespace DCL.PluginSystem.Global
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
+            this.characterPreviewEventBus = characterPreviewEventBus;
             this.featureFlagsCache = featureFlagsCache;
         }
 
@@ -68,7 +71,7 @@ namespace DCL.PluginSystem.Global
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator, featureFlagsCache);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator, characterPreviewEventBus, featureFlagsCache);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
