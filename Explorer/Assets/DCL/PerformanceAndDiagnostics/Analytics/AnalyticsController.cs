@@ -1,92 +1,87 @@
 ﻿using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS;
+using Segment.Analytics;
 using Segment.Serialization;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
+using Utility;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
+    public class StaticCommonTraitsPlugin : EventPlugin
+    {
+        private readonly string dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
+        private readonly string sessionID = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
+        private readonly string rendererVersion = Application.version;
+        private readonly string runtime = Application.isEditor ? "editor" : "build";
+        public override PluginType Type => PluginType.Enrichment;
+
+        public override TrackEvent Track(TrackEvent trackEvent)
+        {
+            trackEvent.Context["dcl_renderer_type"] = dclRendererType;
+            trackEvent.Context["session_id"] = sessionID;
+            trackEvent.Context["renderer_version"] = rendererVersion;
+            trackEvent.Context["runtime"] = runtime;
+
+            return trackEvent;
+        }
+    }
+
+    public class DynamicCommonTraitsPlugin : EventPlugin
+    {
+        private readonly IRealmData realmData;
+        private readonly ExposedTransform playerTransform;
+        private readonly IWeb3IdentityCache identityCache;
+        public override PluginType Type => PluginType.Enrichment;
+
+        public DynamicCommonTraitsPlugin(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform)
+        {
+            this.realmData = realmData;
+            this.identityCache = identityCache;
+            this.playerTransform = playerTransform;
+        }
+
+        public override TrackEvent Track(TrackEvent trackEvent)
+        {
+            trackEvent.Context["dcl_eth_address"] = identityCache!.Identity!.Address.ToString();
+            trackEvent.Context["auth_chain"] = identityCache.Identity.AuthChain.ToString();
+            trackEvent.Context["realm"] = realmData is not { Configured: true } ? "NOT CONFIGURED" : realmData.RealmName;
+            trackEvent.Context["position"] = playerTransform.Position.Value.ToShortString();
+
+            return trackEvent;
+        }
+    }
+
     public class AnalyticsController
     {
-        private const string UNDEFINED = "undefined";
-
         private readonly IAnalyticsService analytics;
         private readonly AnalyticsConfiguration configuration;
-        private readonly IDictionary<string, JsonElement> commonParamsValues;
-
-        private IRealmData realmData;
-        private Transform playerTransform;
-        private IWeb3IdentityCache identityCache;
-
-        private IDictionary<string, JsonElement> commonParams
-        {
-            get
-            {
-                commonParamsValues["dcl_eth_address"] = identityCache?.Identity == null ? UNDEFINED : identityCache.Identity.Address.ToString();
-                commonParamsValues["realm"] = realmData is not { Configured: true } ? UNDEFINED : realmData.RealmName;
-                commonParamsValues["position"] = playerTransform == null ? UNDEFINED : playerTransform.position.ToShortString();
-
-                return commonParamsValues;
-            }
-        }
 
         public AnalyticsController(IAnalyticsService analyticsService, AnalyticsConfiguration configuration)
         {
             analytics = analyticsService;
             this.configuration = configuration;
 
-            commonParamsValues = new Dictionary<string, JsonElement>
-            {
-                // Dynamic common parameters, updated on call
-                ["dcl_eth_address"] = UNDEFINED,
-                ["realm"] = UNDEFINED,
-                ["position"] = UNDEFINED,
-
-                // Static common parameters
-                ["dcl_renderer_type"] = SystemInfo.deviceType.ToString(), // Desktop, Console, Handeheld (Mobile), Unknown
-                ["session_id"] = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff"),
-                ["renderer_version"] = Application.version,
-                ["runtime"] = Application.isEditor ? "editor" : "build", // do we need it❓
-            };
+            analytics.AddPlugin(new StaticCommonTraitsPlugin());
         }
 
-        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, Transform playerTransform)
+        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform)
         {
-            this.realmData = realmData;
-            this.identityCache = identityCache;
-            this.playerTransform = playerTransform;
+            analytics.Identify(identityCache.Identity.Address, new JsonObject
+                {
+                    ["dcl_eth_address"] = identityCache.Identity.Address.ToString(),
+                    ["auth_chain"] = identityCache.Identity.AuthChain.ToString(),
+                }
+            );
 
-            commonParamsValues["dcl_eth_address"] = identityCache?.Identity == null ? UNDEFINED : identityCache.Identity.Address.ToString();
-            commonParamsValues["realm"] = realmData is not { Configured: true } ? UNDEFINED : realmData.RealmName;
-            commonParamsValues["position"] = playerTransform == null ? UNDEFINED : playerTransform.position.ToShortString();
-
-            // analytics.Identify();
+            analytics.AddPlugin(new DynamicCommonTraitsPlugin(realmData, identityCache, playerTransform));
         }
 
-        public void Track(string eventName, Dictionary<string, JsonElement> properties = null)
+        public void Track(string eventName, JsonObject properties = null)
         {
             if (configuration.EventIsEnabled(eventName))
-                analytics.Track(eventName, properties.BuildWithPrefix(commonParams));
-        }
-    }
-
-    public static class JsonObjectUtils
-    {
-        public static JsonObject BuildWithPrefix(this IDictionary<string, JsonElement> origin, IDictionary<string, JsonElement> prefix)
-        {
-            if (origin == null) return new JsonObject(prefix);
-
-            foreach (KeyValuePair<string, JsonElement> element in origin)
-                prefix.Add(element);
-
-            var result = new JsonObject(prefix);
-
-            foreach (KeyValuePair<string, JsonElement> element in origin)
-                prefix.Remove(element);
-
-            return result;
+                analytics.Track(eventName, properties);
         }
     }
 }

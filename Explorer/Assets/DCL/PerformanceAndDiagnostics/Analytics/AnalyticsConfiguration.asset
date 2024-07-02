@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   flushSize: 20
   flushInterval: 30
-  <PerformanceReportInterval>k__BackingField: 1
-  <Mode>k__BackingField: 0
+  <PerformanceReportInterval>k__BackingField: 3
+  <Mode>k__BackingField: 1
   groups:
   - groupName: General
     events:
@@ -24,7 +24,7 @@ MonoBehaviour:
     - eventName: initial_loading
       isEnabled: 1
     - eventName: performance_report
-      isEnabled: 0
+      isEnabled: 1
   - groupName: Chat
     events:
     - eventName: chat_message_sent

@@ -1,7 +1,6 @@
 ﻿using DCL.Navmap;
 using Segment.Serialization;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -26,7 +25,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnJumpIn(Vector2Int parcel)
         {
-            analytics.Track(AnalyticsEvents.Map.JUMP_IN, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.Map.JUMP_IN, new JsonObject
             {
                 { "parcel", parcel.ToString() },
             });

@@ -1,4 +1,5 @@
-﻿using Segment.Serialization;
+﻿using Segment.Analytics;
+using Segment.Serialization;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -10,5 +11,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         void Identify(string userId, JsonObject traits = null);
 
         void Track(string eventName, JsonObject properties = null);
+
+        void AddPlugin(Plugin plugin);
     }
 }

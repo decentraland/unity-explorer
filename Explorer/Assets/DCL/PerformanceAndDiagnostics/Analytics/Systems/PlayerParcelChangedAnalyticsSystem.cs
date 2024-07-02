@@ -56,22 +56,20 @@ namespace DCL.Analytics.Systems
 
             if (newParcel != oldParcel)
             {
-                analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL,
-                    new Dictionary<string, JsonElement>
-                    {
-                        { "old parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
-                        { "new parcel", newParcel.ToString() },
-                    });
+                analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, new JsonObject
+                {
+                    { "old parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
+                    { "new parcel", newParcel.ToString() },
+                });
 
                 oldParcel = newParcel;
 
-                if (scenesCache.TryGetByParcel(newParcel, out var currentScene) && currentScene != lastScene)
+                if (scenesCache.TryGetByParcel(newParcel, out ISceneFacade? currentScene) && currentScene != lastScene)
                 {
-                    analytics.Track(AnalyticsEvents.World.VISIT_SCENE,
-                        new Dictionary<string, JsonElement>
-                        {
-                            { "scene name", currentScene.Info.Name },
-                        });
+                    analytics.Track(AnalyticsEvents.World.VISIT_SCENE, new JsonObject
+                    {
+                        { "scene name", currentScene.Info.Name },
+                    });
 
                     lastScene = currentScene;
                 }

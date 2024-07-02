@@ -48,7 +48,7 @@ namespace DCL.Analytics.Systems
 
         private void SendAnalytics()
         {
-            analytics.Track(AnalyticsEvents.World.TIME_SPENT_IN_WORLD, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.World.TIME_SPENT_IN_WORLD, new JsonObject
             {
                 ["time_spent"] = timeSpentInWorld,
                 ["world_name"] = worldName,

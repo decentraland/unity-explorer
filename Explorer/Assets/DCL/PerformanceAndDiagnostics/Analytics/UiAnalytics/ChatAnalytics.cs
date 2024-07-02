@@ -3,7 +3,6 @@ using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using Segment.Serialization;
 using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
@@ -40,7 +39,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private void OnMessageSent(string message)
         {
-            analytics.Track(AnalyticsEvents.Chat.MESSAGE_SENT, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.Chat.MESSAGE_SENT, new JsonObject
             {
                 { "message", message },
                 { "emojis_amount", EMOJI_PATTERN.Matches(message).Count },
@@ -61,7 +60,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 return;
             }
 
-            analytics.Track(AnalyticsEvents.Chat.BUBBLE_SWITCHED, new Dictionary<string, JsonElement>
+            analytics.Track(AnalyticsEvents.Chat.BUBBLE_SWITCHED, new JsonObject
             {
                 { "is_visible", isVisible },
             });

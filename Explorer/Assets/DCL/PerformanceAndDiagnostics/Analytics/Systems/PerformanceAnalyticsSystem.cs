@@ -15,7 +15,7 @@ namespace DCL.Analytics.Systems
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     [UpdateAfter(typeof(ProfilingSystem))]
-    public partial class PerformanceAnalyticsSystem: BaseUnityLoopSystem
+    public partial class PerformanceAnalyticsSystem : BaseUnityLoopSystem
     {
         private const float NANOSECONDS_TO_MILLISECONDS = 1e-6f;
         private const float BYTES_TO_MEGABYTES = 1e-6f;
@@ -45,7 +45,7 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            analytics.Track(General.PERFORMANCE_REPORT, new Dictionary<string, JsonElement>
+            analytics.Track(General.PERFORMANCE_REPORT, new JsonObject
             {
                 ["total_used_memory"] = profilingProvider.TotalUsedMemoryInBytes * BYTES_TO_MEGABYTES,
 
@@ -61,7 +61,7 @@ namespace DCL.Analytics.Systems
                 ["hiccup_buffer_size"] = profilingProvider.HiccupCountBufferSize,
 
                 // TODO: include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
-                ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()]
+                ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
             });
         }
     }

@@ -1,5 +1,7 @@
 ﻿using DCL.Diagnostics;
+using Segment.Analytics;
 using Segment.Serialization;
+using System.Collections.Generic;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -14,12 +16,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             var message = $"Track: {eventName}";
 
-            foreach (var pair in properties.Content)
+            foreach (KeyValuePair<string, JsonElement> pair in properties.Content)
                 message += $" \n {pair.Key} = {pair.Value}";
 
             message += "\n";
 
             ReportHub.Log(ReportCategory.ANALYTICS, message);
         }
+
+        public void AddPlugin(Plugin plugin) { }
     }
 }
