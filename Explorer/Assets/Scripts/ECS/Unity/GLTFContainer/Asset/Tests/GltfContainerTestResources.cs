@@ -18,7 +18,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         internal const string SCENE_WITH_COLLIDER = "bafybeigwxyfyyarzmvqz262vet65xa2ovetct6hcnm27uwge7yxpmhfvoe";
 
         // 1 Mesh Renderer // 1 Animation
-        public const string SIMPLE_RENDERER = "bafkreif6qazpaiulr6kcqgukopkw6r26lawpnisdjdoddaqeujd5ytaezy";
+        public const string RENDERER_WITH_LEGACY_ANIM = "bafkreif6qazpaiulr6kcqgukopkw6r26lawpnisdjdoddaqeujd5ytaezy";
 
         internal const string NO_GAME_OBJECTS = "bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda";
 

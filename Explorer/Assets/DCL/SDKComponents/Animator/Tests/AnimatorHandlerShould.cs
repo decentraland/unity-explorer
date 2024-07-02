@@ -31,7 +31,7 @@ using Entity = Arch.Core.Entity;
 namespace DCL.SDKComponents.Animator.Tests
 {
     [TestFixture]
-    public class AnimatorHandlerShould : UnitySystemTestBase<AnimatorHandlerSystem>
+    public class AnimatorHandlerShould : UnitySystemTestBase<LegacyAnimationPlayerSystem>
     {
         private Entity entity;
         private PBAnimator pbAnimator;
@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.Animator.Tests
             budget.TrySpendBudget().Returns(true);
             createGltfAssetFromAssetBundleSystem = new CreateGltfAssetFromAssetBundleSystem(world, budget, budget);
 
-            system = new AnimatorHandlerSystem(world);
+            system = new LegacyAnimationPlayerSystem(world);
 
             pbAnimator = new PBAnimator()
             {

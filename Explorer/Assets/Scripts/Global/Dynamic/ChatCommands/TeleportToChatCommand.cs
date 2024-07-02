@@ -1,12 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.Chat;
+using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Realm;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using Utility;
 using Random = UnityEngine.Random;
-using static DCL.Chat.IChatCommand;
+using static DCL.Chat.Commands.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
