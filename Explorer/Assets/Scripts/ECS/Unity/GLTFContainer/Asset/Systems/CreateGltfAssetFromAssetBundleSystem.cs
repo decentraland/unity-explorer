@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using VisibleMeshCollider = ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset.VisibleMeshCollider;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -100,39 +101,59 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 result.Animators.AddRange(animatorScope.Value);
             }
 
-            // Collect colliders and mesh filters
+            // Collect colliders from mesh filters
             // Colliders are created/fetched disabled as its layer is controlled by another system
-            using PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope();
-
-            List<MeshFilter> list = meshFilterScope.Value;
-            instance.GetComponentsInChildren(true, list);
-
-            foreach (MeshFilter meshFilter in list)
+            using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
             {
-                GameObject meshFilterGameObject = meshFilter.gameObject;
+                List<MeshFilter> list = meshFilterScope.Value;
+                instance.GetComponentsInChildren(true, list);
 
-                // gather invisible colliders
-                CreateInvisibleColliders(result.InvisibleColliders, meshFilterGameObject, meshFilter);
+                foreach (MeshFilter visibleMeshCollider in list)
+                {
+                    GameObject go = visibleMeshCollider.gameObject;
 
-                FilterVisibleColliderCandidate(result.VisibleColliderMeshes, meshFilter);
+                    // Consider it a visible collider when it has a renderer on it
+                    if (go.GetComponent<Renderer>())
+                        AddVisibleMeshCollider(result, go, visibleMeshCollider.sharedMesh);
+                    else
+                        // Gather invisible colliders
+                        CreateAndAddMeshCollider(result.InvisibleColliders, go, visibleMeshCollider.sharedMesh);
+                }
+            }
+
+            // Collect colliders from skinned mesh renderers
+            using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> instanceRenderers = GltfContainerAsset.SKINNED_RENDERERS_POOL.AutoScope())
+            {
+                instance.GetComponentsInChildren(true, instanceRenderers.Value);
+
+                foreach (SkinnedMeshRenderer skinnedMeshRenderer in instanceRenderers.Value)
+                {
+                    GameObject go = skinnedMeshRenderer.gameObject;
+
+                    // Gather invisible colliders
+                    // CreateAndAddMeshCollider(result.InvisibleColliders, go, skinnedMeshRenderer.sharedMesh, false);
+
+                    // Always considered as visible collider
+                    AddVisibleMeshCollider(result, go, skinnedMeshRenderer.sharedMesh);
+                }
             }
 
             return result;
         }
 
-        /// <summary>
-        ///     Collect mesh filters suitable for becoming a mesh collider as required
-        /// </summary>
-        private static void FilterVisibleColliderCandidate(List<MeshFilter> results, MeshFilter meshFilter)
+        private static void AddVisibleMeshCollider(GltfContainerAsset result, GameObject go, Mesh mesh)
         {
-            if (meshFilter.sharedMesh && meshFilter.GetComponent<Renderer>())
-                results.Add(meshFilter);
+            result.VisibleColliderMeshes.Add(new VisibleMeshCollider
+            {
+                GameObject = go,
+                Mesh = mesh,
+            });
         }
 
-        private static void CreateInvisibleColliders(List<SDKCollider> results, GameObject meshFilterGo, MeshFilter meshFilter)
+        private static void CreateAndAddMeshCollider(List<SDKCollider> results, GameObject go, Mesh mesh, bool checkGameObjectNaming = true)
         {
             // Asset Bundle converter creates Colliders during the processing in some cases
-            Collider collider = meshFilterGo.GetComponent<Collider>();
+            Collider collider = go.GetComponent<Collider>();
 
             if (collider)
             {
@@ -143,11 +164,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }
 
-            if (!IsCollider(meshFilterGo))
+            if (checkGameObjectNaming && !IsNamedAsCollider(go))
                 return;
 
-            MeshCollider newCollider = meshFilterGo.AddComponent<MeshCollider>();
-            newCollider.sharedMesh = meshFilter.sharedMesh;
+            MeshCollider newCollider = go.AddComponent<MeshCollider>();
+            newCollider.sharedMesh = mesh;
             newCollider.enabled = false;
 
             results.Add(new SDKCollider(newCollider));
@@ -155,7 +176,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // Compatibility layer for old GLTF importer and GLTFast
             // TODO do we need it?
-            static bool IsCollider(GameObject go)
+            static bool IsNamedAsCollider(GameObject go)
             {
                 const StringComparison IGNORE_CASE = StringComparison.CurrentCultureIgnoreCase;
                 const string COLLIDER_SUFFIX = "_collider";
