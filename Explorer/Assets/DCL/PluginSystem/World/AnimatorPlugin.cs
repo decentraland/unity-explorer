@@ -18,7 +18,9 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBAnimator>.InjectToWorld(ref builder);
-            AnimatorHandlerSystem.InjectToWorld(ref builder);
+            SDKAnimatorUpdaterSystem.InjectToWorld(ref builder);
+            AnimationPlayerSystem.InjectToWorld(ref builder);
+            LegacyAnimationPlayerSystem.InjectToWorld(ref builder);
         }
     }
 }

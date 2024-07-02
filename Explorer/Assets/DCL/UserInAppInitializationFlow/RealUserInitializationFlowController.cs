@@ -1,3 +1,4 @@
+using System;
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
@@ -9,7 +10,10 @@ using DCL.Profiles.Self;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
+using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
@@ -22,13 +26,12 @@ namespace DCL.UserInAppInitializationFlow
         private readonly ISelfProfile selfProfile;
         private readonly Vector2Int startParcel;
         private readonly RealFlowLoadingStatus loadingStatus;
-
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
-
         private readonly AudioClipConfig backgroundMusic;
-
         private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
+        private readonly IFeatureFlagsProvider featureFlagsProvider;
+        private readonly IWeb3IdentityCache web3IdentityCache;
 
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
@@ -37,7 +40,9 @@ namespace DCL.UserInAppInitializationFlow
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
             IRealmNavigator realmNavigator,
-            ILoadingScreen loadingScreen)
+            ILoadingScreen loadingScreen,
+            IFeatureFlagsProvider featureFlagsProvider,
+            IWeb3IdentityCache web3IdentityCache)
         {
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
@@ -47,6 +52,8 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
+            this.featureFlagsProvider = featureFlagsProvider;
+            this.web3IdentityCache = web3IdentityCache;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -59,6 +66,9 @@ namespace DCL.UserInAppInitializationFlow
 
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
+
+            // Re-initialize feature flags since the user might have changed thus the data to be resolved
+            await InitializeFeatureFlagsAsync(ct);
 
             if (showLoading)
                 await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(parentLoadReport, world, playerEntity, ct), ct);
@@ -109,6 +119,18 @@ namespace DCL.UserInAppInitializationFlow
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
+        }
+        
+        private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
+        {
+            try
+            {
+                await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, ct);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
+            }
         }
     }
 }

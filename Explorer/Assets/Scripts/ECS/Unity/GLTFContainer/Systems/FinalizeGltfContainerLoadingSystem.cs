@@ -89,6 +89,9 @@ namespace ECS.Unity.GLTFContainer.Systems
 
                 component.State = LoadingState.Finished;
                 eventsBuffer.Add(entity, component);
+
+                if (result.Asset!.Animations.Count > 0 && result.Asset!.Animators.Count == 0)
+                    World.Add(entity, new LegacyGltfAnimation());
             }
         }
     }

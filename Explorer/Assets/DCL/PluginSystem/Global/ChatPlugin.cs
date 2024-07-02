@@ -1,16 +1,15 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Audio;
 using DCL.Chat;
+using DCL.Chat.History;
+using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
 using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -21,6 +20,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly IChatHistory chatHistory;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
@@ -32,6 +32,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IChatMessagesBus chatMessagesBus,
+            IChatHistory chatHistory,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
@@ -40,14 +41,13 @@ namespace DCL.PluginSystem.Global
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.chatHistory = chatHistory;
             this.chatMessagesBus = chatMessagesBus;
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
         }
-
-        public void Dispose() { }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
@@ -66,6 +66,7 @@ namespace DCL.PluginSystem.Global
                     ChatController.CreateLazily(chatView, null),
                     chatEntryConfiguration,
                     chatMessagesBus,
+                    chatHistory,
                     entityParticipantTable,
                     nametagsData,
                     emojiPanelConfig,

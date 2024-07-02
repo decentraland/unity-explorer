@@ -9,7 +9,7 @@ namespace DCL.AvatarRendering.Emotes
     {
         StreamableLoadingResult<EmoteDTO> Model { get; set; }
         StreamableLoadingResult<AudioClip>?[] AudioAssetResults { get; set; }
-        StreamableLoadingResult<WearableRegularAsset>?[] WearableAssetResults { get; }
+        StreamableLoadingResult<WearableRegularAsset>?[] AssetResults { get; }
 
         bool IsLooping();
     }

@@ -59,12 +59,13 @@ namespace Global.Dynamic
         private readonly CharacterContainer characterContainer;
 
         private readonly HybridSceneParams hybridSceneParams;
+        private readonly ReloadSceneController reloadSceneController;
 
-        public GlobalWorldFactory(in StaticContainer staticContainer,
+        public GlobalWorldFactory( in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, HybridSceneParams hybridSceneParams)
+            IScenesCache scenesCache, HybridSceneParams hybridSceneParams, ReloadSceneController reloadSceneController)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -83,6 +84,7 @@ namespace Global.Dynamic
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
             this.hybridSceneParams = hybridSceneParams;
+            this.reloadSceneController = reloadSceneController;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -155,7 +157,7 @@ namespace Global.Dynamic
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
-            var reloadSceneDebugController = new ReloadSceneDebugController(builder.World, playerEntity, scenesCache, debugContainerBuilder);
+            reloadSceneController.Initialize(world, playerEntity, staticContainer.ScenesCache, debugContainerBuilder);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
 

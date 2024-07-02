@@ -1,11 +1,17 @@
+using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
+using System;
+using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
 {
     public class RestrictedActionsAPIWrapper : IJsApiWrapper
     {
         private readonly IRestrictedActionsAPI api;
+
+        private CancellationTokenSource? triggerSceneEmoteCancellationToken;
 
         public RestrictedActionsAPIWrapper(IRestrictedActionsAPI api)
         {
@@ -50,8 +56,17 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             api.TryTriggerEmote(predefinedEmote);
 
         [UsedImplicitly]
-        public bool TriggerSceneEmote(string src, bool loop) =>
-            api.TryTriggerSceneEmote(src, loop);
+        public object TriggerSceneEmote(string src, bool loop)
+        {
+            triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();
+            return TriggerSceneEmoteAsync(triggerSceneEmoteCancellationToken.Token).ToDisconnectedPromise();
+
+            async UniTask<bool> TriggerSceneEmoteAsync(CancellationToken ct)
+            {
+                try { return await api.TryTriggerSceneEmoteAsync(src, loop, ct); }
+                catch (Exception) { return false; }
+            }
+        }
 
         [UsedImplicitly]
         public bool OpenNftDialog(string urn) =>
