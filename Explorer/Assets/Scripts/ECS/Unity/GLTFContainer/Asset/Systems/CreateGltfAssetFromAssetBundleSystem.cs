@@ -108,16 +108,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 List<MeshFilter> list = meshFilterScope.Value;
                 instance.GetComponentsInChildren(true, list);
 
-                foreach (MeshFilter visibleMeshCollider in list)
+                foreach (MeshFilter meshFilter in list)
                 {
-                    GameObject go = visibleMeshCollider.gameObject;
+                    GameObject go = meshFilter.gameObject;
 
                     // Consider it a visible collider when it has a renderer on it
                     if (go.GetComponent<Renderer>())
-                        AddVisibleMeshCollider(result, go, visibleMeshCollider.sharedMesh);
+                        AddVisibleMeshCollider(result, go, meshFilter.sharedMesh);
                     else
                         // Gather invisible colliders
-                        CreateAndAddMeshCollider(result.InvisibleColliders, go, visibleMeshCollider.sharedMesh);
+                        CreateAndAddMeshCollider(result.InvisibleColliders, go, meshFilter.sharedMesh);
                 }
             }
 
