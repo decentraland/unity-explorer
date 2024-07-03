@@ -19,13 +19,11 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public bool IsVisible => poolableBehavior.isVisible;
-        public string Title => poolableBehavior.instance.title.text;
-        public string Description => poolableBehavior.instance.description.text;
+        public string Title { get; private set; }
+        public string Description { get; private set; }
         public Vector2Int ParcelPosition { get; private set; }
 
         public Vector2 Pivot => new (0.5f, 0.5f);
-
-        internal string title { get; private set; }
 
         public PinMarker(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController)
         {
@@ -45,6 +43,12 @@ namespace DCL.MapRenderer.MapLayers.Pins
             poolableBehavior.SetCurrentPosition(position);
         }
 
+        public void SetData(string title, string description)
+        {
+            Title = title;
+            Description = description;
+        }
+
         public void SetTexture(Texture2D texture)
         {
             poolableBehavior.instance.SetTexture(texture);
@@ -52,7 +56,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void OnBecameVisible()
         {
-            poolableBehavior.OnBecameVisible().title.text = title;
+            poolableBehavior.OnBecameVisible();
 
             if(currentBaseScale != 0)
                 poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);

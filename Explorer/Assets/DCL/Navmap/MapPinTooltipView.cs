@@ -5,6 +5,7 @@ namespace DCL.Navmap
 {
     public class MapPinTooltipView : MonoBehaviour
     {
+        [field: SerializeField] public RectTransform RectTransform { get; private set; }
         [field: SerializeField] public TMP_Text Title { get; private set; }
         [field: SerializeField] public TMP_Text Description { get; private set; }
 

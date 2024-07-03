@@ -140,12 +140,14 @@ namespace DCL.MapRenderer.ConsumerUtils
                     else
                     {
                         interactivityController.RemoveHighlight();
-                        HoveredMapPin?.Invoke(parcel, pinMarker);
                     }
-                }
 
-                Hovered?.Invoke(worldPosition);
-                HoveredParcel?.Invoke(parcel);
+                    Hovered?.Invoke(worldPosition);
+                    HoveredParcel?.Invoke(parcel);
+
+                    if(pinMarker != null)
+                        HoveredMapPin?.Invoke(parcel, pinMarker);
+                }
             }
             else if (highlightEnabled)
                 interactivityController.RemoveHighlight();

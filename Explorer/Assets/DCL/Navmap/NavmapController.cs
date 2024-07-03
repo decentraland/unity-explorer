@@ -15,12 +15,12 @@ using DCL.UI;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle.Realm;
-using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Utility;
 
 namespace DCL.Navmap
@@ -53,6 +53,7 @@ namespace DCL.Navmap
         private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
         private NavmapSections lastShownSection;
+        private readonly Mouse mouse;
 
         public NavmapController(
             NavmapView navmapView,
@@ -113,10 +114,12 @@ namespace DCL.Navmap
 
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
+            mouse = InputSystem.GetDevice<Mouse>();
         }
 
         private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
         {
+            navmapView.MapPinTooltip.RectTransform.position = mouse.position.value;
             navmapView.MapPinTooltip.Title.text = pinMarker.Title;
             navmapView.MapPinTooltip.Description.text = pinMarker.Description;
             navmapView.MapPinTooltip.Show();
@@ -139,7 +142,7 @@ namespace DCL.Navmap
         {
             if (!parcel.Equals(lastParcelHovered))
             {
-                //navmapView.MapPinTooltip.Hide();
+                navmapView.MapPinTooltip.Hide();
                 lastParcelHovered = parcel;
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.HoverAudio);
             }

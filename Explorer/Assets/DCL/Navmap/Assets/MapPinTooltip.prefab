@@ -308,8 +308,8 @@ RectTransform:
   - {fileID: 6499819263992263455}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: -100.09982}
   m_SizeDelta: {x: 418, y: 154}
   m_Pivot: {x: 0.5, y: -0.15}
@@ -363,6 +363,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1afdb46dd9d224fc88b654dde633c067, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <RectTransform>k__BackingField: {fileID: 1001436015316186579}
   <Title>k__BackingField: {fileID: 4837430573434022158}
   <Description>k__BackingField: {fileID: 49420563715826149}
 --- !u!1 &5733909130502568492

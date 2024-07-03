@@ -16,6 +16,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetPosition(Vector2 position, Vector2Int parcelPosition);
 
+        void SetData(string title, string description);
+
         void SetTexture(Texture2D texture);
 
         void OnBecameVisible();

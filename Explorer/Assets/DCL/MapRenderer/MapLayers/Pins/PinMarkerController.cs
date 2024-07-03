@@ -68,7 +68,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         [All(typeof(MapPinComponent))]
         [Query]
-        private void SetMapPinPlacement(in Entity e, ref MapPinComponent mapPinComponent)
+        private void SetMapPinPlacement(in Entity e, ref MapPinComponent mapPinComponent, ref PBMapPin pbMapPin)
         {
             if (!mapPinComponent.IsDirty)
                 return;
@@ -85,6 +85,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             }
 
             marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position), mapPinComponent.Position);
+            marker.SetData(pbMapPin.Title, pbMapPin.Description);
 
             if (isEnabled)
                 mapCullingController.StartTracking(marker, this);
