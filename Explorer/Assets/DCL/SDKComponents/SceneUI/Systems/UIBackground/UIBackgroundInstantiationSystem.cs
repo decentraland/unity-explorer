@@ -77,13 +77,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             // Create texture promise if needed
             TextureComponent? backgroundTexture = sdkModel.Texture.CreateTextureComponent(sceneData);
             TryCreateGetTexturePromise(in backgroundTexture, ref uiBackgroundComponent.TexturePromise, ref partitionComponent);
-            uiBackgroundComponent.Status = LifeCycle.LoadingInProgress;
 
+            // No need to wait for the texture promise
             if (uiBackgroundComponent.TexturePromise == null)
             {
-                // Backgrounds without texture
+                // Ensure image is setup of it has no image promise
                 UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel);
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
+            }
+            else if(uiBackgroundComponent.TexturePromise != null && uiBackgroundComponent.Status == LifeCycle.LoadingFinished)
+            {
+                // Ensure texture has latest data from model
+                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, uiBackgroundComponent.Image.Texture);
             }
 
             sdkModel.IsDirty = false;
@@ -92,11 +97,15 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [Query]
         private void LoadUIBackgroundTexture(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent)
         {
-            if (uiBackgroundComponent.Status != LifeCycle.LoadingInProgress ||
-                uiBackgroundComponent.TexturePromise == null ||
-                uiBackgroundComponent.TexturePromise.Value.IsConsumed ||
-                !frameTimeBudgetProvider.TrySpendBudget() ||
-                !memoryBudgetProvider.TrySpendBudget())
+            if (uiBackgroundComponent.Status is not (LifeCycle.LoadingInProgress or LifeCycle.LoadingNotStarted))
+                return;
+
+            if (uiBackgroundComponent.TexturePromise == null ||
+                uiBackgroundComponent.TexturePromise.Value.IsConsumed)
+                return;
+
+            if(!frameTimeBudgetProvider.TrySpendBudget() ||
+               !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             var texturePromise = uiBackgroundComponent.TexturePromise.Value;

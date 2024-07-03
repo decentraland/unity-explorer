@@ -16,8 +16,8 @@ namespace DCL.Interaction.Utility
         {
             GltfContainerAsset asset = gltfContainerComponent.Promise.Result.Value.Asset;
 
-            if (asset.VisibleMeshesColliders != null)
-                cache.Associate(asset.VisibleMeshesColliders, new ColliderSceneEntityInfo(entityReference, sdkEntity, gltfContainerComponent.VisibleMeshesCollisionMask));
+            if (asset.DecodedVisibleSDKColliders != null)
+                cache.Associate(asset.DecodedVisibleSDKColliders, new ColliderSceneEntityInfo(entityReference, sdkEntity, gltfContainerComponent.VisibleMeshesCollisionMask));
 
             cache.Associate(asset.InvisibleColliders, new ColliderSceneEntityInfo(entityReference, sdkEntity, gltfContainerComponent.InvisibleMeshesCollisionMask));
         }
@@ -36,8 +36,8 @@ namespace DCL.Interaction.Utility
 
         public static void Remove(this IEntityCollidersSceneCache cache, in GltfContainerAsset gltfContainerAsset)
         {
-            if (gltfContainerAsset.VisibleMeshesColliders != null)
-                cache.Remove(gltfContainerAsset.VisibleMeshesColliders);
+            if (gltfContainerAsset.DecodedVisibleSDKColliders != null)
+                cache.Remove(gltfContainerAsset.DecodedVisibleSDKColliders);
 
             cache.Remove(gltfContainerAsset.InvisibleColliders);
         }
