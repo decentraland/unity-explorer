@@ -92,7 +92,7 @@ namespace DCL.SDKComponents.Animator.Systems
             animator.enabled = true;
         }
 
-        private static void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
+        private void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
         {
             if (sdkAnimationStates.Count == 0)
                 return;
@@ -113,7 +113,7 @@ namespace DCL.SDKComponents.Animator.Systems
 
                 if (layerIndex == -1)
                 {
-                    // TODO: log & stop anim
+                    ReportHub.LogWarning(new ReportData(GetReportCategory()), $"Cannot find animator layer for clip {name}");
                     continue;
                 }
 
