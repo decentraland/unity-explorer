@@ -36,6 +36,7 @@ namespace DCL.Passport
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly DCLInput dclInput;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
@@ -58,7 +59,8 @@ namespace DCL.Passport
             ISelfProfile selfProfile,
             World world,
             Entity playerEntity,
-            IThumbnailProvider thumbnailProvider) : base(viewFactory)
+            IThumbnailProvider thumbnailProvider,
+            DCLInput dclInput) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -73,6 +75,7 @@ namespace DCL.Passport
             this.world = world;
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
+            this.dclInput = dclInput;
         }
 
         protected override void OnViewInstantiated()
@@ -91,10 +94,12 @@ namespace DCL.Passport
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
+            dclInput.Shortcuts.Disable();
         }
 
         protected override void OnViewClose()
         {
+            dclInput.Shortcuts.Enable();
             characterPreviewController.OnHide();
             userBasicInfoModuleController.Clear();
             userDetailedInfoModuleController.Clear();
