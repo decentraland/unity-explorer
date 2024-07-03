@@ -106,7 +106,7 @@ namespace DCL.Rendering.Menus
 
             // Remove the asset bundle mark
             AssetImporter.GetAtPath(shaderAssetPath).SetAssetBundleNameAndVariant(string.Empty, string.Empty);
-            AssetImporter.GetAtPath(assetVariant).SetAssetBundleNameAndVariant(string.Empty, string.Empty);
+            AssetImporter.GetAtPath(shaderVariantAssetPath).SetAssetBundleNameAndVariant(string.Empty, string.Empty);
             AssetDatabase.RemoveUnusedAssetBundleNames();
 
             Debug.Log("Asset bundle build and copy process completed.");
