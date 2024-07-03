@@ -42,8 +42,7 @@ namespace ECS.StreamableLoading.Common.Components
         /// <summary>
         ///     Budget is not null if Status is Allowed or InProgress
         /// </summary>
-        [CanBeNull]
-        public IAcquiredBudget AcquiredBudget { get; private set; }
+        public IAcquiredBudget? AcquiredBudget { get; private set; }
 
         public void SetAllowed(IAcquiredBudget budget)
         {
@@ -54,7 +53,7 @@ namespace ECS.StreamableLoading.Common.Components
         public void DisposeBudget()
         {
             Assert.IsNotNull(AcquiredBudget);
-            AcquiredBudget.Dispose();
+            AcquiredBudget?.Dispose();
             AcquiredBudget = null;
         }
     }
