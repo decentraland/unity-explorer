@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.Passport.Configuration;
 using DCL.Passport.Fields;
@@ -342,12 +343,12 @@ namespace DCL.Passport.Modules
             foreach (var readOnlyObj in view.InfoReadOnlyObjects)
                 readOnlyObj.SetActive(!isEditMode);
 
-            foreach (var additionalField in instantiatedAdditionalFields)
+            foreach (var additionalFieldForEdition in instantiatedAdditionalFieldsForEdition)
             {
-                additionalField.SetEditionValue(string.Empty);
-                foreach (var additionalFieldForEdition in instantiatedAdditionalFieldsForEdition)
+                additionalFieldForEdition.SetEditionValue(string.Empty);
+                foreach (var additionalField in instantiatedAdditionalFields)
                 {
-                    if (additionalField.Type != additionalFieldForEdition.Type)
+                    if (additionalFieldForEdition.Type != additionalField.Type)
                         continue;
 
                     additionalFieldForEdition.SetEditionValue(additionalField.Value.text);
@@ -355,13 +356,18 @@ namespace DCL.Passport.Modules
                 }
             }
 
+
+
             if (isEditMode)
             {
                 SetInfoSectionAsSavingStatus(false);
                 view.DescriptionForEditMode.text = view.Description.text;
             }
             else
+            {
+                view.AdditionalInfoContainer.gameObject.SetActive(instantiatedAdditionalFields.Count > 0);
                 saveInfoCts.SafeCancelAndDispose();
+            }
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
         }
@@ -421,17 +427,28 @@ namespace DCL.Passport.Modules
                     }
                 }
 
-                // Update profile data and its avatar entity
-                await profileRepository.SetAsync(currentProfile, ct);
-                UpdateAvatarInWorld(currentProfile);
+                try
+                {
+                    // Update profile data and its avatar entity
+                    await profileRepository.SetAsync(currentProfile, ct);
+                    UpdateAvatarInWorld(currentProfile);
 
-                // Reload the new profile data in the passport
-                ClearAdditionalInfoFields();
-                LoadAdditionalFields();
-                LoadDescription();
-                SetInfoSectionAsEditionMode(false);
+                    // Reload the new profile data in the passport
+                    ClearAdditionalInfoFields();
+                    LoadAdditionalFields();
+                    LoadDescription();
 
-                LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
+                }
+                catch (OperationCanceledException) { }
+                catch (Exception e)
+                {
+                    ReportHub.LogError(ReportCategory.PROFILE, $"Error updating profile from passport: {e.Message}");
+                }
+                finally
+                {
+                    SetInfoSectionAsEditionMode(false);
+                }
             }
         }
 
