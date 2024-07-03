@@ -108,7 +108,8 @@ namespace DCL.SDKComponents.Animator.Systems
 
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
             {
-                int layerIndex = animator.GetLayerIndex(sdkAnimationState.Clip);
+                string name = sdkAnimationState.Clip;
+                int layerIndex = animator.GetLayerIndex(name);
 
                 if (layerIndex == -1)
                 {
@@ -117,18 +118,24 @@ namespace DCL.SDKComponents.Animator.Systems
                 }
 
                 animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
-                animator.SetBool($"{sdkAnimationState.Clip}_Loop", sdkAnimationState.Loop);
 
                 if (sdkAnimationState.Playing)
-                    animator.SetTrigger($"{sdkAnimationState.Clip}_Trigger");
+                {
+                    animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
+                    animator.SetTrigger($"{name}_Trigger");
+
+                    // Animators don't support speed by state, just a global speed
+                    animator.speed = sdkAnimationState.Speed;
+
+                    // TODO: support reset
+                    // sdkAnimationState.ShouldReset
+                }
                 else
-                    continue;
-
-                // Animators don't support speed by state, just a global speed
-                animator.speed = sdkAnimationState.Speed;
-
-                // TODO: support reset
-                // sdkAnimationState.ShouldReset
+                {
+                    // In case is not playing, we should also reset the loop so the layer gets back to its empty/non-playing state
+                    // otherwise is stuck there forever
+                    animator.SetBool($"{name}_Loop", false);
+                }
             }
         }
     }
