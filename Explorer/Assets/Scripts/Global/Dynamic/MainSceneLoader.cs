@@ -1,7 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
-using DCL.AssetsProvision.Provisions;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
@@ -16,6 +14,31 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
+    [Serializable]
+    public class DebugSettings
+    {
+        public bool showSplash;
+        public bool showAuthentication;
+        public bool showLoading;
+        public bool enableLandscape;
+        public bool enableLOD;
+
+
+        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public DebugSettings Get() =>
+            Debug.isDebugBuild ? this : Release();
+
+        public static DebugSettings Release() =>
+                new()
+                {
+                    showSplash = true,
+                    showAuthentication = true,
+                    showLoading = true,
+                    enableLandscape = true,
+                    enableLOD = true,
+                };
+    }
+
     public class MainSceneLoader : MonoBehaviour
     {
         [Header("Startup Config")]
@@ -25,12 +48,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space]
-        [SerializeField] private bool showSplash;
-        [SerializeField] private bool showAuthentication;
-        [SerializeField] private bool showLoading;
-        [SerializeField] private bool enableLandscape;
-        [SerializeField] private bool enableLOD;
-        [SerializeField] private bool analyticsEnabled;
+        [SerializeField] private DebugSettings debugSettings;
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -44,28 +62,18 @@ namespace Global.Dynamic
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
 
+        private BootstrapContainer? bootstrapContainer;
+        private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
-        private StaticContainer? staticContainer;
-
-        private IBootstrap? bootstrap;
 
         private void Awake()
         {
-            ErrorTraceAssetsProvisioner assetsProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            var coreBootstrap = new Bootstrap(showSplash, showAuthentication, showLoading, enableLOD, enableLandscape);
-
-            bootstrap = !Debug.isDebugBuild || analyticsEnabled
-                ? new BootstrapAnalyticsDecorator(coreBootstrap, assetsProvisioner, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>())
-                : coreBootstrap;
-
-            InitializeFlowAsync(assetsProvisioner, destroyCancellationToken).Forget();
+            InitializeFlowAsync(destroyCancellationToken).Forget();
         }
 
         private void OnDestroy()
         {
-            bootstrap?.Dispose();
-
             if (dynamicWorldContainer != null)
             {
                 foreach (IDCLGlobalPlugin plugin in dynamicWorldContainer.GlobalPlugins)
@@ -86,18 +94,23 @@ namespace Global.Dynamic
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
             }
 
+            bootstrapContainer?.Dispose();
+
             ReportHub.Log(ReportCategory.ENGINE, "OnDestroy successfully finished");
         }
 
-        private async UniTask InitializeFlowAsync(ErrorTraceAssetsProvisioner assetsProvisioner, CancellationToken ct)
+        private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
+            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, settings, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>(), destroyCancellationToken);
+
+            IBootstrap bootstrap = bootstrapContainer!.Bootstrap;
+
             try
             {
+                await bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
+
                 bool isLoaded;
-
-                await bootstrap!.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
-
-                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(globalPluginSettingsContainer, settings, assetsProvisioner, ct);
+                (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, ct);
 
                 if (!isLoaded)
                 {
@@ -105,7 +118,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(staticContainer!, scenePluginSettingsContainer, settings,
+                (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
                     dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, destroyCancellationToken);
 
                 if (!isLoaded)
@@ -114,7 +127,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await bootstrap.InitializeFeatureFlagsAsync(staticContainer!, ct);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache.Identity!, staticContainer!, ct);
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
@@ -123,7 +136,7 @@ namespace Global.Dynamic
                 }
 
                 Entity playerEntity;
-                (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(staticContainer!, dynamicWorldContainer!, debugUiRoot);
+                (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
             }

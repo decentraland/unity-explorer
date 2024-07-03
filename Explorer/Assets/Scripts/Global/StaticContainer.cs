@@ -25,7 +25,6 @@ using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
-using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization;
@@ -34,6 +33,7 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle.Components;
+using Global.Dynamic;
 using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
@@ -86,8 +86,6 @@ namespace Global
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
-        public IAssetsProvisioner AssetsProvisioner { get; private set; }
-
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
 
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
@@ -100,6 +98,8 @@ namespace Global
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
+
+        private IAssetsProvisioner assetsProvisioner;
 
         public void Dispose()
         {
@@ -117,12 +117,12 @@ namespace Global
             (reportHandlingSettings, partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsDevelopment, ct, nameof(ReportHandlingSettings)),
+                    assetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsDevelopment, ct, nameof(ReportHandlingSettings)),
 #else
                     AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsProduction, ct, nameof(ReportHandlingSettings)),
 #endif
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
+                    assetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
+                    assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
                 );
         }
 
@@ -137,11 +137,9 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
-            IAssetsProvisioner addressablesProvisioner,
+            BootstrapContainer bootstrapContainer,
             IDebugContainerBuilder debugContainerBuilder,
             IPluginSettingsContainer settingsContainer,
-            IWeb3IdentityCache web3IdentityProvider,
-            IEthereumApi ethereumApi,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -152,14 +150,14 @@ namespace Global
 
             var container = new StaticContainer();
 
-            container.EthereumApi = ethereumApi;
+            container.EthereumApi = bootstrapContainer.Web3VerifiedAuthenticator;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
 
-            container.AssetsProvisioner = addressablesProvisioner;
+            container.assetsProvisioner = bootstrapContainer.AssetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();
-            container.CharacterContainer = new CharacterContainer(addressablesProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
+            container.CharacterContainer = new CharacterContainer(bootstrapContainer.AssetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
             bool result = await InitializeContainersAsync(container, settingsContainer, ct);
 
@@ -180,7 +178,7 @@ namespace Global
                 new SceneMapping()
             );
 
-            container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.AssetsProvisioner);
+            container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
             container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
             container.ComponentsContainer = componentsContainer;
@@ -188,7 +186,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, debugContainerBuilder);
+            container.WebRequestsContainer = WebRequestsContainer.Create(bootstrapContainer.IdentityCache, debugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
@@ -204,9 +202,9 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(container.AssetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new NFTShapePlugin(container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
-                new MaterialsPlugin(sharedDependencies, addressablesProvisioner, videoTexturePool),
+                new MaterialsPlugin(sharedDependencies, bootstrapContainer.AssetsProvisioner, videoTexturePool),
                 textureResolvePlugin,
                 new AssetsCollidersPlugin(sharedDependencies, container.PhysicsTickProvider),
                 new AvatarShapePlugin(container.GlobalWorldProxy),
@@ -215,14 +213,14 @@ namespace Global
                 new VisibilityPlugin(),
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 assetBundlePlugin, new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock),
-                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, addressablesProvisioner),
+                new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
+                new SceneUIPlugin(sharedDependencies, bootstrapContainer.AssetsProvisioner),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),
-                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.AssetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
-                new CharacterTriggerAreaPlugin(container.GlobalWorldProxy, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.AssetsProvisioner, container.CacheCleaner),
-                new InteractionsAudioPlugin(addressablesProvisioner),
+                new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new CharacterTriggerAreaPlugin(container.GlobalWorldProxy, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
+                new InteractionsAudioPlugin(bootstrapContainer.AssetsProvisioner),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
 

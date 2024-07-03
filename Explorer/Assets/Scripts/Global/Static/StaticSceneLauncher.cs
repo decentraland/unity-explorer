@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Utilities.Extensions;
+using Global.Dynamic;
 using UnityEngine;
 
 namespace Global.Static
@@ -126,14 +127,16 @@ namespace Global.Static
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
-                new AddressablesProvisioner().WithErrorTrace(),
-                new NullDebugContainerBuilder(),
-                globalSettingsContainer,
-                web3IdentityProvider,
-                ethereumApi,
-                ct
-            )!;
+            (StaticContainer staticContainer, bool isLoaded) = (null, false);
+            //
+            //     await StaticContainer.CreateAsync(
+            //     new AddressablesProvisioner().WithErrorTrace(),
+            //     new NullDebugContainerBuilder(),
+            //     globalSettingsContainer,
+            //     web3IdentityProvider,
+            //     ethereumApi,
+            //     ct
+            // )!;
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
