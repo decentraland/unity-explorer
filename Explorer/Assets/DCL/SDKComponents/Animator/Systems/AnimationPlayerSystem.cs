@@ -20,14 +20,12 @@ namespace DCL.SDKComponents.Animator.Systems
     [ThrottlingEnabled]
     public partial class AnimationPlayerSystem : BaseUnityLoopSystem
     {
-        private static readonly int LOOP_PARAM = UAnimator.StringToHash("Loop");
-
         public AnimationPlayerSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
             LoadAnimatorQuery(World);
-            UpdateAnimationStateQuery(World, t);
+            UpdateAnimationStateQuery(World);
             HandleComponentRemovalQuery(World);
             World.Remove<SDKAnimatorComponent>(in HandleComponentRemoval_QueryDescription);
         }
@@ -66,7 +64,7 @@ namespace DCL.SDKComponents.Animator.Systems
 
         [Query]
         [None(typeof(LegacyGltfAnimation))]
-        private void UpdateAnimationState([Data] float dt, ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
+        private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
 
@@ -74,7 +72,7 @@ namespace DCL.SDKComponents.Animator.Systems
             sdkAnimatorComponent.IsDirty = false;
 
             foreach (var animator in animators)
-                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animator, dt);
+                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animator);
         }
 
         [Query]
@@ -94,42 +92,44 @@ namespace DCL.SDKComponents.Animator.Systems
             animator.enabled = true;
         }
 
-        private static void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator, float dt)
+        private static void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
         {
-            // TODO: we should have one state in each layer so we support weighting
-            // The current system does not support all expected cases from the SDK
-            const int DEFAULT_LAYER_INDEX = 0;
-
             if (sdkAnimationStates.Count == 0)
                 return;
 
-            SDKAnimationState? possiblePlayingAnimation = null;
+            var isAnyAnimPlaying = false;
 
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
-                if (sdkAnimationState.Playing)
-                    possiblePlayingAnimation = sdkAnimationState;
+                isAnyAnimPlaying |= sdkAnimationState.Playing;
 
-            if (possiblePlayingAnimation == null)
+            animator.enabled = isAnyAnimPlaying;
+
+            if (!isAnyAnimPlaying) return;
+
+            foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
             {
-                // Reset to anim initial state
-                animator.CrossFade(animator.GetCurrentAnimatorStateInfo(DEFAULT_LAYER_INDEX).fullPathHash, 0f);
-                animator.Update(dt);
-                animator.enabled = false;
-                return;
+                int layerIndex = animator.GetLayerIndex(sdkAnimationState.Clip);
+
+                if (layerIndex == -1)
+                {
+                    // TODO: log & stop anim
+                    continue;
+                }
+
+                animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
+                animator.SetBool($"{sdkAnimationState.Clip}_Loop", sdkAnimationState.Loop);
+
+                if (sdkAnimationState.Playing)
+                    animator.SetTrigger($"{sdkAnimationState.Clip}_Trigger");
+                else
+                    continue;
+
+                // Animators don't support speed by state, just a global speed
+                animator.speed = sdkAnimationState.Speed;
+
+                // TODO: support reset
+                // sdkAnimationState.ShouldReset
             }
-
-            animator.enabled = true;
-
-            SDKAnimationState currentAnimationState = possiblePlayingAnimation.Value;
-
-            animator.SetLayerWeight(DEFAULT_LAYER_INDEX, currentAnimationState.Weight);
-            animator.SetBool(LOOP_PARAM, currentAnimationState.Loop);
-            animator.speed = currentAnimationState.Speed;
-            animator.SetTrigger(currentAnimationState.Clip);
-
-            // TODO: support reset
-            // if (sdkAnimationState.ShouldReset)
-            //     animator.CrossFade(sdkAnimationState.Clip, 0f);
         }
     }
 }
