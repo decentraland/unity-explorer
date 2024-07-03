@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
@@ -15,6 +16,7 @@ using UnityEngine.Pool;
 using UnityEngine.UI;
 using Utility;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
+using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
 
 namespace DCL.Passport.Modules
 {
@@ -30,6 +32,7 @@ namespace DCL.Passport.Modules
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
+        private readonly RectTransform scrollContainer;
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
         private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
@@ -46,7 +49,8 @@ namespace DCL.Passport.Modules
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
-            IThumbnailProvider thumbnailProvider)
+            IThumbnailProvider thumbnailProvider,
+            RectTransform scrollContainer)
         {
             this.view = view;
             this.world = world;
@@ -54,6 +58,7 @@ namespace DCL.Passport.Modules
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.thumbnailProvider = thumbnailProvider;
+            this.scrollContainer = scrollContainer;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
                 InstantiateEquippedItemPrefab,
@@ -121,11 +126,17 @@ namespace DCL.Passport.Modules
             Clear();
             SetGridAsLoading();
 
-            WearablePromise equippedWearablesPromise = WearablePromise.Create(world,
+            WearablePromise equippedWearablesPromise = WearablePromise.Create(
+                world,
                 WearableComponentsUtils.CreateGetWearablesByPointersIntention(currentProfile.Avatar.BodyShape, currentProfile.Avatar.Wearables, currentProfile.Avatar.ForceRender),
                 PartitionComponent.TOP_PRIORITY);
 
-            AwaitEquippedItemsPromiseAsync(equippedWearablesPromise, cts.Token).Forget();
+            EmotePromise equippedEmotesPromise = EmotePromise.Create(
+                world,
+                EmoteComponentsUtils.CreateGetEmotesByPointersIntention(currentProfile.Avatar.BodyShape, currentProfile.Avatar.Emotes),
+                PartitionComponent.TOP_PRIORITY);
+
+            AwaitEquippedItemsPromiseAsync(equippedWearablesPromise, equippedEmotesPromise, cts.Token).Forget();
         }
 
         private void SetGridAsLoading()
@@ -142,7 +153,7 @@ namespace DCL.Passport.Modules
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.EquippedItemsContainer);
         }
 
-        private void SetGridElements(List<IWearable> gridWearables)
+        private void SetGridElements(List<IWearable> gridWearables, IReadOnlyList<IEmote> gridEmotes)
         {
             ClearLoadingItems();
 
@@ -177,6 +188,28 @@ namespace DCL.Passport.Modules
                 elementsAddedInTheGird++;
             }
 
+            foreach (IEmote emote in gridEmotes)
+            {
+                string rarityName = emote.GetRarity();
+                Sprite raritySprite = rarityBackgrounds.GetTypeImage(rarityName);
+                Color rarityColor = rarityColors.GetColor(rarityName);
+
+                var equippedWearableItem = equippedItemsPool.Get();
+                equippedWearableItem.AssetNameText.text = emote.GetName();
+                equippedWearableItem.ItemId = emote.GetUrn();
+                equippedWearableItem.RarityBackground.sprite = raritySprite;
+                equippedWearableItem.RarityLabelText.text = rarityName;
+                equippedWearableItem.RarityLabelText.color = rarityColor;
+                equippedWearableItem.RarityBackground2.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, equippedWearableItem.RarityBackground2.color.a);
+                equippedWearableItem.FlapBackground.color = rarityColor;
+                equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
+                equippedWearableItem.BuyButton.interactable = emote.IsCollectible() && rarityName != "base";
+                LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
+                WaitForThumbnailAsync(emote, equippedWearableItem, cts.Token).Forget();
+                instantiatedEquippedItems.Add(equippedWearableItem);
+                elementsAddedInTheGird++;
+            }
+
             int missingEmptyItems = CalculateMissingEmptyItems(elementsAddedInTheGird);
             for (var i = 0; i < missingEmptyItems; i++)
             {
@@ -186,6 +219,7 @@ namespace DCL.Passport.Modules
             }
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.EquippedItemsContainer);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(scrollContainer);
         }
 
         private int CalculateMissingEmptyItems(int totalItems)
@@ -195,20 +229,32 @@ namespace DCL.Passport.Modules
             return missingItems;
         }
 
-        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, CancellationToken ct)
+        private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, EmotePromise equippedEmotesPromise, CancellationToken ct)
         {
-            var uniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
+            var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
+            var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!uniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
+            if (!wearablesUniTaskAsync.Result!.Value.Succeeded || !emotesUniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
                 return;
 
-            var currentWearables = uniTaskAsync.Result.Value.Asset.Wearables;
-            SetGridElements(currentWearables);
+            var currentWearables = wearablesUniTaskAsync.Result.Value.Asset.Wearables;
+            var currentEmotes = emotesUniTaskAsync.Result.Value.Asset.Emotes;
+            SetGridElements(currentWearables, currentEmotes);
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, EquippedItem_PassportFieldView itemView, CancellationToken ct)
         {
             Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+
+            if (ct.IsCancellationRequested)
+                return;
+
+            itemView.EquippedItemThumbnail.sprite = sprite;
+        }
+
+        private async UniTaskVoid WaitForThumbnailAsync(IEmote itemEmote, EquippedItem_PassportFieldView itemView, CancellationToken ct)
+        {
+            Sprite? sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
 
             if (ct.IsCancellationRequested)
                 return;
