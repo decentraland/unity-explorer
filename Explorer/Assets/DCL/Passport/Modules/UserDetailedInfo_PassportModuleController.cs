@@ -1,3 +1,4 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.ExternalUrlPrompt;
 using DCL.Passport.Fields;
@@ -24,6 +25,8 @@ namespace DCL.Passport.Modules
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly IProfileRepository profileRepository;
+        private readonly World world;
+        private readonly Entity playerEntity;
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFields = new();
         private readonly IObjectPool<Link_PassportFieldView> linksPool;
@@ -37,12 +40,16 @@ namespace DCL.Passport.Modules
             UserDetailedInfo_PassportModuleView view,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
-            IProfileRepository profileRepository)
+            IProfileRepository profileRepository,
+            World world,
+            Entity playerEntity)
         {
             this.view = view;
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.profileRepository = profileRepository;
+            this.world = world;
+            this.playerEntity = playerEntity;
 
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
@@ -76,8 +83,7 @@ namespace DCL.Passport.Modules
             SetInfoSectionAsEditionMode(false);
             LoadAdditionalFields();
             LoadLinks();
-
-            view.Description.text = !string.IsNullOrEmpty(profile.Description) || instantiatedAdditionalFields.Count > 0 ? profile.Description : NO_INTRO_TEXT;
+            LoadDescription();
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
 
@@ -178,6 +184,9 @@ namespace DCL.Passport.Modules
             instantiatedAdditionalFields.Add(newAdditionalField);
         }
 
+        private void LoadDescription() =>
+            view.Description.text = !string.IsNullOrEmpty(currentProfile.Description) || instantiatedAdditionalFields.Count > 0 ? currentProfile.Description : NO_INTRO_TEXT;
+
         private void LoadLinks()
         {
             view.NoLinksLabel.gameObject.SetActive(currentProfile.Links == null || currentProfile.Links.Count == 0);
@@ -249,8 +258,8 @@ namespace DCL.Passport.Modules
                 SetInfoSectionAsSavingStatus(true);
                 currentProfile.Description = view.DescriptionForEditMode.text;
                 await profileRepository.SetAsync(currentProfile, ct);
-                var updatedProfile = await profileRepository.GetAsync(currentProfile.UserId, 0, ct);
-                view.Description.text = updatedProfile?.Description;
+                UpdateAvatarInWorld(currentProfile);
+                LoadDescription();
                 SetInfoSectionAsEditionMode(false);
             }
         }
@@ -261,6 +270,12 @@ namespace DCL.Passport.Modules
             view.CancelInfoButton.gameObject.SetActive(!isSaving);
             view.SaveInfoButton.gameObject.SetActive(!isSaving);
             view.DescriptionForEditMode.interactable = !isSaving;
+        }
+
+        private void UpdateAvatarInWorld(Profile profile)
+        {
+            profile.IsDirty = true;
+            world.Set(playerEntity, profile);
         }
     }
 }

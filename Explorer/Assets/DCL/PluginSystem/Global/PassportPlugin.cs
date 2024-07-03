@@ -89,6 +89,7 @@ namespace DCL.PluginSystem.Global
                     mvcManager,
                     selfProfile,
                     builder.World,
+                    arguments.PlayerEntity,
                     thumbnailProvider);
 
                 mvcManager.RegisterController(passportController);

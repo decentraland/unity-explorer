@@ -34,6 +34,7 @@ namespace DCL.Passport
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly World world;
+        private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
 
         private string currentUserId;
@@ -56,6 +57,7 @@ namespace DCL.Passport
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             World world,
+            Entity playerEntity,
             IThumbnailProvider thumbnailProvider) : base(viewFactory)
         {
             this.cursor = cursor;
@@ -69,6 +71,7 @@ namespace DCL.Passport
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.world = world;
+            this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
         }
 
@@ -77,7 +80,7 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile);
-            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository);
+            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity);
             equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider);
         }
 
