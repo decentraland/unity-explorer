@@ -9,6 +9,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         DEBUG_LOG,
         SEGMENT,
+        DISABLED,
     }
 
     [CreateAssetMenu(fileName = "AnalyticsConfiguration", menuName = "DCL/AnalyticsConfiguration", order = 0)]

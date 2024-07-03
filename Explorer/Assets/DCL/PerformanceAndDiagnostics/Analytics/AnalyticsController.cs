@@ -14,7 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private readonly string dclRendererType = SystemInfo.deviceType.ToString(); // Desktop, Console, Handeheld (Mobile), Unknown
         private readonly string sessionID = SystemInfo.deviceUniqueIdentifier + DateTime.Now.ToString("yyyyMMddHHmmssfff");
         private readonly string rendererVersion = Application.version;
-        private readonly string runtime = Application.isEditor ? "editor" : "build";
+        private readonly string runtime = Application.isEditor? "editor" : Debug.isDebugBuild ? "debug" : "release";
         public override PluginType Type => PluginType.Enrichment;
 
         public override TrackEvent Track(TrackEvent trackEvent)
