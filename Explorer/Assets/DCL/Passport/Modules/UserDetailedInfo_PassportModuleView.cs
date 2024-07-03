@@ -1,3 +1,4 @@
+using DCL.Passport.Configuration;
 using DCL.Passport.Fields;
 using System.Collections.Generic;
 using TMPro;
@@ -22,6 +23,9 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public RectTransform AdditionalInfoContainer { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform AdditionalInfoContainerForEditMode { get; private set; }
 
         [field: SerializeField]
         public Link_PassportFieldView LinkPrefab { get; private set; }

@@ -66,17 +66,17 @@ namespace DCL.Profiles
         public string? Description { get; set; }
         public int TutorialStep { get; internal set; }
         public string? Email { get; internal set; }
-        public string? Country { get; internal set; }
-        public string? EmploymentStatus { get; internal set; }
-        public string? Gender { get; internal set; }
-        public string? Pronouns { get; internal set; }
-        public string? RelationshipStatus { get; internal set; }
-        public string? SexualOrientation { get; internal set; }
-        public string? Language { get; internal set; }
-        public string? Profession { get; internal set; }
-        public string? RealName { get; internal set; }
-        public string? Hobbies { get; internal set; }
-        public DateTime? Birthdate { get; internal set; }
+        public string? Country { get; set; }
+        public string? EmploymentStatus { get; set; }
+        public string? Gender { get; set; }
+        public string? Pronouns { get; set; }
+        public string? RelationshipStatus { get; set; }
+        public string? SexualOrientation { get; set; }
+        public string? Language { get; set; }
+        public string? Profession { get; set; }
+        public string? RealName { get; set; }
+        public string? Hobbies { get; set; }
+        public DateTime? Birthdate { get; set; }
         public int Version { get; internal set; }
         public Avatar Avatar { get; internal set; }
 

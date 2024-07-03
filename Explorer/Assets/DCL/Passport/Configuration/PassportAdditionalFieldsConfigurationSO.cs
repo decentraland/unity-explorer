@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DCL.Passport
+namespace DCL.Passport.Configuration
 {
     [CreateAssetMenu(fileName = "PassportAdditionalFieldsConfiguration", menuName = "SO/PassportAdditionalFieldsConfiguration")]
     public class PassportAdditionalFieldsConfigurationSO : ScriptableObject
@@ -18,6 +18,7 @@ namespace DCL.Passport
         public AdditionalFieldType type;
         public string title;
         public Sprite logo;
+        public PassportAdditionalFieldsValueListConfigurationSO editionValues;
     }
 
     public enum AdditionalFieldType
