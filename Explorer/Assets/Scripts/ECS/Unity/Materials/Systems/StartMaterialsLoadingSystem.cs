@@ -165,20 +165,16 @@ namespace ECS.Unity.Materials.Systems
             // If component is being reused forget the previous promise
             ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
-            if (textureComponent.Value.IsVideoTexture)
-                promise = Promise.CreateFinalized(new GetTextureIntention
-                {
-                    CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
-                    WrapMode = textureComponentValue.WrapMode,
-                    FilterMode = textureComponentValue.FilterMode,
-                }, GetOrAddVideoTextureResult(textureComponentValue));
-            else
-                promise = Promise.Create(World, new GetTextureIntention
-                {
-                    CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
-                    WrapMode = textureComponentValue.WrapMode,
-                    FilterMode = textureComponentValue.FilterMode,
-                }, partitionComponent);
+            var intention = new GetTextureIntention
+            {
+                CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: attemptsCount),
+                WrapMode = textureComponentValue.WrapMode,
+                FilterMode = textureComponentValue.FilterMode,
+            };
+
+            promise = textureComponent.Value.IsVideoTexture
+                ? Promise.CreateFinalized(intention, GetOrAddVideoTextureResult(textureComponentValue))
+                : Promise.Create(World!, intention, partitionComponent);
 
             return true;
         }
