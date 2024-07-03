@@ -7,6 +7,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
     internal class PinMarkerObject : MapRendererMarkerBase
     {
         [field: SerializeField] internal TextMeshPro title { get; set; }
+        [field: SerializeField] internal TextMeshPro description { get; set; }
         [field: SerializeField] internal SpriteRenderer mapPinIcon { get; set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
 

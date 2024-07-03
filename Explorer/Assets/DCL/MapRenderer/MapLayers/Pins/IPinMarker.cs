@@ -8,7 +8,13 @@ namespace DCL.MapRenderer.MapLayers.Pins
     {
         bool IsVisible { get; }
 
-        void SetPosition(Vector2 position);
+        public string Title { get; }
+
+        public string Description { get; }
+
+        public Vector2Int ParcelPosition { get; }
+
+        void SetPosition(Vector2 position, Vector2Int parcelPosition);
 
         void SetTexture(Texture2D texture);
 

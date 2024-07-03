@@ -26,7 +26,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private readonly IObjectPool<PinMarkerObject> objectsPool;
         private readonly PinMarkerBuilder builder;
 
-        private readonly Dictionary<Entity, IPinMarker> markers = new ();
+        public readonly Dictionary<Entity, IPinMarker> markers = new ();
 
         private MapPinPlacementSystem system;
         private MapPinTextureResolverSystem textureResolverSystem;
@@ -83,7 +83,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
                 marker = builder(objectsPool, mapCullingController);
                 markers.Add(e, marker);
             }
-            marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position));
+
+            marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position), mapPinComponent.Position);
 
             if (isEnabled)
                 mapCullingController.StartTracking(marker, this);

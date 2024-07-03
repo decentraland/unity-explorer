@@ -18,7 +18,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private IAssetsProvisioner assetsProvisioner;
         private MapRendererSettings mapSettings;
 
-        public async UniTask InstallAsync(
+        public async UniTask<PinMarkerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
@@ -49,6 +49,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.Pins, controller);
             zoomScalingWriter.Add(controller);
+            return controller;
         }
 
         private static PinMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, PinMarkerObject prefab, ICoordsUtils coordsUtils)

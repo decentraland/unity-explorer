@@ -19,6 +19,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public bool IsVisible => poolableBehavior.isVisible;
+        public string Title => poolableBehavior.instance.title.text;
+        public string Description => poolableBehavior.instance.description.text;
+        public Vector2Int ParcelPosition { get; private set; }
 
         public Vector2 Pivot => new (0.5f, 0.5f);
 
@@ -36,8 +39,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
             cullingController.StopTracking(this);
         }
 
-        public void SetPosition(Vector2 position)
+        public void SetPosition(Vector2 position, Vector2Int parcelPosition)
         {
+            ParcelPosition = parcelPosition;
             poolableBehavior.SetCurrentPosition(position);
         }
 

@@ -46,22 +46,22 @@ namespace DCL.SDKComponents.MapPins.Systems
         [Query]
         [None(typeof(MapPinHolderComponent))]
         [All(typeof(PBMapPin))]
-        private void LoadMapPin(in Entity entity, ref PBMapPin pbMapPin, ref PartitionComponent partitionComponent)
+        private void LoadMapPin(in Entity entity, ref PBMapPin pbMapPin)
         {
             MapPinComponent mapPinComponent = new MapPinComponent
             {
                 IsDirty = true,
-                Position = new Vector2(pbMapPin.Position.X, pbMapPin.Position.Y)
+                Position = new Vector2Int((int) pbMapPin.Position.X, (int) pbMapPin.Position.Y)
             };
             pbMapPin.IsDirty = false;
             TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-            TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise, ref partitionComponent);
+            TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
 
-            World.Add(entity, new MapPinHolderComponent(globalWorldProxy.Object!.Create(pbMapPin, mapPinComponent, partitionComponent)));
+            World.Add(entity, new MapPinHolderComponent(globalWorldProxy.Object!.Create(pbMapPin, mapPinComponent)));
         }
 
         [Query]
-        private void UpdateMapPin(ref PBMapPin pbMapPin, ref MapPinHolderComponent mapPinHolderComponent, ref PartitionComponent partitionComponent)
+        private void UpdateMapPin(ref PBMapPin pbMapPin, ref MapPinHolderComponent mapPinHolderComponent)
         {
             if (!pbMapPin.IsDirty)
                 return;
@@ -69,11 +69,11 @@ namespace DCL.SDKComponents.MapPins.Systems
             MapPinComponent mapPinComponent = new MapPinComponent
             {
                 IsDirty = true,
-                Position = new Vector2(pbMapPin.Position.X, pbMapPin.Position.Y)
+                Position = new Vector2Int((int) pbMapPin.Position.X, (int) pbMapPin.Position.Y)
             };
 
             TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
-            TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise, ref partitionComponent);
+            TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
             pbMapPin.IsDirty = false;
 
             globalWorldProxy.Object!.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent);
@@ -97,7 +97,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             globalWorldProxy.Object!.Add(sdkAvatarShapeComponent.GlobalWorldEntity, new DeleteEntityIntention());
         }
 
-        private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise, ref PartitionComponent partitionComponent)
+        private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
         {
             if (textureComponent == null)
             {
@@ -114,7 +114,7 @@ namespace DCL.SDKComponents.MapPins.Systems
                 CommonArguments = new CommonLoadingArguments(textureComponentValue.Src, attempts: ATTEMPTS_COUNT),
                 WrapMode = textureComponentValue.WrapMode,
                 FilterMode = textureComponentValue.FilterMode,
-            }, partitionComponent);
+            }, PartitionComponent.TOP_PRIORITY);
         }
 
     }

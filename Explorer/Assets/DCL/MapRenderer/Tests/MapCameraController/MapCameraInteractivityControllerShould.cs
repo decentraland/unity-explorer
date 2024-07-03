@@ -2,6 +2,7 @@
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
+using DCL.MapRenderer.MapLayers.Pins;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
@@ -42,7 +43,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                            return true;
                        });
 
-            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils);
+            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, Substitute.For<PinMarkerController>());
         }
 
         [Test]
@@ -84,7 +85,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
 
             controller.Initialize(MapLayer.ParcelHoverHighlight);
 
-            Assert.IsTrue(controller.TryGetParcel(norm, out var parcel));
+            Assert.IsTrue(controller.TryGetParcel(norm, out var parcel, out IPinMarker pinMarker));
             Assert.AreEqual(expected, new Vector3(parcel.x, parcel.y, 0));
 
             controller.HighlightParcel(parcel);

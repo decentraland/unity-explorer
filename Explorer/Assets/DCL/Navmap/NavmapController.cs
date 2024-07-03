@@ -8,6 +8,7 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
+using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -102,6 +103,8 @@ namespace DCL.Navmap
             this.navmapView.SatelliteRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.StreetViewRenderImage.ParcelClicked += OnParcelClicked;
             this.navmapView.StreetViewRenderImage.HoveredParcel += OnParcelHovered;
+            this.navmapView.StreetViewRenderImage.HoveredMapPin += OnMapPinHovered;
+            this.navmapView.SatelliteRenderImage.HoveredMapPin += OnMapPinHovered;
             this.navmapView.SatelliteRenderImage.HoveredParcel += OnParcelHovered;
 
             this.navmapView.SatelliteRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
@@ -110,6 +113,13 @@ namespace DCL.Navmap
 
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
+        }
+
+        private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
+        {
+            navmapView.MapPinTooltip.Title.text = pinMarker.Title;
+            navmapView.MapPinTooltip.Description.text = pinMarker.Description;
+            navmapView.MapPinTooltip.Show();
         }
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, NavmapSections shownSection, bool animate)
@@ -129,6 +139,7 @@ namespace DCL.Navmap
         {
             if (!parcel.Equals(lastParcelHovered))
             {
+                //navmapView.MapPinTooltip.Hide();
                 lastParcelHovered = parcel;
                 UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.HoverAudio);
             }
@@ -222,7 +233,9 @@ namespace DCL.Navmap
             this.navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
             this.navmapView.StreetViewRenderImage.ParcelClicked -= OnParcelClicked;
             this.navmapView.StreetViewRenderImage.HoveredParcel -= OnParcelHovered;
+            this.navmapView.StreetViewRenderImage.HoveredMapPin += OnMapPinHovered;
             this.navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
+            this.navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
             animationCts?.Dispose();
             zoomController?.Dispose();
             floatingPanelController?.Dispose();
