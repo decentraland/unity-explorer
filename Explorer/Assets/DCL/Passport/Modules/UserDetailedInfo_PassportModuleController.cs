@@ -407,6 +407,8 @@ namespace DCL.Passport.Modules
 
         private void SetInfoSectionAsEditionMode(bool isEditMode)
         {
+            SetInfoSectionAsSavingStatus(false);
+
             foreach (var editionObj in view.InfoEditionObjects)
                 editionObj.SetActive(isEditMode);
 
@@ -427,10 +429,7 @@ namespace DCL.Passport.Modules
             }
 
             if (isEditMode)
-            {
-                SetInfoSectionAsSavingStatus(false);
                 view.DescriptionForEditMode.text = view.Description.text;
-            }
             else
             {
                 view.AdditionalInfoContainer.gameObject.SetActive(instantiatedAdditionalFields.Count > 0);
@@ -518,6 +517,8 @@ namespace DCL.Passport.Modules
 
         private void SetLinksSectionAsEditionMode(bool isEditMode)
         {
+            SetLinksSectionAsSavingStatus(false);
+
             foreach (var editionObj in view.LinksEditionObjects)
                 editionObj.SetActive(isEditMode);
 
@@ -526,7 +527,6 @@ namespace DCL.Passport.Modules
 
             if (isEditMode)
             {
-                SetLinksSectionAsSavingStatus(false);
                 ClearLinksForEdition();
                 foreach (var link in instantiatedLinks)
                     AddLink(link.Id, link.Title.text, link.Url, true);
@@ -608,6 +608,9 @@ namespace DCL.Passport.Modules
             view.CancelLinksButton.gameObject.SetActive(!isSaving);
             view.SaveLinksButton.gameObject.SetActive(!isSaving);
             view.SaveInfoButton.interactable = !isSaving;
+
+            foreach (var buttonToDisable in view.ButtonsToDisableWhileSaving)
+                buttonToDisable.interactable = !isSaving;
 
             foreach (var link in instantiatedLinks)
                 link.SetAsInteractable(!isSaving);

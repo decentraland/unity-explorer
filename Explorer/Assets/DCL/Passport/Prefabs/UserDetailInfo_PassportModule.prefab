@@ -496,7 +496,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77a0b121b78442b6a801a7c42cb104a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <MainContainer>k__BackingField: {fileID: 3708780279043068538}
   <Description>k__BackingField: {fileID: 6331718136935519988}
   <DescriptionForEditMode>k__BackingField: {fileID: 7047690265850872759}
   <AdditionalFieldsConfiguration>k__BackingField: {fileID: 11400000, guid: a82c79cd534f5c04cad2251d197233dc, type: 2}
@@ -532,6 +531,10 @@ MonoBehaviour:
   - {fileID: 5518523827056907457}
   - {fileID: 296717829636089539}
   - {fileID: 5668553386224475547}
+  <MainContainer>k__BackingField: {fileID: 3708780279043068538}
+  <ButtonsToDisableWhileSaving>k__BackingField:
+  - {fileID: 5603943365506482546}
+  - {fileID: 5189447908296941915}
 --- !u!1 &833282475876811896
 GameObject:
   m_ObjectHideFlags: 0

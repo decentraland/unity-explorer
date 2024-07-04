@@ -9,9 +9,6 @@ namespace DCL.Passport.Modules
 {
     public class UserDetailedInfo_PassportModuleView : MonoBehaviour
     {
-        [field: SerializeField]
-        public RectTransform MainContainer { get; private set; }
-
         [field: Header("Info Section")]
         [field: SerializeField]
         public TMP_Text Description { get; private set; }
@@ -79,5 +76,12 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public List<GameObject> LinksEditionObjects { get; private set; }
+
+        [field: Header("Others")]
+        [field: SerializeField]
+        public RectTransform MainContainer { get; private set; }
+
+        [field: SerializeField]
+        public List<Button> ButtonsToDisableWhileSaving { get; private set; }
     }
 }
