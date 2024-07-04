@@ -69,6 +69,7 @@ namespace DCL.SDKComponents.Animator.Systems
         private void UpdateAnimationState([Data] float dt, ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
+            if (gltfContainerComponent.State != LoadingState.Finished) return;
 
             List<UAnimator> animators = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
             sdkAnimatorComponent.IsDirty = false;
