@@ -78,11 +78,9 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (intention.CancellationTokenSource.IsCancellationRequested)
                 {
                     FinalizeLoading(
-                        in entity,
+                        entity,
                         intention,
-                        new StreamableLoadingResult<TAsset>(
-                            new OperationCanceledException()
-                        ),
+                        null,
                         intention.CommonArguments.CurrentSource,
                         state.AcquiredBudget
                     );
@@ -121,6 +119,12 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     // if the cached request is cancelled it does not mean failure for the new intent
                     (requestIsNotFulfilled, result) = await cachedSource.Task.SuppressCancellationThrow();
+
+                    if (requestIsNotFulfilled)
+                    {
+                        await FlowAsync(entity, source, intention, acquiredBudget, partition, disposalCt);
+                        return;
+                    }
                 }
 
                 if (cache.TryGet(intention, out TAsset asset))
@@ -141,16 +145,6 @@ namespace ECS.StreamableLoading.Common.Systems
                 // if this request must be cancelled by `intention.CommonArguments.CancellationToken` it will be cancelled after `if (!requestIsNotFulfilled)`
                 if (requestIsNotFulfilled)
                     result = await CacheableFlowAsync(intention, acquiredBudget, partition, CancellationTokenSource.CreateLinkedTokenSource(intention.CommonArguments.CancellationToken, disposalCt).Token);
-                else
-                {
-                    //This is in case we had OngoingRequests synced to the results of the first request.
-                    //They would not enter into any of these and go directly to the finalize,
-                    //without adding references to the cache thereby breaking the cleanup
-                    if (result is { Succeeded: true })
-                        AddToCache(in intention, result.Value.Asset);
-
-                    return;
-                }
 
                 if (!result.HasValue)
 
@@ -171,12 +165,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
 
-        private void FinalizeLoading(in Entity entity, TIntention intention,
+        private void FinalizeLoading(Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget? acquiredBudget)
         {
-            // using MutexSync.Scope sync = mutexSync.GetScope();
-
             if (systemIsDisposed || !World.IsAlive(entity))
             {
                 // World is no longer valid, can't call World.Get
@@ -207,7 +199,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 if (result.Value.Succeeded)
                 {
-                    OnAssetSuccessfullyLoaded(result.Value.Asset);
+                    IncreaseRefCount(in intention, result.Value.Asset!);
 
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
                 }
@@ -220,7 +212,10 @@ namespace ECS.StreamableLoading.Common.Systems
             }
         }
 
-        protected virtual void OnAssetSuccessfullyLoaded(TAsset asset) { }
+        private void IncreaseRefCount(in TIntention intention, TAsset asset)
+        {
+            cache.AddReference(in intention, asset);
+        }
 
         /// <summary>
         ///     All exceptions are handled by the upper functions, just do pure work
@@ -261,18 +256,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 // continuation of cachedSource.Task.SuppressCancellationThrow();
                 TryRemoveOngoingRequest();
 
+                // before firing the continuation of the ongoing request
+                // Add result to the cache
+                if (result is { Succeeded: true })
+                    AddToCache(in intention, result.Value.Asset!);
+
                 source.TrySetResult(result);
 
-                if (!result.HasValue)
-                    return null; // it will be decided by another source
-
-                StreamableLoadingResult<TAsset> resultValue = result.Value;
-
-                // Add to cache if successful
-                if (resultValue.Succeeded)
-                    AddToCache(in intention, resultValue.Asset);
-
-                return resultValue;
+                // if result is null it will be decided by another source
+                return result.GetValueOrDefault();
             }
             catch (OperationCanceledException operationCanceledException)
             {

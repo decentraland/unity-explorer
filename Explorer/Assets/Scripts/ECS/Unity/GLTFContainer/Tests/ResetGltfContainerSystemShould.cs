@@ -9,6 +9,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
@@ -23,7 +24,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 {
     public class ResetGltfContainerSystemShould : UnitySystemTestBase<ResetGltfContainerSystem>
     {
-        private IDereferencableCache<GltfContainerAsset, string> cache;
+        private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache entityCollidersSceneCache;
         private EntityEventBuffer<GltfContainerComponent> eventBuffer;
         private IECSToCRDTWriter ecsToCRDTWriter;
@@ -32,7 +33,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             system = new ResetGltfContainerSystem(world,
-                cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>(),
+                cache = Substitute.For<IGltfContainerAssetsCache>(),
                 entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(),
                 eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1),
                 ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>());

@@ -11,6 +11,7 @@ using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System.Collections.Generic;
 using UnityEngine;
@@ -32,7 +33,7 @@ namespace DCL.ResourcesUnloading
         private readonly List<IThrottledClearable> avatarPools;
 
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
-        private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
+        private IGltfContainerAssetsCache gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private ILODAssetsPool lodCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
@@ -89,7 +90,7 @@ namespace DCL.ResourcesUnloading
         public void Register(IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache) =>
             this.assetBundleCache = assetBundleCache;
 
-        public void Register(IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache) =>
+        public void Register(IGltfContainerAssetsCache gltfContainerAssetsCache) =>
             this.gltfContainerAssetsCache = gltfContainerAssetsCache;
 
         public void Register(IWearableAssetsCache wearableAssetsCache) =>
