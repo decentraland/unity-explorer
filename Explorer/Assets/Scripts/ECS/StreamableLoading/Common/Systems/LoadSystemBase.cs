@@ -73,32 +73,20 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private void Execute(in Entity entity, ref StreamableLoadingState state, ref TIntention intention, ref IPartitionComponent partitionComponent)
         {
-            // if (intention.CancellationTokenSource.IsCancellationRequested)
-            // {
-            //     FinalizeLoading(
-            //         in entity,
-            //         intention,
-            //         new StreamableLoadingResult<TAsset>(
-            //             new OperationCanceledException()
-            //         ),
-            //         intention.CommonArguments.CurrentSource,
-            //         state.AcquiredBudget
-            //     );
-            //
-            //     return;
-            // }
-
-            if (state.Value != StreamableLoadingState.Status.Allowed && intention.CancellationTokenSource.IsCancellationRequested)
+            if (state.Value != StreamableLoadingState.Status.Allowed)
             {
-                FinalizeLoading(
-                    in entity,
-                    intention,
-                    new StreamableLoadingResult<TAsset>(
-                        new OperationCanceledException()
-                    ),
-                    intention.CommonArguments.CurrentSource,
-                    state.AcquiredBudget
-                );
+                if (intention.CancellationTokenSource.IsCancellationRequested)
+                {
+                    FinalizeLoading(
+                        in entity,
+                        intention,
+                        new StreamableLoadingResult<TAsset>(
+                            new OperationCanceledException()
+                        ),
+                        intention.CommonArguments.CurrentSource,
+                        state.AcquiredBudget
+                    );
+                }
 
                 return;
             }
