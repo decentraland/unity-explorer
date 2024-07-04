@@ -58,7 +58,7 @@ namespace ECS.Unity.Materials.Systems
         [Query]
         private void InvalidateMaterialComponent(ref PBMaterial material, ref MaterialComponent materialComponent, ref PartitionComponent partitionComponent)
         {
-            if (!material.IsDirty)
+            if (material.IsDirty == false)
                 return;
 
             material.IsDirty = false;
@@ -68,14 +68,23 @@ namespace ECS.Unity.Materials.Systems
             if (MaterialDataEqualityComparer.INSTANCE.Equals(materialComponent.Data, materialData))
                 return;
 
+            InvalidatePrbInequality(ref materialComponent, ref materialData);
+            StartNewMaterialLoad(ref materialComponent, ref materialData, ref partitionComponent);
+        }
+
+        private void InvalidatePrbInequality(ref MaterialComponent materialComponent, ref MaterialData materialData)
+        {
             // If isPbr is the same right the same material is reused
             if (materialComponent.Data.IsPbrMaterial != materialData.IsPbrMaterial)
             {
-                ReleaseMaterial.Execute(World, ref materialComponent, destroyMaterial);
+                ReleaseMaterial.Execute(World!, ref materialComponent, destroyMaterial);
                 materialComponent.Result = null;
             }
+        }
 
-            materialComponent.Data = materialData;
+        private void StartNewMaterialLoad(ref MaterialComponent materialComponent, ref MaterialData newMaterialData, ref PartitionComponent partitionComponent)
+        {
+            materialComponent.Data = newMaterialData;
             CreateGetTexturePromises(ref materialComponent, ref partitionComponent);
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
         }

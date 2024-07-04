@@ -4,6 +4,7 @@ using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Pool;
@@ -59,6 +60,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                         {
                             StatePointer = new ManagedTypePointer<StreamableLoadingState>(ref state),
                             PartitionComponent = partition,
+                            Type = query.All[0].Type,
                         };
 
                         loadingIntentions.Add(intentionData);
@@ -67,6 +69,11 @@ namespace ECS.StreamableLoading.DeferredLoading
             }
 
             if (loadingIntentions.Count == 0) return;
+
+            if (loadingIntentions.Count > 1000)
+            {
+                {}
+            }
 
             loadingIntentions.Sort(static (p1, p2) => BucketBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
             AnalyzeBudget();
@@ -102,6 +109,7 @@ namespace ECS.StreamableLoading.DeferredLoading
         {
             public IPartitionComponent PartitionComponent;
             public ManagedTypePointer<StreamableLoadingState> StatePointer;
+            public Type Type;
         }
     }
 }

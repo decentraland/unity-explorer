@@ -50,9 +50,8 @@ namespace ECS.StreamableLoading.Common.Components
             Value = Status.Allowed;
         }
 
-        public void DisposeBudget()
+        public void DisposeBudgetIfExists()
         {
-            Assert.IsNotNull(AcquiredBudget);
             AcquiredBudget?.Dispose();
             AcquiredBudget = null;
         }

@@ -29,25 +29,16 @@ namespace ECS.StreamableLoading.Common.Systems
         protected readonly IStreamableCache<TAsset, TIntention> cache;
 
         private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
-
         private readonly Query query;
-
-        private CancellationTokenSource cancellationTokenSource;
+        private readonly CancellationTokenSource cancellationTokenSource;
 
         private bool systemIsDisposed;
 
         protected LoadSystemBase(World world, IStreamableCache<TAsset, TIntention> cache) : base(world)
         {
             this.cache = cache;
-
-            // this.mutexSync = mutexSync;
-            query = World.Query(in CREATE_WEB_REQUEST);
-
+            query = World!.Query(in CREATE_WEB_REQUEST);
             cachedInternalFlowDelegate = FlowInternalAsync;
-        }
-
-        public override void Initialize()
-        {
             cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -82,8 +73,35 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private void Execute(in Entity entity, ref StreamableLoadingState state, ref TIntention intention, ref IPartitionComponent partitionComponent)
         {
-            if (state.Value != StreamableLoadingState.Status.Allowed)
+            // if (intention.CancellationTokenSource.IsCancellationRequested)
+            // {
+            //     FinalizeLoading(
+            //         in entity,
+            //         intention,
+            //         new StreamableLoadingResult<TAsset>(
+            //             new OperationCanceledException()
+            //         ),
+            //         intention.CommonArguments.CurrentSource,
+            //         state.AcquiredBudget
+            //     );
+            //
+            //     return;
+            // }
+
+            if (state.Value != StreamableLoadingState.Status.Allowed && intention.CancellationTokenSource.IsCancellationRequested)
+            {
+                FinalizeLoading(
+                    in entity,
+                    intention,
+                    new StreamableLoadingResult<TAsset>(
+                        new OperationCanceledException()
+                    ),
+                    intention.CommonArguments.CurrentSource,
+                    state.AcquiredBudget
+                );
+
                 return;
+            }
 
             AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
@@ -124,7 +142,6 @@ namespace ECS.StreamableLoading.Common.Systems
                 }
 
                 // Try load from cache first
-
 
                 // If the given URL failed irrecoverably just return the failure
                 if (cache.IrrecoverableFailures.TryGetValue(intention.CommonArguments.URL.GetCacheableURL(), out var failure))
@@ -168,7 +185,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private void FinalizeLoading(in Entity entity, TIntention intention,
             StreamableLoadingResult<TAsset>? result, AssetSource source,
-            IAcquiredBudget acquiredBudget)
+            IAcquiredBudget? acquiredBudget)
         {
             // using MutexSync.Scope sync = mutexSync.GetScope();
 
@@ -176,7 +193,7 @@ namespace ECS.StreamableLoading.Common.Systems
             {
                 // World is no longer valid, can't call World.Get
                 // Just Free the budget
-                acquiredBudget.Dispose();
+                acquiredBudget?.Dispose();
                 return;
             }
 
@@ -187,11 +204,11 @@ namespace ECS.StreamableLoading.Common.Systems
                 ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
 
                 // it could be already disposed of, but it's safe to call it again
-                acquiredBudget.Dispose();
+                acquiredBudget?.Dispose();
                 return;
             }
 
-            state.DisposeBudget();
+            state.DisposeBudgetIfExists();
 
             if (result.HasValue)
             {
