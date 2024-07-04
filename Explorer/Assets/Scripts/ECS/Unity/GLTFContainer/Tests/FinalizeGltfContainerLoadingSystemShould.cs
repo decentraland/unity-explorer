@@ -132,8 +132,8 @@ namespace ECS.Unity.GLTFContainer.Tests
             component = world.Get<GltfContainerComponent>(e);
             GltfContainerAsset promiseAsset = component.Promise.Result.Value.Asset;
 
-            Assert.That(promiseAsset.VisibleMeshesColliders.Count, Is.EqualTo(196));
-            Assert.That(promiseAsset.VisibleMeshesColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
+            Assert.That(promiseAsset.DecodedVisibleSDKColliders.Count, Is.EqualTo(196));
+            Assert.That(promiseAsset.DecodedVisibleSDKColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
         }
 
         [Test]
@@ -161,7 +161,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(promiseAsset.InvisibleColliders.All(c => c.Collider.gameObject.layer == PhysicsLayers.ON_POINTER_EVENT_LAYER), Is.True);
 
             // No visible colliders created
-            Assert.That(promiseAsset.VisibleMeshesColliders, Is.Null);
+            Assert.That(promiseAsset.DecodedVisibleSDKColliders, Is.Null);
         }
     }
 }

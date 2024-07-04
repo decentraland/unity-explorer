@@ -39,7 +39,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
             var asset = GltfContainerAsset.Create(new GameObject(), null);
 
-            asset.VisibleMeshesColliders = new List<SDKCollider> { new (), new () };
+            asset.DecodedVisibleSDKColliders = new List<SDKCollider> { new (), new () };
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
             c.State = LoadingState.Finished;
 
