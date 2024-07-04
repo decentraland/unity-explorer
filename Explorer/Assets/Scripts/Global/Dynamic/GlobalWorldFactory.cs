@@ -112,7 +112,7 @@ namespace Global.Dynamic
             LoadSceneSystemLogicBase loadSceneSystemLogic = null;
 
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams.HybridSceneID, hybridSceneParams.HybridSceneContent);
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams.HybridSceneContent);
             else
                 loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
 

@@ -7,6 +7,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
+using UnityEngine;
 
 namespace SceneRunner.Scene
 {
@@ -19,7 +20,7 @@ namespace SceneRunner.Scene
 
         public URLDomain ContentBaseUrl => contentBaseUrl;
         private readonly IWebRequestController webRequestController;
-        private readonly string remoteSceneID;
+        private string remoteSceneID;
 
         private readonly URLDomain abDomain;
         private readonly URLDomain remoteContentDomain;
@@ -80,8 +81,32 @@ namespace SceneRunner.Scene
             return fileToHash.TryGetValue(name, out hash);
         }
 
-        public async UniTask GetRemoteSceneDefinitionAsync(CancellationToken ct, string reportCategory)
+        public async UniTask<string> GetRemoteSceneDefinitionAsync(Vector2Int decodedBase, CancellationToken ct, string reportCategory)
         {
+            try
+            {
+                var getAbout = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString("https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest/about")), ct, reportCategory)
+                    .CreateFromJson<ServerAbout>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
+
+                foreach (string? contentDefinition in getAbout.configurations.scenesUrn)
+                {
+                    var getSceneDefinition = await webRequestController.GetAsync(new CommonArguments(URLAddress.FromString($"https://sdk-team-cdn.decentraland.org/ipfs/{IpfsHelper.ParseUrn(contentDefinition).EntityId}")), ct, reportCategory)
+                        .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
+                    if (getSceneDefinition.metadata.scene.DecodedBase.Equals(decodedBase))
+                    {
+                        remoteSceneID = IpfsHelper.ParseUrn(contentDefinition).EntityId;
+                        break;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles");
+            }
+            
+            
+            
             var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
             try
@@ -100,6 +125,7 @@ namespace SceneRunner.Scene
                 ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles");
             }
 
+            return remoteSceneID;
         }
     }
 }
