@@ -75,8 +75,11 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
-                if (intention.CancellationTokenSource.IsCancellationRequested)
+                // If state is in progress the flow was already launched and it will call FinalizeLoading on its own
+                if (state.Value != StreamableLoadingState.Status.InProgress && intention.CancellationTokenSource.IsCancellationRequested)
                 {
+                    // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
+                    // if it's unable to keep up with their number
                     FinalizeLoading(
                         entity,
                         intention,
