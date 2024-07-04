@@ -4,14 +4,14 @@ using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class ChatAnalytics: IDisposable
+    public class ChatEventsAnalytics: IDisposable
     {
         private readonly IAnalyticsController analytics;
         private readonly ChatController chatController;
 
         private bool isInitChatBubble = true;
 
-        public ChatAnalytics(IAnalyticsController analytics, ChatController chatController)
+        public ChatEventsAnalytics(IAnalyticsController analytics, ChatController chatController)
         {
             this.analytics = analytics;
             this.chatController = chatController;

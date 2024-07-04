@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class MapAnalytics : IDisposable
+    public class MapEventsAnalytics : IDisposable
     {
         private readonly IAnalyticsController analytics;
         private readonly NavmapController navmapController;
 
-        public MapAnalytics(IAnalyticsController analytics, NavmapController navmapController)
+        public MapEventsAnalytics(IAnalyticsController analytics, NavmapController navmapController)
         {
             this.analytics = analytics;
             this.navmapController = navmapController;

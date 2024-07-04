@@ -7,6 +7,7 @@
             public const string SYSTEM_INFO_REPORT = "system_info_report";
             public const string INITIAL_LOADING = "initial_loading";
             public const string PERFORMANCE_REPORT = "performance_report";
+            public const string CRITICAL_LOGS = "critical_logs";
         }
 
         public static class World

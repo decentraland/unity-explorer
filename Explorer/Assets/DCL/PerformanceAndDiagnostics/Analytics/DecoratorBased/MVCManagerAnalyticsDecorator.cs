@@ -26,8 +26,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             controllerAnalyticsFactory = new Dictionary<Type, Func<IController, IDisposable>>
             {
-                { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatAnalytics(analytics, c)) },
-                { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapAnalytics(analytics, c.NavmapController)) },
+                { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatEventsAnalytics(analytics, c)) },
+                { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapEventsAnalytics(analytics, c.NavmapController)) },
             };
 
             Func<IController, IDisposable> CreateAnalytics<T>(Func<T, IDisposable> factory) where T : IController =>
