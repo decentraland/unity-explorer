@@ -73,7 +73,7 @@ namespace DCL.Navmap
             view.backButton.gameObject.SetActive(showBackButton);
             view.PlaceSection.gameObject.SetActive(pinMarker == null);
             view.MapPinSection.gameObject.SetActive(pinMarker != null);
-            
+
             if (showBackButton)
             {
                 view.panelAnimator.Rebind();

@@ -18,6 +18,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetData(string title, string description);
 
+        void AnimateIn();
+
+        void AnimateOut();
+
         void SetTexture(Texture2D texture);
 
         void OnBecameVisible();

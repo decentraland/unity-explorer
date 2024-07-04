@@ -125,6 +125,8 @@ namespace DCL.MapRenderer.ConsumerUtils
             return rectTransform.TransformPoint(rectTransform.rect.size * (normalizedDiscretePosition - rectTransform.pivot));
         }
 
+        private IPinMarker previousMarker;
+
         private void ProcessHover(PointerEventData eventData)
         {
             //as in the click process here the hover of different types of underlying element, either map pin or regular parcel
@@ -134,6 +136,12 @@ namespace DCL.MapRenderer.ConsumerUtils
             {
                 if (highlightEnabled && previousParcel != parcel)
                 {
+                    if (previousMarker != null)
+                    {
+                        previousMarker.AnimateOut();
+                        previousMarker = null;
+                    }
+
                     previousParcel = parcel;
                     if (pinMarker == null)
                     {
@@ -141,6 +149,8 @@ namespace DCL.MapRenderer.ConsumerUtils
                     }
                     else
                     {
+                        previousMarker = pinMarker;
+                        pinMarker.AnimateIn();
                         interactivityController.RemoveHighlight();
                     }
 
