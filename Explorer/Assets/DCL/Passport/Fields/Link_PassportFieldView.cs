@@ -18,7 +18,7 @@ namespace DCL.Passport.Fields
         [field: SerializeField]
         public Button RemoveLinkButton { get; private set; }
 
-        public int Id { get; set; }
+        public string Id { get; set; }
 
         public string Url { get; set; }
 

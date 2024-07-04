@@ -1,4 +1,5 @@
 using DCL.CharacterPreview;
+using DCL.Passport.Modals;
 using DCL.Passport.Modules;
 using MVC;
 using UnityEngine;
@@ -34,5 +35,8 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public RectTransform MainContainer { get; private set; }
+
+        [field: SerializeField]
+        public AddLink_PassportModal AddLinkModal { get; private set; }
     }
 }

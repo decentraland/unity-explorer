@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.Passport.Configuration;
 using DCL.Passport.Fields;
+using DCL.Passport.Modals;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using MVC;
@@ -35,6 +36,7 @@ namespace DCL.Passport.Modules
         private readonly IProfileRepository profileRepository;
         private readonly World world;
         private readonly Entity playerEntity;
+        private readonly AddLink_PassportModal addLinkModal;
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFields = new();
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPoolForEdition;
@@ -55,7 +57,8 @@ namespace DCL.Passport.Modules
             ISelfProfile selfProfile,
             IProfileRepository profileRepository,
             World world,
-            Entity playerEntity)
+            Entity playerEntity,
+            AddLink_PassportModal addLinkModal)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -63,6 +66,7 @@ namespace DCL.Passport.Modules
             this.profileRepository = profileRepository;
             this.world = world;
             this.playerEntity = playerEntity;
+            this.addLinkModal = addLinkModal;
 
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
@@ -108,6 +112,8 @@ namespace DCL.Passport.Modules
             view.LinksEditionButton.onClick.AddListener(() => SetLinksSectionAsEditionMode(true));
             view.CancelLinksButton.onClick.AddListener(() => SetLinksSectionAsEditionMode(false));
             view.SaveLinksButton.onClick.AddListener(SaveLinksSection);
+            view.AddNewLinkButton.onClick.AddListener(addLinkModal.Show);
+            addLinkModal.OnSave += CreateNewLink;
         }
 
         public void Setup(Profile profile)
@@ -184,6 +190,8 @@ namespace DCL.Passport.Modules
             view.LinksEditionButton.onClick.RemoveAllListeners();
             view.CancelLinksButton.onClick.RemoveAllListeners();
             view.SaveLinksButton.onClick.RemoveAllListeners();
+            view.AddNewLinkButton.onClick.RemoveAllListeners();
+            addLinkModal.OnSave -= CreateNewLink;
             checkEditionAvailabilityCts.SafeCancelAndDispose();
             saveInfoCts.SafeCancelAndDispose();
             saveLinksCts.SafeCancelAndDispose();
@@ -353,15 +361,11 @@ namespace DCL.Passport.Modules
             if (currentProfile.Links == null)
                 return;
 
-            var id = 0;
             foreach (var link in currentProfile.Links)
-            {
-                AddLink(id, link.title, link.url, false);
-                id++;
-            }
+                AddLink(Guid.NewGuid().ToString(), link.title, link.url, false);
         }
 
-        private void AddLink(int id, string title, string url, bool isEditMode)
+        private void AddLink(string id, string title, string url, bool isEditMode)
         {
             var newLink = !isEditMode ? linksPool.Get() : linksPoolForEdition.Get();
             newLink.transform.SetAsLastSibling();
@@ -539,6 +543,12 @@ namespace DCL.Passport.Modules
                 saveLinksCts.SafeCancelAndDispose();
             }
 
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
+        }
+
+        private void CreateNewLink(string title, string url)
+        {
+            AddLink(Guid.NewGuid().ToString(), title, url, true);
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
         }
 
