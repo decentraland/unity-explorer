@@ -1,6 +1,5 @@
 ﻿using Segment.Serialization;
 using System;
-using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -11,7 +10,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public CriticalLogsAnalytics(IAnalyticsController analytics)
         {
             this.analytics = analytics;
-            Application.logMessageReceived += TrackCriticalLogs;
             AppDomain.CurrentDomain.UnhandledException += TrackUnhandledException;
         }
 
@@ -22,18 +20,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Track(AnalyticsEvents.General.CRITICAL_LOGS, new JsonObject
             {
                 { "type", "unhandled exception" },
-                { "log", e.Message },
-            });
-        }
-
-        private void TrackCriticalLogs(string logString, string stackTrace, LogType type)
-        {
-            if (type is not (LogType.Error or LogType.Exception)) return;
-
-            analytics.Track(AnalyticsEvents.General.CRITICAL_LOGS, new JsonObject
-            {
-                { "type", type.ToString() },
-                { "log", logString },
+                { "category", "UNDEFINED" },
+                { "scene_hash", "UNDEFINED" },
+                { "message", e.Message },
             });
         }
     }

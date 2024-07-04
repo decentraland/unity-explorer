@@ -14,6 +14,7 @@ using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -180,7 +181,10 @@ namespace Global
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-            container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
+            container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings,
+                // TODO: if (enabledAnalytics)
+                (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(bootstrapContainer.Analytics)));
+
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
             container.ProfilingProvider = profilingProvider;

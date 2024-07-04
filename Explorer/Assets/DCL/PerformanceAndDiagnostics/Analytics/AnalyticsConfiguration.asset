@@ -25,11 +25,11 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: performance_report
       isEnabled: 1
+    - eventName: critical_logs
+      isEnabled: 1
   - groupName: Chat
     events:
     - eventName: chat_message_sent
-      isEnabled: 1
-    - eventName: goto_teleport
       isEnabled: 1
     - eventName: chat_bubble_switched
       isEnabled: 1
@@ -40,8 +40,6 @@ MonoBehaviour:
   - groupName: World
     events:
     - eventName: move_to_parcel
-      isEnabled: 1
-    - eventName: visit_scene
       isEnabled: 1
     - eventName: walked_distance
       isEnabled: 1
