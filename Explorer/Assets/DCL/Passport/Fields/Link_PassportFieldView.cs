@@ -13,9 +13,27 @@ namespace DCL.Passport.Fields
         public TMP_Text Title { get; private set; }
 
         [field: SerializeField]
-        public string Link { get; set; }
+        public Button LinkButton { get; private set; }
 
         [field: SerializeField]
-        public Button LinkButton { get; private set; }
+        public Button RemoveLinkButton { get; private set; }
+
+        public int Id { get; set; }
+
+        public string Url { get; set; }
+
+        public bool IsInEditMode { get; private set; }
+
+        public void SetAsEditable(bool isEditable)
+        {
+            RemoveLinkButton.gameObject.SetActive(isEditable);
+            IsInEditMode = isEditable;
+        }
+
+        public void SetAsInteractable(bool isInteractable)
+        {
+            LinkButton.interactable = isInteractable;
+            RemoveLinkButton.interactable = isInteractable;
+        }
     }
 }

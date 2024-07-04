@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -26,7 +27,7 @@ namespace DCL.Passport.Modules
         private const string EDITION_PLACE_HOLDER = "Write here";
         private const string EDITION_PLACE_HOLDER_FOR_DATES = "DD/MM/YYYY";
         private const int ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY = 11;
-        private const int LINK_POOL_DEFAULT_CAPACITY = 5;
+        private const int LINKS_MAX_AMOUNT = 5;
 
         private readonly UserDetailedInfo_PassportModuleView view;
         private readonly IMVCManager mvcManager;
@@ -40,10 +41,13 @@ namespace DCL.Passport.Modules
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFieldsForEdition = new();
         private readonly IObjectPool<Link_PassportFieldView> linksPool;
         private readonly List<Link_PassportFieldView> instantiatedLinks = new();
+        private readonly IObjectPool<Link_PassportFieldView> linksPoolForEdition;
+        private readonly List<Link_PassportFieldView> instantiatedLinksForEdition = new();
 
         private Profile currentProfile;
         private CancellationTokenSource checkEditionAvailabilityCts;
         private CancellationTokenSource saveInfoCts;
+        private CancellationTokenSource saveLinksCts;
 
         public UserDetailedInfo_PassportModuleController(
             UserDetailedInfo_PassportModuleView view,
@@ -63,33 +67,47 @@ namespace DCL.Passport.Modules
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
                 defaultCapacity: ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY,
-                actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
-                actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
-            );
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
+                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false));
 
             additionalFieldsPoolForEdition = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldForEditionPrefab,
                 defaultCapacity: ADDITIONAL_FIELDS_POOL_DEFAULT_CAPACITY,
-                actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
-                actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
-            );
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
+                actionOnRelease: buttonView => buttonView.gameObject.SetActive(false));
 
             linksPool = new ObjectPool<Link_PassportFieldView>(
                 InstantiateLinkPrefab,
-                defaultCapacity: LINK_POOL_DEFAULT_CAPACITY,
-                actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
+                defaultCapacity: LINKS_MAX_AMOUNT,
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
                 actionOnRelease: buttonView =>
                 {
                     buttonView.LinkButton.onClick.RemoveAllListeners();
+                    buttonView.RemoveLinkButton.onClick.RemoveAllListeners();
                     buttonView.gameObject.SetActive(false);
                 }
             );
 
-            view.NoLinksLabel.text = NO_LINKS_TEXT;
+            linksPoolForEdition = new ObjectPool<Link_PassportFieldView>(
+                InstantiateLinkForEditionPrefab,
+                defaultCapacity: LINKS_MAX_AMOUNT,
+                actionOnGet: buttonView => buttonView.gameObject.SetActive(true),
+                actionOnRelease: buttonView =>
+                {
+                    buttonView.LinkButton.onClick.RemoveAllListeners();
+                    buttonView.RemoveLinkButton.onClick.RemoveAllListeners();
+                    buttonView.gameObject.SetActive(false);
+                }
+            );
 
             view.InfoEditionButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(true));
             view.CancelInfoButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(false));
             view.SaveInfoButton.onClick.AddListener(SaveInfoSection);
+
+            view.NoLinksLabel.text = NO_LINKS_TEXT;
+            view.LinksEditionButton.onClick.AddListener(() => SetLinksSectionAsEditionMode(true));
+            view.CancelLinksButton.onClick.AddListener(() => SetLinksSectionAsEditionMode(false));
+            view.SaveLinksButton.onClick.AddListener(SaveLinksSection);
         }
 
         public void Setup(Profile profile)
@@ -97,6 +115,7 @@ namespace DCL.Passport.Modules
             currentProfile = profile;
 
             SetInfoSectionAsEditionMode(false);
+            SetLinksSectionAsEditionMode(false);
             LoadAdditionalFields();
             LoadLinks();
             LoadDescription();
@@ -109,8 +128,14 @@ namespace DCL.Passport.Modules
 
         public void Clear()
         {
+            ClearAllAdditionalInfoFields();
+            ClearAllLinks();
+        }
+
+        private void ClearAllAdditionalInfoFields()
+        {
             ClearAdditionalInfoFields();
-            ClearLinks();
+            ClearAdditionalInfoFieldsForEdition();
         }
 
         private void ClearAdditionalInfoFields()
@@ -119,11 +144,20 @@ namespace DCL.Passport.Modules
                 additionalFieldsPool.Release(additionalField);
 
             instantiatedAdditionalFields.Clear();
+        }
 
+        private void ClearAdditionalInfoFieldsForEdition()
+        {
             foreach (AdditionalField_PassportFieldView additionalFieldForEdition in instantiatedAdditionalFieldsForEdition)
                 additionalFieldsPoolForEdition.Release(additionalFieldForEdition);
 
             instantiatedAdditionalFieldsForEdition.Clear();
+        }
+
+        private void ClearAllLinks()
+        {
+            ClearLinks();
+            ClearLinksForEdition();
         }
 
         private void ClearLinks()
@@ -134,13 +168,25 @@ namespace DCL.Passport.Modules
             instantiatedLinks.Clear();
         }
 
+        private void ClearLinksForEdition()
+        {
+            foreach (Link_PassportFieldView linkForEdition in instantiatedLinksForEdition)
+                linksPoolForEdition.Release(linkForEdition);
+
+            instantiatedLinksForEdition.Clear();
+        }
+
         public void Dispose()
         {
             view.InfoEditionButton.onClick.RemoveAllListeners();
             view.CancelInfoButton.onClick.RemoveAllListeners();
             view.SaveInfoButton.onClick.RemoveAllListeners();
+            view.LinksEditionButton.onClick.RemoveAllListeners();
+            view.CancelLinksButton.onClick.RemoveAllListeners();
+            view.SaveLinksButton.onClick.RemoveAllListeners();
             checkEditionAvailabilityCts.SafeCancelAndDispose();
             saveInfoCts.SafeCancelAndDispose();
+            saveLinksCts.SafeCancelAndDispose();
             Clear();
         }
 
@@ -162,9 +208,17 @@ namespace DCL.Passport.Modules
             return linkView;
         }
 
+        private Link_PassportFieldView InstantiateLinkForEditionPrefab()
+        {
+            Link_PassportFieldView linkView = UnityEngine.Object.Instantiate(view.LinkPrefab, view.LinksContainerForEditMode);
+            return linkView;
+        }
+
+        private void LoadDescription() =>
+            view.Description.text = !string.IsNullOrEmpty(currentProfile.Description) || instantiatedAdditionalFields.Count > 0 ? currentProfile.Description : NO_INTRO_TEXT;
+
         private void LoadAdditionalFields()
         {
-            string additionalFieldValue = string.Empty;
             if (!string.IsNullOrEmpty(currentProfile.Gender))
             {
                 AddAdditionalField(AdditionalFieldType.GENDER, currentProfile.Gender, false);
@@ -291,9 +345,6 @@ namespace DCL.Passport.Modules
                 instantiatedAdditionalFieldsForEdition.Add(newAdditionalField);
         }
 
-        private void LoadDescription() =>
-            view.Description.text = !string.IsNullOrEmpty(currentProfile.Description) || instantiatedAdditionalFields.Count > 0 ? currentProfile.Description : NO_INTRO_TEXT;
-
         private void LoadLinks()
         {
             view.NoLinksLabel.gameObject.SetActive(currentProfile.Links == null || currentProfile.Links.Count == 0);
@@ -302,18 +353,37 @@ namespace DCL.Passport.Modules
             if (currentProfile.Links == null)
                 return;
 
+            var id = 0;
             foreach (var link in currentProfile.Links)
-                AddLink(link.title, link.url);
+            {
+                AddLink(id, link.title, link.url, false);
+                id++;
+            }
         }
 
-        private void AddLink(string title, string url)
+        private void AddLink(int id, string title, string url, bool isEditMode)
         {
-            var newLink = linksPool.Get();
+            var newLink = !isEditMode ? linksPool.Get() : linksPoolForEdition.Get();
             newLink.transform.SetAsLastSibling();
+            newLink.Id = id;
+            newLink.Url = url;
             newLink.Title.text = title;
-            newLink.Link = url;
-            newLink.LinkButton.onClick.AddListener(() => OpenUrlAsync(url).Forget());
-            instantiatedLinks.Add(newLink);
+            newLink.LinkButton.onClick.AddListener(() =>
+            {
+                if (newLink.IsInEditMode) return;
+                OpenUrlAsync(url).Forget();
+            });
+            newLink.SetAsEditable(isEditMode);
+
+            if (!isEditMode)
+                instantiatedLinks.Add(newLink);
+            else
+            {
+                newLink.RemoveLinkButton.onClick.AddListener(() => RemoveLink(newLink));
+                instantiatedLinksForEdition.Add(newLink);
+                SetNewLinkButtonActive(instantiatedLinksForEdition.Count < LINKS_MAX_AMOUNT);
+            }
+
             LayoutRebuilder.ForceRebuildLayoutImmediate(newLink.Container);
         }
 
@@ -355,8 +425,6 @@ namespace DCL.Passport.Modules
                     break;
                 }
             }
-
-
 
             if (isEditMode)
             {
@@ -427,28 +495,12 @@ namespace DCL.Passport.Modules
                     }
                 }
 
-                try
-                {
-                    // Update profile data and its avatar entity
-                    await profileRepository.SetAsync(currentProfile, ct);
-                    UpdateAvatarInWorld(currentProfile);
-
-                    // Reload the new profile data in the passport
-                    ClearAdditionalInfoFields();
-                    LoadAdditionalFields();
-                    LoadDescription();
-
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
-                }
-                catch (OperationCanceledException) { }
-                catch (Exception e)
-                {
-                    ReportHub.LogError(ReportCategory.PROFILE, $"Error updating profile from passport: {e.Message}");
-                }
-                finally
-                {
-                    SetInfoSectionAsEditionMode(false);
-                }
+                await UpdateProfile(ct);
+                ClearAllAdditionalInfoFields();
+                LoadAdditionalFields();
+                LoadDescription();
+                SetInfoSectionAsEditionMode(false);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
             }
         }
 
@@ -458,15 +510,127 @@ namespace DCL.Passport.Modules
             view.CancelInfoButton.gameObject.SetActive(!isSaving);
             view.SaveInfoButton.gameObject.SetActive(!isSaving);
             view.DescriptionForEditMode.interactable = !isSaving;
+            view.SaveLinksButton.interactable = !isSaving;
 
             foreach (var additionalInfoForEdition in instantiatedAdditionalFieldsForEdition)
                 additionalInfoForEdition.SetAsInteractable(!isSaving);
         }
 
-        private void UpdateAvatarInWorld(Profile profile)
+        private void SetLinksSectionAsEditionMode(bool isEditMode)
         {
-            profile.IsDirty = true;
-            world.Set(playerEntity, profile);
+            foreach (var editionObj in view.LinksEditionObjects)
+                editionObj.SetActive(isEditMode);
+
+            foreach (var readOnlyObj in view.LinksReadOnlyObjects)
+                readOnlyObj.SetActive(!isEditMode);
+
+            if (isEditMode)
+            {
+                SetLinksSectionAsSavingStatus(false);
+                ClearLinksForEdition();
+                foreach (var link in instantiatedLinks)
+                    AddLink(link.Id, link.Title.text, link.Url, true);
+
+                SetNewLinkButtonActive(instantiatedLinksForEdition.Count < LINKS_MAX_AMOUNT);
+            }
+            else
+            {
+                view.LinksContainer.gameObject.SetActive(currentProfile.Links is { Count: > 0 });
+                saveLinksCts.SafeCancelAndDispose();
+            }
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
+        }
+
+        private void RemoveLink(Link_PassportFieldView linkToRemove)
+        {
+            var indexToRemove = 0;
+            foreach (var link in instantiatedLinksForEdition)
+            {
+                if (link.Id == linkToRemove.Id)
+                    break;
+
+                indexToRemove++;
+            }
+
+            if (indexToRemove >= instantiatedLinksForEdition.Count)
+                return;
+
+            linksPoolForEdition.Release(linkToRemove);
+            instantiatedLinksForEdition.RemoveAt(indexToRemove);
+            SetNewLinkButtonActive(true);
+        }
+
+        private void SetNewLinkButtonActive(bool isActive)
+        {
+            view.AddNewLinkButton.gameObject.SetActive(isActive);
+
+            if (isActive)
+                view.AddNewLinkButton.transform.SetAsLastSibling();
+        }
+
+        private void SaveLinksSection()
+        {
+            saveLinksCts = saveLinksCts.SafeRestart();
+            SaveLinksAsync(saveLinksCts.Token).Forget();
+            return;
+
+            async UniTaskVoid SaveLinksAsync(CancellationToken ct)
+            {
+                SetLinksSectionAsSavingStatus(true);
+
+                if (currentProfile.Links == null)
+                    currentProfile.Links = new List<LinkJsonDto>();
+                else
+                    currentProfile.Links.Clear();
+
+                List<LinkJsonDto> linksToSave = new ();
+                foreach (var link in instantiatedLinksForEdition)
+                {
+                    currentProfile.Links.Add(new LinkJsonDto
+                    {
+                        title = link.Title.text,
+                        url = link.Url,
+                    });
+                }
+
+                await UpdateProfile(ct);
+                ClearAllLinks();
+                LoadLinks();
+                SetLinksSectionAsEditionMode(false);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
+            }
+        }
+
+        private void SetLinksSectionAsSavingStatus(bool isSaving)
+        {
+            view.SaveLinksButtonLoading.SetActive(isSaving);
+            view.CancelLinksButton.gameObject.SetActive(!isSaving);
+            view.SaveLinksButton.gameObject.SetActive(!isSaving);
+            view.SaveInfoButton.interactable = !isSaving;
+
+            foreach (var link in instantiatedLinks)
+                link.SetAsInteractable(!isSaving);
+        }
+
+        private async Task UpdateProfile(CancellationToken ct)
+        {
+            try
+            {
+                // Update profile data
+                await profileRepository.SetAsync(currentProfile, ct);
+
+                // Update player entity in world
+                currentProfile.IsDirty = true;
+                world.Set(playerEntity, currentProfile);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e) { ReportHub.LogError(ReportCategory.PROFILE, $"Error updating profile from passport: {e.Message}"); }
+            finally
+            {
+                if (currentProfile != null)
+                    currentProfile = await profileRepository.GetAsync(currentProfile.UserId, 0, ct);
+            }
         }
     }
 }

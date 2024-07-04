@@ -87,7 +87,11 @@ namespace DCL.Profiles
 
         public IReadOnlyCollection<string>? Blocked => blocked;
         public IReadOnlyCollection<string>? Interests => interests;
-        public IReadOnlyCollection<LinkJsonDto>? Links => links;
+        public List<LinkJsonDto>? Links
+        {
+            get => links;
+            set => links = value;
+        }
 
         public static Profile Create() =>
             POOL.Get();
