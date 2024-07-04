@@ -15,6 +15,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
+using DCL.ExplorePanel;
 using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
@@ -35,6 +36,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
 using DCL.ParcelsService;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -71,7 +73,7 @@ namespace Global.Dynamic
     {
         private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
 
-        public MVCManager MvcManager { get; private set; } = null!;
+        public IMVCManager MvcManager { get; private set; } = null!;
 
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
 
@@ -91,14 +93,13 @@ namespace Global.Dynamic
 
         // TODO move multiplayer related dependencies to a separate container
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
+        public IChatCommand GoToChatCommand { get;  private set;} = null!;
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
 
         public IProfileBroadcast ProfileBroadcast { get; private set; } = null!;
 
         public IRoomHub RoomHub { get; private set; } = null!;
-
-        public IChatCommand GoToChatCommand { get; private set; } = null!;
 
         public IReadOnlyRealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
@@ -161,7 +162,13 @@ namespace Global.Dynamic
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
-            container.MvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
+
+            var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
+
+            container.MvcManager = dynamicWorldParams.EnableAnalytics
+                ? new AnalyticsMVCManagerDecorator(coreMvcManager)
+                    // bootstrapContainer.Analytics!, container.ChatMessagesBus, container.GoToChatCommand)
+                : coreMvcManager;
 
             var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
             container.ParcelServiceContainer = parcelServiceContainer;
@@ -290,11 +297,11 @@ namespace Global.Dynamic
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(reloadSceneController) },
             };
 
-            container.ChatMessagesBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
-                                       .WithSelfResend(identityCache, container.ProfileRepository)
-                                       .WithIgnoreSymbols()
-                                       .WithCommands(chatCommandsFactory)
-                                       .WithDebugPanel(debugBuilder);
+            container.ChatMessagesBus =  new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
+                   .WithSelfResend(identityCache, container.ProfileRepository)
+                   .WithIgnoreSymbols()
+                   .WithCommands(chatCommandsFactory)
+                   .WithDebugPanel(debugBuilder);
 
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
@@ -407,13 +414,11 @@ namespace Global.Dynamic
 
             if (dynamicWorldParams.EnableAnalytics)
                 globalPlugins.Add(new AnalyticsPlugin(
-                    bootstrapContainer.Analytics!,
-                    staticContainer.ProfilingProvider,
-                    staticContainer.RealmData,
-                    staticContainer.ScenesCache,
-                    container.MvcManager,
-                    container.ChatMessagesBus,
-                    container.GoToChatCommand)
+                        bootstrapContainer.Analytics!,
+                        staticContainer.ProfilingProvider,
+                        staticContainer.RealmData,
+                        staticContainer.ScenesCache
+                    )
                 );
 
             container.GlobalWorldFactory = new GlobalWorldFactory(
@@ -429,6 +434,10 @@ namespace Global.Dynamic
                 reloadSceneController);
 
             container.GlobalPlugins = globalPlugins;
+
+            if (dynamicWorldParams.EnableAnalytics)
+                ((AnalyticsMVCManagerDecorator) container.MvcManager)
+                   .Initialize(bootstrapContainer.Analytics!, container.ChatMessagesBus, container.GoToChatCommand);
 
             staticContainer.RoomHubProxy.SetObject(container.RoomHub);
 

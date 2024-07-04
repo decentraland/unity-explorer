@@ -9,7 +9,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using ECS;
 using ECS.SceneLifeCycle;
-using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -22,57 +21,16 @@ namespace DCL.PluginSystem.Global
         private readonly IProfilingProvider profilingProvider;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
-        private readonly MVCManager mvcManager;
-        private readonly IChatMessagesBus chatMessagesBus;
-        private readonly IChatCommand teleportToCommand;
+
         private readonly IAnalyticsController analytics;
 
-        private MapAnalytics? mapAnalytics;
-        private ChatAnalytics? chatAnalytics;
-
-        public AnalyticsPlugin(IAnalyticsController analytics,
-            IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache,
-            MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
+        public AnalyticsPlugin(IAnalyticsController analytics, IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache)
         {
             this.analytics = analytics;
 
             this.profilingProvider = profilingProvider;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
-            this.mvcManager = mvcManager;
-            this.chatMessagesBus = chatMessagesBus;
-            this.teleportToCommand = teleportToCommand;
-        }
-
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
-        {
-            mvcManager.ControllerRegistered += OnControllerRegistered;
-            return UniTask.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-            mvcManager.ControllerRegistered -= OnControllerRegistered;
-
-            chatAnalytics?.Dispose();
-            mapAnalytics?.Dispose();
-        }
-
-        private void OnControllerRegistered(IController controller)
-        {
-            switch (controller)
-            {
-                case ChatController chatController:
-                {
-                    chatAnalytics = new ChatAnalytics(analytics, chatController, chatMessagesBus, teleportToCommand);
-                    break;
-                }
-                case ExplorePanelController explorePanelController:
-                {
-                    mapAnalytics = new MapAnalytics(analytics, explorePanelController.NavmapController);
-                    break;
-                }
-            }
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -82,6 +40,11 @@ namespace DCL.PluginSystem.Global
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, profilingProvider);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
         }
+
+        public void Dispose() { }
+
+        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
+            UniTask.CompletedTask;
     }
 
     [Serializable]

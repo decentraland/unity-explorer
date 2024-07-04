@@ -8,7 +8,6 @@ using DCL.PluginSystem.Global;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Identities;
 using Segment.Serialization;
-using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -135,7 +134,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "end" },
+                { STAGE_KEY, "8 - end" },
             });
         }
 

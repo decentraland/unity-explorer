@@ -22,7 +22,7 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly IDebugContainerBuilder debugContainerBuilder;
-        private readonly MVCManager mvcManager;
+        private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly IWebBrowser webBrowser;
         private readonly IRealmData realmData;
@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3VerifiedAuthenticator web3Authenticator,
             IDebugContainerBuilder debugContainerBuilder,
-            MVCManager mvcManager,
+            IMVCManager mvcManager,
             ISelfProfile selfProfile,
             IWebBrowser webBrowser,
             IRealmData realmData,

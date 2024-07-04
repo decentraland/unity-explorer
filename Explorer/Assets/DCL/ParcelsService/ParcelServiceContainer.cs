@@ -22,7 +22,7 @@ namespace DCL.ParcelsService
         public static ParcelServiceContainer Create(IRealmData realmData,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IDebugContainerBuilder debugContainerBuilder,
-            MVCManager mvcManager)
+            IMVCManager mvcManager)
         {
             var teleportController = new TeleportController(sceneReadinessReportQueue);
 
@@ -36,7 +36,7 @@ namespace DCL.ParcelsService
             };
         }
 
-        private static void BuildDebugWidget(ITeleportController teleportController, MVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
+        private static void BuildDebugWidget(ITeleportController teleportController, IMVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
         {
             var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
 

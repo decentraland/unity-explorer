@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   flushSize: 20
   flushInterval: 30
-  <PerformanceReportInterval>k__BackingField: 3
-  <Mode>k__BackingField: 1
+  <PerformanceReportInterval>k__BackingField: 15
+  <Mode>k__BackingField: 0
   groups:
   - groupName: General
     events:

@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
@@ -13,8 +12,6 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.UserInAppInitializationFlow;
 using ECS;
 using ECS.Abstract;
-using UnityEngine;
-using Utility;
 
 namespace DCL.Multiplayer.Profiles.Systems
 {

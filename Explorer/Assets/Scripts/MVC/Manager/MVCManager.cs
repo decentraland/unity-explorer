@@ -15,7 +15,6 @@ namespace MVC
         private readonly IPopupCloserView popupCloser;
         public IReadOnlyDictionary<Type, IController> Controllers => controllers;
 
-        public event Action<IController>? ControllerRegistered;
         public event Action<IController>? OnViewShowed;
         public event Action<IController>? OnViewClosed;
 
@@ -48,7 +47,6 @@ namespace MVC
         {
             // throw an exception if the same combination of <TView, TInputData> was already added
             controllers.Add(typeof(IController<TView, TInputData>), controller);
-            ControllerRegistered?.Invoke(controller);
         }
 
         public void SetAllViewsCanvasActive(bool isActive)

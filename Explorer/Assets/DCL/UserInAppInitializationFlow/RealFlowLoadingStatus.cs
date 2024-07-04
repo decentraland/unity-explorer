@@ -29,7 +29,7 @@ namespace DCL.UserInAppInitializationFlow
             [Stage.Completed] = 1f,
         };
 
-        public ReactiveProperty<Stage> CurrentStage { get; } = new ReactiveProperty<Stage>(Stage.Init);
+        public ReactiveProperty<Stage> CurrentStage { get; } = new (Stage.Init);
 
         public float SetStage(Stage stage)
         {

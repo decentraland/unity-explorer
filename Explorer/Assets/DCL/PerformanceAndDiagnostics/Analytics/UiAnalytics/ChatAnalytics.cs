@@ -26,8 +26,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.teleportToCommand = teleportToCommand;
 
             chatController.ChatBubbleVisibilityChanged += OnChatBubbleVisibilityChanged;
-            chatMessagesBus.MessageSent += OnMessageSent;
-            teleportToCommand.Executed += OnTeleportedViaGoTo;
+            this.chatMessagesBus.MessageSent += OnMessageSent;
+            this.teleportToCommand.Executed += OnTeleportedViaGoTo;
         }
 
         public void Dispose()

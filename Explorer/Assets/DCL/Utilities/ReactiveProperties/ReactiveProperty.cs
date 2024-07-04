@@ -35,7 +35,7 @@ namespace DCL.Utilities
         public IDisposable Subscribe(Action<T> observer)
         {
             valueChanged += observer;
-            return new Subscription(this, observer);
+            return new DisposableSubscription(this, observer);
         }
 
         public void Unsubscribe(Action<T> observer)
@@ -49,12 +49,12 @@ namespace DCL.Utilities
         public override string ToString() =>
             latestValue!.ToString();
 
-        private class Subscription : IDisposable
+        private class DisposableSubscription : IDisposable
         {
             private readonly ReactiveProperty<T> reactiveProperty;
             private readonly Action<T> observer;
 
-            public Subscription(ReactiveProperty<T> reactiveProperty, Action<T> observer)
+            public DisposableSubscription(ReactiveProperty<T> reactiveProperty, Action<T> observer)
             {
                 this.reactiveProperty = reactiveProperty;
                 this.observer = observer;
