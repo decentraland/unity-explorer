@@ -182,12 +182,6 @@ MonoBehaviour:
       Severity: 4
     - Category: AVATAR_MODIFIER_AREA
       Severity: 1
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
-    - Category: UNSPECIFIED
-      Severity: 0
   sentryMatrix:
     entries:
     - Category: ASSETS_PROVISION
@@ -358,12 +352,6 @@ MonoBehaviour:
       Severity: 1
     - Category: LIVEKIT
       Severity: 1
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
-    - Category: UNSPECIFIED
-      Severity: 0
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1

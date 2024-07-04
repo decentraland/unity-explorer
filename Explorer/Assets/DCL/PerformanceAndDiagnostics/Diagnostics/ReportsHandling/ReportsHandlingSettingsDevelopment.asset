@@ -259,13 +259,13 @@ MonoBehaviour:
     - Category: PLUGINS
       Severity: 0
     - Category: DEBUG
+      Severity: 3
+    - Category: DEBUG
       Severity: 0
     - Category: DEBUG
-      Severity: 4
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
       Severity: 2
+    - Category: DEBUG
+      Severity: 4
   sentryMatrix:
     entries:
     - Category: ENGINE
@@ -358,10 +358,6 @@ MonoBehaviour:
       Severity: 1
     - Category: UNSPECIFIED
       Severity: 1
-    - Category: UNSPECIFIED
-      Severity: 3
-    - Category: UNSPECIFIED
-      Severity: 2
   debounceEnabled: 1
   isSentryEnabled: 1
   isDebugLogEnabled: 1
