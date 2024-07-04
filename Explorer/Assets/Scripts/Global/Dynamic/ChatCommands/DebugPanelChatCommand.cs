@@ -16,8 +16,6 @@ namespace Global.Dynamic.ChatCommands
 
         private string? param;
 
-        public event Action? Executed;
-
         public DebugPanelChatCommand(IDebugContainerBuilder debugContainerBuilder)
         {
             this.debugContainerBuilder = debugContainerBuilder;

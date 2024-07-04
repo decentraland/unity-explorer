@@ -11,7 +11,7 @@ using static DCL.Chat.Commands.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
-    public class TeleportToChatCommand : IChatCommand
+    public class GoToChatCommand : IChatCommand
     {
         private const string COMMAND_GOTO_LOCAL = "goto-local";
         private const string PARAMETER_RANDOM = "random";
@@ -23,9 +23,7 @@ namespace Global.Dynamic.ChatCommands
         private int x;
         private int y;
 
-        public event Action? Executed;
-
-        public TeleportToChatCommand(IRealmNavigator realmNavigator)
+        public GoToChatCommand(IRealmNavigator realmNavigator)
         {
             this.realmNavigator = realmNavigator;
         }
@@ -46,7 +44,6 @@ namespace Global.Dynamic.ChatCommands
             }
 
             await realmNavigator.TryInitializeTeleportToParcelAsync(new Vector2Int(x, y), ct, isLocal);
-            Executed?.Invoke();
 
             return ct.IsCancellationRequested
                 ? "🔴 Error. The operation was canceled!"

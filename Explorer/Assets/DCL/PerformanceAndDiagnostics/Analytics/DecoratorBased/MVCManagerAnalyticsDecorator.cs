@@ -1,19 +1,18 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Chat.Commands;
 using DCL.Chat.MessageBus;
 using DCL.ExplorePanel;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine.PlayerLoop;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class AnalyticsMVCManagerDecorator : IMVCManager
+    public class MVCManagerAnalyticsDecorator : IMVCManager
     {
         private readonly MVCManager core;
+        private readonly IAnalyticsController analytics;
 
         private readonly Dictionary<Type, IDisposable> registeredAnalytics = new();
         private Dictionary<Type, Func<IController, IDisposable>> controllerAnalyticsFactory;
@@ -21,18 +20,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public event Action<IController>? OnViewShowed;
         public event Action<IController>? OnViewClosed;
 
-        public AnalyticsMVCManagerDecorator(MVCManager core)
+        public MVCManagerAnalyticsDecorator(MVCManager core, IAnalyticsController analytics)
         {
             this.core = core;
+            this.analytics = analytics;
             core.OnViewShowed += c => OnViewShowed?.Invoke(c);
             core.OnViewClosed += c => OnViewClosed?.Invoke(c);
         }
 
-        public void Initialize(IAnalyticsController analytics, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
+        public void Initialize(IChatMessagesBus chatMessagesBus)
         {
             controllerAnalyticsFactory = new Dictionary<Type, Func<IController, IDisposable>>
             {
-                { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatAnalytics(analytics, c, chatMessagesBus, teleportToCommand)) },
+                { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatAnalytics(analytics, c, chatMessagesBus)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapAnalytics(analytics, c.NavmapController)) },
             };
 

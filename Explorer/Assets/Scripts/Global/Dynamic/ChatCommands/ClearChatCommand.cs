@@ -1,7 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
-using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -13,8 +12,6 @@ namespace Global.Dynamic.ChatCommands
 
         private readonly IChatHistory chatHistory;
 
-        public event Action? Executed;
-
         public ClearChatCommand(IChatHistory chatHistory)
         {
             this.chatHistory = chatHistory;
@@ -23,7 +20,6 @@ namespace Global.Dynamic.ChatCommands
         public UniTask<string> ExecuteAsync(Match match, CancellationToken ct)
         {
             chatHistory.Clear();
-            Executed?.Invoke();
             return UniTask.FromResult(string.Empty);
         }
     }

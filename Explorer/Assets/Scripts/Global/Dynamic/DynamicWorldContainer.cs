@@ -166,8 +166,7 @@ namespace Global.Dynamic
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
             container.MvcManager = dynamicWorldParams.EnableAnalytics
-                ? new AnalyticsMVCManagerDecorator(coreMvcManager)
-                    // bootstrapContainer.Analytics!, container.ChatMessagesBus, container.GoToChatCommand)
+                ? new MVCManagerAnalyticsDecorator(coreMvcManager, bootstrapContainer.Analytics!)
                 : coreMvcManager;
 
             var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
@@ -285,11 +284,14 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();
 
-            container.GoToChatCommand = new TeleportToChatCommand(realmNavigator);
+            var gotoCommand = new GoToChatCommand(realmNavigator);
+            container.GoToChatCommand = dynamicWorldParams.EnableAnalytics
+                ? new GoToCommandAnalyticsDecorator(gotoCommand, bootstrapContainer.Analytics!)
+                : gotoCommand;
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { TeleportToChatCommand.REGEX, () => container.GoToChatCommand },
+                { ChatCommands.GoToChatCommand.REGEX, () => container.GoToChatCommand },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
@@ -436,8 +438,7 @@ namespace Global.Dynamic
             container.GlobalPlugins = globalPlugins;
 
             if (dynamicWorldParams.EnableAnalytics)
-                ((AnalyticsMVCManagerDecorator) container.MvcManager)
-                   .Initialize(bootstrapContainer.Analytics!, container.ChatMessagesBus, container.GoToChatCommand);
+                ((MVCManagerAnalyticsDecorator) container.MvcManager).Initialize(container.ChatMessagesBus);
 
             staticContainer.RoomHubProxy.SetObject(container.RoomHub);
 
