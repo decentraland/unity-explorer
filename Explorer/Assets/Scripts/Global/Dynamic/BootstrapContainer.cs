@@ -19,6 +19,7 @@ namespace Global.Dynamic
         public IWeb3IdentityCache IdentityCache { get; private set; }
         public DappWeb3Authenticator Web3VerifiedAuthenticator { get; private set; }
         public ProxyVerifiedWeb3Authenticator Web3Authenticator { get; private set; }
+        public IAnalyticsController? Analytics { get; private set; }
 
         public void Dispose()
         {
@@ -36,21 +37,35 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
             };
 
-            container.Bootstrap = await CreateBootstrapper(debugSettings, analyticsSettings, ct, container);
+            (container.Bootstrap, container.Analytics) = await CreateBootstrapper(debugSettings, analyticsSettings, ct, container);
             (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings);
 
             return container;
         }
 
-        private static async UniTask<IBootstrap> CreateBootstrapper(DebugSettings debugSettings, AnalyticsSettings analyticsSettings, CancellationToken ct, BootstrapContainer container)
+        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapper(DebugSettings debugSettings, AnalyticsSettings analyticsSettings, CancellationToken ct, BootstrapContainer container)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, ct)).Value;
+            bool enabledAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
             var coreBootstrap = new Bootstrap(debugSettings.Get());
+            coreBootstrap.EnableAnalytics = enabledAnalytics;
 
-            return analyticsConfig.Mode == AnalyticsMode.DISABLED
-                ? coreBootstrap
-                : new BootstrapAnalyticsDecorator(coreBootstrap, analyticsConfig);
+            if (enabledAnalytics)
+            {
+                IAnalyticsService service = analyticsConfig.Mode switch
+                                            {
+                                                AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig),
+                                                AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
+                                                AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
+                                                _ => throw new ArgumentOutOfRangeException(),
+                                            };
+
+                var analyticsController = new AnalyticsController(service, analyticsConfig);
+                return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
+            }
+
+            return (coreBootstrap, null);
         }
 
         private static (LogWeb3IdentityCache identityCache, DappWeb3Authenticator web3VerifiedAuthenticator, ProxyVerifiedWeb3Authenticator web3Authenticator)

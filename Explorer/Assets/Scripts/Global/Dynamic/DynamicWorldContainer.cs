@@ -81,7 +81,7 @@ namespace Global.Dynamic
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
-        public List<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
+        public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
 
         public IProfileRepository ProfileRepository { get; private set; } = null!;
 
@@ -121,11 +121,10 @@ namespace Global.Dynamic
                                  .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
         }
 
-        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
+        public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(BootstrapContainer bootstrapContainer,
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
-            AudioClipConfig backgroundMusic,
-            CancellationToken ct)
+            AudioClipConfig backgroundMusic, CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -133,7 +132,7 @@ namespace Global.Dynamic
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
 
-            var debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
+            IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
@@ -280,6 +279,7 @@ namespace Global.Dynamic
             var reloadSceneController = new ReloadSceneController();
 
             container.GoToChatCommand = new TeleportToChatCommand(realmNavigator);
+
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
                 { TeleportToChatCommand.REGEX, () => container.GoToChatCommand },
@@ -295,6 +295,7 @@ namespace Global.Dynamic
                                        .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
+
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
@@ -335,7 +336,8 @@ namespace Global.Dynamic
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
                 new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dclInput),
-                new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog), new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, ASSET_BUNDLES_URL),
+                new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
+                new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, ASSET_BUNDLES_URL),
                 new ProfilingPlugin(staticContainer.ProfilingProvider, staticContainer.SingletonSharedDependencies.FrameTimeBudget, staticContainer.SingletonSharedDependencies.MemoryBudget, debugBuilder),
                 new AvatarPlugin(
                     staticContainer.ComponentsContainer.ComponentPoolsRegistry,
@@ -402,6 +404,17 @@ namespace Global.Dynamic
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
+
+            if (dynamicWorldParams.EnableAnalytics)
+                globalPlugins.Add(new AnalyticsPlugin(
+                    bootstrapContainer.Analytics!,
+                    staticContainer.ProfilingProvider,
+                    staticContainer.RealmData,
+                    staticContainer.ScenesCache,
+                    container.MvcManager,
+                    container.ChatMessagesBus,
+                    container.GoToChatCommand)
+                );
 
             container.GlobalWorldFactory = new GlobalWorldFactory(
                 in staticContainer,

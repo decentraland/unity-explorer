@@ -6,7 +6,6 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
 using Segment.Serialization;
-using System.Collections.Generic;
 using UnityEngine;
 using Entity = Arch.Core.Entity;
 
@@ -15,7 +14,7 @@ namespace DCL.Analytics.Systems
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class WalkedDistanceAnalyticsSystem : BaseUnityLoopSystem
     {
-        private readonly AnalyticsController analytics;
+        private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
         private readonly Entity playerEntity;
 
@@ -24,7 +23,7 @@ namespace DCL.Analytics.Systems
 
         private float totalDistanceSquared;
 
-        public WalkedDistanceAnalyticsSystem(World world, AnalyticsController analytics, IRealmData realmData, in Entity playerEntity) : base(world)
+        public WalkedDistanceAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, in Entity playerEntity) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;

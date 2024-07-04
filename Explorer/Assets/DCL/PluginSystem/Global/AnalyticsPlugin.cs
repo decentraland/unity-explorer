@@ -25,19 +25,17 @@ namespace DCL.PluginSystem.Global
         private readonly MVCManager mvcManager;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IChatCommand teleportToCommand;
-
-        private readonly AnalyticsController analytics;
-        private readonly AnalyticsConfiguration analyticsConfig;
+        private readonly IAnalyticsController analytics;
 
         private MapAnalytics? mapAnalytics;
         private ChatAnalytics? chatAnalytics;
 
-        public AnalyticsPlugin(AnalyticsController analytics, AnalyticsConfiguration analyticsConfig,
+        public AnalyticsPlugin(IAnalyticsController analytics,
             IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache,
             MVCManager mvcManager, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
         {
             this.analytics = analytics;
-            this.analyticsConfig = analyticsConfig;
+
             this.profilingProvider = profilingProvider;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
@@ -81,7 +79,7 @@ namespace DCL.PluginSystem.Global
         {
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
             WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
-            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, analyticsConfig, profilingProvider);
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, profilingProvider);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
         }
     }

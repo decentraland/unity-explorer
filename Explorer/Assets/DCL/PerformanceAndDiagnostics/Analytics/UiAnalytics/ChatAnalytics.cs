@@ -11,14 +11,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private static readonly Regex EMOJI_PATTERN = new (@"\\U[0-9A-Fa-f]{8}");
 
-        private readonly AnalyticsController analytics;
+        private readonly IAnalyticsController analytics;
         private readonly ChatController chatController;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IChatCommand teleportToCommand;
 
         private bool isInitChatBubble = true;
 
-        public ChatAnalytics(AnalyticsController analytics, ChatController chatController, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
+        public ChatAnalytics(IAnalyticsController analytics, ChatController chatController, IChatMessagesBus chatMessagesBus, IChatCommand teleportToCommand)
         {
             this.analytics = analytics;
             this.chatController = chatController;

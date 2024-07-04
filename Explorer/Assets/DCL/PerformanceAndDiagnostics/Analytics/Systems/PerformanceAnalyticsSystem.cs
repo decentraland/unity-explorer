@@ -1,15 +1,13 @@
-﻿using Arch.Core;
-using Arch.SystemGroups;
+﻿using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS.Abstract;
 using Segment.Serialization;
-using System.Collections.Generic;
 using UnityEngine;
-using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 using World = Arch.Core.World;
+using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 
 namespace DCL.Analytics.Systems
 {
@@ -20,16 +18,17 @@ namespace DCL.Analytics.Systems
         private const float NANOSECONDS_TO_MILLISECONDS = 1e-6f;
         private const float BYTES_TO_MEGABYTES = 1e-6f;
 
-        private readonly AnalyticsController analytics;
-        private readonly AnalyticsConfiguration config;
+        private readonly IAnalyticsController analytics;
         private readonly IProfilingProvider profilingProvider;
+        private readonly AnalyticsConfiguration config;
+
         private float lastReportTime;
 
-        public PerformanceAnalyticsSystem(World world, AnalyticsController analytics, AnalyticsConfiguration config, IProfilingProvider profilingProvider) : base(world)
+        public PerformanceAnalyticsSystem(World world, IAnalyticsController analytics, IProfilingProvider profilingProvider) : base(world)
         {
-            this.analytics = analytics;
-            this.config = config;
             this.profilingProvider = profilingProvider;
+            this.analytics = analytics;
+            this.config = analytics.Configuration;
         }
 
         protected override void Update(float t)

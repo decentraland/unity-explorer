@@ -5,20 +5,19 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
 using Segment.Serialization;
-using System.Collections.Generic;
 
 namespace DCL.Analytics.Systems
 {
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class TimeSpentInWorldAnalyticsSystem : BaseUnityLoopSystem
     {
-        private readonly AnalyticsController analytics;
+        private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
 
         private float timeSpentInWorld;
         private string worldName;
 
-        public TimeSpentInWorldAnalyticsSystem(World world, AnalyticsController analytics, IRealmData realmData) : base(world)
+        public TimeSpentInWorldAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;

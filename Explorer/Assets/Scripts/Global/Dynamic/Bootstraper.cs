@@ -30,6 +30,7 @@ namespace Global.Dynamic
         private readonly bool showLoading;
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
+        public bool EnableAnalytics { private get; set; } = false;
 
         private DebugUtilitiesContainer debugUtilitiesContainer;
 
@@ -94,6 +95,7 @@ namespace Global.Dynamic
             };
 
             return await DynamicWorldContainer.CreateAsync(
+                bootstrapContainer,
                 DynamicWorldDependencies,
                 new DynamicWorldParams
                 {
@@ -102,11 +104,11 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = enableLandscape,
                     EnableLOD = enableLOD,
+                    EnableAnalytics = EnableAnalytics,
                     HybridSceneParams = launchSettings.CreateHybridSceneParams(),
                 },
                 backgroundMusic,
-                ct
-            );
+                ct);
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,

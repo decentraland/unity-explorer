@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.AssetsProvision;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -23,14 +22,14 @@ namespace Global.Dynamic
         private const string RESULT_KEY = "result";
 
         private readonly Bootstrap core;
-        private readonly AnalyticsConfiguration analyticsConfig;
+        private readonly IAnalyticsController analytics;
 
-        private AnalyticsController analytics;
+        private int loadingScreenStageId;
 
-        public BootstrapAnalyticsDecorator(Bootstrap core, AnalyticsConfiguration analyticsConfig)
+        public BootstrapAnalyticsDecorator(Bootstrap core, IAnalyticsController analytics)
         {
             this.core = core;
-            this.analyticsConfig = analyticsConfig;
+            this.analytics = analytics;
         }
 
         public void Dispose()
@@ -41,33 +40,9 @@ namespace Global.Dynamic
         public UniTask PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, DebugViewsCatalog debugViewsCatalog,
             CancellationToken ct)
         {
-            IAnalyticsService service = analyticsConfig.Mode switch
-                                        {
-                                            AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig),
-                                            AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
-                                            _ => throw new ArgumentOutOfRangeException(),
-                                        };
-
-            analytics = new AnalyticsController(service, analyticsConfig);
-
-            analytics.Track(General.SYSTEM_INFO_REPORT, new JsonObject
-            {
-                ["device_model"] = SystemInfo.deviceModel, // "XPS 17 9720 (Dell Inc.)"
-                ["operating_system"] = SystemInfo.operatingSystem, // "Windows 11  (10.0.22631) 64bit"
-                ["system_memory_size"] = SystemInfo.systemMemorySize, // 65220 in [MB]
-
-                ["processor_type"] = SystemInfo.processorType, // "12th Gen Intel(R) Core(TM) i7-12700H"
-                ["processor_count"] = SystemInfo.processorCount, // 20
-
-                ["graphics_device_name"] = SystemInfo.graphicsDeviceName, // "NVIDIA GeForce RTX 3050 Laptop GPU"
-                ["graphics_memory_size"] = SystemInfo.graphicsMemorySize, // 3965 in [MB]
-                ["graphics_device_type"] = SystemInfo.graphicsDeviceType.ToString(), // "Direct3D11", Vulkan, OpenGLCore, XBoxOne...
-                ["graphics_device_version"] = SystemInfo.graphicsDeviceVersion, // "Direct3D 11.0 [level 11.1]"
-            });
-
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "started" },
+                { STAGE_KEY, "0 - started" },
             });
 
             return core.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, ct);
@@ -81,7 +56,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "static container loaded" },
+                { STAGE_KEY, "1 - static container loaded" },
                 { RESULT_KEY, result.isSuccess ? "success" : "failure" },
             });
 
@@ -96,23 +71,22 @@ namespace Global.Dynamic
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
                     settings, dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, ct);
 
-            result.container.GlobalPlugins.Add
-            (
-                new AnalyticsPlugin(
-                    analytics,
-                    analyticsConfig,
-                    staticContainer.ProfilingProvider,
-                    staticContainer.RealmData,
-                    staticContainer.ScenesCache,
-                    result.container.MvcManager,
-                    result.container.ChatMessagesBus,
-                    result.container.GoToChatCommand)
-            );
+            analytics.Track(General.INITIAL_LOADING, new JsonObject
+            {
+                { STAGE_KEY, "2 - dynamic container loaded" },
+                { RESULT_KEY, result.Item2 ? "success" : "failure" },
+            });
+
+            return result;
+        }
+
+        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity identity, StaticContainer staticContainer, CancellationToken ct)
+        {
+            UniTask result = core.InitializeFeatureFlagsAsync(identity, staticContainer, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "dynamic container loaded" },
-                { RESULT_KEY, result.Item2 ? "success" : "failure" },
+                { STAGE_KEY, "3 - feature flag initialized" },
             });
 
             return result;
@@ -124,23 +98,11 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "plugins initialized" },
+                { STAGE_KEY, "4 - plugins initialized" },
                 { RESULT_KEY, !anyFailure ? "success" : "failure" },
             });
 
             return anyFailure;
-        }
-
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity identity, StaticContainer staticContainer, CancellationToken ct)
-        {
-            UniTask result = core.InitializeFeatureFlagsAsync(identity, staticContainer, ct);
-
-            analytics.Track(General.INITIAL_LOADING, new JsonObject
-            {
-                { STAGE_KEY, "feature flag initialized" },
-            });
-
-            return result;
         }
 
         public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer, UIDocument debugUiRoot)
@@ -149,7 +111,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "global world and player created" },
+                { STAGE_KEY, "5 - global world and player created" },
             });
 
             return result;
@@ -161,7 +123,7 @@ namespace Global.Dynamic
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, "realm loaded" },
+                { STAGE_KEY, "6 - realm loaded" },
             });
         }
 
@@ -182,7 +144,7 @@ namespace Global.Dynamic
         {
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
-                { STAGE_KEY, $"loading screen: {stage}" },
+                { STAGE_KEY, $"7.{loadingScreenStageId++} - loading screen: {stage}" },
             });
         }
     }

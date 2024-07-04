@@ -8,7 +8,6 @@ using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using SceneRunner.Scene;
 using Segment.Serialization;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -19,7 +18,7 @@ namespace DCL.Analytics.Systems
     {
         private static readonly Vector2Int MIN_INT2 = new (int.MinValue, int.MinValue);
 
-        private readonly AnalyticsController analytics;
+        private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
 
@@ -28,7 +27,7 @@ namespace DCL.Analytics.Systems
         private Vector2Int oldParcel;
         private ISceneFacade lastScene;
 
-        public PlayerParcelChangedAnalyticsSystem(World world, AnalyticsController analytics, IRealmData realmData, IScenesCache scenesCache, in Entity playerEntity) : base(world)
+        public PlayerParcelChangedAnalyticsSystem(World world, IAnalyticsController analytics, IRealmData realmData, IScenesCache scenesCache, in Entity playerEntity) : base(world)
         {
             this.analytics = analytics;
             this.realmData = realmData;
@@ -63,6 +62,9 @@ namespace DCL.Analytics.Systems
                 });
 
                 oldParcel = newParcel;
+
+                // currentScene.Info.Name
+                // currentScene.IsEmpty
 
                 if (scenesCache.TryGetByParcel(newParcel, out ISceneFacade? currentScene) && currentScene != lastScene)
                 {
