@@ -55,26 +55,17 @@ namespace DCL.Analytics.Systems
 
             if (newParcel != oldParcel)
             {
+                scenesCache.TryGetByParcel(newParcel, out ISceneFacade? currentScene);
+
                 analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, new JsonObject
                 {
                     { "old parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
                     { "new parcel", newParcel.ToString() },
+                    { "scene hash", currentScene.Info.Name},
+                    { "is empty scene", currentScene.IsEmpty},
                 });
 
                 oldParcel = newParcel;
-
-                // currentScene.Info.Name
-                // currentScene.IsEmpty
-
-                if (scenesCache.TryGetByParcel(newParcel, out ISceneFacade? currentScene) && currentScene != lastScene)
-                {
-                    analytics.Track(AnalyticsEvents.World.VISIT_SCENE, new JsonObject
-                    {
-                        { "scene name", currentScene.Info.Name },
-                    });
-
-                    lastScene = currentScene;
-                }
             }
         }
     }

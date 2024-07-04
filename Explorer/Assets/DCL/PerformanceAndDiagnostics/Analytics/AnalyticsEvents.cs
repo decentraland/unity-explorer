@@ -12,7 +12,6 @@
         public static class World
         {
             public const string MOVE_TO_PARCEL = "move_to_parcel";
-            public const string VISIT_SCENE = "visit_scene";
             public const string WALKED_DISTANCE = "walked_distance";
             public const string TIME_SPENT_IN_WORLD = "time_spent_in_world";
         }
@@ -20,7 +19,6 @@
         public static class Chat
         {
             public const string MESSAGE_SENT = "chat_message_sent";
-            public const string GOTO_TELEPORT = "goto_teleport";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
         }
 

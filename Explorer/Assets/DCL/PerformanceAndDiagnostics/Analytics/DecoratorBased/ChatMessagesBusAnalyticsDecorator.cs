@@ -17,15 +17,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.core = core;
             this.analytics = analytics;
 
-            core.MessageAdded += OnMessageAdded;
+            core.MessageAdded += ReEmit;
         }
 
         public void Dispose()
         {
-            core.MessageAdded -= OnMessageAdded;
+            core.MessageAdded -= ReEmit;
         }
 
-        private void OnMessageAdded(ChatMessage obj) =>
+        private void ReEmit(ChatMessage obj) =>
             MessageAdded?.Invoke(obj);
 
         public void Send(string message)
