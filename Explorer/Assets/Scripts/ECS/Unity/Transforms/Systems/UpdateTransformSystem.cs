@@ -27,7 +27,6 @@ namespace ECS.Unity.Transforms.Systems
         {
             if (sdkTransform.IsDirty)
             {
-                Debug.Log($"JUANI ENTRO ACA {entity.Id}");
                 transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
                 sdkTransform.IsDirty = false;
             }
