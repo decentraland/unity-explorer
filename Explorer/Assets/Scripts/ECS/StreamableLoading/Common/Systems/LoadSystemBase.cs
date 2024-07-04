@@ -263,8 +263,10 @@ namespace ECS.StreamableLoading.Common.Systems
 
                 source.TrySetResult(result);
 
-                // if result is null it will be decided by another source
-                return result.GetValueOrDefault();
+                // if result is null the next available source will be picked by another system
+                // which will prepare proper `Intention` accordingly
+                // (e.g. if in StreamingAssets the requested asset is not present, arguments to download from WEB source will be prepared separately)
+                return result;
             }
             catch (OperationCanceledException operationCanceledException)
             {

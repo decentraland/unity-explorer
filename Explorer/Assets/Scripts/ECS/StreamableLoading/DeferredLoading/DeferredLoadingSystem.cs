@@ -70,11 +70,6 @@ namespace ECS.StreamableLoading.DeferredLoading
 
             if (loadingIntentions.Count == 0) return;
 
-            if (loadingIntentions.Count > 1000)
-            {
-                {}
-            }
-
             loadingIntentions.Sort(static (p1, p2) => BucketBasedComparer.INSTANCE.Compare(p1.PartitionComponent, p2.PartitionComponent));
             AnalyzeBudget();
         }
