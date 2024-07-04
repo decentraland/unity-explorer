@@ -6,7 +6,7 @@ namespace DCL.Utilities
     public class ReactiveProperty<T> : IReactiveProperty<T>, IDisposable
     {
         private T latestValue;
-        private Action<T> valueChanged;
+        private Action<T>? valueChanged;
 
         public T Value
         {
@@ -14,8 +14,11 @@ namespace DCL.Utilities
 
             set
             {
-                latestValue = value;
-                valueChanged?.Invoke(value);
+                if (!Equals(latestValue, value))
+                {
+                    latestValue = value;
+                    valueChanged?.Invoke(latestValue);
+                }
             }
         }
 
@@ -29,16 +32,38 @@ namespace DCL.Utilities
             valueChanged = null;
         }
 
-        public void Subscribe(Action<T> observer) =>
+        public IDisposable Subscribe(Action<T> observer)
+        {
             valueChanged += observer;
+            return new Subscription(this, observer);
+        }
 
-        public void Unsubscribe(Action<T> observer) =>
+        public void Unsubscribe(Action<T> observer)
+        {
             valueChanged -= observer;
+        }
 
         public static implicit operator T(ReactiveProperty<T> value) =>
             value.Value;
 
         public override string ToString() =>
             latestValue!.ToString();
+
+        private class Subscription : IDisposable
+        {
+            private readonly ReactiveProperty<T> reactiveProperty;
+            private readonly Action<T> observer;
+
+            public Subscription(ReactiveProperty<T> reactiveProperty, Action<T> observer)
+            {
+                this.reactiveProperty = reactiveProperty;
+                this.observer = observer;
+            }
+
+            public void Dispose()
+            {
+                reactiveProperty.Unsubscribe(observer);
+            }
+        }
     }
 }

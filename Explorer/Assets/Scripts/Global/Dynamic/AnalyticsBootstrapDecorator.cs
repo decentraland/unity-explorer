@@ -130,9 +130,8 @@ namespace Global.Dynamic
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer, GlobalWorld? globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot,
             CancellationToken ct)
         {
-            dynamicWorldContainer.RealFlowLoadingStatus.StageChanged += OnLoadingStageChanged;
-            await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
-            dynamicWorldContainer.RealFlowLoadingStatus.StageChanged -= OnLoadingStageChanged;
+            using (dynamicWorldContainer.RealFlowLoadingStatus.CurrentStage.Subscribe(OnLoadingStageChanged))
+                await core.UserInitializationAsync(dynamicWorldContainer, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
