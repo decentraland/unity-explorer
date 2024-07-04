@@ -18,6 +18,7 @@ namespace DCL.MapRenderer.ConsumerUtils
         {
             public Vector2Int Parcel;
             public Vector2 WorldPosition;
+            public IPinMarker PinMarker;
         }
 
         private static readonly string DRAG_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnDrag));
@@ -109,6 +110,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                 {
                     Parcel = parcel,
                     WorldPosition = GetParcelWorldPosition(parcel),
+                    PinMarker = pinMarker
                 });
 
             Profiler.EndSample();

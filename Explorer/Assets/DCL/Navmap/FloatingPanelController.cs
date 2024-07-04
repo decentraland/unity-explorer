@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Character.CharacterMotion.Components;
+using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
@@ -67,10 +68,12 @@ namespace DCL.Navmap
             view.backButton.onClick.AddListener(HidePanelFromBackButton);
         }
 
-        public void HandlePanelVisibility(Vector2Int parcel, bool showBackButton)
+        public void HandlePanelVisibility(Vector2Int parcel, IPinMarker? pinMarker, bool showBackButton)
         {
             view.backButton.gameObject.SetActive(showBackButton);
-
+            view.PlaceSection.gameObject.SetActive(pinMarker == null);
+            view.MapPinSection.gameObject.SetActive(pinMarker != null);
+            
             if (showBackButton)
             {
                 view.panelAnimator.Rebind();

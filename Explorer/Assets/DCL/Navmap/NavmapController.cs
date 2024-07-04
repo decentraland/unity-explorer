@@ -159,13 +159,13 @@ namespace DCL.Navmap
         private void OnResultClicked(string coordinates)
         {
             VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result);
-            floatingPanelController.HandlePanelVisibility(result, true);
+            floatingPanelController.HandlePanelVisibility(result, null, true);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
-            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, false);
+            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker ,false);
         }
 
         public void Activate()
