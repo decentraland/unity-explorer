@@ -23,38 +23,30 @@ namespace DCL.Chat.MessageBus
         {
             this.origin = origin;
             this.forbiddenChars = forbiddenChars;
-            this.origin.OnMessageAdded += OriginOnOnMessageAdded;
-            this.origin.MessageSent += OnMessageSent;
+            this.origin.MessageAdded += OriginOnOnMessageAdded;
         }
 
         private void OriginOnOnMessageAdded(ChatMessage obj)
         {
             if (Valid(obj.Message))
-                OnMessageAdded?.Invoke(obj);
+                MessageAdded?.Invoke(obj);
         }
 
-        private void OnMessageSent(string obj)
-        {
-            MessageSent?.Invoke(obj);
-        }
-
-        public event Action<ChatMessage>? OnMessageAdded;
-        public event Action<string>? MessageSent;
+        public event Action<ChatMessage>? MessageAdded;
 
         public void Send(string message)
         {
             if (Valid(message))
                 origin.Send(message);
             else
-                OnMessageAdded?.Invoke(
+                MessageAdded?.Invoke(
                     ChatMessage.NewFromSystem("Message with the special character is forbidden")
                 );
         }
 
         public void Dispose()
         {
-            origin.OnMessageAdded -= OriginOnOnMessageAdded;
-            origin.MessageSent -= OnMessageSent;
+            origin.MessageAdded -= OriginOnOnMessageAdded;
             origin.Dispose();
         }
 

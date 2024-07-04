@@ -96,7 +96,7 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
 
-            chatMessagesBus.OnMessageAdded += OnMessageAdded;
+            chatMessagesBus.MessageAdded += OnMessageAdded;
             chatHistory.OnMessageAdded += CreateChatEntry;
             chatHistory.OnCleared += ChatHistoryOnOnCleared;
             device = InputSystem.GetDevice<Mouse>();
@@ -483,7 +483,7 @@ namespace DCL.Chat
 
         public override void Dispose()
         {
-            chatMessagesBus.OnMessageAdded -= CreateChatEntry;
+            chatMessagesBus.MessageAdded -= CreateChatEntry;
             chatHistory.OnMessageAdded -= CreateChatEntry;
             chatHistory.OnCleared -= ChatHistoryOnOnCleared;
 

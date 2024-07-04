@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
-using DCL.Chat.MessageBus;
 using DCL.ExplorePanel;
 using MVC;
 using System;
@@ -12,10 +11,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class MVCManagerAnalyticsDecorator : IMVCManager
     {
         private readonly MVCManager core;
-        private readonly IAnalyticsController analytics;
 
         private readonly Dictionary<Type, IDisposable> registeredAnalytics = new();
-        private Dictionary<Type, Func<IController, IDisposable>> controllerAnalyticsFactory;
+        private readonly Dictionary<Type, Func<IController, IDisposable>> controllerAnalyticsFactory;
 
         public event Action<IController>? OnViewShowed;
         public event Action<IController>? OnViewClosed;
@@ -23,16 +21,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         public MVCManagerAnalyticsDecorator(MVCManager core, IAnalyticsController analytics)
         {
             this.core = core;
-            this.analytics = analytics;
             core.OnViewShowed += c => OnViewShowed?.Invoke(c);
             core.OnViewClosed += c => OnViewClosed?.Invoke(c);
-        }
 
-        public void Initialize(IChatMessagesBus chatMessagesBus)
-        {
             controllerAnalyticsFactory = new Dictionary<Type, Func<IController, IDisposable>>
             {
-                { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatAnalytics(analytics, c, chatMessagesBus)) },
+                { typeof(ChatController), CreateAnalytics<ChatController>(c => new ChatAnalytics(analytics, c)) },
                 { typeof(ExplorePanelController), CreateAnalytics<ExplorePanelController>(c => new MapAnalytics(analytics, c.NavmapController)) },
             };
 

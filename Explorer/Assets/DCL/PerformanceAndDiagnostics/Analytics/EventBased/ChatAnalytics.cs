@@ -1,5 +1,4 @@
 ﻿using DCL.Chat;
-using DCL.Chat.MessageBus;
 using Segment.Serialization;
 using System;
 
@@ -9,32 +8,20 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly IAnalyticsController analytics;
         private readonly ChatController chatController;
-        private readonly IChatMessagesBus chatMessagesBus;
 
         private bool isInitChatBubble = true;
 
-        public ChatAnalytics(IAnalyticsController analytics, ChatController chatController, IChatMessagesBus chatMessagesBus)
+        public ChatAnalytics(IAnalyticsController analytics, ChatController chatController)
         {
             this.analytics = analytics;
             this.chatController = chatController;
-            this.chatMessagesBus = chatMessagesBus;
 
             chatController.ChatBubbleVisibilityChanged += OnChatBubbleVisibilityChanged;
-            this.chatMessagesBus.MessageSent += OnMessageSent;
         }
 
         public void Dispose()
         {
             chatController.ChatBubbleVisibilityChanged -= OnChatBubbleVisibilityChanged;
-            chatMessagesBus.MessageSent -= OnMessageSent;
-        }
-
-        private void OnMessageSent(string message)
-        {
-            analytics.Track(AnalyticsEvents.Chat.MESSAGE_SENT, new JsonObject
-            {
-                { "message", message },
-            });
         }
 
         private void OnChatBubbleVisibilityChanged(bool isVisible)

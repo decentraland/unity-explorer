@@ -8,7 +8,7 @@ namespace DCL.Chat
 {
     public class ChatMessagesBus : IChatMessagesBus
     {
-        public event Action<ChatMessage> OnMessageAdded;
+        public event Action<ChatMessage> MessageAdded;
         public event Action<string>? MessageSent;
 
         public ChatMessagesBus(IDebugContainerBuilder debugBuilder)
@@ -20,7 +20,7 @@ namespace DCL.Chat
         {
             string sender = "User" + Random.Range(0, 10);
 
-            OnMessageAdded?.Invoke(
+            MessageAdded?.Invoke(
                 new ChatMessage(
                     StringUtils.GenerateRandomString(Random.Range(1,250)),
                     sender,
@@ -33,7 +33,7 @@ namespace DCL.Chat
 
         public void Send(string message)
         {
-            OnMessageAdded?.Invoke(new ChatMessage(message, "Self", Random.Range(0, 2) == 0 ? "" : "#asd38", true, true));
+            MessageAdded?.Invoke(new ChatMessage(message, "Self", Random.Range(0, 2) == 0 ? "" : "#asd38", true, true));
         }
 
         public void Dispose()

@@ -93,7 +93,6 @@ namespace Global.Dynamic
 
         // TODO move multiplayer related dependencies to a separate container
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
-        public IChatCommand GoToChatCommand { get;  private set;} = null!;
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
 
@@ -284,14 +283,9 @@ namespace Global.Dynamic
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();
 
-            var gotoCommand = new GoToChatCommand(realmNavigator);
-            container.GoToChatCommand = dynamicWorldParams.EnableAnalytics
-                ? new GoToCommandAnalyticsDecorator(gotoCommand, bootstrapContainer.Analytics!)
-                : gotoCommand;
-
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { ChatCommands.GoToChatCommand.REGEX, () => container.GoToChatCommand },
+                { ChatCommands.GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator) },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
@@ -299,11 +293,14 @@ namespace Global.Dynamic
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(reloadSceneController) },
             };
 
-            container.ChatMessagesBus =  new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
-                   .WithSelfResend(identityCache, container.ProfileRepository)
-                   .WithIgnoreSymbols()
-                   .WithCommands(chatCommandsFactory)
-                   .WithDebugPanel(debugBuilder);
+            var chatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
+                                .WithSelfResend(identityCache, container.ProfileRepository)
+                                .WithIgnoreSymbols()
+                                .WithCommands(chatCommandsFactory)
+                                .WithDebugPanel(debugBuilder);
+
+            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics?
+                new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
 
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
@@ -436,9 +433,6 @@ namespace Global.Dynamic
                 reloadSceneController);
 
             container.GlobalPlugins = globalPlugins;
-
-            if (dynamicWorldParams.EnableAnalytics)
-                ((MVCManagerAnalyticsDecorator) container.MvcManager).Initialize(container.ChatMessagesBus);
 
             staticContainer.RoomHubProxy.SetObject(container.RoomHub);
 

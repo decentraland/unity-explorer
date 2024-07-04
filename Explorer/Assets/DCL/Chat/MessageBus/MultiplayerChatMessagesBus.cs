@@ -42,7 +42,7 @@ namespace DCL.Chat.MessageBus
 
                 var profile = await profileRepository.GetAsync(receivedMessage.FromWalletId, 0, cancellationTokenSource.Token);
 
-                OnMessageAdded?.Invoke(
+                MessageAdded?.Invoke(
                     new ChatMessage(
                         receivedMessage.Payload.Message!,
                         profile?.DisplayName ?? string.Empty,
@@ -54,8 +54,7 @@ namespace DCL.Chat.MessageBus
             }
         }
 
-        public event Action<ChatMessage>? OnMessageAdded;
-        public event Action<string>? MessageSent;
+        public event Action<ChatMessage>? MessageAdded;
 
         public void Send(string message)
         {
@@ -65,8 +64,6 @@ namespace DCL.Chat.MessageBus
             double timestamp = DateTime.UtcNow.TimeOfDay.TotalSeconds;
             SendTo(message, timestamp, messagePipesHub.IslandPipe());
             SendTo(message, timestamp, messagePipesHub.ScenePipe());
-
-            MessageSent?.Invoke(message);
         }
 
         private void SendTo(string message, double timestamp, IMessagePipe messagePipe)

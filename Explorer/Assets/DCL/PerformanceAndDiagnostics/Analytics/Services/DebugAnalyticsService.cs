@@ -16,10 +16,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             var message = $"Track: {eventName}";
 
-            foreach (KeyValuePair<string, JsonElement> pair in properties.Content)
-                message += $" \n {pair.Key} = {pair.Value}";
+            if (properties != null)
+            {
+                foreach (KeyValuePair<string, JsonElement> pair in properties.Content)
+                    message += $" \n {pair.Key} = {pair.Value}";
 
-            message += "\n";
+                message += "\n";
+            }
 
             ReportHub.Log(ReportCategory.ANALYTICS, message);
         }

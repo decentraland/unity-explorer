@@ -13,22 +13,19 @@ namespace DCL.Chat.MessageBus
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
 
-        public event Action<ChatMessage>? OnMessageAdded;
-        public event Action<string>? MessageSent;
+        public event Action<ChatMessage>? MessageAdded;
 
         public SelfResendChatMessageBus(MultiplayerChatMessagesBus origin, IWeb3IdentityCache web3IdentityCache, IProfileRepository profileRepository)
         {
             this.origin = origin;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
-            this.origin.OnMessageAdded += OriginOnOnMessageAdded;
-            this.origin.MessageSent += OriginOnMessageSent;
+            this.origin.MessageAdded += OriginOnOnMessageAdded;
         }
 
         ~SelfResendChatMessageBus()
         {
-            this.origin.OnMessageAdded -= OriginOnOnMessageAdded;
-            this.origin.MessageSent -= OriginOnMessageSent;
+            this.origin.MessageAdded -= OriginOnOnMessageAdded;
         }
 
         public void Dispose()
@@ -38,11 +35,7 @@ namespace DCL.Chat.MessageBus
 
         private void OriginOnOnMessageAdded(ChatMessage obj)
         {
-            OnMessageAdded?.Invoke(obj);
-        }
-        private void OriginOnMessageSent(string message)
-        {
-            MessageSent?.Invoke(message);
+            MessageAdded?.Invoke(obj);
         }
 
         public void Send(string message)
@@ -63,7 +56,7 @@ namespace DCL.Chat.MessageBus
 
             var profile = await profileRepository.GetAsync(identity.Address, 0, CancellationToken.None);
 
-            OnMessageAdded?.Invoke(
+            MessageAdded?.Invoke(
                 new ChatMessage(
                     message,
                     profile?.DisplayName ?? string.Empty,
