@@ -6,6 +6,7 @@ using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
+using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -22,10 +23,11 @@ namespace ECS.Unity.Transforms.Systems
         }
 
         [Query]
-        private void UpdateTransform(ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void UpdateTransform(in Entity entity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
             if (sdkTransform.IsDirty)
             {
+                Debug.Log($"JUANI ENTRO ACA {entity.Id}");
                 transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
                 sdkTransform.IsDirty = false;
             }
