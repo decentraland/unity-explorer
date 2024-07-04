@@ -75,7 +75,11 @@ namespace DCL.Billboard.System
             if ((billboardMode & BILLBOARD_Z) != 0)
                 rotation *= cameraRotationAxisZ;
 
+
             billboardT.rotation = rotation;
+
+            Debug.Log("PUTTING ROTATION " + billboardT.rotation + " PUTTING POSITION " + billboardT.position);
+
         }
     }
 }
