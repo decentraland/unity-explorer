@@ -78,6 +78,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // If state is in progress the flow was already launched and it will call FinalizeLoading on its own
                 if (state.Value != StreamableLoadingState.Status.InProgress && intention.CancellationTokenSource.IsCancellationRequested)
                 {
+                    state.Forbid();
                     // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
                     // if it's unable to keep up with their number
                     FinalizeLoading(
@@ -99,7 +100,7 @@ namespace ECS.StreamableLoading.Common.Systems
             intention.RemoveCurrentSource();
 
             // Indicate that loading has started
-            state.Value = StreamableLoadingState.Status.InProgress;
+            state.StartProgress();
 
             FlowAsync(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
         }
@@ -172,7 +173,7 @@ namespace ECS.StreamableLoading.Common.Systems
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget? acquiredBudget)
         {
-            if (systemIsDisposed || !World.IsAlive(entity))
+            if (systemIsDisposed || !World!.IsAlive(entity))
             {
                 // World is no longer valid, can't call World.Get
                 // Just Free the budget
@@ -195,7 +196,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             if (result.HasValue)
             {
-                state.Value = StreamableLoadingState.Status.Finished;
+                state.Finish();
 
                 // If we make a structural change before changing refs it will invalidate them, take care!!!
                 World.Add(entity, result.Value);
@@ -207,12 +208,10 @@ namespace ECS.StreamableLoading.Common.Systems
                     ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
                 }
             }
-            else if (intention.CancellationTokenSource.IsCancellationRequested) { World.Destroy(entity); }
+            else if (intention.CancellationTokenSource.IsCancellationRequested)
+                World.Destroy(entity);
             else
-            {
-                // Indicate that it should be reevaluated
-                state.Value = StreamableLoadingState.Status.NotStarted;
-            }
+                state.RequestReevaluate();
         }
 
         private void IncreaseRefCount(in TIntention intention, TAsset asset)
