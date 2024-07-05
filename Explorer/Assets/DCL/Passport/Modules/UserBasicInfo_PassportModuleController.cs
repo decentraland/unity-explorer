@@ -58,7 +58,7 @@ namespace DCL.Passport.Modules
             view.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
             view.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             view.VerifiedMark.SetActive(profile.HasClaimedName);
-            view.UserWalletAddressText.text = $"{profile.UserId[..3]}...{profile.UserId[^5..]}";
+            view.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.UserNameContainer);
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.WalletAddressContainer);
