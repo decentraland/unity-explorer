@@ -7,6 +7,7 @@ using DCL.Passport.Fields;
 using DCL.Passport.Modals;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -37,6 +38,7 @@ namespace DCL.Passport.Modules
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly AddLink_PassportModal addLinkModal;
+        private readonly WarningNotificationView errorNotification;
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFields = new();
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPoolForEdition;
@@ -58,7 +60,8 @@ namespace DCL.Passport.Modules
             IProfileRepository profileRepository,
             World world,
             Entity playerEntity,
-            AddLink_PassportModal addLinkModal)
+            AddLink_PassportModal addLinkModal,
+            WarningNotificationView errorNotification)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -67,6 +70,7 @@ namespace DCL.Passport.Modules
             this.world = world;
             this.playerEntity = playerEntity;
             this.addLinkModal = addLinkModal;
+            this.errorNotification = errorNotification;
 
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
@@ -638,12 +642,23 @@ namespace DCL.Passport.Modules
                 world.Set(playerEntity, currentProfile);
             }
             catch (OperationCanceledException) { }
-            catch (Exception e) { ReportHub.LogError(ReportCategory.PROFILE, $"Error updating profile from passport: {e.Message}"); }
+            catch (Exception e)
+            {
+                ShowErrorNotificationAsync(errorNotification, CancellationToken.None).Forget();
+                ReportHub.LogError(ReportCategory.PROFILE, $"Error updating profile from passport: {e.Message}");
+            }
             finally
             {
                 if (currentProfile != null)
                     currentProfile = await profileRepository.GetAsync(currentProfile.UserId, 0, ct);
             }
+        }
+
+        private async UniTaskVoid ShowErrorNotificationAsync(WarningNotificationView notificationView, CancellationToken ct)
+        {
+            notificationView.Show();
+            await UniTask.Delay(3000, cancellationToken: ct);
+            notificationView.Hide();
         }
     }
 }

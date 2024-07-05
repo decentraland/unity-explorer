@@ -1,6 +1,7 @@
 using DCL.CharacterPreview;
 using DCL.Passport.Modals;
 using DCL.Passport.Modules;
+using DCL.UI;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -38,5 +39,8 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public AddLink_PassportModal AddLinkModal { get; private set; }
+
+        [field: SerializeField]
+        public WarningNotificationView ErrorNotification { get; private set; }
     }
 }

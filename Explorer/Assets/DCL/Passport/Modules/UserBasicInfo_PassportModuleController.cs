@@ -17,8 +17,6 @@ namespace DCL.Passport.Modules
         private readonly ISelfProfile selfProfile;
 
         private Profile currentProfile;
-        private CancellationTokenSource copyNameCts;
-        private CancellationTokenSource copyWalletCts;
         private CancellationTokenSource checkEditionAvailabilityCts;
 
         public UserBasicInfo_PassportModuleController(
@@ -39,8 +37,7 @@ namespace DCL.Passport.Modules
                     return;
 
                 CopyToClipboard(currentProfile.HasClaimedName ? view.UserNameText.text : $"{currentProfile.Name}#{currentProfile.UserId[^4..]}");
-                copyNameCts = copyNameCts.SafeRestart();
-                ShowCopyWarningAsync(view.CopyNameWarningNotification, copyNameCts.Token).Forget();
+                ShowCopyWarningAsync(view.CopyNameWarningNotification, CancellationToken.None).Forget();
             });
             view.CopyWalletAddressButton.onClick.AddListener(() =>
             {
@@ -48,8 +45,7 @@ namespace DCL.Passport.Modules
                     return;
 
                 CopyToClipboard(currentProfile.UserId);
-                copyWalletCts = copyWalletCts.SafeRestart();
-                ShowCopyWarningAsync(view.CopyWalletWarningNotification, copyWalletCts.Token).Forget();
+                ShowCopyWarningAsync(view.CopyWalletWarningNotification, CancellationToken.None).Forget();
             });
         }
 
@@ -62,7 +58,7 @@ namespace DCL.Passport.Modules
             view.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
             view.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             view.VerifiedMark.SetActive(profile.HasClaimedName);
-            view.UserWalletAddressText.text = $"{profile.UserId[..3]}...{profile.UserId[^3..]}";
+            view.UserWalletAddressText.text = $"{profile.UserId[..3]}...{profile.UserId[^5..]}";
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.UserNameContainer);
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.WalletAddressContainer);
