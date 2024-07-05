@@ -68,7 +68,7 @@ namespace DCL.PluginSystem.World
 
             Transform cameraTransform = GetNewTransform(sharedDependencies, sceneRootTransform);
             cameraTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel} CAMERA_ENTITY";
-            builder.World.Add(persistentEntities.Camera, new TransformComponent(cameraTransform), new SDKTransform());
+            builder.World.Add(persistentEntities.Camera, new TransformComponent(cameraTransform));
         }
 
         private Transform GetNewTransform(ECSWorldInstanceSharedDependencies sharedDependencies, Transform? transform = null)
