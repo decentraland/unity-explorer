@@ -60,7 +60,7 @@ namespace DCL.MapRenderer.MapCameraController
         {
             marker?.Deactivate();
         }
-        
+
         public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker mark)
         {
             mark = null;

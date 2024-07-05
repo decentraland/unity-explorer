@@ -163,10 +163,18 @@ namespace DCL.Navmap
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
         {
-            placeImageController.SetVisible(true);
-            mapPinPlaceImageController.SetVisible(true);
-            placeImageController.RequestImage(placeInfo.image);
-            mapPinPlaceImageController.RequestImage(placeInfo.image);
+            if (view.PlaceSection.activeInHierarchy)
+            {
+                placeImageController.SetVisible(true);
+                placeImageController.RequestImage(placeInfo.image);
+            }
+
+            if (view.MapPinSection.activeInHierarchy)
+            {
+                mapPinPlaceImageController.SetVisible(true);
+                mapPinPlaceImageController.RequestImage(placeInfo.image);
+            }
+
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             view.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
