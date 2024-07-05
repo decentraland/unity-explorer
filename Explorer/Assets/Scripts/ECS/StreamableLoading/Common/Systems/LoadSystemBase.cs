@@ -28,7 +28,6 @@ namespace ECS.StreamableLoading.Common.Systems
 
         protected readonly IStreamableCache<TAsset, TIntention> cache;
 
-        private readonly AssetsLoadingUtility.InternalFlowDelegate<TAsset, TIntention> cachedInternalFlowDelegate;
         private readonly Query query;
         private readonly CancellationTokenSource cancellationTokenSource;
 
@@ -38,7 +37,6 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             this.cache = cache;
             query = World!.Query(in CREATE_WEB_REQUEST);
-            cachedInternalFlowDelegate = FlowInternalAsync;
             cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -312,7 +310,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private async UniTask<StreamableLoadingResult<TAsset>?> RepeatLoopAsync(TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, cachedInternalFlowDelegate, GetReportCategory(), ct);
+            StreamableLoadingResult<TAsset>? result = await intention.RepeatLoopAsync(acquiredBudget, partition, FlowInternalAsync, GetReportCategory(), ct);
             return result is { Succeeded: false } ? SetIrrecoverableFailure(intention, result.Value) : result;
         }
 
