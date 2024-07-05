@@ -33,7 +33,9 @@ namespace ECS.StreamableLoading.AudioClips
         {
             if (cache.ContainsKey(key)) return;
 
-            cache.Add(key, new AudioClipData(asset)); // reference will be added later
+            var audioClipData = new AudioClipData(asset);
+            cache.Add(key, audioClipData); // reference will be added later
+            listedCache.Add((key, audioClipData));
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
         }
 
