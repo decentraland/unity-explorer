@@ -97,17 +97,20 @@ namespace DCL.SDKComponents.Animator.Systems
 
         private static void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator, float dt)
         {
+            // TODO: we should have one state in each layer so we support weighting
+            // The current system does not support all expected cases from the SDK
             const int DEFAULT_LAYER_INDEX = 0;
 
             if (sdkAnimationStates.Count == 0)
                 return;
 
-            var isAnyAnimPlaying = false;
+            SDKAnimationState? possiblePlayingAnimation = null;
 
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
-                isAnyAnimPlaying |= sdkAnimationState.Playing;
+                if (sdkAnimationState.Playing)
+                    possiblePlayingAnimation = sdkAnimationState;
 
-            if (!isAnyAnimPlaying)
+            if (possiblePlayingAnimation == null)
             {
                 // Reset to anim initial state
                 animator.CrossFade(animator.GetCurrentAnimatorStateInfo(DEFAULT_LAYER_INDEX).fullPathHash, 0f);
@@ -118,18 +121,16 @@ namespace DCL.SDKComponents.Animator.Systems
 
             animator.enabled = true;
 
-            foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
-            {
-                if (!sdkAnimationState.Playing) continue;
+            SDKAnimationState currentAnimationState = possiblePlayingAnimation.Value;
 
-                animator.SetLayerWeight(DEFAULT_LAYER_INDEX, sdkAnimationState.Weight);
-                animator.SetBool(LOOP_PARAM, sdkAnimationState.Loop);
-                animator.speed = sdkAnimationState.Speed;
-                animator.SetTrigger(sdkAnimationState.Clip);
+            animator.SetLayerWeight(DEFAULT_LAYER_INDEX, currentAnimationState.Weight);
+            animator.SetBool(LOOP_PARAM, currentAnimationState.Loop);
+            animator.speed = currentAnimationState.Speed;
+            animator.SetTrigger(currentAnimationState.Clip);
 
-                if (sdkAnimationState.ShouldReset)
-                    animator.CrossFade(sdkAnimationState.Clip, 0f);
-            }
+            // TODO: support reset
+            // if (sdkAnimationState.ShouldReset)
+            //     animator.CrossFade(sdkAnimationState.Clip, 0f);
         }
     }
 }

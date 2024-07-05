@@ -130,9 +130,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
             else
                 visualElementToSetup.style.left = StyleKeyword.Null;
-
-            visualElementToSetup.style.backgroundImage = new StyleBackground(StyleKeyword.Null);
-            visualElementToSetup.style.backgroundColor = new StyleColor(StyleKeyword.None);
         }
 
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
@@ -194,6 +191,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             elementStyle.position = new StyleEnum<Position>(Position.Absolute);
             elementStyle.justifyContent = new StyleEnum<Justify>(Justify.Center);
             elementStyle.alignItems = new StyleEnum<Align>(Align.Center);
+            elementStyle.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
         }
 
         public static void ReleaseUIElement(VisualElement visualElement) =>
