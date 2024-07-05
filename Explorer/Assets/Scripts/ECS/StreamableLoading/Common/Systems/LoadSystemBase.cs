@@ -260,7 +260,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
                 if (result is { Succeeded: true })
-                    AddToCache(in intention, result.Value.Asset!);
+                    cache.Add(in intention, result.Value.Asset!);
 
                 source.TrySetResult(result);
 
@@ -309,11 +309,6 @@ namespace ECS.StreamableLoading.Common.Systems
         {
             cache.IrrecoverableFailures.Add(intention.CommonArguments.URL.GetCacheableURL(), failure);
             return failure;
-        }
-
-        private void AddToCache(in TIntention intention, TAsset asset)
-        {
-            cache.Add(in intention, asset);
         }
     }
 }
