@@ -1,7 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -35,7 +34,7 @@ namespace SceneRunner.Scene
         public SceneData(
             ISceneContent sceneContent,
             SceneEntityDefinition sceneDefinition,
-            [NotNull] SceneAssetBundleManifest assetBundleManifest,
+            SceneAssetBundleManifest assetBundleManifest,
             Vector2Int baseParcel,
             ParcelMathHelper.SceneGeometry geometry,
             IReadOnlyList<Vector2Int> parcels,

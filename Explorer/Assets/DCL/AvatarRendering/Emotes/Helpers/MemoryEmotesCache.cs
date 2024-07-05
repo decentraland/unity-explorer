@@ -102,22 +102,22 @@ namespace DCL.AvatarRendering.Emotes
         {
             var countNullOrEmpty = 0;
 
-            for (var i = 0; i < emote.WearableAssetResults.Length; i++)
+            for (var i = 0; i < emote.AssetResults.Length; i++)
             {
-                StreamableLoadingResult<WearableRegularAsset>? result = emote.WearableAssetResults[i];
-                WearableRegularAsset? wearableAsset = emote.WearableAssetResults[i]?.Asset;
+                StreamableLoadingResult<WearableRegularAsset>? result = emote.AssetResults[i];
+                WearableRegularAsset? wearableAsset = emote.AssetResults[i]?.Asset;
 
                 if (wearableAsset == null || wearableAsset.ReferenceCount == 0)
                 {
                     wearableAsset?.Dispose();
-                    emote.WearableAssetResults[i] = null;
+                    emote.AssetResults[i] = null;
                 }
 
                 if ((!emote.IsLoading && result == null) || !result.HasValue || result.Value is { Succeeded: true, Asset: null })
                     countNullOrEmpty++;
             }
 
-            return countNullOrEmpty == emote.WearableAssetResults.Length;
+            return countNullOrEmpty == emote.AssetResults.Length;
         }
     }
 }
