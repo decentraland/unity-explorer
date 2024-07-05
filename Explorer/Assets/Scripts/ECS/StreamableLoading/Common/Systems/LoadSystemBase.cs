@@ -254,15 +254,15 @@ namespace ECS.StreamableLoading.Common.Systems
                 // Ensure that we returned to the main thread
                 await UniTask.SwitchToMainThread(ct);
 
-                // Set result for the reusable source
-                // Remove from the ongoing requests immediately because finally will be called later than
-                // continuation of cachedSource.Task.SuppressCancellationThrow();
-                TryRemoveOngoingRequest();
-
                 // before firing the continuation of the ongoing request
                 // Add result to the cache
                 if (result is { Succeeded: true })
                     AddToCache(in intention, result.Value.Asset!);
+
+                // Set result for the reusable source
+                // Remove from the ongoing requests immediately because finally will be called later than
+                // continuation of cachedSource.Task.SuppressCancellationThrow();
+                TryRemoveOngoingRequest();
 
                 source.TrySetResult(result);
 

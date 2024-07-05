@@ -64,11 +64,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             return false;
         }
 
-        public void Add(in string key, GltfContainerAsset asset)
-        {
-            // Nothing to do, we don't reuse the existing instantiated game objects
-        }
-
         /// <summary>
         ///     Return to the pool
         /// </summary>
