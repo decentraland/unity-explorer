@@ -99,11 +99,6 @@ namespace ECS.StreamableLoading.Common
 
             result = default(StreamableLoadingResult<TAsset>);
 
-            if (!world.IsAlive(Entity))
-            {
-                {}
-            }
-
             if (world.TryGet(Entity, out result))
             {
                 Result = result;
