@@ -38,27 +38,44 @@ namespace DCL.Billboard.System
             in PBBillboard billboard
         )
         {
-            if (billboard.BillboardMode is BillboardMode.BmNone)
+            const uint BILLBOARD_NONE = (uint)BillboardMode.BmNone;
+            const uint BILLBOARD_X = (uint)BillboardMode.BmX;
+            const uint BILLBOARD_Y = (uint)BillboardMode.BmY;
+            const uint BILLBOARD_Z = (uint)BillboardMode.BmZ;
+            const uint BILLBOARD_XY = BILLBOARD_X | BILLBOARD_Y;
+
+            Vector3 cameraPos = cameraPosition;
+
+            var billboardMode = (uint)billboard.GetBillboardMode();
+
+            if (billboardMode == BILLBOARD_NONE)
                 return;
 
-            Vector3 forward = transform.Transform.forward;
+            Transform billboardT = transform.Transform;
 
-            if (billboard.UseX() || billboard.UseY())
+            Vector3 billboardForward = billboardT.forward;
+            Vector3 billboardPos = billboardT.position;
+
+            Vector3 forward = billboardForward;
+
+            // either or both X and Y are set
+            if ((billboardMode & BILLBOARD_XY) != 0)
             {
-                forward = cameraPosition - transform.Cached.WorldPosition;
+                forward = billboardPos - cameraPos;
 
-                if ((billboard.BillboardMode & BillboardMode.BmY) == 0) forward.x = 0;
-                if ((billboard.BillboardMode & BillboardMode.BmX) == 0) forward.y = 0;
+                if ((billboardMode & BILLBOARD_Y) == 0) forward.x = 0;
+                if ((billboardMode & BILLBOARD_X) == 0) forward.y = 0;
 
                 forward.Normalize();
             }
 
             Quaternion rotation = forward != Vector3.zero ? Quaternion.LookRotation(forward) : Quaternion.identity;
 
-            if (billboard.UseZ())
+            // apply Z axis rotation
+            if ((billboardMode & BILLBOARD_Z) != 0)
                 rotation *= cameraRotationAxisZ;
 
-            transform.Apply(rotation);
+            billboardT.rotation = rotation;
         }
     }
 }

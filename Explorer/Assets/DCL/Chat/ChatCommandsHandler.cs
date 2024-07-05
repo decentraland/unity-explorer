@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DCL.Chat.Commands;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 

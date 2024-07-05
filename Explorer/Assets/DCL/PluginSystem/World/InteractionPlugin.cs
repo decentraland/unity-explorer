@@ -58,13 +58,15 @@ namespace DCL.PluginSystem.World
 
             InitializeRaycastSystem.InjectToWorld(ref builder, raycastResultPool);
 
+            sceneIsCurrentListeners.Add(
             ExecuteRaycastSystem.InjectToWorld(ref builder, sceneDeps.SceneData, raycastBudget, settings.RaycastBucketThreshold,
                 sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<RaycastHit>(),
                 raycastResultPool,
                 sceneDeps.EntityCollidersSceneCache,
                 sceneDeps.EntitiesMap,
                 sceneDeps.EcsToCRDTWriter,
-                sceneDeps.SceneStateProvider);
+                sceneDeps.SceneStateProvider)
+            );
 
             WritePointerEventResultsSystem.InjectToWorld(ref builder, sceneDeps.SceneData,
                 sceneDeps.EcsToCRDTWriter,
@@ -72,7 +74,8 @@ namespace DCL.PluginSystem.World
                 globalInputEvents,
                 poolsRegistry.GetReferenceTypePool<RaycastHit>());
 
-            InteractionHighlightSystem.InjectToWorld(ref builder, interactionData, sceneDeps.SceneStateProvider);
+            sceneIsCurrentListeners.Add(InteractionHighlightSystem.InjectToWorld(ref builder, interactionData,
+                sceneDeps.SceneStateProvider));
         }
 
         [Serializable]

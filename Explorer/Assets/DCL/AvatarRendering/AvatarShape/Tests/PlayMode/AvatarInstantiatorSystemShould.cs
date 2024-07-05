@@ -133,7 +133,7 @@ namespace DCL.AvatarRendering.AvatarShape.Tests
         {
             (IEmote mockWearable, WearableRegularAsset wearableAsset) = GetMockedAvatarAttachment<IEmote>(materialName, category);
 
-            mockWearable.WearableAssetResults.Returns(
+            mockWearable.AssetResults.Returns(
                 new StreamableLoadingResult<WearableRegularAsset>?[] { new StreamableLoadingResult<WearableRegularAsset>(wearableAsset) });
 
             return mockWearable;

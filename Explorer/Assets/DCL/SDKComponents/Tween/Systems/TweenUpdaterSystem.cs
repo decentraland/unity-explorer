@@ -17,19 +17,26 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using CrdtEcsBridge.Components.Transform;
+using ECS.Groups;
+using ECS.Unity.Transforms.Systems;
 using UnityEngine;
+using UnityEngine.Pool;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
-    [UpdateAfter(typeof(TweenLoaderSystem))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
+    [UpdateBefore(typeof(UpdateTransformSystem))]
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
+        private readonly TweenerPool tweenerPool;
+        private readonly IObjectPool<PBTween> pbTweenPool;
+        
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
         {
@@ -67,11 +74,11 @@ namespace DCL.SDKComponents.Tween.Systems
         };
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
-        private readonly List<DG.Tweening.Tween> transformTweens = new ();
-        private Tweener tempTweener;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, IObjectPool<PBTween> pbTweenPool) : base(world)
         {
+            this.tweenerPool = tweenerPool;
+            this.pbTweenPool = pbTweenPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
@@ -93,158 +100,124 @@ namespace DCL.SDKComponents.Tween.Systems
 
         [Query]
         [All(typeof(SDKTweenComponent))]
-        private void FinalizeComponents(ref CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
+        private void FinalizeComponents(CRDTEntity sdkEntity, ref SDKTweenComponent tweenComponent)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent);
+            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleEntityDestruction(ref SDKTweenComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleEntityDestruction(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent);
+            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
         }
 
         [Query]
         [None(typeof(PBTween), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref SDKTweenComponent tweenComponent, ref CRDTEntity sdkEntity)
+        private void HandleComponentRemoval(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
         {
-            CleanUpTweenBeforeRemoval(sdkEntity, tweenComponent);
+            CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
         }
 
         [Query]
-        [All(typeof(SDKTweenComponent))]
-        private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref TransformComponent transformComponent, ref CRDTEntity sdkEntity)
+        private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
-            if (!sdkTweenComponent.IsDirty) { UpdateTweenState(transformComponent, sdkEntity, sdkTweenComponent); }
+            if (sdkTweenComponent.IsDirty)
+                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);
             else
-            {
-                SDKTweenModel tweenModel = sdkTweenComponent.CurrentTweenModel;
-                bool isPlaying = tweenModel.IsPlaying;
-                sdkTweenComponent.IsPlaying = isPlaying;
-
-                Transform entityTransform = transformComponent.Transform;
-                float durationInSeconds = tweenModel.Duration / MILLISECONDS_CONVERSION_INT;
-
-                SetupTweener(transformComponent, sdkTweenComponent, entityTransform, tweenModel, durationInSeconds, isPlaying);
-
-                sdkTweenComponent.Tweener = tempTweener;
-                sdkTweenComponent.CurrentTime = tweenModel.CurrentTime;
-                sdkTweenComponent.IsDirty = false;
-
-                if (isPlaying)
-                {
-                    sdkTweenComponent.Tweener.Play();
-                    sdkTweenComponent.TweenStateStatus = sdkTweenComponent.CurrentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
-                }
-                else
-                {
-                    sdkTweenComponent.Tweener.Pause();
-                    sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
-                }
-            }
+                UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity);
         }
 
-        private void UpdateTweenState(TransformComponent transformComponent, CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
+        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
-            float currentTime = sdkTweenComponent.Tweener.ElapsedPercentage();
-            var tweenStateDirty = false;
-            TweenStateStatus newState = GetCurrentTweenState(currentTime, sdkTweenComponent.IsPlaying);
+            bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
+            var entityTransform = transformComponent.Transform;
+            float durationInSeconds = pbTween.Duration / MILLISECONDS_CONVERSION_INT;
 
-            //We only update the state if we changed status OR if the tween is playing and the current time has changed
+            SetupTweener(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, entityTransform, durationInSeconds, isPlaying);
+
+            if (isPlaying)
+            {
+                sdkTweenComponent.CustomTweener.Play();
+                sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsActive;
+            }
+            else
+            {
+                sdkTweenComponent.CustomTweener.Pause();
+                sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
+            }
+
+            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+            sdkTweenComponent.IsDirty = false;
+        }
+
+        private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity)
+        {
+            var newState = GetCurrentTweenState(sdkTweenComponent);
+
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                tweenStateDirty = true;
+                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             }
-
-            if (sdkTweenComponent.IsPlaying && !sdkTweenComponent.CurrentTime.Equals(currentTime))
+            else if (newState == TweenStateStatus.TsActive)
             {
-                sdkTweenComponent.CurrentTime = currentTime;
-                tweenStateDirty = true;
+                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             }
-
-            if (!tweenStateDirty) return;
-
-            TweenSDKComponentHelper.WriteTweenState(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
-            TweenSDKComponentHelper.WriteTweenTransform(ecsToCRDTWriter, sdkEntity, transformComponent);
         }
 
-        private void SetupTweener(TransformComponent transformComponent, SDKTweenComponent sdkTweenComponent, Transform entityTransform, SDKTweenModel tweenModel, float durationInSeconds, bool isPlaying)
+        private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
-            tempTweener = sdkTweenComponent.Tweener;
+            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+            UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
+        }
 
+        private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
+        {
+            TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+            TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+        }
+
+
+        private void SetupTweener(ref SDKTweenComponent sdkTweenComponent,  ref SDKTransform sdkTransform, in PBTween tweenModel, CRDTEntity entity, Transform entityTransform, float durationInSeconds, bool isPlaying)
+        {
             //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
             // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
-            DOTween.TweensByTarget(entityTransform, true, transformTweens);
-            if (transformTweens.Count > 0) transformTweens[0].Rewind(false);
+            if (sdkTweenComponent.IsActive())
+            {
+                sdkTweenComponent.Rewind();
+                TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+                TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, entity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+            }
+
+            ReturnTweenToPool(ref sdkTweenComponent);
 
             if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
                 ease = Linear;
 
-            switch (tweenModel.ModeCase)
-            {
-                case PBTween.ModeOneofCase.Rotate:
-                    tempTweener = SetupRotationTween(transformComponent.Transform,
-                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.Start),
-                        PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(tweenModel.Rotate.End),
-                        durationInSeconds, ease);
-
-                    break;
-                case PBTween.ModeOneofCase.Scale:
-                    tempTweener = SetupScaleTween(transformComponent.Transform,
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.Start),
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Scale.End),
-                        durationInSeconds, ease);
-
-                    break;
-                case PBTween.ModeOneofCase.Move:
-                default:
-                    tempTweener = SetupPositionTween(transformComponent.Transform,
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.Start),
-                        PrimitivesConversionExtensions.PBVectorToUnityVector(tweenModel.Move.End),
-                        durationInSeconds, ease, tweenModel.Move.HasFaceDirection && tweenModel.Move.FaceDirection);
-
-                    break;
-            }
-
-            tempTweener.Goto(tweenModel.CurrentTime * durationInSeconds, isPlaying);
+            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, entityTransform, durationInSeconds);
+            sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
-        private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent)
+        private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent)
         {
-            sdkTweenComponent.Tweener.Kill();
+            ReturnTweenToPool(ref sdkTweenComponent);
+            pbTweenPool.Release(sdkTweenComponent.CachedTween);
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
         }
 
-        private Tweener SetupPositionTween(Transform entityTransform, Vector3 startPosition,
-            Vector3 endPosition, float durationInSeconds, Ease ease, bool faceDirection)
+        private void ReturnTweenToPool(ref SDKTweenComponent sdkTweenComponent)
         {
-            if (faceDirection) entityTransform.forward = (endPosition - startPosition).normalized;
-
-            entityTransform.localPosition = startPosition;
-            return entityTransform.DOLocalMove(endPosition, durationInSeconds).SetEase(ease).SetAutoKill(false);
+            tweenerPool.Return(sdkTweenComponent);
+            sdkTweenComponent.CustomTweener = null;
         }
 
-        private TweenStateStatus GetCurrentTweenState(float currentTime, bool isPlaying)
+        private TweenStateStatus GetCurrentTweenState(SDKTweenComponent tweener)
         {
-            if (!isPlaying) { return TweenStateStatus.TsPaused; }
-
-            return currentTime.Equals(1f) ? TweenStateStatus.TsCompleted : TweenStateStatus.TsActive;
+            if (tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
+            if (tweener.CustomTweener.IsPaused()) return TweenStateStatus.TsPaused;
+            return TweenStateStatus.TsActive;
         }
 
-        private Tweener SetupRotationTween(Transform entityTransform, Quaternion startRotation,
-            Quaternion endRotation, float durationInSeconds, Ease ease)
-        {
-            entityTransform.localRotation = startRotation;
-            return entityTransform.DOLocalRotateQuaternion(endRotation, durationInSeconds).SetEase(ease).SetAutoKill(false);
-        }
-
-        private Tweener SetupScaleTween(Transform entityTransform, Vector3 startScale,
-            Vector3 endScale, float durationInSeconds, Ease ease)
-        {
-            entityTransform.localScale = startScale;
-            return entityTransform.DOScale(endScale, durationInSeconds).SetEase(ease).SetAutoKill(false);
-        }
     }
 }
