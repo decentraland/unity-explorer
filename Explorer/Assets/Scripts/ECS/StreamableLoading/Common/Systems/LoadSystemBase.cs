@@ -188,7 +188,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             if (result.HasValue)
                 ApplyLoadedResult(in entity, ref state, intention, result, source);
-            else if (intention.CancellationTokenSource.IsCancellationRequested)
+            else if (intention.IsCancelled())
                 World.Destroy(entity);
             else
                 state.RequestReevaluate();
