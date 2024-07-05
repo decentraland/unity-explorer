@@ -29,6 +29,7 @@ namespace DCL.Navmap
         private CancellationTokenSource cts;
 
         private readonly ImageController placeImageController;
+        private readonly ImageController mapPinPlaceImageController;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -38,9 +39,11 @@ namespace DCL.Navmap
             this.realmNavigator = realmNavigator;
 
             view.closeButton.onClick.AddListener(HidePanel);
+            view.mapPinCloseButton.onClick.AddListener(HidePanel);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
             placeImageController = new ImageController(view.placeImage, webRequestController);
+            mapPinPlaceImageController = new ImageController(view.MapPinPlaceImage, webRequestController);
             categoriesDictionary = new Dictionary<string, GameObject>();
 
             for (var i = 0; i < view.categories.Length; i++)
@@ -153,6 +156,7 @@ namespace DCL.Navmap
             view.upvotes.text = "-";
             view.parcelsCount.text = "1";
             placeImageController.SetVisible(false);
+            mapPinPlaceImageController.SetVisible(false);
 
             ResetCategories();
         }
@@ -160,7 +164,9 @@ namespace DCL.Navmap
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
         {
             placeImageController.SetVisible(true);
+            mapPinPlaceImageController.SetVisible(true);
             placeImageController.RequestImage(placeInfo.image);
+            mapPinPlaceImageController.RequestImage(placeInfo.image);
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             view.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));

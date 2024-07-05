@@ -33,10 +33,16 @@ namespace DCL.Navmap
         public TMP_Text MapPinDescription { get; private set; }
 
         [field: SerializeField]
+        public ImageView MapPinPlaceImage { get; private set; }
+
+        [field: SerializeField]
         public ImageView placeImage;
 
         [field: SerializeField]
         public Button closeButton;
+
+        [field: SerializeField]
+        public Button mapPinCloseButton { get; private set; }
 
         [field: SerializeField]
         public Button backButton;
