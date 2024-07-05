@@ -4,7 +4,6 @@ using ECS.Abstract;
 using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine.Pool;
@@ -27,7 +26,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             this.sameBoatQueries = sameBoatQueries;
             this.releasablePerformanceLoadingBudget = releasablePerformanceLoadingBudget;
             this.memoryBudget = memoryBudget;
-            loadingIntentions = ListPool<IntentionData>.Get();
+            loadingIntentions = ListPool<IntentionData>.Get()!;
         }
 
         protected static QueryDescription CreateQuery<TIntention, TAsset>() where TIntention: ILoadingIntention =>
@@ -42,7 +41,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             // All types of intentions are weighed against each other all together, not each type individually
             foreach (QueryDescription query in sameBoatQueries)
             {
-                foreach (ref Chunk chunk in World.Query(in query).GetChunkIterator())
+                foreach (ref Chunk chunk in World!.Query(in query).GetChunkIterator())
                 {
                     ref IPartitionComponent partitionFirstElement = ref chunk.GetFirst<IPartitionComponent>();
                     ref StreamableLoadingState stateFirstElement = ref chunk.GetFirst<StreamableLoadingState>();
@@ -50,7 +49,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                     foreach (int entityIndex in chunk)
                     {
                         ref StreamableLoadingState state = ref Unsafe.Add(ref stateFirstElement, entityIndex);
-                        ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex);
+                        ref IPartitionComponent partition = ref Unsafe.Add(ref partitionFirstElement, entityIndex)!;
 
                         // Process only not evaluated and explicitly forbidden entities
                         if (state.Value is not (Status.NotStarted or Status.Forbidden))
@@ -59,8 +58,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                         var intentionData = new IntentionData
                         {
                             StatePointer = new ManagedTypePointer<StreamableLoadingState>(ref state),
-                            PartitionComponent = partition,
-                            Type = query.All[0].Type,
+                            PartitionComponent = partition
                         };
 
                         loadingIntentions.Add(intentionData);
@@ -84,7 +82,7 @@ namespace ECS.StreamableLoading.DeferredLoading
                 if (!releasablePerformanceLoadingBudget.TrySpendBudget(out IAcquiredBudget acquiredBudget)) break;
 
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
-                state.SetAllowed(acquiredBudget);
+                state.SetAllowed(acquiredBudget!);
             }
 
             // Set the rest to forbidden
@@ -104,7 +102,6 @@ namespace ECS.StreamableLoading.DeferredLoading
         {
             public IPartitionComponent PartitionComponent;
             public ManagedTypePointer<StreamableLoadingState> StatePointer;
-            public Type Type;
         }
     }
 }
