@@ -408,7 +408,8 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     characterPreviewEventBus,
                     selfProfile,
-                    dclInput),
+                    dclInput,
+                    webBrowser),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

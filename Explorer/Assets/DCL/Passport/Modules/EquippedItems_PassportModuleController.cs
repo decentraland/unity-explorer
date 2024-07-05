@@ -5,6 +5,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
+using DCL.Browser;
 using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
@@ -33,6 +34,7 @@ namespace DCL.Passport.Modules
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly RectTransform scrollContainer;
+        private readonly IWebBrowser webBrowser;
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
         private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
@@ -50,7 +52,8 @@ namespace DCL.Passport.Modules
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
-            RectTransform scrollContainer)
+            RectTransform scrollContainer,
+            IWebBrowser webBrowser)
         {
             this.view = view;
             this.world = world;
@@ -59,6 +62,7 @@ namespace DCL.Passport.Modules
             this.categoryIcons = categoryIcons;
             this.thumbnailProvider = thumbnailProvider;
             this.scrollContainer = scrollContainer;
+            this.webBrowser = webBrowser;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
                 InstantiateEquippedItemPrefab,
@@ -84,7 +88,11 @@ namespace DCL.Passport.Modules
                     equippedItemView.gameObject.SetActive(true);
                     equippedItemView.gameObject.transform.SetAsFirstSibling();
                 },
-                actionOnRelease: equippedItemView => equippedItemView.gameObject.SetActive(false));
+                actionOnRelease: equippedItemView =>
+                {
+                    equippedItemView.gameObject.SetActive(false);
+                    equippedItemView.BuyButton.onClick.RemoveAllListeners();
+                });
 
             emptyItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
                 InstantiateEquippedItemPrefab,
@@ -181,7 +189,9 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.RarityBackground2.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, equippedWearableItem.RarityBackground2.color.a);
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
-                equippedWearableItem.BuyButton.interactable = wearable.IsCollectible();
+                string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
+                equippedWearableItem.BuyButton.interactable = wearable.IsCollectible() && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
                 WaitForThumbnailAsync(wearable, equippedWearableItem, cts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -203,7 +213,9 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.RarityBackground2.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, equippedWearableItem.RarityBackground2.color.a);
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
-                equippedWearableItem.BuyButton.interactable = emote.IsCollectible() && rarityName != "base";
+                string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
+                equippedWearableItem.BuyButton.interactable = emote.IsCollectible() && rarityName != "base" && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
                 WaitForThumbnailAsync(emote, equippedWearableItem, cts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -284,6 +296,21 @@ namespace DCL.Passport.Modules
                 emptyItemsPool.Release(emptyItem);
 
             instantiatedEmptyItems.Clear();
+        }
+
+        private static string GetMarketplaceLink(string id)
+        {
+            const string MARKETPLACE = "https://market.decentraland.org/contracts/{0}/items/{1}";
+            string[] split = id.Split(":");
+
+            if (split.Length < 2)
+                return "";
+
+            // If this is not correct, we could retrieve the marketplace link by checking TheGraph, but that's super slow
+            if (!split[^2].StartsWith("0x") || !int.TryParse(split[^1], out int _))
+                return "";
+
+            return string.Format(MARKETPLACE, split[^2], split[^1]);
         }
     }
 }

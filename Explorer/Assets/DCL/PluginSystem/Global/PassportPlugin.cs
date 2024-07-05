@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
+using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
@@ -34,6 +35,7 @@ namespace DCL.PluginSystem.Global
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly ISelfProfile selfProfile;
         private readonly DCLInput dclInput;
+        private readonly IWebBrowser webBrowser;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -47,7 +49,8 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
-            DCLInput dclInput)
+            DCLInput dclInput,
+            IWebBrowser webBrowser)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -61,6 +64,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.selfProfile = selfProfile;
             this.dclInput = dclInput;
+            this.webBrowser = webBrowser;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -94,7 +98,8 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     thumbnailProvider,
-                    dclInput);
+                    dclInput,
+                    webBrowser);
 
                 mvcManager.RegisterController(passportController);
             };

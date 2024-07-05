@@ -2,6 +2,7 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
+using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
@@ -37,6 +38,7 @@ namespace DCL.Passport
         private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly DCLInput dclInput;
+        private readonly IWebBrowser webBrowser;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
@@ -60,7 +62,8 @@ namespace DCL.Passport
             World world,
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
-            DCLInput dclInput) : base(viewFactory)
+            DCLInput dclInput,
+            IWebBrowser webBrowser) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -76,6 +79,7 @@ namespace DCL.Passport
             this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
             this.dclInput = dclInput;
+            this.webBrowser = webBrowser;
         }
 
         protected override void OnViewInstantiated()
@@ -84,7 +88,7 @@ namespace DCL.Passport
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile);
             userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, viewInstance.ErrorNotification);
-            equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer);
+            equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer, webBrowser);
         }
 
         protected override void OnViewShow()

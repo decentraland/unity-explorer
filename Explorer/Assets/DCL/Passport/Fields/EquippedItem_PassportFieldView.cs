@@ -69,14 +69,8 @@ namespace DCL.Passport.Fields
 
         private CancellationTokenSource cts;
 
-        private void Awake()
-        {
-            BuyButton.onClick.AddListener(() =>
-            {
-                // TODO (Santi): Implement buy logic...
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio);
-            });
-        }
+        private void Awake() =>
+            BuyButton.onClick.AddListener(() => UIAudioEventsBus.Instance.SendPlayAudioEvent(BuyAudio));
 
         public void OnPointerEnter(PointerEventData eventData)
         {
