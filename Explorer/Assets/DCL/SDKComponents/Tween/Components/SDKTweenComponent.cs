@@ -31,24 +31,24 @@ namespace DCL.SDKComponents.Tween.Components
                 case PBTween.ModeOneofCase.None:
                     break;
                 case PBTween.ModeOneofCase.Move:
-                    CachedTween.Move = new Move();
-                    CachedTween.Move.Start = new Vector3();
-                    CachedTween.Move.End = new Vector3();
+                    CachedTween.Move = new Move
+                    {
+                        Start = new Vector3(), End = new Vector3()
+                    };
                     break;
                 case PBTween.ModeOneofCase.Rotate:
-                    CachedTween.Rotate = new Rotate();
-                    CachedTween.Rotate.Start = new Quaternion();
-                    CachedTween.Rotate.End = new Quaternion();
+                    CachedTween.Rotate = new Rotate
+                    {
+                        Start = new Quaternion(), End = new Quaternion()
+                    };
                     break;
                 case PBTween.ModeOneofCase.Scale:
-                    CachedTween.Scale = new Scale();
-                    CachedTween.Scale.Start = new Vector3();
-                    CachedTween.Scale.End = new Vector3();
+                    CachedTween.Scale = new Scale
+                    {
+                        Start = new Vector3(), End = new Vector3()
+                    };
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException();
             }
-
             CachedTween.MergeFrom(pbTween);
         }
     }
