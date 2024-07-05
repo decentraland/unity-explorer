@@ -74,6 +74,12 @@ namespace DCL.Navmap
             view.PlaceSection.gameObject.SetActive(pinMarker == null);
             view.MapPinSection.gameObject.SetActive(pinMarker != null);
 
+            if (pinMarker != null)
+            {
+                view.MapPinTitle.text = pinMarker.Title;
+                view.MapPinDescription.text = pinMarker.Description;
+            }
+
             if (showBackButton)
             {
                 view.panelAnimator.Rebind();

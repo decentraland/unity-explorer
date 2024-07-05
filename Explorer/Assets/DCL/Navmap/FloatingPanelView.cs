@@ -27,6 +27,12 @@ namespace DCL.Navmap
         public GameObject MapPinSection { get; private set; }
 
         [field: SerializeField]
+        public TMP_Text MapPinTitle { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text MapPinDescription { get; private set; }
+
+        [field: SerializeField]
         public ImageView placeImage;
 
         [field: SerializeField]
