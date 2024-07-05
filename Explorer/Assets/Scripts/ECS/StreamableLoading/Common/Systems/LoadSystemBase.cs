@@ -63,7 +63,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref TIntention intention = ref Unsafe.Add(ref intentionFirstElement, entityIndex);
-                    ref IPartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirstElement, entityIndex);
+                    ref IPartitionComponent partitionComponent = ref Unsafe.Add(ref partitionComponentFirstElement, entityIndex)!;
                     ref StreamableLoadingState state = ref Unsafe.Add(ref stateFirstElement, entityIndex);
 
                     Execute(in entity, ref state, ref intention, ref partitionComponent);
@@ -94,11 +94,17 @@ namespace ECS.StreamableLoading.Common.Systems
             // Indicate that loading has started
             state.StartProgress();
 
-            FlowAsync(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
+            FlowAsync(entity, currentSource, intention, state.AcquiredBudget!, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTask FlowAsync(Entity entity,
-            AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
+        private async UniTask FlowAsync(
+            Entity entity,
+            AssetSource source,
+            TIntention intention,
+            IAcquiredBudget acquiredBudget,
+            IPartitionComponent partition,
+            CancellationToken disposalCt
+        )
         {
             StreamableLoadingResult<TAsset>? result = null;
 
@@ -146,6 +152,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     // Indicate that it should be grabbed by another system
                     // finally will handle the rest
+                    // ReSharper disable once RedundantJumpStatement
                     return;
             }
             catch (Exception e)
