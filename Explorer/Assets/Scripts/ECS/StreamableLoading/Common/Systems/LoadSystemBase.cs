@@ -84,15 +84,12 @@ namespace ECS.StreamableLoading.Common.Systems
                         entity,
                         intention,
                         null,
-                        intention.CommonArguments.CurrentSource,
                         state.AcquiredBudget
                     );
                 }
 
                 return;
             }
-
-            AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
@@ -101,11 +98,10 @@ namespace ECS.StreamableLoading.Common.Systems
             // Indicate that loading has started
             state.StartProgress();
 
-            FlowAsync(entity, currentSource, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
+            FlowAsync(entity, intention, state.AcquiredBudget, partitionComponent, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTask FlowAsync(Entity entity,
-            AssetSource source, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
+        private async UniTask FlowAsync(Entity entity, TIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken disposalCt)
         {
             StreamableLoadingResult<TAsset>? result = null;
 
@@ -125,7 +121,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
                     if (requestIsNotFulfilled)
                     {
-                        await FlowAsync(entity, source, intention, acquiredBudget, partition, disposalCt);
+                        await FlowAsync(entity, intention, acquiredBudget, partition, disposalCt);
                         return;
                     }
                 }
@@ -163,14 +159,13 @@ namespace ECS.StreamableLoading.Common.Systems
                 if (e is not OperationCanceledException)
                     ReportException(e);
             }
-            finally { FinalizeLoading(entity, intention, result, source, acquiredBudget); }
+            finally { FinalizeLoading(entity, intention, result, acquiredBudget); }
         }
 
         protected virtual void DisposeAbandonedResult(TAsset asset) { }
 
         private void FinalizeLoading(Entity entity, TIntention intention,
-            StreamableLoadingResult<TAsset>? result, AssetSource source,
-            IAcquiredBudget? acquiredBudget)
+            StreamableLoadingResult<TAsset>? result, IAcquiredBudget? acquiredBudget)
         {
             if (systemIsDisposed || !World!.IsAlive(entity))
             {
@@ -184,7 +179,7 @@ namespace ECS.StreamableLoading.Common.Systems
 
             if (!exists)
             {
-                ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {source}");
+                ReportHub.LogError(GetReportCategory(), $"Leak detected on loading {intention.ToString()} from {intention.CommonArguments.CurrentSource}");
 
                 // it could be already disposed of, but it's safe to call it again
                 acquiredBudget?.Dispose();
@@ -204,7 +199,7 @@ namespace ECS.StreamableLoading.Common.Systems
                 {
                     IncreaseRefCount(in intention, result.Value.Asset!);
 
-                    ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
+                    ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {intention.CommonArguments.CurrentSource}");
                 }
             }
             else if (intention.CancellationTokenSource.IsCancellationRequested)
