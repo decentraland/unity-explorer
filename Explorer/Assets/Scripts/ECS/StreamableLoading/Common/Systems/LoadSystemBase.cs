@@ -172,15 +172,10 @@ namespace ECS.StreamableLoading.Common.Systems
             StreamableLoadingResult<TAsset>? result, AssetSource source,
             IAcquiredBudget? acquiredBudget)
         {
-            if (systemIsDisposed || !World!.IsAlive(entity))
-            {
-                // World is no longer valid, can't call World.Get
-                // Just Free the budget
-                acquiredBudget?.Dispose();
+            if (IsWorldInvalid(entity, acquiredBudget))
                 return;
-            }
 
-            ref StreamableLoadingState state = ref World.TryGetRef<StreamableLoadingState>(entity, out bool exists);
+            ref StreamableLoadingState state = ref World!.TryGetRef<StreamableLoadingState>(entity, out bool exists);
 
             if (!exists)
             {
@@ -194,23 +189,39 @@ namespace ECS.StreamableLoading.Common.Systems
             state.DisposeBudgetIfExists();
 
             if (result.HasValue)
-            {
-                state.Finish();
-
-                // If we make a structural change before changing refs it will invalidate them, take care!!!
-                World.Add(entity, result.Value);
-
-                if (result.Value.Succeeded)
-                {
-                    IncreaseRefCount(in intention, result.Value.Asset!);
-
-                    ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
-                }
-            }
+                ApplyLoadedResult(in entity, ref state, intention, result, source);
             else if (intention.CancellationTokenSource.IsCancellationRequested)
                 World.Destroy(entity);
             else
                 state.RequestReevaluate();
+        }
+
+        private void ApplyLoadedResult(in Entity entity, ref StreamableLoadingState state, TIntention intention, StreamableLoadingResult<TAsset>? result, AssetSource source)
+        {
+            state.Finish();
+
+            // If we make a structural change before changing refs it will invalidate them, take care!!!
+            World!.Add(entity, result!.Value);
+
+            if (result.Value.Succeeded)
+            {
+                IncreaseRefCount(in intention, result.Value.Asset!);
+
+                ReportHub.Log(GetReportCategory(), $"{intention}'s successfully loaded from {source}");
+            }
+        }
+
+        private bool IsWorldInvalid(in Entity entity, IAcquiredBudget? acquiredBudget)
+        {
+            if (systemIsDisposed || !World!.IsAlive(entity))
+            {
+                // World is no longer valid, can't call World.Get
+                // Just Free the budget
+                acquiredBudget?.Dispose();
+                return true;
+            }
+
+            return false;
         }
 
         private void IncreaseRefCount(in TIntention intention, TAsset asset)
