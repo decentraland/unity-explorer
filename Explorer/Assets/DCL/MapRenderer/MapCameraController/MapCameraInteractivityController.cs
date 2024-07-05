@@ -60,8 +60,7 @@ namespace DCL.MapRenderer.MapCameraController
         {
             marker?.Deactivate();
         }
-
-        //return as out also the eventual data of a map pin, title and desc in a separate struct?
+        
         public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker mark)
         {
             mark = null;

@@ -129,9 +129,6 @@ namespace DCL.MapRenderer.ConsumerUtils
 
         private void ProcessHover(PointerEventData eventData)
         {
-            //as in the click process here the hover of different types of underlying element, either map pin or regular parcel
-            //there will be an additional struct as out with the data of the map pin if present, based on that avoid rendering
-            //the parcel highlight and instead render the map pin highlight
             if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition, out IPinMarker pinMarker))
             {
                 if (highlightEnabled && previousParcel != parcel)
@@ -165,7 +162,6 @@ namespace DCL.MapRenderer.ConsumerUtils
                 interactivityController.RemoveHighlight();
         }
 
-        //Add here a struct (?) for the map pin data
         private bool TryGetParcelUnderPointer(PointerEventData eventData, out Vector2Int parcel, out Vector2 localPosition, out Vector3 worldPosition, out IPinMarker pinMarker)
         {
             pinMarker = null;
