@@ -13,7 +13,7 @@ namespace DCL.SDKComponents.SceneUI.Components
     {
         private static readonly Comparison<VisualElement> CACHED_COMPARISON = TabIndexComparison;
 
-        public VisualElement Transform;
+        public VisualElement? Transform;
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
 
@@ -64,13 +64,13 @@ namespace DCL.SDKComponents.SceneUI.Components
                 if (entitiesMap.TryGetValue(childEntityId, out var child))
                 {
                     var childTransform = world.Get<UITransformComponent>(child);
-                    childTransform.Transform.tabIndex = i;
+                    childTransform.Transform!.tabIndex = i;
                 }
 
                 i++;
             }
 
-            Transform.Sort(CACHED_COMPARISON);
+            Transform!.Sort(CACHED_COMPARISON);
 
             RelationData.layoutIsDirty = false;
         }
@@ -86,7 +86,7 @@ namespace DCL.SDKComponents.SceneUI.Components
             if (isRoot)
                 return;
 
-            Transform.tabIndex = 0;
+            Transform!.tabIndex = 0;
             Transform.RemoveFromHierarchy();
         }
     }

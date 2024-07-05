@@ -8,6 +8,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Defaults;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
 using UnityEngine.UIElements;
@@ -28,25 +29,25 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.canvas = canvas;
-            transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>();
+            transformsPool = poolsRegistry.GetReferenceTypePool<UITransformComponent>().EnsureNotNull();
         }
 
         protected override void Update(float t)
         {
-            InstantiateUITransformQuery(World);
+            InstantiateUITransformQuery(World!);
         }
 
         [Query]
         [None(typeof(UITransformComponent))]
         private void InstantiateUITransform(in Entity entity, CRDTEntity sdkEntity, ref PBUiTransform sdkModel)
         {
-            UITransformComponent newTransform = transformsPool.Get();
-
+            UITransformComponent newTransform = transformsPool.Get()!;
             newTransform.Initialize(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
 
-            canvas.rootVisualElement.Add(newTransform.Transform);
+            if (canvas.rootVisualElement != newTransform.Transform)
+                canvas.rootVisualElement!.Add(newTransform.Transform.EnsureNotNull());
 
-            World.Add(entity, newTransform);
+            World!.Add(entity, newTransform);
         }
     }
 }
