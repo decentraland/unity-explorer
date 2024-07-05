@@ -65,7 +65,7 @@ namespace ECS.Unity.Materials.Systems
 
             MaterialData materialData = CreateMaterialData(ref material);
 
-            if (MaterialDataEqualityComparer.INSTANCE.Equals(materialComponent.Data, materialData))
+            if (MaterialDataEqualityComparer.Equals(in materialComponent.Data, in materialData))
                 return;
 
             InvalidatePrbInequality(ref materialComponent, ref materialData);

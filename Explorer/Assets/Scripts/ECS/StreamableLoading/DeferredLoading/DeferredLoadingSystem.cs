@@ -91,7 +91,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             for (; i < loadingIntentions.Count; i++)
             {
                 ref StreamableLoadingState state = ref loadingIntentions[i].StatePointer.Value;
-                state.Value = Status.Forbidden;
+                state.Forbid();
             }
         }
 
