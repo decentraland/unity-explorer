@@ -73,26 +73,19 @@ namespace ECS.StreamableLoading.Common.Systems
 
         private void Execute(in Entity entity, ref StreamableLoadingState state, ref TIntention intention, ref IPartitionComponent partitionComponent)
         {
+            AssetSource currentSource = intention.CommonArguments.CurrentSource;
+
             if (state.Value != StreamableLoadingState.Status.Allowed)
             {
                 // If state is in progress the flow was already launched and it will call FinalizeLoading on its own
                 if (state.Value != StreamableLoadingState.Status.InProgress && intention.CancellationTokenSource.IsCancellationRequested)
-                {
+
                     // If we don't finalize promises preemptively they are being stacked in DeferredLoadingSystem
                     // if it's unable to keep up with their number
-                    FinalizeLoading(
-                        entity,
-                        intention,
-                        null,
-                        intention.CommonArguments.CurrentSource,
-                        state.AcquiredBudget
-                    );
-                }
+                    FinalizeLoading(entity, intention, null, currentSource, state.AcquiredBudget);
 
                 return;
             }
-
-            AssetSource currentSource = intention.CommonArguments.CurrentSource;
 
             // Remove current source flag from the permitted sources
             // it indicates that the current source was used
