@@ -95,7 +95,7 @@ namespace SceneRunner.ECSWorld
 
             SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
 
-            if (!args.SceneData.IsPortableExperience()) { singletonDependencies.SceneMapping.Register(args.SceneData.SceneShortInfo.Name, args.SceneData.Parcels, world); }
+            singletonDependencies.SceneMapping.Register(args.SceneData.SceneShortInfo.Name, args.SceneData.Parcels, world);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems, isCurrentListeners);
         }
