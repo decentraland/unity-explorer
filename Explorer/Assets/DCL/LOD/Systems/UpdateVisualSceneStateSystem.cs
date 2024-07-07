@@ -9,6 +9,7 @@ using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
+using SceneRunner;
 using SceneRunner.Scene;
 using System.Runtime.CompilerServices;
 
@@ -20,28 +21,27 @@ namespace ECS.SceneLifeCycle.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
     {
-        private readonly IRealmData realmData;
-        private readonly IScenesCache scenesCache;
-        private readonly ILODAssetsPool lodAssetsPool;
-        private readonly ILODSettingsAsset lodSettingsAsset;
+        /// <summary>
+        ///     Represents one of the methods in UpdateVisualSceneStateSystem, they should be converted to static ones to avoid closures
+        /// </summary>
+        private delegate void ContinuationMethod<T>(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref T switchComponent);
 
         private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
                                                                            .WithAll<VisualSceneState, PartitionComponent, SceneDefinitionComponent>()
                                                                            .WithAny<SceneLODInfo, ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>()
                                                                            .WithNone<DeleteEntityIntention>();
-
-        /// <summary>
-        ///     Represents one of the methods in UpdateVisualSceneStateSystem, they should be converted to static ones to avoid closures
-        /// </summary>
-        private delegate void ContinuationMethod<T>(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref T switchComponent);
+        private readonly IRealmData realmData;
+        private readonly IScenesCache scenesCache;
+        private readonly ILODAssetsPool lodAssetsPool;
+        private readonly ILODSettingsAsset lodSettingsAsset;
 
         private readonly ContinuationMethod<ISceneFacade> sceneFacadeToLODContinuation;
         private readonly ContinuationMethod<AssetPromise<ISceneFacade, GetSceneFacadeIntention>> scenePromiseToLODContinuation;
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver) : base(world)
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset,
+            VisualSceneStateResolver visualSceneStateResolver) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
@@ -96,9 +96,13 @@ namespace ECS.SceneLifeCycle.Systems
 
                 foreach (int entityIndex in chunk)
                 {
+                    ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref scenedefinitioncomponentFirstElement, entityIndex);
+
+                    if (sceneDefinitionComponent.IsPortableExperience) continue;
+
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref VisualSceneState visualSceneStateComponent = ref Unsafe.Add(ref visualscenestateFirstElement, entityIndex);
-                    ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref scenedefinitioncomponentFirstElement, entityIndex);
+
                     ref T customComponent = ref Unsafe.Add(ref customComponentFirstElement, entityIndex);
                     ref PartitionComponent partitionComponent = ref Unsafe.Add(ref partitioncomponentFirstElement, entityIndex);
 
@@ -116,37 +120,42 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void SwapScenePromiseToLOD(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> switchcomponent)
         {
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
-            {
-                var sceneLODInfo = SceneLODInfo.Create();
+            if (sceneDefinitionComponent.IsPortableExperience) return;
 
-                //Dispose Promise
-                switchcomponent.ForgetLoading(World);
+            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
-                visualSceneState.IsDirty = false;
+            var sceneLODInfo = SceneLODInfo.Create();
 
-                World.Add(entity, sceneLODInfo);
-                World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
-            }
+            //Dispose Promise
+            switchcomponent.ForgetLoading(World);
+
+            visualSceneState.IsDirty = false;
+
+            World.Add(entity, sceneLODInfo);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
         }
 
         private void SwapLODToScenePromise(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLODInfo switchComponent)
         {
-            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
-            {
-                switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
-                visualSceneState.IsDirty = false;
+            if (sceneDefinitionComponent.IsPortableExperience) return;
 
-                //Show Scene
-                World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
-                    new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
-                    partitionComponent));
-                World.Remove<SceneLODInfo>(entity);
-            }
+            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_SCENE) return;
+
+            switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
+            visualSceneState.IsDirty = false;
+
+            //Show Scene
+            World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
+                new GetSceneFacadeIntention(realmData.Ipfs, sceneDefinitionComponent),
+                partitionComponent));
+
+            World.Remove<SceneLODInfo>(entity);
         }
 
         private void SwapSceneFacadeToLOD(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref ISceneFacade switchComponent)
         {
+            if (sceneDefinitionComponent.IsPortableExperience) { return; }
+
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
                 //Create LODInfo
@@ -161,6 +170,5 @@ namespace ECS.SceneLifeCycle.Systems
                 World.Remove<ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>(entity);
             }
         }
-
     }
 }

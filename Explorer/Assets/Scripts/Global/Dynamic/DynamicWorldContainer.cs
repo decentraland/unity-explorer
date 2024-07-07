@@ -138,6 +138,7 @@ namespace Global.Dynamic
 
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, staticContainer.AssetsProvisioner, ct).ThrowOnFail();
+
                 container.LODContainer = await LODContainer.CreateAsync(staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
             }
 
@@ -299,6 +300,7 @@ namespace Global.Dynamic
                                        .WithIgnoreSymbols()
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
+
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(

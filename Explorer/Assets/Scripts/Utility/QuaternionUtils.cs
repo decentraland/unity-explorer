@@ -26,8 +26,17 @@ namespace Utility
                 this.allowedError = allowedError;
             }
 
-            public bool Equals(Quaternion expected, Quaternion actual) =>
-                Mathf.Abs(Quaternion.Dot(expected, actual)) > 1.0f - allowedError;
+            public bool Equals(Quaternion expected, Quaternion actual)
+            {
+                //I noticed some quaternion comparisons where returning false when both quaternions where exactly the same
+                //that is fixed with these comparisons
+                if (Mathf.Approximately(expected.x, actual.x) && Mathf.Approximately(expected.y, actual.y) &&
+                    Mathf.Approximately(expected.z, actual.z) && Mathf.Approximately(expected.w, actual.w)) { return true; }
+
+                float dot = Mathf.Abs(Quaternion.Dot(expected, actual));
+
+                return dot > 1.0f - allowedError;
+            }
 
             /// <summary>
             ///     Serves as the default hash function.

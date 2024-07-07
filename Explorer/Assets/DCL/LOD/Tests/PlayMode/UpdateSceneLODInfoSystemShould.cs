@@ -1,3 +1,4 @@
+using Arch.Core;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
@@ -14,25 +15,26 @@ namespace DCL.LOD.Tests
 {
     public class UpdateSceneLODInfoSystemShould : UnitySystemTestBase<UpdateSceneLODInfoSystem>
     {
+        private const string fakeHash = "FAKE_HASH";
         private SceneLODInfo sceneLODInfo;
         private LODAssetsPool lodAssetsPool;
         private PartitionComponent partitionComponent;
         private SceneDefinitionComponent sceneDefinitionComponent;
 
-        private const string fakeHash = "FAKE_HASH";
-
         [SetUp]
         public void Setup()
         {
-            var lodSettings = Substitute.For<ILODSettingsAsset>();
+            ILODSettingsAsset? lodSettings = Substitute.For<ILODSettingsAsset>();
+
             int[] bucketThresholds =
             {
-                2
+                2,
             };
+
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
-            var scenesCache = Substitute.For<IScenesCache>();
-            var sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
+            IScenesCache? scenesCache = Substitute.For<IScenesCache>();
+            ISceneReadinessReportQueue? sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
 
             partitionComponent = new PartitionComponent();
 
@@ -44,13 +46,13 @@ namespace DCL.LOD.Tests
                     {
                         DecodedBase = new Vector2Int(0, 0), DecodedParcels = new Vector2Int[]
                         {
-                            new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1)
-                        }
-                    }
-                }
+                            new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1),
+                        },
+                    },
+                },
             };
 
-            sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
+            sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();
@@ -58,8 +60,8 @@ namespace DCL.LOD.Tests
             system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue);
         }
 
-
         [Test]
+
         //Note: Test modified due to LOD level always defaulting to 3 while we rebuild all of them
         [TestCase(0, 0)]
         [TestCase(1, 0)]
@@ -72,19 +74,14 @@ namespace DCL.LOD.Tests
             //Arrange
             partitionComponent.IsDirty = true;
             partitionComponent.Bucket = bucket;
-            var entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent);
+            Entity entity = world.Create(sceneLODInfo, partitionComponent, sceneDefinitionComponent);
 
             //Act
             system.Update(0);
-            
+
             //Assert
             Assert.AreEqual(expectedLODLevel, world.Get<SceneLODInfo>(entity).CurrentLODLevel);
         }
-
-
-  
-         
-       
 
         /*
    TODO: Uncomment when LOD Async Instantiation is back up
@@ -115,8 +112,5 @@ namespace DCL.LOD.Tests
       Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
   }
   */
-        
-
-
     }
 }

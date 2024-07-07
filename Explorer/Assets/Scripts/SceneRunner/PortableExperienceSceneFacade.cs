@@ -17,11 +17,10 @@ namespace SceneRunner
     {
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
+        private int intervalMS;
+
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
-
-        private ISceneRuntime runtimeInstance => deps.Runtime;
-        private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public ISceneData SceneData { get; }
 
@@ -29,7 +28,8 @@ namespace SceneRunner
 
         public SceneShortInfo Info => SceneData.SceneShortInfo;
 
-        private int intervalMS;
+        private ISceneRuntime runtimeInstance => deps.Runtime;
+        private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public PortableExperienceSceneFacade(
             ISceneData sceneData,
@@ -62,21 +62,11 @@ namespace SceneRunner
         UniTask ISceneFacade.Tick(float dt) =>
             runtimeInstance.UpdateScene(dt);
 
-        public bool Contains(Vector2Int parcel)
-        {
-            foreach (Vector2Int sceneParcel in SceneData.Parcels)
-            {
-                if (sceneParcel != parcel) continue;
-                return true;
-            }
+        public bool Contains(Vector2Int parcel) =>
+            true;
 
-            return false;
-        }
-
-        public bool IsSceneReady()
-        {
-            return SceneData.SceneLoadingConcluded;
-        }
+        public bool IsSceneReady() =>
+            SceneData.SceneLoadingConcluded;
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
@@ -122,6 +112,8 @@ namespace SceneRunner
                         or SceneState.Disposed
                         or SceneState.JavaScriptError
                         or SceneState.EngineError)
+
+                        //In this case we should probably also remove the real that contains this PX
                         break;
 
                     stopWatch.Restart();
@@ -183,9 +175,9 @@ namespace SceneRunner
 
         public void SetIsCurrent(bool isCurrent)
         {
-            SceneStateProvider.IsCurrent = isCurrent;
-            runtimeInstance.OnSceneIsCurrentChanged(isCurrent);
-            deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(isCurrent);
+            SceneStateProvider.IsCurrent = true;
+            runtimeInstance.OnSceneIsCurrentChanged(true);
+            deps.SyncDeps.ECSWorldFacade.OnSceneIsCurrentChanged(true);
         }
 
         public async UniTask DisposeAsync()

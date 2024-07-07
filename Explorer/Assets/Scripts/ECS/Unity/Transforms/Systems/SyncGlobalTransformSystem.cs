@@ -1,9 +1,5 @@
 using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
-using DCL.Character;
-using DCL.Character.Components;
 using DCL.CharacterCamera;
 using ECS.Abstract;
 using ECS.Groups;

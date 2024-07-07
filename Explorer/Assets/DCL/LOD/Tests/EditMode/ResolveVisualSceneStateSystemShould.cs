@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Arch.Core;
+using System.Collections.Generic;
 using DCL.Ipfs;
 using ECS;
 using ECS.Prioritization.Components;
@@ -19,23 +20,26 @@ namespace DCL.LOD.Tests
 
         private static readonly IReadOnlyList<Vector2Int> SAMPLE_PARCELS = new Vector2Int[]
         {
-            new (0, 0), new (0, 1), new (1, 0), new (1, 1)
+            new (0, 0), new (0, 1), new (1, 0), new (1, 1),
         };
 
         [SetUp]
         public void Setup()
         {
-            var lodSettings = Substitute.For<ILODSettingsAsset>();
+            ILODSettingsAsset lodSettings = Substitute.For<ILODSettingsAsset>();
+
             int[] bucketThresholds =
             {
-                4, 8
+                4, 8,
             };
+
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
             lodSettings.SDK7LodThreshold.Returns(2);
-            var realmData = Substitute.For<IRealmData>();
+            IRealmData realmData = Substitute.For<IRealmData>();
+
             system = new ResolveVisualSceneStateSystem(world, lodSettings, new VisualSceneStateResolver(new HashSet<Vector2Int>
             {
-                ROAD_BASE_PARCEL
+                ROAD_BASE_PARCEL,
             }), realmData);
         }
 
@@ -48,19 +52,21 @@ namespace DCL.LOD.Tests
                 {
                     scene = new SceneMetadataScene
                     {
-                        DecodedParcels = SAMPLE_PARCELS, DecodedBase = REGULAR_PARCEL
-                    }
-                }
+                        DecodedParcels = SAMPLE_PARCELS, DecodedBase = REGULAR_PARCEL,
+                    },
+                },
             };
-            var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-            var entity = world.Create( new PartitionComponent
+
+            SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+
+            Entity entity = world.Create(new PartitionComponent
             {
-                IsDirty = true
+                IsDirty = true,
             }, sceneDefinitionComponent);
 
             system.Update(0);
 
-            var visualSceneState = world.Get<VisualSceneState>(entity);
+            VisualSceneState visualSceneState = world.Get<VisualSceneState>(entity);
 
             Assert.IsFalse(visualSceneState.IsDirty);
             Assert.IsTrue(visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD);
@@ -75,19 +81,21 @@ namespace DCL.LOD.Tests
                 {
                     scene = new SceneMetadataScene
                     {
-                        DecodedParcels = SAMPLE_PARCELS, DecodedBase = ROAD_BASE_PARCEL
-                    }
-                }
+                        DecodedParcels = SAMPLE_PARCELS, DecodedBase = ROAD_BASE_PARCEL,
+                    },
+                },
             };
-            var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-            var entity = world.Create( new PartitionComponent
+
+            SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+
+            Entity entity = world.Create(new PartitionComponent
             {
-                IsDirty = true
+                IsDirty = true,
             }, sceneDefinitionComponent);
 
             system.Update(0);
 
-            var visualSceneState = world.Get<VisualSceneState>(entity);
+            VisualSceneState visualSceneState = world.Get<VisualSceneState>(entity);
 
             Assert.IsFalse(visualSceneState.IsDirty);
             Assert.IsTrue(visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.ROAD);
@@ -109,18 +117,18 @@ namespace DCL.LOD.Tests
                 {
                     scene = new SceneMetadataScene
                     {
-                        DecodedParcels = SAMPLE_PARCELS
+                        DecodedParcels = SAMPLE_PARCELS,
                     },
-                    runtimeVersion = "7"
-                }
+                    runtimeVersion = "7",
+                },
             };
 
-            var sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-            var entity = world.Create( partitionComponent, sceneDefinitionComponent);
+            SceneDefinitionComponent sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
+            Entity entity = world.Create(partitionComponent, sceneDefinitionComponent);
 
             system.Update(0);
 
-            var visualSceneState = world.Get<VisualSceneState>(entity);
+            VisualSceneState visualSceneState = world.Get<VisualSceneState>(entity);
 
             Assert.IsFalse(visualSceneState.IsDirty);
             Assert.IsTrue(visualSceneState.CurrentVisualSceneState == expectedVisualSceneState);

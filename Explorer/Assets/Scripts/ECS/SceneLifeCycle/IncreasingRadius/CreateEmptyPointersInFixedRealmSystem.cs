@@ -61,7 +61,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 // we need to check it again as parcelInfo.AlreadyProcessed corresponds to the moment of splitting
                 if (!processedScenePointers.Value.Contains(parcelInfo.Parcel))
                 {
-                    World.Create(new SceneDefinitionComponent(parcelInfo.Parcel.ToVector2Int()));
+                    World.Create(SceneDefinitionComponentFactory.CreateEmpty(parcelInfo.Parcel.ToVector2Int()));
                     pointersCreated++;
                     processedScenePointers.Value.Add(parcelInfo.Parcel);
                 }

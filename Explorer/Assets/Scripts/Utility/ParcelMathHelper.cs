@@ -14,7 +14,7 @@ namespace Utility
             Vector3.zero,
             new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue));
 
-        public static readonly Vector3 RoadPivotDeviation  =  new (8, 0, 8);
+        public static readonly Vector3 RoadPivotDeviation = new (8, 0, 8);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2 ToInt2(this Vector2Int vector2Int) =>
@@ -86,13 +86,6 @@ namespace Utility
             return new ParcelCorners(min, min + new Vector3(0, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, PARCEL_SIZE), min + new Vector3(PARCEL_SIZE, 0, 0));
         }
 
-        public static ParcelCorners CalculateMaxCorners() =>
-            new (
-                minXZ: new Vector3(float.MinValue, 0, float.MinValue),
-                minXmaxZ: new Vector3(float.MinValue, 0, float.MaxValue),
-                maxXZ: new Vector3(float.MaxValue, 0, float.MaxValue),
-                maxXminZ: new Vector3(float.MaxValue, 0, float.MinValue));
-
         public static Vector2Int FloorToParcel(Vector3 position) =>
             new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
 
@@ -127,21 +120,17 @@ namespace Utility
             }
         }
 
-        public static Vector2Int WorldToGridPosition(Vector3 worldPosition)
-        {
-            return new Vector2Int(
+        public static Vector2Int WorldToGridPosition(Vector3 worldPosition) =>
+            new (
                 (int)Mathf.Floor(worldPosition.x / PARCEL_SIZE),
                 (int)Mathf.Floor(worldPosition.z / PARCEL_SIZE)
             );
-        }
 
-        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition)
-        {
-            return new Vector2(
+        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition) =>
+            new (
                 worldPosition.x / PARCEL_SIZE,
                 worldPosition.z / PARCEL_SIZE
             );
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)

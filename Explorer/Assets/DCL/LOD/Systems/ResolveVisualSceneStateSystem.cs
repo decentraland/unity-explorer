@@ -41,8 +41,8 @@ namespace ECS.SceneLifeCycle.Systems
             if (!partition.IsDirty) return;
 
             if (partition.OutOfRange) return;
-            
-            VisualSceneState visualSceneState = new VisualSceneState();
+
+            var visualSceneState = new VisualSceneState();
             visualSceneStateResolver.ResolveVisualSceneState(ref visualSceneState, partition, sceneDefinitionComponent, lodSettingsAsset, realmData);
             visualSceneState.IsDirty = false;
             World.Add(entity, visualSceneState);

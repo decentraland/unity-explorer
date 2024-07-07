@@ -41,8 +41,8 @@ namespace Global.Dynamic
         private readonly IScenesCache scenesCache;
 
         private GlobalWorld? globalWorld;
-        public Dictionary<string,Entity> PortableExperienceEntities { get; } = new (); //Probably should be a dictionary using the url as key?
-        private RealmData realmData = new RealmData();
+        private readonly RealmData realmData = new ();
+        public Dictionary<string, Entity> PortableExperienceEntities { get; } = new (); //Probably should be a dictionary using the url as key?
 
         public GlobalWorld GlobalWorld
         {
@@ -80,8 +80,10 @@ namespace Global.Dynamic
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
-            try {
+            try
+            { //in case the url is wrong or any other potential issue with the request
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+
                 if (result.configurations.scenesUrn.Count == 0)
                 {
                     //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
@@ -103,7 +105,6 @@ namespace Global.Dynamic
                 Console.WriteLine(e);
                 throw;
             }
-
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>

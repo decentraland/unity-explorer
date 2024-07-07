@@ -35,7 +35,7 @@ namespace Global.Dynamic
         [Header("Startup Config")] [SerializeField]
         private RealmLaunchSettings launchSettings;
 
-        [Space] [SerializeField] private DebugViewsCatalog debugViewsCatalog = new();
+        [Space] [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space] [SerializeField] private bool showSplash;
         [SerializeField] private bool showAuthentication;
@@ -93,7 +93,7 @@ namespace Global.Dynamic
             {
                 // Exclude SharedPlugins as they were disposed as they were already disposed of as `GlobalPlugins`
                 foreach (IDCLPlugin worldPlugin in staticContainer.ECSWorldPlugins.Except<IDCLPlugin>(staticContainer
-                             .SharedPlugins))
+                            .SharedPlugins))
                     worldPlugin.SafeDispose(ReportCategory.ENGINE);
 
                 staticContainer.SafeDispose(ReportCategory.ENGINE);
@@ -232,18 +232,19 @@ namespace Global.Dynamic
                 var anyFailure = false;
 
                 void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result)
-                    where TPluginInterface : IDCLPlugin
+                    where TPluginInterface: IDCLPlugin
                 {
                     if (!result.success)
                         anyFailure = true;
                 }
 
                 await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp =>
-                        scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized))
-                    .EnsureNotNull());
+                                                           scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized))
+                                                      .EnsureNotNull());
+
                 await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp =>
-                        globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized))
-                    .EnsureNotNull());
+                                                                 globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized))
+                                                            .EnsureNotNull());
 
                 if (anyFailure)
                 {
@@ -263,9 +264,9 @@ namespace Global.Dynamic
                 await ChangeRealmAsync(ct);
 
                 //Load all the URLS from wherever to create the permanent PXs
-                var pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/PizzaPie.dcl.eth");
+                var pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/NicoE.dcl.eth");
                 await dynamicWorldContainer!.PortableExperiencesController.CreatePortableExperienceAsync(pXURLDomain, ct);
-                pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/pejo.dcl.eth");
+                pXURLDomain = URLDomain.FromString("https://worlds-content-server.decentraland.org/world/globalpx.dcl.eth");
                 await dynamicWorldContainer!.PortableExperiencesController.CreatePortableExperienceAsync(pXURLDomain, ct);
 
                 if (showSplash)
@@ -302,8 +303,10 @@ namespace Global.Dynamic
         {
             // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
+
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct)
-                .Forget();
+                      .Forget();
+
             mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }
@@ -322,14 +325,8 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
-            try
-            {
-                await staticContainer!.FeatureFlagsProvider.InitializeAsync(identityCache!.Identity?.Address, ct);
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
-            }
+            try { await staticContainer!.FeatureFlagsProvider.InitializeAsync(identityCache!.Identity?.Address, ct); }
+            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

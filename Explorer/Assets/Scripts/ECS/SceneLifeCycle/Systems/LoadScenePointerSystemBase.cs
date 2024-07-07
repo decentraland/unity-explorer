@@ -14,8 +14,10 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected LoadScenePointerSystemBase(World world) : base(world) { }
 
-        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool isPortableExperience = false) =>
-            World.Create(new SceneDefinitionComponent(definition, ipfsPath, isPortableExperience));
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool forcePortableExperience = false) =>
+            World.Create(forcePortableExperience ? SceneDefinitionComponentFactory.CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath) : SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
+
+        //TODO FRAN: This is a dirty CHEAT to be able to load any world as PX even if their metadata isnt set as PX, this should be removed before merging
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet
@@ -35,7 +37,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                World.Create(new SceneDefinitionComponent(definition, ipfsPath));
+                World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
             }
         }
     }
