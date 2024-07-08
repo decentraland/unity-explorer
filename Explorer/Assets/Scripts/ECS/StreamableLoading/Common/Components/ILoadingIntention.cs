@@ -17,6 +17,9 @@ namespace ECS.StreamableLoading.Common.Components
 
     public static class LoadingIntentionExtensions
     {
+        public static bool IsCancelled<T>(this ref T intention) where T: struct, ILoadingIntention =>
+            intention.CancellationTokenSource.IsCancellationRequested;
+
         public static void SetURL<T>(this ref T loadingIntention, URLAddress url) where T: struct, ILoadingIntention
         {
             CommonLoadingArguments ca = loadingIntention.CommonArguments;

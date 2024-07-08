@@ -7,6 +7,7 @@ using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
@@ -19,9 +20,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
-        private readonly IStreamableCache<GltfContainerAsset, string> cache;
+        private readonly IGltfContainerAssetsCache cache;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IStreamableCache<GltfContainerAsset, string> cache) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache) : base(world)
         {
             this.cache = cache;
         }
