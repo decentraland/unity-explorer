@@ -34,10 +34,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         protected override void Update(float _)
         {
-            UpdateUITransformQuery(World);
+            UpdateUITransformQuery(World!);
 
             // For newly created and modified entities
-            CheckUITransformOutOfSceneQuery(World, sceneStateProvider.IsCurrent);
+            CheckUITransformOutOfSceneQuery(World!, sceneStateProvider.IsCurrent);
         }
 
         [Query]
@@ -63,11 +63,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             switch (isCurrent)
             {
                 case false when !uiTransformComponent.IsHidden:
-                    canvas.rootVisualElement.Remove(uiTransformComponent.Transform);
+                    canvas.rootVisualElement!.Remove(uiTransformComponent.Transform!);
                     uiTransformComponent.IsHidden = true;
                     break;
                 case true when uiTransformComponent.IsHidden:
-                    canvas.rootVisualElement.Add(uiTransformComponent.Transform);
+                    canvas.rootVisualElement!.Add(uiTransformComponent.Transform!);
                     uiTransformComponent.IsHidden = false;
                     break;
             }
@@ -75,7 +75,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
 
         public void OnSceneIsCurrentChanged(bool value)
         {
-            CheckUITransformOutOfSceneQuery(World, value);
+            CheckUITransformOutOfSceneQuery(World!, value);
         }
     }
 }
