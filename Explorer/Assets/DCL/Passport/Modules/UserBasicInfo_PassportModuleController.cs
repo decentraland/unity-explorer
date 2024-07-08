@@ -64,7 +64,8 @@ namespace DCL.Passport.Modules
             LayoutRebuilder.ForceRebuildLayoutImmediate(view.WalletAddressContainer);
 
             checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
-            CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
+            // TODO (Santi): Uncomment this when the name's edition is available
+            //CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
         }
 
         public void Clear() { }
