@@ -10,9 +10,12 @@ using ECS.Abstract;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using System;
+using System.Runtime.CompilerServices;
+using Utility.Arch;
 
 namespace ECS.Unity.GLTFContainer.Systems
 {
@@ -24,13 +27,13 @@ namespace ECS.Unity.GLTFContainer.Systems
     [ThrottlingEnabled]
     public partial class ResetGltfContainerSystem : BaseUnityLoopSystem
     {
-        private readonly IDereferencableCache<GltfContainerAsset, string> cache;
+        private readonly IGltfContainerAssetsCache cache;
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
         internal ResetGltfContainerSystem(World world,
-            IDereferencableCache<GltfContainerAsset, string> cache,
+            IGltfContainerAssetsCache cache,
             IEntityCollidersSceneCache entityCollidersSceneCache,
             EntityEventBuffer<GltfContainerComponent> eventsBuffer,
             IECSToCRDTWriter ecsToCRDTWriter) : base(world)
@@ -51,11 +54,12 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         [Query]
         [None(typeof(PBGltfContainer))]
-        private void HandleComponentRemoval(ref GltfContainerComponent component, CRDTEntity sdkEntity)
+        private void HandleComponentRemoval(Entity entity, ref GltfContainerComponent component, CRDTEntity sdkEntity)
         {
             TryReleaseAsset(ref component);
             component.Promise.ForgetLoading(World);
             ecsToCRDTWriter.DeleteMessage<PBGltfContainerLoadingState>(sdkEntity);
+            RemoveAnimationMarker(entity);
         }
 
         private void TryReleaseAsset(ref GltfContainerComponent component)
@@ -65,6 +69,16 @@ namespace ECS.Unity.GLTFContainer.Systems
                 cache.Dereference(component.Source, result.Asset);
                 entityCollidersSceneCache.Remove(result.Asset);
             }
+        }
+
+        /// <summary>
+        ///     When asset is invalidated we must delete the previous Animation marker if it was added.<br/>
+        ///     Leads to the structural change so it will invalidate arguments passed by `ref` and `in`
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RemoveAnimationMarker(Entity entity)
+        {
+            World.TryRemove<LegacyGltfAnimation>(entity);
         }
 
         [Query]
@@ -78,6 +92,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                 component.State = LoadingState.Unknown;
                 component.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
                 eventsBuffer.Add(entity, component);
+                RemoveAnimationMarker(entity);
             }
         }
     }
