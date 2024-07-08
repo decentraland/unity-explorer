@@ -58,6 +58,9 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
                 return component!.Transform == canvas.rootVisualElement;
             }
 
+            if (IsRootVisualElement() == false)
+                return component;
+
             for (var i = 0; i < TRIES_COUNT; i++)
             {
                 component = transformsPool.Get()!;
