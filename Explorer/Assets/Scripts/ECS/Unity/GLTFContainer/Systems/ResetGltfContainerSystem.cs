@@ -37,12 +37,13 @@ namespace ECS.Unity.GLTFContainer.Systems
             IGltfContainerAssetsCache cache,
             IEntityCollidersSceneCache entityCollidersSceneCache,
             EntityEventBuffer<GltfContainerComponent> eventsBuffer,
-            IECSToCRDTWriter ecsToCRDTWriter) : base(world)
+            IECSToCRDTWriter ecsToCRDTWriter, string sceneName) : base(world)
         {
             this.cache = cache;
             this.entityCollidersSceneCache = entityCollidersSceneCache;
             this.eventsBuffer = eventsBuffer;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
+            this.sceneName = sceneName;
         }
 
         protected override void Update(float t)

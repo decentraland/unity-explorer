@@ -36,7 +36,8 @@ namespace ECS.Unity.GLTFContainer.Tests
                 cache = Substitute.For<IGltfContainerAssetsCache>(),
                 entityCollidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(),
                 eventBuffer = new EntityEventBuffer<GltfContainerComponent>(1),
-                ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>());
+                ecsToCRDTWriter = Substitute.For<IECSToCRDTWriter>(),
+                "0,0");
         }
 
         [Test]

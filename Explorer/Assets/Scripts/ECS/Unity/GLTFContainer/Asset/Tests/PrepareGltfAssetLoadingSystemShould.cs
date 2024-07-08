@@ -45,7 +45,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
             cache.TryGet("0,0", "TEST", out Arg.Any<GltfContainerAsset>())
                  .Returns(c =>
                   {
-                      c[1] = asset;
+                    c[2] = asset;
                       return true;
                   });
 
