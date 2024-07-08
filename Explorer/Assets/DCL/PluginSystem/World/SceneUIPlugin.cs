@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.World
         {
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
+            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200)!;
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent, maxSize: 50);
@@ -53,7 +53,7 @@ namespace DCL.PluginSystem.World
             canvas = (await assetsProvisioner.ProvideInstanceAsync(settings.Canvas, ct: ct)).Value;
             StyleSheet scenesUIStyleSheet = (await assetsProvisioner.ProvideMainAssetAsync(settings.StyleSheet, ct)).Value;
 
-            canvas.rootVisualElement.styleSheets.Add(scenesUIStyleSheet);
+            canvas.rootVisualElement!.styleSheets.Add(scenesUIStyleSheet);
             canvas.rootVisualElement.AddToClassList("sceneUIMainCanvas");
             canvas.rootVisualElement.pickingMode = PickingMode.Ignore;
         }
