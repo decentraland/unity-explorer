@@ -22,6 +22,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     {
         private const string COMPONENT_NAME = "UITransform";
 
+        private const int TRIES_COUNT = 10;
         private readonly UIDocument canvas;
         private readonly IComponentPool<UITransformComponent> transformsPool;
 
@@ -47,11 +48,27 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             World!.Add(entity, newTransform);
         }
 
+        // allows to avoid getting from the pool the same element that that already is rootVisualElement
         private UITransformComponent NewUITransformComponent()
         {
             var component = transformsPool.Get()!;
-            //allows to avoid getting from the pool the same element that that already is rootVisualElement
-            while (component.Transform == canvas.rootVisualElement) component = transformsPool.Get()!;
+
+            bool IsRootVisualElement()
+            {
+                return component!.Transform == canvas.rootVisualElement;
+            }
+
+            for (var i = 0; i < TRIES_COUNT; i++)
+            {
+                component = transformsPool.Get()!;
+
+                if (IsRootVisualElement() == false)
+                    break;
+            }
+
+            if (IsRootVisualElement())
+                throw new System.Exception("UITransformInstantiationSystem: Could not get a UITransformComponent that is not the rootVisualElement");
+
             return component;
         }
     }
