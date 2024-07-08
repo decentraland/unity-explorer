@@ -41,13 +41,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [None(typeof(UITransformComponent))]
         private void InstantiateUITransform(in Entity entity, CRDTEntity sdkEntity, ref PBUiTransform sdkModel)
         {
-            UITransformComponent newTransform = transformsPool.Get()!;
+            UITransformComponent newTransform = NewUITransformComponent();
             newTransform.Initialize(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
-
-            if (canvas.rootVisualElement != newTransform.Transform)
-                canvas.rootVisualElement!.Add(newTransform.Transform.EnsureNotNull());
-
+            canvas.rootVisualElement!.Add(newTransform.Transform.EnsureNotNull());
             World!.Add(entity, newTransform);
+        }
+
+        private UITransformComponent NewUITransformComponent()
+        {
+            var component = transformsPool.Get()!;
+            //allows to avoid getting from the pool the same element that that already is rootVisualElement
+            while (component.Transform == canvas.rootVisualElement) component = transformsPool.Get()!;
+            return component;
         }
     }
 }
