@@ -6,8 +6,8 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 
@@ -25,7 +25,7 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
-        internal CleanUpGltfContainerSystem(World world, IDereferencableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
         {
             releaseOnEntityDestroy = new ReleaseOnEntityDestroy(cache, entityCollidersSceneCache, World);
         }
@@ -43,10 +43,10 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly struct ReleaseOnEntityDestroy : IForEach<GltfContainerComponent>
         {
             private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
-            private readonly IDereferencableCache<GltfContainerAsset, string> cache;
+            private readonly IGltfContainerAssetsCache cache;
             private readonly World world;
 
-            public ReleaseOnEntityDestroy(IDereferencableCache<GltfContainerAsset, string> cache, IEntityCollidersSceneCache entityCollidersSceneCache, World world)
+            public ReleaseOnEntityDestroy(IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, World world)
             {
                 this.cache = cache;
                 this.world = world;
