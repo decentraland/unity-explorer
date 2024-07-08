@@ -20,10 +20,12 @@ namespace ECS.SceneLifeCycle.Systems
     public partial class UnloadSceneSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IScenesCache scenesCache;
+        private readonly SceneAssetLock sceneAssetLock;
 
-        internal UnloadSceneSystem(World world, IScenesCache scenesCache) : base(world)
+        internal UnloadSceneSystem(World world, IScenesCache scenesCache, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.scenesCache = scenesCache;
+            this.sceneAssetLock = sceneAssetLock;
         }
 
         protected override void Update(float t)
@@ -42,7 +44,7 @@ namespace ECS.SceneLifeCycle.Systems
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             // Keep definition so it won't be downloaded again = Cache in ECS itself
-            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
+            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels, sceneAssetLock);
             World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
         }
 

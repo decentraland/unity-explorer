@@ -32,10 +32,10 @@ namespace DCL.SDKComponents.AudioSources
         private readonly World world;
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly IDereferencableCache<AudioClip, GetAudioClipIntention> cache;
+        private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
         private readonly AudioMixerGroup audioMixerGroup;
 
-        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
+        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider, AudioMixerGroup audioMixerGroup) : base(world)
         {

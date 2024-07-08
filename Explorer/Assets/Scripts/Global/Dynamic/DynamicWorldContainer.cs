@@ -158,7 +158,7 @@ namespace Global.Dynamic
             PopupCloserView popupCloserView = Object.Instantiate((await staticContainer.AssetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
             container.MvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
-            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager);
+            var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager, staticContainer.SingletonSharedDependencies.SceneAssetLock);
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
@@ -214,7 +214,8 @@ namespace Global.Dynamic
                 dynamicWorldParams.StaticLoadPositions,
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
-                staticContainer.PartitionDataContainer);
+                staticContainer.PartitionDataContainer,
+                staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
