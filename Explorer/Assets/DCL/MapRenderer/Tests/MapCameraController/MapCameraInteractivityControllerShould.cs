@@ -43,7 +43,7 @@ namespace DCL.MapRenderer.Tests.MapCameraController
                            return true;
                        });
 
-            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, Substitute.For<PinMarkerController>());
+            controller = new MapCameraInteractivityController(null, camera, pool, coordUtils, null);
         }
 
         [Test]

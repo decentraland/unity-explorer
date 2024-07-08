@@ -66,7 +66,7 @@ namespace DCL.MapRenderer.MapCameraController
             mark = null;
             bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
 
-            if (parcelExists)
+            if (parcelExists && markerController != null)
             {
                 foreach (IPinMarker pinMarker in markerController.markers.Values)
                 {
