@@ -21,6 +21,7 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace Global.Dynamic
     public class MainSceneLoader : MonoBehaviour
     {
         [Header("Startup Config")] [SerializeField]
-        private RealmLaunchSettings launchSettings;
+        private RealmLaunchSettings launchSettings = null!;
 
         [Space] [SerializeField] private DebugViewsCatalog debugViewsCatalog = new();
 
@@ -55,6 +56,7 @@ namespace Global.Dynamic
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
+        [SerializeField] private WorldInfoTool worldInfoTool = null!;
 
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
@@ -192,6 +194,7 @@ namespace Global.Dynamic
                         Web3Authenticator = web3Authenticator,
                         Web3IdentityCache = identityCache,
                         SplashAnimator = splashScreenAnimation,
+                        WorldInfoTool = worldInfoTool,
                     },
                     new DynamicWorldParams
                     {
