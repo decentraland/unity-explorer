@@ -28,6 +28,8 @@ namespace DCL.SDKComponents.MapPins.Systems
         private readonly ObjectProxy<World> globalWorldProxy;
         private const int ATTEMPTS_COUNT = 6;
         private readonly ISceneData sceneData;
+        private int xRounded;
+        private int yRounded;
 
         public MapPinLoaderSystem(World world, ISceneData sceneData, ObjectProxy<World> globalWorldProxy) : base(world)
         {
@@ -65,12 +67,16 @@ namespace DCL.SDKComponents.MapPins.Systems
         {
             if (!pbMapPin.IsDirty)
                 return;
+            
+            MapPinComponent mapPinComponent = globalWorldProxy.Object!.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent)) as MapPinComponent;
 
-            MapPinComponent mapPinComponent = new MapPinComponent
-            {
-                IsDirty = true,
-                Position = new Vector2Int((int) pbMapPin.Position.X, (int) pbMapPin.Position.Y)
-            };
+            xRounded = Mathf.RoundToInt(pbMapPin.Position.X);
+            yRounded = Mathf.RoundToInt(pbMapPin.Position.Y);
+
+            if (mapPinComponent.Position.x == xRounded && mapPinComponent.Position.y == yRounded)
+                mapPinComponent.Position = new Vector2Int(xRounded, yRounded);
+
+            mapPinComponent.IsDirty = true;
 
             TextureComponent? mapPinTexture = pbMapPin.Texture.CreateTextureComponent(sceneData);
             TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
