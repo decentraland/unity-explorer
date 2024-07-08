@@ -67,8 +67,8 @@ namespace DCL.SDKComponents.MapPins.Systems
         {
             if (!pbMapPin.IsDirty)
                 return;
-            
-            MapPinComponent mapPinComponent = globalWorldProxy.Object!.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent)) as MapPinComponent;
+
+            MapPinComponent mapPinComponent = (MapPinComponent) globalWorldProxy.Object!.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
 
             xRounded = Mathf.RoundToInt(pbMapPin.Position.X);
             yRounded = Mathf.RoundToInt(pbMapPin.Position.Y);
