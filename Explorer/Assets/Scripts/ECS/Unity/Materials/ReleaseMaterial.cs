@@ -1,11 +1,14 @@
 ﻿using Arch.Core;
 using ECS.Unity.Materials.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
+using UnityEngine;
 using Utility.Primitives;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.Unity.Materials
 {
+    public delegate void DestroyMaterial(in MaterialData materialData, Material material);
+
     /// <summary>
     ///     Executes the logic to clean-up material
     /// </summary>

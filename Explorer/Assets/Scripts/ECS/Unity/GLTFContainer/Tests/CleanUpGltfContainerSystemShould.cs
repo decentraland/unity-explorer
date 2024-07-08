@@ -7,6 +7,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Systems;
@@ -21,13 +22,13 @@ namespace ECS.Unity.GLTFContainer.Tests
 {
     public class CleanUpGltfContainerSystemShould : UnitySystemTestBase<CleanUpGltfContainerSystem>
     {
-        private IDereferencableCache<GltfContainerAsset, string> cache;
+        private IGltfContainerAssetsCache cache;
         private IEntityCollidersSceneCache collidersSceneCache;
 
         [SetUp]
         public void SetUp()
         {
-            cache = Substitute.For<IDereferencableCache<GltfContainerAsset, string>>();
+            cache = Substitute.For<IGltfContainerAssetsCache>();
             system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
         }
 

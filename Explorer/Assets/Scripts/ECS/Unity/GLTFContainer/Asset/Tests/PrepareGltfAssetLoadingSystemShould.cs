@@ -3,6 +3,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Asset.Systems;
 using NSubstitute;
@@ -18,10 +19,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>());
+            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>());
         }
 
-        private IStreamableCache<GltfContainerAsset, string> cache;
+        private IGltfContainerAssetsCache cache;
 
         [Test]
         public void CreateAssetBundleIntention()

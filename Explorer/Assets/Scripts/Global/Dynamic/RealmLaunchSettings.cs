@@ -52,6 +52,16 @@ namespace Global.Dynamic
 
         public string GetStartingRealm()
         {
+            // when started in preview mode (local scene development) a command line argument is used
+            string[] cmdArgs = System.Environment.GetCommandLineArgs();
+            for (var i = 0; i < cmdArgs.Length; i++)
+            {
+                if (cmdArgs[i].StartsWith("-realm"))
+                {
+                    return cmdArgs[i+1];
+                }
+            }
+
             return initialRealm switch
                    {
                        InitialRealm.GenesisCity => IRealmNavigator.GENESIS_URL,
