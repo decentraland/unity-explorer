@@ -11,6 +11,7 @@ using DCL.SDKComponents.SceneUI.Defaults;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
+using UnityEngine.Assertions;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UITransform
@@ -42,37 +43,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         [None(typeof(UITransformComponent))]
         private void InstantiateUITransform(in Entity entity, CRDTEntity sdkEntity, ref PBUiTransform sdkModel)
         {
-            UITransformComponent newTransform = NewUITransformComponent();
+            UITransformComponent newTransform = transformsPool.Get()!;
+            // allows to avoid getting from the pool the same element that that already is rootVisualElement
+            Assert.AreNotEqual(canvas.rootVisualElement, newTransform.Transform);
             newTransform.Initialize(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
             canvas.rootVisualElement!.Add(newTransform.Transform.EnsureNotNull());
             World!.Add(entity, newTransform);
-        }
-
-        // allows to avoid getting from the pool the same element that that already is rootVisualElement
-        private UITransformComponent NewUITransformComponent()
-        {
-            var component = transformsPool.Get()!;
-
-            bool IsRootVisualElement()
-            {
-                return component!.Transform == canvas.rootVisualElement;
-            }
-
-            if (IsRootVisualElement() == false)
-                return component;
-
-            for (var i = 0; i < TRIES_COUNT; i++)
-            {
-                component = transformsPool.Get()!;
-
-                if (IsRootVisualElement() == false)
-                    break;
-            }
-
-            if (IsRootVisualElement())
-                throw new System.Exception("UITransformInstantiationSystem: Could not get a UITransformComponent that is not the rootVisualElement");
-
-            return component;
         }
     }
 }

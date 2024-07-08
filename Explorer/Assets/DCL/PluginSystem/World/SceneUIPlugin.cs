@@ -38,7 +38,18 @@ namespace DCL.PluginSystem.World
         {
             this.assetsProvisioner = assetsProvisioner;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
-            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200)!;
+
+            transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(
+                onRelease:t=>
+                {
+                    if (canvas != null && canvas.rootVisualElement == t.Transform)
+                        throw new InvalidOperationException("Trying to release the root UITransformComponent");
+
+                    UiElementUtils.ReleaseUITransformComponent(t);
+                },
+                maxSize: 200
+            )!;
+
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<DCLImage>(onRelease: UiElementUtils.ReleaseDCLImage, maxSize: 100);
             componentPoolsRegistry.AddComponentPool<UIInputComponent>(onRelease: UiElementUtils.ReleaseUIInputComponent, maxSize: 50);
