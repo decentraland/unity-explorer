@@ -29,7 +29,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void SetUp()
         {
             cache = Substitute.For<IGltfContainerAssetsCache>();
-            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>());
+            system = new CleanUpGltfContainerSystem(world, cache, collidersSceneCache = Substitute.For<IEntityCollidersSceneCache>(), "0,0");
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace ECS.Unity.GLTFContainer.Tests
 
             Assert.That(world.TryGet(e, out GltfContainerComponent component), Is.True);
             Assert.That(component.Promise.Entity, Is.EqualTo(EntityReference.Null));
-            cache.Received(1).Dereference("1", Arg.Any<GltfContainerAsset>());
+            cache.Received(1).Dereference("0,0", "1", Arg.Any<GltfContainerAsset>());
             collidersSceneCache.Received(2).Remove(Arg.Any<Collider>());
         }
     }

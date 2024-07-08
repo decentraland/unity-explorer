@@ -52,7 +52,7 @@ namespace DCL.PluginSystem.World
             var buffer = sharedDependencies.EntityEventsBuilder.Rent<GltfContainerComponent>();
 
             // Asset loading
-            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
+            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.SceneData.SceneShortInfo.BaseParcel.ToString());
             CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
@@ -70,7 +70,7 @@ namespace DCL.PluginSystem.World
             ResetDirtyFlagSystem<PBGltfContainer>.InjectToWorld(ref builder);
 
             var cleanUpGltfContainerSystem =
-                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache);
+                CleanUpGltfContainerSystem.InjectToWorld(ref builder, assetsCache, sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData.SceneShortInfo.BaseParcel.ToString());
 
             finalizeWorldSystems.Add(cleanUpGltfContainerSystem);
         }

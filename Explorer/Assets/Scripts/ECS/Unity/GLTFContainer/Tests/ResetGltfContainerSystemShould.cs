@@ -59,7 +59,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(entity, component)));
             Assert.That(component.Promise, Is.EqualTo(AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL));
 
-            cache.Received(1).Dereference("1", Arg.Any<GltfContainerAsset>());
+            cache.Received(1).Dereference("0,0", "1", Arg.Any<GltfContainerAsset>());
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
         }
 

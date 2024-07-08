@@ -19,7 +19,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>());
+            system = new PrepareGltfAssetLoadingSystem(world, cache = Substitute.For<IGltfContainerAssetsCache>(), "0,0");
         }
 
         private IGltfContainerAssetsCache cache;
@@ -42,7 +42,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), null);
 
-            cache.TryGet("TEST", out Arg.Any<GltfContainerAsset>())
+            cache.TryGet("0,0", "TEST", out Arg.Any<GltfContainerAsset>())
                  .Returns(c =>
                   {
                       c[1] = asset;
@@ -54,7 +54,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
             system.Update(0);
 
-            cache.Received(1).TryGet("TEST", out Arg.Any<GltfContainerAsset>());
+            cache.Received(1).TryGet("0,0", "TEST", out Arg.Any<GltfContainerAsset>());
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.True);
             Assert.That(result.Asset, Is.EqualTo(asset));

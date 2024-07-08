@@ -21,10 +21,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private readonly string sceneName;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, string sceneName) : base(world)
         {
             this.cache = cache;
+            this.sceneName = sceneName;
         }
 
         protected override void Update(float t)
@@ -37,7 +39,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache
-            if (cache.TryGet(intention.Name, out GltfContainerAsset asset))
+            if (cache.TryGet(sceneName, intention.Name, out var asset))
             {
                 // construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));

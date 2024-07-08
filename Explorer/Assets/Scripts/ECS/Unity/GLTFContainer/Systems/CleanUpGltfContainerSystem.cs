@@ -25,9 +25,9 @@ namespace ECS.Unity.GLTFContainer.Systems
 
         private ReleaseOnEntityDestroy releaseOnEntityDestroy;
 
-        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache) : base(world)
+        internal CleanUpGltfContainerSystem(World world, IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, string sceneName) : base(world)
         {
-            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(cache, entityCollidersSceneCache, World);
+            releaseOnEntityDestroy = new ReleaseOnEntityDestroy(cache, entityCollidersSceneCache, World, sceneName);
         }
 
         protected override void Update(float t)
@@ -45,11 +45,13 @@ namespace ECS.Unity.GLTFContainer.Systems
             private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
             private readonly IGltfContainerAssetsCache cache;
             private readonly World world;
+            private readonly string sceneName;
 
-            public ReleaseOnEntityDestroy(IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, World world)
+            public ReleaseOnEntityDestroy(IGltfContainerAssetsCache cache, IEntityCollidersSceneCache entityCollidersSceneCache, World world, string sceneName)
             {
                 this.cache = cache;
                 this.world = world;
+                this.sceneName = sceneName;
                 this.entityCollidersSceneCache = entityCollidersSceneCache;
             }
 
@@ -57,7 +59,7 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 if (component.Promise.TryGetResult(world, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
                 {
-                    cache.Dereference(component.Source, result.Asset);
+                    cache.Dereference(sceneName, component.Source, result.Asset);
                     entityCollidersSceneCache.Remove(result.Asset);
                 }
 

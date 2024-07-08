@@ -19,9 +19,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// </summary>
     public class GltfContainerAssetsCache : IGltfContainerAssetsCache, IEqualityComparer<string>
     {
-        internal readonly Dictionary<string, List<GltfContainerAsset>> cache;
+        internal readonly Dictionary<(string, string), List<GltfContainerAsset>> cache;
         private readonly Transform parentContainer;
-        private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
+        private readonly SimplePriorityQueue<(string, string), long> unloadQueue = new ();
 
         public IDictionary<string, UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>> OngoingRequests { get; }
         public IDictionary<string, StreamableLoadingResult<GltfContainerAsset>> IrrecoverableFailures { get; }
@@ -33,7 +33,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             parentContainer = new GameObject($"POOL_CONTAINER_{nameof(GltfContainerAsset)}").transform;
             parentContainer.gameObject.SetActive(false);
 
-            cache = new Dictionary<string, List<GltfContainerAsset>>(this);
+            cache = new Dictionary<(string, string), List<GltfContainerAsset>>();
             OngoingRequests = new FakeDictionaryCache<UniTaskCompletionSource<StreamableLoadingResult<GltfContainerAsset>?>>();
             IrrecoverableFailures = new Dictionary<string, StreamableLoadingResult<GltfContainerAsset>>();
         }
@@ -47,14 +47,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             isDisposed = true;
         }
 
-        public bool TryGet(in string key, out GltfContainerAsset? asset)
+        public bool TryGet(in string sceneName, in string assetName, out GltfContainerAsset? asset)
         {
-            if (cache.TryGetValue(key, out List<GltfContainerAsset> assets) && assets.Count > 0)
+            if (cache.TryGetValue((sceneName, assetName), out var assets) && assets.Count > 0)
             {
                 // Remove from the tail of the list
                 asset = assets[^1];
                 assets.RemoveAt(assets.Count - 1);
-                unloadQueue.TryUpdatePriority(key, MultithreadingUtility.FrameCount);
+                unloadQueue.TryUpdatePriority((sceneName, assetName), MultithreadingUtility.FrameCount);
 
                 ProfilingCounters.GltfInCacheAmount.Value--;
                 return true;
@@ -67,17 +67,17 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
         /// <summary>
         ///     Return to the pool
         /// </summary>
-        public void Dereference(in string key, GltfContainerAsset asset)
+        public void Dereference(in string sceneName, in string assetName, GltfContainerAsset asset)
         {
-            if (!cache.TryGetValue(key, out List<GltfContainerAsset> assets))
+            if (!cache.TryGetValue((sceneName, assetName), out var assets))
             {
                 assets = new List<GltfContainerAsset>();
-                cache[key] = assets;
-                unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
+                cache[(sceneName, assetName)] = assets;
+                unloadQueue.Enqueue((sceneName, assetName), MultithreadingUtility.FrameCount);
             }
 
             assets.Add(asset);
-            unloadQueue.TryUpdatePriority(key, MultithreadingUtility.FrameCount);
+            unloadQueue.TryUpdatePriority((sceneName, assetName), MultithreadingUtility.FrameCount);
 
             ProfilingCounters.GltfInCacheAmount.Value++;
 
@@ -94,7 +94,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
             while (frameTimeBudget.TrySpendBudget()
                    && unloadedAmount < maxUnloadAmount && unloadQueue.Count > 0
-                   && unloadQueue.TryDequeue(out string key) && cache.TryGetValue(key, out List<GltfContainerAsset> assets))
+                   && unloadQueue.TryDequeue(out var key) && cache.TryGetValue(key, out var assets))
             {
                 unloadedAmount += assets.Count;
 

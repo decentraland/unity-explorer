@@ -167,7 +167,7 @@ namespace DCL.ResourcesUnloading.Tests
 
             var gltfContainerAsset = GltfContainerAsset.Create(new GameObject(), assetBundleData);
             assetBundleData.AddReference();
-            gltfContainerAssetsCache.Dereference(hashID, gltfContainerAsset); // add to cache
+            gltfContainerAssetsCache.Dereference("0,0", hashID, gltfContainerAsset); // add to cache
 
             var wearableAsset = new WearableRegularAsset(new GameObject(), new List<WearableRegularAsset.RendererInfo>(10), assetBundleData);
             assetBundleData.AddReference();

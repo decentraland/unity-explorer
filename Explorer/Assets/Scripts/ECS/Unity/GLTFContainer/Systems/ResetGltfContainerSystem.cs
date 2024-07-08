@@ -31,6 +31,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         private readonly IEntityCollidersSceneCache entityCollidersSceneCache;
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private readonly string sceneName;
 
         internal ResetGltfContainerSystem(World world,
             IGltfContainerAssetsCache cache,
@@ -66,7 +67,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
-                cache.Dereference(component.Source, result.Asset);
+                cache.Dereference(sceneName, component.Source, result.Asset);
                 entityCollidersSceneCache.Remove(result.Asset);
             }
         }

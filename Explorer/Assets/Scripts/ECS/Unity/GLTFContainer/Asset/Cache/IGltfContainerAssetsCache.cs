@@ -9,10 +9,10 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     /// </summary>
     public interface IGltfContainerAssetsCache
     {
-        bool TryGet(in string key, out GltfContainerAsset? asset);
+        bool TryGet(in string sceneName, in string assetName, out GltfContainerAsset? asset);
 
         void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount);
 
-        void Dereference(in string key, GltfContainerAsset asset);
+        void Dereference(in string sceneName, in string assetName, GltfContainerAsset asset);
     }
 }
