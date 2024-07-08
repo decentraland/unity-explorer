@@ -142,9 +142,6 @@ namespace ECS.StreamableLoading.AssetBundles
             return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies));
         }
 
-        protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>
-            asset.AddReference();
-
         private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, string reportCategory, CancellationToken ct) {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);
 
