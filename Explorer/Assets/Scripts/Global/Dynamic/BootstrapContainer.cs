@@ -62,7 +62,6 @@ namespace Global.Dynamic
                                             };
 
                 var analyticsController = new AnalyticsController(service, analyticsConfig);
-                var criticalLogsAnalytics = new CriticalLogsAnalytics(analyticsController);
 
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }
