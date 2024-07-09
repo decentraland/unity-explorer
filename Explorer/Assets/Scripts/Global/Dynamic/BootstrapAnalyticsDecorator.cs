@@ -31,11 +31,6 @@ namespace Global.Dynamic
             this.analytics = analytics;
         }
 
-        public void Dispose()
-        {
-            core.Dispose();
-        }
-
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, DebugViewsCatalog debugViewsCatalog,
             CancellationToken ct)
         {

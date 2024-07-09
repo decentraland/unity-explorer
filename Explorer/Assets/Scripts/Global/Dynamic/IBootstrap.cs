@@ -12,7 +12,7 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    public interface IBootstrap: IDisposable
+    public interface IBootstrap
     {
         void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
             GameObject splashRoot, DebugViewsCatalog debugViewsCatalog, CancellationToken ct);

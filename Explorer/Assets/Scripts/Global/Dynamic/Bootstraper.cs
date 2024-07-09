@@ -48,10 +48,6 @@ namespace Global.Dynamic
             enableLandscape = debugSettings.enableLandscape;
         }
 
-        public void Dispose()
-        {
-        }
-
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
             GameObject splashRoot, DebugViewsCatalog debugViewsCatalog, CancellationToken _)
         {
