@@ -139,6 +139,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 parcel = $"{parcel.x},{parcel.y}",
                 tld = "org",
                 network = "mainnet",
+                // TODO: support guest if required in the future
                 isGuest = false,
                 signer = "decentraland-kernel-scene",
                 realm = new SignatureMetadata.Realm
