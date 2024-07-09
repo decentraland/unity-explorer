@@ -19,11 +19,7 @@ namespace DCL.SDKComponents.Tween.Helpers
         {
             sdkTransform.IsDirty = true;
             sdkTransform.ParentId = tweenResult.Item2;
-
-            var currentResult = tweenResult.Item1.GetResult();
-            sdkTransform.Position = currentResult.Position;
-            sdkTransform.Rotation = currentResult.Rotation;
-            sdkTransform.Scale = currentResult.Scale;
+            tweenResult.Item1.SetResult(ref sdkTransform);
         }
 
         public static void WriteTweenResultInCRDT(IECSToCRDTWriter ecsToCrdtWriter, CRDTEntity sdkEntity, (ICustomTweener, CRDTEntity) result)
