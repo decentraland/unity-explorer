@@ -5,15 +5,14 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Helpers;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 using UnityEngine;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
@@ -50,12 +49,14 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
+        private void UpdateTween(in Entity entity, ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
             if (pbTween.IsDirty)
             {
+                if(entity.Id.Equals(8))
+                    Debug.Log($"{Time.frameCount} Juani dirty incoming");
                 tweenComponent.CopyToCacheTween(pbTween);
                 tweenComponent.IsDirty = true;
             }
