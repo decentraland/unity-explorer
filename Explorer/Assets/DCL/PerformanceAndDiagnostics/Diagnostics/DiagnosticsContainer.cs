@@ -19,20 +19,12 @@ namespace DCL.Diagnostics
             Debug.unityLogger.logHandler = defaultLogHandler;
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings) =>
-            Create(settings, new List<(ReportHandler, IReportHandler)>(2));
-
-        public static DiagnosticsContainer CreateWithAdditionalHandlers(IReportsHandlingSettings settings, params (ReportHandler, IReportHandler)[] additionalHandlers)
-        {
-            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(additionalHandlers.Length + 2);
-            handlers.AddRange(additionalHandlers);
-
-            return Create(settings, handlers);
-        }
-
-        private static DiagnosticsContainer Create(IReportsHandlingSettings settings, List<(ReportHandler, IReportHandler)> handlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params (ReportHandler, IReportHandler)[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
+
+            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(additionalHandlers.Length + 2);
+            handlers.AddRange(additionalHandlers);
 
             if (settings.IsEnabled(ReportHandler.DebugLog))
                 handlers.Add((ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)));
@@ -42,7 +34,7 @@ namespace DCL.Diagnostics
 
             var logger = new ReportHubLogger(handlers);
 
-            ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
+            ILogHandler defaultLogHandler1 = Debug.unityLogger.logHandler;
 
             // Override Default Unity Logger
             Debug.unityLogger.logHandler = logger;
@@ -50,7 +42,7 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Instance = logger;
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
+            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler1 };
         }
     }
 }
