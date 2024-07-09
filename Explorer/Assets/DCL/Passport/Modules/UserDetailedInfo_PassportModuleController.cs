@@ -502,7 +502,7 @@ namespace DCL.Passport.Modules
                     }
                 }
 
-                await UpdateProfile(ct);
+                await UpdateProfileAsync(ct);
                 ClearAllAdditionalInfoFields();
                 LoadAdditionalFields();
                 LoadDescription();
@@ -608,7 +608,7 @@ namespace DCL.Passport.Modules
                     });
                 }
 
-                await UpdateProfile(ct);
+                await UpdateProfileAsync(ct);
                 ClearAllLinks();
                 LoadLinks();
                 SetLinksSectionAsEditionMode(false);
@@ -630,7 +630,7 @@ namespace DCL.Passport.Modules
                 link.SetAsInteractable(!isSaving);
         }
 
-        private async Task UpdateProfile(CancellationToken ct)
+        private async Task UpdateProfileAsync(CancellationToken ct)
         {
             try
             {
