@@ -6,7 +6,6 @@ using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
