@@ -22,12 +22,10 @@ namespace DCL.SDKComponents.Tween.Systems
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
         private readonly IObjectPool<PBTween> pbTweenPool;
-        private ProtobufSerializer<PBTween> serializer;
 
         public TweenLoaderSystem(World world, IObjectPool<PBTween> tweenPool) : base(world)
         {
             pbTweenPool = tweenPool;
-            serializer = new ProtobufSerializer<PBTween>();
         }
 
         protected override void Update(float t)
