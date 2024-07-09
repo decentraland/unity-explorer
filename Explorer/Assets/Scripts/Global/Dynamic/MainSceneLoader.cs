@@ -63,12 +63,14 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
+        private string localSceneDevelopmentRealm = null;
         private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
 
         private void Awake()
         {
             EnsureNotNull();
+            DetectLocalSceneDevelopment();
             SetupInitialConfig();
 
             InitializeFlowAsync(destroyCancellationToken).Forget();
@@ -272,6 +274,9 @@ namespace Global.Dynamic
                 splashRoot.SetActive(false);
 
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+
+                if (!string.IsNullOrEmpty(localSceneDevelopmentRealm))
+                    dynamicWorldContainer.LocalSceneDevelopmentController.Initialize(localSceneDevelopmentRealm);
             }
             catch (OperationCanceledException)
             {
@@ -285,9 +290,30 @@ namespace Global.Dynamic
             }
         }
 
+        private void DetectLocalSceneDevelopment()
+        {
+            // When started in preview mode (local scene development) a command line argument is used
+            // Example (Windows) -> start decentraland://realm=http://127.0.0.1:8000&otherParam="fesfsefesf"&otherparam2=24324234
+            string[] cmdArgs = System.Environment.GetCommandLineArgs();
+            if (cmdArgs.Length > 1)
+            {
+                string realmParam = cmdArgs[1].Substring(cmdArgs[1].IndexOf("realm=")+6);
+
+                // TODO: support other params when needed -> .Split('&')...
+                int otherParamsSeparatorIndex = realmParam.IndexOf('&');
+                if (otherParamsSeparatorIndex > -1)
+                    realmParam = realmParam.Remove(otherParamsSeparatorIndex, realmParam.Length - otherParamsSeparatorIndex);
+
+                localSceneDevelopmentRealm = realmParam;
+            }
+
+            // FOR DEBUGGING IN UNITY ONLY
+            // localSceneDevelopmentRealm = "http://127.0.0.1:8000";
+        }
+
         private void SetupInitialConfig()
         {
-            startingRealm = launchSettings.GetStartingRealm();
+            startingRealm = localSceneDevelopmentRealm ?? launchSettings.GetStartingRealm();
             startingParcel = launchSettings.TargetScene;
         }
 

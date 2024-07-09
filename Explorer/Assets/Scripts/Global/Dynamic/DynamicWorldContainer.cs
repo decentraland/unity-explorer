@@ -46,6 +46,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.ChatCommands;
 using LiveKit.Internal.FFIClients.Pools;
@@ -98,12 +99,15 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; } = null!;
 
+        public LocalSceneDevelopmentController LocalSceneDevelopmentController { get; private set; } = null!;
+
         public void Dispose()
         {
             MvcManager.Dispose();
             ChatMessagesBus.Dispose();
             ProfileBroadcast.Dispose();
             MessagePipesHub.Dispose();
+            LocalSceneDevelopmentController.Dispose();
         }
 
         public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct) =>
@@ -290,6 +294,8 @@ namespace Global.Dynamic
                                        .WithCommands(chatCommandsFactory)
                                        .WithDebugPanel(debugBuilder);
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
+
+            container.LocalSceneDevelopmentController = new LocalSceneDevelopmentController(reloadSceneController);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
