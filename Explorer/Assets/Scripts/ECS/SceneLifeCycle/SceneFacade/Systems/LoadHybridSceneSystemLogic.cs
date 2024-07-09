@@ -10,11 +10,12 @@ namespace ECS.SceneLifeCycle.Systems
 {
     public class LoadHybridSceneSystemLogic : LoadSceneSystemLogicBase
     {
-        private string hibridSceneID;
+        private readonly string hibridSceneID;
         private readonly string hibridSceneContentServer;
 
-        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, string hibridSceneContentServer) : base(webRequestController, assetBundleURL)
+        public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, string hibridSceneID, string hibridSceneContentServer) : base(webRequestController, assetBundleURL)
         {
+            this.hibridSceneID = hibridSceneID;
             this.hibridSceneContentServer = hibridSceneContentServer;
         }
 
@@ -26,7 +27,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory)
         {
             var hibridSceneHashedContent = new HibridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL , URLDomain.FromString(hibridSceneContentServer), hibridSceneID);
-            hibridSceneID = await hibridSceneHashedContent.GetRemoteSceneDefinitionAsync(definition.metadata.scene.DecodedBase, new CancellationToken(), reportCategory);
+            await hibridSceneHashedContent.GetRemoteSceneDefinitionAsync(new CancellationToken(), reportCategory);
             return hibridSceneHashedContent;
         }
     }
