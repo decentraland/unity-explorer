@@ -21,7 +21,6 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.AVATAR_ATTACH)]
-    [ThrottlingEnabled]
     public partial class AvatarAttachHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
