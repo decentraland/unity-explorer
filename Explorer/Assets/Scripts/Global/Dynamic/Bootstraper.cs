@@ -30,14 +30,14 @@ namespace Global.Dynamic
         private readonly bool showLoading;
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
-        public bool EnableAnalytics { private get; set; } = false;
+        public bool EnableAnalytics { private get; set; }
 
-        private DebugUtilitiesContainer debugUtilitiesContainer;
+        private DebugUtilitiesContainer? debugUtilitiesContainer;
 
         private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
 
-        public DynamicWorldDependencies DynamicWorldDependencies { get; private set; }
+        private DynamicWorldDependencies dynamicWorldDependencies;
 
         public Bootstrap(DebugSettings debugSettings)
         {
@@ -74,16 +74,16 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, debugUtilitiesContainer.Builder, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, debugUtilitiesContainer!.Builder, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.Web3VerifiedAuthenticator, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,
             UIDocument uiToolkitRoot, UIDocument cursorRoot, Animator splashScreenAnimation, AudioClipConfig backgroundMusic, CancellationToken ct)
         {
-            DynamicWorldDependencies = new DynamicWorldDependencies
+            dynamicWorldDependencies = new DynamicWorldDependencies
             {
-                DebugContainerBuilder = debugUtilitiesContainer.Builder,
+                DebugContainerBuilder = debugUtilitiesContainer!.Builder,
                 AssetsProvisioner = bootstrapContainer.AssetsProvisioner,
                 StaticContainer = staticContainer,
                 SettingsContainer = scenePluginSettingsContainer,
@@ -97,7 +97,7 @@ namespace Global.Dynamic
 
             return await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
-                DynamicWorldDependencies,
+                dynamicWorldDependencies,
                 new DynamicWorldParams
                 {
                     StaticLoadPositions = launchSettings.GetPredefinedParcels(),
@@ -118,8 +118,8 @@ namespace Global.Dynamic
         {
             var anyFailure = false;
 
-            await UniTask.WhenAll(staticContainer!.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
-            await UniTask.WhenAll(dynamicWorldContainer!.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => scenePluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
+            await UniTask.WhenAll(dynamicWorldContainer.GlobalPlugins.Select(gp => globalPluginSettingsContainer.InitializePluginAsync(gp, ct).ContinueWith(OnPluginInitialized)).EnsureNotNull());
 
             void OnPluginInitialized<TPluginInterface>((TPluginInterface plugin, bool success) result) where TPluginInterface: IDCLPlugin
             {
@@ -132,7 +132,7 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity identity, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer!.FeatureFlagsProvider.InitializeAsync(identity?.Address, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity.Address, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -143,20 +143,20 @@ namespace Global.Dynamic
             GlobalWorld globalWorld;
 
             var sceneSharedContainer = SceneSharedContainer.Create(
-                in staticContainer!,
-                dynamicWorldContainer!.MvcManager,
+                in staticContainer,
+                dynamicWorldContainer.MvcManager,
                 bootstrapContainer.IdentityCache,
                 dynamicWorldContainer.ProfileRepository,
-                staticContainer!.WebRequestsContainer.WebRequestController,
-                dynamicWorldContainer!.RoomHub,
+                staticContainer.WebRequestsContainer.WebRequestController,
+                dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.RealmController.GetRealm(),
                 dynamicWorldContainer.MessagePipesHub
             );
 
-            (globalWorld, playerEntity) = dynamicWorldContainer!.GlobalWorldFactory.Create(sceneSharedContainer!.SceneFactory);
+            (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
-            debugUtilitiesContainer.Builder.BuildWithFlex(debugUiRoot);
+            debugUtilitiesContainer!.Builder.BuildWithFlex(debugUiRoot);
 
             return (globalWorld, playerEntity);
         }
@@ -174,7 +174,7 @@ namespace Global.Dynamic
 
             splashScreenAnimation.transform.SetSiblingIndex(1);
 
-            await dynamicWorldContainer!.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
+            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
                 globalWorld!.EcsWorld, playerEntity, ct);
 
             splashRoot.SetActive(false);
