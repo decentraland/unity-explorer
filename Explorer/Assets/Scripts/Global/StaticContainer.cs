@@ -11,6 +11,7 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Interaction.Utility;
+using DCL.Ipfs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -51,7 +52,7 @@ namespace Global
         public readonly ObjectProxy<World> GlobalWorldProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
-        public readonly RealmData RealmData = new ();
+        public readonly RealmData RealmData = new (InvalidIpfsRealm.Instance);
         public readonly PartitionDataContainer PartitionDataContainer = new ();
 
         private ProvidedInstance<CharacterObject> characterObject;
