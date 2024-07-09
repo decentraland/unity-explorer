@@ -40,9 +40,6 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            var pbTweenCopy = pbTweenPool.Get();
-
-            // We have to keep a copy of the tween to compare for possible changes when PBTween is not correctly dirtyed by SDK scenes
             SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
             {
                 IsDirty = true
