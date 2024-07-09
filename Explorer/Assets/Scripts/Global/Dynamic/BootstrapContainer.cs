@@ -37,13 +37,13 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
             };
 
-            (container.Bootstrap, container.Analytics) = await CreateBootstrapper(debugSettings, analyticsSettings, ct, container);
+            (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, analyticsSettings, ct, container);
             (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings);
 
             return container;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapper(DebugSettings debugSettings, AnalyticsSettings analyticsSettings, CancellationToken ct, BootstrapContainer container)
+        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, AnalyticsSettings analyticsSettings, CancellationToken ct, BootstrapContainer container)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, ct)).Value;
             bool enabledAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
@@ -66,7 +66,7 @@ namespace Global.Dynamic
                 return (new BootstrapAnalyticsDecorator(coreBootstrap, analyticsController), analyticsController);
             }
 
-            return (coreBootstrap, null);
+            return (coreBootstrap, IAnalyticsController.Null);
         }
 
         private static (LogWeb3IdentityCache identityCache, DappWeb3Authenticator web3VerifiedAuthenticator, ProxyVerifiedWeb3Authenticator web3Authenticator)
