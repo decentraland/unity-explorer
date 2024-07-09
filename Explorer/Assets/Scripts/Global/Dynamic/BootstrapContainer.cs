@@ -26,7 +26,6 @@ namespace Global.Dynamic
             Web3Authenticator.Dispose();
             Web3VerifiedAuthenticator.Dispose();
             IdentityCache.Dispose();
-            Bootstrap.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(DebugSettings debugSettings, DynamicSceneLoaderSettings sceneLoaderSettings,
