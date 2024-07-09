@@ -50,8 +50,6 @@ namespace CrdtEcsBridge.WorldSynchronizer.CommandBuffer
                     }
                     else
                     {
-                        //Debug.Log($"JUANI UPDATING COMMAND BUFFER {typeof(T)} {world} {entity} {world.Has<T>(entity)}");
-                        
                         ref T pointerToPrevObj = ref world.Get<T>(entity);
                         componentPool.Release(pointerToPrevObj);
                         pointerToPrevObj = c;

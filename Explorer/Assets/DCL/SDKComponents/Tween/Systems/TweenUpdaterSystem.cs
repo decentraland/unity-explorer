@@ -36,7 +36,6 @@ namespace DCL.SDKComponents.Tween.Systems
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
         private readonly TweenerPool tweenerPool;
-        private readonly IObjectPool<PBTween> pbTweenPool;
         
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
@@ -76,10 +75,9 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, IObjectPool<PBTween> pbTweenPool) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
         {
             this.tweenerPool = tweenerPool;
-            this.pbTweenPool = pbTweenPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
@@ -139,8 +137,6 @@ namespace DCL.SDKComponents.Tween.Systems
 
             if (isPlaying)
             {
-                if(entity.Id.Equals(8))
-                    Debug.Log($"{Time.frameCount} Juani new play");
                 sdkTweenComponent.CustomTweener.Play();
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsActive;
             }
@@ -162,8 +158,6 @@ namespace DCL.SDKComponents.Tween.Systems
             {
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenStateAndPosition(entity, sdkEntity, sdkTweenComponent, ref sdkTransform);
-                if(entity.Id.Equals(8))
-                    Debug.Log($"{Time.frameCount} JUANI SETTING STATE " + sdkTransform.Rotation);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
@@ -181,8 +175,6 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
             TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
-            if(entity.Id.Equals(8))
-                Debug.Log($"{Time.frameCount} JUANI SETTING ROTATION " + sdkTransform.Rotation);
         }
 
 
@@ -209,7 +201,6 @@ namespace DCL.SDKComponents.Tween.Systems
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent)
         {
             ReturnTweenToPool(ref sdkTweenComponent);
-            pbTweenPool.Release(sdkTweenComponent.CachedTween);
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
         }
 

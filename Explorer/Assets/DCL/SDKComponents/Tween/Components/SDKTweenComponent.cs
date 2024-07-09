@@ -10,7 +10,6 @@ namespace DCL.SDKComponents.Tween.Components
         public TweenStateStatus TweenStateStatus { get; set; }
         public ICustomTweener CustomTweener { get; set; }
 
-        public PBTween CachedTween { get; set; } 
 
         public bool IsActive()
         {
@@ -23,34 +22,7 @@ namespace DCL.SDKComponents.Tween.Components
             CustomTweener.Rewind();
         }
 
-
-        public void CopyToCacheTween(PBTween pbTween)
-        {
-            switch (pbTween.ModeCase)
-            {
-                case PBTween.ModeOneofCase.None:
-                    break;
-                case PBTween.ModeOneofCase.Move:
-                    CachedTween.Move = new Move
-                    {
-                        Start = new Vector3(), End = new Vector3()
-                    };
-                    break;
-                case PBTween.ModeOneofCase.Rotate:
-                    CachedTween.Rotate = new Rotate
-                    {
-                        Start = new Quaternion(), End = new Quaternion()
-                    };
-                    break;
-                case PBTween.ModeOneofCase.Scale:
-                    CachedTween.Scale = new Scale
-                    {
-                        Start = new Vector3(), End = new Vector3()
-                    };
-                    break;
-            }
-            CachedTween.MergeFrom(pbTween);
-        }
+       
     }
     
 }

@@ -64,19 +64,6 @@ namespace DCL.SDKComponents.Tween.Tests
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
         }
 
-        [Test]
-        public void UpdateTweenComponentIfPBTweenIsDifferentThanStoredModel()
-        {
-            system.Update(0);
-            pbTween.CurrentTime = 5555;
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsFalse(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CachedTween)));
-
-            system.Update(0);
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CachedTween)));
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(comp.IsDirty));
-        }
 
         [Test]
         public void DirtyTweenComponentIfPBTweenIsDirty()

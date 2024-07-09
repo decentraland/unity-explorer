@@ -35,7 +35,7 @@ namespace DCL.SDKComponents.Tween.Tests
         public void SetUp()
         {
             tweneerPool = new TweenerPool();
-            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool, new ObjectPool<PBTween>(() => new PBTween()));
+            system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool);
             var crdtEntity = new CRDTEntity(1);
             tweenLoaderSystem = new TweenLoaderSystem(world, new ObjectPool<PBTween>(() => new PBTween()));
 
