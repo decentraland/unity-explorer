@@ -99,7 +99,7 @@ namespace DCL.PluginSystem.Global
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 
-            LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
+            LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
 
