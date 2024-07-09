@@ -38,6 +38,7 @@ MonoBehaviour:
   - rid: 6697045322133929986
   - rid: 4132209997426458630
   - rid: 758312859982102531
+  - rid: 3601421940623147010
   references:
     version: 2
     RefIds:
@@ -282,6 +283,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         parsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3601421940623147010
+      type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <NotificationSection>k__BackingField:
+          m_AssetGUID: 
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

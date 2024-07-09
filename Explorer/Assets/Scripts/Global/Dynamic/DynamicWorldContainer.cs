@@ -391,7 +391,8 @@ namespace Global.Dynamic
                 container.LODContainer.LODPlugin,
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, staticContainer.AssetsProvisioner, dynamicWorldParams.EnableLandscape),
-                new RealmDataDirtyFlagPlugin(staticContainer.RealmData)
+                new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
+                new NotificationPlugin(staticContainer.AssetsProvisioner, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
