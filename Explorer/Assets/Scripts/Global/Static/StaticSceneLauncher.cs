@@ -1,6 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AssetsProvision.Provisions;
 using DCL.Browser;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
@@ -18,7 +17,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.Utilities.Extensions;
-using Global.Dynamic;
 using UnityEngine;
 
 namespace Global.Static
@@ -102,7 +100,7 @@ namespace Global.Static
                     await memoryProfileRepository.SetAsync(ownProfile, ct);
                 }
 
-                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
+                (staticContainer, sceneSharedContainer) = await InstallAsync(new AddressablesProvisioner().WithErrorTrace(), globalPluginSettingsContainer, scenePluginSettingsContainer,
                     identityCache, dappWeb3Authenticator, identityCache, memoryProfileRepository, webRequests, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
@@ -117,6 +115,7 @@ namespace Global.Static
         }
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
+            IAssetsProvisioner assetsProvisioner,
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -127,16 +126,14 @@ namespace Global.Static
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = (null, false);
-            //
-            //     await StaticContainer.CreateAsync(
-            //     new AddressablesProvisioner().WithErrorTrace(),
-            //     new NullDebugContainerBuilder(),
-            //     globalSettingsContainer,
-            //     web3IdentityProvider,
-            //     ethereumApi,
-            //     ct
-            // )!;
+            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                assetsProvisioner,
+                new NullDebugContainerBuilder(),
+                globalSettingsContainer,
+                web3IdentityProvider,
+                ethereumApi,
+                ct
+            )!;
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

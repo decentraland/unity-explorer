@@ -74,7 +74,8 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer, debugUtilitiesContainer.Builder, globalPluginSettingsContainer, ct);
+            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, debugUtilitiesContainer.Builder, globalPluginSettingsContainer,
+                bootstrapContainer.IdentityCache, bootstrapContainer.Web3VerifiedAuthenticator, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,

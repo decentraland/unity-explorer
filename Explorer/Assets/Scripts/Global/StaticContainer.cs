@@ -26,6 +26,7 @@ using DCL.SDKComponents.VideoPlayer;
 using DCL.Time;
 using DCL.Utilities;
 using DCL.Web3;
+using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS;
 using ECS.Prioritization;
@@ -138,9 +139,11 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
-            BootstrapContainer bootstrapContainer,
+            IAssetsProvisioner assetsProvisioner,
             IDebugContainerBuilder debugContainerBuilder,
             IPluginSettingsContainer settingsContainer,
+            IWeb3IdentityCache web3IdentityProvider,
+            IEthereumApi ethereumApi,
             CancellationToken ct)
         {
             ProfilingCounters.CleanAllCounters();
@@ -151,12 +154,12 @@ namespace Global
 
             var container = new StaticContainer();
 
-            container.EthereumApi = bootstrapContainer.Web3VerifiedAuthenticator;
+            container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
 
-            container.assetsProvisioner = bootstrapContainer.AssetsProvisioner;
+            container.assetsProvisioner = assetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();
             container.CharacterContainer = new CharacterContainer(container.assetsProvisioner, exposedGlobalDataContainer.ExposedCameraData, exposedPlayerTransform);
 
@@ -182,18 +185,17 @@ namespace Global
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
 
-            container.DiagnosticsContainer =
-                bootstrapContainer.Analytics == null
-                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings)
-                    : DiagnosticsContainer.CreateWithAdditionalHandlers(container.ReportHandlingSettings,
-                        (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(bootstrapContainer.Analytics)));
+            container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
+                // bootstrapContainer.Analytics == null
+                //     : DiagnosticsContainer.CreateWithAdditionalHandlers(container.ReportHandlingSettings,
+                //         (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(bootstrapContainer.Analytics)));
 
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(bootstrapContainer.IdentityCache, debugContainerBuilder);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, debugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
