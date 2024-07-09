@@ -1,16 +1,11 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
-using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Serialization;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Groups;
-using UnityEngine;
-using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Tween.Systems
 {

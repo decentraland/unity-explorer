@@ -1,6 +1,4 @@
-using System;
 using DCL.ECSComponents;
-using Decentraland.Common;
 
 namespace DCL.SDKComponents.Tween.Components
 {

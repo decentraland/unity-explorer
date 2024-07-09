@@ -23,7 +23,7 @@ namespace ECS.Unity.Transforms.Systems
         }
 
         [Query]
-        private void UpdateTransform(in Entity entity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        private void UpdateTransform(ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
             if (sdkTransform.IsDirty)
             {
