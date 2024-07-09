@@ -7,11 +7,8 @@ using CrdtEcsBridge.Serialization;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Helpers;
 using ECS.Abstract;
 using ECS.Groups;
-using Google.Protobuf;
-using UnityEngine;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Tween.Systems

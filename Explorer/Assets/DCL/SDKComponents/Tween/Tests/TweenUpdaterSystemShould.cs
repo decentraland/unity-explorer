@@ -1,16 +1,12 @@
 ﻿using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.Tween.Components;
 using DCL.SDKComponents.Tween.Systems;
-using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
 using Arch.Core;
 using Decentraland.Common;
 using UnityEngine.Pool;
