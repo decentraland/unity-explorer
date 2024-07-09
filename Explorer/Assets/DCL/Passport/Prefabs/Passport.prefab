@@ -851,7 +851,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 2100000, guid: 257dc4fad47be514d92d7a5f79783383, type: 2}
-  m_Color: {r: 0.5254902, g: 0.09803922, b: 0.65882355, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -884,7 +884,7 @@ MonoBehaviour:
   _separateMask: {fileID: 0}
   _sprite: {fileID: 21300000, guid: 99428d9ed6da74af2966fb29d960e48f, type: 3}
   _spriteBorderMode: 1
-  _spritePixelsPerUnitMultiplier: 1
+  _spritePixelsPerUnitMultiplier: 2
   _texture: {fileID: 0}
   _textureUVRect:
     serializedVersion: 2
@@ -1017,7 +1017,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2756838715054702078}
   m_HandleRect: {fileID: 1242067529493426053}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -1411,19 +1411,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2343935294292489617, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_Color.a
-      value: 0.2
+      value: 0.14901961
       objectReference: {fileID: 0}
     - target: {fileID: 2343935294292489617, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_Color.b
-      value: 1
+      value: 0.9811321
       objectReference: {fileID: 0}
     - target: {fileID: 2343935294292489617, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_Color.g
-      value: 0.3372549
+      value: 0.032395888
       objectReference: {fileID: 0}
     - target: {fileID: 2343935294292489617, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: m_Color.r
-      value: 0.8666667
+      value: 0.79026216
       objectReference: {fileID: 0}
     - target: {fileID: 2519183063070275485, guid: ef488299c2199b848ad0e35b6b5b019a, type: 3}
       propertyPath: EnablePanning
@@ -1817,6 +1817,10 @@ PrefabInstance:
     - target: {fileID: 3708780279043068538, guid: 151a47ce8596ce64e92a50d7bd425f0d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4450617478433646482, guid: 151a47ce8596ce64e92a50d7bd425f0d, type: 3}
+      propertyPath: m_Color.a
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 4827264411860335128, guid: 151a47ce8596ce64e92a50d7bd425f0d, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3345,6 +3349,10 @@ PrefabInstance:
     - target: {fileID: 4649723704110202013, guid: c21d4076270a3874cb822cd7399efb4e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5637620619241261429, guid: c21d4076270a3874cb822cd7399efb4e, type: 3}
+      propertyPath: m_Color.a
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 8404437162302355061, guid: c21d4076270a3874cb822cd7399efb4e, type: 3}
       propertyPath: m_Name
