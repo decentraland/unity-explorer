@@ -19,11 +19,20 @@ namespace DCL.Diagnostics
             Debug.unityLogger.logHandler = defaultLogHandler;
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params (ReportHandler, IReportHandler)[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings) =>
+            Create(settings, new List<(ReportHandler, IReportHandler)>(2));
+
+        public static DiagnosticsContainer CreateWithAdditionalHandlers(IReportsHandlingSettings settings, params (ReportHandler, IReportHandler)[] additionalHandlers)
+        {
+            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(additionalHandlers.Length + 2);
+            handlers.AddRange(additionalHandlers);
+
+            return Create(settings, handlers);
+        }
+
+        private static DiagnosticsContainer Create(IReportsHandlingSettings settings, List<(ReportHandler, IReportHandler)> handlers)
         {
             settings.NotifyErrorDebugLogDisabled();
-            List<(ReportHandler, IReportHandler)> handlers = new (additionalHandlers.Length + 2);
-            handlers.AddRange(additionalHandlers);
 
             if (settings.IsEnabled(ReportHandler.DebugLog))
                 handlers.Add((ReportHandler.DebugLog, new DebugLogReportHandler(Debug.unityLogger.logHandler, settings.GetMatrix(ReportHandler.DebugLog), settings.DebounceEnabled)));

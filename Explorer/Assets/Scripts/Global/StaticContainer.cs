@@ -181,9 +181,12 @@ namespace Global
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-            container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings,
-                // TODO: if (enabledAnalytics)
-                (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(bootstrapContainer.Analytics)));
+
+            container.DiagnosticsContainer =
+                bootstrapContainer.Analytics == null
+                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings)
+                    : DiagnosticsContainer.CreateWithAdditionalHandlers(container.ReportHandlingSettings,
+                        (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(bootstrapContainer.Analytics)));
 
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
