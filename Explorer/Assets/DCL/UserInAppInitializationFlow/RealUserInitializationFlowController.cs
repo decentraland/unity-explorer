@@ -25,7 +25,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly Vector2Int startParcel;
-        private readonly IReadOnlyRealFlowLoadingStatus loadingStatus;
+        private readonly RealFlowLoadingStatus loadingStatus;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
         private readonly AudioClipConfig backgroundMusic;
         private readonly IRealmNavigator realmNavigator;
@@ -33,7 +33,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IFeatureFlagsProvider featureFlagsProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
 
-        public RealUserInitializationFlowController(IReadOnlyRealFlowLoadingStatus loadingStatus,
+        public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             Vector2Int startParcel,
@@ -81,7 +81,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
             await InitializeFeatureFlagsAsync(ct);
-            
+
             Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
             parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
 

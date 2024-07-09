@@ -100,7 +100,7 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; } = null!;
 
-        public IReadOnlyRealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
+        public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
         public void Dispose()
         {

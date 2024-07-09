@@ -107,7 +107,7 @@ namespace Global.Dynamic
 
             try
             {
-                await bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
+                bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, debugViewsCatalog, destroyCancellationToken);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, ct);

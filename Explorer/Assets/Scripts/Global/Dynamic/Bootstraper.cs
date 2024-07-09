@@ -52,7 +52,7 @@ namespace Global.Dynamic
         {
         }
 
-        public UniTask PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
+        public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
             GameObject splashRoot, DebugViewsCatalog debugViewsCatalog, CancellationToken _)
         {
             splashRoot.SetActive(showSplash);
@@ -69,8 +69,6 @@ namespace Global.Dynamic
             DotNetLoggingPlugin.Initialize();
 
             debugUtilitiesContainer = DebugUtilitiesContainer.Create(debugViewsCatalog);
-
-            return UniTask.CompletedTask;
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, CancellationToken ct) =>
