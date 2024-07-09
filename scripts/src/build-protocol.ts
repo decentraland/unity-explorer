@@ -134,6 +134,9 @@ async function buildProtocol() {
       .filter((value) => !value.endsWith('v2/comms.proto'))
       .filter((value) => !value.endsWith('v3/comms.proto'))
 
+  // Uncomment this line to use the protoc-gen-dclunity plugin and generate the services (rpc dependency)
+  //command += ` --plugin=protoc-gen-dclunity=${nodeModulesPath}/protoc-gen-dclunity/dist/index.${isWin ? 'cmd' : 'js'}`
+  //command += ` --dclunity_out "${protocolOutputPath}"`
   const baseCommand = `${protocPath} --csharp_out "${protocolOutputPath}" --csharp_opt=file_extension=.gen.cs --proto_path "${protocolInputPath}"`
 
   // Split protoFiles into chunks
