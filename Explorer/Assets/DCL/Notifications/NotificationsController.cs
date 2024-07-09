@@ -1,11 +1,8 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
-using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Utility.Times;
 
 namespace DCL.Notification
@@ -36,11 +33,12 @@ namespace DCL.Notification
                 headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp)
             ).CreateFromJson<NotificationDTOList>(WRJsonParser.Unity);
 
-            Debug.Log("notifications count " + notifications.notifications.Count);
-            foreach (NotificationDTO notificationsElement in notifications.notifications)
+            foreach (NotificationDTO notification in notifications.notifications)
             {
-                Debug.Log("Notification: " + notificationsElement.id + " " + notificationsElement.type + " " + notificationsElement.read);
+                //process notification and sed it to a bus that handles new notifications
+                NotificationsFactory.CreateNotification(notification);
             }
+
             GetNotificationAsync().Forget();
         }
     }

@@ -7,7 +7,7 @@ namespace DCL.Notification
     public struct NotificationDTO
     {
         public string id;
-        public NotificationType type;
+        public string type;
         public string address;
         public Dictionary<string, string> metadata;
         public string timestamp;
