@@ -54,9 +54,7 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            // (Juani & Fran): Im not happy to leave this AreSameModels check. But apparently its required as SDK might not mark the tween component as dirty.
-            // Its present in the old renderer. If this was not needed, the CurrentTween field can be deleted
-            if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CachedTween))
+            if (pbTween.IsDirty)
             {
                 tweenComponent.CopyToCacheTween(pbTween);
                 tweenComponent.IsDirty = true;

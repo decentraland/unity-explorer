@@ -61,12 +61,12 @@ namespace DCL.SDKComponents.Tween.Components
         {
             core?.Kill();
             Finished = false;
+            var tweenValues = GetTweenValues(pbTween, startTransform);
+            core = CreateTweener(tweenValues.Item1, tweenValues.Item2, durationInSeconds);
             CurrentValue = new TweenResult
             {
                 Position = startTransform.localPosition, Rotation = startTransform.localRotation, Scale = startTransform.localScale
             };
-            var tweenValues = GetTweenValues(pbTween, startTransform);
-            core = CreateTweener(tweenValues.Item1, tweenValues.Item2, durationInSeconds);
         }
 
         protected void WriteResult(Vector3 position, Quaternion rotation, Vector3 scale)
