@@ -142,7 +142,15 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
-            //labelToSetup.style.unityFont = model.GetFont();
+
+            if (model.HasTextWrap)
+            {
+                labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
+            }
+            else
+            {
+                labelToSetup.style.whiteSpace = WhiteSpace.NoWrap;
+            }
         }
 
         public static void SetupDCLImage(ref DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
