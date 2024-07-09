@@ -9,20 +9,17 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Groups;
+using UnityEngine;
 using UnityEngine.Pool;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.TWEEN)]
-    [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
-        private readonly IObjectPool<PBTween> pbTweenPool;
-
-        public TweenLoaderSystem(World world, IObjectPool<PBTween> tweenPool) : base(world)
+        public TweenLoaderSystem(World world) : base(world)
         {
-            pbTweenPool = tweenPool;
         }
 
         protected override void Update(float t)
@@ -46,7 +43,7 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTween(in Entity entity, ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
+        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 

@@ -15,11 +15,9 @@ namespace DCL.PluginSystem.World
     public class TweenPlugin : IDCLWorldPluginWithoutSettings
     {
         private readonly TweenerPool tweenerPool;
-        private readonly IObjectPool<PBTween> pbTweenObjectPool;
 
         public TweenPlugin()
         {
-            pbTweenObjectPool = new ObjectPool<PBTween>(() => new PBTween());
             tweenerPool = new TweenerPool();
         }
         
@@ -29,7 +27,7 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
-            TweenLoaderSystem.InjectToWorld(ref builder, pbTweenObjectPool);
+            TweenLoaderSystem.InjectToWorld(ref builder);
             var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
         }

@@ -27,7 +27,7 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new TweenLoaderSystem(world, new ObjectPool<PBTween>(() => new PBTween()));
+            system = new TweenLoaderSystem(world);
 
             var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
             var endVector = new Vector3() { X = 10, Y = 0, Z = 0 };

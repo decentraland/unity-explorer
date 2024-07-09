@@ -31,7 +31,6 @@ namespace DCL.SDKComponents.Tween.Systems
     [UpdateBefore(typeof(UpdateTransformSystem))]
     [UpdateAfter(typeof(TweenLoaderSystem))]
     [LogCategory(ReportCategory.TWEEN)]
-    [ThrottlingEnabled]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
@@ -119,15 +118,21 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTweenSequence(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
+        private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
             if (sdkTweenComponent.IsDirty)
-                SetupTween(in entity, ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);
+            {
+                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);  
+            }
+
             else
-                UpdateTweenState(in entity, ref sdkTweenComponent, ref sdkTransform, sdkEntity);
+            {
+                UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity);
+            }
+
         }
 
-        private void SetupTween(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
+        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
             var entityTransform = transformComponent.Transform;
@@ -146,32 +151,32 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
             }
 
-            UpdateTweenStateAndPosition(entity, sdkEntity, sdkTweenComponent, ref sdkTransform);
+            UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             sdkTweenComponent.IsDirty = false;
         }
 
-        private void UpdateTweenState(in Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity)
+        private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity)
         {
             var newState = GetCurrentTweenState(sdkTweenComponent);
 
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenStateAndPosition(entity, sdkEntity, sdkTweenComponent, ref sdkTransform);
+                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             }
             else if (newState == TweenStateStatus.TsActive)
             {
-                UpdateTweenPosition(entity, sdkEntity, sdkTweenComponent, ref sdkTransform);
+                UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             }
         }
 
-        private void UpdateTweenStateAndPosition(in Entity entity, CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
+        private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
-            UpdateTweenPosition(entity, sdkEntity, sdkTweenComponent, ref sdkTransform);
+            UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
-        private void UpdateTweenPosition(in Entity entity,CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
+        private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
             TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
             TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));

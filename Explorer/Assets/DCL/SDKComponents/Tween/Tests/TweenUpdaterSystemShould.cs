@@ -33,7 +33,7 @@ namespace DCL.SDKComponents.Tween.Tests
             tweneerPool = new TweenerPool();
             system = new TweenUpdaterSystem(world, Substitute.For<IECSToCRDTWriter>(), tweneerPool);
             var crdtEntity = new CRDTEntity(1);
-            tweenLoaderSystem = new TweenLoaderSystem(world, new ObjectPool<PBTween>(() => new PBTween()));
+            tweenLoaderSystem = new TweenLoaderSystem(world);
 
             var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
             var endVector = new Vector3() { X = 10, Y = 0, Z = 0 };
