@@ -9,6 +9,7 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.Unity.GLTFContainer.Components;
 using SceneRunner.Scene;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Pool;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -28,6 +29,7 @@ namespace ECS.SceneLifeCycle.Systems
         private bool concluded;
         private int assetsResolved;
         private int totalAssetsToResolve = -1;
+        private float startTime;
 
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
         private readonly EntityEventBuffer<GltfContainerComponent>.ForEachDelegate forEachEvent;
@@ -46,6 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
         public override void Initialize()
         {
             entitiesUnderObservation = HashSetPool<EntityReference>.Get();
+            startTime = Time.time;
         }
 
         public override void Dispose()
@@ -112,6 +115,10 @@ namespace ECS.SceneLifeCycle.Systems
 
                 entitiesUnderObservation.ExceptWith(toDelete);
                 ListPool<EntityReference>.Release(toDelete);
+
+                // If is still not concluded apply certain timeout to be in sync with `WaitForSceneReadiness`
+                if (Time.time - startTime > WaitForSceneReadiness.TIMEOUT.TotalSeconds)
+                    concluded = true;
 
                 if (concluded)
                 {

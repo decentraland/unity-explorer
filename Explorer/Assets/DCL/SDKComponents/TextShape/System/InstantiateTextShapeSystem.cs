@@ -56,7 +56,8 @@ namespace DCL.SDKComponents.TextShape.System
 
             World.Add(entity, component);
 
-            // Issue an event so it will be grabbed by visibility system
+            // IF there is a visibility component, it will set it invisible in the visibility system
+            textMeshPro.enabled = true;
             changedTextMeshes.Add(entity, component);
         }
     }

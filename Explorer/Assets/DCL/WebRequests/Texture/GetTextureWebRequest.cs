@@ -45,6 +45,7 @@ namespace DCL.WebRequests
                 this.filterMode = filterMode;
             }
 
+
             public UniTask<Texture2D?> ExecuteAsync(GetTextureWebRequest webRequest, CancellationToken ct)
             {
                 var texture = DownloadHandlerTexture.GetContent(webRequest.UnityWebRequest);

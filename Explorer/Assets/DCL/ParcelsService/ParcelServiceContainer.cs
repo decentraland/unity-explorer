@@ -4,6 +4,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
@@ -22,9 +23,10 @@ namespace DCL.ParcelsService
         public static ParcelServiceContainer Create(IRealmData realmData,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IDebugContainerBuilder debugContainerBuilder,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            SceneAssetLock assetLock)
         {
-            var teleportController = new TeleportController(sceneReadinessReportQueue);
+            var teleportController = new TeleportController(sceneReadinessReportQueue, assetLock);
 
             BuildDebugWidget(teleportController, mvcManager, debugContainerBuilder);
 

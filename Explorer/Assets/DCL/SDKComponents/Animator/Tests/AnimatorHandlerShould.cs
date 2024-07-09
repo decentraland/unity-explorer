@@ -122,7 +122,7 @@ namespace DCL.SDKComponents.Animator.Tests
         {
             await InitializeGlftContainerComponent();
 
-            world.Add(entity, pbAnimator);
+            world.Set(entity, pbAnimator);
             system.Update(0);
 
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKAnimatorComponent>().WithAll<PBAnimator>()));
@@ -133,7 +133,7 @@ namespace DCL.SDKComponents.Animator.Tests
         {
             await InitializeGlftContainerComponent();
 
-            world.Add(entity, pbAnimator);
+            world.Set(entity, pbAnimator);
             system.Update(0);
 
             world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKAnimatorComponent comp, ref GltfContainerComponent containerComponent) =>
@@ -158,7 +158,7 @@ namespace DCL.SDKComponents.Animator.Tests
             await InitializeGlftContainerComponent();
             pbAnimator.States.First().Loop = false;
 
-            world.Add(entity, pbAnimator);
+            world.Set(entity, pbAnimator);
             system.Update(0);
 
             world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKAnimatorComponent comp, ref GltfContainerComponent containerComponent) =>
