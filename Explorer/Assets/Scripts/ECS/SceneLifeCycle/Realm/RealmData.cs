@@ -37,6 +37,16 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// Create an empty data to configure later
+        /// </summary>
+        public RealmData()
+        {
+            RealmName = string.Empty;
+            CommsAdapter = string.Empty;
+            Protocol = string.Empty;
+        }
+
         public RealmData(IIpfsRealm ipfsRealm)
         {
             Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty);
