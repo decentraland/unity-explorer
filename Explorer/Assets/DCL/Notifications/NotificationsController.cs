@@ -1,15 +1,22 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Notification.Serialization;
 using DCL.WebRequests;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
+using Utility;
 using Utility.Times;
 
 namespace DCL.Notification
 {
-    public class NotificationsController
+    public class NotificationsController : IDisposable
     {
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
         private const string NOTIFICATION_URL = "https://notifications.decentraland.org/notifications";
+        private readonly CancellationTokenSource cancellationToken;
         private readonly IWebRequestController webRequestController;
         private readonly CommonArguments commonArguments;
         private ulong unixTimestamp;
@@ -18,28 +25,32 @@ namespace DCL.Notification
         {
             this.webRequestController = webRequestController;
             commonArguments = new CommonArguments(new URLBuilder().AppendDomain(URLDomain.FromString(NOTIFICATION_URL)).Build());
-            GetNotificationAsync().Forget();
+            cancellationToken = new CancellationTokenSource();
+            GetNewNotificationAsync().Forget();
         }
 
-        private async UniTaskVoid GetNotificationAsync()
+        private async UniTaskVoid GetNewNotificationAsync()
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(5));
-            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-
-            NotificationDTOList notifications = await webRequestController.GetAsync(
-                commonArguments,
-                new CancellationToken(),
-                signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp)
-            ).CreateFromJson<NotificationDTOList>(WRJsonParser.Unity);
-
-            foreach (NotificationDTO notification in notifications.notifications)
+            do
             {
-                //process notification and sed it to a bus that handles new notifications
-                NotificationsFactory.CreateNotification(notification);
-            }
+                await UniTask.Delay(TimeSpan.FromSeconds(5));
+                unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
-            GetNotificationAsync().Forget();
+                List<INotification> notifications = await webRequestController.GetAsync(
+                                                                                             commonArguments,
+                                                                                             new CancellationToken(),
+                                                                                             signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
+                                                                                             headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                                                                        .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
+
+                Debug.Log("notification count is " + notifications.Count);
+            }
+            while (cancellationToken.IsCancellationRequested == false);
+        }
+
+        public void Dispose()
+        {
+            cancellationToken.SafeCancelAndDispose();
         }
     }
 }
