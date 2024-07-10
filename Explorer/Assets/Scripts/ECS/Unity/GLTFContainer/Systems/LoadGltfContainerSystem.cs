@@ -1,4 +1,5 @@
-﻿using Arch.Core;
+﻿using System;
+using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
@@ -10,6 +11,9 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
+using DCL.Diagnostics;
+using SceneRunner.Scene;
+using UnityEngine;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
@@ -23,10 +27,12 @@ namespace ECS.Unity.GLTFContainer.Systems
     public partial class LoadGltfContainerSystem : BaseUnityLoopSystem
     {
         private readonly EntityEventBuffer<GltfContainerComponent> eventsBuffer;
+        private readonly ISceneData sceneData;
 
-        internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer) : base(world)
+        internal LoadGltfContainerSystem(World world, EntityEventBuffer<GltfContainerComponent> eventsBuffer, ISceneData sceneData) : base(world)
         {
             this.eventsBuffer = eventsBuffer;
+            this.sceneData = sceneData;
         }
 
         protected override void Update(float t)
@@ -39,12 +45,22 @@ namespace ECS.Unity.GLTFContainer.Systems
         [None(typeof(GltfContainerComponent))]
         private void StartLoading(in Entity entity, ref PBGltfContainer sdkComponent, ref PartitionComponent partitionComponent)
         {
-            // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
-            var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
-            var component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
-            component.State = LoadingState.Loading;
-            World.Add(entity, component);
+            GltfContainerComponent component;
+            if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
+            {
+                ReportHub.LogWarning($"Hash does not exist for asset with name {sdkComponent.Src} in the scene content", GetReportCategory());
+                component = GltfContainerComponent.CreateFaulty(sdkComponent.Src);
+            }
+            else
+            {
+                // It's not the best idea to pass Transform directly but we rely on cancellation source to cancel if the entity dies
+                var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash ,new CancellationTokenSource()), partitionComponent);
+                component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
+                component.State = LoadingState.Loading;
+            }
+            
             eventsBuffer.Add(entity, component);
+            World.Add(entity, component);
         }
 
         // SDK Component was changed
@@ -57,9 +73,16 @@ namespace ECS.Unity.GLTFContainer.Systems
             {
                 // The source is changed, should start downloading over again
                 case LoadingState.Unknown:
-                    var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, new CancellationTokenSource()), partitionComponent);
-                    component.Promise = promise;
-                    component.State = LoadingState.Loading;
+                    if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
+                    {
+                        ReportHub.LogWarning($"Hash does not exist for asset with name {sdkComponent.Src} in the scene content", GetReportCategory());
+                        component.SetFaulty(sdkComponent.Src);
+                    }
+                    else
+                    {
+                        var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src,hash, new CancellationTokenSource()), partitionComponent);
+                        component.UpdatePromise(promise);
+                    }
                     eventsBuffer.Add(entity, component);
                     return;
 
@@ -93,5 +116,6 @@ namespace ECS.Unity.GLTFContainer.Systems
                     return;
             }
         }
+        
     }
 }
