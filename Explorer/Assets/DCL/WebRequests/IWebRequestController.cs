@@ -68,7 +68,7 @@ namespace DCL.WebRequests
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
-            string jsonMetaData,
+            string signatureMetadata,
             CancellationToken ct
         )
             where TOp: struct, IWebRequestOp<GenericPostRequest, TResult>
@@ -80,8 +80,8 @@ namespace DCL.WebRequests
                 webRequestOp,
                 GenericPostArguments.Empty,
                 ct,
-                signInfo: WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp)
+                signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
             );
         }
 
