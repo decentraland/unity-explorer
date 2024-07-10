@@ -183,7 +183,8 @@ namespace DCL.Web3.Authenticators
         {
             var authChain = AuthChain.Create();
 
-            authChain.SetSigner(response.sender);
+            // To keep cohesiveness between the platform, convert the user address to lower case
+            authChain.SetSigner(response.sender.ToLower());
 
             string signature = response.result;
 
