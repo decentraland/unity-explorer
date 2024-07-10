@@ -3,7 +3,6 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
-using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
@@ -21,9 +20,7 @@ using MVC;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
-using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
-using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Factory;
 using System;
 using System.Threading;
@@ -191,7 +188,10 @@ namespace SceneRunner
                     identityCache,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
-                    runtimeDeps.SimpleFetchApi);
+                    runtimeDeps.SimpleFetchApi,
+                    sceneData,
+                    realmData!
+                    );
             }
             else
             {
@@ -211,7 +211,9 @@ namespace SceneRunner
                     identityCache,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
-                    runtimeDeps.SimpleFetchApi);
+                    runtimeDeps.SimpleFetchApi,
+                    sceneData,
+                    realmData!);
             }
 
             sceneRuntime.ExecuteSceneJson();
