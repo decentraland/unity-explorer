@@ -14,13 +14,9 @@ namespace Global.Dynamic
 
         UniTask CreatePortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct);
 
-        UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
-
-        IRealmData GetRealm();
-
         /// <summary>
         ///     Gracefully unload the current realm
         /// </summary>
-        UniTask UnloadPortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct);
+        UniTask UnloadPortableExperienceAsync(string portableExperiencePath, CancellationToken ct);
     }
 }

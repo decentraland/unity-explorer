@@ -21,6 +21,8 @@ namespace ECS.SceneLifeCycle
         bool Contains(Vector2Int parcel);
 
         bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade);
+        bool TryGetPortableExperienceBySceneUrn(string sceneUrn, out ISceneFacade sceneFacade);
+        void RemovePortableExperienceFacade(string sceneUrn);
 
         void Clear();
     }
@@ -78,6 +80,15 @@ namespace ECS.SceneLifeCycle
 
         public bool TryGetByParcel(Vector2Int parcel, out ISceneFacade sceneFacade) =>
             scenesByParcels.TryGetValue(parcel, out sceneFacade);
+
+        public bool TryGetPortableExperienceBySceneUrn(string urn, out ISceneFacade sceneFacade) =>
+            portableExperienceScenesByUrn.TryGetValue(urn, out sceneFacade);
+
+        public void RemovePortableExperienceFacade(string urn)
+        {
+            portableExperienceScenesByUrn.Remove(urn);
+        }
+
 
         public void Clear()
         {

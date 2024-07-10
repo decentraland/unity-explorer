@@ -16,12 +16,9 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD.Components;
-using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
-using UnityEngine;
+using GetSceneDefinition = ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinition;
 
 namespace Global.Dynamic
 {
@@ -30,45 +27,34 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent>();
+        private static readonly QueryDescription GET_SCENE_DEFINITION = new QueryDescription().WithAll<GetSceneDefinition>();
+        private static readonly QueryDescription SCENE_DEFINITION = new QueryDescription().WithAll<SceneDefinitionComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
-        private readonly TeleportController teleportController;
-        private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
 
         private GlobalWorld? globalWorld;
         private readonly RealmData realmData = new ();
-        public Dictionary<string, Entity> PortableExperienceEntities { get; } = new (); //Probably should be a dictionary using the url as key?
+        public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
 
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
 
-            set
-            {
-                globalWorld = value;
-                teleportController.World = globalWorld.EcsWorld;
-            }
+            set => globalWorld = value;
         }
 
         public PortableExperiencesController(
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
-            TeleportController teleportController,
-            IReadOnlyList<int2> staticLoadPositions,
-            RealmData realmData,
-            IScenesCache scenesCache,
-            PartitionDataContainer partitionDataContainer)
+            IScenesCache scenesCache)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
-            this.teleportController = teleportController;
             this.scenesCache = scenesCache;
-            this.partitionDataContainer = partitionDataContainer;
         }
 
         public async UniTask CreatePortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct)
@@ -98,46 +84,111 @@ namespace Global.Dynamic
                 );
 
                 PortableExperienceEntities.Add(portableExperiencePath.Value, world.Create(new PortableExperienceComponent(realmData)));
+
+                WaitAndRemovePX().Forget();
             }
             catch (Exception e)
             {
-                //Handle exception properly
+                //TODO: Add proper exception handling
                 Console.WriteLine(e);
                 throw;
             }
         }
 
-        public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
-            await webRequestController.IsReachableAsync(realm.Append(new URLPath("/about")), ct);
+        private async UniTask WaitAndRemovePX()
+        {
+            await UniTask.Delay(10000);
+            await UniTask.Delay(10000);
+            await UniTask.Delay(10000);
+            await UniTask.Delay(10000);
+            await UniTask.Delay(10000);
 
-        public IRealmData GetRealm() =>
-            realmData;
+            await UnloadPortableExperienceAsync("https://worlds-content-server.decentraland.org/world/globalpx.dcl.eth", new CancellationToken());
+        }
 
-        public async UniTask UnloadPortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct)
+        public async UniTask UnloadPortableExperienceAsync(string portableExperiencePath, CancellationToken ct)
         {
             if (globalWorld == null) return;
 
             World world = globalWorld.EcsWorld;
 
-            //ScenesCache.TryGetByURL
+            await UniTask.SwitchToMainThread();
 
-            // release pooled entities
-            for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+            //We need to dispose all the scenes that the PX has created.
+             if (PortableExperienceEntities.TryGetValue(portableExperiencePath, out var portableExperienceEntity))
+            {
+                var portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
 
-            world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+                //Portable Experiences only have one scene
+                string? sceneUrn = portableExperienceComponent.Ipfs.SceneUrns[0];
+                string sceneEntityId = string.Empty;
 
-            // Clear the world from everything connected to the current realm
-            world.Destroy(in CLEAR_QUERY);
+                if (sceneUrn != null)
+                {
+                    sceneEntityId = IpfsHelper.ParseUrn(sceneUrn).EntityId;
 
-            globalWorld.Clear();
+                        if (scenesCache.TryGetPortableExperienceBySceneUrn(sceneEntityId, out var sceneFacade))
+                        {
+                            await sceneFacade.DisposeAsync();
+                            scenesCache.RemovePortableExperienceFacade(sceneEntityId);
+                        }
+                }
 
-            realmData.Invalidate();
+                // Clear the world from everything connected to the current PX
+                //for this we will need to go over all these entities in the query
+                //and check if their ipfs data coincides with the PX and if so, delete them.
+                List<Entity> entities = new List<Entity>();
 
-            await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+                if (!string.IsNullOrEmpty(sceneEntityId))
+                {
+                    GetEntities(world, sceneEntityId, GET_SCENE_DEFINITION, CheckGetSceneDefinitions, ref entities);
+                    GetEntities(world, sceneEntityId, SCENE_DEFINITION, CheckSceneDefinitions, ref entities);
+                    foreach (var entity in entities)
+                    {
+                        world.Destroy(entity);
+                    }
+                }
 
-            // Collect garbage, good moment to do it
-            GC.Collect();
+                world.Destroy(portableExperienceEntity);
+                PortableExperienceEntities.Remove(portableExperiencePath);
+
+                GC.Collect();
+            }
         }
+
+        private void GetEntities(World world, string url, QueryDescription queryDescription, Func<Chunk, string, Entity> iterationFunc, ref List<Entity> entities)
+        {
+            var query = world.Query(queryDescription);
+
+            foreach (var chunk in query.GetChunkIterator())
+            {
+                Entity entity = iterationFunc.Invoke(chunk, url);
+                if ( entity != Entity.Null)
+                {
+                    entities.Add(entity);
+                }
+            }
+        }
+
+        private Entity CheckGetSceneDefinitions(Chunk chunk, string url)
+        {
+            var first = chunk.GetFirst<GetSceneDefinition>();
+            if (first.IpfsPath.EntityId == url)
+            {
+                return chunk.Entity(0);
+            }
+            return Entity.Null;
+        }
+
+        private Entity CheckSceneDefinitions(Chunk chunk, string url)
+        {
+            var first = chunk.GetFirst<SceneDefinitionComponent>();
+            if (first.IpfsPath.EntityId == url)
+            {
+                return chunk.Entity(0);
+            }
+            return Entity.Null;
+        }
+
     }
 }

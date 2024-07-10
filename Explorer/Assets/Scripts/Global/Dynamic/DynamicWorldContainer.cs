@@ -222,11 +222,8 @@ namespace Global.Dynamic
             container.PortableExperiencesController = new PortableExperiencesController(
                 identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
-                parcelServiceContainer.TeleportController,
-                dynamicWorldParams.StaticLoadPositions,
-                staticContainer.RealmData,
-                staticContainer.ScenesCache,
-                staticContainer.PartitionDataContainer);
+                staticContainer.ScenesCache
+                );
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
