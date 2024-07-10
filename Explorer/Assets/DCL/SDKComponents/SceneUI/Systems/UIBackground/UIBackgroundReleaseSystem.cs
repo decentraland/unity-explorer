@@ -7,17 +7,14 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Groups;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(SceneUIComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
-    [ThrottlingEnabled]
     public partial class UIBackgroundReleaseSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPool componentPool;
@@ -31,20 +28,23 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             HandleEntityDestructionQuery(World);
             HandleUIBackgroundRemovalQuery(World);
-            World.Remove<UIBackgroundComponent>(in HandleUIBackgroundRemoval_QueryDescription);
+            // World.Remove<UIBackgroundComponent>(in HandleUIBackgroundRemoval_QueryDescription);
         }
 
         [Query]
         [None(typeof(PBUiBackground), typeof(DeleteEntityIntention))]
-        private void HandleUIBackgroundRemoval(ref UIBackgroundComponent uiBackgroundComponent) =>
-            RemoveDCLImage(ref uiBackgroundComponent);
+        private void HandleUIBackgroundRemoval(in Entity entity, ref UIBackgroundComponent uiBackgroundComponent)
+        {
+            // World.Remove<UIBackgroundComponent>(entity);
+            CleanUpDCLImage(ref uiBackgroundComponent);
+        }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void HandleEntityDestruction(ref UIBackgroundComponent uiBackgroundComponent) =>
-            RemoveDCLImage(ref uiBackgroundComponent);
+            CleanUpDCLImage(ref uiBackgroundComponent);
 
-        private void RemoveDCLImage(ref UIBackgroundComponent uiBackgroundComponent)
+        private void CleanUpDCLImage(ref UIBackgroundComponent uiBackgroundComponent)
         {
             if (uiBackgroundComponent.TexturePromise != null)
             {
@@ -52,8 +52,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 uiBackgroundComponent.TexturePromise = null;
             }
 
-            if (componentPool != null)
-                componentPool.Release(uiBackgroundComponent.Image);
+            componentPool?.Release(uiBackgroundComponent.Image);
+            uiBackgroundComponent.Image?.Dispose();
         }
     }
 }

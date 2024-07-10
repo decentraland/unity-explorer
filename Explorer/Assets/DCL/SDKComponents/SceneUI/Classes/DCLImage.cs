@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using JetBrains.Annotations;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.SDKComponents.SceneUI.Classes
@@ -8,18 +9,17 @@ namespace DCL.SDKComponents.SceneUI.Classes
         private static readonly Vertex[] VERTICES = new Vertex[4];
         private static readonly ushort[] INDICES = { 0, 1, 2, 2, 3, 0 };
 
-        private VisualElement canvas;
+        [CanBeNull] private VisualElement canvas;
         private DCLImageScaleMode scaleMode;
         private Texture2D texture2D;
         private Vector4 slices;
         private Color color;
         private DCLUVs uvs;
 
-        private bool customMeshGenerationRequired { get; set; }
+        private bool customMeshGenerationRequired;
 
         public DCLImageScaleMode ScaleMode
         {
-            get => scaleMode;
             set => SetScaleMode(value);
         }
 
@@ -31,83 +31,89 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         public Vector4 Slices
         {
-            get => slices;
             set => SetSlices(value);
         }
 
         public Color Color
         {
-            get => color;
             set => SetColor(value);
         }
 
         public DCLUVs UVs
         {
-            get => uvs;
             set => SetUVs(value);
         }
 
-        private IStyle style => canvas.style;
-
         public void Initialize(VisualElement canvasToApply)
         {
-            this.texture2D = null;
-            this.scaleMode = default(DCLImageScaleMode);
-            this.slices = Vector4.zero;
-            this.color = new Color(1, 1, 1, 0);
-            this.uvs = default(DCLUVs);
-            this.canvas = canvasToApply;
+            if (canvasToApply == null) return;
+
+            texture2D = null;
+            scaleMode = default(DCLImageScaleMode);
+            slices = Vector4.zero;
+            color = new Color(1, 1, 1, 0);
+            uvs = default(DCLUVs);
+            canvas = canvasToApply;
 
             canvasToApply.generateVisualContent += OnGenerateVisualContent;
         }
 
         public void Dispose()
         {
-            canvas.generateVisualContent -= OnGenerateVisualContent;
+            if (canvas != null)
+                canvas.generateVisualContent -= OnGenerateVisualContent;
+
+            texture2D = null;
+            scaleMode = default(DCLImageScaleMode);
+            slices = Vector4.zero;
+            color = new Color(1, 1, 1, 0);
+            uvs = default(DCLUVs);
+
+            canvas = null;
         }
 
         private void SetScaleMode(DCLImageScaleMode scaleModeValue)
         {
-            if (this.scaleMode == scaleModeValue)
+            if (scaleMode == scaleModeValue)
                 return;
 
-            this.scaleMode = scaleModeValue;
+            scaleMode = scaleModeValue;
             ResolveGenerationWay();
         }
 
         private void SetTexture(Texture2D texture)
         {
-            if (this.texture2D == texture)
+            if (texture2D == texture)
                 return;
 
-            this.texture2D = texture;
+            texture2D = texture;
             ResolveGenerationWay();
         }
 
         private void SetSlices(Vector4 slicesValue)
         {
-            if (this.slices == slicesValue)
+            if (slices == slicesValue)
                 return;
 
-            this.slices = slicesValue;
+            slices = slicesValue;
             ResolveGenerationWay();
         }
 
         private void SetColor(Color colorValue)
         {
-            if (this.color == colorValue)
+            if (color == colorValue)
                 return;
 
-            this.color = colorValue;
+            color = colorValue;
             ResolveGenerationWay();
         }
 
         private void SetUVs(DCLUVs uvsValue)
         {
-            if (this.uvs.Equals(uvsValue))
+            if (uvs.Equals(uvsValue))
                 return;
 
-            this.uvs = uvsValue;
+            uvs = uvsValue;
             ResolveGenerationWay();
         }
 
@@ -132,13 +138,13 @@ namespace DCL.SDKComponents.SceneUI.Classes
             }
             else SetSolidColor();
 
-            canvas.MarkDirtyRepaint();
+            canvas?.MarkDirtyRepaint();
         }
 
         private void AdjustUVs()
         {
             // check uvs
-            if (uvs.Equals(default))
+            if (uvs.Equals(default(DCLUVs)))
                 uvs = DCLUVs.Default;
         }
 
@@ -159,40 +165,48 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private void SetSliced()
         {
+            if (canvas == null) return;
+
             // Instead of generating a sliced mesh manually pass it to the existing logic of background
-            style.backgroundImage = Background.FromTexture2D(texture2D);
-            style.unityBackgroundImageTintColor = new StyleColor(color);
-            style.backgroundColor = new StyleColor(StyleKeyword.None);
+            canvas!.style.backgroundImage = Background.FromTexture2D(texture2D);
+            canvas!.style.unityBackgroundImageTintColor = new StyleColor(color);
+            canvas!.style.backgroundColor = new StyleColor(StyleKeyword.None);
 
             int texWidth = texture2D.width;
             int texHeight = texture2D.height;
 
             // convert slices to absolute values
-            style.unitySliceLeft = new StyleInt((int)(slices[0] * texWidth));
-            style.unitySliceTop = new StyleInt((int)(slices[1] * texHeight));
-            style.unitySliceRight = new StyleInt((int)(slices[2] * texWidth));
-            style.unitySliceBottom = new StyleInt((int)(slices[3] * texHeight));
+            canvas!.style.unitySliceLeft = new StyleInt((int)(slices[0] * texWidth));
+            canvas!.style.unitySliceTop = new StyleInt((int)(slices[1] * texHeight));
+            canvas!.style.unitySliceRight = new StyleInt((int)(slices[2] * texWidth));
+            canvas!.style.unitySliceBottom = new StyleInt((int)(slices[3] * texHeight));
             customMeshGenerationRequired = false;
         }
 
         private void SetCentered()
         {
-            style.backgroundImage = new StyleBackground(StyleKeyword.Null);
-            style.backgroundColor = new StyleColor(StyleKeyword.None);
+            if (canvas == null) return;
+
+            canvas!.style.backgroundImage = new StyleBackground(StyleKeyword.Null);
+            canvas!.style.backgroundColor = new StyleColor(StyleKeyword.None);
             customMeshGenerationRequired = true;
         }
 
         private void SetStretched()
         {
-            style.backgroundImage = new StyleBackground(StyleKeyword.Null);
-            style.backgroundColor = new StyleColor(StyleKeyword.None);
+            if (canvas == null) return;
+
+            canvas!.style.backgroundImage = new StyleBackground(StyleKeyword.Null);
+            canvas!.style.backgroundColor = new StyleColor(StyleKeyword.None);
             customMeshGenerationRequired = true;
         }
 
         private void SetSolidColor()
         {
-            style.backgroundImage = new StyleBackground(StyleKeyword.None);
-            style.backgroundColor = new StyleColor(color);
+            if (canvas == null) return;
+
+            canvas!.style.backgroundImage = new StyleBackground(StyleKeyword.None);
+            canvas!.style.backgroundColor = new StyleColor(color);
             customMeshGenerationRequired = false;
         }
 
@@ -214,8 +228,10 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private void GenerateStretched(MeshGenerationContext mgc)
         {
+            if (canvas == null) return;
+
             // in local coords
-            var r = canvas.contentRect;
+            Rect r = canvas.contentRect;
 
             float left = 0;
             float right = r.width;
@@ -227,10 +243,10 @@ namespace DCL.SDKComponents.SceneUI.Classes
             VERTICES[2].position = new Vector3(right, top, Vertex.nearZ);
             VERTICES[3].position = new Vector3(right, bottom, Vertex.nearZ);
 
-            var mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture2D);
+            MeshWriteData mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture2D);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
-            var uvRegion = mwd.uvRegion;
+            Rect uvRegion = mwd.uvRegion;
 
             VERTICES[0].uv = (uvs.BottomLeft * uvRegion.size) + uvRegion.min;
             VERTICES[1].uv = (uvs.TopLeft * uvRegion.size) + uvRegion.min;
@@ -245,15 +261,17 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         private void GenerateCenteredTexture(MeshGenerationContext mgc)
         {
-            // in local coords
-            var r = canvas.contentRect;
+            if (canvas == null) return;
 
-            var panelScale = canvas.worldTransform.lossyScale;
+            // in local coords
+            Rect r = canvas.contentRect;
+
+            Vector3 panelScale = canvas.worldTransform.lossyScale;
             float targetTextureWidth = texture2D.width * panelScale[0];
             float targetTextureHeight = texture2D.height * panelScale[1];
 
             // Remain the original center
-            var center = r.center;
+            Vector2 center = r.center;
 
             float width = Mathf.Min(r.width, targetTextureWidth);
             float height = Mathf.Min(r.height, targetTextureHeight);
@@ -268,10 +286,10 @@ namespace DCL.SDKComponents.SceneUI.Classes
             VERTICES[2].position = new Vector3(right, top, Vertex.nearZ);
             VERTICES[3].position = new Vector3(right, bottom, Vertex.nearZ);
 
-            var mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture2D);
+            MeshWriteData mwd = mgc.Allocate(VERTICES.Length, INDICES.Length, texture2D);
 
             // uv Rect [0;1] that was assigned by the Dynamic atlas by UI Toolkit
-            var uvRegion = mwd.uvRegion;
+            Rect uvRegion = mwd.uvRegion;
 
             // the texture should be cut off if it exceeds the parent rect
             float uvsDisplacementX = (1 - (width / targetTextureWidth)) / 2f;
