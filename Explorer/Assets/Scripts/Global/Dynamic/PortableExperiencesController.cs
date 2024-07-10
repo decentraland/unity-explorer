@@ -28,7 +28,7 @@ namespace Global.Dynamic
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
         private static readonly QueryDescription GET_SCENE_DEFINITION = new QueryDescription().WithAll<GetSceneDefinition>();
-        private static readonly QueryDescription SCENE_DEFINITION = new QueryDescription().WithAll<SceneDefinitionComponent>();
+        private static readonly QueryDescription SCENE_DEFINITION_COMPONENT = new QueryDescription().WithAll<SceneDefinitionComponent>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -39,7 +39,7 @@ namespace Global.Dynamic
         private GlobalWorld? globalWorld;
         private readonly RealmData realmData = new ();
         public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
-
+        private List<Entity> entitiesToDestroy = new List<Entity>();
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
@@ -67,7 +67,8 @@ namespace Global.Dynamic
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
             try
-            { //in case the url is wrong or any other potential issue with the request
+            {
+                //in case the url is wrong or any other potential issue with the request
                 ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
                 if (result.configurations.scenesUrn.Count == 0)
@@ -84,8 +85,6 @@ namespace Global.Dynamic
                 );
 
                 PortableExperienceEntities.Add(portableExperiencePath.Value, world.Create(new PortableExperienceComponent(realmData)));
-
-                WaitAndRemovePX().Forget();
             }
             catch (Exception e)
             {
@@ -93,17 +92,6 @@ namespace Global.Dynamic
                 Console.WriteLine(e);
                 throw;
             }
-        }
-
-        private async UniTask WaitAndRemovePX()
-        {
-            await UniTask.Delay(10000);
-            await UniTask.Delay(10000);
-            await UniTask.Delay(10000);
-            await UniTask.Delay(10000);
-            await UniTask.Delay(10000);
-
-            await UnloadPortableExperienceAsync("https://worlds-content-server.decentraland.org/world/globalpx.dcl.eth", new CancellationToken());
         }
 
         public async UniTask UnloadPortableExperienceAsync(string portableExperiencePath, CancellationToken ct)
@@ -114,7 +102,7 @@ namespace Global.Dynamic
 
             await UniTask.SwitchToMainThread();
 
-            //We need to dispose all the scenes that the PX has created.
+            //We need to dispose the scene that the PX has created.
              if (PortableExperienceEntities.TryGetValue(portableExperiencePath, out var portableExperienceEntity))
             {
                 var portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
@@ -136,14 +124,14 @@ namespace Global.Dynamic
 
                 // Clear the world from everything connected to the current PX
                 //for this we will need to go over all these entities in the query
-                //and check if their ipfs data coincides with the PX and if so, delete them.
-                List<Entity> entities = new List<Entity>();
+                //and check if their entity Id coincides with the scene's entity Id and if so, delete them.
+                entitiesToDestroy.Clear();
 
                 if (!string.IsNullOrEmpty(sceneEntityId))
                 {
-                    GetEntities(world, sceneEntityId, GET_SCENE_DEFINITION, CheckGetSceneDefinitions, ref entities);
-                    GetEntities(world, sceneEntityId, SCENE_DEFINITION, CheckSceneDefinitions, ref entities);
-                    foreach (var entity in entities)
+                    GetEntitiesToDestroy(world, sceneEntityId, GET_SCENE_DEFINITION, CheckGetSceneDefinitions, ref entitiesToDestroy);
+                    GetEntitiesToDestroy(world, sceneEntityId, SCENE_DEFINITION_COMPONENT, CheckSceneDefinitionComponents, ref entitiesToDestroy);
+                    foreach (var entity in entitiesToDestroy)
                     {
                         world.Destroy(entity);
                     }
@@ -156,7 +144,7 @@ namespace Global.Dynamic
             }
         }
 
-        private void GetEntities(World world, string url, QueryDescription queryDescription, Func<Chunk, string, Entity> iterationFunc, ref List<Entity> entities)
+        private void GetEntitiesToDestroy(World world, string url, QueryDescription queryDescription, Func<Chunk, string, Entity> iterationFunc, ref List<Entity> entities)
         {
             var query = world.Query(queryDescription);
 
@@ -180,7 +168,7 @@ namespace Global.Dynamic
             return Entity.Null;
         }
 
-        private Entity CheckSceneDefinitions(Chunk chunk, string url)
+        private Entity CheckSceneDefinitionComponents(Chunk chunk, string url)
         {
             var first = chunk.GetFirst<SceneDefinitionComponent>();
             if (first.IpfsPath.EntityId == url)
