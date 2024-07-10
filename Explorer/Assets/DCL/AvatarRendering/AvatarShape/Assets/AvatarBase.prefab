@@ -902,6 +902,7 @@ Transform:
   m_Children:
   - {fileID: 1579278854253744184}
   - {fileID: 6025102889096956563}
+  - {fileID: 4404269078412893173}
   - {fileID: 174017465429567360}
   - {fileID: 5392123658557924511}
   - {fileID: 4610638108693341539}
@@ -2272,6 +2273,37 @@ Transform:
   - {fileID: 3291366697074546674}
   m_Father: {fileID: 2220084985539663103}
   m_LocalEulerAnglesHint: {x: -0.28630647, y: -0.00000029223767, z: -2.6708906}
+--- !u!1 &5717972368255707350
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4404269078412893173}
+  m_Layer: 0
+  m_Name: NameTag
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4404269078412893173
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5717972368255707350}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0.00000013584501, w: -1}
+  m_LocalPosition: {x: -0, y: 1.965, z: 0}
+  m_LocalScale: {x: 0.010000003, y: 0.010000002, z: 0.010000002}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2198816967188641954}
+  m_LocalEulerAnglesHint: {x: -1.8985285, y: 0.00000008344817, z: -0.00000030495588}
 --- !u!1 &5750407799388277196
 GameObject:
   m_ObjectHideFlags: 0
@@ -3509,8 +3541,31 @@ MonoBehaviour:
   <HeadLookAtTargetHorizontal>k__BackingField: {fileID: 649947946792223910}
   <HeadLookAtTargetVertical>k__BackingField: {fileID: 5233882474765970618}
   <HeadPositionConstraint>k__BackingField: {fileID: 3708642057345503796}
+  <NameTagAnchorPoint>k__BackingField: {fileID: 4404269078412893173}
+  <HeadAnchorPoint>k__BackingField: {fileID: 4808891874506309325}
+  <NeckAnchorPoint>k__BackingField: {fileID: 6393731801598406390}
+  <SpineAnchorPoint>k__BackingField: {fileID: 9127361671025538962}
+  <Spine1AnchorPoint>k__BackingField: {fileID: 2575054607326833859}
+  <Spine2AnchorPoint>k__BackingField: {fileID: 6731488012879041327}
+  <HipAnchorPoint>k__BackingField: {fileID: 8350878165225546196}
+  <LeftShoulderAnchorPoint>k__BackingField: {fileID: 9057336653499675147}
+  <LeftArmAnchorPoint>k__BackingField: {fileID: 3008215921542459096}
+  <LeftForearmAnchorPoint>k__BackingField: {fileID: 3856210754195295245}
   <LeftHandAnchorPoint>k__BackingField: {fileID: 8257500666133283372}
+  <LeftHandIndexAnchorPoint>k__BackingField: {fileID: 1640689886514143526}
+  <RightShoulderAnchorPoint>k__BackingField: {fileID: 3066867467205636775}
+  <RightArmAnchorPoint>k__BackingField: {fileID: 4407208937942704870}
+  <RightForearmAnchorPoint>k__BackingField: {fileID: 2461261742225218745}
   <RightHandAnchorPoint>k__BackingField: {fileID: 481221082041237366}
+  <RightHandIndexAnchorPoint>k__BackingField: {fileID: 5572700364798881516}
+  <LeftUpLegAnchorPoint>k__BackingField: {fileID: 7094745639504999080}
+  <LeftLegAnchorPoint>k__BackingField: {fileID: 3457471958813412090}
+  <LeftFootAnchorPoint>k__BackingField: {fileID: 7641587907440333157}
+  <LeftToeBaseAnchorPoint>k__BackingField: {fileID: 4332106098282305372}
+  <RightUpLegAnchorPoint>k__BackingField: {fileID: 6347344340055563907}
+  <RightLegAnchorPoint>k__BackingField: {fileID: 7773640597938076529}
+  <RightFootAnchorPoint>k__BackingField: {fileID: 8530642813781257132}
+  <RightToeBaseAnchorPoint>k__BackingField: {fileID: 3392771611989602023}
 --- !u!1 &8135611663119746201
 GameObject:
   m_ObjectHideFlags: 0
