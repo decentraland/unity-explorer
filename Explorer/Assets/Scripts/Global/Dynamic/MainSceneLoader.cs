@@ -101,7 +101,7 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings, globalPluginSettingsContainer.GetSettings<AnalyticsSettings>(), destroyCancellationToken);
+            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings, globalPluginSettingsContainer, destroyCancellationToken);
 
             IBootstrap bootstrap = bootstrapContainer!.Bootstrap;
 

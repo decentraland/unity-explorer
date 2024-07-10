@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -12,7 +13,7 @@ using UnityEngine;
 
 namespace Global.Dynamic
 {
-    public class BootstrapContainer : IDisposable
+    public class BootstrapContainer : DCLContainer<AnalyticsSettings>
     {
         public IAssetsProvisioner AssetsProvisioner { get; private init; }
         public IBootstrap Bootstrap { get; private set; }
@@ -29,17 +30,20 @@ namespace Global.Dynamic
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(DebugSettings debugSettings, DynamicSceneLoaderSettings sceneLoaderSettings,
-            AnalyticsSettings analyticsSettings, CancellationToken ct)
+            IPluginSettingsContainer settingsContainer, CancellationToken ct)
         {
-            var container = new BootstrapContainer
+            var bootstrapContainer = new BootstrapContainer
             {
                 AssetsProvisioner = new AddressablesProvisioner(),
             };
 
-            (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, analyticsSettings, ct, container);
-            (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings);
+            await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, AnalyticsSettings>(settingsContainer, ct, async container =>
+            {
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container.settings, ct, container);
+                (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings);
+            });
 
-            return container;
+            return bootstrapContainer;
         }
 
         private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, AnalyticsSettings analyticsSettings, CancellationToken ct, BootstrapContainer container)
