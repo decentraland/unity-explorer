@@ -64,12 +64,12 @@ namespace DCL.SDKComponents.SceneUI.Classes
                 canvas.generateVisualContent -= OnGenerateVisualContent;
 
             texture2D = null;
-            scaleMode = default(DCLImageScaleMode);
-            slices = Vector4.zero;
-            color = new Color(1, 1, 1, 0);
-            uvs = default(DCLUVs);
+            // scaleMode = default(DCLImageScaleMode);
+            // slices = Vector4.zero;
+            // color = new Color(1, 1, 1, 0);
+            // uvs = default(DCLUVs);
 
-            canvas = null;
+            // canvas = null;
         }
 
         private void SetScaleMode(DCLImageScaleMode scaleModeValue)

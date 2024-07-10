@@ -33,9 +33,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
         [Query]
         [None(typeof(PBUiBackground), typeof(DeleteEntityIntention))]
-        private void HandleUIBackgroundRemoval(in Entity entity, ref UIBackgroundComponent uiBackgroundComponent)
+        private void HandleUIBackgroundRemoval(ref UIBackgroundComponent uiBackgroundComponent)
         {
-            // World.Remove<UIBackgroundComponent>(entity);
             CleanUpDCLImage(ref uiBackgroundComponent);
         }
 
@@ -52,8 +51,10 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 uiBackgroundComponent.TexturePromise = null;
             }
 
+            uiBackgroundComponent.Image = null;
+
             componentPool?.Release(uiBackgroundComponent.Image);
-            uiBackgroundComponent.Image?.Dispose();
+            // uiBackgroundComponent.Image?.Dispose();
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Classes;
+using JetBrains.Annotations;
 using System;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
@@ -7,7 +8,7 @@ namespace DCL.SDKComponents.SceneUI.Components
 {
     public struct UIBackgroundComponent : IPoolableComponentProvider<DCLImage>
     {
-        public DCLImage Image;
+        [CanBeNull] public DCLImage Image;
         public Promise? TexturePromise;
         public ECS.StreamableLoading.LifeCycle Status;
 

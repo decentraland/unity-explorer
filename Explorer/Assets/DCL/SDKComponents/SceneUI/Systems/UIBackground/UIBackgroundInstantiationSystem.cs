@@ -60,7 +60,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [None(typeof(UIBackgroundComponent))]
         private void InstantiateUIBackground(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var image = imagesPool.Get();
+            DCLImage image = null;
+
+            while (image == null)
+                image = imagesPool.Get();
+
             image.Initialize(uiTransformComponent.Transform);
             var uiBackgroundComponent = new UIBackgroundComponent();
             uiBackgroundComponent.Image = image;

@@ -211,7 +211,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
         }
 
         public static void ReleaseDCLImage(DCLImage image) =>
-            image.Dispose();
+            image?.Dispose();
 
         public static void ReleaseUIInputComponent(UIInputComponent input)
         {
