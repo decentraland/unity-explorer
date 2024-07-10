@@ -37,7 +37,6 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var c = new GltfContainerComponent();
             c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", "1_Hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
-            c.Hash = c.Promise.LoadingIntention.Hash;
             var asset = GltfContainerAsset.Create(new GameObject(), null);
 
             asset.DecodedVisibleSDKColliders = new List<SDKCollider> { new (), new () };

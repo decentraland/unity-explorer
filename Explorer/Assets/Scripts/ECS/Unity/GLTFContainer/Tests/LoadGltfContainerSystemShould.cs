@@ -168,7 +168,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             GltfContainerComponent component = world.Get<GltfContainerComponent>(e);
 
             Assert.That(component.State, Is.EqualTo(LoadingState.FinishedWithError));
-            Assert.That(component.Promise, Is.EqualTo(AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL));
+            Assert.That(component.Promise, Is.EqualTo(GltfContainerComponent.CreateFaulty(GltfContainerTestResources.NO_GAME_OBJECTS).Promise));
         }
     }
 }

@@ -81,7 +81,8 @@ namespace ECS.Unity.GLTFContainer.Systems
                     else
                     {
                         var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src,hash, new CancellationTokenSource()), partitionComponent);
-                        component.UpdatePromise(promise);
+                        component.Promise = promise;
+                        component.State = LoadingState.Loading;
                     }
                     eventsBuffer.Add(entity, component);
                     return;

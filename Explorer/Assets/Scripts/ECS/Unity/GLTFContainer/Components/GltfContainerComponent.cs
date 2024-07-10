@@ -8,8 +8,8 @@ namespace ECS.Unity.GLTFContainer.Components
     {
         private const string FAULTY_HASH = "FAULTY_HASH";
         
-        public string Hash;
-        public string Name;
+        public string Hash => Promise.LoadingIntention.Hash;
+        public string Name => Promise.LoadingIntention.Name;
 
         public ColliderLayer VisibleMeshesCollisionMask;
         public ColliderLayer InvisibleMeshesCollisionMask;
@@ -24,8 +24,6 @@ namespace ECS.Unity.GLTFContainer.Components
             InvisibleMeshesCollisionMask = invisibleMeshesCollisionMask;
             Promise = promise;
             State = LoadingState.Unknown;
-            Hash = Promise.LoadingIntention.Hash;
-            Name = Promise.LoadingIntention.Name;
         }
 
         public static GltfContainerComponent CreateFaulty(string name)
@@ -39,17 +37,10 @@ namespace ECS.Unity.GLTFContainer.Components
         public void SetFaulty(string name)
         {
             State = LoadingState.FinishedWithError;
-            Hash = FAULTY_HASH;
-            Name = name;
-            Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL;
+            Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.CreateFinalized(
+                new GetGltfContainerAssetIntention(name, FAULTY_HASH, null),
+                null);
         }
 
-        public void UpdatePromise(AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention> promise)
-        {
-            Promise = promise;
-            Hash = Promise.LoadingIntention.Hash;
-            Name = Promise.LoadingIntention.Name;
-            State = LoadingState.Loading;
-        }
     }
 }
