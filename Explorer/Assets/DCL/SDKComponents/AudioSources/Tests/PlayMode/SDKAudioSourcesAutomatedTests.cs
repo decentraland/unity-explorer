@@ -117,7 +117,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             // First load the common global plugin
             (StaticContainer? staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
                 new AddressablesProvisioner().WithErrorTrace(),
-                new NullDebugContainerBuilder(),
+                new DebugViewsCatalog(),
                 globalSettingsContainer,
                 web3IdentityCache,
                 ethereumApi,

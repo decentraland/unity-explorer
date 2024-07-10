@@ -2,7 +2,6 @@
 using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.AssetsProvision.Provisions;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character;
 using DCL.Character.Plugin;
@@ -14,7 +13,6 @@ using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -35,7 +33,6 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle.Components;
-using Global.Dynamic;
 using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
@@ -101,6 +98,8 @@ namespace Global
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
 
+        public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
+
         private IAssetsProvisioner assetsProvisioner;
 
         public void Dispose()
@@ -140,7 +139,7 @@ namespace Global
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
             IAssetsProvisioner assetsProvisioner,
-            IDebugContainerBuilder debugContainerBuilder,
+            DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
             IEthereumApi ethereumApi,
@@ -154,6 +153,7 @@ namespace Global
 
             var container = new StaticContainer();
 
+            container.DebugContainerBuilder = DebugUtilitiesContainer.Create(debugViewsCatalog).Builder;
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
@@ -195,7 +195,7 @@ namespace Global
             container.ProfilingProvider = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
-            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, debugContainerBuilder);
+            container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.FeatureFlagsCache = new FeatureFlagsCache();

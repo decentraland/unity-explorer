@@ -128,7 +128,7 @@ namespace Global.Static
             // First load the common global plugin
             (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
                 assetsProvisioner,
-                new NullDebugContainerBuilder(),
+                new DebugViewsCatalog(),
                 globalSettingsContainer,
                 web3IdentityProvider,
                 ethereumApi,
