@@ -179,7 +179,6 @@ namespace Global.Dynamic
             }
 
             foreach (ISceneFacade scene in allScenes)
-
                 // Scene Info is contained in the ReportData, don't include it into the exception
                 scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
                     static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
@@ -189,6 +188,7 @@ namespace Global.Dynamic
         {
             allScenes.Clear();
             allScenes.AddRange(scenesCache.Scenes);
+            allScenes.AddRange(scenesCache.PortableExperiencesScenes);
 
             // Dispose all scenes
             scenesCache.Clear();

@@ -8,7 +8,7 @@ namespace ECS.SceneLifeCycle
     public interface IScenesCache
     {
         IReadOnlyCollection<ISceneFacade> Scenes { get; }
-
+        IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes { get; }
         void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels);
 
         void AddNonRealScene(IReadOnlyList<Vector2Int> parcels);
@@ -36,6 +36,7 @@ namespace ECS.SceneLifeCycle
         private readonly HashSet<ISceneFacade> scenes = new (PoolConstants.SCENES_COUNT);
 
         public IReadOnlyCollection<ISceneFacade> Scenes => scenes;
+        public IReadOnlyCollection<ISceneFacade> PortableExperiencesScenes => portableExperienceScenesByUrn.Values;
 
         public void Add(ISceneFacade sceneFacade, IReadOnlyList<Vector2Int> parcels)
         {
