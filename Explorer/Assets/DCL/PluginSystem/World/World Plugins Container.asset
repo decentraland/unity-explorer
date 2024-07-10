@@ -20,17 +20,13 @@ MonoBehaviour:
   - rid: 847852733734322176
   - rid: 1045841226745774107
   - rid: 1045841258647388162
-  - rid: 758312499805421571
   - rid: 758312842344792066
   - rid: 857448815798779906
   - rid: 4769369655026384898
+  - rid: 2872862489835208706
   references:
     version: 2
     RefIds:
-    - rid: 758312499805421571
-      type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
-      data:
-        AudioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
     - rid: 758312842344792066
       type: {class: InteractionsAudioPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -119,6 +115,10 @@ MonoBehaviour:
         <RaycastFrameBudgetMs>k__BackingField: 3
         <PlayerOriginRaycastMaxDistance>k__BackingField: 200
         <GlobalInputPropagationBucketThreshold>k__BackingField: 3
+    - rid: 2872862489835208706
+      type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
+      data:
+        AudioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
     - rid: 4753057106328551424
       type: {class: SceneUIPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
