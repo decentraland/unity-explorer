@@ -2,7 +2,7 @@ using ECS.StreamableLoading.Textures;
 using ECS.Unity.Textures.Components;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
-namespace DCL.SDKComponents.VideoPlayer.Utils
+namespace DCL.SDKComponents.Utils
 {
     public static class TextureComponentUtils
     {

@@ -1,8 +1,8 @@
 using Arch.Core;
 
-namespace DCL.SDKComponents.MapPins.Components
+namespace DCL.MapPins.Components
 {
-    public class MapPinHolderComponent
+    public struct MapPinHolderComponent
     {
         public Entity GlobalWorldEntity;
 

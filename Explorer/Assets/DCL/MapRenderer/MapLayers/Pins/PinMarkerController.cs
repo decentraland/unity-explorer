@@ -6,7 +6,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ECSComponents;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
-using DCL.SDKComponents.MapPins.Components;
+using DCL.MapPins.Components;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using MVC;
@@ -47,10 +47,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
             this.builder = builder;
         }
 
-        public async UniTask InitializeAsync(CancellationToken cancellationToken)
-        {
-        }
-
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
             world = builder.World;
@@ -66,7 +62,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
             mapPinDeletionSystem.Activate();
         }
 
-        [All(typeof(MapPinComponent))]
         [Query]
         private void SetMapPinPlacement(in Entity e, ref MapPinComponent mapPinComponent, ref PBMapPin pbMapPin)
         {
@@ -93,7 +88,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
             mapPinComponent.IsDirty = false;
         }
 
-        [All(typeof(MapPinComponent))]
         [Query]
         private void SetMapPinTexture(in Entity e, ref MapPinComponent mapPinComponent)
         {

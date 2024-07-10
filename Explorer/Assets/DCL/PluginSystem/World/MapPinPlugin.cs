@@ -26,7 +26,8 @@ namespace DCL.PluginSystem.World
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             ResetDirtyFlagSystem<PBMapPin>.InjectToWorld(ref builder);
-            MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorldProxy);
+
+            MapPinLoaderSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, globalWorldProxy, sharedDependencies.ScenePartition);
         }
     }
 }

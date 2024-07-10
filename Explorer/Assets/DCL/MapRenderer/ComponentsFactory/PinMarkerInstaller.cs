@@ -46,7 +46,6 @@ namespace DCL.MapRenderer.ComponentsFactory
                 cullingController
             );
 
-            await controller.InitializeAsync(cancellationToken);
             writer.Add(MapLayer.Pins, controller);
             zoomScalingWriter.Add(controller);
             return controller;

@@ -6,7 +6,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarkerObject : MapRendererMarkerBase
     {
-        [field: SerializeField] internal SpriteRenderer mapPinIcon { get; set; }
+        [field: SerializeField] internal SpriteRenderer mapPinIcon { get; private set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
 
         public void SetScale(float baseScale, float newScale)

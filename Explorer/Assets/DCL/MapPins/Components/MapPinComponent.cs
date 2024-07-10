@@ -3,7 +3,7 @@ using DCL.ECSComponents;
 using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
-namespace DCL.SDKComponents.MapPins.Components
+namespace DCL.MapPins.Components
 {
     public struct MapPinComponent
     {
