@@ -1,10 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
-using DCL.Chat;
-using DCL.Chat.Commands;
-using DCL.Chat.MessageBus;
-using DCL.ExplorePanel;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
 using ECS;
@@ -50,7 +47,19 @@ namespace DCL.PluginSystem.Global
     [Serializable]
     public class AnalyticsSettings : IDCLPluginSettings
     {
+        [field: SerializeField]
+        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+
+        [field: SerializeField]
+        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
+
         [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
+
+        [Serializable]
+        public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
+        {
+            public ReportHandlingSettingsRef(string guid) : base(guid) { }
+        }
 
         [Serializable]
         public class AnalyticsConfigurationRef : AssetReferenceT<AnalyticsConfiguration>

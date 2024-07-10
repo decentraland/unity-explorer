@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -15,18 +16,28 @@ namespace Global.Dynamic
 {
     public class BootstrapContainer : DCLContainer<AnalyticsSettings>
     {
-        public IAssetsProvisioner AssetsProvisioner { get; private init; }
-        public IBootstrap Bootstrap { get; private set; }
-        public IWeb3IdentityCache IdentityCache { get; private set; }
-        public DappWeb3Authenticator Web3VerifiedAuthenticator { get; private set; }
-        public ProxyVerifiedWeb3Authenticator Web3Authenticator { get; private set; }
-        public IAnalyticsController? Analytics { get; private set; }
+        private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
+        private DiagnosticsContainer? diagnosticsContainer;
 
-        public void Dispose()
+        private bool enableAnalytics;
+
+        public IAssetsProvisioner? AssetsProvisioner { get; private init; }
+        public IBootstrap? Bootstrap { get; private set; }
+        public IWeb3IdentityCache? IdentityCache { get; private set; }
+        public DappWeb3Authenticator? Web3VerifiedAuthenticator { get; private set; }
+        public ProxyVerifiedWeb3Authenticator? Web3Authenticator { get; private set; }
+        public IAnalyticsController? Analytics { get; private set; }
+        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
+
+        public override void Dispose()
         {
-            Web3Authenticator.Dispose();
-            Web3VerifiedAuthenticator.Dispose();
-            IdentityCache.Dispose();
+            base.Dispose();
+
+            diagnosticsContainer?.Dispose();
+            reportHandlingSettings.Dispose();
+            Web3Authenticator?.Dispose();
+            Web3VerifiedAuthenticator?.Dispose();
+            IdentityCache?.Dispose();
         }
 
         public static async UniTask<BootstrapContainer> CreateAsync(DebugSettings debugSettings, DynamicSceneLoaderSettings sceneLoaderSettings,
@@ -39,22 +50,29 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, AnalyticsSettings>(settingsContainer, ct, async container =>
             {
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container.settings, ct, container);
+                container.reportHandlingSettings = await ProvideReportHandlingSettings(container.AssetsProvisioner!, container.settings, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
                 (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings);
+
+                container.diagnosticsContainer = container.enableAnalytics
+                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
+                    : DiagnosticsContainer.Create(container.ReportHandlingSettings);
             });
 
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, AnalyticsSettings analyticsSettings, CancellationToken ct, BootstrapContainer container)
+        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, BootstrapContainer container, AnalyticsSettings analyticsSettings, CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, ct)).Value;
-            bool enabledAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
+            container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings.Get());
-            coreBootstrap.EnableAnalytics = enabledAnalytics;
+            var coreBootstrap = new Bootstrap(debugSettings.Get())
+            {
+                EnableAnalytics = container.enableAnalytics,
+            };
 
-            if (enabledAnalytics)
+            if (container.enableAnalytics)
             {
                 IAnalyticsService service = analyticsConfig.Mode switch
                                             {
@@ -96,6 +114,18 @@ namespace Global.Dynamic
             // Allow devUrl only in DebugBuilds (Debug.isDebugBuild is always true in Editor)
             string GetAuthUrl(string releaseUrl, string devUrl) =>
                 Application.isEditor || !Debug.isDebugBuild ? releaseUrl : devUrl;
+        }
+
+        private static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettings(IAssetsProvisioner assetsProvisioner, AnalyticsSettings settings, CancellationToken ct)
+        {
+            AnalyticsSettings.ReportHandlingSettingsRef reportHandlingSettings =
+#if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
+                settings.ReportHandlingSettingsDevelopment;
+#else
+                            settings.ReportHandlingSettingsProduction;
+#endif
+
+            return await assetsProvisioner.ProvideMainAssetAsync(reportHandlingSettings, ct, nameof(ReportHandlingSettings));
         }
     }
 }

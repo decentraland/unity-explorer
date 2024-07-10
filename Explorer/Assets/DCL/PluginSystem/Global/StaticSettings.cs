@@ -17,11 +17,6 @@ namespace DCL.PluginSystem.Global
     public class StaticSettings : IDCLPluginSettings
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
-
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
 
         [field: SerializeField]
         public PartitionSettingsRef PartitionSettings { get; private set; }
@@ -53,12 +48,6 @@ namespace DCL.PluginSystem.Global
         }
 
         [Serializable]
-        public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
-        {
-            public ReportHandlingSettingsRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
         public class RealmPartitionSettingsRef : AssetReferenceT<RealmPartitionSettingsAsset>
         {
             public RealmPartitionSettingsRef(string guid) : base(guid) { }
@@ -69,7 +58,7 @@ namespace DCL.PluginSystem.Global
         {
             public LODSettingsRef(string guid) : base(guid) { }
         }
-        
+
         [Serializable]
         public class AvatarRandomizerSettingsRef : AssetReferenceT<AvatarRandomizerAsset>
         {

@@ -56,9 +56,6 @@ namespace Global
         private ProvidedInstance<CharacterObject> characterObject;
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
-        private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
-
-        public DiagnosticsContainer DiagnosticsContainer { get; private set; }
 
         public ComponentsContainer ComponentsContainer { get; private set; }
 
@@ -85,8 +82,6 @@ namespace Global
 
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
 
-        public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
-
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
 
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
@@ -104,10 +99,8 @@ namespace Global
 
         public void Dispose()
         {
-            DiagnosticsContainer?.Dispose();
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
-            reportHandlingSettings.Dispose();
             QualityContainer.Dispose();
         }
 
@@ -115,13 +108,8 @@ namespace Global
         {
             StaticSettings = settings;
 
-            (reportHandlingSettings, partitionSettings, realmPartitionSettings) =
+            (partitionSettings, realmPartitionSettings) =
                 await UniTask.WhenAll(
-#if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
-                    assetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsDevelopment, ct, nameof(ReportHandlingSettings)),
-#else
-                    AssetsProvisioner.ProvideMainAssetAsync(settings.ReportHandlingSettingsProduction, ct, nameof(ReportHandlingSettings)),
-#endif
                     assetsProvisioner.ProvideMainAssetAsync(settings.PartitionSettings, ct, nameof(PartitionSettings)),
                     assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct, nameof(RealmPartitionSettings))
                 );
@@ -139,6 +127,7 @@ namespace Global
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
             IAssetsProvisioner assetsProvisioner,
+            IReportsHandlingSettings reportHandlingSettings,
             DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer settingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -172,7 +161,7 @@ namespace Global
 
             var sharedDependencies = new ECSWorldSingletonSharedDependencies(
                 componentsContainer.ComponentPoolsRegistry,
-                container.ReportHandlingSettings,
+                reportHandlingSettings,
                 new SceneEntityFactory(),
                 new PartitionedWorldsAggregate.Factory(),
                 new ConcurrentLoadingPerformanceBudget(staticSettings.AssetsLoadingBudget),
@@ -184,11 +173,6 @@ namespace Global
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
-
-            container.DiagnosticsContainer = DiagnosticsContainer.Create(container.ReportHandlingSettings);
-                // bootstrapContainer.Analytics == null
-                //     : DiagnosticsContainer.CreateWithAdditionalHandlers(container.ReportHandlingSettings,
-                //         (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(bootstrapContainer.Analytics)));
 
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
@@ -202,7 +186,7 @@ namespace Global
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
-            var assetBundlePlugin = new AssetBundlesPlugin(container.ReportHandlingSettings, container.CacheCleaner);
+            var assetBundlePlugin = new AssetBundlesPlugin(reportHandlingSettings, container.CacheCleaner);
             var textureResolvePlugin = new TexturesLoadingPlugin(container.WebRequestsContainer.WebRequestController, container.CacheCleaner);
 
             ExtendedObjectPool<Texture2D> videoTexturePool = VideoTextureFactory.CreateVideoTexturesPool();

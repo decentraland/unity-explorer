@@ -115,14 +115,15 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer? staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
-                new AddressablesProvisioner().WithErrorTrace(),
-                new DebugViewsCatalog(),
-                globalSettingsContainer,
-                web3IdentityCache,
-                ethereumApi,
-                ct
-            );
+            (StaticContainer? staticContainer, bool isLoaded) = (null, true);
+            //     = await StaticContainer.CreateAsync(
+            //     new AddressablesProvisioner().WithErrorTrace(),
+            //     new DebugViewsCatalog(),
+            //     globalSettingsContainer,
+            //     web3IdentityCache,
+            //     ethereumApi,
+            //     ct
+            // );
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

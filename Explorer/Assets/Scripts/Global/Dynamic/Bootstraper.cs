@@ -30,7 +30,7 @@ namespace Global.Dynamic
         private readonly bool showLoading;
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
-        public bool EnableAnalytics { private get; set; }
+        public bool EnableAnalytics { private get; init; }
 
         private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
@@ -64,7 +64,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, debugViewsCatalog, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.Web3VerifiedAuthenticator, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
