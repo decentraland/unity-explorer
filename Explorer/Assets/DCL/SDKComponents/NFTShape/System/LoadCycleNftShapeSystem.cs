@@ -33,9 +33,9 @@ namespace DCL.SDKComponents.NFTShape.System
 
         [Query]
         [None(typeof(NFTLoadingComponent))]
-        private void Start(in Entity entity, in PBNftShape nftShape, in PartitionComponent partitionComponent)
+        private void Start(in Entity entity, in PBNftShape nftShape) //TODO optimise partitioning
         {
-            var promise = Promise.Create(World!, new GetNFTShapeIntention(nftShape.Urn!, urnSource), partitionComponent);
+            var promise = Promise.Create(World!, new GetNFTShapeIntention(nftShape.Urn!, urnSource), PartitionComponent.TOP_PRIORITY);
             World!.Add(entity, new NFTLoadingComponent(promise));
         }
 
