@@ -24,9 +24,10 @@ namespace Global.Tests
         {
             PluginSettingsContainer globalSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(GLOBAL_CONTAINER_ADDRESS);
             PluginSettingsContainer sceneSettingsContainer = await Addressables.LoadAssetAsync<PluginSettingsContainer>(WORLD_CONTAINER_ADDRESS);
+            var analyticsSettings = globalSettingsContainer.GetSettings<AnalyticsSettings>();
 
             var assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettings(assetProvisioner, new AnalyticsSettings(), default(CancellationToken));
+            var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettings(assetProvisioner, analyticsSettings, default(CancellationToken));
 
             return await StaticSceneLauncher.InstallAsync(
                 assetProvisioner, reportHandlingSettings.Value, new DebugViewsCatalog(),
