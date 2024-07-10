@@ -1,9 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.AssetsProvision.Provisions;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
+using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Web3;
@@ -14,6 +17,7 @@ using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using Global;
+using Global.Dynamic;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
@@ -114,16 +118,22 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             IProfileRepository profileRepository,
             CancellationToken ct)
         {
+            ErrorTraceAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
+
+            ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings = await BootstrapContainer.ProvideReportHandlingSettings(assetProvisioner,
+                sceneSettingsContainer.GetSettings<AnalyticsSettings>(), ct);
+
             // First load the common global plugin
-            (StaticContainer? staticContainer, bool isLoaded) = (null, true);
-            //     = await StaticContainer.CreateAsync(
-            //     new AddressablesProvisioner().WithErrorTrace(),
-            //     new DebugViewsCatalog(),
-            //     globalSettingsContainer,
-            //     web3IdentityCache,
-            //     ethereumApi,
-            //     ct
-            // );
+            (StaticContainer? staticContainer, bool isLoaded)
+                = await StaticContainer.CreateAsync(
+                    assetProvisioner,
+                    reportHandlingSettings.Value,
+                    new DebugViewsCatalog(),
+                    globalSettingsContainer,
+                    web3IdentityCache,
+                    ethereumApi,
+                    ct
+                );
 
             if (!isLoaded)
                 GameReports.PrintIsDead();

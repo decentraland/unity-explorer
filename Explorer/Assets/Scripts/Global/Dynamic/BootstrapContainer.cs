@@ -116,13 +116,13 @@ namespace Global.Dynamic
                 Application.isEditor || !Debug.isDebugBuild ? releaseUrl : devUrl;
         }
 
-        private static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettings(IAssetsProvisioner assetsProvisioner, AnalyticsSettings settings, CancellationToken ct)
+        public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettings(IAssetsProvisioner assetsProvisioner, AnalyticsSettings settings, CancellationToken ct)
         {
             AnalyticsSettings.ReportHandlingSettingsRef reportHandlingSettings =
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
                 settings.ReportHandlingSettingsDevelopment;
 #else
-                            settings.ReportHandlingSettingsProduction;
+                settings.ReportHandlingSettingsProduction;
 #endif
 
             return await assetsProvisioner.ProvideMainAssetAsync(reportHandlingSettings, ct, nameof(ReportHandlingSettings));

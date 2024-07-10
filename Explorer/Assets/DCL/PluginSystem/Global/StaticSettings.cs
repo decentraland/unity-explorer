@@ -1,4 +1,6 @@
-﻿using DCL.AssetsProvision;
+﻿using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Character;
 using DCL.Diagnostics;
 using DCL.LOD;
@@ -8,11 +10,35 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
+    public class TestContainer : IDCLGlobalPlugin<TestSettings>
+    {
+        public void Dispose()
+        {
+            // TODO release managed resources here
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
+            throw new NotImplementedException();
+        }
+
+        public UniTask InitializeAsync(TestSettings settings, CancellationToken ct) =>
+            throw new NotImplementedException();
+    }
+
+    [Serializable]
+    public class TestSettings : IDCLPluginSettings
+    {
+        [field: SerializeField]
+        public StaticSettings.PartitionSettingsRef PartitionSettings { get; private set; }
+    }
+
     [Serializable]
     public class StaticSettings : IDCLPluginSettings
     {

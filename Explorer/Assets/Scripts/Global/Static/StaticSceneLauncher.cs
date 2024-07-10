@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -16,7 +17,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
+using DCL.PluginSystem.Global;
 using DCL.Utilities.Extensions;
+using Global.Dynamic;
 using UnityEngine;
 
 namespace Global.Static
@@ -100,8 +103,22 @@ namespace Global.Static
                     await memoryProfileRepository.SetAsync(ownProfile, ct);
                 }
 
-                (staticContainer, sceneSharedContainer) = await InstallAsync(new AddressablesProvisioner().WithErrorTrace(), globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    identityCache, dappWeb3Authenticator, identityCache, memoryProfileRepository, webRequests, ct);
+                var assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
+
+                var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettings(assetProvisioner,
+                    globalPluginSettingsContainer.GetSettings<AnalyticsSettings>(), ct);
+
+                (staticContainer, sceneSharedContainer) = await InstallAsync(
+                    assetProvisioner,
+                    reportHandlingSettings.Value,
+                    new DebugViewsCatalog(),
+                    globalPluginSettingsContainer,
+                    scenePluginSettingsContainer,
+                    identityCache,
+                    dappWeb3Authenticator,
+                    identityCache,
+                    memoryProfileRepository,
+                    webRequests, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
@@ -116,6 +133,8 @@ namespace Global.Static
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
             IAssetsProvisioner assetsProvisioner,
+            IReportsHandlingSettings reportHandlingSettings,
+            DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -126,15 +145,16 @@ namespace Global.Static
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer? staticContainer, bool isLoaded) = (null, true);
-            //     = await StaticContainer.CreateAsync(
-            //     assetsProvisioner,
-            //     new DebugViewsCatalog(),
-            //     globalSettingsContainer,
-            //     web3IdentityProvider,
-            //     ethereumApi,
-            //     ct
-            // )!;
+            (StaticContainer? staticContainer, bool isLoaded)
+                = await StaticContainer.CreateAsync(
+                assetsProvisioner,
+                reportHandlingSettings,
+                debugViewsCatalog,
+                globalSettingsContainer,
+                web3IdentityProvider,
+                ethereumApi,
+                ct
+            )!;
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
