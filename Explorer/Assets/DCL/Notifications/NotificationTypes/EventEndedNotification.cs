@@ -4,14 +4,14 @@ using System;
 namespace DCL.Notification
 {
     [Serializable]
-    public class EventStartedNotification : NotificationBase
+    public class EventEndedNotification : NotificationBase
     {
         [JsonProperty("metadata")]
-        public EventStartedNotificationMetadata Metadata { get; set; }
+        public EventEndedNotificationMetadata Metadata { get; set; }
     }
 
     [Serializable]
-    public struct EventStartedNotificationMetadata
+    public struct EventEndedNotificationMetadata
     {
         [JsonProperty("link")]
         public string Link { get; set; }
@@ -28,5 +28,4 @@ namespace DCL.Notification
         [JsonProperty("description")]
         public string Description { get; set; }
     }
-
 }

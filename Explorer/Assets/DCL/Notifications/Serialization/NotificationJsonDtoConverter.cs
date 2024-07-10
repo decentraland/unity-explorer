@@ -37,14 +37,8 @@ namespace DCL.Notification.Serialization
 
                 INotification notificationObject = type switch
                 {
-                    "events_started" => new EventStartedNotification(){
-                        Type = NotificationType.EVENTS_STARTED,
-                        Id = notification["Id"]?.ToString(),
-                        Address = notification["address"]?.ToString(),
-                        Read = notification["read"]?.Value<bool>() ?? false,
-                        Timestamp = notification["timestamp"]?.ToString(),
-                        StartedNotificationMetadata = JsonUtility.FromJson<EventStartedNotificationMetadata>(JsonUtility.ToJson(notification["metadata"]))
-                    },
+                    "events_started" => new EventStartedNotification(),
+                    "events_ended" => new EventEndedNotification(),
                     _ => null
                 };
 
