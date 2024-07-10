@@ -14,9 +14,12 @@ using ECS.Unity.Transforms.Components;
 using NSubstitute;
 using NUnit.Framework;
 using SceneRunner.Scene;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Object = UnityEngine.Object;
 
 namespace DCL.SDKComponents.AvatarAttach.Tests
 {
@@ -191,6 +194,68 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
 
             system.Update(0);
             Assert.AreEqual(playerAvatarBase.RightHandAnchorPoint.position, entityTransformComponent.Transform.position);
+        }
+
+        [Test]
+        public async Task VerifyAllAnchorPoints()
+        {
+            bool ApproximatelyEqual(Vector3 a, Vector3 b)
+            {
+                return Vector3.SqrMagnitude(a - b) < Mathf.Epsilon * Mathf.Epsilon;
+            }
+
+            // Workaround for Unity bug not awaiting async Setup correctly
+            await UniTask.WaitUntil(() => system != null);
+
+            var pbAvatarAttachComponent = new PBAvatarAttach();
+            world.Add(entity, pbAvatarAttachComponent);
+
+            // Dictionary to map AvatarAnchorPointType to the corresponding Transform property
+            var anchorPointMap = new Dictionary<AvatarAnchorPointType, Func<Transform>>
+            {
+                { AvatarAnchorPointType.AaptPosition, () => playerAvatarBase.transform },
+                { AvatarAnchorPointType.AaptNameTag, () => playerAvatarBase.NameTagAnchorPoint },
+                { AvatarAnchorPointType.AaptHead, () => playerAvatarBase.HeadAnchorPoint },
+                { AvatarAnchorPointType.AaptNeck, () => playerAvatarBase.NeckAnchorPoint },
+                { AvatarAnchorPointType.AaptSpine, () => playerAvatarBase.SpineAnchorPoint },
+                { AvatarAnchorPointType.AaptSpine1, () => playerAvatarBase.Spine1AnchorPoint },
+                { AvatarAnchorPointType.AaptSpine2, () => playerAvatarBase.Spine2AnchorPoint },
+                { AvatarAnchorPointType.AaptHip, () => playerAvatarBase.HipAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftShoulder, () => playerAvatarBase.LeftShoulderAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftArm, () => playerAvatarBase.LeftArmAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftForearm, () => playerAvatarBase.LeftForearmAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftHand, () => playerAvatarBase.LeftHandAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftHandIndex, () => playerAvatarBase.LeftHandIndexAnchorPoint },
+                { AvatarAnchorPointType.AaptRightShoulder, () => playerAvatarBase.RightShoulderAnchorPoint },
+                { AvatarAnchorPointType.AaptRightArm, () => playerAvatarBase.RightArmAnchorPoint },
+                { AvatarAnchorPointType.AaptRightForearm, () => playerAvatarBase.RightForearmAnchorPoint },
+                { AvatarAnchorPointType.AaptRightHand, () => playerAvatarBase.RightHandAnchorPoint },
+                { AvatarAnchorPointType.AaptRightHandIndex, () => playerAvatarBase.RightHandIndexAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftUpLeg, () => playerAvatarBase.LeftUpLegAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftLeg, () => playerAvatarBase.LeftLegAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftFoot, () => playerAvatarBase.LeftFootAnchorPoint },
+                { AvatarAnchorPointType.AaptLeftToeBase, () => playerAvatarBase.LeftToeBaseAnchorPoint },
+                { AvatarAnchorPointType.AaptRightUpLeg, () => playerAvatarBase.RightUpLegAnchorPoint },
+                { AvatarAnchorPointType.AaptRightLeg, () => playerAvatarBase.RightLegAnchorPoint },
+                { AvatarAnchorPointType.AaptRightFoot, () => playerAvatarBase.RightFootAnchorPoint },
+                { AvatarAnchorPointType.AaptRightToeBase, () => playerAvatarBase.RightToeBaseAnchorPoint }
+            };
+
+            foreach (var anchorPoint in anchorPointMap)
+            {
+                // Set the anchor point
+                pbAvatarAttachComponent.AnchorPointId = anchorPoint.Key;
+                pbAvatarAttachComponent.IsDirty = true;
+                world.Set(entity, pbAvatarAttachComponent);
+
+                // Update the system
+                system.Update(0);
+
+                // After update, position should match the anchor point
+                var position = anchorPoint.Value().position;
+                Assert.IsTrue(ApproximatelyEqual(position, entityTransformComponent.Transform.position),
+                    $"Position should match {anchorPoint.Key} after update");
+            }
         }
 
         [Test]
