@@ -25,32 +25,57 @@ namespace Decentraland.Kernel.Apis {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CiZkZWNlbnRyYWxhbmQva2VybmVsL2FwaXMvdGVzdGluZy5wcm90bxIYZGVj",
-            "ZW50cmFsYW5kLmtlcm5lbC5hcGlzIowBCgpUZXN0UmVzdWx0EgwKBG5hbWUY",
-            "ASABKAkSCgoCb2sYAiABKAgSEgoFZXJyb3IYAyABKAlIAIgBARISCgVzdGFj",
-            "axgEIAEoCUgBiAEBEhQKDHRvdGFsX2ZyYW1lcxgFIAEoDRISCgp0b3RhbF90",
-            "aW1lGAYgASgCQggKBl9lcnJvckIICgZfc3RhY2siFAoSVGVzdFJlc3VsdFJl",
-            "c3BvbnNlImoKCFRlc3RQbGFuEj8KBXRlc3RzGAEgAygLMjAuZGVjZW50cmFs",
-            "YW5kLmtlcm5lbC5hcGlzLlRlc3RQbGFuLlRlc3RQbGFuRW50cnkaHQoNVGVz",
-            "dFBsYW5FbnRyeRIMCgRuYW1lGAEgASgJIhIKEFRlc3RQbGFuUmVzcG9uc2Ui",
-            "rgIKHVNldENhbWVyYVRyYW5zZm9ybVRlc3RDb21tYW5kElEKCHBvc2l0aW9u",
-            "GAEgASgLMj8uZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlNldENhbWVyYVRy",
-            "YW5zZm9ybVRlc3RDb21tYW5kLlZlY3RvcjMSVAoIcm90YXRpb24YAiABKAsy",
-            "Qi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuU2V0Q2FtZXJhVHJhbnNmb3Jt",
-            "VGVzdENvbW1hbmQuUXVhdGVybmlvbhoqCgdWZWN0b3IzEgkKAXgYASABKAIS",
-            "CQoBeRgCIAEoAhIJCgF6GAMgASgCGjgKClF1YXRlcm5pb24SCQoBeBgBIAEo",
-            "AhIJCgF5GAIgASgCEgkKAXoYAyABKAISCQoBdxgEIAEoAiInCiVTZXRDYW1l",
-            "cmFUcmFuc2Zvcm1UZXN0Q29tbWFuZFJlc3BvbnNlMuQCCg5UZXN0aW5nU2Vy",
-            "dmljZRJlCg1Mb2dUZXN0UmVzdWx0EiQuZGVjZW50cmFsYW5kLmtlcm5lbC5h",
-            "cGlzLlRlc3RSZXN1bHQaLC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVz",
-            "dFJlc3VsdFJlc3BvbnNlIgASWAoEUGxhbhIiLmRlY2VudHJhbGFuZC5rZXJu",
-            "ZWwuYXBpcy5UZXN0UGxhbhoqLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5U",
-            "ZXN0UGxhblJlc3BvbnNlIgASkAEKElNldENhbWVyYVRyYW5zZm9ybRI3LmRl",
-            "Y2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TZXRDYW1lcmFUcmFuc2Zvcm1UZXN0",
-            "Q29tbWFuZBo/LmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5TZXRDYW1lcmFU",
-            "cmFuc2Zvcm1UZXN0Q29tbWFuZFJlc3BvbnNlIgBiBnByb3RvMw=="));
+            "ZW50cmFsYW5kLmtlcm5lbC5hcGlzGiFkZWNlbnRyYWxhbmQvY29tbW9uL3Zl",
+            "Y3RvcnMucHJvdG8irAQKH1Rha2VBbmRDb21wYXJlU2NyZWVuc2hvdFJlcXVl",
+            "c3QSGwoTc3JjX3N0b3JlZF9zbmFwc2hvdBgBIAEoCRI1Cg9jYW1lcmFfcG9z",
+            "aXRpb24YAiABKAsyHC5kZWNlbnRyYWxhbmQuY29tbW9uLlZlY3RvcjMSMwoN",
+            "Y2FtZXJhX3RhcmdldBgDIAEoCzIcLmRlY2VudHJhbGFuZC5jb21tb24uVmVj",
+            "dG9yMxI1Cg9zY3JlZW5zaG90X3NpemUYBCABKAsyHC5kZWNlbnRyYWxhbmQu",
+            "Y29tbW9uLlZlY3RvcjIScgoPZ3JleV9waXhlbF9kaWZmGAUgASgLMlcuZGVj",
+            "ZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRha2VBbmRDb21wYXJlU2NyZWVuc2hv",
+            "dFJlcXVlc3QuQ29tcGFyaXNvbk1ldGhvZEdyZXlQaXhlbERpZmZIABJdCg1z",
+            "bmFwc2hvdF9tb2RlGAYgASgOMkYuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlz",
+            "LlRha2VBbmRDb21wYXJlU2NyZWVuc2hvdFJlcXVlc3QuU25hcHNob3RNb2Rl",
+            "Gh8KHUNvbXBhcmlzb25NZXRob2RHcmV5UGl4ZWxEaWZmIkAKDFNuYXBzaG90",
+            "TW9kZRIQCgxTTV8zRF9BTkRfVUkQABIOCgpTTV8zRF9PTkxZEAESDgoKU01f",
+            "VUlfT05MWRACQhMKEWNvbXBhcmlzb25fbWV0aG9kIpMCCiBUYWtlQW5kQ29t",
+            "cGFyZVNjcmVlbnNob3RSZXNwb25zZRIdChVzdG9yZWRfc25hcHNob3RfZm91",
+            "bmQYASABKAgSeQoPZ3JleV9waXhlbF9kaWZmGAIgASgLMl4uZGVjZW50cmFs",
+            "YW5kLmtlcm5lbC5hcGlzLlRha2VBbmRDb21wYXJlU2NyZWVuc2hvdFJlc3Bv",
+            "bnNlLkNvbXBhcmlzb25NZXRob2RHcmV5UGl4ZWxEaWZmUmVzdWx0SAAaOQoj",
+            "Q29tcGFyaXNvbk1ldGhvZEdyZXlQaXhlbERpZmZSZXN1bHQSEgoKc2ltaWxh",
+            "cml0eRgBIAEoAkIaChhjb21wYXJpc29uX21ldGhvZF9yZXN1bHQijAEKClRl",
+            "c3RSZXN1bHQSDAoEbmFtZRgBIAEoCRIKCgJvaxgCIAEoCBISCgVlcnJvchgD",
+            "IAEoCUgAiAEBEhIKBXN0YWNrGAQgASgJSAGIAQESFAoMdG90YWxfZnJhbWVz",
+            "GAUgASgNEhIKCnRvdGFsX3RpbWUYBiABKAJCCAoGX2Vycm9yQggKBl9zdGFj",
+            "ayIUChJUZXN0UmVzdWx0UmVzcG9uc2UiagoIVGVzdFBsYW4SPwoFdGVzdHMY",
+            "ASADKAsyMC5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGVzdFBsYW4uVGVz",
+            "dFBsYW5FbnRyeRodCg1UZXN0UGxhbkVudHJ5EgwKBG5hbWUYASABKAkiEgoQ",
+            "VGVzdFBsYW5SZXNwb25zZSKuAgodU2V0Q2FtZXJhVHJhbnNmb3JtVGVzdENv",
+            "bW1hbmQSUQoIcG9zaXRpb24YASABKAsyPy5kZWNlbnRyYWxhbmQua2VybmVs",
+            "LmFwaXMuU2V0Q2FtZXJhVHJhbnNmb3JtVGVzdENvbW1hbmQuVmVjdG9yMxJU",
+            "Cghyb3RhdGlvbhgCIAEoCzJCLmRlY2VudHJhbGFuZC5rZXJuZWwuYXBpcy5T",
+            "ZXRDYW1lcmFUcmFuc2Zvcm1UZXN0Q29tbWFuZC5RdWF0ZXJuaW9uGioKB1Zl",
+            "Y3RvcjMSCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAIaOAoKUXVh",
+            "dGVybmlvbhIJCgF4GAEgASgCEgkKAXkYAiABKAISCQoBehgDIAEoAhIJCgF3",
+            "GAQgASgCIicKJVNldENhbWVyYVRyYW5zZm9ybVRlc3RDb21tYW5kUmVzcG9u",
+            "c2Uy+gMKDlRlc3RpbmdTZXJ2aWNlEmUKDUxvZ1Rlc3RSZXN1bHQSJC5kZWNl",
+            "bnRyYWxhbmQua2VybmVsLmFwaXMuVGVzdFJlc3VsdBosLmRlY2VudHJhbGFu",
+            "ZC5rZXJuZWwuYXBpcy5UZXN0UmVzdWx0UmVzcG9uc2UiABJYCgRQbGFuEiIu",
+            "ZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlRlc3RQbGFuGiouZGVjZW50cmFs",
+            "YW5kLmtlcm5lbC5hcGlzLlRlc3RQbGFuUmVzcG9uc2UiABKQAQoSU2V0Q2Ft",
+            "ZXJhVHJhbnNmb3JtEjcuZGVjZW50cmFsYW5kLmtlcm5lbC5hcGlzLlNldENh",
+            "bWVyYVRyYW5zZm9ybVRlc3RDb21tYW5kGj8uZGVjZW50cmFsYW5kLmtlcm5l",
+            "bC5hcGlzLlNldENhbWVyYVRyYW5zZm9ybVRlc3RDb21tYW5kUmVzcG9uc2Ui",
+            "ABKTAQoYVGFrZUFuZENvbXBhcmVTY3JlZW5zaG90EjkuZGVjZW50cmFsYW5k",
+            "Lmtlcm5lbC5hcGlzLlRha2VBbmRDb21wYXJlU2NyZWVuc2hvdFJlcXVlc3Qa",
+            "Oi5kZWNlbnRyYWxhbmQua2VybmVsLmFwaXMuVGFrZUFuZENvbXBhcmVTY3Jl",
+            "ZW5zaG90UmVzcG9uc2UiAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
-          new pbr::FileDescriptor[] { },
+          new pbr::FileDescriptor[] { global::Decentraland.Common.VectorsReflection.Descriptor, },
           new pbr::GeneratedClrTypeInfo(null, null, new pbr::GeneratedClrTypeInfo[] {
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest), global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Parser, new[]{ "SrcStoredSnapshot", "CameraPosition", "CameraTarget", "ScreenshotSize", "GreyPixelDiff", "SnapshotMode" }, new[]{ "ComparisonMethod" }, new[]{ typeof(global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode) }, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff), global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff.Parser, null, null, null, null, null)}),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse), global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Parser, new[]{ "StoredSnapshotFound", "GreyPixelDiff" }, new[]{ "ComparisonMethodResult" }, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult), global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult.Parser, new[]{ "Similarity" }, null, null, null, null)}),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TestResult), global::Decentraland.Kernel.Apis.TestResult.Parser, new[]{ "Name", "Ok", "Error", "Stack", "TotalFrames", "TotalTime" }, new[]{ "Error", "Stack" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TestResultResponse), global::Decentraland.Kernel.Apis.TestResultResponse.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TestPlan), global::Decentraland.Kernel.Apis.TestPlan.Parser, new[]{ "Tests" }, null, null, null, new pbr::GeneratedClrTypeInfo[] { new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Kernel.Apis.TestPlan.Types.TestPlanEntry), global::Decentraland.Kernel.Apis.TestPlan.Types.TestPlanEntry.Parser, new[]{ "Name" }, null, null, null, null)}),
@@ -64,6 +89,1104 @@ namespace Decentraland.Kernel.Apis {
 
   }
   #region Messages
+  public sealed partial class TakeAndCompareScreenshotRequest : pb::IMessage<TakeAndCompareScreenshotRequest>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<TakeAndCompareScreenshotRequest> _parser = new pb::MessageParser<TakeAndCompareScreenshotRequest>(() => new TakeAndCompareScreenshotRequest());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<TakeAndCompareScreenshotRequest> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[0]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeAndCompareScreenshotRequest() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeAndCompareScreenshotRequest(TakeAndCompareScreenshotRequest other) : this() {
+      srcStoredSnapshot_ = other.srcStoredSnapshot_;
+      cameraPosition_ = other.cameraPosition_ != null ? other.cameraPosition_.Clone() : null;
+      cameraTarget_ = other.cameraTarget_ != null ? other.cameraTarget_.Clone() : null;
+      screenshotSize_ = other.screenshotSize_ != null ? other.screenshotSize_.Clone() : null;
+      snapshotMode_ = other.snapshotMode_;
+      switch (other.ComparisonMethodCase) {
+        case ComparisonMethodOneofCase.GreyPixelDiff:
+          GreyPixelDiff = other.GreyPixelDiff.Clone();
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeAndCompareScreenshotRequest Clone() {
+      return new TakeAndCompareScreenshotRequest(this);
+    }
+
+    /// <summary>Field number for the "src_stored_snapshot" field.</summary>
+    public const int SrcStoredSnapshotFieldNumber = 1;
+    private string srcStoredSnapshot_ = "";
+    /// <summary>
+    /// the source path in the scene where the screenshot is stored, 
+    ///  the snapshot taken is compared with the stored one
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SrcStoredSnapshot {
+      get { return srcStoredSnapshot_; }
+      set {
+        srcStoredSnapshot_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "camera_position" field.</summary>
+    public const int CameraPositionFieldNumber = 2;
+    private global::Decentraland.Common.Vector3 cameraPosition_;
+    /// <summary>
+    /// the camera position where is set before and while taking the screenshot, relative to base scene
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector3 CameraPosition {
+      get { return cameraPosition_; }
+      set {
+        cameraPosition_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "camera_target" field.</summary>
+    public const int CameraTargetFieldNumber = 3;
+    private global::Decentraland.Common.Vector3 cameraTarget_;
+    /// <summary>
+    /// the camera position where is target to before and while taking the screenshot, relative to base scene
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector3 CameraTarget {
+      get { return cameraTarget_; }
+      set {
+        cameraTarget_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "screenshot_size" field.</summary>
+    public const int ScreenshotSizeFieldNumber = 4;
+    private global::Decentraland.Common.Vector2 screenshotSize_;
+    /// <summary>
+    /// width x height screenshot size
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Common.Vector2 ScreenshotSize {
+      get { return screenshotSize_; }
+      set {
+        screenshotSize_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "grey_pixel_diff" field.</summary>
+    public const int GreyPixelDiffFieldNumber = 5;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff GreyPixelDiff {
+      get { return comparisonMethodCase_ == ComparisonMethodOneofCase.GreyPixelDiff ? (global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff) comparisonMethod_ : null; }
+      set {
+        comparisonMethod_ = value;
+        comparisonMethodCase_ = value == null ? ComparisonMethodOneofCase.None : ComparisonMethodOneofCase.GreyPixelDiff;
+      }
+    }
+
+    /// <summary>Field number for the "snapshot_mode" field.</summary>
+    public const int SnapshotModeFieldNumber = 6;
+    private global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode snapshotMode_ = global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode.Sm3DAndUi;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode SnapshotMode {
+      get { return snapshotMode_; }
+      set {
+        snapshotMode_ = value;
+      }
+    }
+
+    private object comparisonMethod_;
+    /// <summary>Enum of possible cases for the "comparison_method" oneof.</summary>
+    public enum ComparisonMethodOneofCase {
+      None = 0,
+      GreyPixelDiff = 5,
+    }
+    private ComparisonMethodOneofCase comparisonMethodCase_ = ComparisonMethodOneofCase.None;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ComparisonMethodOneofCase ComparisonMethodCase {
+      get { return comparisonMethodCase_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearComparisonMethod() {
+      comparisonMethodCase_ = ComparisonMethodOneofCase.None;
+      comparisonMethod_ = null;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as TakeAndCompareScreenshotRequest);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(TakeAndCompareScreenshotRequest other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (SrcStoredSnapshot != other.SrcStoredSnapshot) return false;
+      if (!object.Equals(CameraPosition, other.CameraPosition)) return false;
+      if (!object.Equals(CameraTarget, other.CameraTarget)) return false;
+      if (!object.Equals(ScreenshotSize, other.ScreenshotSize)) return false;
+      if (!object.Equals(GreyPixelDiff, other.GreyPixelDiff)) return false;
+      if (SnapshotMode != other.SnapshotMode) return false;
+      if (ComparisonMethodCase != other.ComparisonMethodCase) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (SrcStoredSnapshot.Length != 0) hash ^= SrcStoredSnapshot.GetHashCode();
+      if (cameraPosition_ != null) hash ^= CameraPosition.GetHashCode();
+      if (cameraTarget_ != null) hash ^= CameraTarget.GetHashCode();
+      if (screenshotSize_ != null) hash ^= ScreenshotSize.GetHashCode();
+      if (comparisonMethodCase_ == ComparisonMethodOneofCase.GreyPixelDiff) hash ^= GreyPixelDiff.GetHashCode();
+      if (SnapshotMode != global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode.Sm3DAndUi) hash ^= SnapshotMode.GetHashCode();
+      hash ^= (int) comparisonMethodCase_;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (SrcStoredSnapshot.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(SrcStoredSnapshot);
+      }
+      if (cameraPosition_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(CameraPosition);
+      }
+      if (cameraTarget_ != null) {
+        output.WriteRawTag(26);
+        output.WriteMessage(CameraTarget);
+      }
+      if (screenshotSize_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(ScreenshotSize);
+      }
+      if (comparisonMethodCase_ == ComparisonMethodOneofCase.GreyPixelDiff) {
+        output.WriteRawTag(42);
+        output.WriteMessage(GreyPixelDiff);
+      }
+      if (SnapshotMode != global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode.Sm3DAndUi) {
+        output.WriteRawTag(48);
+        output.WriteEnum((int) SnapshotMode);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (SrcStoredSnapshot.Length != 0) {
+        output.WriteRawTag(10);
+        output.WriteString(SrcStoredSnapshot);
+      }
+      if (cameraPosition_ != null) {
+        output.WriteRawTag(18);
+        output.WriteMessage(CameraPosition);
+      }
+      if (cameraTarget_ != null) {
+        output.WriteRawTag(26);
+        output.WriteMessage(CameraTarget);
+      }
+      if (screenshotSize_ != null) {
+        output.WriteRawTag(34);
+        output.WriteMessage(ScreenshotSize);
+      }
+      if (comparisonMethodCase_ == ComparisonMethodOneofCase.GreyPixelDiff) {
+        output.WriteRawTag(42);
+        output.WriteMessage(GreyPixelDiff);
+      }
+      if (SnapshotMode != global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode.Sm3DAndUi) {
+        output.WriteRawTag(48);
+        output.WriteEnum((int) SnapshotMode);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (SrcStoredSnapshot.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SrcStoredSnapshot);
+      }
+      if (cameraPosition_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(CameraPosition);
+      }
+      if (cameraTarget_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(CameraTarget);
+      }
+      if (screenshotSize_ != null) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(ScreenshotSize);
+      }
+      if (comparisonMethodCase_ == ComparisonMethodOneofCase.GreyPixelDiff) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(GreyPixelDiff);
+      }
+      if (SnapshotMode != global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode.Sm3DAndUi) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) SnapshotMode);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(TakeAndCompareScreenshotRequest other) {
+      if (other == null) {
+        return;
+      }
+      if (other.SrcStoredSnapshot.Length != 0) {
+        SrcStoredSnapshot = other.SrcStoredSnapshot;
+      }
+      if (other.cameraPosition_ != null) {
+        if (cameraPosition_ == null) {
+          CameraPosition = new global::Decentraland.Common.Vector3();
+        }
+        CameraPosition.MergeFrom(other.CameraPosition);
+      }
+      if (other.cameraTarget_ != null) {
+        if (cameraTarget_ == null) {
+          CameraTarget = new global::Decentraland.Common.Vector3();
+        }
+        CameraTarget.MergeFrom(other.CameraTarget);
+      }
+      if (other.screenshotSize_ != null) {
+        if (screenshotSize_ == null) {
+          ScreenshotSize = new global::Decentraland.Common.Vector2();
+        }
+        ScreenshotSize.MergeFrom(other.ScreenshotSize);
+      }
+      if (other.SnapshotMode != global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode.Sm3DAndUi) {
+        SnapshotMode = other.SnapshotMode;
+      }
+      switch (other.ComparisonMethodCase) {
+        case ComparisonMethodOneofCase.GreyPixelDiff:
+          if (GreyPixelDiff == null) {
+            GreyPixelDiff = new global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff();
+          }
+          GreyPixelDiff.MergeFrom(other.GreyPixelDiff);
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 10: {
+            SrcStoredSnapshot = input.ReadString();
+            break;
+          }
+          case 18: {
+            if (cameraPosition_ == null) {
+              CameraPosition = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(CameraPosition);
+            break;
+          }
+          case 26: {
+            if (cameraTarget_ == null) {
+              CameraTarget = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(CameraTarget);
+            break;
+          }
+          case 34: {
+            if (screenshotSize_ == null) {
+              ScreenshotSize = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(ScreenshotSize);
+            break;
+          }
+          case 42: {
+            global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff subBuilder = new global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff();
+            if (comparisonMethodCase_ == ComparisonMethodOneofCase.GreyPixelDiff) {
+              subBuilder.MergeFrom(GreyPixelDiff);
+            }
+            input.ReadMessage(subBuilder);
+            GreyPixelDiff = subBuilder;
+            break;
+          }
+          case 48: {
+            SnapshotMode = (global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 10: {
+            SrcStoredSnapshot = input.ReadString();
+            break;
+          }
+          case 18: {
+            if (cameraPosition_ == null) {
+              CameraPosition = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(CameraPosition);
+            break;
+          }
+          case 26: {
+            if (cameraTarget_ == null) {
+              CameraTarget = new global::Decentraland.Common.Vector3();
+            }
+            input.ReadMessage(CameraTarget);
+            break;
+          }
+          case 34: {
+            if (screenshotSize_ == null) {
+              ScreenshotSize = new global::Decentraland.Common.Vector2();
+            }
+            input.ReadMessage(ScreenshotSize);
+            break;
+          }
+          case 42: {
+            global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff subBuilder = new global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.ComparisonMethodGreyPixelDiff();
+            if (comparisonMethodCase_ == ComparisonMethodOneofCase.GreyPixelDiff) {
+              subBuilder.MergeFrom(GreyPixelDiff);
+            }
+            input.ReadMessage(subBuilder);
+            GreyPixelDiff = subBuilder;
+            break;
+          }
+          case 48: {
+            SnapshotMode = (global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Types.SnapshotMode) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the TakeAndCompareScreenshotRequest message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public enum SnapshotMode {
+        /// <summary>
+        /// only visible 3d scene and ui scene
+        /// </summary>
+        [pbr::OriginalName("SM_3D_AND_UI")] Sm3DAndUi = 0,
+        /// <summary>
+        /// only visible 3d scene
+        /// </summary>
+        [pbr::OriginalName("SM_3D_ONLY")] Sm3DOnly = 1,
+        /// <summary>
+        /// only visible ui scene
+        /// </summary>
+        [pbr::OriginalName("SM_UI_ONLY")] SmUiOnly = 2,
+      }
+
+      public sealed partial class ComparisonMethodGreyPixelDiff : pb::IMessage<ComparisonMethodGreyPixelDiff>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<ComparisonMethodGreyPixelDiff> _parser = new pb::MessageParser<ComparisonMethodGreyPixelDiff>(() => new ComparisonMethodGreyPixelDiff());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<ComparisonMethodGreyPixelDiff> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotRequest.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ComparisonMethodGreyPixelDiff() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ComparisonMethodGreyPixelDiff(ComparisonMethodGreyPixelDiff other) : this() {
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ComparisonMethodGreyPixelDiff Clone() {
+          return new ComparisonMethodGreyPixelDiff(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as ComparisonMethodGreyPixelDiff);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(ComparisonMethodGreyPixelDiff other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(ComparisonMethodGreyPixelDiff other) {
+          if (other == null) {
+            return;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
+
+  }
+
+  public sealed partial class TakeAndCompareScreenshotResponse : pb::IMessage<TakeAndCompareScreenshotResponse>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<TakeAndCompareScreenshotResponse> _parser = new pb::MessageParser<TakeAndCompareScreenshotResponse>(() => new TakeAndCompareScreenshotResponse());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<TakeAndCompareScreenshotResponse> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[1]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeAndCompareScreenshotResponse() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeAndCompareScreenshotResponse(TakeAndCompareScreenshotResponse other) : this() {
+      storedSnapshotFound_ = other.storedSnapshotFound_;
+      switch (other.ComparisonMethodResultCase) {
+        case ComparisonMethodResultOneofCase.GreyPixelDiff:
+          GreyPixelDiff = other.GreyPixelDiff.Clone();
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public TakeAndCompareScreenshotResponse Clone() {
+      return new TakeAndCompareScreenshotResponse(this);
+    }
+
+    /// <summary>Field number for the "stored_snapshot_found" field.</summary>
+    public const int StoredSnapshotFoundFieldNumber = 1;
+    private bool storedSnapshotFound_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool StoredSnapshotFound {
+      get { return storedSnapshotFound_; }
+      set {
+        storedSnapshotFound_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "grey_pixel_diff" field.</summary>
+    public const int GreyPixelDiffFieldNumber = 2;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult GreyPixelDiff {
+      get { return comparisonMethodResultCase_ == ComparisonMethodResultOneofCase.GreyPixelDiff ? (global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult) comparisonMethodResult_ : null; }
+      set {
+        comparisonMethodResult_ = value;
+        comparisonMethodResultCase_ = value == null ? ComparisonMethodResultOneofCase.None : ComparisonMethodResultOneofCase.GreyPixelDiff;
+      }
+    }
+
+    private object comparisonMethodResult_;
+    /// <summary>Enum of possible cases for the "comparison_method_result" oneof.</summary>
+    public enum ComparisonMethodResultOneofCase {
+      None = 0,
+      GreyPixelDiff = 2,
+    }
+    private ComparisonMethodResultOneofCase comparisonMethodResultCase_ = ComparisonMethodResultOneofCase.None;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ComparisonMethodResultOneofCase ComparisonMethodResultCase {
+      get { return comparisonMethodResultCase_; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void ClearComparisonMethodResult() {
+      comparisonMethodResultCase_ = ComparisonMethodResultOneofCase.None;
+      comparisonMethodResult_ = null;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as TakeAndCompareScreenshotResponse);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(TakeAndCompareScreenshotResponse other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (StoredSnapshotFound != other.StoredSnapshotFound) return false;
+      if (!object.Equals(GreyPixelDiff, other.GreyPixelDiff)) return false;
+      if (ComparisonMethodResultCase != other.ComparisonMethodResultCase) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (StoredSnapshotFound != false) hash ^= StoredSnapshotFound.GetHashCode();
+      if (comparisonMethodResultCase_ == ComparisonMethodResultOneofCase.GreyPixelDiff) hash ^= GreyPixelDiff.GetHashCode();
+      hash ^= (int) comparisonMethodResultCase_;
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (StoredSnapshotFound != false) {
+        output.WriteRawTag(8);
+        output.WriteBool(StoredSnapshotFound);
+      }
+      if (comparisonMethodResultCase_ == ComparisonMethodResultOneofCase.GreyPixelDiff) {
+        output.WriteRawTag(18);
+        output.WriteMessage(GreyPixelDiff);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (StoredSnapshotFound != false) {
+        output.WriteRawTag(8);
+        output.WriteBool(StoredSnapshotFound);
+      }
+      if (comparisonMethodResultCase_ == ComparisonMethodResultOneofCase.GreyPixelDiff) {
+        output.WriteRawTag(18);
+        output.WriteMessage(GreyPixelDiff);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (StoredSnapshotFound != false) {
+        size += 1 + 1;
+      }
+      if (comparisonMethodResultCase_ == ComparisonMethodResultOneofCase.GreyPixelDiff) {
+        size += 1 + pb::CodedOutputStream.ComputeMessageSize(GreyPixelDiff);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(TakeAndCompareScreenshotResponse other) {
+      if (other == null) {
+        return;
+      }
+      if (other.StoredSnapshotFound != false) {
+        StoredSnapshotFound = other.StoredSnapshotFound;
+      }
+      switch (other.ComparisonMethodResultCase) {
+        case ComparisonMethodResultOneofCase.GreyPixelDiff:
+          if (GreyPixelDiff == null) {
+            GreyPixelDiff = new global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult();
+          }
+          GreyPixelDiff.MergeFrom(other.GreyPixelDiff);
+          break;
+      }
+
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            StoredSnapshotFound = input.ReadBool();
+            break;
+          }
+          case 18: {
+            global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult subBuilder = new global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult();
+            if (comparisonMethodResultCase_ == ComparisonMethodResultOneofCase.GreyPixelDiff) {
+              subBuilder.MergeFrom(GreyPixelDiff);
+            }
+            input.ReadMessage(subBuilder);
+            GreyPixelDiff = subBuilder;
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+        switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            StoredSnapshotFound = input.ReadBool();
+            break;
+          }
+          case 18: {
+            global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult subBuilder = new global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Types.ComparisonMethodGreyPixelDiffResult();
+            if (comparisonMethodResultCase_ == ComparisonMethodResultOneofCase.GreyPixelDiff) {
+              subBuilder.MergeFrom(GreyPixelDiff);
+            }
+            input.ReadMessage(subBuilder);
+            GreyPixelDiff = subBuilder;
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+    #region Nested types
+    /// <summary>Container for nested types declared in the TakeAndCompareScreenshotResponse message type.</summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static partial class Types {
+      public sealed partial class ComparisonMethodGreyPixelDiffResult : pb::IMessage<ComparisonMethodGreyPixelDiffResult>
+      #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          , pb::IBufferMessage
+      #endif
+      {
+        private static readonly pb::MessageParser<ComparisonMethodGreyPixelDiffResult> _parser = new pb::MessageParser<ComparisonMethodGreyPixelDiffResult>(() => new ComparisonMethodGreyPixelDiffResult());
+        private pb::UnknownFieldSet _unknownFields;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pb::MessageParser<ComparisonMethodGreyPixelDiffResult> Parser { get { return _parser; } }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public static pbr::MessageDescriptor Descriptor {
+          get { return global::Decentraland.Kernel.Apis.TakeAndCompareScreenshotResponse.Descriptor.NestedTypes[0]; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        pbr::MessageDescriptor pb::IMessage.Descriptor {
+          get { return Descriptor; }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ComparisonMethodGreyPixelDiffResult() {
+          OnConstruction();
+        }
+
+        partial void OnConstruction();
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ComparisonMethodGreyPixelDiffResult(ComparisonMethodGreyPixelDiffResult other) : this() {
+          similarity_ = other.similarity_;
+          _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public ComparisonMethodGreyPixelDiffResult Clone() {
+          return new ComparisonMethodGreyPixelDiffResult(this);
+        }
+
+        /// <summary>Field number for the "similarity" field.</summary>
+        public const int SimilarityFieldNumber = 1;
+        private float similarity_;
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public float Similarity {
+          get { return similarity_; }
+          set {
+            similarity_ = value;
+          }
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override bool Equals(object other) {
+          return Equals(other as ComparisonMethodGreyPixelDiffResult);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public bool Equals(ComparisonMethodGreyPixelDiffResult other) {
+          if (ReferenceEquals(other, null)) {
+            return false;
+          }
+          if (ReferenceEquals(other, this)) {
+            return true;
+          }
+          if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(Similarity, other.Similarity)) return false;
+          return Equals(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override int GetHashCode() {
+          int hash = 1;
+          if (Similarity != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(Similarity);
+          if (_unknownFields != null) {
+            hash ^= _unknownFields.GetHashCode();
+          }
+          return hash;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public override string ToString() {
+          return pb::JsonFormatter.ToDiagnosticString(this);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void WriteTo(pb::CodedOutputStream output) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          output.WriteRawMessage(this);
+        #else
+          if (Similarity != 0F) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Similarity);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(output);
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+          if (Similarity != 0F) {
+            output.WriteRawTag(13);
+            output.WriteFloat(Similarity);
+          }
+          if (_unknownFields != null) {
+            _unknownFields.WriteTo(ref output);
+          }
+        }
+        #endif
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public int CalculateSize() {
+          int size = 0;
+          if (Similarity != 0F) {
+            size += 1 + 4;
+          }
+          if (_unknownFields != null) {
+            size += _unknownFields.CalculateSize();
+          }
+          return size;
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(ComparisonMethodGreyPixelDiffResult other) {
+          if (other == null) {
+            return;
+          }
+          if (other.Similarity != 0F) {
+            Similarity = other.Similarity;
+          }
+          _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+        }
+
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        public void MergeFrom(pb::CodedInputStream input) {
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+          input.ReadRawMessage(this);
+        #else
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+                break;
+              case 13: {
+                Similarity = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        #endif
+        }
+
+        #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+        [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+        void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+          uint tag;
+          while ((tag = input.ReadTag()) != 0) {
+            switch(tag) {
+              default:
+                _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+                break;
+              case 13: {
+                Similarity = input.ReadFloat();
+                break;
+              }
+            }
+          }
+        }
+        #endif
+
+      }
+
+    }
+    #endregion
+
+  }
+
   public sealed partial class TestResult : pb::IMessage<TestResult>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -78,7 +1201,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[0]; }
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[2]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -482,7 +1605,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[1]; }
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[3]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -634,7 +1757,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[2]; }
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[4]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1009,7 +2132,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[3]; }
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[5]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1161,7 +2284,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[4]; }
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[6]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1976,7 +3099,7 @@ namespace Decentraland.Kernel.Apis {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[5]; }
+      get { return global::Decentraland.Kernel.Apis.TestingReflection.Descriptor.MessageTypes[7]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]

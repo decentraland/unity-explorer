@@ -1,4 +1,6 @@
 import * as path from 'path'
+import { promisify } from 'util'
+import { exec } from 'child_process'
 import { glob } from 'glob'
 import {
   camelToSnakeCase,
@@ -118,34 +120,38 @@ function getProtofiles(pattern: string)
     )
 }
 
+const execAsync = promisify(exec)
+
 async function buildProtocol() {
   console.log('Building protocol...')
   cleanGeneratedCode(protocolOutputPath)
 
   await preProcessComponents()
 
-  const protoFiles = [
-    ...getProtofiles('decentraland/**/*.proto')
+  const protoFiles = getProtofiles('decentraland/**/*.proto')
       .filter((value) => !value.endsWith('id.proto'))
       .filter((value) => !value.endsWith('v1/comms.proto'))
       .filter((value) => !value.endsWith('v2/comms.proto'))
       .filter((value) => !value.endsWith('v3/comms.proto'))
-  ].join(' ')
-
-  console.log(protoFiles)
-
-  let command = `${protocPath}`
-  command += ` --csharp_out "${protocolOutputPath}"`
-  command += ` --csharp_opt=file_extension=.gen.cs`
 
   // Uncomment this line to use the protoc-gen-dclunity plugin and generate the services (rpc dependency)
   //command += ` --plugin=protoc-gen-dclunity=${nodeModulesPath}/protoc-gen-dclunity/dist/index.${isWin ? 'cmd' : 'js'}`
   //command += ` --dclunity_out "${protocolOutputPath}"`
+  const baseCommand = `${protocPath} --csharp_out "${protocolOutputPath}" --csharp_opt=file_extension=.gen.cs --proto_path "${protocolInputPath}"`
 
-  command += ` --proto_path "${protocolInputPath}"`
-  command += ` ${protoFiles}`
+  // Split protoFiles into chunks
+  const chunkSize = 10
+  for (let i = 0; i < protoFiles.length; i += chunkSize) {
+    const chunk = protoFiles.slice(i, i + chunkSize)
+    const command = `${baseCommand} ${chunk.join(' ')}`
 
-  await execute(command, workingDirectory)
+    try {
+      await execAsync(command, { cwd: workingDirectory })
+    } catch (error) {
+      console.error(`Error executing command: ${error}`)
+      throw error
+    }
+  }
 
   console.log('Building protocol... Done!')
 }
