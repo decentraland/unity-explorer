@@ -16,29 +16,6 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class TestContainer : IDCLGlobalPlugin<TestSettings>
-    {
-        public void Dispose()
-        {
-            // TODO release managed resources here
-        }
-
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-            throw new NotImplementedException();
-        }
-
-        public UniTask InitializeAsync(TestSettings settings, CancellationToken ct) =>
-            throw new NotImplementedException();
-    }
-
-    [Serializable]
-    public class TestSettings : IDCLPluginSettings
-    {
-        [field: SerializeField]
-        public StaticSettings.PartitionSettingsRef PartitionSettings { get; private set; }
-    }
-
     [Serializable]
     public class StaticSettings : IDCLPluginSettings
     {
