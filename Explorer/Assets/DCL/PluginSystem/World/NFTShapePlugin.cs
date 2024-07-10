@@ -20,11 +20,9 @@ using ECS.LifeCycle;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
-using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
-using Utility.Multithreading;
 
 namespace DCL.PluginSystem.World
 {
@@ -108,7 +106,7 @@ namespace DCL.PluginSystem.World
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
+            InitializeAsync(container.GetSettings<NFTShapePluginSettings>(), ct);
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
         {
@@ -127,7 +125,7 @@ namespace DCL.PluginSystem.World
 
             LoadNFTShapeSystem.InjectToWorld(ref builder, cache, webRequestController, webContentSizes);
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource());
-            InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, buffer);
+            InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
 
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);

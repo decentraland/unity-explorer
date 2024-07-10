@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
             new SeveralDemoWorld(
                     AllFrameTypes()
                        .Select(e => nftShapeProperties.With(e))
-                       .Select(e => new WarmUpSettingsNftShapeDemoWorld(world, framesPool, e, () => visible) as IDemoWorld)
+                       .Select(e => new WarmUpSettingsNftShapeDemoWorld(world, framesPool, framesPrefabs, e, () => visible) as IDemoWorld)
                        .Append(new GridDemoWorld(world, countInRow, distanceBetween))
                        .ToList()
                 ).SetUpAndRunAsync(destroyCancellationToken)
