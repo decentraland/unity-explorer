@@ -105,8 +105,6 @@ namespace DCL.PluginSystem.World
             cache.Dispose();
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            InitializeAsync(container.GetSettings<NFTShapePluginSettings>(), ct);
 
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
         {
