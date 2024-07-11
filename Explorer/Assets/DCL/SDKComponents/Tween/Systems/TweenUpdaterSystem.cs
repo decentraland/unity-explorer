@@ -82,6 +82,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
+            UpdatePBTweenQuery(World);
             UpdateTweenSequenceQuery(World);
 
             HandleEntityDestructionQuery(World);
@@ -115,6 +116,15 @@ namespace DCL.SDKComponents.Tween.Systems
         private void HandleComponentRemoval(ref SDKTweenComponent tweenComponent, CRDTEntity sdkEntity)
         {
             CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
+        }
+        
+        [Query]
+        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
+        {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            if (pbTween.IsDirty)
+                tweenComponent.IsDirty = true;
         }
 
         [Query]

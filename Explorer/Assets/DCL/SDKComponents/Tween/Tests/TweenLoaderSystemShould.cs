@@ -63,31 +63,7 @@ namespace DCL.SDKComponents.Tween.Tests
 
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
         }
-
-
-        [Test]
-        public void DirtyTweenComponentIfPBTweenIsDirty()
-        {
-            system.Update(0);
-            world.Get<SDKTweenComponent>(entity).IsDirty = false;
-
-            pbTween.IsDirty = true;
-            system.Update(0);
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(comp.IsDirty));
-        }
-
-        [Test]
-        public void DontUpdateTweenComponentIfPBTweenIsNotDifferentThanStoredModelAndNotDirty()
-        {
-            system.Update(0);
-            world.Get<SDKTweenComponent>(entity).IsDirty = false;
-
-            pbTween.IsDirty = false;
-            system.Update(0);
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsFalse(comp.IsDirty));
-        }
+     
           
     }
   
