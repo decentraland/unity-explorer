@@ -13,7 +13,6 @@ using ECS.Unity.GLTFContainer.Components.Defaults;
 using System.Threading;
 using DCL.Diagnostics;
 using SceneRunner.Scene;
-using UnityEngine;
 using UnityEngine.Assertions;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.Unity.GLTFContainer.Asset.Components.GltfContainerAsset, ECS.Unity.GLTFContainer.Asset.Components.GetGltfContainerAssetIntention>;
 
@@ -48,8 +47,9 @@ namespace ECS.Unity.GLTFContainer.Systems
             GltfContainerComponent component;
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
-                ReportHub.LogWarning($"Hash does not exist for asset with name {sdkComponent.Src} in the scene content", GetReportCategory());
                 component = GltfContainerComponent.CreateFaulty(sdkComponent.Src);
+                var exception = new ArgumentException($"Asset Bundle {sdkComponent.Src} not found in the content");
+                World.Add(entity, component, new StreamableLoadingResult<GltfContainerAsset>(CreateException(exception)));
             }
             else
             {
@@ -57,10 +57,10 @@ namespace ECS.Unity.GLTFContainer.Systems
                 var promise = Promise.Create(World, new GetGltfContainerAssetIntention(sdkComponent.Src, hash ,new CancellationTokenSource()), partitionComponent);
                 component = new GltfContainerComponent(sdkComponent.GetVisibleMeshesCollisionMask(), sdkComponent.GetInvisibleMeshesCollisionMask(), promise);
                 component.State = LoadingState.Loading;
+                World.Add(entity, component);
+
             }
-            
             eventsBuffer.Add(entity, component);
-            World.Add(entity, component);
         }
 
         // SDK Component was changed
@@ -77,6 +77,7 @@ namespace ECS.Unity.GLTFContainer.Systems
                     {
                         ReportHub.LogWarning($"Hash does not exist for asset with name {sdkComponent.Src} in the scene content", GetReportCategory());
                         component.SetFaulty(sdkComponent.Src);
+                        World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(new ArgumentException($"Hash does not exist for asset with name {sdkComponent.Src} in the scene content")));
                     }
                     else
                     {
