@@ -66,7 +66,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         {
             if (component.Promise.TryGetResult(World, out StreamableLoadingResult<GltfContainerAsset> result) && result.Succeeded)
             {
-                cache.Dereference(component.Source, result.Asset);
+                cache.Dereference(component.Hash, result.Asset);
                 entityCollidersSceneCache.Remove(result.Asset);
             }
         }
@@ -84,7 +84,7 @@ namespace ECS.Unity.GLTFContainer.Systems
         [Query]
         private void InvalidatePromise(Entity entity, ref PBGltfContainer sdkComponent, ref GltfContainerComponent component)
         {
-            if (sdkComponent.IsDirty && !string.Equals(sdkComponent.Src, component.Source, StringComparison.OrdinalIgnoreCase))
+            if (sdkComponent.IsDirty && !string.Equals(sdkComponent.Src, component.Name, StringComparison.OrdinalIgnoreCase))
             {
                 TryReleaseAsset(ref component);
 
