@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Notification.NotificationsBus;
 using DCL.Notification.Serialization;
+using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Newtonsoft.Json;
 using System;
@@ -20,14 +21,16 @@ namespace DCL.Notification
         private readonly CancellationTokenSource cancellationToken;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly CommonArguments commonArguments;
         private readonly DateTimeOffset unixEpoch;
         private ulong unixTimestamp;
 
-        public NotificationsController(IWebRequestController webRequestController, INotificationsBusController notificationsBusController)
+        public NotificationsController(IWebRequestController webRequestController, INotificationsBusController notificationsBusController, IWeb3IdentityCache web3IdentityCache)
         {
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
+            this.web3IdentityCache = web3IdentityCache;
 
             unixEpoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
             commonArguments = new CommonArguments(new URLBuilder().AppendDomain(URLDomain.FromString(NOTIFICATION_URL)).AppendParameter(new URLParameter("onlyUnread", "true")).Build());
@@ -40,6 +43,10 @@ namespace DCL.Notification
             do
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(5));
+
+                if(web3IdentityCache.Identity == null)
+                    continue;
+
                 unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
                 List<INotification> notifications =

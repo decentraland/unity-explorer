@@ -3,11 +3,10 @@ using System;
 
 namespace DCL.Notification
 {
-    [Serializable]
-    public class EventEndedNotification : NotificationBase
+    public class RewardAssignedNotification : NotificationBase
     {
         [JsonProperty("metadata")]
-        public EventEndedNotificationMetadata Metadata { get; set; }
+        public RewardAssignedNotificationMetadata Metadata { get; set; }
 
         public override string GetHeader() =>
             Metadata.Title;
@@ -20,16 +19,16 @@ namespace DCL.Notification
     }
 
     [Serializable]
-    public struct EventEndedNotificationMetadata
+    public struct RewardAssignedNotificationMetadata
     {
-        [JsonProperty("link")]
-        public string Link { get; set; }
-
-        [JsonProperty("name")]
+        [JsonProperty("tokenName")]
         public string Name { get; set; }
 
-        [JsonProperty("image")]
+        [JsonProperty("tokenImage")]
         public string Image { get; set; }
+
+        [JsonProperty("tokenRarity")]
+        public string Rarity { get; set; }
 
         [JsonProperty("title")]
         public string Title { get; set; }

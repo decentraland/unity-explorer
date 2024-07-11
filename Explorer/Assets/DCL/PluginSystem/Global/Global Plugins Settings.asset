@@ -276,6 +276,11 @@ MonoBehaviour:
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
+        AnalyticsConfigRef:
+          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <ReportHandlingSettingsDevelopment>k__BackingField:
           m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
           m_SubObjectName: 
@@ -283,11 +288,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <ReportHandlingSettingsProduction>k__BackingField:
           m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        AnalyticsConfigRef:
-          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -314,6 +314,11 @@ MonoBehaviour:
       data:
         <NewNotificationView>k__BackingField:
           m_AssetGUID: a1d5d4f99234041159f0c215eef3eff3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <NotificationIconTypesSO>k__BackingField:
+          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

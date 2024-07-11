@@ -39,6 +39,7 @@ namespace DCL.Notification.Serialization
                 {
                     "events_started" => new EventStartedNotification(),
                     "events_ended" => new EventEndedNotification(),
+                    "reward_assignment" => new RewardAssignedNotification(),
                     _ => null
                 };
 

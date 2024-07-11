@@ -10,5 +10,6 @@ namespace DCL.Notification
 
         public string GetHeader();
         public string GetTitle();
+        public string GetThumbnail();
     }
 }

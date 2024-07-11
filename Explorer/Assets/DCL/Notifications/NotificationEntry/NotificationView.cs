@@ -1,3 +1,4 @@
+using DCL.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -19,7 +20,10 @@ namespace DCL.Notification.NotificationEntry
         public TMP_Text TimeText { get; private set; }
 
         [field: SerializeField]
-        public Image NotificationImage { get; private set; }
+        public ImageView NotificationImage { get; private set; }
+
+        [field: SerializeField]
+        public Image NotificationImageBackground { get; private set; }
 
         [field: SerializeField]
         public Image NotificationTypeImage { get; private set; }

@@ -6,16 +6,17 @@ namespace DCL.Notification
     [Serializable]
     public class EventStartedNotification : NotificationBase
     {
-        private const string NOTIFICATION_HEADER = "An event has started!";
-
         [JsonProperty("metadata")]
         public EventStartedNotificationMetadata Metadata { get; set; }
 
         public override string GetHeader() =>
-            NOTIFICATION_HEADER;
+            Metadata.Title;
 
         public override string GetTitle() =>
-            Metadata.Title;
+            Metadata.Description;
+
+        public override string GetThumbnail() =>
+            Metadata.Image;
     }
 
     [Serializable]

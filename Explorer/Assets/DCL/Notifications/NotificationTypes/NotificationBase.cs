@@ -16,5 +16,8 @@ namespace DCL.Notification
 
         public virtual string GetTitle() =>
             string.Empty;
+
+        public virtual string GetThumbnail() =>
+            string.Empty;
     }
 }
