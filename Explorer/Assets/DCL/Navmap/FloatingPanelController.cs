@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Character.CharacterMotion.Components;
+using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
@@ -28,6 +29,7 @@ namespace DCL.Navmap
         private CancellationTokenSource cts;
 
         private readonly ImageController placeImageController;
+        private readonly ImageController mapPinPlaceImageController;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -37,9 +39,11 @@ namespace DCL.Navmap
             this.realmNavigator = realmNavigator;
 
             view.closeButton.onClick.AddListener(HidePanel);
+            view.mapPinCloseButton.onClick.AddListener(HidePanel);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
             placeImageController = new ImageController(view.placeImage, webRequestController);
+            mapPinPlaceImageController = new ImageController(view.MapPinPlaceImage, webRequestController);
             categoriesDictionary = new Dictionary<string, GameObject>();
 
             for (var i = 0; i < view.categories.Length; i++)
@@ -67,9 +71,17 @@ namespace DCL.Navmap
             view.backButton.onClick.AddListener(HidePanelFromBackButton);
         }
 
-        public void HandlePanelVisibility(Vector2Int parcel, bool showBackButton)
+        public void HandlePanelVisibility(Vector2Int parcel, IPinMarker? pinMarker, bool showBackButton)
         {
             view.backButton.gameObject.SetActive(showBackButton);
+            view.PlaceSection.gameObject.SetActive(pinMarker == null);
+            view.MapPinSection.gameObject.SetActive(pinMarker != null);
+
+            if (pinMarker != null)
+            {
+                view.MapPinTitle.text = pinMarker.Title;
+                view.MapPinDescription.text = pinMarker.Description;
+            }
 
             if (showBackButton)
             {
@@ -144,14 +156,25 @@ namespace DCL.Navmap
             view.upvotes.text = "-";
             view.parcelsCount.text = "1";
             placeImageController.SetVisible(false);
+            mapPinPlaceImageController.SetVisible(false);
 
             ResetCategories();
         }
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
         {
-            placeImageController.SetVisible(true);
-            placeImageController.RequestImage(placeInfo.image);
+            if (view.PlaceSection.activeInHierarchy)
+            {
+                placeImageController.SetVisible(true);
+                placeImageController.RequestImage(placeInfo.image);
+            }
+
+            if (view.MapPinSection.activeInHierarchy)
+            {
+                mapPinPlaceImageController.SetVisible(true);
+                mapPinPlaceImageController.RequestImage(placeInfo.image);
+            }
+
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             view.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));

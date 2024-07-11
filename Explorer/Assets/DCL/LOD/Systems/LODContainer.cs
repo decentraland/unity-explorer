@@ -19,7 +19,7 @@ namespace DCL.LOD.Systems
     /// <summary>
     /// LOD Container unites LOD and Road Plugins and their common dependencies
     /// </summary>
-    public class LODContainer : DCLContainer<LODContainer.LODContainerSettings>
+    public class LODContainer : DCLWorldContainer<LODContainer.LODContainerSettings>
     {
         [Serializable]
         public class LODContainerSettings : IDCLPluginSettings
