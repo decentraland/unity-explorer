@@ -14,9 +14,12 @@ namespace DCL.SDKComponents.SceneUI.Components
         DCLImage IPoolableComponentProvider<DCLImage>.PoolableComponent => Image;
         Type IPoolableComponentProvider<DCLImage>.PoolableComponentType => typeof(DCLImage);
 
+        public bool IsDisposed { get; private set; }
+
         public void Dispose()
         {
-            Image.Dispose();
+            IsDisposed = true;
+            Image = null;
         }
     }
 }

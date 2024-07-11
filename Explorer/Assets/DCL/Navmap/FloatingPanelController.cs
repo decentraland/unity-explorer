@@ -16,7 +16,7 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
-        public event Action OnJumpIn;
+        public event Action<Vector2Int> OnJumpIn;
 
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
@@ -142,7 +142,7 @@ namespace DCL.Navmap
 
         private void JumpIn(Vector2Int parcel)
         {
-            OnJumpIn?.Invoke();
+            OnJumpIn?.Invoke(parcel);
             realmNavigator.TryInitializeTeleportToParcelAsync(parcel, cts.Token).Forget();
         }
 
