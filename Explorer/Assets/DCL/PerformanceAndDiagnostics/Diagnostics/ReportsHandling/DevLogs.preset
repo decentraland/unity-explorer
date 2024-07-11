@@ -26,7 +26,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.size
-    value: 187
+    value: 207
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[0].Category
@@ -70,7 +70,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[5].Category
-    value: ASSETS_PROVISION
+    value: AUDIO_SOURCES
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[5].Severity
@@ -78,7 +78,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[6].Category
-    value: ENGINE
+    value: AVATAR_MODIFIER_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[6].Severity
@@ -86,55 +86,55 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[7].Category
-    value: CRDT
+    value: AUDIO_SOURCES
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[7].Severity
-    value: 0
+    value: 4
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[8].Category
-    value: CRDT_ECS_BRIDGE
+    value: AVATAR_MODIFIER_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[8].Severity
-    value: 0
+    value: 4
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[9].Category
-    value: REALM
+    value: AUDIO_SOURCES
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[9].Severity
-    value: 0
+    value: 1
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[10].Category
-    value: SCENE_FACTORY
+    value: AVATAR_MODIFIER_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[10].Severity
-    value: 0
+    value: 1
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[11].Category
-    value: SCENE_LOADING
+    value: UNSPECIFIED
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[11].Severity
-    value: 0
+    value: 3
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[12].Category
-    value: SCENE_UI
+    value: UNSPECIFIED
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[12].Severity
-    value: 0
+    value: 2
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[13].Category
-    value: JAVASCRIPT
+    value: ANIMATOR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[13].Severity
@@ -150,7 +150,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[15].Category
-    value: ECS
+    value: ASSETS_PROVISION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[15].Severity
@@ -158,7 +158,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[16].Category
-    value: GENERIC_WEB_REQUEST
+    value: AUDIO
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[16].Severity
@@ -166,7 +166,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[17].Category
-    value: TEXTURE_WEB_REQUEST
+    value: AUDIO_CLIP_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[17].Severity
@@ -174,7 +174,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[18].Category
-    value: NFT_SHAPE_WEB_REQUEST
+    value: AUTHENTICATION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[18].Severity
@@ -182,7 +182,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[19].Category
-    value: NFT_INFO_WEB_REQUEST
+    value: AVATAR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[19].Severity
@@ -190,7 +190,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[20].Category
-    value: AUDIO_CLIP_WEB_REQUEST
+    value: AVATAR_ATTACH
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[20].Severity
@@ -198,7 +198,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[21].Category
-    value: STREAMABLE_LOADING
+    value: CAMERA_MODE_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[21].Severity
@@ -206,7 +206,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[22].Category
-    value: TEXTURES
+    value: CHARACTER_TRIGGER_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[22].Severity
@@ -214,7 +214,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[23].Category
-    value: GLTF_CONTAINER
+    value: CRDT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[23].Severity
@@ -222,7 +222,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[24].Category
-    value: MATERIALS
+    value: CRDT_ECS_BRIDGE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[24].Severity
@@ -230,7 +230,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[25].Category
-    value: PRIMITIVE_COLLIDERS
+    value: ECS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[25].Severity
@@ -238,7 +238,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[26].Category
-    value: PRIMITIVE_MESHES
+    value: EMOTE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[26].Severity
@@ -246,7 +246,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[27].Category
-    value: AUDIO_SOURCES
+    value: ENGINE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[27].Severity
@@ -254,7 +254,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[28].Category
-    value: MEDIA_STREAM
+    value: FEATURE_FLAGS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[28].Severity
@@ -262,7 +262,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[29].Category
-    value: PRIORITIZATION
+    value: GENERIC_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[29].Severity
@@ -270,7 +270,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[30].Category
-    value: MOTION
+    value: GLTF_CONTAINER
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[30].Severity
@@ -278,7 +278,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[31].Category
-    value: LANDSCAPE
+    value: INPUT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[31].Severity
@@ -286,7 +286,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[32].Category
-    value: INPUT
+    value: JAVASCRIPT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[32].Severity
@@ -294,7 +294,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[33].Category
-    value: AVATAR
+    value: LANDSCAPE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[33].Severity
@@ -302,7 +302,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[34].Category
-    value: PROFILE
+    value: LIVEKIT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[34].Severity
@@ -310,7 +310,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[35].Category
-    value: TWEEN
+    value: LOD
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[35].Severity
@@ -318,7 +318,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[36].Category
-    value: ANIMATOR
+    value: MATERIALS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[36].Severity
@@ -326,7 +326,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[37].Category
-    value: WEARABLE
+    value: MEDIA_STREAM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[37].Severity
@@ -334,7 +334,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[38].Category
-    value: EMOTE
+    value: MOTION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[38].Severity
@@ -342,7 +342,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[39].Category
-    value: AUTHENTICATION
+    value: MULTIPLAYER
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[39].Severity
@@ -350,7 +350,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[40].Category
-    value: LOD
+    value: MULTIPLAYER_MOVEMENT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[40].Severity
@@ -358,7 +358,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[41].Category
-    value: AVATAR_ATTACH
+    value: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[41].Severity
@@ -366,7 +366,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[42].Category
-    value: QUALITY
+    value: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[42].Severity
@@ -374,7 +374,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[43].Category
-    value: RESTRICTED_ACTIONS
+    value: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[43].Severity
@@ -382,7 +382,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[44].Category
-    value: CHARACTER_TRIGGER_AREA
+    value: MVC
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[44].Severity
@@ -390,7 +390,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[45].Category
-    value: CAMERA_MODE_AREA
+    value: NFT_INFO_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[45].Severity
@@ -398,7 +398,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[46].Category
-    value: AVATAR_MODIFIER_AREA
+    value: NFT_SHAPE_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[46].Severity
@@ -406,7 +406,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[47].Category
-    value: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+    value: PLAYER_AVATAR_BASE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[47].Severity
@@ -414,7 +414,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[48].Category
-    value: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+    value: PLAYER_AVATAR_EMOTE_COMMAND
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[48].Severity
@@ -422,7 +422,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[49].Category
-    value: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+    value: PLAYER_AVATAR_EQUIPPED
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[49].Severity
@@ -438,7 +438,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[51].Category
-    value: PLAYER_AVATAR_BASE
+    value: PLUGINS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[51].Severity
@@ -446,7 +446,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[52].Category
-    value: PLAYER_AVATAR_EQUIPPED
+    value: PRIMITIVE_COLLIDERS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[52].Severity
@@ -454,7 +454,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[53].Category
-    value: PLAYER_AVATAR_EMOTE_COMMAND
+    value: PRIMITIVE_MESHES
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[53].Severity
@@ -462,7 +462,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[54].Category
-    value: REALM_DATA_DIRTY_RESET_SYSTEM
+    value: PRIORITIZATION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[54].Severity
@@ -470,7 +470,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[55].Category
-    value: ROADS
+    value: PROFILE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[55].Severity
@@ -478,7 +478,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[56].Category
-    value: LIVEKIT
+    value: QUALITY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[56].Severity
@@ -486,7 +486,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[57].Category
-    value: MULTIPLAYER_MOVEMENT
+    value: REALM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[57].Severity
@@ -494,7 +494,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[58].Category
-    value: MULTIPLAYER
+    value: REALM_DATA_DIRTY_RESET_SYSTEM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[58].Severity
@@ -502,7 +502,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[59].Category
-    value: AUDIO
+    value: RESTRICTED_ACTIONS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[59].Severity
@@ -510,7 +510,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[60].Category
-    value: SCENE_FETCH_REQUEST
+    value: ROADS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[60].Severity
@@ -518,7 +518,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[61].Category
-    value: MVC
+    value: SCENE_FACTORY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[61].Severity
@@ -526,7 +526,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[62].Category
-    value: SETTINGS_MENU
+    value: SCENE_FETCH_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[62].Severity
@@ -534,7 +534,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[63].Category
-    value: PLUGINS
+    value: SCENE_LOADING
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[63].Severity
@@ -542,95 +542,95 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[64].Category
-    value: ASSETS_PROVISION
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[64].Severity
-    value: 4
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[65].Category
-    value: ENGINE
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[65].Severity
-    value: 4
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[66].Category
-    value: CRDT
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[66].Severity
-    value: 4
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[67].Category
-    value: CRDT_ECS_BRIDGE
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[67].Severity
-    value: 4
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[68].Category
-    value: REALM
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[68].Severity
-    value: 4
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[69].Category
-    value: SCENE_FACTORY
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[69].Severity
-    value: 4
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[70].Category
-    value: SCENE_LOADING
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[70].Severity
-    value: 4
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[71].Category
     value: SCENE_UI
     objectReference: {fileID: 0}
   - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[64].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[65].Category
+    value: SDK_AUDIO_SOURCES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[65].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[66].Category
+    value: SDK_OBSERVABLES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[66].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[67].Category
+    value: SETTINGS_MENU
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[67].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[68].Category
+    value: STREAMABLE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[68].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[69].Category
+    value: TEXTURE_WEB_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[69].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[70].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[70].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[71].Category
+    value: TWEEN
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[71].Severity
-    value: 4
+    value: 0
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[72].Category
-    value: JAVASCRIPT
+    value: UI
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[72].Severity
-    value: 4
+    value: 0
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[73].Category
-    value: ARCHIPELAGO_REQUEST
+    value: UNSPECIFIED
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[73].Severity
-    value: 4
+    value: 0
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[74].Category
-    value: ECS
+    value: WEARABLE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[74].Severity
-    value: 4
+    value: 0
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[75].Category
-    value: GENERIC_WEB_REQUEST
+    value: ANIMATOR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[75].Severity
@@ -638,7 +638,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[76].Category
-    value: TEXTURE_WEB_REQUEST
+    value: ARCHIPELAGO_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[76].Severity
@@ -646,7 +646,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[77].Category
-    value: NFT_SHAPE_WEB_REQUEST
+    value: ASSETS_PROVISION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[77].Severity
@@ -654,7 +654,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[78].Category
-    value: NFT_INFO_WEB_REQUEST
+    value: AUDIO
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[78].Severity
@@ -670,7 +670,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[80].Category
-    value: STREAMABLE_LOADING
+    value: AUTHENTICATION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[80].Severity
@@ -678,7 +678,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[81].Category
-    value: TEXTURES
+    value: AVATAR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[81].Severity
@@ -686,7 +686,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[82].Category
-    value: GLTF_CONTAINER
+    value: AVATAR_ATTACH
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[82].Severity
@@ -694,7 +694,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[83].Category
-    value: MATERIALS
+    value: CAMERA_MODE_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[83].Severity
@@ -702,7 +702,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[84].Category
-    value: PRIMITIVE_COLLIDERS
+    value: CHARACTER_TRIGGER_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[84].Severity
@@ -710,7 +710,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[85].Category
-    value: PRIMITIVE_MESHES
+    value: CRDT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[85].Severity
@@ -718,7 +718,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[86].Category
-    value: AUDIO_SOURCES
+    value: CRDT_ECS_BRIDGE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[86].Severity
@@ -726,7 +726,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[87].Category
-    value: MEDIA_STREAM
+    value: ECS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[87].Severity
@@ -734,7 +734,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[88].Category
-    value: PRIORITIZATION
+    value: EMOTE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[88].Severity
@@ -742,7 +742,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[89].Category
-    value: MOTION
+    value: ENGINE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[89].Severity
@@ -750,7 +750,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[90].Category
-    value: LANDSCAPE
+    value: FEATURE_FLAGS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[90].Severity
@@ -758,7 +758,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[91].Category
-    value: INPUT
+    value: GENERIC_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[91].Severity
@@ -766,7 +766,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[92].Category
-    value: AVATAR
+    value: GLTF_CONTAINER
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[92].Severity
@@ -774,7 +774,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[93].Category
-    value: PROFILE
+    value: INPUT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[93].Severity
@@ -782,7 +782,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[94].Category
-    value: TWEEN
+    value: JAVASCRIPT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[94].Severity
@@ -790,7 +790,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[95].Category
-    value: ANIMATOR
+    value: LANDSCAPE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[95].Severity
@@ -798,7 +798,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[96].Category
-    value: WEARABLE
+    value: LIVEKIT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[96].Severity
@@ -806,7 +806,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[97].Category
-    value: EMOTE
+    value: LOD
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[97].Severity
@@ -814,7 +814,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[98].Category
-    value: AUTHENTICATION
+    value: MATERIALS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[98].Severity
@@ -822,7 +822,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[99].Category
-    value: LOD
+    value: MEDIA_STREAM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[99].Severity
@@ -830,7 +830,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[100].Category
-    value: AVATAR_ATTACH
+    value: MOTION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[100].Severity
@@ -838,7 +838,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[101].Category
-    value: QUALITY
+    value: MULTIPLAYER
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[101].Severity
@@ -846,7 +846,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[102].Category
-    value: RESTRICTED_ACTIONS
+    value: MULTIPLAYER_MOVEMENT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[102].Severity
@@ -854,7 +854,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[103].Category
-    value: CHARACTER_TRIGGER_AREA
+    value: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[103].Severity
@@ -862,7 +862,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[104].Category
-    value: CAMERA_MODE_AREA
+    value: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[104].Severity
@@ -870,7 +870,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[105].Category
-    value: AVATAR_MODIFIER_AREA
+    value: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[105].Severity
@@ -878,7 +878,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[106].Category
-    value: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+    value: MVC
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[106].Severity
@@ -886,7 +886,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[107].Category
-    value: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+    value: NFT_INFO_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[107].Severity
@@ -894,7 +894,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[108].Category
-    value: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+    value: NFT_SHAPE_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[108].Severity
@@ -902,7 +902,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[109].Category
-    value: PLAYER_IDENTITY_DATA
+    value: PLAYER_AVATAR_BASE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[109].Severity
@@ -910,7 +910,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[110].Category
-    value: PLAYER_AVATAR_BASE
+    value: PLAYER_AVATAR_EMOTE_COMMAND
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[110].Severity
@@ -926,7 +926,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[112].Category
-    value: PLAYER_AVATAR_EMOTE_COMMAND
+    value: PLAYER_IDENTITY_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[112].Severity
@@ -934,7 +934,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[113].Category
-    value: REALM_DATA_DIRTY_RESET_SYSTEM
+    value: PLUGINS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[113].Severity
@@ -942,7 +942,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[114].Category
-    value: ROADS
+    value: PRIMITIVE_COLLIDERS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[114].Severity
@@ -950,7 +950,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[115].Category
-    value: LIVEKIT
+    value: PRIMITIVE_MESHES
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[115].Severity
@@ -958,7 +958,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[116].Category
-    value: MULTIPLAYER_MOVEMENT
+    value: PRIORITIZATION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[116].Severity
@@ -966,7 +966,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[117].Category
-    value: MULTIPLAYER
+    value: PROFILE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[117].Severity
@@ -974,7 +974,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[118].Category
-    value: AUDIO
+    value: QUALITY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[118].Severity
@@ -982,7 +982,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[119].Category
-    value: SCENE_FETCH_REQUEST
+    value: REALM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[119].Severity
@@ -990,7 +990,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[120].Category
-    value: MVC
+    value: REALM_DATA_DIRTY_RESET_SYSTEM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[120].Severity
@@ -998,7 +998,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[121].Category
-    value: SETTINGS_MENU
+    value: RESTRICTED_ACTIONS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[121].Severity
@@ -1006,7 +1006,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[122].Category
-    value: PLUGINS
+    value: ROADS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[122].Severity
@@ -1014,119 +1014,119 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[123].Category
-    value: ASSETS_PROVISION
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[123].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[124].Category
-    value: ENGINE
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[124].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[125].Category
-    value: CRDT
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[125].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[126].Category
-    value: CRDT_ECS_BRIDGE
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[126].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[127].Category
-    value: REALM
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[127].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[128].Category
     value: SCENE_FACTORY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[128].Severity
-    value: 1
+    propertyPath: debugLogMatrix.entries.Array.data[123].Severity
+    value: 4
     objectReference: {fileID: 0}
   - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[129].Category
+    propertyPath: debugLogMatrix.entries.Array.data[124].Category
+    value: SCENE_FETCH_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[124].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[125].Category
     value: SCENE_LOADING
     objectReference: {fileID: 0}
   - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[129].Severity
-    value: 1
+    propertyPath: debugLogMatrix.entries.Array.data[125].Severity
+    value: 4
     objectReference: {fileID: 0}
   - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[130].Category
+    propertyPath: debugLogMatrix.entries.Array.data[126].Category
     value: SCENE_UI
     objectReference: {fileID: 0}
   - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[126].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[127].Category
+    value: SDK_AUDIO_SOURCES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[127].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[128].Category
+    value: SDK_OBSERVABLES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[128].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[129].Category
+    value: SETTINGS_MENU
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[129].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[130].Category
+    value: STREAMABLE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[130].Severity
-    value: 1
+    value: 4
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[131].Category
-    value: JAVASCRIPT
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[131].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[132].Category
-    value: ARCHIPELAGO_REQUEST
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[132].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[133].Category
-    value: ECS
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[133].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[134].Category
-    value: GENERIC_WEB_REQUEST
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[134].Severity
-    value: 1
-    objectReference: {fileID: 0}
-  - target: {fileID: 0}
-    propertyPath: debugLogMatrix.entries.Array.data[135].Category
     value: TEXTURE_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[131].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[132].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[132].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[133].Category
+    value: TWEEN
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[133].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[134].Category
+    value: UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[134].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[135].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[135].Severity
-    value: 1
+    value: 4
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[136].Category
-    value: NFT_SHAPE_WEB_REQUEST
+    value: WEARABLE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[136].Severity
-    value: 1
+    value: 4
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[137].Category
-    value: NFT_INFO_WEB_REQUEST
+    value: ANIMATOR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[137].Severity
@@ -1134,7 +1134,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[138].Category
-    value: AUDIO_CLIP_WEB_REQUEST
+    value: ARCHIPELAGO_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[138].Severity
@@ -1142,7 +1142,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[139].Category
-    value: STREAMABLE_LOADING
+    value: ASSETS_PROVISION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[139].Severity
@@ -1150,7 +1150,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[140].Category
-    value: TEXTURES
+    value: AUDIO
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[140].Severity
@@ -1158,7 +1158,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[141].Category
-    value: GLTF_CONTAINER
+    value: AUDIO_CLIP_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[141].Severity
@@ -1166,7 +1166,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[142].Category
-    value: MATERIALS
+    value: AUTHENTICATION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[142].Severity
@@ -1174,7 +1174,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[143].Category
-    value: PRIMITIVE_COLLIDERS
+    value: AVATAR
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[143].Severity
@@ -1182,7 +1182,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[144].Category
-    value: PRIMITIVE_MESHES
+    value: AVATAR_ATTACH
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[144].Severity
@@ -1190,7 +1190,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[145].Category
-    value: AUDIO_SOURCES
+    value: CAMERA_MODE_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[145].Severity
@@ -1198,7 +1198,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[146].Category
-    value: MEDIA_STREAM
+    value: CHARACTER_TRIGGER_AREA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[146].Severity
@@ -1206,7 +1206,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[147].Category
-    value: PRIORITIZATION
+    value: CRDT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[147].Severity
@@ -1214,7 +1214,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[148].Category
-    value: MOTION
+    value: CRDT_ECS_BRIDGE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[148].Severity
@@ -1222,7 +1222,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[149].Category
-    value: LANDSCAPE
+    value: ECS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[149].Severity
@@ -1230,7 +1230,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[150].Category
-    value: INPUT
+    value: EMOTE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[150].Severity
@@ -1238,7 +1238,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[151].Category
-    value: AVATAR
+    value: ENGINE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[151].Severity
@@ -1246,7 +1246,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[152].Category
-    value: PROFILE
+    value: FEATURE_FLAGS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[152].Severity
@@ -1254,7 +1254,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[153].Category
-    value: TWEEN
+    value: GENERIC_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[153].Severity
@@ -1262,7 +1262,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[154].Category
-    value: ANIMATOR
+    value: GLTF_CONTAINER
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[154].Severity
@@ -1270,7 +1270,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[155].Category
-    value: WEARABLE
+    value: INPUT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[155].Severity
@@ -1278,7 +1278,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[156].Category
-    value: EMOTE
+    value: JAVASCRIPT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[156].Severity
@@ -1286,7 +1286,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[157].Category
-    value: AUTHENTICATION
+    value: LANDSCAPE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[157].Severity
@@ -1294,7 +1294,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[158].Category
-    value: LOD
+    value: LIVEKIT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[158].Severity
@@ -1302,7 +1302,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[159].Category
-    value: AVATAR_ATTACH
+    value: LOD
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[159].Severity
@@ -1310,7 +1310,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[160].Category
-    value: QUALITY
+    value: MATERIALS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[160].Severity
@@ -1318,7 +1318,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[161].Category
-    value: RESTRICTED_ACTIONS
+    value: MEDIA_STREAM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[161].Severity
@@ -1326,7 +1326,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[162].Category
-    value: CHARACTER_TRIGGER_AREA
+    value: MOTION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[162].Severity
@@ -1334,7 +1334,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[163].Category
-    value: CAMERA_MODE_AREA
+    value: MULTIPLAYER
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[163].Severity
@@ -1342,7 +1342,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[164].Category
-    value: AVATAR_MODIFIER_AREA
+    value: MULTIPLAYER_MOVEMENT
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[164].Severity
@@ -1350,7 +1350,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[165].Category
-    value: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+    value: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[165].Severity
@@ -1358,7 +1358,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[166].Category
-    value: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+    value: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[166].Severity
@@ -1366,7 +1366,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[167].Category
-    value: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+    value: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[167].Severity
@@ -1374,7 +1374,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[168].Category
-    value: PLAYER_IDENTITY_DATA
+    value: MVC
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[168].Severity
@@ -1382,7 +1382,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[169].Category
-    value: PLAYER_AVATAR_BASE
+    value: NFT_INFO_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[169].Severity
@@ -1390,7 +1390,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[170].Category
-    value: PLAYER_AVATAR_EQUIPPED
+    value: NFT_SHAPE_WEB_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[170].Severity
@@ -1398,7 +1398,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[171].Category
-    value: PLAYER_AVATAR_EMOTE_COMMAND
+    value: PLAYER_AVATAR_BASE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[171].Severity
@@ -1406,7 +1406,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[172].Category
-    value: REALM_DATA_DIRTY_RESET_SYSTEM
+    value: PLAYER_AVATAR_EMOTE_COMMAND
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[172].Severity
@@ -1414,7 +1414,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[173].Category
-    value: ROADS
+    value: PLAYER_AVATAR_EQUIPPED
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[173].Severity
@@ -1422,7 +1422,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[174].Category
-    value: LIVEKIT
+    value: PLAYER_IDENTITY_DATA
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[174].Severity
@@ -1430,7 +1430,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[175].Category
-    value: MULTIPLAYER_MOVEMENT
+    value: PLUGINS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[175].Severity
@@ -1438,7 +1438,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[176].Category
-    value: MULTIPLAYER
+    value: PRIMITIVE_COLLIDERS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[176].Severity
@@ -1446,7 +1446,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[177].Category
-    value: AUDIO
+    value: PRIMITIVE_MESHES
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[177].Severity
@@ -1454,7 +1454,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[178].Category
-    value: SCENE_FETCH_REQUEST
+    value: PRIORITIZATION
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[178].Severity
@@ -1462,7 +1462,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[179].Category
-    value: MVC
+    value: PROFILE
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[179].Severity
@@ -1470,7 +1470,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[180].Category
-    value: SETTINGS_MENU
+    value: QUALITY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[180].Severity
@@ -1478,7 +1478,7 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[181].Category
-    value: PLUGINS
+    value: REALM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[181].Severity
@@ -1486,42 +1486,202 @@ Preset:
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[182].Category
-    value: UNSPECIFIED
+    value: REALM_DATA_DIRTY_RESET_SYSTEM
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[182].Severity
-    value: 3
+    value: 1
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[183].Category
-    value: UNSPECIFIED
+    value: RESTRICTED_ACTIONS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[183].Severity
-    value: 2
+    value: 1
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[184].Category
-    value: UNSPECIFIED
+    value: ROADS
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[184].Severity
-    value: 0
+    value: 1
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[185].Category
-    value: UNSPECIFIED
+    value: SCENE_FACTORY
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[185].Severity
-    value: 4
+    value: 1
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[186].Category
-    value: UNSPECIFIED
+    value: SCENE_FETCH_REQUEST
     objectReference: {fileID: 0}
   - target: {fileID: 0}
     propertyPath: debugLogMatrix.entries.Array.data[186].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[187].Category
+    value: SCENE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[187].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[188].Category
+    value: SCENE_UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[188].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[189].Category
+    value: SDK_AUDIO_SOURCES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[189].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[190].Category
+    value: SDK_OBSERVABLES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[190].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[191].Category
+    value: SETTINGS_MENU
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[191].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[192].Category
+    value: STREAMABLE_LOADING
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[192].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[193].Category
+    value: TEXTURE_WEB_REQUEST
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[193].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[194].Category
+    value: TEXTURES
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[194].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[195].Category
+    value: TWEEN
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[195].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[196].Category
+    value: UI
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[196].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[197].Category
+    value: UNSPECIFIED
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[197].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[198].Category
+    value: WEARABLE
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[198].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[199].Category
+    value: ANALYTICS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[199].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[200].Category
+    value: ANALYTICS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[200].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[201].Category
+    value: ANALYTICS
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[201].Severity
+    value: 1
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[202].Category
+    value: DEBUG
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[202].Severity
+    value: 3
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[203].Category
+    value: DEBUG
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[203].Severity
+    value: 2
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[204].Category
+    value: DEBUG
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[204].Severity
+    value: 0
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[205].Category
+    value: DEBUG
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[205].Severity
+    value: 4
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[206].Category
+    value: DEBUG
+    objectReference: {fileID: 0}
+  - target: {fileID: 0}
+    propertyPath: debugLogMatrix.entries.Array.data[206].Severity
     value: 1
     objectReference: {fileID: 0}
   - target: {fileID: 0}

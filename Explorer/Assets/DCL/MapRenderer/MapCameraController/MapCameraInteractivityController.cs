@@ -1,6 +1,9 @@
-﻿using DCL.MapRenderer.CoordsUtils;
+﻿using Arch.Core;
+using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
+using DCL.MapRenderer.MapLayers.Pins;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -12,6 +15,7 @@ namespace DCL.MapRenderer.MapCameraController
         private readonly Transform cameraParent;
         private readonly IObjectPool<IParcelHighlightMarker> markersPool;
         private readonly ICoordsUtils coordsUtils;
+        private readonly PinMarkerController markerController;
         private readonly Camera camera;
 
         private IParcelHighlightMarker marker;
@@ -22,11 +26,13 @@ namespace DCL.MapRenderer.MapCameraController
             Transform cameraParent,
             Camera camera,
             IObjectPool<IParcelHighlightMarker> markersPool,
-            ICoordsUtils coordsUtils)
+            ICoordsUtils coordsUtils,
+            PinMarkerController markerController)
         {
             this.cameraParent = cameraParent;
             this.markersPool = markersPool;
             this.coordsUtils = coordsUtils;
+            this.markerController = markerController;
             this.camera = camera;
         }
 
@@ -55,8 +61,25 @@ namespace DCL.MapRenderer.MapCameraController
             marker?.Deactivate();
         }
 
-        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel) =>
-            coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
+        public bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker mark)
+        {
+            mark = null;
+            bool parcelExists = coordsUtils.TryGetCoordsWithinInteractableBounds(GetLocalPosition(normalizedCoordinates), out parcel);
+
+            if (parcelExists && markerController != null)
+            {
+                foreach (IPinMarker pinMarker in markerController.markers.Values)
+                {
+                    if (pinMarker.ParcelPosition == parcel)
+                    {
+                        mark = pinMarker;
+                        break;
+                    }
+                }
+            }
+
+            return parcelExists;
+        }
 
         public Vector2 GetNormalizedPosition(Vector2Int parcel)
         {

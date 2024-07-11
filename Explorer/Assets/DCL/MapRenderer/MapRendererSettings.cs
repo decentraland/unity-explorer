@@ -29,6 +29,9 @@ namespace DCL.MapRenderer
         public AssetReferenceGameObject PlayerMarker { get; private set; }
 
         [field: SerializeField]
+        public AssetReferenceGameObject PinMarker { get; private set; }
+
+        [field: SerializeField]
         public AssetReferenceGameObject SceneOfInterestMarker { get; private set; }
 
         [field: SerializeField]

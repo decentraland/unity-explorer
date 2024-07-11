@@ -1,4 +1,5 @@
-﻿using DCL.DebugUtilities;
+﻿using DCL.AssetsProvision;
+using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3.Authenticators;
@@ -14,6 +15,7 @@ namespace Global.Dynamic
     public struct DynamicWorldDependencies
     {
         public IDebugContainerBuilder DebugContainerBuilder;
+        public IAssetsProvisioner AssetsProvisioner;
         public StaticContainer StaticContainer;
         public IPluginSettingsContainer SettingsContainer;
         public UIDocument RootUIDocument;
@@ -32,6 +34,7 @@ namespace Global.Dynamic
         public Vector2Int StartParcel { get; init; }
         public bool EnableLandscape { get; init; }
         public bool EnableLOD { get; init; }
+        public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
 
     }

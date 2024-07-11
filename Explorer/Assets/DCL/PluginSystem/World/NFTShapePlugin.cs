@@ -107,9 +107,6 @@ namespace DCL.PluginSystem.World
             cache.Dispose();
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
-            UniTask.CompletedTask;
-
         public UniTask InitializeAsync(NFTShapePluginSettings settings, CancellationToken ct)
         {
             lazyMaxSize.Initialize(settings.MaxSizeOfNftForDownload);
