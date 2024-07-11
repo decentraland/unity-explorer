@@ -548,32 +548,6 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
-    <BackpackSettings>k__BackingField:
-      <CategoryIconsMapping>k__BackingField:
-        m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityBackgroundsMapping>k__BackingField:
-        m_AssetGUID: 04a7ffcd277754f7c91237894604f522
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityInfoPanelBackgroundsMapping>k__BackingField:
-        m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityColorMappings>k__BackingField:
-        m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <PageButtonView>k__BackingField:
-        m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
     <ChatEntryConfiguration>k__BackingField:
       m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
       m_SubObjectName: 
@@ -592,6 +566,7 @@ MonoBehaviour:
   splashRoot: {fileID: 7722564697705550552}
   splashScreenAnimation: {fileID: 7722564697705550553}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
+  worldInfoTool: {fileID: 2047677986}
 --- !u!1 &946305962
 GameObject:
   m_ObjectHideFlags: 0
@@ -797,6 +772,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2047677984
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2047677985}
+  - component: {fileID: 2047677986}
+  m_Layer: 0
+  m_Name: World InfoTool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2047677985
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2047677984}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2047677986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2047677984}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8da4b3d5af364b3ebd276199367b5742, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneCoordinates: {x: 0, y: 0}
+  entityId: 0
+  message: 
 --- !u!1 &2104274356
 GameObject:
   m_ObjectHideFlags: 0
@@ -1144,4 +1166,5 @@ SceneRoots:
   - {fileID: 46733615}
   - {fileID: 1901323879}
   - {fileID: 6834788295734673943}
+  - {fileID: 2047677985}
   - {fileID: 2104274357}
