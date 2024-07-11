@@ -29,7 +29,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public readonly Dictionary<Entity, IPinMarker> markers = new ();
 
         private MapPinPlacementSystem system;
-        private MapPinTextureResolverSystem textureResolverSystem;
         private MapPinDeletionSystem mapPinDeletionSystem;
         private World world;
 
@@ -51,61 +50,57 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             world = builder.World;
             system = MapPinPlacementSystem.InjectToWorld(ref builder);
-            textureResolverSystem = MapPinTextureResolverSystem.InjectToWorld(ref builder);
             mapPinDeletionSystem = MapPinDeletionSystem.InjectToWorld(ref builder);
 
             system.SetQueryMethod(SetMapPinPlacementQuery);
-            textureResolverSystem.SetQueryMethod(SetMapPinTextureQuery);
             mapPinDeletionSystem.SetQueryMethod(HandleEntityDestructionQuery);
             system.Activate();
-            textureResolverSystem.Activate();
             mapPinDeletionSystem.Activate();
         }
 
         [Query]
         private void SetMapPinPlacement(in Entity e, ref MapPinComponent mapPinComponent, ref PBMapPin pbMapPin)
         {
-            if (!mapPinComponent.IsDirty)
-                return;
-
-            IPinMarker marker;
-            if (markers.TryGetValue(e, out IPinMarker pinMarker))
+            if (mapPinComponent.IsDirty)
             {
-                marker = pinMarker;
+                IPinMarker marker;
+                if (!markers.TryGetValue(e, out IPinMarker pinMarker))
+                {
+                    marker = builder(objectsPool, mapCullingController);
+                    markers.Add(e, marker);
+                }
+                else
+                {
+                    marker = pinMarker;
+                }
+
+                marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position), mapPinComponent.Position);
+                marker.SetData(pbMapPin.Title, pbMapPin.Description);
+
+                if (isEnabled)
+                    mapCullingController.StartTracking(marker, this);
+
+                mapPinComponent.IsDirty = false;
             }
-            else
+
+            if (mapPinComponent.TexturePromise is not null && !mapPinComponent.TexturePromise.Value.IsConsumed)
             {
-                marker = builder(objectsPool, mapCullingController);
-                markers.Add(e, marker);
+                IPinMarker marker;
+                if (!markers.TryGetValue(e, out IPinMarker pinMarker))
+                {
+                    marker = builder(objectsPool, mapCullingController);
+                    markers.Add(e, marker);
+                }
+                else
+                {
+                    marker = pinMarker;
+                }
+
+                if (mapPinComponent.TexturePromise.Value.TryConsume(world, out StreamableLoadingResult<Texture2D> texture))
+                {
+                    marker.SetTexture(texture.Asset);
+                }
             }
-
-            marker.SetPosition(coordsUtils.CoordsToPositionWithOffset(mapPinComponent.Position), mapPinComponent.Position);
-            marker.SetData(pbMapPin.Title, pbMapPin.Description);
-
-            if (isEnabled)
-                mapCullingController.StartTracking(marker, this);
-
-            mapPinComponent.IsDirty = false;
-        }
-
-        [Query]
-        private void SetMapPinTexture(in Entity e, ref MapPinComponent mapPinComponent)
-        {
-            if(mapPinComponent.TexturePromise is null or { IsConsumed: true })
-                return;
-
-            IPinMarker marker;
-            if (markers.TryGetValue(e, out IPinMarker pinMarker))
-            {
-                marker = pinMarker;
-            }
-            else
-            {
-                marker = builder(objectsPool, mapCullingController);
-                markers.Add(e, marker);
-            }
-            if (mapPinComponent.TexturePromise.Value.TryConsume(world, out StreamableLoadingResult<Texture2D> texture))
-                marker.SetTexture(texture.Asset);
         }
 
         [All(typeof(DeleteEntityIntention))]
@@ -180,12 +175,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
     public partial class MapPinPlacementSystem : ControllerECSBridgeSystem
     {
         internal MapPinPlacementSystem(World world) : base(world) { }
-    }
-
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class MapPinTextureResolverSystem : ControllerECSBridgeSystem
-    {
-        internal MapPinTextureResolverSystem(World world) : base(world) { }
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
