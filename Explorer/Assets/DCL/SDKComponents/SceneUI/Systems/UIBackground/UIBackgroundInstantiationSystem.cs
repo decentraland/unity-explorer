@@ -62,9 +62,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             var image = imagesPool.Get();
             image.Initialize(uiTransformComponent.Transform);
+
             var uiBackgroundComponent = new UIBackgroundComponent();
             uiBackgroundComponent.Image = image;
             uiBackgroundComponent.Status = LifeCycle.LoadingNotStarted;
+
             World.Add(entity, uiBackgroundComponent);
         }
 
@@ -82,13 +84,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             if (uiBackgroundComponent.TexturePromise == null)
             {
                 // Ensure image is setup of it has no image promise
-                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel);
+                uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel);
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
             }
-            else if(uiBackgroundComponent.TexturePromise != null && uiBackgroundComponent.Status == LifeCycle.LoadingFinished)
+            else if(uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
             {
                 // Ensure texture has latest data from model
-                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, uiBackgroundComponent.Image.Texture);
+                uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, uiBackgroundComponent.Image.Texture);
             }
 
             sdkModel.IsDirty = false;
@@ -109,11 +111,12 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
             {
+                // Backgrounds with texture
                 if (promiseResult.Succeeded)
-                    // Backgrounds with texture
-                    UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
+                    uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, promiseResult.Asset);
                 else
                     ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
+
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
 
                 // Write value back as it's nullable (and can't be accessed by ref)
