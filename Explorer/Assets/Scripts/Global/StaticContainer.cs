@@ -215,6 +215,7 @@ namespace Global
                 new MediaPlayerPlugin(sharedDependencies, videoTexturePool, sharedDependencies.FrameTimeBudget, container.assetsProvisioner, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new CharacterTriggerAreaPlugin(container.GlobalWorldProxy, container.MainPlayerAvatarBaseProxy, exposedGlobalDataContainer.ExposedCameraData.CameraEntityProxy, container.CharacterContainer.CharacterObject, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner, container.CacheCleaner),
                 new InteractionsAudioPlugin(container.assetsProvisioner),
+                new MapPinPlugin(container.GlobalWorldProxy),
                 new MultiplayerPlugin(),
                 new RealmInfoPlugin(container.RealmData, container.RoomHubProxy),
 
