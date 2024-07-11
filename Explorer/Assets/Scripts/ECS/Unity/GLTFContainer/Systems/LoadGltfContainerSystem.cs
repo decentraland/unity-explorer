@@ -75,9 +75,9 @@ namespace ECS.Unity.GLTFContainer.Systems
                 case LoadingState.Unknown:
                     if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
                     {
-                        ReportHub.LogWarning($"Hash does not exist for asset with name {sdkComponent.Src} in the scene content", GetReportCategory());
+                        var exception = new ArgumentException($"Asset Bundle {sdkComponent.Src} not found in the content");
                         component.SetFaulty(sdkComponent.Src);
-                        World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(new ArgumentException($"Hash does not exist for asset with name {sdkComponent.Src} in the scene content")));
+                        World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(exception)));
                     }
                     else
                     {
