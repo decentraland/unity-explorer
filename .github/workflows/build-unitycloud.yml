@@ -156,6 +156,7 @@ jobs:
           PARAM_SENTRY_ENVIRONMENT: ${{ needs.prebuild.outputs.sentry_environment }}
           PARAM_SENTRY_CLI_AUTH_TOKEN: ${{ secrets.SENTRY_CLI_AUTH_TOKEN }}
           PARAM_SENTRY_UPLOAD_DEBUG_SYMBOLS: ${{ needs.prebuild.outputs.sentry_upload_symbols }}
+          PARAM_SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
         run: python -u scripts/cloudbuild/build.py
 
       - name: Upload artifact

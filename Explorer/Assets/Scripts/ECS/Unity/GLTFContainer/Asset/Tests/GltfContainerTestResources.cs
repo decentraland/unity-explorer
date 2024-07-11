@@ -15,10 +15,16 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
 
 
         // 1 Collider, 196 Mesh Renderers, 0 Animations
-        internal const string SCENE_WITH_COLLIDER = "bafybeigwxyfyyarzmvqz262vet65xa2ovetct6hcnm27uwge7yxpmhfvoe";
+        internal const string SCENE_WITH_COLLIDER_HASH = "bafybeigwxyfyyarzmvqz262vet65xa2ovetct6hcnm27uwge7yxpmhfvoe";
+        
+        internal const string SCENE_WITH_COLLIDER_NAME = "SCENE_WITH_COLLIDER_NAME";
+
 
         // 1 Mesh Renderer // 1 Animation
-        public const string RENDERER_WITH_LEGACY_ANIM = "bafkreif6qazpaiulr6kcqgukopkw6r26lawpnisdjdoddaqeujd5ytaezy";
+        public const string RENDERER_WITH_LEGACY_ANIM_HASH = "bafkreif6qazpaiulr6kcqgukopkw6r26lawpnisdjdoddaqeujd5ytaezy";
+        
+        public const string RENDERER_WITH_LEGACY_ANIM_NAME = "RENDERER_WITH_LEGACY_NAME";
+
 
         internal const string NO_GAME_OBJECTS = "bafkreid3xecd44iujaz5qekbdrt5orqdqj3wivg5zc5mya3zkorjhyrkda";
 
