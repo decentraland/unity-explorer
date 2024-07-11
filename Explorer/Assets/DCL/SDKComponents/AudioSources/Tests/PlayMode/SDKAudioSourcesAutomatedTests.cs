@@ -120,7 +120,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
         {
             ErrorTraceAssetsProvisioner assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
 
-            ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings = await BootstrapContainer.ProvideReportHandlingSettings(assetProvisioner,
+            ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings = await BootstrapContainer.ProvideReportHandlingSettingsAsync(assetProvisioner,
                 sceneSettingsContainer.GetSettings<AnalyticsSettings>(), ct);
 
             // First load the common global plugin

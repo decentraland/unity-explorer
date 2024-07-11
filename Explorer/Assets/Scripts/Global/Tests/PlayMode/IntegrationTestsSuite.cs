@@ -27,7 +27,7 @@ namespace Global.Tests
             var analyticsSettings = globalSettingsContainer.GetSettings<AnalyticsSettings>();
 
             var assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
-            var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettings(assetProvisioner, analyticsSettings, default(CancellationToken));
+            var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettingsAsync(assetProvisioner, analyticsSettings, default(CancellationToken));
 
             return await StaticSceneLauncher.InstallAsync(
                 assetProvisioner, reportHandlingSettings.Value, new DebugViewsCatalog(),

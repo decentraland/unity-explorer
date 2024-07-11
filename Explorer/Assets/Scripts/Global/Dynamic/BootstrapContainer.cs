@@ -50,7 +50,7 @@ namespace Global.Dynamic
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, AnalyticsSettings>(settingsContainer, ct, async container =>
             {
-                container.reportHandlingSettings = await ProvideReportHandlingSettings(container.AssetsProvisioner!, container.settings, ct);
+                container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
                 (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings);
 
@@ -116,7 +116,7 @@ namespace Global.Dynamic
                 Application.isEditor || !Debug.isDebugBuild ? releaseUrl : devUrl;
         }
 
-        public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettings(IAssetsProvisioner assetsProvisioner, AnalyticsSettings settings, CancellationToken ct)
+        public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, AnalyticsSettings settings, CancellationToken ct)
         {
             AnalyticsSettings.ReportHandlingSettingsRef reportHandlingSettings =
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
