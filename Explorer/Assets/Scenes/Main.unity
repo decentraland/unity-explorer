@@ -489,11 +489,12 @@ MonoBehaviour:
     <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
-  showSplash: 1
-  showAuthentication: 1
-  showLoading: 1
-  enableLandscape: 1
-  enableLOD: 1
+  debugSettings:
+    showSplash: 0
+    showAuthentication: 0
+    showLoading: 0
+    enableLandscape: 0
+    enableLOD: 0
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
@@ -534,7 +535,7 @@ MonoBehaviour:
         m_SubObjectType: 
         m_EditorAssetChanged: 0
       <PinMarker>k__BackingField:
-        m_AssetGUID: e7d14406516774d91886b6b4d1a26a58
+        m_AssetGUID: 
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
@@ -550,32 +551,6 @@ MonoBehaviour:
         m_EditorAssetChanged: 0
       <UserMarker>k__BackingField:
         m_AssetGUID: 53b70d09c4a814878a30c68582ad4523
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-    <BackpackSettings>k__BackingField:
-      <CategoryIconsMapping>k__BackingField:
-        m_AssetGUID: 
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityBackgroundsMapping>k__BackingField:
-        m_AssetGUID: 
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityInfoPanelBackgroundsMapping>k__BackingField:
-        m_AssetGUID: 
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityColorMappings>k__BackingField:
-        m_AssetGUID: 
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <PageButtonView>k__BackingField:
-        m_AssetGUID: 
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
@@ -597,6 +572,7 @@ MonoBehaviour:
   splashRoot: {fileID: 7722564697705550552}
   splashScreenAnimation: {fileID: 7722564697705550553}
   backgroundMusic: {fileID: 11400000, guid: 26e7ebc818785ad428e1de2791a42768, type: 2}
+  worldInfoTool: {fileID: 1929393545}
 --- !u!1 &946305962
 GameObject:
   m_ObjectHideFlags: 0
@@ -802,6 +778,53 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1929393543
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1929393544}
+  - component: {fileID: 1929393545}
+  m_Layer: 0
+  m_Name: World Info Tool
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1929393544
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1929393543}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1929393545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1929393543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8da4b3d5af364b3ebd276199367b5742, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneCoordinates: {x: 0, y: 0}
+  entityId: 0
+  message: 
 --- !u!1 &2104274356
 GameObject:
   m_ObjectHideFlags: 0
@@ -1149,4 +1172,5 @@ SceneRoots:
   - {fileID: 46733615}
   - {fileID: 1901323879}
   - {fileID: 6834788295734673943}
+  - {fileID: 1929393544}
   - {fileID: 2104274357}
