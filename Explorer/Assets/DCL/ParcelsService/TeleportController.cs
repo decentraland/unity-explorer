@@ -7,6 +7,7 @@ using DCL.Character.Components;
 using DCL.CharacterCamera;
 using DCL.CharacterMotion.Components;
 using DCL.Ipfs;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System;
 using System.Collections.Generic;
@@ -25,6 +26,8 @@ namespace DCL.ParcelsService
         private static readonly Random RANDOM = new ();
 
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly SceneAssetLock sceneAssetLock;
+
         private IRetrieveScene? retrieveScene;
         private World? world;
         private Entity cameraEntity;
@@ -45,9 +48,10 @@ namespace DCL.ParcelsService
             }
         }
 
-        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue)
+        public TeleportController(ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock)
         {
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.sceneAssetLock = sceneAssetLock;
         }
 
         public void InvalidateRealm()
@@ -57,6 +61,9 @@ namespace DCL.ParcelsService
 
         public async UniTask<WaitForSceneReadiness?> TeleportToSceneSpawnPointAsync(Vector2Int parcel, AsyncLoadProcessReport loadReport, CancellationToken ct)
         {
+            // if current scene is still loading it will block the teleport until its assets are resolved or timed out
+            sceneAssetLock.Reset();
+
             if (retrieveScene == null)
             {
                 TeleportCharacter(new PlayerTeleportIntent(ParcelMathHelper.GetPositionByParcelPosition(parcel, true), parcel, loadReport));

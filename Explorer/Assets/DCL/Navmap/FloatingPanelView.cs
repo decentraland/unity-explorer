@@ -1,6 +1,5 @@
 using DCL.Audio;
 using DCL.UI;
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,10 +21,28 @@ namespace DCL.Navmap
         public RectTransform CategoriesContainer { get; private set; }
 
         [field: SerializeField]
+        public GameObject PlaceSection { get; private set; }
+
+        [field: SerializeField]
+        public GameObject MapPinSection { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text MapPinTitle { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text MapPinDescription { get; private set; }
+
+        [field: SerializeField]
+        public ImageView MapPinPlaceImage { get; private set; }
+
+        [field: SerializeField]
         public ImageView placeImage;
 
         [field: SerializeField]
         public Button closeButton;
+
+        [field: SerializeField]
+        public Button mapPinCloseButton { get; private set; }
 
         [field: SerializeField]
         public Button backButton;

@@ -21,6 +21,7 @@ MonoBehaviour:
   - rid: 758312881421549570
   - rid: 857448817791336450
   - rid: 278567035285012480
+  - rid: 892605786557251584
   references:
     version: 2
     RefIds:
@@ -48,6 +49,12 @@ MonoBehaviour:
       type: {class: TextShapePlugin/FontsSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         <FontList>k__BackingField: {fileID: 0}
+    - rid: 892605786557251584
+      type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
+        <MaxSizeOfNftForDownload>k__BackingField:
+          maxSizeInBytes: 2097152
     - rid: 1268264197252972545
       type: {class: InteractionPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:

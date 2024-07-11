@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using CRDT;
-using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.Special;
 using DCL.Diagnostics;
 using DCL.ECSComponents;

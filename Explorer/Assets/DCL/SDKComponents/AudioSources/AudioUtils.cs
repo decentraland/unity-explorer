@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioUtils
     {
-        public static void CleanUp(this ref AudioSourceComponent component, World world, IDereferencableCache<AudioClip, GetAudioClipIntention> cache)
+        public static void CleanUp(this ref AudioSourceComponent component, World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache)
         {
             component.ClipPromise.ForgetLoading(world);
 

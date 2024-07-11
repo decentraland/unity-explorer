@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class UiElementUtils
     {
-        public static void SetupVisualElement(ref VisualElement visualElementToSetup, ref PBUiTransform model)
+        public static void SetupVisualElement(VisualElement visualElementToSetup, ref PBUiTransform model)
         {
             visualElementToSetup.style.display = GetDisplay(model.Display);
             visualElementToSetup.style.overflow = GetOverflow(model.Overflow);
@@ -142,10 +142,18 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
-            //labelToSetup.style.unityFont = model.GetFont();
+
+            if (model.HasTextWrap)
+            {
+                labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
+            }
+            else
+            {
+                labelToSetup.style.whiteSpace = WhiteSpace.NoWrap;
+            }
         }
 
-        public static void SetupDCLImage(ref DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
+        public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
         {
             imageToSetup.Color = model.GetColor();
             imageToSetup.Slices = model.GetBorder();
