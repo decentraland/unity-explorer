@@ -4,6 +4,10 @@ using ECS.StreamableLoading.Common;
 using System;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Profiling;
+using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 using UnityEngine;
 using Utility;
 
@@ -11,62 +15,76 @@ namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {
+        public GameObject Root;
         public byte CurrentLODLevel;
-        public LODGroup LodGroup;
-        public UnityEngine.LOD [] lods;
-        public LODAsset CurrentLOD;
-        public LODAsset CurrentVisibleLOD;
-        public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
-        public bool IsDirty;
-        
-        
+        public List<LODAsset> LODAssets;
+
         public void Dispose(World world)
         {
-            CurrentLODPromise.ForgetLoading(world);
-            if (CurrentVisibleLOD != null && !CurrentVisibleLOD.LodKey.Equals(CurrentLOD))
-                CurrentVisibleLOD.Release();
-            CurrentLOD?.Release();
+            foreach (var lodVar in LODAssets)
+            {
+                lodVar?.Release(world);
+            }
+            UnityObjectUtils.SafeDestroy(Root);
+            //CurrentLODPromise.ForgetLoading(world);
+            // if (CurrentVisibleLOD != null && !CurrentVisibleLOD.LodKey.Equals(CurrentLOD))
+            //     CurrentVisibleLOD.Release();
+            //CurrentLOD?.Release();
         }
 
-        public static SceneLODInfo Create() =>
-            new()
+        public static SceneLODInfo Create()
+        {
+            GameObject root = new GameObject();
+            LODGroup lodGroup = root.AddComponent<LODGroup>();
+            lodGroup.fadeMode = LODFadeMode.CrossFade;
+            lodGroup.animateCrossFading = true;
+            //lodGroup.ForceLOD(0);
+            return new SceneLODInfo
             {
-                CurrentLODLevel = byte.MaxValue, LodGroup = new GameObject().AddComponent<LODGroup>(), lods = new UnityEngine.LOD[2]
+                CurrentLODLevel = byte.MaxValue,
+                LODAssets = new List<LODAsset>(),
+                Root = root,
             };
-
-        public void SetCurrentLOD(LODAsset newLod, Transform lodTransformParent)
-        {
-            if (!newLod.setup && newLod.Root != null)
-            {
-                LodGroup.fadeMode = LODFadeMode.CrossFade;
-                LodGroup.animateCrossFading = true;
-                LodGroup.transform.SetParent(lodTransformParent);
-                newLod.Root.transform.SetParent(LodGroup.transform);
-                var lod = new UnityEngine.LOD(newLod.LodKey.Level == 0 ? 0.5f : 0.05f,
-                    newLod.Root.GetComponentsInChildren<Renderer>());
-                lods[newLod.LodKey.Level] = lod;
-                LodGroup.SetLODs(lods);
-            }
-
-            newLod.setup = true;
-            
-            CurrentLOD = newLod;
-            UpdateCurrentVisibleLOD();
         }
 
-        public void UpdateCurrentVisibleLOD()
+        public bool ArePromisesConsumed()
         {
-            if (CurrentLOD?.State == LODAsset.LOD_STATE.SUCCESS)
+            foreach (var lodAsset in LODAssets)
             {
-                CurrentVisibleLOD?.Release();
-                CurrentVisibleLOD = CurrentLOD;
+                if (!lodAsset.LODPromise.IsConsumed)
+                    return false;
             }
+
+            return true;
         }
 
-        public void ResetToCurrentVisibleLOD()
+        public void ReEvaluateLODGroup(Transform lodTransformParent)
         {
-            CurrentLOD = CurrentVisibleLOD;
+            LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
+            UnityEngine.LOD[] lods = new UnityEngine.LOD[LODAssets.Count];
+            for (int i = 0; i < LODAssets.Count; ++i)
+            {
+                lods[i] = LODAssets[i].lod;
+                lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f;
+            }
+
+            if (lods.Length == 1)
+                lods[0].screenRelativeTransitionHeight = 0.05f;
+
+            LODGroup lodGroup = Root.GetComponent<LODGroup>();
+            lodGroup.transform.SetParent(lodTransformParent);
+            lodGroup.SetLODs(lods.ToArray());
+        }
+
+        public bool HasLODKey(LODKey lodKey)
+        {
+            foreach (var lodAsset in LODAssets)
+            {
+                if (lodKey.Equals(lodAsset.LodKey))
+                    return true;
+            }
+
+            return false;
         }
     }
-
 }

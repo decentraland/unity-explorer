@@ -46,45 +46,59 @@ namespace DCL.LOD.Systems
         protected override void Update(float t)
         {
             UpdateLODLevelQuery(World);
-            //InstantiateCurrentLODQuery(World);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            //New LOD infront of you. Update
-            if (!partitionComponent.IsBehind && sceneLODInfo.CurrentLODLevel == byte.MaxValue)
+            if (!partitionComponent.IsBehind)
             {
-                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
-                return;
-            }
+                byte lodForAcquisition = CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+                LODKey newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, lodForAcquisition);
 
-            //Existing LOD (either infront or behind you). Update
-            if (partitionComponent.IsDirty && sceneLODInfo.CurrentLODLevel != byte.MaxValue)
-                CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+                if (sceneLODInfo.LODAssets.Count == 0)
+                {
+                    AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
+                }
+                else
+                {
+                    //foreach (var lodAsset in sceneLODInfo.LODAssets)
+                    {
+                        if (!sceneLODInfo.HasLODKey(newLODKey)) //If the current LOD is the candidate, no need to make a new promise or set anything new
+                        {
+                            AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
+                        }
+                    }
+                }
+            }
         }
 
-/*
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void AddLODAsset(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, LODKey newLODKey, byte lodForAcquisition)
         {
-            if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLOD == null) return;
+            LODAsset lodAsset = new LODAsset(newLODKey, lodCache);
+            lodAsset.currentLODLevel = lodForAcquisition;
+            sceneLODInfo.LODAssets.Add(lodAsset);
+            // if (lodCache.TryGet(newLODKey, out var cachedAsset))
+            // {
+            //     //If its cached, no need to make a new promise
+            //     //sceneLODInfo.SetCurrentLOD(cachedAsset, null);
+            //     CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
+            //     return;
+            // }
 
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+            string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-            var currentLOD = sceneLODInfo.CurrentLOD;
+            var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
+                platformLODKey,
+                permittedSources: AssetSource.ALL,
+                customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+                manifest: manifest);
 
-            if (currentLOD.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
-                currentLOD.AsyncInstantiation.IsWaitingForSceneActivation())
-            {
-                FinalizeAsyncInstantiation(currentLOD, sceneDefinitionComponent);
-                sceneLODInfo.UpdateCurrentVisibleLOD();
-                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-            }
+            lodAsset.LODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
         }
-*/
+
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (IsLOD0(ref sceneLODInfo))
@@ -92,10 +106,9 @@ namespace DCL.LOD.Systems
                 scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
                 LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
-            sceneLODInfo.IsDirty = false;
         }
 
-        private void CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
+        private byte CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             //If we are in an SDK6 scene, this value will be kept.
             //Therefore, lod0 will be shown
@@ -107,79 +120,51 @@ namespace DCL.LOD.Systems
                     sceneLODCandidate = (byte)(i + 1);
             }
 
-            if (sceneLODCandidate != sceneLODInfo.CurrentLODLevel)
-                UpdateLODLevel(ref partitionComponent, ref sceneLODInfo, sceneLODCandidate, sceneDefinitionComponent);
+            return sceneLODCandidate;
         }
 
-        private void UpdateLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo,
-            byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
-            sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-            var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
-
-            //If the current LOD is the candidate, no need to make a new promise or set anything new
-            if (newLODKey.Equals(sceneLODInfo.CurrentLOD))
-            {
-                sceneLODInfo.IsDirty = false;
-                return;
-            }
-
-            if (newLODKey.Equals(sceneLODInfo.CurrentVisibleLOD))
-            {
-                sceneLODInfo.ResetToCurrentVisibleLOD();
-                sceneLODInfo.IsDirty = false;
-                return;
-            }
-
-            if (lodCache.TryGet(newLODKey, out var cachedAsset))
-            {
-                //If its cached, no need to make a new promise
-                sceneLODInfo.SetCurrentLOD(cachedAsset, null);
-                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-                return;
-            }
-
-            string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
-
-            var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
-                platformLODKey,
-                permittedSources: AssetSource.ALL,
-                customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                manifest: manifest);
-
-            sceneLODInfo.CurrentLODPromise =
-                Promise.Create(World, assetBundleIntention, partitionComponent);
-
-            sceneLODInfo.IsDirty = true;
-        }
-
-        /*
-        private void FinalizeAsyncInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            currentLOD.AsyncInstantiation.allowSceneActivation = true;
-            currentLOD.AsyncInstantiation.WaitForCompletion();
-            var newRoot = currentLOD.AsyncInstantiation.Result[0];
-            FinalizeInstantiation(currentLOD, sceneDefinitionComponent, newRoot);
-        }
-
-        private void FinalizeInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD)
-        {
-            var slots = Array.Empty<TextureArraySlot?>();
-            if (!currentLOD.LodKey.Level.Equals(0))
-            {
-                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.Definition.id,
-                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
-            }
-
-            currentLOD?.FinalizeInstantiation(instantiatedLOD, slots);
-        }
-        */
+        // private void UpdateLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo,
+        //     byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
+        // {
+        //     // This function should really be called AcquireLOD()
+        //     // as we store more LODs than what we display.
+        //
+        //     byte lodForAcquisition = sceneLODCandidate;
+        //
+        //     //sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
+        //     var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, lodForAcquisition);
+        //
+        //     //If the current LOD is the candidate, no need to make a new promise or set anything new
+        //     if (sceneLODInfo.HasLODKey(newLODKey))
+        //     {
+        //         return;
+        //     }
+        //
+        //     if (lodCache.TryGet(newLODKey, out var cachedAsset))
+        //     {
+        //         //If its cached, no need to make a new promise
+        //         //sceneLODInfo.SetCurrentLOD(cachedAsset, null);
+        //         CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
+        //         return;
+        //     }
+        //
+        //     string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+        //     var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
+        //
+        //     var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
+        //         platformLODKey,
+        //         permittedSources: AssetSource.ALL,
+        //         customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+        //         manifest: manifest);
+        //
+        //     byte lodPromiseArrayIndex = (byte)(sceneLODInfo.CurrentLODLevel - 1); // We're not using 0 for RAW mesh yet, so it's adjusted
+        //     sceneLODInfo.CurrentLOD[lodPromiseArrayIndex].LODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
+        // }
 
         private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
         {
-            return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
+            //return sceneLODInfo.CurrentLOD[0].LodKey.Level == 0;
+            return true;
         }
     }
 }

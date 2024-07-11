@@ -21,7 +21,7 @@ namespace DCL.LOD
         public byte CurrentLODLevel;
         public LODAsset.LOD_STATE CurrentLODState;
         public DebugCube[] DebugCubes;
-        
+
 
         //This is a sync method, so we can use a shared list
         private static readonly List<Material> TEMP_MATERIALS = new (3);
@@ -60,28 +60,28 @@ namespace DCL.LOD
             if (debugAsset.LodState == LODAsset.LOD_STATE.FAILED)
                 return LodSettingsAsset.LODDebugColors[CurrentLODLevel];
 
-            //Still in loading state    
+            //Still in loading state
             return Color.magenta;
         }
 
         private void UpdateState(ref SceneLODInfoDebugContent debugContent, LODAsset lodAsset)
         {
-            if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
-            {
-                var renderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
-                var originalColorsList = new List<Color>();
-                for (int i = 0; i < renderers.Length; i++)
-                {
-                    renderers[i].SafeGetMaterials(TEMP_MATERIALS);
-                    foreach (var t in TEMP_MATERIALS)
-                        originalColorsList.Add(t.color);
-                }
-
-                debugContent.OriginalColors = originalColorsList.ToArray();
-                debugContent.Renderers = renderers;
-            }
-
-            debugContent.LodState = lodAsset.State;
+            // if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
+            // {
+            //     var renderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
+            //     var originalColorsList = new List<Color>();
+            //     for (int i = 0; i < renderers.Length; i++)
+            //     {
+            //         renderers[i].SafeGetMaterials(TEMP_MATERIALS);
+            //         foreach (var t in TEMP_MATERIALS)
+            //             originalColorsList.Add(t.color);
+            //     }
+            //
+            //     debugContent.OriginalColors = originalColorsList.ToArray();
+            //     debugContent.Renderers = renderers;
+            // }
+            //
+            // debugContent.LodState = lodAsset.State;
         }
 
         public void Update(LODAsset lodAsset)
@@ -94,7 +94,7 @@ namespace DCL.LOD
                 sceneLODInfoDebugContents = CreateSceneLODInfoDebugContents();
                 SceneLODInfoDebugContents.Add(lodAsset.LodKey.Level, sceneLODInfoDebugContents);
             }
-            
+
             ClearPreviousContent();
             UpdateContent(sceneLODInfoDebugContents, lodAsset);
         }
@@ -134,7 +134,7 @@ namespace DCL.LOD
                 debugCubes[i] = Object.Instantiate(lodSettingsAsset.DebugCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, missingSceneParent);
                 debugCubes[i].gameObject.SetActive(false);
             }
-            
+
             return new SceneLODInfoDebug
             {
                 SceneLODInfoDebugContents = new Dictionary<byte, SceneLODInfoDebugContent>(), CurrentLODLevel = byte.MaxValue, DebugCubes = debugCubes, LodSettingsAsset = lodSettingsAsset

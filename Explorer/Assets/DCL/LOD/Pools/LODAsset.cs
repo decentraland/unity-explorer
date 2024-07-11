@@ -1,31 +1,27 @@
+using Arch.Core;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
 using System;
-using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using DCL.Optimization.Pools;
-using ECS.Unity.SceneBoundsChecker;
-using JetBrains.Annotations;
+using ECS.StreamableLoading.Common;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
 using Utility;
-using Object = UnityEngine.Object;
 
 namespace DCL.LOD
 {
     public class LODAsset : IDisposable
     {
+        public byte currentLODLevel;
         public LOD_STATE State;
-        public readonly LODKey LodKey;
+        public readonly LODKey LodKey; // Hashmap would probably be better
+        public AssetPromise<AssetBundleData, GetAssetBundleIntention> LODPromise;
 
-        public GameObject Root;
-        public AsyncInstantiateOperation<GameObject> AsyncInstantiation;
+        public UnityEngine.LOD lod;
         public  TextureArraySlot?[] Slots;
-        
+
         private readonly ILODAssetsPool Pool;
         internal AssetBundleData AssetBundleReference;
-
-        public bool setup;
 
         public enum LOD_STATE
         {
@@ -35,37 +31,23 @@ namespace DCL.LOD
             WAITING_INSTANTIATION,
         }
 
-
-        public LODAsset(LODKey lodKey, ILODAssetsPool pool, AssetBundleData assetBundleData,
-            AsyncInstantiateOperation<GameObject> asyncInstantiation)
+        public LODAsset(LODKey lodKey,
+                        ILODAssetsPool pool)
         {
             LodKey = lodKey;
             Pool = pool;
             Slots = Array.Empty<TextureArraySlot?>();
-            AssetBundleReference = assetBundleData;
-            AsyncInstantiation = asyncInstantiation;
-
-            Root = null;
+            AssetBundleReference = null;
 
             State = LOD_STATE.WAITING_INSTANTIATION;
-            
+
             ProfilingCounters.LODAssetAmount.Value++;
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }
 
-        public LODAsset(LODKey lodKey, ILODAssetsPool pool)
+        public void SetAssetBundleReference(AssetBundleData assetBundleData)
         {
-            State = LOD_STATE.FAILED;
-            LodKey = lodKey;
-            Pool = pool;
-
-            Slots = Array.Empty<TextureArraySlot?>();
-            Root = null;
-            AsyncInstantiation = null;
-            AssetBundleReference = null;
-
-            ProfilingCounters.LODAssetAmount.Value++;
-            ProfilingCounters.Failling_LOD_Amount.Value++;
+            AssetBundleReference = assetBundleData;
         }
 
         public void Dispose()
@@ -78,10 +60,8 @@ namespace DCL.LOD
             for (int i = 0; i < Slots.Length; i++)
                 Slots[i]?.FreeSlot();
 
-
-            AsyncInstantiation?.Cancel();
-            if (State == LOD_STATE.SUCCESS)
-                UnityObjectUtils.SafeDestroy(Root);
+            // if (State == LOD_STATE.SUCCESS)
+            //     UnityObjectUtils.SafeDestroy(Root);
 
             ProfilingCounters.LODAssetAmount.Value--;
             ProfilingCounters.LODInstantiatedInCache.Value--;
@@ -94,7 +74,6 @@ namespace DCL.LOD
 
             if (State == LOD_STATE.SUCCESS)
             {
-                //Root.SetActive(true);
                 ProfilingCounters.LODInstantiatedInCache.Value--;
                 ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
             }
@@ -104,26 +83,29 @@ namespace DCL.LOD
         {
             if (State == LOD_STATE.FAILED)
                 return;
-            
+
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting) return;
 
             if (State == LOD_STATE.SUCCESS)
             {
-                //Root.SetActive(false);
                 ProfilingCounters.LODInstantiatedInCache.Value++;
                 ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value--;
             }
         }
 
-        public void Release()
+        public void Release(World world)
         {
+            LODPromise.ForgetLoading(world);
             Pool.Release(LodKey, this);
         }
 
         public void FinalizeInstantiation(GameObject newRoot, TextureArraySlot?[] slots)
         {
-            Root = newRoot;
+            Renderer[] nextLOD = newRoot.GetComponentsInChildren<Renderer>();
+            float screenRelativeTransitionHeight = 0.05f;
+            lod = new UnityEngine.LOD(screenRelativeTransitionHeight, nextLOD);
+
             Slots = slots;
             State = LOD_STATE.SUCCESS;
         }
