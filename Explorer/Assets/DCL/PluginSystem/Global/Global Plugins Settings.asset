@@ -38,6 +38,7 @@ MonoBehaviour:
   - rid: 4132209997426458630
   - rid: 758312859982102531
   - rid: 2306906494740202818
+  - rid: 2872862511896199171
   references:
     version: 2
     RefIds:
@@ -275,6 +276,11 @@ MonoBehaviour:
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
+        AnalyticsConfigRef:
+          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <ReportHandlingSettingsDevelopment>k__BackingField:
           m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
           m_SubObjectName: 
@@ -285,8 +291,31 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        AnalyticsConfigRef:
-          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
+    - rid: 2872862511896199171
+      type: {class: PassportPlugin/PassportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        PassportPrefab:
+          m_AssetGUID: bf1104b23d6ed8f4ab84e9a0da93e10d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityInfoPanelBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
