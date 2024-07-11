@@ -46,7 +46,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupVisualElement(ref uiTransformComponent.Transform, ref sdkModel);
+            UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
             sdkModel.IsDirty = false;
         }
 
