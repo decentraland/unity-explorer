@@ -6,7 +6,9 @@ namespace DCL.Profiling
 
         ulong CurrentFrameTimeValueInNS { get; }
 
-        long CurrentGPUFrameTimeValueInNS { get; }
+        long LastFrameTimeValueInNS { get; }
+
+        long LastGPUFrameTimeValueInNS { get; }
 
         double AverageFrameTimeValueInNS { get; }
         int AverageFameTimeSamples { get; }

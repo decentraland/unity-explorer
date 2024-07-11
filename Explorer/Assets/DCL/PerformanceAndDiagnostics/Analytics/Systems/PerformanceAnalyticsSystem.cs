@@ -48,9 +48,9 @@ namespace DCL.Analytics.Systems
             {
                 ["total_used_memory"] = profilingProvider.TotalUsedMemoryInBytes * BYTES_TO_MEGABYTES,
 
-                ["gpu_frame_time"] = profilingProvider.CurrentGPUFrameTimeValueInNS * BYTES_TO_MEGABYTES,
+                ["gpu_frame_time"] = profilingProvider.LastGPUFrameTimeValueInNS * BYTES_TO_MEGABYTES,
 
-                ["current_frame_time"] = profilingProvider.CurrentFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
+                ["current_frame_time"] = profilingProvider.LastFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
                 ["min_frame_time"] = profilingProvider.MinFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
 
                 ["average_frame_time"] = profilingProvider.AverageFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,

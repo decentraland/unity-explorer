@@ -18,9 +18,9 @@ namespace DCL.Profiling
         private readonly ProfilerRecorder gpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", 15);
 
         public ulong TotalUsedMemoryInBytes => (ulong)totalUsedMemoryRecorder.CurrentValue;
-
-        public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.LastValue;
-        public long CurrentGPUFrameTimeValueInNS => gpuRecorder.LastValue;
+        public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.CurrentValue;
+        public long LastFrameTimeValueInNS => mainThreadTimeRecorder.LastValue;
+        public long LastGPUFrameTimeValueInNS => gpuRecorder.LastValue;
 
         public double AverageFrameTimeValueInNS => GetRecorderAverage(mainThreadTimeRecorder);
         public int AverageFameTimeSamples => mainThreadTimeRecorder.Capacity;
