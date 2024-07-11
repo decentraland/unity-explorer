@@ -1,13 +1,13 @@
+using System;
 using DCL.ECSComponents;
 using ECS.StreamableLoading.Common;
+using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.GLTFContainer.Asset.Components;
 
 namespace ECS.Unity.GLTFContainer.Components
 {
     public struct GltfContainerComponent
     {
-        private const string FAULTY_HASH = "FAULTY_HASH";
-        
         public string Hash => Promise.LoadingIntention.Hash;
         public string Name => Promise.LoadingIntention.Name;
 
@@ -26,20 +26,19 @@ namespace ECS.Unity.GLTFContainer.Components
             State = LoadingState.Unknown;
         }
 
-        public static GltfContainerComponent CreateFaulty(string name)
+        public static GltfContainerComponent CreateFaulty(Exception exception)
         {
             GltfContainerComponent component = new GltfContainerComponent();
-            component.SetFaulty(name);
+            component.SetFaulty(exception);
             return component;
         }
-            
 
-        public void SetFaulty(string name)
+        public void SetFaulty(Exception exception)
         {
             State = LoadingState.FinishedWithError;
             Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.CreateFinalized(
-                new GetGltfContainerAssetIntention(name, FAULTY_HASH, null),
-                null);
+                default,
+                new StreamableLoadingResult<GltfContainerAsset>(exception));
         }
 
     }

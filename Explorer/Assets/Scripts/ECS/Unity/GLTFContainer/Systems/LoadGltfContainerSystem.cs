@@ -47,9 +47,10 @@ namespace ECS.Unity.GLTFContainer.Systems
             GltfContainerComponent component;
             if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
             {
-                component = GltfContainerComponent.CreateFaulty(sdkComponent.Src);
-                var exception = new ArgumentException($"Asset Bundle {sdkComponent.Src} not found in the content");
-                World.Add(entity, component, new StreamableLoadingResult<GltfContainerAsset>(CreateException(exception)));
+                var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
+                ReportHub.LogException(exception, GetReportCategory());
+                component = GltfContainerComponent.CreateFaulty(exception);
+                World.Add(entity, component);
             }
             else
             {
@@ -75,9 +76,9 @@ namespace ECS.Unity.GLTFContainer.Systems
                 case LoadingState.Unknown:
                     if (!sceneData.TryGetHash(sdkComponent.Src, out string hash))
                     {
-                        var exception = new ArgumentException($"Asset Bundle {sdkComponent.Src} not found in the content");
-                        component.SetFaulty(sdkComponent.Src);
-                        World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateException(exception)));
+                        var exception = new ArgumentException($"GLTF source {sdkComponent.Src} not found in the content");
+                        ReportHub.LogException(exception, GetReportCategory());
+                        component.SetFaulty(exception);
                     }
                     else
                     {
