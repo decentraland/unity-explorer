@@ -44,8 +44,6 @@ namespace ECS.Unity.Transforms.Systems
             {
                 SetNewChild(ref World.Get<TransformComponent>(childEntity.Entity),
                     childEntity, 0, sceneRoot, SpecialEntitiesID.SCENE_ROOT_ENTITY);
-
-                World.Add(childEntity.Entity, new DeleteEntityIntention());
             }
 
             transformComponentToBeDeleted.Children.Clear();
