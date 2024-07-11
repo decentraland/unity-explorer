@@ -4,17 +4,17 @@ using DCL.Browser;
 using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace Global.Dynamic
 {
-    public class BootstrapContainer : DCLContainer<AnalyticsSettings>
+    public class BootstrapContainer : DCLGlobalContainer<BootstrapSettings>
     {
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
         private DiagnosticsContainer? diagnosticsContainer;
@@ -48,7 +48,7 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
             };
 
-            await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, AnalyticsSettings>(settingsContainer, ct, async container =>
+            await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
@@ -62,9 +62,9 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, BootstrapContainer container, AnalyticsSettings analyticsSettings, CancellationToken ct)
+        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
         {
-            AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(analyticsSettings.AnalyticsConfigRef, ct)).Value;
+            AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
             var coreBootstrap = new Bootstrap(debugSettings.Get())
@@ -116,9 +116,9 @@ namespace Global.Dynamic
                 Application.isEditor || !Debug.isDebugBuild ? releaseUrl : devUrl;
         }
 
-        public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, AnalyticsSettings settings, CancellationToken ct)
+        public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, BootstrapSettings settings, CancellationToken ct)
         {
-            AnalyticsSettings.ReportHandlingSettingsRef reportHandlingSettings =
+            BootstrapSettings.ReportHandlingSettingsRef reportHandlingSettings =
 #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
                 settings.ReportHandlingSettingsDevelopment;
 #else
@@ -126,6 +126,30 @@ namespace Global.Dynamic
 #endif
 
             return await assetsProvisioner.ProvideMainAssetAsync(reportHandlingSettings, ct, nameof(ReportHandlingSettings));
+        }
+    }
+
+    [Serializable]
+    public class BootstrapSettings : IDCLPluginSettings
+    {
+        [field: SerializeField]
+        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
+
+        [field: SerializeField]
+        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
+
+        [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
+
+        [Serializable]
+        public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
+        {
+            public ReportHandlingSettingsRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class AnalyticsConfigurationRef : AssetReferenceT<AnalyticsConfiguration>
+        {
+            public AnalyticsConfigurationRef(string guid) : base(guid) { }
         }
     }
 }

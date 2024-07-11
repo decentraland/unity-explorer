@@ -106,7 +106,7 @@ namespace Global.Static
                 var assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
 
                 var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettingsAsync(assetProvisioner,
-                    globalPluginSettingsContainer.GetSettings<AnalyticsSettings>(), ct);
+                    globalPluginSettingsContainer.GetSettings<BootstrapSettings>(), ct);
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(
                     assetProvisioner,

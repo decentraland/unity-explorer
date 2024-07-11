@@ -43,28 +43,4 @@ namespace DCL.PluginSystem.Global
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;
     }
-
-    [Serializable]
-    public class AnalyticsSettings : IDCLPluginSettings
-    {
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
-
-        [field: SerializeField]
-        public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
-
-        [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
-
-        [Serializable]
-        public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
-        {
-            public ReportHandlingSettingsRef(string guid) : base(guid) { }
-        }
-
-        [Serializable]
-        public class AnalyticsConfigurationRef : AssetReferenceT<AnalyticsConfiguration>
-        {
-            public AnalyticsConfigurationRef(string guid) : base(guid) { }
-        }
-    }
 }
