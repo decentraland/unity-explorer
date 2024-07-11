@@ -22,7 +22,6 @@ MonoBehaviour:
   - rid: 1501337502808539138
   - rid: 2152807656697888768
   - rid: 1095376790733193218
-  - rid: 8593314843508867075
   - rid: 4107643854440628226
   - rid: 3022170012058910723
   - rid: 1841402216112979969
@@ -38,7 +37,7 @@ MonoBehaviour:
   - rid: 6697045322133929986
   - rid: 4132209997426458630
   - rid: 758312859982102531
-  - rid: 2872862511896199168
+  - rid: 2306906494740202818
   references:
     version: 2
     RefIds:
@@ -273,31 +272,21 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 2872862511896199168
-      type: {class: PassportPlugin/PassportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+    - rid: 2306906494740202818
+      type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
-        PassportPrefab:
-          m_AssetGUID: bf1104b23d6ed8f4ab84e9a0da93e10d
+        <ReportHandlingSettingsDevelopment>k__BackingField:
+          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <RarityColorMappings>k__BackingField:
-          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+        <ReportHandlingSettingsProduction>k__BackingField:
+          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <CategoryIconsMapping>k__BackingField:
-          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <RarityBackgroundsMapping>k__BackingField:
-          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <RarityInfoPanelBackgroundsMapping>k__BackingField:
-          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+        AnalyticsConfigRef:
+          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -515,16 +504,6 @@ MonoBehaviour:
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ReportHandlingSettingsDevelopment>k__BackingField:
-          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <ReportHandlingSettingsProduction>k__BackingField:
-          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
         <PartitionSettings>k__BackingField:
           m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
           m_SubObjectName: 
@@ -583,9 +562,3 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 8593314843508867075
-      type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
-        <MaxSizeOfNftForDownload>k__BackingField:
-          maxSizeInBytes: 2097152

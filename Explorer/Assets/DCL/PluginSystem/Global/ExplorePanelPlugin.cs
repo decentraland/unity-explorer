@@ -174,8 +174,7 @@ namespace DCL.PluginSystem.Global
                 explorePanelOpener = new PersistentExplorePanelOpenerController(
                     PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager);
 
-                mvcManager.RegisterController(explorePanelOpener
-                );
+                mvcManager.RegisterController(explorePanelOpener);
 
                 inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
             };
