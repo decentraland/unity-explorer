@@ -37,6 +37,7 @@ MonoBehaviour:
   - rid: 6697045322133929986
   - rid: 4132209997426458630
   - rid: 758312859982102531
+  - rid: 2306906494740202818
   references:
     version: 2
     RefIds:
@@ -271,6 +272,24 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 2306906494740202818
+      type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data:
+        <ReportHandlingSettingsDevelopment>k__BackingField:
+          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <ReportHandlingSettingsProduction>k__BackingField:
+          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        AnalyticsConfigRef:
+          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -485,16 +504,6 @@ MonoBehaviour:
     - rid: 6784895264912310272
       type: {class: StaticSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ReportHandlingSettingsDevelopment>k__BackingField:
-          m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <ReportHandlingSettingsProduction>k__BackingField:
-          m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
         <PartitionSettings>k__BackingField:
           m_AssetGUID: 8d266ff458e71f2439f9c30bd7e68d4a
           m_SubObjectName: 

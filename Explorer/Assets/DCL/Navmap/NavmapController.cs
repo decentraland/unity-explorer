@@ -39,14 +39,15 @@ namespace DCL.Navmap
         private CancellationTokenSource animationCts;
         private IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
-        private readonly FloatingPanelController floatingPanelController;
         private readonly NavmapFilterController filterController;
         private readonly NavmapSearchBarController searchBarController;
         private readonly RectTransform rectTransform;
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
-        private NavmapLocationController navmapLocationController;
         private readonly IRealmData realmData;
+
+        private NavmapLocationController navmapLocationController;
+        public FloatingPanelController FloatingPanelController { get; }
 
         private Vector2 lastParcelHovered;
         private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
@@ -74,10 +75,10 @@ namespace DCL.Navmap
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, dclInput);
-            floatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
-            floatingPanelController.OnJumpIn += () => searchBarController.ResetSearch();
+            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
+            FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             searchBarController.OnResultClicked += OnResultClicked;
-            searchBarController.OnSearchTextChanged += floatingPanelController.HidePanel;
+            searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
 
@@ -159,13 +160,13 @@ namespace DCL.Navmap
         private void OnResultClicked(string coordinates)
         {
             VectorUtilities.TryParseVector2Int(coordinates, out Vector2Int result);
-            floatingPanelController.HandlePanelVisibility(result, null, true);
+            FloatingPanelController.HandlePanelVisibility(result, null, true);
         }
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
-            floatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker ,false);
+            FloatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker ,false);
         }
 
         public void Activate()
@@ -241,7 +242,7 @@ namespace DCL.Navmap
             this.navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
             animationCts?.Dispose();
             zoomController?.Dispose();
-            floatingPanelController?.Dispose();
+            FloatingPanelController?.Dispose();
             searchBarController?.Dispose();
         }
     }

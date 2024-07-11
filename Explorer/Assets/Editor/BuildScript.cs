@@ -1,7 +1,5 @@
-﻿using JetBrains.Annotations;
-using NBitcoin;
-using NUnit;
-using Sentry.Unity.Editor.ConfigurationWindow;
+﻿using DCL.PerformanceAndDiagnostics.Analytics;
+using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +22,7 @@ namespace Editor
             //Unity suggestion: 1793168
             //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
             EditorApplication.ExecuteMenuItem("File/Save Project");
-            
+
             // Gather values from args
             Dictionary<string, string> options = GetValidatedOptions();
 
@@ -209,9 +207,42 @@ namespace Editor
                 buildPlayerOptions.options |= BuildOptions.EnableDeepProfilingSupport;
             }
 
+            if (options.TryGetValue("segmentWriteKey", out string segmentWriteKey))
+            {
+                Console.WriteLine("Setting SEGMENT_WRITE_KEY for the Analytics...");
+                WriteSegmentKeyToAnalyticsConfig(segmentWriteKey);
+            }
+
             BuildSummary buildSummary = BuildPipeline.BuildPlayer(buildPlayerOptions).summary;
             ReportSummary(buildSummary);
             ExitWithResult(buildSummary.result);
+        }
+
+        private static void WriteSegmentKeyToAnalyticsConfig(string segmentWriteKey)
+        {
+            string[] guids = AssetDatabase.FindAssets($"t:{nameof(AnalyticsConfiguration)}");
+
+            switch (guids.Length)
+            {
+                case 0:
+                    Debug.LogError($"{nameof(AnalyticsConfiguration)} asset not found!");
+                    return;
+                case > 1:
+                    Debug.LogWarning($"Multiple {nameof(AnalyticsConfiguration)} assets found. Using the first one.");
+                    break;
+            }
+
+            string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(assetPath);
+
+            if (config == null)
+            {
+                Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found , when trying to load it from AssetDatabase. Creating SO config file via {nameof(ScriptableObject.CreateInstance)}");
+                config = ScriptableObject.CreateInstance<AnalyticsConfiguration>();
+            }
+
+            config.WriteKey = segmentWriteKey;
+            AssetDatabase.SaveAssetIfDirty(config);
         }
 
         private static void ReportSummary(BuildSummary summary)
