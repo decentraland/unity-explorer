@@ -22,7 +22,6 @@ MonoBehaviour:
   - rid: 1501337502808539138
   - rid: 2152807656697888768
   - rid: 1095376790733193218
-  - rid: 8593314843508867075
   - rid: 4107643854440628226
   - rid: 3022170012058910723
   - rid: 1841402216112979969
@@ -563,9 +562,3 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 8593314843508867075
-      type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
-        <MaxSizeOfNftForDownload>k__BackingField:
-          maxSizeInBytes: 2097152
