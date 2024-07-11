@@ -340,7 +340,7 @@
     },
     "com.unity.render-pipelines.universal-config": {
       "version": "14.0.9",
-      "depth": 2,
+      "depth": 1,
       "source": "builtin",
       "dependencies": {
         "com.unity.render-pipelines.core": "14.0.9"

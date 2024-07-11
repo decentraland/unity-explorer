@@ -17,7 +17,6 @@ reviewGroups:
     - fcolarich
   qa:
     - Ludmilafantaniella
-    - LucasLioyQA
     - anicalbano
 
 filterLabels:
