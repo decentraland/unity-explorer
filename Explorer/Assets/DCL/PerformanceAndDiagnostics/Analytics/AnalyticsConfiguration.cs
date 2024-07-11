@@ -34,8 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         [field: SerializeField]
         public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
 
-        [SerializeField]
-        internal List<AnalyticsGroup> groups;
+        [SerializeField] public List<AnalyticsGroup> groups;
 
         private string segmentWriteKey;
         private Configuration segmentConfiguration;
