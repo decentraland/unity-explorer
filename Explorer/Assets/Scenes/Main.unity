@@ -490,11 +490,11 @@ MonoBehaviour:
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
   debugSettings:
-    showSplash: 0
-    showAuthentication: 0
-    showLoading: 0
-    enableLandscape: 0
-    enableLOD: 0
+    showSplash: 1
+    showAuthentication: 1
+    showLoading: 1
+    enableLandscape: 1
+    enableLOD: 1
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
