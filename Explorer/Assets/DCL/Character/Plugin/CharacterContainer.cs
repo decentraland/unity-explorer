@@ -121,7 +121,7 @@ namespace DCL.Character.Plugin
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
-                    sharedDependencies.ScenePartition, bucketPropagationLimit);
+                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Camera);
             }
         }
 
