@@ -74,13 +74,7 @@ namespace Global.Dynamic
 
             if (container.enableAnalytics)
             {
-                IAnalyticsService service = analyticsConfig.Mode switch
-                                            {
-                                                AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig),
-                                                AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
-                                                AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
-                                                _ => throw new ArgumentOutOfRangeException(),
-                                            };
+                IAnalyticsService service = CreateAnalyticsService(analyticsConfig);
 
                 var analyticsController = new AnalyticsController(service, analyticsConfig);
 
@@ -88,6 +82,21 @@ namespace Global.Dynamic
             }
 
             return (coreBootstrap, IAnalyticsController.Null);
+        }
+
+        private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig)
+        {
+            // force segment in release
+            if (!Debug.isDebugBuild)
+                return new SegmentAnalyticsService(analyticsConfig);
+
+            return analyticsConfig.Mode switch
+                   {
+                       AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig),
+                       AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
+                       AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
+                       _ => throw new ArgumentOutOfRangeException(),
+                   };
         }
 
         private static (LogWeb3IdentityCache identityCache, DappWeb3Authenticator web3VerifiedAuthenticator, ProxyVerifiedWeb3Authenticator web3Authenticator)
@@ -132,13 +141,12 @@ namespace Global.Dynamic
     [Serializable]
     public class BootstrapSettings : IDCLPluginSettings
     {
+        [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
         [field: SerializeField]
         public ReportHandlingSettingsRef ReportHandlingSettingsDevelopment { get; private set; }
 
         [field: SerializeField]
         public ReportHandlingSettingsRef ReportHandlingSettingsProduction { get; private set; }
-
-        [field: SerializeField] public AnalyticsConfigurationRef AnalyticsConfigRef;
 
         [Serializable]
         public class ReportHandlingSettingsRef : AssetReferenceT<ReportsHandlingSettings>
