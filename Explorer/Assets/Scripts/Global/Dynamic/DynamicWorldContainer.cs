@@ -67,7 +67,7 @@ using Object = UnityEngine.Object;
 
 namespace Global.Dynamic
 {
-    public class DynamicWorldContainer : IDCLPlugin<DynamicWorldSettings>
+    public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
         private static readonly URLDomain ASSET_BUNDLES_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/");
 
@@ -98,16 +98,13 @@ namespace Global.Dynamic
 
         public IRoomHub RoomHub { get; private set; } = null!;
 
-        public void Dispose()
+        public override void Dispose()
         {
             MvcManager.Dispose();
             ChatMessagesBus.Dispose();
             ProfileBroadcast.Dispose();
             MessagePipesHub.Dispose();
         }
-
-        public UniTask InitializeAsync(DynamicWorldSettings settings, CancellationToken ct) =>
-            UniTask.CompletedTask;
 
         private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
         {
