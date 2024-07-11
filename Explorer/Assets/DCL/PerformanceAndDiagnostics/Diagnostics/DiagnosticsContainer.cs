@@ -34,7 +34,7 @@ namespace DCL.Diagnostics
 
             var logger = new ReportHubLogger(handlers);
 
-            ILogHandler defaultLogHandler1 = Debug.unityLogger.logHandler;
+            ILogHandler defaultLogHandler = Debug.unityLogger.logHandler;
 
             // Override Default Unity Logger
             Debug.unityLogger.logHandler = logger;
@@ -42,7 +42,7 @@ namespace DCL.Diagnostics
             // Enable Hub static accessors
             ReportHub.Instance = logger;
 
-            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler1 };
+            return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
         }
     }
 }
