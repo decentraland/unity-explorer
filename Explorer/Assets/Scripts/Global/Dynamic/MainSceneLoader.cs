@@ -3,13 +3,6 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
-using DCL.EmotesWheel;
-using DCL.ExplorePanel;
-using DCL.FeatureFlags;
-using DCL.Minimap;
-using DCL.Multiplayer.Connections.RoomHubs;
-using DCL.Notification.NewNotification;
-using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
@@ -156,47 +149,6 @@ namespace Global.Dynamic
                 // unhandled exception
                 GameReports.PrintIsDead();
                 throw;
-            }
-        }
-
-        private void SetupInitialConfig()
-        {
-            startingRealm = launchSettings.GetStartingRealm();
-            startingParcel = launchSettings.TargetScene;
-        }
-
-        private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
-        {
-            // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
-            mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct)
-                .Forget();
-            mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
-        }
-
-        private async UniTask WaitUntilSplashAnimationEndsAsync(CancellationToken ct)
-        {
-            await UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
-                cancellationToken: ct);
-        }
-
-        private async UniTask ChangeRealmAsync(CancellationToken ct)
-        {
-            IRealmController realmController = dynamicWorldContainer!.RealmController;
-            await realmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
-        }
-
-        private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
-        {
-            try
-            {
-                await staticContainer!.FeatureFlagsProvider.InitializeAsync(identityCache!.Identity?.Address, ct);
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
             }
         }
 
