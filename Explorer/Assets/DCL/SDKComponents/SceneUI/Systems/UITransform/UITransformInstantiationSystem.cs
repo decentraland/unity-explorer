@@ -42,7 +42,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
         {
             UITransformComponent newTransform = transformsPool.Get();
 
-            newTransform.Initialize(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
+            newTransform.InitializeAsChild(COMPONENT_NAME, sdkEntity, sdkModel.GetRightOfEntity());
 
             canvas.rootVisualElement.Add(newTransform.Transform);
 

@@ -97,9 +97,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [Query]
         private void LoadUIBackgroundTexture(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent)
         {
-            if (uiBackgroundComponent.Status is not (LifeCycle.LoadingInProgress or LifeCycle.LoadingNotStarted))
-                return;
-
             if (uiBackgroundComponent.TexturePromise == null ||
                 uiBackgroundComponent.TexturePromise.Value.IsConsumed)
                 return;
