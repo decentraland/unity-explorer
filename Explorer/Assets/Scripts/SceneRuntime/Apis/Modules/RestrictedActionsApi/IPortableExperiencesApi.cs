@@ -6,7 +6,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
     {
         UniTask<object> SpawnAsync(string pid, string ens);
 
-        bool KillAsync(string pid);
+        bool KillAsync(string ens);
 
         bool ExitAsync(string predefinedEmote);
 

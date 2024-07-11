@@ -1,36 +1,29 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Ipfs;
-using DCL.Optimization.Pools;
-using DCL.ParcelsService;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
-using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Utilities.Extensions;
-using Unity.Mathematics;
+using SceneRunner.Scene;
+using System.Linq;
 using GetSceneDefinition = ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinition;
 
 namespace Global.Dynamic
 {
     public class PortableExperiencesController : IPortableExperiencesController
     {
-        // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
-        // TODO construct player/camera entities again and allocate more memory. Evaluate
-        // Realms + Promises
         private static readonly QueryDescription GET_SCENE_DEFINITION = new QueryDescription().WithAll<GetSceneDefinition>();
         private static readonly QueryDescription SCENE_DEFINITION_COMPONENT = new QueryDescription().WithAll<SceneDefinitionComponent>();
 
-        private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
@@ -43,7 +36,6 @@ namespace Global.Dynamic
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
-
             set => globalWorld = value;
         }
 
@@ -57,13 +49,34 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
         }
 
-        public async UniTask CreatePortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct)
+        public async UniTask CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct)
         {
             World world = globalWorld!.EcsWorld;
 
+            //According to kernel implementation, the id value is used as an urn
+            //https://github.com/decentraland/unity-renderer/blob/b3b170e404ec43bb8bc08ec1f6072812005ebad3/browser-interface/packages/shared/apis/host/PortableExperiences.ts#L28
+            //And is validated first. As it has no ipfs config, it uses the one f
+
+            string worldUrl = string.Empty;
+
+            if (!string.IsNullOrEmpty(urn))
+            {
+                //TODO: Enable loading PX from urns using current scene realm data
+                //worldUrl = IpfsHelper.ParseUrn(urn).BaseUrl.Value;
+            }
+
+            if (EnsUtils.ValidateEns(ens))
+            {
+                worldUrl = EnsUtils.ConvertEnsToWorldUrl(ens);
+            }
+
+            if (!worldUrl.IsValidUrl()) return; //Return with error to the JS side "('Invalid Spawn params. Provide a URN or an ENS name.')"
+
+            URLDomain portableExperiencePath = URLDomain.FromString(worldUrl);
+            URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
+
             await UniTask.SwitchToMainThread();
 
-            URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
             try
@@ -74,7 +87,7 @@ namespace Global.Dynamic
                 if (result.configurations.scenesUrn.Count == 0)
                 {
                     //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
-                    return;
+                    return; //TODO: return error "Scene not available"
                 }
 
                 realmData.Reconfigure(
@@ -84,26 +97,50 @@ namespace Global.Dynamic
                     result.comms?.adapter ?? string.Empty
                 );
 
-                PortableExperienceEntities.Add(portableExperiencePath.Value, world.Create(new PortableExperienceComponent(realmData)));
+                var parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
+                PortableExperienceEntities.Add(ens, world.Create(new PortableExperienceComponent(realmData, (parentScene != null? parentScene.Info.Name : "main"))));
             }
             catch (Exception e)
             {
                 //TODO: Add proper exception handling
+                //Return with error to the JS side if it fails "Error fetching scene"
                 Console.WriteLine(e);
                 throw;
             }
         }
 
-        public async UniTask UnloadPortableExperienceAsync(string portableExperiencePath, CancellationToken ct)
+        public bool CanKillPortableExperience(string ens)
+        {
+            if (globalWorld == null) return false;
+
+            var currentSceneFacade = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
+            if (currentSceneFacade == null) return false;
+
+            World world = globalWorld.EcsWorld;
+
+            if (PortableExperienceEntities.TryGetValue(ens, out var portableExperienceEntity))
+            {
+                var portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
+                return portableExperienceComponent.ParentSceneId == currentSceneFacade.Info.Name;
+            }
+
+            return false;
+        }
+
+
+        public async UniTask UnloadPortableExperienceAsync(string ens, CancellationToken ct)
         {
             if (globalWorld == null) return;
+
+            if (!EnsUtils.ValidateEns(ens)) return; //Return error to JS side
+            //TODO: We need to be able to kill PX using only the urn as well, it will mean some changes to this code.
 
             World world = globalWorld.EcsWorld;
 
             await UniTask.SwitchToMainThread();
 
             //We need to dispose the scene that the PX has created.
-             if (PortableExperienceEntities.TryGetValue(portableExperiencePath, out var portableExperienceEntity))
+             if (PortableExperienceEntities.TryGetValue(ens, out var portableExperienceEntity))
             {
                 var portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
 
@@ -124,7 +161,7 @@ namespace Global.Dynamic
 
                 // Clear the world from everything connected to the current PX
                 //for this we will need to go over all these entities in the query
-                //and check if their entity Id coincides with the scene's entity Id and if so, delete them.
+                //and check if their IpfsPath.EntityId coincides with the scene's entityId and if so, delete them.
                 entitiesToDestroy.Clear();
 
                 if (!string.IsNullOrEmpty(sceneEntityId))
@@ -138,7 +175,7 @@ namespace Global.Dynamic
                 }
 
                 world.Destroy(portableExperienceEntity);
-                PortableExperienceEntities.Remove(portableExperiencePath);
+                PortableExperienceEntities.Remove(ens);
 
                 GC.Collect();
             }

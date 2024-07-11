@@ -7,9 +7,12 @@ namespace ECS
         public IIpfsRealm Ipfs => RealmData.Ipfs;
         public IRealmData RealmData { get; }
 
-        public PortableExperienceComponent(IRealmData realmData)
+        public string ParentSceneId { get; }
+
+        public PortableExperienceComponent(IRealmData realmData, string parentSceneId)
         {
             this.RealmData = realmData;
+            this.ParentSceneId = parentSceneId;
         }
     }
 }

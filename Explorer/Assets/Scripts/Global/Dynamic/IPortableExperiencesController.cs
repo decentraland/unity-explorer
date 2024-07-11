@@ -12,11 +12,11 @@ namespace Global.Dynamic
         GlobalWorld GlobalWorld { get; set; }
         Dictionary<string, Entity> PortableExperienceEntities { get; }
 
-        UniTask CreatePortableExperienceAsync(URLDomain portableExperiencePath, CancellationToken ct);
+        UniTask CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct);
 
         /// <summary>
         ///     Gracefully unload the current realm
         /// </summary>
-        UniTask UnloadPortableExperienceAsync(string portableExperiencePath, CancellationToken ct);
+        UniTask UnloadPortableExperienceAsync(string ens, CancellationToken ct);
     }
 }
