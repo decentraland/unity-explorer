@@ -26,7 +26,7 @@ MonoBehaviour:
     - eventName: performance_report
       isEnabled: 1
     - eventName: critical_logs
-      isEnabled: 1
+      isEnabled: 0
   - groupName: Chat
     events:
     - eventName: chat_message_sent

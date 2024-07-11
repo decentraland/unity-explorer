@@ -50,9 +50,8 @@ namespace DCL.Analytics.Systems
 
                 ["gpu_frame_time"] = profilingProvider.LastGPUFrameTimeValueInNS * BYTES_TO_MEGABYTES,
 
-                ["current_frame_time"] = profilingProvider.LastFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
+                ["frame_time"] = profilingProvider.LastFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
                 ["min_frame_time"] = profilingProvider.MinFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
-
                 ["average_frame_time"] = profilingProvider.AverageFrameTimeValueInNS * NANOSECONDS_TO_MILLISECONDS,
                 ["average_frame_time_samples"] = profilingProvider.AverageFameTimeSamples,
 
