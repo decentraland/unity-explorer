@@ -7,11 +7,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using DCL.Web3.Authenticators;
-using DCL.Web3.Identities;
-using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
-using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
@@ -30,20 +25,19 @@ namespace Global.Dynamic
         public bool enableLandscape;
         public bool enableLOD;
 
-
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
         public DebugSettings Get() =>
             Debug.isDebugBuild ? this : Release();
 
         public static DebugSettings Release() =>
-                new()
-                {
-                    showSplash = true,
-                    showAuthentication = true,
-                    showLoading = true,
-                    enableLandscape = true,
-                    enableLOD = true,
-                };
+            new ()
+            {
+                showSplash = true,
+                showAuthentication = true,
+                showLoading = true,
+                enableLandscape = true,
+                enableLOD = true,
+            };
     }
 
     public class MainSceneLoader : MonoBehaviour
@@ -127,7 +121,7 @@ namespace Global.Dynamic
                 }
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, destroyCancellationToken);
+                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
 
                 if (!isLoaded)
                 {
