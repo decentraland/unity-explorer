@@ -10,6 +10,7 @@ using NSubstitute;
 using NUnit.Framework;
 using System.Threading;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Tests
 {
@@ -27,14 +28,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void CreateAssetBundleIntention()
         {
-            var intent = new GetGltfContainerAssetIntention("TEST", new CancellationTokenSource());
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
             system.Update(0);
 
             Assert.That(world.Has<StreamableLoadingResult<GltfContainerAsset>>(e), Is.False);
             Assert.That(world.TryGet(e, out GetAssetBundleIntention result), Is.True);
-            Assert.That(result.Name, Is.EqualTo("TEST"));
+            Assert.That(result.Hash, Is.EqualTo($"TEST_HASH{PlatformUtils.GetPlatform()}"));
         }
 
         [Test]
@@ -42,19 +43,19 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), null);
 
-            cache.TryGet("TEST", out Arg.Any<GltfContainerAsset>())
+            cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>())
                  .Returns(c =>
                   {
                       c[1] = asset;
                       return true;
                   });
 
-            var intent = new GetGltfContainerAssetIntention("TEST", new CancellationTokenSource());
+            var intent = new GetGltfContainerAssetIntention("TEST", "TEST_HASH", new CancellationTokenSource());
             Entity e = world.Create(intent);
 
             system.Update(0);
 
-            cache.Received(1).TryGet("TEST", out Arg.Any<GltfContainerAsset>());
+            cache.Received(1).TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>());
             Assert.That(world.TryGet(e, out StreamableLoadingResult<GltfContainerAsset> result), Is.True);
             Assert.That(result.Succeeded, Is.True);
             Assert.That(result.Asset, Is.EqualTo(asset));
