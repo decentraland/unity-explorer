@@ -28,8 +28,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public readonly Dictionary<Entity, IPinMarker> markers = new ();
 
-        private MapPinPlacementSystem system;
-        private MapPinDeletionSystem mapPinDeletionSystem;
+        private MapPinBridgeSystem system;
         private World world;
 
         private bool isEnabled;
@@ -49,13 +48,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
             world = builder.World;
-            system = MapPinPlacementSystem.InjectToWorld(ref builder);
-            mapPinDeletionSystem = MapPinDeletionSystem.InjectToWorld(ref builder);
+            system = MapPinBridgeSystem.InjectToWorld(ref builder);
 
-            system.SetQueryMethod(SetMapPinPlacementQuery);
-            mapPinDeletionSystem.SetQueryMethod(HandleEntityDestructionQuery);
+            system.SetQueryMethod((ControllerECSBridgeSystem.QueryMethod)SetMapPinPlacementQuery + HandleEntityDestructionQuery);
             system.Activate();
-            mapPinDeletionSystem.Activate();
         }
 
         [Query]
@@ -103,9 +99,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
             }
         }
 
-        [All(typeof(DeleteEntityIntention))]
+        [All(typeof(DeleteEntityIntention), typeof(PBMapPin))]
         [Query]
-        private void HandleEntityDestruction(in Entity e, in PBMapPin pbMapPin)
+        private void HandleEntityDestruction(in Entity e)
         {
             if (markers.TryGetValue(e, out IPinMarker marker))
             {
@@ -172,14 +168,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
     }
 
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class MapPinPlacementSystem : ControllerECSBridgeSystem
+    public partial class MapPinBridgeSystem : ControllerECSBridgeSystem
     {
-        internal MapPinPlacementSystem(World world) : base(world) { }
-    }
-
-    [UpdateInGroup(typeof(PresentationSystemGroup))]
-    public partial class MapPinDeletionSystem : ControllerECSBridgeSystem
-    {
-        internal MapPinDeletionSystem(World world) : base(world) { }
+        internal MapPinBridgeSystem(World world) : base(world) { }
     }
 }
