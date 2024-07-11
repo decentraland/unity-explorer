@@ -60,10 +60,15 @@ namespace DCL.SDKComponents.SceneUI.Classes
 
         public void Dispose()
         {
-            if (canvas != null)
+           if (canvas != null)
                 canvas.generateVisualContent -= OnGenerateVisualContent;
 
             texture2D = null;
+
+            // Reset overriden styles
+            style.backgroundImage = new StyleBackground(StyleKeyword.Null);
+            style.backgroundColor = new StyleColor(StyleKeyword.Null);
+
             // scaleMode = default(DCLImageScaleMode);
             // slices = Vector4.zero;
             // color = new Color(1, 1, 1, 0);

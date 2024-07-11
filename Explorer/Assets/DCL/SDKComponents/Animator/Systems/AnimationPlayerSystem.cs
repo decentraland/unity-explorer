@@ -118,12 +118,12 @@ namespace DCL.SDKComponents.Animator.Systems
                     continue;
                 }
 
-                animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
                 animator.SetBool($"{name}_Enabled", sdkAnimationState.Playing);
                 animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
 
                 if (sdkAnimationState.Playing)
                 {
+                    animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
                     animator.SetTrigger($"{name}_Trigger");
 
                     // Animators don't support speed by state, just a global speed
@@ -134,6 +134,12 @@ namespace DCL.SDKComponents.Animator.Systems
                     // This behaviour could bring unexpected results since it works differently than unity-renderer
                     // TODO: support reset
                     // sdkAnimationState.ShouldReset
+                }
+                else
+                {
+                    // Since animation states are now executed through layers, we need to force to 0 if the state is not playing
+                    // otherwise it overrides the current playing state
+                    animator.SetLayerWeight(layerIndex, 0f);
                 }
             }
         }
