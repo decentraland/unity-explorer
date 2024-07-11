@@ -33,6 +33,7 @@ namespace SceneRunner.Scene
             this.assetBundlesBaseUrl = assetBundlesBaseUrl;
             convertedFiles = new HashSet<string>();
             ignoreConvertedFiles = true;
+            version = "";
         }
 
         /// <summary>
