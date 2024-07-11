@@ -28,7 +28,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             if (initialized) return;
 
             initialized = true;
-            localSceneWebsocketServer = localSceneServer.Replace("http", "ws");
+            localSceneWebsocketServer = localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws");
             Debug.Log("LocalSceneDevelopmentController - trying to connect to: " + localSceneWebsocketServer);
 
             ConnectToServerAsync().Forget();

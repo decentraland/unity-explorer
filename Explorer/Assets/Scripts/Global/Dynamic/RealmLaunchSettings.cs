@@ -18,13 +18,14 @@ namespace Global.Dynamic
         }
 
         [SerializeField] private InitialRealm initialRealm;
-        [SerializeField] private Vector2Int targetScene;
         [SerializeField] private PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] private string customRealm = IRealmNavigator.GOERLI_URL;
         [SerializeField] private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
         [SerializeField] private ContentServer remoteSceneContentServer = ContentServer.World;
-        public Vector2Int TargetScene => targetScene;
+
+        [SerializeField] public Vector2Int targetScene;
+        public string CustomRealm => customRealm;
 
         public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
             ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()
@@ -48,6 +49,12 @@ namespace Global.Dynamic
             }
 
             return new HybridSceneParams();
+        }
+
+        public void SetCustomStartingRealm(string targetRealm)
+        {
+            customRealm = targetRealm;
+            initialRealm = InitialRealm.Custom;
         }
 
         public string GetStartingRealm()

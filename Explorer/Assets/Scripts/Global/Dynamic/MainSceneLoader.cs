@@ -24,6 +24,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -63,9 +64,9 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
-        private string localSceneDevelopmentRealm = null;
         private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
+        private bool localSceneDevelopment = false;
 
         private void Awake()
         {
@@ -275,8 +276,8 @@ namespace Global.Dynamic
 
                 OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
 
-                if (!string.IsNullOrEmpty(localSceneDevelopmentRealm))
-                    dynamicWorldContainer.LocalSceneDevelopmentController.Initialize(localSceneDevelopmentRealm);
+                if (localSceneDevelopment)
+                    dynamicWorldContainer.LocalSceneDevelopmentController.Initialize(launchSettings.CustomRealm);
             }
             catch (OperationCanceledException)
             {
@@ -293,28 +294,41 @@ namespace Global.Dynamic
         private void DetectLocalSceneDevelopment()
         {
             // When started in preview mode (local scene development) a command line argument is used
-            // Example (Windows) -> start decentraland://realm=http://127.0.0.1:8000&otherParam="fesfsefesf"&otherparam2=24324234
-            string[] cmdArgs = System.Environment.GetCommandLineArgs();
-            if (cmdArgs.Length > 1)
-            {
-                string realmParam = cmdArgs[1].Substring(cmdArgs[1].IndexOf("realm=")+6);
-
-                // TODO: support other params when needed -> .Split('&')...
-                int otherParamsSeparatorIndex = realmParam.IndexOf('&');
-                if (otherParamsSeparatorIndex > -1)
-                    realmParam = realmParam.Remove(otherParamsSeparatorIndex, realmParam.Length - otherParamsSeparatorIndex);
-
-                localSceneDevelopmentRealm = realmParam;
-            }
+            // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
 
             // FOR DEBUGGING IN UNITY ONLY
-            // localSceneDevelopmentRealm = "http://127.0.0.1:8000";
+            // string[] cmdArgs = new[] { "", "decentraland://realm=http://127.0.0.1:8000&position=100,100" };
+            string[] cmdArgs = System.Environment.GetCommandLineArgs();
+
+            if (cmdArgs.Length > 1)
+            {
+                var pattern = @"(?<=://|&)[^?&]+=[^&]+";
+                var regex = new Regex(pattern);
+                var matches = regex.Matches(cmdArgs[1]);
+                foreach (Group matchesGroup in matches)
+                {
+                    string param = matchesGroup.Value;
+
+                    if (param.Contains("realm="))
+                    {
+                        string realm = param.Replace("realm=", "");
+                        localSceneDevelopment = realm.Contains("http://127.0.0.1:8000");
+                        launchSettings.SetCustomStartingRealm(realm);
+                    }
+                    else if (param.Contains("position="))
+                    {
+                        param = param.Replace("position=", "");
+                        launchSettings.targetScene.x = int.Parse(param.Substring(0, param.IndexOf(',')));
+                        launchSettings.targetScene.y = int.Parse(param.Substring(param.IndexOf(',')+1));
+                    }
+                }
+            }
         }
 
         private void SetupInitialConfig()
         {
-            startingRealm = localSceneDevelopmentRealm ?? launchSettings.GetStartingRealm();
-            startingParcel = launchSettings.TargetScene;
+            startingRealm = launchSettings.GetStartingRealm();
+            startingParcel = launchSettings.targetScene;
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
