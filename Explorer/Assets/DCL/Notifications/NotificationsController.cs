@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Notification.NotificationsBus;
 using DCL.Notification.Serialization;
 using DCL.WebRequests;
 using Newtonsoft.Json;
@@ -15,19 +16,21 @@ namespace DCL.Notification
     public class NotificationsController : IDisposable
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
-        private const string NOTIFICATION_URL = "https://notifications.decentraland.org/notifications";
+        private const string NOTIFICATION_URL = "https://notifications.decentraland.zone/notifications";
         private readonly CancellationTokenSource cancellationToken;
         private readonly IWebRequestController webRequestController;
+        private readonly INotificationsBusController notificationsBusController;
         private readonly CommonArguments commonArguments;
         private readonly DateTimeOffset unixEpoch;
         private ulong unixTimestamp;
 
-        public NotificationsController(IWebRequestController webRequestController)
+        public NotificationsController(IWebRequestController webRequestController, INotificationsBusController notificationsBusController)
         {
             this.webRequestController = webRequestController;
-            //.AppendParameter(new URLParameter("onlyUnread", "true"))
+            this.notificationsBusController = notificationsBusController;
+
             unixEpoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
-            commonArguments = new CommonArguments(new URLBuilder().AppendDomain(URLDomain.FromString(NOTIFICATION_URL)).Build());
+            commonArguments = new CommonArguments(new URLBuilder().AppendDomain(URLDomain.FromString(NOTIFICATION_URL)).AppendParameter(new URLParameter("onlyUnread", "true")).Build());
             cancellationToken = new CancellationTokenSource();
             GetNewNotificationAsync().Forget();
         }
@@ -50,15 +53,12 @@ namespace DCL.Notification
                 Debug.Log("notification count is " + notifications.Count);
                 foreach (INotification notification in notifications)
                 {
-                    Debug.Log($"metadata {((EventStartedNotification)notification).Metadata.Description} and {((EventStartedNotification)notification).Metadata.Image}");
-                    Debug.Log("notification type is " + notification.Type + " " + notification.Address + " " + notification.Timestamp + " " + notification.Read + " " + notification.Id );
-
                     // Convert to Unix time in milliseconds
                     var unixTimeMilliseconds = (ulong)unixEpoch.AddMilliseconds(long.Parse(notification.Timestamp)).ToUnixTimeMilliseconds();
 
                     if (unixTimestamp - unixTimeMilliseconds <= 5000)
                     {
-                        //notification is new, send it to the notifications bus
+                        notificationsBusController.AddNotification(notification);
                     }
                 }
 

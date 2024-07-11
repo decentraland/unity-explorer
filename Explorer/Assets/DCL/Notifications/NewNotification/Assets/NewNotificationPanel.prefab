@@ -117,6 +117,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 7045577537841842900}
   <raycaster>k__BackingField: {fileID: 5811179477361871448}
+  <NotificationView>k__BackingField: {fileID: 7431118532215417263}
+  <NotificationViewCanvasGroup>k__BackingField: {fileID: 7194573606636815890}
 --- !u!1001 &2982465942076838295
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -128,6 +130,10 @@ PrefabInstance:
     - target: {fileID: 192176438896886382, guid: 1c5c866a014f04911bbd4469d35b92a6, type: 3}
       propertyPath: m_Name
       value: Notification
+      objectReference: {fileID: 0}
+    - target: {fileID: 5385067565377509253, guid: 1c5c866a014f04911bbd4469d35b92a6, type: 3}
+      propertyPath: m_Alpha
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6259150501965458249, guid: 1c5c866a014f04911bbd4469d35b92a6, type: 3}
       propertyPath: m_Pivot.x
@@ -214,6 +220,22 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1c5c866a014f04911bbd4469d35b92a6, type: 3}
+--- !u!225 &7194573606636815890 stripped
+CanvasGroup:
+  m_CorrespondingSourceObject: {fileID: 5385067565377509253, guid: 1c5c866a014f04911bbd4469d35b92a6, type: 3}
+  m_PrefabInstance: {fileID: 2982465942076838295}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7431118532215417263 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5639485393653299256, guid: 1c5c866a014f04911bbd4469d35b92a6, type: 3}
+  m_PrefabInstance: {fileID: 2982465942076838295}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d83ff9e39094063a84de761c0fe52ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!224 &9205112176156293854 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6259150501965458249, guid: 1c5c866a014f04911bbd4469d35b92a6, type: 3}

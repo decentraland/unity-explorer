@@ -2,6 +2,8 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Notification;
+using DCL.Notification.NewNotification;
+using DCL.Notification.NotificationsBus;
 using DCL.WebRequests;
 using MVC;
 using System;
@@ -15,18 +17,19 @@ namespace DCL.PluginSystem.Global
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
+        private readonly INotificationsBusController notificationsBusController;
         private NotificationsController notificationsController;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            IWebRequestController webRequestController
-            )
+            IWebRequestController webRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
-            notificationsController = new NotificationsController(webRequestController);
+            notificationsBusController = new NotificationsBusController();
+            notificationsController = new NotificationsController(webRequestController, notificationsBusController);
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
@@ -35,9 +38,12 @@ namespace DCL.PluginSystem.Global
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(NotificationSettings notificationSettings, CancellationToken ct)
         {
-            //NotificationsSectionView notificationsSectionView = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationSection, ct)).Value;
+            NewNotificationView newNotificationView = (await assetsProvisioner.ProvideMainAssetAsync(settings.NewNotificationView, ct: ct)).Value.GetComponent<NewNotificationView>();
+
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
+                NewNotificationController newNotificationController = new NewNotificationController(NewNotificationController.CreateLazily(newNotificationView, null), notificationsBusController);
+                mvcManager.RegisterController(newNotificationController);
             };
         }
 
@@ -45,12 +51,12 @@ namespace DCL.PluginSystem.Global
         public class NotificationSettings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public NotificationSectionRef NotificationSection { get; private set; }
+            public NewNotificationViewRef NewNotificationView { get; private set; }
 
             [Serializable]
-            public class NotificationSectionRef : ComponentReference<NotificationsSectionView>
+            public class NewNotificationViewRef : ComponentReference<NewNotificationView>
             {
-                public NotificationSectionRef(string guid) : base(guid) { }
+                public NewNotificationViewRef(string guid) : base(guid) { }
             }
         }
     }

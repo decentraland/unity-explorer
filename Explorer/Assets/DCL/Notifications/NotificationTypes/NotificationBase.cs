@@ -10,5 +10,11 @@ namespace DCL.Notification
         public string Address { get; set; }
         public string Timestamp { get; set; }
         public bool Read { get; set; }
+
+        public virtual string GetHeader() =>
+            string.Empty;
+
+        public virtual string GetTitle() =>
+            string.Empty;
     }
 }
