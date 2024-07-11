@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class UiElementUtils
     {
-        public static void SetupVisualElement(ref VisualElement visualElementToSetup, ref PBUiTransform model)
+        public static void SetupVisualElement(VisualElement visualElementToSetup, ref PBUiTransform model)
         {
             visualElementToSetup.style.display = GetDisplay(model.Display);
             visualElementToSetup.style.overflow = GetOverflow(model.Overflow);

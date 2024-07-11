@@ -14,6 +14,8 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.Audio;
 
 namespace DCL.PluginSystem.Global
 {
@@ -65,10 +67,11 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
+            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator, featureFlagsCache);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator, featureFlagsCache, generalAudioMixer.Value);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
@@ -85,6 +88,9 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField]
         public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
 
         [Serializable]
         public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>
