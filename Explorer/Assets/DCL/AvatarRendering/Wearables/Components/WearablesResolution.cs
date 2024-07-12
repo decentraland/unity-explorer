@@ -9,26 +9,28 @@ namespace DCL.AvatarRendering.Wearables.Components
     /// </summary>
     public readonly struct WearablesResolution : IDisposable
     {
-        public static readonly WearablesResolution EMPTY = new (new List<IWearable>(), null);
+        public static readonly WearablesResolution EMPTY = new (new List<IWearable>());
+        private readonly List<IWearable> wearables;
 
         /// <summary>
         ///     This list is calculated on wearables resolution and it's used on avatar instantiation, poolable
         /// </summary>
-        public readonly HashSet<string> HiddenCategories;
+        public readonly HashSet<string>? HiddenCategories;
+
         /// <summary>
         ///     Poolable collection of result wearables
         /// </summary>
-        public readonly List<IWearable> Wearables;
+        public IReadOnlyList<IWearable> Wearables => wearables;
 
-        public WearablesResolution(List<IWearable> wearables, HashSet<string> hiddenCategories = null)
+        public WearablesResolution(List<IWearable> wearables, HashSet<string>? hiddenCategories = null)
         {
             HiddenCategories = hiddenCategories;
-            Wearables = wearables;
+            this.wearables = wearables;
         }
 
         public void Dispose()
         {
-            WEARABLES_POOL.Release(Wearables);
+            WEARABLES_POOL.Release(wearables);
 
             if (HiddenCategories != null)
                 CATEGORIES_POOL.Release(HiddenCategories);

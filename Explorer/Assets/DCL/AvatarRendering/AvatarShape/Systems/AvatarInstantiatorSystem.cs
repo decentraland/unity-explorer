@@ -161,7 +161,7 @@ namespace DCL.AvatarRendering.AvatarShape.Systems
 
             GameObject? bodyShape = null;
 
-            IList<IWearable> visibleWearables;
+            IReadOnlyList<IWearable> visibleWearables;
 
             if (wearablesResult.Succeeded)
                 visibleWearables = wearablesResult.Asset.Wearables;
