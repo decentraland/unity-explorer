@@ -3,7 +3,6 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics.Metrics;
-using UnityEngine;
 using Utility.Multithreading;
 using Utility.Storage;
 
