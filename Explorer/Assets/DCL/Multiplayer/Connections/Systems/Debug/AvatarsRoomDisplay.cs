@@ -8,7 +8,6 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
     {
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly ElementBinding<string> activeCount;
-        private readonly DebugWidgetVisibilityBinding visibilityBinding = new (false);
 
         public AvatarsRoomDisplay(IReadOnlyEntityParticipantTable entityParticipantTable, DebugWidgetBuilder widgetBuilder)
         {
@@ -16,7 +15,6 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             activeCount = new ElementBinding<string>(string.Empty);
 
             widgetBuilder
-               .SetVisibilityBinding(visibilityBinding)
                .AddCustomMarker("Active Avatars", activeCount);
         }
 
@@ -28,8 +26,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         public void Update()
         {
-            if (visibilityBinding.IsExpanded)
-                activeCount.SetAndUpdate(entityParticipantTable.Count.ToString());
+            activeCount.SetAndUpdate(entityParticipantTable.Count.ToString());
         }
     }
 }
