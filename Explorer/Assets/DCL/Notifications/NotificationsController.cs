@@ -16,8 +16,8 @@ namespace DCL.Notification
 {
     public class NotificationsController : IDisposable
     {
-        private const string NOTIFICATION_URL = "https://notifications.decentraland.zone/notifications";
-        private const string NOTIFICATION_READ_URL = "https://notifications.decentraland.zone/notifications/read";
+        private const string NOTIFICATION_URL = "https://notifications.decentraland.org/notifications";
+        private const string NOTIFICATION_READ_URL = "https://notifications.decentraland.org/notifications/read";
 
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
 
