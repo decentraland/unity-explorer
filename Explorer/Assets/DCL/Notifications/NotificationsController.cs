@@ -7,6 +7,7 @@ using DCL.WebRequests;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -16,15 +17,22 @@ namespace DCL.Notification
 {
     public class NotificationsController : IDisposable
     {
-        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
         private const string NOTIFICATION_URL = "https://notifications.decentraland.zone/notifications";
+        private const string NOTIFICATION_READ_URL = "https://notifications.decentraland.zone/notifications/read";
+
+        private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
+
         private readonly CancellationTokenSource cancellationToken;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly CommonArguments commonArguments;
-        private readonly DateTimeOffset unixEpoch;
+        private readonly CommonArguments commonArgumentsForSetRead;
+        private readonly StringBuilder bodyBuilder = new ();
+        private readonly URLParameter onlyUnreadParameter = new ("onlyUnread", "true");
+        private readonly URLBuilder urlBuilder = new();
+        private CommonArguments commonArguments;
         private ulong unixTimestamp;
+        private ulong lastPolledTimestamp;
 
         public NotificationsController(IWebRequestController webRequestController, INotificationsBusController notificationsBusController, IWeb3IdentityCache web3IdentityCache)
         {
@@ -32,9 +40,10 @@ namespace DCL.Notification
             this.notificationsBusController = notificationsBusController;
             this.web3IdentityCache = web3IdentityCache;
 
-            unixEpoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
-            commonArguments = new CommonArguments(new URLBuilder().AppendDomain(URLDomain.FromString(NOTIFICATION_URL)).AppendParameter(new URLParameter("onlyUnread", "true")).Build());
             cancellationToken = new CancellationTokenSource();
+            lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+            commonArgumentsForSetRead = new CommonArguments(new URLBuilder().AppendDomain(URLDomain.FromString(NOTIFICATION_READ_URL)).Build());
+
             GetNewNotificationAsync().Forget();
         }
 
@@ -47,8 +56,14 @@ namespace DCL.Notification
                 if(web3IdentityCache.Identity == null)
                     continue;
 
-                unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+                urlBuilder.Clear();
+                urlBuilder.AppendDomain(URLDomain.FromString(NOTIFICATION_URL))
+                          .AppendParameter(onlyUnreadParameter)
+                          .AppendParameter(new URLParameter("from", lastPolledTimestamp.ToString()));
+                commonArguments = new CommonArguments(urlBuilder.Build());
 
+                unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+                lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
                 List<INotification> notifications =
                     await webRequestController.GetAsync(
                         commonArguments,
@@ -57,20 +72,31 @@ namespace DCL.Notification
                         headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
 
-                Debug.Log("notification count is " + notifications.Count);
                 foreach (INotification notification in notifications)
                 {
-                    // Convert to Unix time in milliseconds
-                    var unixTimeMilliseconds = (ulong)unixEpoch.AddMilliseconds(long.Parse(notification.Timestamp)).ToUnixTimeMilliseconds();
-
-                    if (unixTimestamp - unixTimeMilliseconds <= 5000)
-                    {
-                        notificationsBusController.AddNotification(notification);
-                    }
+                    notificationsBusController.AddNotification(notification);
+                    SetNotificationAsRead(notification.Id);
                 }
 
             }
             while (cancellationToken.IsCancellationRequested == false);
+        }
+
+        public void SetNotificationAsRead(string notificationId)
+        {
+            bodyBuilder.Clear();
+            bodyBuilder.Append("{\"notificationIds\":[\"")
+                       .Append(notificationId)
+                       .Append("\"]}");
+
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
+            webRequestController.PutAsync(
+                commonArgumentsForSetRead,
+                WebRequests.GenericPutArguments.CreateJson(bodyBuilder.ToString()),
+                new CancellationToken(),
+                signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArgumentsForSetRead.URL, unixTimestamp, "put"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp));
         }
 
         public void Dispose()

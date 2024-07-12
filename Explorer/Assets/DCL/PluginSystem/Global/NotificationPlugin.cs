@@ -58,6 +58,10 @@ namespace DCL.PluginSystem.Global
             };
         }
 
+        public override void Dispose()
+        {
+            notificationsController.Dispose();
+        }
 
         public class NotificationSettings : IDCLPluginSettings
         {
