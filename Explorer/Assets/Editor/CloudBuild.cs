@@ -65,19 +65,16 @@ namespace Editor
             string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
             AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(assetPath);
 
-            if (config == null)
+            if (config != null)
             {
-                Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found , when trying to load it from AssetDatabase. Creating SO config file via {nameof(ScriptableObject.CreateInstance)}");
-                return;
-                // TODO (Vit): create and add to Addressables
-                config = ScriptableObject.CreateInstance<AnalyticsConfiguration>();
+                config.SetWriteKey(segmentWriteKey);
+                AssetDatabase.SaveAssetIfDirty(config);
+                EditorUtility.SetDirty(config);
+
+                Debug.Log("[SEGMENT]: write key saved");
             }
-
-            config.SetWriteKey(segmentWriteKey);
-            AssetDatabase.SaveAssetIfDirty(config);
-            EditorUtility.SetDirty(config);
-
-            Debug.Log("[SEGMENT]: write key saved");
+            else // TODO (Vit): create default and add to Addressables (config = ScriptableObject.CreateInstance<AnalyticsConfiguration>());
+                Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found , when trying to load it from AssetDatabase. Creating SO config file via {nameof(ScriptableObject.CreateInstance)}");
         }
     }
 }
