@@ -8,6 +8,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
     {
         private readonly IRemotePoses remotePoses;
         private readonly ElementBinding<string> count;
+        private readonly DebugWidgetVisibilityBinding visibilityBinding = new (false);
 
         public RemotePosesRoomDisplay(IRemotePoses remotePoses, DebugWidgetBuilder widgetBuilder)
         {
@@ -15,12 +16,14 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             count = new ElementBinding<string>(string.Empty);
 
             widgetBuilder
+               .SetVisibilityBinding(visibilityBinding)
                .AddCustomMarker("Remote Poses Count", count);
         }
 
         public void Update()
         {
-            count.SetAndUpdate(remotePoses.Count.ToString());
+            if (visibilityBinding.IsExpanded)
+                count.SetAndUpdate(remotePoses.Count.ToString());
         }
     }
 }
