@@ -26,10 +26,6 @@ namespace Editor
 
             // E.g. access like:
             // Debug.Log(Parameters["TEST_VALUE"] as string);
-            if (Parameters.TryGetValue("SEGMENT_WRITE_KEY", out object segmentWriteKey))
-                WriteSegmentKeyToAnalyticsConfig(segmentWriteKey as string);
-            else
-                Debug.LogWarning("SEGMENT_WRITE_KEY not found.");
 
             //Unity suggestion: 1793168
             //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
@@ -40,6 +36,10 @@ namespace Editor
             PlayerSettings.bundleVersion = buildVersion;
             PlayerSettings.macOS.buildNumber = buildVersion;
             Debug.Log($"Build version set to: {buildVersion}");
+
+            var segmentKey = Parameters["SEGMENT_WRITE_KEY"] as string;
+            Debug.Log($"[SEGMENT]: write key found");
+            WriteSegmentKeyToAnalyticsConfig(segmentKey);
         }
 
         [UsedImplicitly]
@@ -68,11 +68,14 @@ namespace Editor
             if (config == null)
             {
                 Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found , when trying to load it from AssetDatabase. Creating SO config file via {nameof(ScriptableObject.CreateInstance)}");
+                return;
+                // TODO (Vit): create and add to Addressables
                 config = ScriptableObject.CreateInstance<AnalyticsConfiguration>();
             }
 
             config.WriteKey = segmentWriteKey;
             AssetDatabase.SaveAssetIfDirty(config);
+            Debug.Log("[SEGMENT]: write key saved");
         }
     }
 }
