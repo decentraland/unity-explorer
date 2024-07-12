@@ -123,13 +123,7 @@ namespace DCL.SDKComponents.Animator.Systems
 
                 if (sdkAnimationState.Playing)
                 {
-                    // Set the weight to 1 to ensure the animation is visible, as some scenes may set the state to playing:true but assign a weight of 0.
-                    // ie: Teleperformance (-93,109)
-                    // Is this expected by the SDK? Should the scene fix the parameters?
-                    animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight > 0f
-                        ? sdkAnimationState.Weight
-                        : 1f);
-
+                    animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
                     animator.SetTrigger($"{name}_Trigger");
 
                     // Animators don't support speed by state, just a global speed
