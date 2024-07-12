@@ -1,4 +1,5 @@
 ﻿
+using DCL.PerformanceAndDiagnostics.Analytics;
 using JetBrains.Annotations;
 using System;
 using System.Collections;
@@ -25,6 +26,10 @@ namespace Editor
 
             // E.g. access like:
             // Debug.Log(Parameters["TEST_VALUE"] as string);
+            if (Parameters.TryGetValue("SEGMENT_WRITE_KEY", out object segmentWriteKey))
+                WriteSegmentKeyToAnalyticsConfig(segmentWriteKey as string);
+            else
+                Debug.LogWarning("SEGMENT_WRITE_KEY not found.");
 
             //Unity suggestion: 1793168
             //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
@@ -41,6 +46,33 @@ namespace Editor
         public static void PostExport()
         {
             Debug.Log("~~ PostExport ~~");
+        }
+
+        private static void WriteSegmentKeyToAnalyticsConfig(string segmentWriteKey)
+        {
+            string[] guids = AssetDatabase.FindAssets($"t:{nameof(AnalyticsConfiguration)}");
+
+            switch (guids.Length)
+            {
+                case 0:
+                    Debug.LogError($"{nameof(AnalyticsConfiguration)} asset not found!");
+                    return;
+                case > 1:
+                    Debug.LogWarning($"Multiple {nameof(AnalyticsConfiguration)} assets found. Using the first one.");
+                    break;
+            }
+
+            string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
+            AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(assetPath);
+
+            if (config == null)
+            {
+                Debug.LogWarning($"{nameof(AnalyticsConfiguration)} asset not found , when trying to load it from AssetDatabase. Creating SO config file via {nameof(ScriptableObject.CreateInstance)}");
+                config = ScriptableObject.CreateInstance<AnalyticsConfiguration>();
+            }
+
+            config.WriteKey = segmentWriteKey;
+            AssetDatabase.SaveAssetIfDirty(config);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Segment.Analytics;
+﻿using DCL.Diagnostics;
+using Segment.Analytics;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -17,6 +18,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
+        [SerializeField] public List<AnalyticsGroup> groups;
+
         [SerializeField]
         [Tooltip("This parameter specifies the maximum number of messages to be queued before they are flushed (i.e., sent to the server). "
                  + "For example, if flushSize is set to 20, Segment will batch up to 20 messages before sending them in a single request.")]
@@ -27,19 +30,17 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                  + "Even if the queue does not reach the flushSize limit, messages will still be sent after this interval has passed.")]
         private int flushInterval = 30;
 
+        private string segmentWriteKey;
+        private Configuration segmentConfiguration;
+
+        private Dictionary<string, AnalyticsEventToggle> eventToggles;
+
         [field: SerializeField]
         [Tooltip("This parameter sets the interval (in seconds) at which the performance report is tracked to the analytics.")]
         public float PerformanceReportInterval { get; private set; } = 1.0f;
 
         [field: SerializeField]
         public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
-
-        [SerializeField] public List<AnalyticsGroup> groups;
-
-        private string segmentWriteKey;
-        private Configuration segmentConfiguration;
-
-        private Dictionary<string, AnalyticsEventToggle> eventToggles;
 
         public Configuration SegmentConfiguration => segmentConfiguration ??=
             new Configuration(WriteKey, new SegmentErrorHandler(), flushSize, flushInterval);
@@ -50,6 +51,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 if (string.IsNullOrEmpty(segmentWriteKey))
                 {
+                    ReportHub.LogError(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
                     segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
 
                     if (string.IsNullOrEmpty(segmentWriteKey))

@@ -88,11 +88,11 @@ namespace Global.Dynamic
         {
             // force segment in release
             if (!Debug.isDebugBuild)
-                return new SegmentAnalyticsService(analyticsConfig);
+                return new SegmentAnalyticsService(analyticsConfig.SegmentConfiguration);
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig),
+                       AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig.SegmentConfiguration),
                        AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
                        AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
