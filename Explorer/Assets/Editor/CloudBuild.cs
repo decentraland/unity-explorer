@@ -68,8 +68,8 @@ namespace Editor
             if (config != null)
             {
                 config.SetWriteKey(segmentWriteKey);
-                AssetDatabase.SaveAssetIfDirty(config);
                 EditorUtility.SetDirty(config);
+                AssetDatabase.SaveAssetIfDirty(config);
 
                 Debug.Log("[SEGMENT]: write key saved");
             }
