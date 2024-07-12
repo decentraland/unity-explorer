@@ -12,6 +12,7 @@ using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace DCL.AvatarRendering.Emotes
@@ -41,17 +42,27 @@ namespace DCL.AvatarRendering.Emotes
         protected override async UniTask<StreamableLoadingResult<EmotesResolution>> FlowInternalAsync(GetOwnedEmotesFromRealmIntention intention,
             IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            LambdaOwnedEmoteElementList lambdaResponse =
-                await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
-                                               ct, GetReportCategory())
-                                          .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
+            LambdaOwnedEmoteElementList lambdaResponse = await webRequestController
+                                                              .GetAsync(
+                                                                   new CommonArguments(
+                                                                       intention.CommonArguments.URL,
+                                                                       attemptsCount: intention.CommonArguments.Attempts
+                                                                   ),
+                                                                   ct,
+                                                                   GetReportCategory()
+                                                               )
+                                                              .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
+
+            if (lambdaResponse.elements.Count == 0) return EmptyResult(lambdaResponse);
+            var emotes = ParsedEmotes(lambdaResponse);
+            return new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(emotes, lambdaResponse.totalAmount));
+        }
+
+        private IReadOnlyList<IEmote> ParsedEmotes(LambdaOwnedEmoteElementList lambdaResponse)
+        {
             // The following logic is not thread-safe!
             // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
-
-            if (lambdaResponse.elements.Count == 0)
-                return new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(Array.Empty<IEmote>(), lambdaResponse.totalAmount));
-
             var emotes = new IEmote[lambdaResponse.elements.Count];
 
             for (var i = 0; i < lambdaResponse.elements.Count; i++)
@@ -64,22 +75,38 @@ namespace DCL.AvatarRendering.Emotes
                 foreach (LambdaOwnedEmoteElementDTO.IndividualDataDTO individualData in element.individualData)
                 {
                     // Probably a base emote, wrongly return individual data. Skip it
-                    if (emoteDto.metadata.id == individualData.id) continue;
-
-                    long.TryParse(individualData.transferredAt, out long transferredAt);
-                    decimal.TryParse(individualData.price, out decimal price);
-
-                    ownedNftHub.SetOwnedNft(emoteDto.metadata.id,
-                        new NftBlockchainOperationEntry(individualData.id,
-                            individualData.tokenId,
-                            DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
-                            price));
+                    if (emoteDto.metadata?.id == individualData.id) continue;
+                    SetOwnedNft(emoteDto.metadata!.id!, individualData);
                 }
 
                 emotes[i] = emote;
             }
 
-            return new StreamableLoadingResult<EmotesResolution>(new EmotesResolution(emotes, lambdaResponse.totalAmount));
+            return emotes;
+        }
+
+        private static StreamableLoadingResult<EmotesResolution> EmptyResult(LambdaOwnedEmoteElementList lambdaResponse) =>
+            new (
+                new EmotesResolution(
+                    Array.Empty<IEmote>(),
+                    lambdaResponse.totalAmount
+                )
+            );
+
+        private void SetOwnedNft(string emoteMetadataId, LambdaOwnedEmoteElementDTO.IndividualDataDTO individualData)
+        {
+            long.TryParse(individualData.transferredAt, out long transferredAt);
+            decimal.TryParse(individualData.price, out decimal price);
+
+            ownedNftHub.SetOwnedNft(
+                emoteMetadataId,
+                new NftBlockchainOperationEntry(
+                    individualData.id,
+                    individualData.tokenId,
+                    DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
+                    price
+                )
+            );
         }
     }
 }
