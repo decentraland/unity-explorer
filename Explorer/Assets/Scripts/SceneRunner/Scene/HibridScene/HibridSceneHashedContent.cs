@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
 using DCL.WebRequests;
+using UnityEngine;
 
 namespace SceneRunner.Scene
 {
@@ -18,11 +18,11 @@ namespace SceneRunner.Scene
         private readonly Dictionary<string, (bool success, URLAddress url)> resolvedContentURLs;
 
         public URLDomain ContentBaseUrl => contentBaseUrl;
+        public string remoteSceneID;
+
         private readonly IWebRequestController webRequestController;
-        private readonly string remoteSceneID;
 
         private readonly URLDomain abDomain;
-        private readonly URLDomain remoteContentDomain;
 
 
         private readonly List<string> filesToGetFromLocalHost = new()
@@ -32,18 +32,16 @@ namespace SceneRunner.Scene
 
         public HibridSceneHashedContent(IWebRequestController webRequestController,
             SceneEntityDefinition contentDefinitions, URLDomain contentBaseUrl,
-            URLDomain abDomain, URLDomain remoteContentDomain,
-            string remoteSceneID)
+            URLDomain abDomain)
         {
             filesToGetFromLocalHost.Add(contentDefinitions.metadata.main);
             fileToHash = new Dictionary<string, string>(contentDefinitions.content!.Count, StringComparer.OrdinalIgnoreCase);
             foreach (var contentDefinition in contentDefinitions.content) fileToHash[contentDefinition.file] = contentDefinition.hash;
             resolvedContentURLs = new Dictionary<string, (bool success, URLAddress url)>(fileToHash.Count, StringComparer.OrdinalIgnoreCase);
+            
             this.contentBaseUrl = contentBaseUrl;
             this.abDomain = abDomain;
             this.webRequestController = webRequestController;
-            this.remoteSceneID = remoteSceneID;
-            this.remoteContentDomain = remoteContentDomain;
         }
 
         public bool TryGetContentUrl(string contentPath, out URLAddress result)
@@ -80,13 +78,13 @@ namespace SceneRunner.Scene
             return fileToHash.TryGetValue(name, out hash);
         }
 
-        public async UniTask GetRemoteSceneDefinitionAsync(CancellationToken ct, string reportCategory)
+        public async UniTask GetRemoteSceneDefinitionAsync(URLDomain remoteContentDomain, string reportCategory)
         {
             var url = remoteContentDomain.Append(URLPath.FromString(remoteSceneID));
 
             try
             {
-                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), ct, reportCategory)
+                var sceneEntityDefinition = await webRequestController.GetAsync(new CommonArguments(url), new CancellationToken(), reportCategory)
                     .CreateFromJson<SceneEntityDefinition>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
@@ -100,6 +98,32 @@ namespace SceneRunner.Scene
                 ReportHub.LogError(reportCategory, $"Trying to load hybrid scene with id {remoteSceneID} failed. You wont get the asset bundles");
             }
 
+        }
+
+        public async UniTask<bool> TryGetRemoteSceneID(HibridSceneContentServer remoteContentServer, Vector2Int coordinate, string reportCategory)
+        {
+            IGetHash getHash;
+            switch (remoteContentServer)
+            {
+                case HibridSceneContentServer.Genesis:
+                    getHash = new GetHashGenesis();
+                    break;
+                case HibridSceneContentServer.Goerli:
+                    getHash = new GetHashGoerli();
+                    break;
+                default:
+                    ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Unexistent remote content domain {remoteContentServer.ToString()}");
+                    return false;
+            }
+
+            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, coordinate, reportCategory);
+            if (success)
+            {
+                remoteSceneID = sceneHash;
+                return true;
+            }
+
+            return false;
         }
     }
 }

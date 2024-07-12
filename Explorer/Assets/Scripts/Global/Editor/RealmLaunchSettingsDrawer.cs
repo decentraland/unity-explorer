@@ -16,7 +16,6 @@ namespace Global.Editor
         private const string TARGET_SCENE_FIELD_NAME = "targetScene";
         private const string TARGET_WORLD_FIELD_NAME = "targetWorld";
         private const string CUSTOM_REALM_FIELD_NAME = "customRealm";
-        private const string REMOTE_SCENE_ID_FIELD_NAME = "remoteSceneID";
         private const string REMOTE_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteSceneContentServer";
         private const string PREDEFINED_SCENES_FIELD_NAME = "predefinedScenes";
 
@@ -122,11 +121,10 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.Localhost)
             {
-                SerializedProperty remoteSceneIDProperty = parent.FindPropertyRelative(REMOTE_SCENE_ID_FIELD_NAME);
-                SerializedProperty remoteSceneContentServerProperty = parent.FindPropertyRelative(REMOTE_SCENE_CONTENT_SERVER_FIELD_NAME);
-
-                EditorGUI.PropertyField(position, remoteSceneIDProperty);
+                EditorGUI.LabelField(position, "Set content server in the dropdown below to fetch asset bundles");
                 position.y += singleLineHeight;
+                
+                SerializedProperty remoteSceneContentServerProperty = parent.FindPropertyRelative(REMOTE_SCENE_CONTENT_SERVER_FIELD_NAME);
 
                 EditorGUI.PropertyField(position, remoteSceneContentServerProperty);
                 position.y += singleLineHeight;
