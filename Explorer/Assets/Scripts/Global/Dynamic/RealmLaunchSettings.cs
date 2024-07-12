@@ -5,6 +5,7 @@ using System.Linq;
 using SceneRunner.Scene;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Global.Dynamic
 {
@@ -23,8 +24,8 @@ namespace Global.Dynamic
         [SerializeField] private PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] private string customRealm = IRealmNavigator.GOERLI_URL;
-        [SerializeField] private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
-        [SerializeField] private HibridSceneContentServer remoteSceneContentServer = HibridSceneContentServer.Goerli;
+        [SerializeField] private string remoteHibridWorld = "MetadyneLabs.dcl.eth";
+        [SerializeField] private HibridSceneContentServer remoteHibridSceneContentServer = HibridSceneContentServer.Goerli;
         public Vector2Int TargetScene => targetScene;
 
         public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
@@ -37,8 +38,7 @@ namespace Global.Dynamic
             {
                 return new HybridSceneParams
                 {
-                    StartParcel = startParcel,
-                    EnableHybridScene = true, HybridSceneContentServer = remoteSceneContentServer
+                    StartParcel = startParcel, EnableHybridScene = true, HybridSceneContentServer = remoteHibridSceneContentServer, World = remoteHibridSceneContentServer.Equals(HibridSceneContentServer.World) ? remoteHibridWorld : ""
                 };
             }
 

@@ -46,5 +46,7 @@ namespace Global.Dynamic
         public HibridSceneContentServer HybridSceneContentServer { get; set; }
         public Vector2Int StartParcel { get; init; }
 
+        public string World { get; init; }
+
     }
 }

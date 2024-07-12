@@ -15,6 +15,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly Vector2Int startParcel;
         private HibridSceneHashedContent hibridSceneHashedContent;
         private string remoteSceneID;
+        private readonly string world;
 
         private static readonly URLDomain GOERLI_CONTENT_URL = URLDomain.FromString("https://sdk-team-cdn.decentraland.org/ipfs/");
         private static readonly URLDomain GENESIS_CONTENT_URL = URLDomain.FromString("https://peer.decentraland.org/content/contents/");
@@ -22,6 +23,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         public LoadHybridSceneSystemLogic(IWebRequestController webRequestController, URLDomain assetBundleURL, HybridSceneParams hybridSceneParams) : base(webRequestController, assetBundleURL)
         {
+            world = hybridSceneParams.World;
             hibridSceneContentServer = hybridSceneParams.HybridSceneContentServer;
             startParcel = hybridSceneParams.StartParcel;
             switch (hibridSceneContentServer)
@@ -31,6 +33,9 @@ namespace ECS.SceneLifeCycle.Systems
                     break;
                 case HibridSceneContentServer.Genesis:
                     hibridSceneContentServerDomain = GENESIS_CONTENT_URL;
+                    break;
+                case HibridSceneContentServer.World:
+                    hibridSceneContentServerDomain = WORLDS_CONTENT_URL;
                     break;
             }
         }
@@ -43,7 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory)
         {
             hibridSceneHashedContent = new HibridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
-            if (await hibridSceneHashedContent.TryGetRemoteSceneID(hibridSceneContentServer, startParcel, reportCategory))
+            if (await hibridSceneHashedContent.TryGetRemoteSceneID(hibridSceneContentServerDomain, hibridSceneContentServer, startParcel, world, reportCategory))
             {
                 await hibridSceneHashedContent.GetRemoteSceneDefinitionAsync(hibridSceneContentServerDomain, reportCategory);
             }

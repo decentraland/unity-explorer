@@ -54,7 +54,7 @@ namespace SceneRunner.Scene
 
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
-                if (filesToGetFromLocalHost.Contains(contentPath))
+                if (filesToGetFromLocalHost.Contains(contentPath) || IsTexture(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
                     resolvedContentURLs[contentPath] = (true, result);
@@ -89,7 +89,7 @@ namespace SceneRunner.Scene
 
                 foreach (var contentDefinition in sceneEntityDefinition.content)
                 {
-                    if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file))
+                    if (fileToHash.ContainsKey(contentDefinition.file) && !filesToGetFromLocalHost.Contains(contentDefinition.file) && !IsTexture(contentDefinition.file))
                         fileToHash[contentDefinition.file] = contentDefinition.hash;
                 }
             }
@@ -100,7 +100,14 @@ namespace SceneRunner.Scene
 
         }
 
-        public async UniTask<bool> TryGetRemoteSceneID(HibridSceneContentServer remoteContentServer, Vector2Int coordinate, string reportCategory)
+        private bool IsTexture(string contentDefinitionFile)
+        {
+            return contentDefinitionFile.EndsWith("jpg", StringComparison.OrdinalIgnoreCase) ||
+                   contentDefinitionFile.EndsWith("jpeg", StringComparison.OrdinalIgnoreCase) ||
+                   contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public async UniTask<bool> TryGetRemoteSceneID(URLDomain contentDomain, HibridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, string reportCategory)
         {
             IGetHash getHash;
             switch (remoteContentServer)
@@ -111,12 +118,15 @@ namespace SceneRunner.Scene
                 case HibridSceneContentServer.Goerli:
                     getHash = new GetHashGoerli();
                     break;
+                case HibridSceneContentServer.World:
+                    getHash = new GetHashWorld(world);
+                    break;
                 default:
                     ReportHub.LogError(ReportCategory.SCENE_LOADING, $"Unexistent remote content domain {remoteContentServer.ToString()}");
                     return false;
             }
 
-            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, coordinate, reportCategory);
+            (bool success, string sceneHash) = await getHash.TryGetHashAsync(webRequestController, contentDomain, coordinate, reportCategory);
             if (success)
             {
                 remoteSceneID = sceneHash;

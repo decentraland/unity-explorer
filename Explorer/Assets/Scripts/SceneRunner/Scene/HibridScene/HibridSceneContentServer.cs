@@ -3,6 +3,7 @@
     public enum HibridSceneContentServer
     {
         Genesis,
-        Goerli
+        Goerli,
+        World
     }
 }

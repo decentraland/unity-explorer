@@ -3,6 +3,7 @@ using SceneRuntime.Factory.JsSceneSourceCode;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using SceneRunner.Scene;
 using UnityEditor;
 using UnityEngine;
 using Utility;
@@ -16,7 +17,8 @@ namespace Global.Editor
         private const string TARGET_SCENE_FIELD_NAME = "targetScene";
         private const string TARGET_WORLD_FIELD_NAME = "targetWorld";
         private const string CUSTOM_REALM_FIELD_NAME = "customRealm";
-        private const string REMOTE_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteSceneContentServer";
+        private const string REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteHibridSceneContentServer";
+        private const string REMOTE_HIBRID_WORLD_FIELD_NAME = "remoteHibridWorld";
         private const string PREDEFINED_SCENES_FIELD_NAME = "predefinedScenes";
 
         private static readonly Dictionary<string, Vector2Int> SCENES = new ()
@@ -121,13 +123,28 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.Localhost)
             {
+                var remoteWorldContentServerProperty = parent.FindPropertyRelative(REMOTE_HIBRID_WORLD_FIELD_NAME);
+                var remoteSceneContentServerProperty = parent.FindPropertyRelative(REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME);
+                
                 EditorGUI.LabelField(position, "Set content server in the dropdown below to fetch asset bundles");
                 position.y += singleLineHeight;
-                
-                SerializedProperty remoteSceneContentServerProperty = parent.FindPropertyRelative(REMOTE_SCENE_CONTENT_SERVER_FIELD_NAME);
 
                 EditorGUI.PropertyField(position, remoteSceneContentServerProperty);
                 position.y += singleLineHeight;
+
+                if (remoteSceneContentServerProperty.enumValueIndex == (int)HibridSceneContentServer.World)
+                {
+                    EditorGUI.LabelField(position, "Write down the remote world from where to get the content");
+                    position.y += singleLineHeight;
+
+                    EditorGUI.PropertyField(position, remoteWorldContentServerProperty);
+                    position.y += singleLineHeight;
+                }
+                else
+                {
+                    position.y += singleLineHeight;
+                    position.y += singleLineHeight;
+                }
             }
 
             return position;
@@ -226,7 +243,7 @@ namespace Global.Editor
             switch (initialRealmValue)
             {
                 case InitialRealm.Localhost:
-                    fieldsCount += 2;
+                    fieldsCount += 4;
                     break;
                 case InitialRealm.World:
                 case InitialRealm.Custom:
