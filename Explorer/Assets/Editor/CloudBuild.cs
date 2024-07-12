@@ -62,6 +62,7 @@ namespace Editor
                     break;
             }
 
+            AssetDatabase.Refresh();
             string assetPath = AssetDatabase.GUIDToAssetPath(guids[0]);
             AnalyticsConfiguration config = AssetDatabase.LoadAssetAtPath<AnalyticsConfiguration>(assetPath);
 
@@ -71,7 +72,8 @@ namespace Editor
 
                 config.SetWriteKey(segmentWriteKey);
                 EditorUtility.SetDirty(config);
-                AssetDatabase.SaveAssetIfDirty(config);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
 
                 Debug.Log("[SEGMENT]: write key saved");
             }
