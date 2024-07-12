@@ -42,27 +42,56 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         [field: SerializeField]
         public AnalyticsMode Mode { get; private set; } = AnalyticsMode.SEGMENT;
 
-        public Configuration SegmentConfiguration => segmentConfiguration ??=
-            new Configuration(WriteKey, new SegmentErrorHandler(), flushSize, flushInterval);
-
-        public string WriteKey
+        public bool TryGetSegmentConfiguration(out Configuration configuration)
         {
-            private get
+            if (segmentConfiguration != null)
             {
-                if (string.IsNullOrEmpty(segmentWriteKey))
-                {
-                    ReportHub.LogError(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
-                    // segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
-                    //
-                    // if (string.IsNullOrEmpty(segmentWriteKey))
-                    //     throw new InvalidOperationException($"{SEGMENT_WRITE_KEY} environment variable is not set.");
-                }
-
-                return segmentWriteKey;
+                configuration = segmentConfiguration;
+                return true;
             }
 
-            set => segmentWriteKey = value;
+            if (string.IsNullOrEmpty(segmentWriteKey) && !TryGetWriteKeyLocally())
+            {
+                configuration = null;
+                return false;
+            }
+
+            return TryCreateSegmentConfiguration(out configuration);
         }
+
+        private bool TryGetWriteKeyLocally()
+        {
+            ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
+            segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
+
+            if (string.IsNullOrEmpty(segmentWriteKey))
+            {
+                ReportHub.LogWarning(ReportCategory.ANALYTICS, $"{SEGMENT_WRITE_KEY} environment variable is not set.");
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryCreateSegmentConfiguration(out Configuration configuration)
+        {
+            try
+            {
+                segmentConfiguration = new Configuration(segmentWriteKey, new SegmentErrorHandler(), flushSize, flushInterval);
+            }
+            catch (Exception e)
+            {
+                ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Cannot create Segment configuration with provided write key. Exception {e.Message}.");
+                configuration = null;
+                return false;
+            }
+
+            ReportHub.Log(ReportCategory.ANALYTICS, "Segment configuration successfully created.");
+            configuration = segmentConfiguration;
+            return true;
+        }
+
+        public string WriteKey { set => segmentWriteKey = value; }
 
         public bool EventIsEnabled(string eventName)
         {
