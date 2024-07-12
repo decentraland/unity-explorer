@@ -54,6 +54,7 @@ namespace SceneRunner.Scene
 
             if (fileToHash.TryGetValue(contentPath, out string hash))
             {
+                //Textures are not fetched by asset bundles
                 if (filesToGetFromLocalHost.Contains(contentPath) || IsTexture(contentPath))
                 {
                     result = contentBaseUrl.Append(URLPath.FromString(hash));
@@ -107,7 +108,7 @@ namespace SceneRunner.Scene
                    contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async UniTask<bool> TryGetRemoteSceneID(URLDomain contentDomain, HibridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, string reportCategory)
+        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HibridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, string reportCategory)
         {
             IGetHash getHash;
             switch (remoteContentServer)

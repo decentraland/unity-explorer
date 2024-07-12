@@ -48,7 +48,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected override async UniTask<ISceneContent> GetSceneHashedContentAsync(SceneEntityDefinition definition, URLDomain contentBaseUrl, string reportCategory)
         {
             hibridSceneHashedContent = new HibridSceneHashedContent(webRequestController, definition, contentBaseUrl, assetBundleURL);
-            if (await hibridSceneHashedContent.TryGetRemoteSceneID(hibridSceneContentServerDomain, hibridSceneContentServer, startParcel, world, reportCategory))
+            if (await hibridSceneHashedContent.TryGetRemoteSceneIDAsync(hibridSceneContentServerDomain, hibridSceneContentServer, startParcel, world, reportCategory))
             {
                 await hibridSceneHashedContent.GetRemoteSceneDefinitionAsync(hibridSceneContentServerDomain, reportCategory);
             }
