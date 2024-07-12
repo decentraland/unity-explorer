@@ -64,13 +64,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
             segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
 
-            if (string.IsNullOrEmpty(segmentWriteKey))
-            {
-                ReportHub.LogWarning(ReportCategory.ANALYTICS, $"{SEGMENT_WRITE_KEY} environment variable is not set.");
-                return false;
-            }
+            if (!string.IsNullOrEmpty(segmentWriteKey))
+                return true;
 
-            return true;
+            ReportHub.LogWarning(ReportCategory.ANALYTICS, $"{SEGMENT_WRITE_KEY} environment variable is not set.");
+            return false;
         }
 
         private bool TryCreateSegmentConfiguration(out Configuration configuration)
@@ -81,7 +79,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             }
             catch (Exception e)
             {
-                ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Cannot create Segment configuration with provided write key. Exception {e.Message}.");
+                ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Cannot create Segment configuration with provided write key (incorrect key?). Exception {e.Message}.");
                 configuration = null;
                 return false;
             }
@@ -91,7 +89,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             return true;
         }
 
-        public string WriteKey { set => segmentWriteKey = value; }
+        public void SetWriteKey(string writeKey) =>
+            segmentWriteKey = writeKey;
 
         public bool EventIsEnabled(string eventName)
         {

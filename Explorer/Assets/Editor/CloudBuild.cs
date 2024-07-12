@@ -73,8 +73,10 @@ namespace Editor
                 config = ScriptableObject.CreateInstance<AnalyticsConfiguration>();
             }
 
-            config.WriteKey = segmentWriteKey;
+            config.SetWriteKey(segmentWriteKey);
             AssetDatabase.SaveAssetIfDirty(config);
+            EditorUtility.SetDirty(config);
+
             Debug.Log("[SEGMENT]: write key saved");
         }
     }
