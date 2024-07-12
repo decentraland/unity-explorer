@@ -1,5 +1,4 @@
 using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.Common.Components;
@@ -10,12 +9,14 @@ namespace DCL.AvatarRendering.Emotes
 {
     public class MemoryEmotesCache : IEmoteCache
     {
-        private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
-        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(),
-            URNIgnoreCaseEqualityComparer.Default);
-        private readonly Dictionary<URN, IEmote> emotes = new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
-        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(),
-            URNIgnoreCaseEqualityComparer.Default);
+        private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys =
+            new ();
+
+        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary =
+            new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
+
+        private readonly Dictionary<URN, IEmote> emotes =
+            new (new Dictionary<URN, IEmote>(), URNIgnoreCaseEqualityComparer.Default);
 
         public bool TryGetEmote(URN urn, out IEmote emote)
         {
@@ -54,25 +55,6 @@ namespace DCL.AvatarRendering.Emotes
                 cacheKeysDictionary.Remove(urn);
                 listedCacheKeys.Remove(node);
             }
-        }
-
-        public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
-        {
-            if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
-            {
-                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
-                    URNIgnoreCaseEqualityComparer.Default);
-                ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
-            }
-
-            ownedWearableRegistry[entry.Urn] = entry;
-        }
-
-        public bool TryGetOwnedNftRegistry(URN nftUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry> registry)
-        {
-            bool result = ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> r);
-            registry = r;
-            return result;
         }
 
         private IEmote AddEmote(URN urn, IEmote wearable, bool qualifiedForUnloading)

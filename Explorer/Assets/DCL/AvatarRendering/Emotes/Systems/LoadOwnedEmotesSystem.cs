@@ -2,11 +2,11 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AvatarRendering.Emotes.OwnedNfts;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.WebRequests;
-using ECS;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
@@ -20,20 +20,21 @@ namespace DCL.AvatarRendering.Emotes
     [LogCategory(ReportCategory.EMOTE)]
     public partial class LoadOwnedEmotesSystem : LoadSystemBase<EmotesResolution, GetOwnedEmotesFromRealmIntention>
     {
-        private readonly IRealmData realmData;
         private readonly IEmoteCache emoteCache;
+        private readonly IOwnedNftHub ownedNftHub;
         private readonly IWebRequestController webRequestController;
 
         public LoadOwnedEmotesSystem(
             World world,
-            IRealmData realmData,
             IWebRequestController webRequestController,
             IStreamableCache<EmotesResolution, GetOwnedEmotesFromRealmIntention> cache,
-            IEmoteCache emoteCache)
+            IEmoteCache emoteCache,
+            IOwnedNftHub ownedNftHub
+        )
             : base(world, cache)
         {
-            this.realmData = realmData;
             this.emoteCache = emoteCache;
+            this.ownedNftHub = ownedNftHub;
             this.webRequestController = webRequestController;
         }
 
@@ -42,8 +43,8 @@ namespace DCL.AvatarRendering.Emotes
         {
             LambdaOwnedEmoteElementList lambdaResponse =
                 await webRequestController.GetAsync(new CommonArguments(intention.CommonArguments.URL, attemptsCount: intention.CommonArguments.Attempts),
-                        ct, GetReportCategory())
-                   .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
+                                               ct, GetReportCategory())
+                                          .CreateFromJson<LambdaOwnedEmoteElementList>(WRJsonParser.Unity);
 
             // The following logic is not thread-safe!
             // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
@@ -68,12 +69,13 @@ namespace DCL.AvatarRendering.Emotes
                     long.TryParse(individualData.transferredAt, out long transferredAt);
                     decimal.TryParse(individualData.price, out decimal price);
 
-                    emoteCache.SetOwnedNft(emoteDto.metadata.id,
+                    ownedNftHub.SetOwnedNft(emoteDto.metadata.id,
                         new NftBlockchainOperationEntry(individualData.id,
                             individualData.tokenId,
                             DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
+
                 emotes[i] = emote;
             }
 

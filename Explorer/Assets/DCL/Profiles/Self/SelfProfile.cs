@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
+using DCL.AvatarRendering.Emotes.OwnedNfts;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Equipped;
@@ -23,7 +24,7 @@ namespace DCL.Profiles.Self
         private readonly IEquippedWearables equippedWearables;
         private readonly IWearableCatalog wearableCatalog;
         private readonly IEquippedEmotes equippedEmotes;
-        private readonly IEmoteCache emoteCache;
+        private readonly IOwnedNftHub ownedNftHub;
         private readonly IReadOnlyList<string> forceRender;
         private readonly ProfileBuilder profileBuilder = new ();
 
@@ -32,7 +33,7 @@ namespace DCL.Profiles.Self
             IWeb3IdentityCache web3IdentityCache,
             IEquippedWearables equippedWearables,
             IWearableCatalog wearableCatalog,
-            IEmoteCache emoteCache,
+            IOwnedNftHub ownedNftHub,
             IEquippedEmotes equippedEmotes,
             IReadOnlyList<string> forceRender
         )
@@ -41,7 +42,7 @@ namespace DCL.Profiles.Self
             this.web3IdentityCache = web3IdentityCache;
             this.equippedWearables = equippedWearables;
             this.wearableCatalog = wearableCatalog;
-            this.emoteCache = emoteCache;
+            this.ownedNftHub = ownedNftHub;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
         }
@@ -76,7 +77,7 @@ namespace DCL.Profiles.Self
             uniqueWearables = uniqueWearables.EnsureNotNull();
             ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
 
-            var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
+            var uniqueEmotes = new URN[profile.Avatar.Emotes.Count];
             ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
@@ -87,7 +88,7 @@ namespace DCL.Profiles.Self
                                            .WithColors(equippedWearables.GetColors())
                                            .WithEmotes(uniqueEmotes)
                                            .WithForceRender(forceRender)
-                                           .WithVersion(profile!.Version + 1)
+                                           .WithVersion(profile.Version + 1)
                                            .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
@@ -143,8 +144,8 @@ namespace DCL.Profiles.Self
 
                 if (!uniqueUrn.IsExtended())
                 {
-                    if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
+                    if (ownedNftHub.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                        uniqueUrn = registry!.First().Value.Urn;
                     else
                     {
                         foreach (URN urn in profile?.Avatar.Emotes ?? Array.Empty<URN>())

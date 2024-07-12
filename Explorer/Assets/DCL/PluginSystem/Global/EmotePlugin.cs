@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
+using DCL.AvatarRendering.Emotes.OwnedNfts;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
 using DCL.DebugUtilities;
@@ -31,6 +32,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IWebRequestController webRequestController;
         private readonly IEmoteCache emoteCache;
+        private readonly IOwnedNftHub ownedNftHub;
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
         private readonly IDebugContainerBuilder debugBuilder;
@@ -47,6 +49,7 @@ namespace DCL.PluginSystem.Global
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteCache emoteCache,
+            IOwnedNftHub ownedNftHub,
             IRealmData realmData,
             IEmotesMessageBus messageBus,
             IDebugContainerBuilder debugBuilder,
@@ -69,6 +72,7 @@ namespace DCL.PluginSystem.Global
             this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
+            this.ownedNftHub = ownedNftHub;
             this.realmData = realmData;
 
             audioClipsCache = new AudioClipsCache();
@@ -93,9 +97,12 @@ namespace DCL.PluginSystem.Global
                 emoteCache, realmData,
                 customStreamingSubdirectory);
 
-            LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
+            LoadOwnedEmotesSystem.InjectToWorld(ref builder,
+                webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteCache);
+                emoteCache,
+                ownedNftHub
+            );
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 
