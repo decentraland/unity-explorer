@@ -51,10 +51,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            var component = new AvatarAttachComponent
-            {
-                anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId),
-            };
+            AvatarAttachComponent component = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
 
             ApplyAnchorPointTransformValues(transformComponent, component);
             transformComponent.UpdateCache();
@@ -68,7 +65,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             if (!sceneStateProvider.IsCurrent) return;
 
             if (pbAvatarAttach.IsDirty)
-                avatarAttachComponent.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
+                avatarAttachComponent = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
 
             if (ApplyAnchorPointTransformValues(transformComponent, avatarAttachComponent))
                 transformComponent.UpdateCache();
@@ -86,12 +83,14 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             FinalizeComponentsQuery(World);
         }
 
-private Transform GetAnchorPointTransform(AvatarAnchorPointType anchorPointType)
+        private AvatarAttachComponent GetAnchorPointTransform(AvatarAnchorPointType anchorPointType)
 {
+    const float OLD_CLIENT_PIVOT_CORRECTION = -0.75f;
+
     switch (anchorPointType)
     {
         case AvatarAnchorPointType.AaptPosition:
-            return mainPlayerAvatarBaseProxy.Object!.transform;
+            return new AvatarAttachComponent(mainPlayerAvatarBaseProxy.Object!.transform, OLD_CLIENT_PIVOT_CORRECTION);
         case AvatarAnchorPointType.AaptNameTag:
             return mainPlayerAvatarBaseProxy.Object!.NameTagAnchorPoint;
         case AvatarAnchorPointType.AaptHead:
@@ -149,8 +148,8 @@ private Transform GetAnchorPointTransform(AvatarAnchorPointType anchorPointType)
 
         private bool ApplyAnchorPointTransformValues(TransformComponent targetTransform, AvatarAttachComponent avatarAttachComponent)
         {
-            Vector3 anchorPointPosition = avatarAttachComponent.anchorPointTransform.position;
-            Quaternion anchorPointRotation = avatarAttachComponent.anchorPointTransform.rotation;
+            Vector3 anchorPointPosition = avatarAttachComponent.AnchorPointTransform.position + (avatarAttachComponent.PivotCorrection * Vector3.up);
+            Quaternion anchorPointRotation = avatarAttachComponent.AnchorPointTransform.rotation;
             var modifiedComponent = false;
 
             if (anchorPointPosition != targetTransform.Cached.WorldPosition)
