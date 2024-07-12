@@ -19,6 +19,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
         [SerializeField] public List<AnalyticsGroup> groups;
+        [SerializeField] private bool localEnvVariableFallback;
 
         [SerializeField]
         [Tooltip("This parameter specifies the maximum number of messages to be queued before they are flushed (i.e., sent to the server). "
@@ -30,7 +31,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                  + "Even if the queue does not reach the flushSize limit, messages will still be sent after this interval has passed.")]
         private int flushInterval = 30;
 
-        [SerializeField, HideInInspector]
+        [SerializeField] [HideInInspector]
         private string segmentWriteKey;
 
         private Configuration segmentConfiguration;
@@ -63,11 +64,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private bool TryGetWriteKeyLocally()
         {
-            ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
-            // segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
-            //
-            // if (!string.IsNullOrEmpty(segmentWriteKey))
-            //     return true;
+            if (localEnvVariableFallback)
+            {
+                ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
+                segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
+
+                if (!string.IsNullOrEmpty(segmentWriteKey))
+                    return true;
+            }
 
             ReportHub.LogWarning(ReportCategory.ANALYTICS, $"{SEGMENT_WRITE_KEY} environment variable is not set.");
             return false;
@@ -75,10 +79,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private bool TryCreateSegmentConfiguration(out Configuration configuration)
         {
-            try
-            {
-                segmentConfiguration = new Configuration(segmentWriteKey, new SegmentErrorHandler(), flushSize, flushInterval);
-            }
+            try { segmentConfiguration = new Configuration(segmentWriteKey, new SegmentErrorHandler(), flushSize, flushInterval); }
             catch (Exception e)
             {
                 ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Cannot create Segment configuration with provided write key (incorrect key?). Exception {e.Message}.");
