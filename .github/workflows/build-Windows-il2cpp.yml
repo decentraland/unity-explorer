@@ -1,4 +1,4 @@
-name: Unity Windows Build IL2CPP
+name: Unity Mac Build IL2CPP
 
 on:
   workflow_dispatch:
@@ -11,11 +11,8 @@ on:
         description: 'Set to true, deep profiling will also be enabled'
         required: false
         default: 'false'
-
+  
 env:
-  UNITY_LICENSE: ${{ secrets.UNITY_PERSONAL_LICENSE }}
-  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
   SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
 
@@ -25,36 +22,39 @@ concurrency:
 
 jobs:
   build:
-    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event.pull_request.draft == false) || (github.event.label.name == 'force-build')
     strategy:
       max-parallel: 1
       matrix:
         include:
-          - targetPlatform: StandaloneWindows64
+          - targetPlatform: StandaloneOSX
+            dockerImage: macos-latest-xl
 
     name: Build
-    runs-on: bigwin2022
-    timeout-minutes: 120
+    runs-on: ${{ matrix.dockerImage }}
     steps:
+      - name: Install PowerShell
+        run: brew install powershell
       
       - name: Set SHA env variable
+        shell: pwsh
         run: |
-          $eventName = "${{ github.event_name }}"
-          
-          if ($eventName -eq "push") {
-              $LONG_SHA = "${{ github.sha }}"
-              $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
-              Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
-              Write-Output $SHORT_SHA
-          }
-          elseif ($eventName -eq "pull_request") {
-              $LONG_SHA = "${{ github.event.pull_request.head.sha }}"
-              $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
-              Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
-              Write-Output $SHORT_SHA
-          }
+            $eventName = "${{ github.event_name }}"
 
+            if ($eventName -eq "push") {
+                $LONG_SHA = "${{ github.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
+            elseif ($eventName -eq "pull_request") {
+                $LONG_SHA = "${{ github.event.pull_request.head.sha }}"
+                $SHORT_SHA = ($LONG_SHA).Substring(0, 7)
+                Add-Content -Value "CUSTOM_SHA=$SHORT_SHA" -Path $env:GITHUB_ENV
+                Write-Output $SHORT_SHA
+            }
+          
       - name: Set sentry env var
+        shell: pwsh
         run: |
           $branchName = "${{ github.ref }}"
           $SENTRY_ENVIRONMENT = "branch"
@@ -67,8 +67,9 @@ jobs:
           
           Add-Content -Value "SENTRY_ENVIRONMENT=$SENTRY_ENVIRONMENT" -Path $env:GITHUB_ENV
           Write-Output $SENTRY_ENVIRONMENT
-
+          
       - name: Enable or disable the upload of sentry debug symbols
+        shell: pwsh
         run: |
           $branchName = "${{ github.ref }}"
           $uploadSymbols = "false"
@@ -77,17 +78,12 @@ jobs:
           }
           Add-Content -Value "SENTRY_UPLOAD_DEBUG_SYMBOLS=$uploadSymbols" -Path $env:GITHUB_ENV
           Write-Output $uploadSymbols
-
+            
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          
-      - name: Extract branch name
-        shell: bash
-        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-        id: extract_branch
-
+        
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
 
@@ -103,7 +99,7 @@ jobs:
           git lfs pull
           git add .
           git reset --hard
-          
+
       - name: Create Version
         id: create-version
         run: | 
@@ -134,18 +130,17 @@ jobs:
           Write-Output "Version: $semVer"
           Write-Output "version=$($semVer)" >> $env:GITHUB_OUTPUT
         shell: pwsh
-          
+
       - name: 'Using Version'
         run: |
           Write-Output "Version: ${{ steps.create-version.outputs.version }}"
           Write-Output "Version: ($env:SELECTED_COLOR)"
-          
         shell: pwsh
-      
+
       - name: Restore Library cache
         uses: actions/cache@v3
         with:
-          path: |
+          path: | 
             Explorer/Library
             !Explorer/Library/Bee/**
             !Explorer/Library/BuildPlayerData/**
@@ -158,93 +153,93 @@ jobs:
 
       - name: 'Add GitHub to the SSH known hosts file'
         run: |
-          $sshPath = "$env:USERPROFILE\.ssh"
-          if (-not (Test-Path -Path $sshPath)) {
-            New-Item -Path $sshPath -ItemType Directory
-          }
-          
-          $knownHostsPath = Join-Path $sshPath 'known_hosts'
-          
-          # Download GitHub public keys and append them to the known_hosts file
-          (Invoke-WebRequest -Uri 'https://api.github.com/meta' | ConvertFrom-Json).ssh_keys | ForEach-Object {
-            Add-Content -Path $knownHostsPath -Value ("github.com " + $_)
-          }
-        
-          # Set proper permissions on the known_hosts file
-          attrib.exe +R +H $knownHostsPath
-          
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
       - name: Manage custom input parameters
         run: |
-          $profileEnabled = "${{ github.event.inputs.profile }}"
-          $deepProfileEnabled = "${{ github.event.inputs.deep_profile }}"
+          profileEnabled="${{ github.event.inputs.profile }}"
+          deepProfileEnabled="${{ github.event.inputs.deep_profile }}"
           
-          if ($profileEnabled -eq 'true') {
-            $profilingParam = '-profile'
-          } else {
-            $profilingParam = ''
-          }
-
-          if ($deepProfileEnabled -eq 'true') {
-            $deepProfilingParam = '-deepProfile'
-          } else {
-            $deepProfilingParam = ''
-          }
-
-          Add-Content -Value "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" -Path $env:GITHUB_ENV
-          Write-Output "Profiling parameters: $profilingParam $deepProfilingParam"
+          profilingParam=""
+          deepProfilingParam=""
           
+          if [ "$profileEnabled" = "true" ]; then
+            profilingParam="-profile"
+          fi
+
+          if [ "$deepProfileEnabled" = "true" ]; then
+            deepProfilingParam="-deepProfile"
+          fi
+
+          echo "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" >> $GITHUB_ENV
+          echo "Profiling parameters: $profilingParam $deepProfilingParam"
+
       - name: Clone Packages To Use Locally
         run: |
-              # Clone the repository
-              git clone git@github.com:decentraland/unity-explorer-packages.git
-              
-              # Display message
-              Write-Host "Editing package manifest"
-              
-              # Specify the path to the manifest.json file
-              $jsonFilePath = "Explorer\Packages\manifest.json"
-              
-              # Replace the first string in manifest.json
-              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedGrassShader', 'file:../../unity-explorer-packages/StylizedGrassShader' | Set-Content -Path $jsonFilePath
-              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/StylizedWater2', 'file:../../unity-explorer-packages/StylizedWater2' | Set-Content -Path $jsonFilePath
-              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/AVProVideo', 'file:../../unity-explorer-packages/AVProVideo' | Set-Content -Path $jsonFilePath
-              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SuperScrollView', 'file:../../unity-explorer-packages/SuperScrollView' | Set-Content -Path $jsonFilePath
-              (Get-Content -Path $jsonFilePath -Raw) -replace 'git@github.com:decentraland/unity-explorer-packages.git\?path=/SoftMask', 'file:../../unity-explorer-packages/SoftMask' | Set-Content -Path $jsonFilePath
+          # Clone the repository
+          git clone git@github.com:decentraland/unity-explorer-packages.git
           
-              # Display the content of manifest.json
-              Get-Content -Path $jsonFilePath
+          # Display message
+          echo "Editing package manifest"
+          
+          # Specify the path to the manifest.json file
+          jsonFilePath="Explorer/Packages/manifest.json"
+          
+          # Replace the strings in manifest.json
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask|file:../../unity-explorer-packages/SoftMask|g' $jsonFilePath
+          
+          # Display the content of manifest.json
+          cat $jsonFilePath
+          
+          # Display list of files
+          ls
 
-              # Display list of files
-              ls
-
-      - uses: game-ci/unity-builder@v4.2.3
+      - uses: decentraland/unity-builder@0.9
         id: build
         timeout-minutes: 120
+        env:
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          buildMethod: Editor.BuildScript.Build
           projectPath: Explorer
-          buildTimeout: 120
           targetPlatform: ${{ matrix.targetPlatform }}
+          buildMethod: Editor.BuildScript.Build
           buildName: Decentraland
           versioning: Custom
           version: ${{ steps.create-version.outputs.version }}
           customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }} -segmentWriteKey ${{ secrets.SEGMENT_WRITE_KEY }}
           sshAgent: ${{ env.SSH_AUTH_SOCK }}
           allowDirtyBuild: true
-
+          
+      # Tar build files to maintain file permissions
+      - name: Tar MacOSX/Linux build files
+        run: |
+          echo 1. go into build dir
+          cd build
+          echo 2. delete unnecessary folder
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BackUpThisFolder_ButDontShipItWithYourGame
+          rm -r  ${{ matrix.targetPlatform }}/StandaloneOSX_BurstDebugInformation_DoNotShip
+          echo 4. tar mac build folder + remove og files
+          sudo tar -cvf "${{ matrix.targetPlatform }}.tar" "${{ matrix.targetPlatform }}"
+          rm -r  ${{ matrix.targetPlatform }}
+          echo 5. go back to src dir
+          cd ..
+          
       # Upload artifact
-      - name: Upload windows artifact
+      - name: Upload mac artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Decentraland
-          path: |
-            build
-            !build/**/*_BackUpThisFolder_ButDontShipItWithYourGame
-            !build/**/*_BurstDebugInformation_DoNotShip
+          name: Build-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}.tar
           if-no-files-found: error
-          
+
       # Upload build report
-      - name: Uploading build report (test)
+      - name: Uploading build report
         uses: actions/upload-artifact@v4
         with:
           name: Build Report
