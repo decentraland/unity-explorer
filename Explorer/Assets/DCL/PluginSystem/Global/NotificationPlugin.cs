@@ -45,6 +45,7 @@ namespace DCL.PluginSystem.Global
         {
             NewNotificationView newNotificationView = (await assetsProvisioner.ProvideMainAssetAsync(settings.NewNotificationView, ct: ct)).Value.GetComponent<NewNotificationView>();
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
+            NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
@@ -53,6 +54,7 @@ namespace DCL.PluginSystem.Global
                         NewNotificationController.CreateLazily(newNotificationView, null),
                         notificationsBusController,
                         notificationIconTypes,
+                        rarityBackgroundMapping,
                         webRequestController);
                 mvcManager.RegisterController(newNotificationController);
             };
@@ -70,6 +72,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
 
             [Serializable]
             public class NewNotificationViewRef : ComponentReference<NewNotificationView>

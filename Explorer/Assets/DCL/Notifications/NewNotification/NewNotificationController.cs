@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Backpack;
 using DCL.Notification.NotificationsBus;
 using DCL.UI;
 using DCL.WebRequests;
@@ -17,7 +18,7 @@ namespace DCL.Notification.NewNotification
 
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
-        //private readonly NftTypeIconSO nftTypeIconSo;
+        private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying = false;
@@ -28,13 +29,13 @@ namespace DCL.Notification.NewNotification
             ViewFactoryMethod viewFactory,
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
-            //NftTypeIconSO nftTypeIconSO,
+            NftTypeIconSO rarityBackgroundMapping,
             IWebRequestController webRequestController
             ) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
-            //nftTypeIconSo = nftTypeIconSO;
+            this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
             notificationsBusController.OnNotificationAdded += QueueNewNotification;
         }
@@ -79,6 +80,7 @@ namespace DCL.Notification.NewNotification
                 viewInstance.NotificationView.HeaderText.text = notification.GetHeader();
                 viewInstance.NotificationView.TitleText.text = notification.GetTitle();
                 viewInstance.NotificationView.NotificationType = notification.Type;
+                ProcessCustomMetadata(notification);
                 if(!string.IsNullOrEmpty(notification.GetThumbnail()))
                     thumbnailImageController.RequestImage(notification.GetThumbnail());
 
@@ -104,7 +106,7 @@ namespace DCL.Notification.NewNotification
             switch (notification.Type)
             {
                 case NotificationType.REWARD_ASSIGNMENT:
-                    //viewInstance.NotificationView.NotificationImageBackground.sprite = nftTypeIconSo.GetTypeImage(((RewardAssignedNotification)notification).Metadata.Rarity);
+                    viewInstance.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(((RewardAssignedNotification)notification).Metadata.Rarity);
                     break;
             }
         }
