@@ -86,6 +86,8 @@ namespace Global.Dynamic
 
         private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig)
         {
+            return new DebugAnalyticsService();
+
             // force segment in release
             if (!Debug.isDebugBuild)
                 return new SegmentAnalyticsService(analyticsConfig);
