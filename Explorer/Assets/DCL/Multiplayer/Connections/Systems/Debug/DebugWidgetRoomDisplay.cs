@@ -16,6 +16,8 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
         private readonly ElementBinding<string> connectionQuality;
         private readonly ElementBinding<string> connectiveState;
 
+        private readonly DebugWidgetVisibilityBinding visibilityBinding = new (false);
+
         public DebugWidgetRoomDisplay(
             string roomName,
             IConnectiveRoom connectiveRoom,
@@ -36,7 +38,7 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
             connectiveState = new ElementBinding<string>(string.Empty);
 
             widgetBuilder
-               .SetVisibilityBinding(new DebugWidgetVisibilityBinding(true))!
+               .SetVisibilityBinding(visibilityBinding)!
                .AddCustomMarker("Room State", stateScene)!
                .AddCustomMarker("Connecting State", connectiveState)!
                .AddCustomMarker("Connection Quality", connectionQuality)!
@@ -71,6 +73,9 @@ namespace DCL.Multiplayer.Connections.Systems.Debug
 
         public void Update()
         {
+            if (visibilityBinding.IsExpanded == false)
+                return;
+
             connectionQuality.SetAndUpdate(room.Room().Participants.LocalParticipant().ConnectionQuality.ToString());
             connectiveState.SetAndUpdate(room.Room().Info.ConnectionState.ToString());
             stateScene.SetAndUpdate(room.CurrentState().ToString());
