@@ -19,7 +19,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         private const string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
 
         [SerializeField] public List<AnalyticsGroup> groups;
-        [SerializeField] private bool localEnvVariableFallback;
+
+        [SerializeField]
+        [Tooltip("If true, the AnalyticsConfiguration will attempt to use the local environment variable as a fallback if the write key is not set.")]
+        private bool useLocalEnvVariableFallback;
 
         [SerializeField]
         [Tooltip("This parameter specifies the maximum number of messages to be queued before they are flushed (i.e., sent to the server). "
@@ -64,7 +67,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         private bool TryGetWriteKeyLocally()
         {
-            if (localEnvVariableFallback)
+            if (useLocalEnvVariableFallback)
             {
                 ReportHub.LogWarning(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
                 segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
