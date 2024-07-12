@@ -108,7 +108,18 @@ namespace DCL.AvatarRendering.Emotes
             IReadOnlyList<URN> wearablesToRequest, int startIndex, int endIndex, List<EmoteDTO> results, CancellationToken ct)
         {
             await UniTask.SwitchToMainThread();
+            string emotePostData = EmotesPostData(wearablesToRequest, startIndex, endIndex);
+            using PoolExtensions.Scope<List<EmoteDTO>> dtoPooledList = DTO_POOL.AutoScope();
 
+            await webRequestController
+                 .PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(emotePostData), ct)
+                 .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
+
+            lock (results) { results.AddRange(dtoPooledList.Value); }
+        }
+
+        private string EmotesPostData(IReadOnlyList<URN> wearablesToRequest, int startIndex, int endIndex)
+        {
             bodyBuilder.Clear();
             bodyBuilder.Append("{\"pointers\":[");
 
@@ -124,13 +135,7 @@ namespace DCL.AvatarRendering.Emotes
             }
 
             bodyBuilder.Append("]}");
-
-            using PoolExtensions.Scope<List<EmoteDTO>> dtoPooledList = DTO_POOL.AutoScope();
-
-            await webRequestController.PostAsync(new CommonArguments(url), GenericPostArguments.CreateJson(bodyBuilder.ToString()), ct)
-                                      .OverwriteFromJsonAsync(dtoPooledList.Value, WRJsonParser.Newtonsoft, WRThreadFlags.SwitchToThreadPool);
-
-            lock (results) { results.AddRange(dtoPooledList.Value); }
+            return bodyBuilder.ToString();
         }
 
         [Query]
@@ -242,7 +247,7 @@ namespace DCL.AvatarRendering.Emotes
             bool isSucceeded = emotesWithResponse == intention.Pointers.Count;
 
             if (isSucceeded)
-                World.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
+                World!.Add(entity, new StreamableResult(new EmotesResolution(resolvedEmotesTmp.ToList(), intention.Pointers.Count)));
 
             ListPool<URN>.Release(missingPointersTmp);
             ListPool<IEmote>.Release(resolvedEmotesTmp);
@@ -254,12 +259,12 @@ namespace DCL.AvatarRendering.Emotes
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
-                promise.ForgetLoading(World);
-                World.Destroy(entity);
+                promise.ForgetLoading(World!);
+                World!.Destroy(entity);
                 return;
             }
 
-            if (promise.SafeTryConsume(World, out StreamableLoadingResult<EmotesDTOList> promiseResult))
+            if (promise.SafeTryConsume(World!, out StreamableLoadingResult<EmotesDTOList> promiseResult))
             {
                 if (!promiseResult.Succeeded)
                 {
@@ -268,16 +273,14 @@ namespace DCL.AvatarRendering.Emotes
                             component.IsLoading = false;
                 }
                 else
-                {
                     foreach (EmoteDTO assetEntity in promiseResult.Asset.Value)
                     {
                         IEmote component = emoteCache.GetOrAddEmoteByDTO(assetEntity);
                         component.Model = new StreamableLoadingResult<EmoteDTO>(assetEntity);
                         component.IsLoading = false;
                     }
-                }
 
-                World.Destroy(entity);
+                World!.Destroy(entity);
             }
         }
 
@@ -324,7 +327,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             AvatarAttachmentDTO.Content[]? content = component.Model.Asset!.content;
 
-            foreach (AvatarAttachmentDTO.Content item in content)
+            foreach (AvatarAttachmentDTO.Content item in content ?? Array.Empty<AvatarAttachmentDTO.Content>())
             {
                 var audioType = item.file.ToAudioType();
 
@@ -337,7 +340,7 @@ namespace DCL.AvatarRendering.Emotes
 
                 // The resolution of the audio promise will be finalized by FinalizeEmoteAssetBundleSystem
                 AudioPromise promise = AudioUtils.CreateAudioClipPromise(World, url.Value, audioType, partitionComponent);
-                World.Create(promise, component, bodyShape);
+                World!.Create(promise, component, bodyShape);
             }
         }
     }
