@@ -285,7 +285,9 @@ namespace Global.Dynamic
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { ChatCommands.GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator) },
+                {
+                    GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator)
+                },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },

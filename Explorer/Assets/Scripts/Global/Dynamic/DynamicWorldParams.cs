@@ -6,6 +6,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using SceneRunner.Debugging;
 using System.Collections.Generic;
+using SceneRunner.Scene;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -42,7 +43,10 @@ namespace Global.Dynamic
     public struct HybridSceneParams
     {
         public bool EnableHybridScene { get; set; }
-        public string HybridSceneID { get; set; }
-        public string HybridSceneContent { get; set; }
+        public HibridSceneContentServer HybridSceneContentServer { get; set; }
+        public Vector2Int StartParcel { get; init; }
+
+        public string World { get; init; }
+
     }
 }

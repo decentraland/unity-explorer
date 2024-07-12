@@ -98,8 +98,7 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = enableLandscape,
                     EnableLOD = enableLOD,
-                    EnableAnalytics = EnableAnalytics,
-                    HybridSceneParams = launchSettings.CreateHybridSceneParams(),
+                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel)
                 },
                 backgroundMusic,
                 ct);
