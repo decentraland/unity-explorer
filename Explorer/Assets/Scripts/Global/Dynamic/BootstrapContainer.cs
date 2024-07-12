@@ -89,18 +89,18 @@ namespace Global.Dynamic
         {
             // Force segment in release
             if (!Debug.isDebugBuild)
-                return TryCreateSegmentAnalyticsWithFallback(analyticsConfig);
+                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig);
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => TryCreateSegmentAnalyticsWithFallback(analyticsConfig),
+                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig),
                        AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
                        AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
         }
 
-        private static IAnalyticsService TryCreateSegmentAnalyticsWithFallback(AnalyticsConfiguration analyticsConfig)
+        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig)
         {
             if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
                 return new SegmentAnalyticsService(segmentConfiguration);
