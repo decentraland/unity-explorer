@@ -123,10 +123,12 @@ namespace DCL.AvatarRendering.Emotes
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
         {
+            const float CUTOFF_LIMIT = 0.2f;
+
             float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
             float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
 
-            bool canEmoteBeCancelled = velocity > 0.2f || verticalVelocity > 0.2f;
+            bool canEmoteBeCancelled = velocity > CUTOFF_LIMIT || verticalVelocity > CUTOFF_LIMIT;
 
             if (!canEmoteBeCancelled) return;
 
