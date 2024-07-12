@@ -4,13 +4,13 @@ namespace DCL.CharacterPreview
 {
     public class CharacterPreviewEventBus
     {
-        public event Action<CharacterPreviewType> OnAnyCharacterPreviewShowEvent;
-        public event Action<CharacterPreviewType> OnAnyCharacterPreviewHideEvent;
+        public event Action<CharacterPreviewControllerBase> OnAnyCharacterPreviewShowEvent;
+        public event Action<CharacterPreviewControllerBase> OnAnyCharacterPreviewHideEvent;
 
-        public void OnAnyCharacterPreviewShow(CharacterPreviewType type) =>
-            OnAnyCharacterPreviewShowEvent?.Invoke(type);
+        public void OnAnyCharacterPreviewShow(CharacterPreviewControllerBase characterPreviewController) =>
+            OnAnyCharacterPreviewShowEvent?.Invoke(characterPreviewController);
 
-        public void OnAnyCharacterPreviewHide(CharacterPreviewType type) =>
-            OnAnyCharacterPreviewHideEvent?.Invoke(type);
+        public void OnAnyCharacterPreviewHide(CharacterPreviewControllerBase characterPreviewController) =>
+            OnAnyCharacterPreviewHideEvent?.Invoke(characterPreviewController);
     }
 }

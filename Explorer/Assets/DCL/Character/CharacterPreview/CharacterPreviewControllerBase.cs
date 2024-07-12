@@ -33,21 +33,18 @@ namespace DCL.CharacterPreview
         private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
         private bool isPreviewPlatformActive;
-        private CharacterPreviewType characterPreviewType;
 
         protected CharacterPreviewControllerBase(
             CharacterPreviewView view,
             ICharacterPreviewFactory previewFactory,
             World world,
             bool isPreviewPlatformActive,
-            CharacterPreviewType characterPreviewType,
             CharacterPreviewEventBus characterPreviewEventBus)
         {
             this.view = view;
             this.previewFactory = previewFactory;
             this.world = world;
             this.isPreviewPlatformActive = isPreviewPlatformActive;
-            this.characterPreviewType = characterPreviewType;
             this.characterPreviewEventBus = characterPreviewEventBus;
 
             if (view.EnableZooming)
@@ -174,7 +171,7 @@ namespace DCL.CharacterPreview
             else if (previewAvatarModel.Initialized) { Initialize(); }
 
             previewController?.SetPreviewPlatformActive(isPreviewPlatformActive);
-            characterPreviewEventBus.OnAnyCharacterPreviewShow(characterPreviewType);
+            characterPreviewEventBus.OnAnyCharacterPreviewShow(this);
         }
 
         public void OnHide()
@@ -187,23 +184,23 @@ namespace DCL.CharacterPreview
                 initialized = false;
             }
 
-            characterPreviewEventBus.OnAnyCharacterPreviewHide(characterPreviewType);
+            characterPreviewEventBus.OnAnyCharacterPreviewHide(this);
         }
 
         // If another character preview is shown, we deactivate the current one in order to avoid rendering issues.
         // We can only have one character preview active at a time.
-        private void OnAnyCharacterPreviewShow(CharacterPreviewType type)
+        private void OnAnyCharacterPreviewShow(CharacterPreviewControllerBase characterPreviewController)
         {
-            if (type == characterPreviewType)
+            if (characterPreviewController == this)
                 return;
 
             previewController?.SetCharacterPreviewAvatarContainerActive(false);
         }
 
         // Once any other character preview is closed, we activate back the current one.
-        private void OnAnyCharacterPreviewHide(CharacterPreviewType type)
+        private void OnAnyCharacterPreviewHide(CharacterPreviewControllerBase characterPreviewController)
         {
-            if (type == characterPreviewType)
+            if (characterPreviewController == this)
                 return;
 
             previewController?.SetCharacterPreviewAvatarContainerActive(true);
