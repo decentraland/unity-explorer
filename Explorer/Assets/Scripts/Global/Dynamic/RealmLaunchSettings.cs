@@ -26,6 +26,8 @@ namespace Global.Dynamic
         [SerializeField] private string customRealm = IRealmNavigator.GOERLI_URL;
         [SerializeField] private string remoteHibridWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] private HibridSceneContentServer remoteHibridSceneContentServer = HibridSceneContentServer.Goerli;
+        [SerializeField] private bool useRemoteAssetsBundles = true;
+
         public Vector2Int TargetScene => targetScene;
 
         public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
@@ -38,7 +40,7 @@ namespace Global.Dynamic
             {
                 return new HybridSceneParams
                 {
-                    StartParcel = startParcel, EnableHybridScene = true, HybridSceneContentServer = remoteHibridSceneContentServer, World = remoteHibridSceneContentServer.Equals(HibridSceneContentServer.World) ? remoteHibridWorld : ""
+                    StartParcel = startParcel, EnableHybridScene = useRemoteAssetsBundles, HybridSceneContentServer = remoteHibridSceneContentServer, World = remoteHibridSceneContentServer.Equals(HibridSceneContentServer.World) ? remoteHibridWorld : ""
                 };
             }
 

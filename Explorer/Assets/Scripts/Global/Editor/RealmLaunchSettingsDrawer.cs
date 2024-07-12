@@ -18,6 +18,7 @@ namespace Global.Editor
         private const string TARGET_WORLD_FIELD_NAME = "targetWorld";
         private const string CUSTOM_REALM_FIELD_NAME = "customRealm";
         private const string REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteHibridSceneContentServer";
+        private const string REMOTE_HIBRID_SCENE_ENABLED = "useRemoteAssetsBundles";
         private const string REMOTE_HIBRID_WORLD_FIELD_NAME = "remoteHibridWorld";
         private const string PREDEFINED_SCENES_FIELD_NAME = "predefinedScenes";
 
@@ -125,25 +126,27 @@ namespace Global.Editor
             {
                 var remoteWorldContentServerProperty = parent.FindPropertyRelative(REMOTE_HIBRID_WORLD_FIELD_NAME);
                 var remoteSceneContentServerProperty = parent.FindPropertyRelative(REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME);
-                
-                EditorGUI.LabelField(position, "Set content server in the dropdown below to fetch asset bundles");
+                var useHibridAssets = parent.FindPropertyRelative(REMOTE_HIBRID_SCENE_ENABLED);
+
+                EditorGUI.PropertyField(position, useHibridAssets);
                 position.y += singleLineHeight;
 
-                EditorGUI.PropertyField(position, remoteSceneContentServerProperty);
-                position.y += singleLineHeight;
-
-                if (remoteSceneContentServerProperty.enumValueIndex == (int)HibridSceneContentServer.World)
+                if (useHibridAssets.boolValue)
                 {
-                    EditorGUI.LabelField(position, "Write down the remote world from where to get the content");
+                    EditorGUI.LabelField(position, "Set content server in the dropdown below to fetch asset bundles");
                     position.y += singleLineHeight;
 
-                    EditorGUI.PropertyField(position, remoteWorldContentServerProperty);
+                    EditorGUI.PropertyField(position, remoteSceneContentServerProperty);
                     position.y += singleLineHeight;
-                }
-                else
-                {
-                    position.y += singleLineHeight;
-                    position.y += singleLineHeight;
+
+                    if (remoteSceneContentServerProperty.enumValueIndex == (int)HibridSceneContentServer.World)
+                    {
+                        EditorGUI.LabelField(position, "Write down the remote world from where to get the content");
+                        position.y += singleLineHeight;
+
+                        EditorGUI.PropertyField(position, remoteWorldContentServerProperty);
+                        position.y += singleLineHeight;
+                    }
                 }
             }
 
@@ -243,7 +246,16 @@ namespace Global.Editor
             switch (initialRealmValue)
             {
                 case InitialRealm.Localhost:
-                    fieldsCount += 4;
+                    int fieldToAdd = 1;
+                    if (property.FindPropertyRelative(REMOTE_HIBRID_SCENE_ENABLED).boolValue)
+                    {
+                        fieldToAdd += 2;
+                        var remoteSceneContentServerProperty = property.FindPropertyRelative(REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME);
+                        if (remoteSceneContentServerProperty.enumValueIndex == (int)HibridSceneContentServer.World)
+                            fieldToAdd += 2;
+                    }
+
+                    fieldsCount += fieldToAdd;
                     break;
                 case InitialRealm.World:
                 case InitialRealm.Custom:
