@@ -52,10 +52,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 if (string.IsNullOrEmpty(segmentWriteKey))
                 {
                     ReportHub.LogError(ReportCategory.ANALYTICS, "Segment Write Key is not set. Fall down to local environment variable.");
-                    segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
-
-                    if (string.IsNullOrEmpty(segmentWriteKey))
-                        throw new InvalidOperationException($"{SEGMENT_WRITE_KEY} environment variable is not set.");
+                    // segmentWriteKey = Environment.GetEnvironmentVariable(SEGMENT_WRITE_KEY);
+                    //
+                    // if (string.IsNullOrEmpty(segmentWriteKey))
+                    //     throw new InvalidOperationException($"{SEGMENT_WRITE_KEY} environment variable is not set.");
                 }
 
                 return segmentWriteKey;
