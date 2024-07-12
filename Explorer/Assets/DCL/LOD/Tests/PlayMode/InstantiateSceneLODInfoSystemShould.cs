@@ -133,7 +133,7 @@ namespace DCL.LOD.Tests
         private (AssetBundleData, Promise) GenerateLODPromise()
         {
             var promise = Promise.Create(world,
-                GetAssetBundleIntention.FromName("Cube"),
+                GetAssetBundleIntention.FromHash(typeof(GameObject),"Cube"),
                 new PartitionComponent());
 
             var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),

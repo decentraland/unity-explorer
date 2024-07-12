@@ -1,6 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
-using JetBrains.Annotations;
-using UnityEngine.Assertions;
+using System;
+using System.Runtime.CompilerServices;
 
 namespace ECS.StreamableLoading.Common.Components
 {
@@ -37,24 +37,67 @@ namespace ECS.StreamableLoading.Common.Components
             Finished,
         }
 
-        public Status Value;
+        public Status Value { get; private set; }
 
         /// <summary>
         ///     Budget is not null if Status is Allowed or InProgress
         /// </summary>
-        [CanBeNull]
-        public IAcquiredBudget AcquiredBudget { get; private set; }
+        public IAcquiredBudget? AcquiredBudget { get; private set; }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetAllowed(IAcquiredBudget budget)
         {
             AcquiredBudget = budget;
             Value = Status.Allowed;
         }
 
-        public void DisposeBudget()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Forbid()
         {
-            Assert.IsNotNull(AcquiredBudget);
-            AcquiredBudget.Dispose();
+#if UNITY_EDITOR
+            if (Value is Status.Finished)
+                throw new InvalidOperationException();
+#endif
+            Value = Status.Forbidden;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void StartProgress()
+        {
+#if UNITY_EDITOR
+            if (Value is not Status.Allowed)
+                throw new InvalidOperationException();
+#endif
+            Value = Status.InProgress;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Finish()
+        {
+#if UNITY_EDITOR
+            if (Value is not Status.InProgress)
+                throw new InvalidOperationException();
+#endif
+            Value = Status.Finished;
+        }
+
+        /// <summary>
+        ///     Indicate that it should be reevaluated
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RequestReevaluate()
+        {
+#if UNITY_EDITOR
+            if (Value is not Status.InProgress)
+                throw new InvalidOperationException();
+#endif
+            Value = Status.NotStarted;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void DisposeBudgetIfExists()
+        {
+            AcquiredBudget?.Dispose();
             AcquiredBudget = null;
         }
     }

@@ -489,11 +489,12 @@ MonoBehaviour:
     <Vector2IntField>k__BackingField: {fileID: 9197481963319205126, guid: 9b80a9e15429ecd489572a5de9918603, type: 3}
     <Vector3Field>k__BackingField: {fileID: 0}
     <DropdownField>k__BackingField: {fileID: 9197481963319205126, guid: 63de32c36b8356d42bb93522421d6379, type: 3}
-  showSplash: 1
-  showAuthentication: 1
-  showLoading: 1
-  enableLandscape: 1
-  enableLOD: 1
+  debugSettings:
+    showSplash: 1
+    showAuthentication: 1
+    showLoading: 1
+    enableLandscape: 1
+    enableLOD: 1
   globalPluginSettingsContainer: {fileID: 11400000, guid: 7575a56449e4af444b9c13267319c95d, type: 2}
   scenePluginSettingsContainer: {fileID: 11400000, guid: 52a2a6abe420a8b4db9dc55df4b42e92, type: 2}
   uiToolkitRoot: {fileID: 1901323878}
@@ -533,6 +534,11 @@ MonoBehaviour:
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
+      <PinMarker>k__BackingField:
+        m_AssetGUID: e7d14406516774d91886b6b4d1a26a58
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
       <SceneOfInterestMarker>k__BackingField:
         m_AssetGUID: 1f557ed079be146f9aeb090104c115c9
         m_SubObjectName: 
@@ -545,32 +551,6 @@ MonoBehaviour:
         m_EditorAssetChanged: 0
       <UserMarker>k__BackingField:
         m_AssetGUID: 53b70d09c4a814878a30c68582ad4523
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-    <BackpackSettings>k__BackingField:
-      <CategoryIconsMapping>k__BackingField:
-        m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityBackgroundsMapping>k__BackingField:
-        m_AssetGUID: 04a7ffcd277754f7c91237894604f522
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityInfoPanelBackgroundsMapping>k__BackingField:
-        m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <RarityColorMappings>k__BackingField:
-        m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
-        m_SubObjectName: 
-        m_SubObjectType: 
-        m_EditorAssetChanged: 0
-      <PageButtonView>k__BackingField:
-        m_AssetGUID: 37fc70977aa8e4023aadf578a73db58b
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0

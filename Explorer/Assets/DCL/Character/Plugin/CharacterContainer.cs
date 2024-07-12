@@ -28,11 +28,13 @@ namespace DCL.Character.Plugin
     ///     Character container is isolated to provide access
     ///     to Character/Player related assets and settings only
     /// </summary>
-    public class CharacterContainer : IDCLPlugin<CharacterContainer.Settings>
+    public class CharacterContainer : DCLGlobalContainer<CharacterContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IExposedCameraData exposedCameraData;
-        private readonly ExposedTransform transform;
+
+        public readonly ExposedTransform Transform;
+
         private byte bucketPropagationLimit;
 
         private ProvidedInstance<CharacterObject> characterObject;
@@ -42,7 +44,7 @@ namespace DCL.Character.Plugin
             this.assetsProvisioner = assetsProvisioner;
             this.exposedCameraData = exposedCameraData;
 
-            transform = exposedPlayerTransform;
+            Transform = exposedPlayerTransform;
         }
 
         /// <summary>
@@ -50,12 +52,12 @@ namespace DCL.Character.Plugin
         /// </summary>
         public ICharacterObject CharacterObject => characterObject.Value;
 
-        public void Dispose()
+        public override void Dispose()
         {
             characterObject.Dispose();
         }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
             characterObject = await assetsProvisioner.ProvideInstanceAsync(
                 settings.CharacterObject,
@@ -69,10 +71,10 @@ namespace DCL.Character.Plugin
         }
 
         public WorldPlugin CreateWorldPlugin(IComponentPoolsRegistry componentPoolsRegistry) =>
-            new (transform, exposedCameraData, componentPoolsRegistry, bucketPropagationLimit);
+            new (Transform, exposedCameraData, componentPoolsRegistry, bucketPropagationLimit);
 
         public GlobalPlugin CreateGlobalPlugin() =>
-            new (transform);
+            new (Transform);
 
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
@@ -121,7 +123,7 @@ namespace DCL.Character.Plugin
                     exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
-                    sharedDependencies.ScenePartition, bucketPropagationLimit);
+                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Camera);
             }
         }
 

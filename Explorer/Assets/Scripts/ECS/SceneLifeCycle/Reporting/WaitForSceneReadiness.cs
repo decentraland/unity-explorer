@@ -15,7 +15,7 @@ namespace ECS.SceneLifeCycle.Reporting
 
     public class WaitForSceneReadiness
     {
-        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
+        public static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
         private readonly Vector2Int parcel;
         private readonly AsyncLoadProcessReport loadProcessReport;
