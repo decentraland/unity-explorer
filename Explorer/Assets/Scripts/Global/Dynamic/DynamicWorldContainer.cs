@@ -279,6 +279,8 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CharacterObject
             );
 
+            dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
+
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();
 
