@@ -67,6 +67,8 @@ namespace Editor
 
             if (config != null)
             {
+                Debug.Log($"[SEGMENT]: write key lenght {segmentWriteKey.Length}");
+
                 config.SetWriteKey(segmentWriteKey);
                 EditorUtility.SetDirty(config);
                 AssetDatabase.SaveAssetIfDirty(config);
