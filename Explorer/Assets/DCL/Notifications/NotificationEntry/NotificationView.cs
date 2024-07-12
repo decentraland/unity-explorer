@@ -1,12 +1,17 @@
 using DCL.UI;
+using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DCL.Notification.NotificationEntry
 {
-    public class NotificationView : MonoBehaviour
+    public class NotificationView : MonoBehaviour, IPointerClickHandler
     {
+        public event Action<NotificationType> OnNotificationClicked;
+        public NotificationType NotificationType { get; set; }
+
         [field: SerializeField]
         public Button CloseButton { get; private set; }
 
@@ -27,5 +32,10 @@ namespace DCL.Notification.NotificationEntry
 
         [field: SerializeField]
         public Image NotificationTypeImage { get; private set; }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            OnNotificationClicked?.Invoke(NotificationType);
+        }
     }
 }

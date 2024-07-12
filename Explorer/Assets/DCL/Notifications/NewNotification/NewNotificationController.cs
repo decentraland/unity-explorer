@@ -7,6 +7,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace DCL.Notification.NewNotification
 {
@@ -21,6 +22,7 @@ namespace DCL.Notification.NewNotification
         private readonly Queue<INotification> notificationQueue = new ();
         private bool isDisplaying = false;
         private ImageController thumbnailImageController;
+        private CancellationTokenSource cts;
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
@@ -40,6 +42,19 @@ namespace DCL.Notification.NewNotification
         protected override void OnViewInstantiated()
         {
             thumbnailImageController = new ImageController(viewInstance.NotificationView.NotificationImage, webRequestController);
+            viewInstance.NotificationView.OnNotificationClicked += ClickedOnNotification;
+            viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
+        }
+
+        private void StopAnimation()
+        {
+            cts.SafeCancelAndDispose();
+        }
+
+        private void ClickedOnNotification(NotificationType notificationType)
+        {
+            StopAnimation();
+            notificationsBusController.ClickNotification(notificationType);
         }
 
         private void QueueNewNotification(INotification newNotification)
@@ -55,17 +70,31 @@ namespace DCL.Notification.NewNotification
         {
             while (notificationQueue.Count > 0)
             {
+                cts.SafeCancelAndDispose();
+                cts = new CancellationTokenSource();
+                cts.Token.ThrowIfCancellationRequested();
+
                 isDisplaying = true;
                 INotification notification = notificationQueue.Dequeue();
                 viewInstance.NotificationView.HeaderText.text = notification.GetHeader();
                 viewInstance.NotificationView.TitleText.text = notification.GetTitle();
+                viewInstance.NotificationView.NotificationType = notification.Type;
                 if(!string.IsNullOrEmpty(notification.GetThumbnail()))
                     thumbnailImageController.RequestImage(notification.GetThumbnail());
 
                 viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
-                await viewInstance.NotificationViewCanvasGroup.DOFade(1, 0.5f).ToUniTask();
-                await UniTask.Delay(TimeSpan.FromSeconds(3));
-                await viewInstance.NotificationViewCanvasGroup.DOFade(0, 0.5f).ToUniTask();
+                try
+                {
+                    await viewInstance.NotificationViewCanvasGroup.DOFade(1, 0.5f).ToUniTask(cancellationToken: cts.Token);
+                    await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                finally
+                {
+                    await viewInstance.NotificationViewCanvasGroup.DOFade(0, 0.5f).ToUniTask();
+                }
             }
             isDisplaying = false;
         }

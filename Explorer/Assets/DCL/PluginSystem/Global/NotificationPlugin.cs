@@ -27,12 +27,13 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
-            notificationsBusController = new NotificationsBusController();
+            this.notificationsBusController = notificationsBusController;
             notificationsController = new NotificationsController(webRequestController, notificationsBusController, web3IdentityCache);
         }
 
