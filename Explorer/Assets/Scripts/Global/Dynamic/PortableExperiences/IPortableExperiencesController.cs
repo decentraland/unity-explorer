@@ -1,22 +1,15 @@
 ﻿using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using ECS;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Global.Dynamic
+namespace PortableExperiences.Controller
 {
     public interface IPortableExperiencesController
     {
-        GlobalWorld GlobalWorld { get; set; }
         Dictionary<string, Entity> PortableExperienceEntities { get; }
-
-        UniTask CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct);
-
-        /// <summary>
-        ///     Gracefully unload the current realm
-        /// </summary>
+        bool CanKillPortableExperience(string ens);
+        UniTask CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct, bool isGlobalPortableExperience = false);
         UniTask UnloadPortableExperienceAsync(string ens, CancellationToken ct);
     }
 }

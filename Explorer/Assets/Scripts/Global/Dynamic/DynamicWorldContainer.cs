@@ -79,8 +79,6 @@ namespace Global.Dynamic
 
         public IRealmController RealmController { get; private set; } = null!;
 
-        public IPortableExperiencesController PortableExperiencesController { get; private set; } = null!;
-
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
 
         public IReadOnlyList<IDCLGlobalPlugin> GlobalPlugins { get; private set; } = null!;
@@ -218,13 +216,6 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer);
-
-            container.PortableExperiencesController = new PortableExperiencesController(
-                identityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
-                staticContainer.ScenesCache
-                );
-
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 

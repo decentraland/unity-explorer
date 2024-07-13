@@ -12,7 +12,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
@@ -32,6 +31,7 @@ using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -88,7 +88,8 @@ namespace SceneRunner.Tests
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
                 new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
                 Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>());
+                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>(),
+                Substitute.For<IPortableExperiencesController>());
         }
 
         [OneTimeTearDown]

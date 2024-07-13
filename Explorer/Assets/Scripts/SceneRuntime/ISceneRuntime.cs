@@ -5,6 +5,7 @@ using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS.SceneLifeCycle;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
@@ -74,7 +75,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
-            sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesApi);
+            sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesApi, exceptionsHandler);
         }
 
         public static void RegisterAll(this ISceneRuntime sceneRuntime,
@@ -108,7 +109,7 @@ namespace SceneRuntime
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
-            sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesApi);
+            sceneRuntime.RegisterPortableExperiencesApi(portableExperiencesApi, exceptionsHandler);
         }
 
         internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
@@ -185,9 +186,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySDKMessageBusCommsControllerApi", new SDKMessageBusCommsControllerAPIWrapper(api));
         }
 
-        private static void RegisterPortableExperiencesApi(this ISceneRuntime sceneRuntime, IPortableExperiencesApi api)
+        private static void RegisterPortableExperiencesApi(this ISceneRuntime sceneRuntime, IPortableExperiencesApi api, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("UnityPortableExperiencesApi", new PortableExperiencesApiWrapper(api));
+            sceneRuntime.Register("UnityPortableExperiencesApi", new PortableExperiencesApiWrapper(api, sceneExceptionsHandler));
         }
     }
 }

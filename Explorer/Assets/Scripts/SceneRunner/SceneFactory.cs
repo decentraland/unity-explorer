@@ -3,7 +3,6 @@ using CRDT.Serializer;
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.JsModulesImplementation.Communications.SDKMessageBus;
-using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
@@ -18,12 +17,11 @@ using ECS;
 using ECS.Prioritization.Components;
 using Microsoft.ClearScript;
 using MVC;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRuntime;
-using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
-using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Factory;
 using System;
 using System.Threading;
@@ -52,6 +50,7 @@ namespace SceneRunner
         private readonly IMVCManager mvcManager;
         private readonly IRealmData? realmData;
         private readonly ICommunicationControllerHub messagePipesHub;
+        private readonly IPortableExperiencesController portableExperiencesController;
 
         private IGlobalWorldActions globalWorldActions = null!;
 
@@ -70,7 +69,8 @@ namespace SceneRunner
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
-            ICommunicationControllerHub messagePipesHub)
+            ICommunicationControllerHub messagePipesHub,
+            IPortableExperiencesController portableExperiencesController)
         {
             this.ecsWorldFactory = ecsWorldFactory;
             this.sceneRuntimeFactory = sceneRuntimeFactory;
@@ -87,6 +87,7 @@ namespace SceneRunner
             this.roomHub = roomHub;
             this.realmData = realmData;
             this.messagePipesHub = messagePipesHub;
+            this.portableExperiencesController = portableExperiencesController;
         }
 
         public async UniTask<ISceneFacade> CreateSceneFromFileAsync(string jsCodeUrl, IPartitionComponent partitionProvider, CancellationToken ct)
@@ -143,7 +144,7 @@ namespace SceneRunner
         {
             var deps = new SceneInstanceDependencies(sdkComponentsRegistry, entityCollidersGlobalCache, sceneData, partitionProvider, ecsWorldFactory, entityFactory);
 
-            // Try create scene runtime
+            // Try to create scene runtime
             SceneRuntimeImpl sceneRuntime;
 
             try { sceneRuntime = await sceneRuntimeFactory.CreateByPathAsync(deps.SceneCodeUrl, deps.PoolsProvider, sceneData.SceneShortInfo, ct, SceneRuntimeFactory.InstantiationBehavior.SwitchToThreadPool); }
@@ -174,7 +175,7 @@ namespace SceneRunner
                 var sdkCommsControllerAPI = new SDKMessageBusCommsAPIImplementation(sceneData, messagePipesHub, sceneRuntime, deps.SceneStateProvider);
                 sceneRuntime.RegisterSDKMessageBusCommsApi(sdkCommsControllerAPI);
 
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeJsAndSDKObservablesEngineAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, portableExperiencesController);
 
                 sceneRuntime.RegisterAll(
                     (ISDKObservableEventsEngineApi)runtimeDeps.EngineAPI,
@@ -196,7 +197,7 @@ namespace SceneRunner
             }
             else
             {
-                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub);
+                runtimeDeps = new SceneInstanceDependencies.WithRuntimeAndJsAPI(deps, sceneRuntime, sharedPoolsProvider, crdtSerializer, mvcManager, globalWorldActions, realmData!, messagePipesHub, portableExperiencesController);
 
                 sceneRuntime.RegisterAll(
                     runtimeDeps.EngineAPI,
@@ -225,13 +226,11 @@ namespace SceneRunner
                     runtimeDeps
                 );
             }
-            else
-            {
-                return new SceneFacade(
-                    sceneData,
-                    runtimeDeps
-                );
-            }
+
+            return new SceneFacade(
+                sceneData,
+                runtimeDeps
+            );
         }
     }
 }

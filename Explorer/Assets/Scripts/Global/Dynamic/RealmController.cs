@@ -19,9 +19,7 @@ using System.Threading;
 using DCL.LOD.Components;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
-using ECS.SceneLifeCycle.Reporting;
 using Unity.Mathematics;
-using UnityEngine;
 
 namespace Global.Dynamic
 {
@@ -50,6 +48,7 @@ namespace Global.Dynamic
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
             set
             {
                 globalWorld = value;
@@ -90,7 +89,7 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(
@@ -179,6 +178,7 @@ namespace Global.Dynamic
             }
 
             foreach (ISceneFacade scene in allScenes)
+
                 // Scene Info is contained in the ReportData, don't include it into the exception
                 scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
                     static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
@@ -191,7 +191,7 @@ namespace Global.Dynamic
             allScenes.AddRange(scenesCache.PortableExperiencesScenes);
 
             // Dispose all scenes
-            scenesCache.Clear();
+            scenesCache.ClearScenes();
         }
     }
 }
