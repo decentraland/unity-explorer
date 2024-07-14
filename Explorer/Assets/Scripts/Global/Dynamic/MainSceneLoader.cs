@@ -137,10 +137,12 @@ namespace Global.Dynamic
                     return;
                 }
 
+
                 Entity playerEntity;
                 (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
+
                 //TODO: Implement loading this (or more addresses) from Unleash
                 var pxEns = "globalpx.dcl.eth";
                 await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(pxEns, string.Empty, ct, true);

@@ -28,7 +28,7 @@ namespace ECS.SceneLifeCycle
 
         void RemovePortableExperienceFacade(string sceneUrn);
 
-        void ClearScenes();
+        void ClearScenes(bool clearPortableExperiences = false);
     }
 
     public class ScenesCache : IScenesCache
@@ -93,11 +93,11 @@ namespace ECS.SceneLifeCycle
             portableExperienceScenesByUrn.Remove(urn);
         }
 
-        public void ClearScenes()
+        public void ClearScenes(bool clearPortableExperiences)
         {
             scenesByParcels.Clear();
             nonRealSceneByParcel.Clear();
-            portableExperienceScenesByUrn.Clear();
+            if (clearPortableExperiences) portableExperienceScenesByUrn.Clear();
             scenes.Clear();
         }
     }

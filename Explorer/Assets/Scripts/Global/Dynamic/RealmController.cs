@@ -174,7 +174,7 @@ namespace Global.Dynamic
             if (globalWorld != null)
             {
                 World world = globalWorld.EcsWorld;
-                FindLoadedScenes();
+                FindLoadedScenes(true);
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
                 // Destroy everything without awaiting as it's Application Quit
@@ -182,20 +182,19 @@ namespace Global.Dynamic
             }
 
             foreach (ISceneFacade scene in allScenes)
-
                 // Scene Info is contained in the ReportData, don't include it into the exception
                 scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
                     static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
         }
 
-        private void FindLoadedScenes()
+        private void FindLoadedScenes(bool findPortableExperiences = false)
         {
             allScenes.Clear();
             allScenes.AddRange(scenesCache.Scenes);
-            allScenes.AddRange(scenesCache.PortableExperiencesScenes);
+            if (findPortableExperiences) allScenes.AddRange(scenesCache.PortableExperiencesScenes);
 
             // Dispose all scenes
-            scenesCache.ClearScenes();
+            scenesCache.ClearScenes(findPortableExperiences);
         }
     }
 }
