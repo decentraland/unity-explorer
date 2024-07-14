@@ -87,7 +87,8 @@ namespace PortableExperiences.Controller
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
-                result.comms?.adapter ?? string.Empty
+                result.comms?.adapter ?? string.Empty,
+                result.comms?.protocol ?? string.Empty
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
