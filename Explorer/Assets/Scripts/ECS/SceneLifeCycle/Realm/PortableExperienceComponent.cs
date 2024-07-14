@@ -14,9 +14,9 @@ namespace ECS
 
         public PortableExperienceComponent(IRealmData realmData, string parentSceneId, bool isGlobalPortableExperience)
         {
-            this.RealmData = realmData;
-            this.ParentSceneId = parentSceneId;
-            this.IsGlobalPortableExperience = isGlobalPortableExperience;
+            RealmData = realmData;
+            ParentSceneId = parentSceneId;
+            IsGlobalPortableExperience = isGlobalPortableExperience;
         }
     }
 }

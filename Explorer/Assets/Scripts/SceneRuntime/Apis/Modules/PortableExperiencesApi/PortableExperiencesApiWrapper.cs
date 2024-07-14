@@ -1,6 +1,10 @@
 using JetBrains.Annotations;
+using Microsoft.ClearScript.JavaScript;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
+using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
 {
@@ -13,13 +17,29 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
         public PortableExperiencesApiWrapper(IPortableExperiencesApi api, IJavaScriptApiExceptionsHandler exceptionsHandler) : base(api)
         {
             this.api = api;
+            this.exceptionsHandler = exceptionsHandler;
             cancellationTokenSource = new CancellationTokenSource();
         }
 
-        public void Dispose() { }
+        [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
+        public object Spawn(string pid, string ens)
+        {
+            try { return api.SpawnAsync(pid, ens, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+        }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
-        public object Spawn(string pid, string ens) =>
-            api.SpawnAsync(pid, ens, cancellationTokenSource.Token);
+        public object Kill(string pid, string ens)
+        {
+            try { return api.KillAsync(ens, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+        }
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
+        public object Exit()
+        {
+            try { return api.ExitAsync(cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+        }
     }
 }

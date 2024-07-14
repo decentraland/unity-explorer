@@ -97,6 +97,7 @@ namespace ECS.SceneLifeCycle
         {
             scenesByParcels.Clear();
             nonRealSceneByParcel.Clear();
+            portableExperienceScenesByUrn.Clear();
             scenes.Clear();
         }
     }

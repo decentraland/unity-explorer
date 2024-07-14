@@ -233,7 +233,7 @@ namespace SceneRunner
                     new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator, syncDeps.ecsWorldSharedDependencies.SceneStateProvider),
                     syncDeps,
                     sceneRuntime,
-                    new PortableExperiencesApiImplementation(portableExperiencesController)) { }
+                    new PortableExperiencesApiImplementation(portableExperiencesController, syncDeps.sceneData)) { }
 
             public void Dispose()
             {

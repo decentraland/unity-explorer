@@ -66,7 +66,6 @@ namespace Global.Dynamic
         private IWeb3VerifiedAuthenticator? web3Authenticator;
         private DappWeb3Authenticator? web3VerifiedAuthenticator;
 
-
         private void Awake()
         {
             EnsureNotNull();
@@ -259,14 +258,11 @@ namespace Global.Dynamic
 
                 debugUtilitiesContainer.Builder.BuildWithFlex(debugUiRoot);
                 dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
-                //staticContainer.PortableExperiencesContainer.PortableExperiencesController.GlobalWorld = globalWorld;
 
                 await ChangeRealmAsync(ct);
 
-                //Load all the URLS from wherever to create the permanent PXs
-                var pxEns = "NicoE.dcl.eth";
-                await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(pxEns, string.Empty, ct, true);
-                pxEns = "globalpx.dcl.eth";
+                //TODO: Implement loading this (or more addresses) from Unleash
+                var pxEns = "globalpx.dcl.eth";
                 await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(pxEns, string.Empty, ct, true);
 
                 if (showSplash)

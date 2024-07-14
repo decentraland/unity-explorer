@@ -216,6 +216,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer);
+
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 

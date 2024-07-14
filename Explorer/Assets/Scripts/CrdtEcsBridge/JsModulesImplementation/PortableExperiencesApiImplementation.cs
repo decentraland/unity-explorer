@@ -1,7 +1,9 @@
 using Cysharp.Threading.Tasks;
 using PortableExperiences.Controller;
+using SceneRunner.Scene;
 using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 namespace CrdtEcsBridge.PortableExperiencesApi
@@ -9,46 +11,32 @@ namespace CrdtEcsBridge.PortableExperiencesApi
     public class PortableExperiencesApiImplementation : IPortableExperiencesApi
     {
         private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly ISceneData sceneData;
 
-        public PortableExperiencesApiImplementation(IPortableExperiencesController portableExperiencesController)
+        public PortableExperiencesApiImplementation(IPortableExperiencesController portableExperiencesController, ISceneData sceneData)
         {
             this.portableExperiencesController = portableExperiencesController;
+            this.sceneData = sceneData;
         }
 
+        public void Dispose() { }
 
-        public async UniTask<object> SpawnAsync(string pid, string ens, CancellationToken ct)
-        {
+        public async UniTask<IPortableExperiencesApi.SpawnResponse> SpawnAsync(string pid, string ens, CancellationToken ct) =>
             await portableExperiencesController.CreatePortableExperienceAsync(ens, pid, ct);
-            return null;
-        }
 
-        public async UniTask<bool> KillAsync(string ens, CancellationToken ct)
+        public async UniTask<IPortableExperiencesApi.ExitResponse> KillAsync(string ens, CancellationToken ct)
         {
-            if (!portableExperiencesController.CanKillPortableExperience(ens)) return false;
+            if (!portableExperiencesController.CanKillPortableExperience(ens))
+                return new IPortableExperiencesApi.ExitResponse
+                    { status = false };
 
-            await portableExperiencesController.UnloadPortableExperienceAsync(ens, ct);
-
-            return true;
+            return await portableExperiencesController.UnloadPortableExperienceAsync(ens, ct);
         }
 
-        public async UniTask<bool> ExitAsync(string ens, CancellationToken ct)
-        {
-            await portableExperiencesController.UnloadPortableExperienceAsync(ens, ct);
-            return true;
-        }
+        public async UniTask<IPortableExperiencesApi.ExitResponse> ExitAsync(CancellationToken ct) =>
+            await portableExperiencesController.UnloadPortableExperienceAsync(sceneData.SceneEntityDefinition.id, ct);
 
-        public bool GetPortableExperiencesLoadedAsync(CancellationToken ct) =>
-            throw new NotImplementedException();
-
-        public struct SpawnResponse
-        {
-            private string pid;
-            private string parent_cid;
-            private string name;
-            private string ens;
-        }
-
-        public void Dispose()
-        { }
+        public List<IPortableExperiencesApi.SpawnResponse> GetPortableExperiencesLoaded(CancellationToken ct) =>
+            portableExperiencesController.GetAllPortableExperiences();
     }
 }

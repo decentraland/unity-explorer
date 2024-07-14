@@ -13,6 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Utilities.Extensions;
+using SceneRunner.Scene;
+using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using System.Linq;
 using GetSceneDefinition = ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinition;
 
@@ -29,107 +31,118 @@ namespace PortableExperiences.Controller
         private readonly IScenesCache scenesCache;
 
         private readonly RealmData realmData = new ();
-        public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
-        private List<Entity> entitiesToDestroy = new List<Entity>();
 
-        private readonly ObjectProxy<Arch.Core.World> globalWorldProxy;
+        private readonly ObjectProxy<World> globalWorldProxy;
+        private List<Entity> entitiesToDestroy = new ();
+        public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
         private World world => globalWorldProxy.Object;
+        private List<IPortableExperiencesApi.SpawnResponse> spawnResponsesList = new ();
 
         public PortableExperiencesController(
-            ObjectProxy<Arch.Core.World> world,
+            ObjectProxy<World> world,
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             IScenesCache scenesCache)
         {
-            this.globalWorldProxy = world;
+            globalWorldProxy = world;
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
             this.scenesCache = scenesCache;
         }
 
-        public async UniTask CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct, bool isGlobalPortableExperience = false)
+        public async UniTask<IPortableExperiencesApi.SpawnResponse> CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct, bool isGlobalPortableExperience = false)
         {
             //According to kernel implementation, the id value is used as an urn
             //https://github.com/decentraland/unity-renderer/blob/b3b170e404ec43bb8bc08ec1f6072812005ebad3/browser-interface/packages/shared/apis/host/PortableExperiences.ts#L28
-            //And is validated first. As it has no ipfs config, it uses the one f
+            //And is validated first. As it has no ipfs config, it uses the one from the current realm apparently
 
             string worldUrl = string.Empty;
 
             if (!string.IsNullOrEmpty(urn))
             {
-                //TODO: Enable loading PX from urns using current scene realm data
+                //TODO: Enable loading PX from urns using current scene realm data. -> will be done in next iteration.
                 //worldUrl = IpfsHelper.ParseUrn(urn).BaseUrl.Value;
             }
 
-            if (EnsUtils.ValidateEns(ens))
-            {
-                worldUrl = EnsUtils.ConvertEnsToWorldUrl(ens);
-            }
+            if (EnsUtils.ValidateEns(ens)) { worldUrl = EnsUtils.ConvertEnsToWorldUrl(ens); }
 
-            if (!worldUrl.IsValidUrl()) return; //Return with error to the JS side "('Invalid Spawn params. Provide a URN or an ENS name.')"
+            if (!worldUrl.IsValidUrl()) throw new ArgumentException("Invalid Spawn params. Provide a URN or an ENS name");
 
-            URLDomain portableExperiencePath = URLDomain.FromString(worldUrl);
+            var portableExperiencePath = URLDomain.FromString(worldUrl);
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
 
             await UniTask.SwitchToMainThread();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
-            try
+
+            ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
+
+            if (result.configurations.scenesUrn.Count == 0)
             {
-                //in case the url is wrong or any other potential issue with the request
-                ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
-
-                if (result.configurations.scenesUrn.Count == 0)
-                {
-                    //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
-                    return; //TODO: return error "Scene not available"
-                }
-
-                realmData.Reconfigure(
-                    new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
-                    result.configurations.realmName.EnsureNotNull("Realm name not found"),
-                    result.configurations.networkId,
-                    result.comms?.adapter ?? string.Empty
-                );
-
-                var parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
-                PortableExperienceEntities.Add(ens, world.Create(new PortableExperienceComponent(realmData, (parentScene != null? parentScene.Info.Name : "main"), isGlobalPortableExperience)));
+                //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
+                throw new Exception($"Scene not Available in provided Portable Experience with ens:{ens} - urn: {urn}");
             }
-            catch (Exception e)
-            {
-                //TODO: Add proper exception handling
-                //Return with error to the JS side if it fails "Error fetching scene"
-                Console.WriteLine(e);
-                throw;
-            }
+
+            realmData.Reconfigure(
+                new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
+                result.configurations.realmName.EnsureNotNull("Realm name not found"),
+                result.configurations.networkId,
+                result.comms?.adapter ?? string.Empty
+            );
+
+            ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
+            string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
+            Entity portableExperienceEntity = world.Create(new PortableExperienceComponent(realmData, parentSceneName, isGlobalPortableExperience));
+            PortableExperienceEntities.Add(ens, portableExperienceEntity);
+
+            return new IPortableExperiencesApi.SpawnResponse
+                { name = realmData.RealmName, ens = ens, parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
         }
 
         public bool CanKillPortableExperience(string ens)
         {
-            var currentSceneFacade = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
+            ISceneFacade currentSceneFacade = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             if (currentSceneFacade == null) return false;
 
-            if (PortableExperienceEntities.TryGetValue(ens, out var portableExperienceEntity))
+            if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                var portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
+                PortableExperienceComponent portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
                 return portableExperienceComponent.ParentSceneId == currentSceneFacade.Info.Name;
             }
 
             return false;
         }
 
-
-        public async UniTask UnloadPortableExperienceAsync(string ens, CancellationToken ct)
+        public List<IPortableExperiencesApi.SpawnResponse> GetAllPortableExperiences()
         {
-            if (!EnsUtils.ValidateEns(ens)) return; //Return error to JS side
-            //TODO: We need to be able to kill PX using only the urn as well, it will mean some changes to this code.
+            spawnResponsesList.Clear();
+
+            foreach (var portableExperience in PortableExperienceEntities)
+            {
+                PortableExperienceComponent pxComponent = world.Get<PortableExperienceComponent>(portableExperience.Value);
+
+                spawnResponsesList.Add(new IPortableExperiencesApi.SpawnResponse {
+                        name = pxComponent.RealmData.RealmName,
+                        ens = portableExperience.Key,
+                        parent_cid = pxComponent.ParentSceneId,
+                        pid = portableExperience.Value.Id.ToString() });
+            }
+
+            return spawnResponsesList;
+        }
+
+        public async UniTask<IPortableExperiencesApi.ExitResponse> UnloadPortableExperienceAsync(string ens, CancellationToken ct)
+        {
+            if (!EnsUtils.ValidateEns(ens)) throw new ArgumentException($"The provided ens {ens} is invalid");
+
+            //TODO: We need to be able to kill PX using only the urn as well, it will mean some changes to this code, this will be done in the next iteration.
 
             await UniTask.SwitchToMainThread();
 
             //We need to dispose the scene that the PX has created.
-             if (PortableExperienceEntities.TryGetValue(ens, out var portableExperienceEntity))
+            if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                var portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
+                PortableExperienceComponent portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
 
                 //Portable Experiences only have one scene
                 string? sceneUrn = portableExperienceComponent.Ipfs.SceneUrns[0];
@@ -139,11 +152,11 @@ namespace PortableExperiences.Controller
                 {
                     sceneEntityId = IpfsHelper.ParseUrn(sceneUrn).EntityId;
 
-                        if (scenesCache.TryGetPortableExperienceBySceneUrn(sceneEntityId, out var sceneFacade))
-                        {
-                            await sceneFacade.DisposeAsync();
-                            scenesCache.RemovePortableExperienceFacade(sceneEntityId);
-                        }
+                    if (scenesCache.TryGetPortableExperienceBySceneUrn(sceneEntityId, out ISceneFacade sceneFacade))
+                    {
+                        await sceneFacade.DisposeAsync();
+                        scenesCache.RemovePortableExperienceFacade(sceneEntityId);
+                    }
                 }
 
                 // Clear the world from everything connected to the current PX
@@ -155,52 +168,50 @@ namespace PortableExperiences.Controller
                 {
                     GetEntitiesToDestroy(sceneEntityId, GET_SCENE_DEFINITION, CheckGetSceneDefinitions, ref entitiesToDestroy);
                     GetEntitiesToDestroy(sceneEntityId, SCENE_DEFINITION_COMPONENT, CheckSceneDefinitionComponents, ref entitiesToDestroy);
-                    foreach (var entity in entitiesToDestroy)
-                    {
-                        world.Destroy(entity);
-                    }
+
+                    foreach (Entity entity in entitiesToDestroy) { world.Destroy(entity); }
                 }
 
                 world.Destroy(portableExperienceEntity);
                 PortableExperienceEntities.Remove(ens);
-
                 GC.Collect();
+
+                return new IPortableExperiencesApi.ExitResponse
+                    { status = true };
             }
+
+            return new IPortableExperiencesApi.ExitResponse
+                { status = false };
         }
 
         private void GetEntitiesToDestroy(string url, QueryDescription queryDescription, Func<Chunk, string, Entity> iterationFunc, ref List<Entity> entities)
         {
-            var query = world.Query(queryDescription);
+            Query query = world.Query(queryDescription);
 
-            foreach (var chunk in query.GetChunkIterator())
+            foreach (Chunk chunk in query.GetChunkIterator())
             {
                 Entity entity = iterationFunc.Invoke(chunk, url);
-                if ( entity != Entity.Null)
-                {
-                    entities.Add(entity);
-                }
+
+                if (entity != Entity.Null) { entities.Add(entity); }
             }
         }
 
         private Entity CheckGetSceneDefinitions(Chunk chunk, string url)
         {
-            var first = chunk.GetFirst<GetSceneDefinition>();
-            if (first.IpfsPath.EntityId == url)
-            {
-                return chunk.Entity(0);
-            }
+            GetSceneDefinition first = chunk.GetFirst<GetSceneDefinition>();
+
+            if (first.IpfsPath.EntityId == url) { return chunk.Entity(0); }
+
             return Entity.Null;
         }
 
         private Entity CheckSceneDefinitionComponents(Chunk chunk, string url)
         {
-            var first = chunk.GetFirst<SceneDefinitionComponent>();
-            if (first.IpfsPath.EntityId == url)
-            {
-                return chunk.Entity(0);
-            }
+            SceneDefinitionComponent first = chunk.GetFirst<SceneDefinitionComponent>();
+
+            if (first.IpfsPath.EntityId == url) { return chunk.Entity(0); }
+
             return Entity.Null;
         }
-
     }
 }

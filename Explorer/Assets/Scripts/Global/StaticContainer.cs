@@ -196,6 +196,7 @@ namespace Global
             container.PortableExperiencesController = new PortableExperiencesController(container.GlobalWorldProxy, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache);
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
+
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
