@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using DCL.MapRenderer.MapLayers.Pins;
+using UnityEngine;
 
 namespace DCL.MapRenderer.MapCameraController
 {
@@ -16,7 +17,7 @@ namespace DCL.MapRenderer.MapCameraController
         /// <summary>
         /// Returns Parcel corresponding to the given (cursor) position within UI `RawImage`
         /// </summary>
-        bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel);
+        bool TryGetParcel(Vector2 normalizedCoordinates, out Vector2Int parcel, out IPinMarker pinMarker);
 
         Vector2 GetNormalizedPosition(Vector2Int parcel);
     }

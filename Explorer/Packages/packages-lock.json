@@ -87,6 +87,15 @@
       },
       "hash": "e0eba31d549237dbd74c526e40fa90db4befec37"
     },
+    "com.segment.analytics.csharp": {
+      "version": "2.4.2",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.0.2"
+      },
+      "url": "https://package.openupm.com"
+    },
     "com.unity.2d.sprite": {
       "version": "1.0.0",
       "depth": 0,
@@ -219,7 +228,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.rider": {
-      "version": "3.0.28",
+      "version": "3.0.31",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -270,7 +279,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.memoryprofiler": {
-      "version": "1.0.0",
+      "version": "1.1.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -327,8 +336,8 @@
       }
     },
     "com.unity.render-pipelines.universal": {
-      "version": "14.0.10",
-      "depth": 1,
+      "version": "14.0.8",
+      "depth": 0,
       "source": "builtin",
       "dependencies": {
         "com.unity.mathematics": "1.2.1",
@@ -340,7 +349,7 @@
     },
     "com.unity.render-pipelines.universal-config": {
       "version": "14.0.9",
-      "depth": 2,
+      "depth": 1,
       "source": "builtin",
       "dependencies": {
         "com.unity.render-pipelines.core": "14.0.9"

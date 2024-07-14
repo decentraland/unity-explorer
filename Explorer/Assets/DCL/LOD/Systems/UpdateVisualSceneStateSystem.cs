@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using DCL.Diagnostics;
 using DCL.LOD;
 using DCL.LOD.Components;
+using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -25,29 +26,30 @@ namespace ECS.SceneLifeCycle.Systems
         ///     Represents one of the methods in UpdateVisualSceneStateSystem, they should be converted to static ones to avoid closures
         /// </summary>
         private delegate void ContinuationMethod<T>(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref T switchComponent);
-
-        private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
-                                                                           .WithAll<VisualSceneState, PartitionComponent, SceneDefinitionComponent>()
-                                                                           .WithAny<SceneLODInfo, ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>()
-                                                                           .WithNone<DeleteEntityIntention>();
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
         private readonly ILODAssetsPool lodAssetsPool;
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly SceneAssetLock sceneAssetLock;
+        private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
+                                                                           .WithAll<VisualSceneState, PartitionComponent, SceneDefinitionComponent>()
+                                                                           .WithAny<SceneLODInfo, ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>()
+                                                                           .WithNone<DeleteEntityIntention>();
 
         private readonly ContinuationMethod<ISceneFacade> sceneFacadeToLODContinuation;
         private readonly ContinuationMethod<AssetPromise<ISceneFacade, GetSceneFacadeIntention>> scenePromiseToLODContinuation;
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset,
-            VisualSceneStateResolver visualSceneStateResolver) : base(world)
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool,
+            ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.lodAssetsPool = lodAssetsPool;
             this.lodSettingsAsset = lodSettingsAsset;
             this.visualSceneStateResolver = visualSceneStateResolver;
+            this.sceneAssetLock = sceneAssetLock;
             sceneFacadeToLODContinuation = SwapSceneFacadeToLOD;
             scenePromiseToLODContinuation = SwapScenePromiseToLOD;
             sceneLODToScenePromiseContinuation = SwapLODToScenePromise;
@@ -162,7 +164,7 @@ namespace ECS.SceneLifeCycle.Systems
                 var sceneLODInfo = SceneLODInfo.Create();
 
                 //Dispose scene
-                switchComponent.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
+                switchComponent.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, sceneAssetLock);
 
                 visualSceneState.IsDirty = false;
 

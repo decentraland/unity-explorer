@@ -1,11 +1,13 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.LOD.Components;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
+using DCL.Utilities;
+using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
@@ -16,9 +18,6 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD.Components;
-using DCL.Utilities;
-using DCL.Utilities.Extensions;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -41,6 +40,7 @@ namespace Global.Dynamic
         private readonly TeleportController teleportController;
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
+        private readonly SceneAssetLock sceneAssetLock;
 
         private GlobalWorld? globalWorld;
         public Entity RealmEntity { get; private set; }
@@ -65,7 +65,8 @@ namespace Global.Dynamic
             IReadOnlyList<int2> staticLoadPositions,
             RealmData realmData,
             IScenesCache scenesCache,
-            PartitionDataContainer partitionDataContainer)
+            PartitionDataContainer partitionDataContainer,
+            SceneAssetLock sceneAssetLock)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -76,6 +77,7 @@ namespace Global.Dynamic
             this.retrieveSceneFromVolatileWorld = retrieveSceneFromVolatileWorld;
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
+            this.sceneAssetLock = sceneAssetLock;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -96,7 +98,8 @@ namespace Global.Dynamic
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
-                result.comms?.adapter ?? string.Empty
+                result.comms?.adapter ?? string.Empty,
+                result.comms?.protocol ?? string.Empty
             );
 
             // Add the realm component
@@ -160,6 +163,7 @@ namespace Global.Dynamic
             realmData.Invalidate();
 
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+            sceneAssetLock.Reset();
 
             // Collect garbage, good moment to do it
             GC.Collect();

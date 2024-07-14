@@ -14,13 +14,10 @@ namespace ECS.StreamableLoading.AudioClips
         public AudioClip AudioClip { get; }
         public long LastUsedFrame { get; private set; }
 
-        public AudioClipData(AudioClip audioClip, int referencesCount = 1)
+        public AudioClipData(AudioClip audioClip)
         {
             AudioClip = audioClip;
-            this.referencesCount = referencesCount;
             LastUsedFrame = MultithreadingUtility.FrameCount;
-
-            ProfilingCounters.AudioClipsReferenced.Value++;
         }
 
         public void Dispose()

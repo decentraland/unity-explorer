@@ -106,17 +106,23 @@ namespace CrdtEcsBridge.JsModulesImplementation
                         return new IWebSocketApi.ReceiveResponse
                         {
                             type = "Close",
-                            data = jsOperations.CreateUint8Array(Memory<byte>.Empty),
                         };
 
                     // This closure is abnormal
                     if (closeStatus != WebSocketCloseStatus.Empty)
                         throw new WebSocketException((int)closeStatus, $"WebSocket with id {websocketId} is already closed with status {closeStatus}");
 
+                    if (messageType == WebSocketMessageType.Text)
+                        return new IWebSocketApi.ReceiveResponse
+                        {
+                            type = "Text",
+                            text = Encoding.UTF8.GetString(result.Span),
+                        };
+
                     return new IWebSocketApi.ReceiveResponse
                     {
-                        type = messageType == WebSocketMessageType.Text ? "Text" : "Binary",
-                        data = jsOperations.CreateUint8Array(result.Memory),
+                        type = "Binary",
+                        binary = jsOperations.CreateUint8Array(result.Memory),
                     };
                 }
             }

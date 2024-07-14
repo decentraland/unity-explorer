@@ -14,6 +14,7 @@ using ECS.Unity.GLTFContainer.Systems;
 using ECS.Unity.Visibility.Systems;
 using System.Collections.Generic;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS.SceneLifeCycle;
 
 namespace DCL.PluginSystem.World
 {
@@ -56,7 +57,7 @@ namespace DCL.PluginSystem.World
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container
-            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer);
+            LoadGltfContainerSystem.InjectToWorld(ref builder, buffer, sharedDependencies.SceneData);
             FinalizeGltfContainerLoadingSystem.InjectToWorld(ref builder, persistentEntities.SceneRoot, globalDeps.FrameTimeBudget,
                 sharedDependencies.EntityCollidersSceneCache, sharedDependencies.SceneData, buffer);
 

@@ -67,8 +67,7 @@ namespace DCL.UserInAppInitializationFlow
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
 
-            // Re-initialize feature flags since the user might have changed thus the data to be resolved
-            await InitializeFeatureFlagsAsync(ct);
+
 
             if (showLoading)
                 await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(parentLoadReport, world, playerEntity, ct), ct);
@@ -80,6 +79,9 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask LoadCharacterAndWorldAsync(AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
         {
+            // Re-initialize feature flags since the user might have changed thus the data to be resolved
+            await InitializeFeatureFlagsAsync(ct);
+
             Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
             parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
 
@@ -120,7 +122,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
         }
-        
+
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
             try

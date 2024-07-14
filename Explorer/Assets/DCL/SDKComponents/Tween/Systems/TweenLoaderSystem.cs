@@ -5,29 +5,22 @@ using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Helpers;
 using ECS.Abstract;
-using ECS.Unity.Groups;
-using UnityEngine;
-using UnityEngine.Pool;
+using ECS.Groups;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
     {
-        private readonly IObjectPool<PBTween> pbTweenPool;
-
-        public TweenLoaderSystem(World world, IObjectPool<PBTween> tweenPool) : base(world)
+        public TweenLoaderSystem(World world) : base(world)
         {
-            pbTweenPool = tweenPool;
         }
 
         protected override void Update(float t)
         {
-            UpdateTweenQuery(World);
             LoadTweenQuery(World);
         }
 
@@ -37,30 +30,14 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            var pbTweenCopy = pbTweenPool.Get();
-            pbTweenCopy.MergeFrom(pbTween);
-
-            // We have to keep a copy of the tween to compare for possible changes when PBTween is not correctly dirtyed by SDK scenes
             SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
             {
-                IsDirty = true, CachedTween = pbTweenCopy
+                IsDirty = true
             };
 
             World.Add(entity, sdkTweenComponent);
         }
 
-        [Query]
-        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
-        {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            // (Juani & Fran): Im not happy to leave this AreSameModels check. But apparently its required as SDK might not mark the tween component as dirty.
-            // Its present in the old renderer. If this was not needed, the CurrentTween field can be deleted
-            if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CachedTween))
-            {
-                tweenComponent.CachedTween.MergeFrom(pbTween);
-                tweenComponent.IsDirty = true;
-            }
-        }
     }
 }

@@ -60,7 +60,8 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
         visualSceneState = new VisualSceneState();
 
-        system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings, new VisualSceneStateResolver(new HashSet<Vector2Int>()));
+        system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings,
+            new VisualSceneStateResolver(new HashSet<Vector2Int>()), new SceneAssetLock());
     }
 
     [Test]

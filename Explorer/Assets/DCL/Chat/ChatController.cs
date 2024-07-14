@@ -28,7 +28,6 @@ namespace DCL.Chat
     public class ChatController : ControllerBase<ChatView>
     {
         private const int MAX_MESSAGE_LENGTH = 250;
-
         private const string EMOJI_SUGGESTION_PATTERN = @":\w+";
         private static readonly Regex EMOJI_PATTERN_REGEX = new (EMOJI_SUGGESTION_PATTERN, RegexOptions.Compiled);
 
@@ -61,6 +60,8 @@ namespace DCL.Chat
         private IReadOnlyList<RaycastResult> raycastResults;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
+        public event Action<bool>? ChatBubbleVisibilityChanged;
 
         public ChatController(
             ViewFactoryMethod viewFactory,
@@ -95,7 +96,7 @@ namespace DCL.Chat
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
 
-            chatMessagesBus.OnMessageAdded += OnMessageAdded;
+            chatMessagesBus.MessageAdded += OnMessageAdded;
             chatHistory.OnMessageAdded += CreateChatEntry;
             chatHistory.OnCleared += ChatHistoryOnOnCleared;
             device = InputSystem.GetDevice<Mouse>();
@@ -202,6 +203,8 @@ namespace DCL.Chat
             viewInstance.ChatBubblesToggle.OffImage.gameObject.SetActive(!isToggled);
             viewInstance.ChatBubblesToggle.OnImage.gameObject.SetActive(isToggled);
             nametagsData.showChatBubbles = isToggled;
+
+            ChatBubbleVisibilityChanged?.Invoke(isToggled);
         }
 
         private void AddEmojiToInput(string emoji)
@@ -480,7 +483,7 @@ namespace DCL.Chat
 
         public override void Dispose()
         {
-            chatMessagesBus.OnMessageAdded -= CreateChatEntry;
+            chatMessagesBus.MessageAdded -= CreateChatEntry;
             chatHistory.OnMessageAdded -= CreateChatEntry;
             chatHistory.OnCleared -= ChatHistoryOnOnCleared;
 

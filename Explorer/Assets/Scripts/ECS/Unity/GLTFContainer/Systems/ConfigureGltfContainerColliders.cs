@@ -1,6 +1,5 @@
 ﻿using CrdtEcsBridge.Physics;
 using DCL.ECSComponents;
-using DCL.Utilities.Extensions;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.SceneBoundsChecker;
@@ -32,10 +31,10 @@ namespace ECS.Unity.GLTFContainer.Systems
             if (component.VisibleMeshesCollisionMask != ColliderLayer.ClNone)
             {
                 TryInstantiateVisibleMeshesColliders(asset);
-                EnableColliders(asset.VisibleMeshesColliders, component.VisibleMeshesCollisionMask);
+                EnableColliders(asset.DecodedVisibleSDKColliders!, component.VisibleMeshesCollisionMask);
             }
-            else if (asset.VisibleMeshesColliders != null)
-                DisableColliders(asset.VisibleMeshesColliders);
+            else if (asset.DecodedVisibleSDKColliders != null)
+                DisableColliders(asset.DecodedVisibleSDKColliders);
         }
 
         private static void EnableColliders(List<SDKCollider> colliders, ColliderLayer colliderLayer)
@@ -72,28 +71,33 @@ namespace ECS.Unity.GLTFContainer.Systems
         private static void TryInstantiateVisibleMeshesColliders(GltfContainerAsset asset)
         {
             // They can't change
-            if (asset.VisibleMeshesColliders != null)
+            if (asset.DecodedVisibleSDKColliders != null)
                 return;
 
-            asset.VisibleMeshesColliders = GltfContainerAsset.COLLIDERS_POOL.Get();
+            asset.DecodedVisibleSDKColliders = GltfContainerAsset.COLLIDERS_POOL.Get();
 
             for (var i = 0; i < asset.VisibleColliderMeshes.Count; i++)
+            {
+                GltfContainerAsset.VisibleMeshCollider visibleMeshCollider = asset.VisibleColliderMeshes[i];
+
                 try
                 {
-                    MeshFilter meshFilter = asset.VisibleColliderMeshes[i].EnsureNotNull();
-                    MeshCollider newCollider = meshFilter.gameObject.AddComponent<MeshCollider>();
+                    Mesh mesh = visibleMeshCollider.Mesh;
+                    GameObject go = visibleMeshCollider.GameObject;
+                    MeshCollider newCollider = go.AddComponent<MeshCollider>();
 
                     // TODO Jobify: can be invoked from a worker thread
-                    Physics.BakeMesh(meshFilter.sharedMesh.GetInstanceID(), false);
+                    Physics.BakeMesh(mesh.GetInstanceID(), false);
 
-                    newCollider.sharedMesh = meshFilter.sharedMesh;
+                    newCollider.sharedMesh = mesh;
 
-                    asset.VisibleMeshesColliders.Add(new SDKCollider(newCollider));
+                    asset.DecodedVisibleSDKColliders.Add(new SDKCollider(newCollider));
                 }
                 catch (Exception e)
                 {
-                    throw new Exception($"Error adding collider to mesh {asset.VisibleColliderMeshes[i]!.name}", e);
+                    throw new Exception($"Error adding collider to mesh {visibleMeshCollider.GameObject.name}", e);
                 }
+            }
         }
     }
 }

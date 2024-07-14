@@ -10,6 +10,11 @@
         /// <summary>
         ///     Everything connected to raw assets and addressables
         /// </summary>
+        public const string ANALYTICS = nameof(ANALYTICS);
+
+        /// <summary>
+        ///     Everything connected to raw assets and addressables
+        /// </summary>
         public const string ASSETS_PROVISION = nameof(ASSETS_PROVISION);
 
         /// <summary>
