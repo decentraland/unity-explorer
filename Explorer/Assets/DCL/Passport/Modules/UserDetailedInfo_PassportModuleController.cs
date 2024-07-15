@@ -630,7 +630,7 @@ namespace DCL.Passport.Modules
                 link.SetAsInteractable(!isSaving);
         }
 
-        private async Task UpdateProfileAsync(CancellationToken ct)
+        private async UniTask UpdateProfileAsync(CancellationToken ct)
         {
             try
             {
