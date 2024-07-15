@@ -7,6 +7,7 @@ using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using UnityEngine;
@@ -35,7 +36,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         }
 
         [Query]
-        [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention))]
+        [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache
@@ -45,9 +46,23 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
                 return;
             }
+            // branch aca si usar assetbundles o rawgltf
 
-            // If not in cache, try load from asset bundle
-            World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetPlatform()}", intention.Name));
+            // primero forzar el raw para ver que ande
+            // hacer un fallback
+            var useRawGLTFLoad = true;
+
+            if (useRawGLTFLoad)
+            {
+                Debug.Log($"PrepareGltfAssetLoadingSystem.Prepare: {intention.Name}, {intention.Hash}");
+                World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
+            }
+            else
+            {
+                //intention.
+                // If not in cache, try load from asset bundle
+                World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetPlatform()}", intention.Name));
+            }
         }
     }
 }
