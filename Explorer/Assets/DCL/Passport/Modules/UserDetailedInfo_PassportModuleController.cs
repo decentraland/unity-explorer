@@ -393,11 +393,8 @@ namespace DCL.Passport.Modules
             LayoutRebuilder.ForceRebuildLayoutImmediate(newLink.Container);
         }
 
-        private async UniTask OpenUrlAsync(string url)
-        {
-            await UniTask.SwitchToMainThread();
+        private async UniTask OpenUrlAsync(string url) =>
             await mvcManager.ShowAsync(ExternalUrlPromptController.IssueCommand(new ExternalUrlPromptController.Params(url)));
-        }
 
         private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
         {
