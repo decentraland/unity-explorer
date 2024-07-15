@@ -7,13 +7,11 @@ using DCL.Passport.Fields;
 using DCL.Passport.Modals;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using MVC;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -38,7 +36,7 @@ namespace DCL.Passport.Modules
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly AddLink_PassportModal addLinkModal;
-        private readonly WarningNotificationView errorNotification;
+        private readonly PassportErrorsController passportErrorsController;
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPool;
         private readonly List<AdditionalField_PassportFieldView> instantiatedAdditionalFields = new();
         private readonly IObjectPool<AdditionalField_PassportFieldView> additionalFieldsPoolForEdition;
@@ -61,7 +59,7 @@ namespace DCL.Passport.Modules
             World world,
             Entity playerEntity,
             AddLink_PassportModal addLinkModal,
-            WarningNotificationView errorNotification)
+            PassportErrorsController passportErrorsController)
         {
             this.view = view;
             this.mvcManager = mvcManager;
@@ -70,7 +68,7 @@ namespace DCL.Passport.Modules
             this.world = world;
             this.playerEntity = playerEntity;
             this.addLinkModal = addLinkModal;
-            this.errorNotification = errorNotification;
+            this.passportErrorsController = passportErrorsController;
 
             additionalFieldsPool = new ObjectPool<AdditionalField_PassportFieldView>(
                 InstantiateAdditionalFieldPrefab,
@@ -644,7 +642,7 @@ namespace DCL.Passport.Modules
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
-                ShowErrorNotificationAsync(errorNotification, CancellationToken.None).Forget();
+                passportErrorsController.Show();
                 ReportHub.LogError(ReportCategory.PROFILE, $"Error updating profile from passport: {e.Message}");
             }
             finally
@@ -652,13 +650,6 @@ namespace DCL.Passport.Modules
                 if (currentProfile != null)
                     currentProfile = await profileRepository.GetAsync(currentProfile.UserId, 0, ct);
             }
-        }
-
-        private async UniTaskVoid ShowErrorNotificationAsync(WarningNotificationView notificationView, CancellationToken ct)
-        {
-            notificationView.Show();
-            await UniTask.Delay(3000, cancellationToken: ct);
-            notificationView.Hide();
         }
     }
 }

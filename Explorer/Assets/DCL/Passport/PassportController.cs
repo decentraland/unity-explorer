@@ -43,8 +43,9 @@ namespace DCL.Passport
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
+        private PassportErrorsController passportErrorsController;
         private PassportCharacterPreviewController characterPreviewController;
-        private List<IPassportModuleController> passportModules = new ();
+        private readonly List<IPassportModuleController> passportModules = new ();
 
         public PassportController(
             [NotNull] ViewFactoryMethod viewFactory,
@@ -84,9 +85,10 @@ namespace DCL.Passport
         protected override void OnViewInstantiated()
         {
             Assert.IsNotNull(world);
+            passportErrorsController = new PassportErrorsController(viewInstance.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
             passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile));
-            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, viewInstance.ErrorNotification));
+            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, passportErrorsController));
             passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer, webBrowser));
         }
 
@@ -103,6 +105,7 @@ namespace DCL.Passport
 
         protected override void OnViewClose()
         {
+            passportErrorsController.Hide(true);
             dclInput.Shortcuts.Enable();
             characterPreviewController.OnHide();
 
@@ -117,6 +120,7 @@ namespace DCL.Passport
 
         public override void Dispose()
         {
+            passportErrorsController.Hide(true);
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController.Dispose();
 
