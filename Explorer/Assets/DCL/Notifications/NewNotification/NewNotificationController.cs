@@ -87,6 +87,8 @@ namespace DCL.Notification.NewNotification
                 viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
                 try
                 {
+                    viewInstance.NotificationViewCanvasGroup.interactable = true;
+                    viewInstance.NotificationViewCanvasGroup.blocksRaycasts = true;
                     await viewInstance.NotificationViewCanvasGroup.DOFade(1, 0.5f).ToUniTask(cancellationToken: cts.Token);
                     await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: cts.Token);
                 }
@@ -95,6 +97,8 @@ namespace DCL.Notification.NewNotification
                 }
                 finally
                 {
+                    viewInstance.NotificationViewCanvasGroup.interactable = false;
+                    viewInstance.NotificationViewCanvasGroup.blocksRaycasts = false;
                     await viewInstance.NotificationViewCanvasGroup.DOFade(0, 0.5f).ToUniTask();
                 }
             }
