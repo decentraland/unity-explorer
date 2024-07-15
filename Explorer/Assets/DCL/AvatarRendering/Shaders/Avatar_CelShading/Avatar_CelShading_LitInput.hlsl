@@ -3,7 +3,7 @@
 
 #include "Avatar_CelShading_Core.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
-#include "Packages/com.decentraland.unity-shared-dependencies/Runtime/Shaders/URP/Constants.hlsl"
+#include "Assets/git-submodules/unity-shared-dependencies/Runtime/Shaders/URP/Constants.hlsl"
 #include "Avatar_CelShading_Shadows.hlsl"
 #include "Avatar_CelShading_Input.hlsl"
 #include "Avatar_CelShading_SurfaceData.hlsl"
