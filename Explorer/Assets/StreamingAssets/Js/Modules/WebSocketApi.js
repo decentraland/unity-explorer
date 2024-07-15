@@ -88,16 +88,17 @@ class WebSocket {
                 }
 
                 UnityWebSocketApi.ReceiveAsync(self.webSocketId).then(data => {
-                    // console.log("WS: Received binary data", typeof data.data, data.data.length);
-
                     let messageType;
+                    let body;
 
                     switch (data.type) {
                         case 'Text':
                             messageType = "text";
+                            body = data.text;
                             break;
                         case 'Binary':
                             messageType = "binary";
+                            body = data.binary;
                             break;
                         case 'Close':
                             // this close is initiated by the server
@@ -116,7 +117,7 @@ class WebSocket {
                     }
 
                     if (typeof self.onmessage === 'function') {
-                        self.onmessage({type: messageType, data: data.data});
+                        self.onmessage({type: messageType, data: body});
                     }
                     // Restart Receive iteration
                     receiveData();
