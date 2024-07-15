@@ -92,12 +92,13 @@ namespace DCL.Profiles
         public static Profile Create() =>
             POOL.Get();
 
-        public static Profile Create(string userId, string name, Avatar avatar)
+        public static Profile Create(string userId, string name, Avatar avatar, bool hasConnectedWeb3)
         {
             Profile profile = Create();
             profile.UserId = userId;
             profile.Name = name;
             profile.Avatar = avatar;
+            profile.HasConnectedWeb3 = hasConnectedWeb3;
             return profile;
         }
 
