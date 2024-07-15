@@ -248,6 +248,7 @@ namespace SceneRunner.Tests
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.WebSocketAipImplementation));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.CommunicationsControllerAPI));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RuntimeImplementation));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.PortableExperiencesApi));
 
             await UniTask.SwitchToThreadPool();
 

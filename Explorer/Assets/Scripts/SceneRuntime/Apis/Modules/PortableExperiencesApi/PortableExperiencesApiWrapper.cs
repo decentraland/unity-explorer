@@ -5,6 +5,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Utility;
 
 namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
 {
@@ -45,5 +46,11 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object GetLoadedPortableExperiences() =>
             api.GetxLoadedgetPortableExperiences(cancellationTokenSource.Token);
+
+        protected override void DisposeInternal()
+        {
+            cancellationTokenSource.SafeCancelAndDispose();
+        }
+
     }
 }
