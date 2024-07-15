@@ -49,13 +49,8 @@ namespace DCL.Multiplayer.Profiles.Entities
             this.collidersGlobalCache = collidersGlobalCache;
         }
 
-        public void Initialize(RemoteAvatarTransform remoteAvatarTransform)
-        {
-            componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarTransform, Vector3.zero, Quaternion.identity));
-            transformPool = componentPoolsRegistry
-                           .GetReferenceTypePool<RemoteAvatarTransform>()
-                           .EnsureNotNull("ReferenceTypePool of type Transform not found in the registry");
-        }
+        public void Initialize(RemoteAvatarTransform remoteAvatarTransform) =>
+            transformPool = componentPoolsRegistry.AddGameObjectPool(() => Object.Instantiate(remoteAvatarTransform, Vector3.zero, Quaternion.identity));
 
         public void TryCreateOrUpdate(IReadOnlyCollection<RemoteProfile> list, World world)
         {
@@ -145,6 +140,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             Entity entity = world.Create(
                 profile.Profile,
                 transformComp,
+                remoteAvatarTransform,
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(queuePool),
