@@ -39,6 +39,7 @@ MonoBehaviour:
   - rid: 758312859982102531
   - rid: 2306906494740202818
   - rid: 2872862511896199171
+  - rid: 2872862602853875714
   references:
     version: 2
     RefIds:
@@ -319,6 +320,14 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 2872862602853875714
+      type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        RemoteAvatarTransformPrefab:
+          m_AssetGUID: 9c4c0e79124f01744a5f969e08ad0370
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
     - rid: 3022170012058910723
       type: {class: LandscapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

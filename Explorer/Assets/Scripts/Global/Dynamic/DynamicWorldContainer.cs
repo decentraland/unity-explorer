@@ -326,6 +326,7 @@ namespace Global.Dynamic
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
+                    assetsProvisioner,
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
                     container.RoomHub,
