@@ -313,8 +313,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
             var avatarShape = Profile.Create(
                 StringUtils.GenerateRandomString(5),
                 StringUtils.GenerateRandomString(5),
-                new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()),
-                true);
+                new Avatar(BodyShape.FromStringSafe(bodyShape), wearablesURN, WearablesConstants.DefaultColors.GetRandomEyesColor(), WearablesConstants.DefaultColors.GetRandomHairColor(), WearablesConstants.DefaultColors.GetRandomSkinColor()));
 
             World.Create(avatarShape,
                 transformComp,
