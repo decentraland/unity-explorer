@@ -17,6 +17,7 @@ using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using MVC;
+using SceneRunner.Debugging;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -48,7 +49,7 @@ namespace Global.Dynamic
         }
 
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
-            GameObject splashRoot,  CancellationToken _)
+            GameObject splashRoot, CancellationToken _)
         {
             splashRoot.SetActive(showSplash);
             cursorRoot.EnsureNotNull();
@@ -70,7 +71,8 @@ namespace Global.Dynamic
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, Animator splashScreenAnimation, AudioClipConfig backgroundMusic, CancellationToken ct)
+            UIDocument uiToolkitRoot, UIDocument cursorRoot, Animator splashScreenAnimation, AudioClipConfig backgroundMusic, WorldInfoTool worldInfoTool,
+            CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
             {
@@ -84,6 +86,7 @@ namespace Global.Dynamic
                 RootUIDocument = uiToolkitRoot,
                 CursorUIDocument = cursorRoot,
                 SplashAnimator = splashScreenAnimation,
+                WorldInfoTool = worldInfoTool,
             };
 
             return await DynamicWorldContainer.CreateAsync(
@@ -96,8 +99,7 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = enableLandscape,
                     EnableLOD = enableLOD,
-                    EnableAnalytics = EnableAnalytics,
-                    HybridSceneParams = launchSettings.CreateHybridSceneParams(),
+                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel)
                 },
                 backgroundMusic,
                 ct);
