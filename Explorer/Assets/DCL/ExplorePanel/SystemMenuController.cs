@@ -92,15 +92,13 @@ namespace DCL.ExplorePanel
         private void ShowPrivacyPolicy() =>
             webBrowser.OpenUrl(PRIVACY_POLICY_URL);
 
-        private void ShowPassport() =>
-            ShowPassportAsync(web3IdentityCache.Identity!.Address).Forget();
-
-        private async UniTask ShowPassportAsync(string userId)
+        private void ShowPassport()
         {
+            var userId = web3IdentityCache.Identity!.Address;
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)));
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
         }
 
         private void ExitApp() =>
