@@ -10,6 +10,7 @@ using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -18,6 +19,7 @@ using UnityEngine.UI;
 using Utility;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
+using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules
 {
@@ -301,16 +303,23 @@ namespace DCL.Passport.Modules
         private static string GetMarketplaceLink(string id)
         {
             const string MARKETPLACE = "https://market.decentraland.org/contracts/{0}/items/{1}";
-            string[] split = id.Split(":");
+            ReadOnlySpan<char> idSpan = id.AsSpan();
+            int lastColonIndex = idSpan.LastIndexOf(':');
 
-            if (split.Length < 2)
+            if (lastColonIndex == -1)
                 return "";
+
+            var item = idSpan.Slice(lastColonIndex + 1).ToString();
+            idSpan = idSpan.Slice(0, lastColonIndex);
+            int secondLastColonIndex = idSpan.LastIndexOf(':');
+            var contract = idSpan.Slice(secondLastColonIndex + 1).ToString();
 
             // If this is not correct, we could retrieve the marketplace link by checking TheGraph, but that's super slow
-            if (!split[^2].StartsWith("0x") || !int.TryParse(split[^1], out int _))
+            if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
                 return "";
 
-            return string.Format(MARKETPLACE, split[^2], split[^1]);
+            return string.Format(MARKETPLACE, contract, item);
         }
+
     }
 }
