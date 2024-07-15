@@ -1,4 +1,5 @@
-﻿using DCL.Diagnostics;
+﻿#nullable enable
+
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -14,7 +15,7 @@ namespace DCL.SDKComponents.AudioSources
         /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
-        public AudioSource AudioSource { get; private set; }
+        public AudioSource? AudioSource { get; private set; }
         public bool AudioSourceAssigned { get; private set; }
 
         public AudioSourceComponent(Promise promise, string audioClipUrl)
