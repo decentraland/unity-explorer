@@ -91,7 +91,7 @@ namespace DCL.Multiplayer.Profiles.Entities
 
             if (collidersByWalletId.TryGetValue(walletId, out Collider collider))
             {
-                collidersGlobalCache.RemoveAssociation(collider);
+                collidersGlobalCache.RemoveGlobalEntityAssociation(collider);
                 collidersByWalletId.Remove(walletId);
             }
 

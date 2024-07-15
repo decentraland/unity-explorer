@@ -37,7 +37,7 @@ namespace DCL.Interaction.Utility
             if (collider)
             {
                 map.Remove(collider);
-                globalCache.RemoveAssociation(collider);
+                globalCache.RemoveSceneEntityAssociation(collider);
             }
         }
 

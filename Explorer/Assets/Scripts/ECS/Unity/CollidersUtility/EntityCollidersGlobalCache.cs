@@ -39,10 +39,10 @@ namespace DCL.Interaction.Utility
             colliderGlobalEntityInfos[collider] = new GlobalColliderGlobalEntityInfo(entityReference);
         }
 
-        public void RemoveAssociation(Collider collider)
-        {
+        public void RemoveSceneEntityAssociation(Collider collider) =>
             colliderSceneEntityInfos.Remove(collider);
+
+        public void RemoveGlobalEntityAssociation(Collider collider) =>
             colliderGlobalEntityInfos.Remove(collider);
-        }
     }
 }

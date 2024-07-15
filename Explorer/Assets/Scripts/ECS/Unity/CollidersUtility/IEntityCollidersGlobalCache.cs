@@ -30,8 +30,13 @@ namespace DCL.Interaction.Utility
         void Associate(Collider collider, EntityReference entityReference);
 
         /// <summary>
-        ///     Remove association with the collider
+        ///     Remove association with the collider (for scene entities)
         /// </summary>
-        void RemoveAssociation(Collider collider);
+        void RemoveSceneEntityAssociation(Collider collider);
+
+        /// <summary>
+        ///     Remove association with the collider (for global entities)
+        /// </summary>
+        void RemoveGlobalEntityAssociation(Collider collider);
     }
 }
