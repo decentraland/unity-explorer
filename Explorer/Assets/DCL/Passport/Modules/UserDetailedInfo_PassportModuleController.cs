@@ -596,7 +596,6 @@ namespace DCL.Passport.Modules
                 else
                     currentProfile.Links.Clear();
 
-                List<LinkJsonDto> linksToSave = new ();
                 foreach (var link in instantiatedLinksForEdition)
                 {
                     currentProfile.Links.Add(new LinkJsonDto
