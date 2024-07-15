@@ -14,7 +14,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
 
         UniTask<ExitResponse> ExitAsync(CancellationToken ct);
 
-        List<SpawnResponse> GetPortableExperiencesLoaded(CancellationToken ct);
+        List<SpawnResponse> GetxLoadedgetPortableExperiences(CancellationToken ct);
 
         [SuppressMessage("ReSharper", "InconsistentNaming")]
         public struct SpawnResponse

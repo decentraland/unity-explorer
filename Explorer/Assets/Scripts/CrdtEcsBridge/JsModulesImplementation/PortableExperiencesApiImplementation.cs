@@ -36,7 +36,7 @@ namespace CrdtEcsBridge.PortableExperiencesApi
         public async UniTask<IPortableExperiencesApi.ExitResponse> ExitAsync(CancellationToken ct) =>
             await portableExperiencesController.UnloadPortableExperienceAsync(sceneData.SceneEntityDefinition.id, ct);
 
-        public List<IPortableExperiencesApi.SpawnResponse> GetPortableExperiencesLoaded(CancellationToken ct) =>
+        public List<IPortableExperiencesApi.SpawnResponse> GetxLoadedgetPortableExperiences(CancellationToken ct) =>
             portableExperiencesController.GetAllPortableExperiences();
     }
 }

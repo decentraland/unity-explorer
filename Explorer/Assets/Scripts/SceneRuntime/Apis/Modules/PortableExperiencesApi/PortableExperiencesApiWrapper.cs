@@ -41,5 +41,9 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
             try { return api.ExitAsync(cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
+
+        [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
+        public object GetLoadedPortableExperiences() =>
+            api.GetxLoadedgetPortableExperiences(cancellationTokenSource.Token);
     }
 }
