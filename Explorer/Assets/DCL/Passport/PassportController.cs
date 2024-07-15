@@ -11,6 +11,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using JetBrains.Annotations;
 using MVC;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -43,9 +44,7 @@ namespace DCL.Passport
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
         private PassportCharacterPreviewController characterPreviewController;
-        private IPassportModuleController userBasicInfoModuleController;
-        private IPassportModuleController userDetailedInfoModuleController;
-        private IPassportModuleController equippedItemsModuleController;
+        private List<IPassportModuleController> passportModules = new ();
 
         public PassportController(
             [NotNull] ViewFactoryMethod viewFactory,
@@ -86,9 +85,9 @@ namespace DCL.Passport
         {
             Assert.IsNotNull(world);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            userBasicInfoModuleController = new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile);
-            userDetailedInfoModuleController = new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, viewInstance.ErrorNotification);
-            equippedItemsModuleController = new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer, webBrowser);
+            passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile));
+            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, viewInstance.ErrorNotification));
+            passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer, webBrowser));
         }
 
         protected override void OnViewShow()
@@ -106,9 +105,9 @@ namespace DCL.Passport
         {
             dclInput.Shortcuts.Enable();
             characterPreviewController.OnHide();
-            userBasicInfoModuleController.Clear();
-            userDetailedInfoModuleController.Clear();
-            equippedItemsModuleController.Clear();
+
+            foreach (IPassportModuleController module in passportModules)
+                module.Clear();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -120,9 +119,9 @@ namespace DCL.Passport
         {
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController.Dispose();
-            userBasicInfoModuleController.Dispose();
-            userDetailedInfoModuleController.Dispose();
-            equippedItemsModuleController.Dispose();
+
+            foreach (IPassportModuleController module in passportModules)
+                module.Dispose();
         }
 
         private async UniTaskVoid LoadUserProfileAsync(string userId, CancellationToken ct)
@@ -139,9 +138,8 @@ namespace DCL.Passport
             characterPreviewController.OnShow();
 
             // Load passport modules
-            userBasicInfoModuleController.Setup(profile);
-            userDetailedInfoModuleController.Setup(profile);
-            equippedItemsModuleController.Setup(profile);
+            foreach (IPassportModuleController module in passportModules)
+                module.Setup(profile);
         }
     }
 }
