@@ -84,15 +84,11 @@ namespace DCL.Interaction.Systems
             if (context.control.IsPressed() || currentProfileHovered == null)
                 return;
 
-            OpenPassportAsync(currentProfileHovered.UserId).Forget();
-        }
-
-        private async UniTask OpenPassportAsync(string userId)
-        {
+            string userId = currentProfileHovered.UserId;
             if (string.IsNullOrEmpty(userId))
                 return;
 
-            await mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId)));
+            mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
         }
     }
 }
