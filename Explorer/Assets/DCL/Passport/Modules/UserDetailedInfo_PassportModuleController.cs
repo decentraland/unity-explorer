@@ -67,8 +67,6 @@ namespace DCL.Passport.Modules
             linksController.SetLinksSectionAsEditionMode(false);
             linksController.LoadLinks();
 
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
-
             checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
             CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
         }
@@ -151,7 +149,6 @@ namespace DCL.Passport.Modules
                 additionalFieldsController.LoadAdditionalFields();
                 descriptionController.LoadDescription();
                 SetInfoSectionAsEditionMode(false);
-                LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
             }
         }
 

@@ -7,7 +7,6 @@ using DCL.UI;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Passport.Modules
@@ -64,9 +63,6 @@ namespace DCL.Passport.Modules
             view.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             view.VerifiedMark.SetActive(profile.HasClaimedName);
             view.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.UserNameContainer);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.WalletAddressContainer);
 
             checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
             // TODO (Santi): Uncomment this when the name's edition is available

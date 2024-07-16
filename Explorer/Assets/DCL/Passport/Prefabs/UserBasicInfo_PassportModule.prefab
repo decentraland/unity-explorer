@@ -222,6 +222,7 @@ GameObject:
   m_Component:
   - component: {fileID: 942316798144216209}
   - component: {fileID: 1329208856872254954}
+  - component: {fileID: 5043299882241329887}
   m_Layer: 5
   m_Name: UserNameContainer
   m_TagString: Untagged
@@ -252,7 +253,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 446, y: 29.1}
+  m_SizeDelta: {x: 0, y: 29.1}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1329208856872254954
 MonoBehaviour:
@@ -280,6 +281,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &5043299882241329887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1596533749125186149}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 1
+  m_VerticalFit: 0
 --- !u!1 &2402372934683265698
 GameObject:
   m_ObjectHideFlags: 0
@@ -969,6 +984,7 @@ GameObject:
   m_Component:
   - component: {fileID: 533235076076506494}
   - component: {fileID: 8206332824800034350}
+  - component: {fileID: 2801836148897722618}
   m_Layer: 5
   m_Name: WalletAddressContainer
   m_TagString: Untagged
@@ -996,7 +1012,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -37}
-  m_SizeDelta: {x: 446, y: 19.4}
+  m_SizeDelta: {x: 0, y: 19.4}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &8206332824800034350
 MonoBehaviour:
@@ -1024,6 +1040,20 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &2801836148897722618
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8480904758322488965}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_HorizontalFit: 1
+  m_VerticalFit: 0
 --- !u!1001 &1025889838955752937
 PrefabInstance:
   m_ObjectHideFlags: 0

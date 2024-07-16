@@ -263,7 +263,6 @@ namespace DCL.Passport.Modules
                 ClearAllLinks();
                 LoadLinks();
                 SetLinksSectionAsEditionMode(false);
-                LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
             }
         }
 

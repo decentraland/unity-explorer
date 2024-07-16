@@ -166,8 +166,6 @@ namespace DCL.Passport.Modules
                 loadingItem.gameObject.name = "LoadingItem";
                 instantiatedLoadingItems.Add(loadingItem);
             }
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.EquippedItemsContainer);
         }
 
         private void SetGridElements(List<IWearable> gridWearables, IReadOnlyList<IEmote> gridEmotes)
