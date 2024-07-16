@@ -10,6 +10,8 @@ import argparse
 # Local
 import utils
 
+# Force a build
+
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
