@@ -2,6 +2,10 @@
 
 Explorer renderer 
 
+## Submodule installation required
+
+After checking out, remember to install and update the submodules by doing (git submodule update --init and git submodule update .)
+
 # Protocol Generation
 ## Update protocol
 
