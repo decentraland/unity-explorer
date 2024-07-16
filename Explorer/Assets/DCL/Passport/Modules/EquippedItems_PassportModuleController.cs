@@ -246,7 +246,7 @@ namespace DCL.Passport.Modules
         private int CalculateMissingEmptyItems(int totalItems)
         {
             int remainder = totalItems % 6;
-            int missingItems = (remainder == 0) ? 0 : 6 - remainder;
+            int missingItems = remainder == 0 ? 0 : 6 - remainder;
             return missingItems;
         }
 
