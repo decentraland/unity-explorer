@@ -256,10 +256,6 @@ namespace DCL.Passport.Modules
             {
                 var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
                 var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
-
-                //if (!wearablesUniTaskAsync.Result!.Value.Succeeded || !emotesUniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
-                //    return;
-
                 var currentWearables = wearablesUniTaskAsync.Result!.Value.Asset.Wearables;
                 var currentEmotes = emotesUniTaskAsync.Result!.Value.Asset.Emotes;
                 SetGridElements(currentWearables, currentEmotes);
