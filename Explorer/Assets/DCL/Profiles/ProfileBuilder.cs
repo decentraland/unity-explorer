@@ -41,6 +41,7 @@ namespace DCL.Profiles
         private bool hasConnectedWeb3;
         private URLAddress? bodySnapshotUrl;
         private URLAddress? faceSnapshotUrl;
+        private Avatar? avatar;
 
         public ProfileBuilder From(Profile? profile)
         {
@@ -86,6 +87,12 @@ namespace DCL.Profiles
         public ProfileBuilder WithWearables(IEnumerable<URN> wearables)
         {
             this.wearables = wearables;
+            return this;
+        }
+
+        public ProfileBuilder WithAvatar(Avatar avatar)
+        {
+            this.avatar = avatar;
             return this;
         }
 
@@ -154,7 +161,8 @@ namespace DCL.Profiles
             profile.HasClaimedName = hasClaimedName;
             profile.HasConnectedWeb3 = hasConnectedWeb3;
 
-            var avatar = new Avatar();
+
+            var avatar = this.avatar ?? new Avatar();
             profile.Avatar = avatar;
 
             if (wearables != null)
