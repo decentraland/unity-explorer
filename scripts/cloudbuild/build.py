@@ -108,23 +108,63 @@ def set_parameters(params):
         print("Response body:", response.text)
         sys.exit(1)
 
+def get_latest_build(target):
+    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
+    
+    if response.status_code == 200:
+        builds = response.json()
+        if builds:
+            return builds[0]
+    
+    print('Failed to get the latest build.')
+    return None
+    
 def run_build(branch):
-    body = {
-        'branch': branch,
-        # 'commit': f'{os.getenv('COMMIT_SHA')}',
-    }
-    response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
+    max_retries = 10
+    retry_delay = 20  # seconds
 
-    if response.status_code == 202:
-        response_json = response.json()
-        print('Build started successfully. Response:', response_json)
-        return int(response_json[0]['build'])
-    else:
-        print('Build failed to start with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
-        return -1
+    for attempt in range(max_retries):
+        body = {
+            'branch': branch,
+        }
+        response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
 
+        if response.status_code == 202:
+            response_json = response.json()
+            print(f'Build response (attempt {attempt + 1}):', response_json)
+            
+            if 'error' in response_json[0] and 'already a build pending' in response_json[0]['error']:
+                print('A build is already pending. Attempting to cancel it...')
+                latest_build = get_latest_build(os.getenv('TARGET'))
+                if latest_build:
+                    cancel_build(latest_build['build'])
+                    print(f'Waiting {retry_delay} seconds before retrying...')
+                    time.sleep(retry_delay)
+                else:
+                    print('Failed to get the latest build ID.')
+                    if attempt == max_retries - 1:
+                        print('Max retries reached. Exiting.')
+                        sys.exit(1)
+            elif 'build' in response_json[0]:
+                print('Build started successfully.')
+                return int(response_json[0]['build'])
+            else:
+                print('Unexpected response format.')
+                if attempt == max_retries - 1:
+                    print('Max retries reached. Exiting.')
+                    sys.exit(1)
+        else:
+            print(f'Build failed to start with status code: {response.status_code}')
+            print('Response body:', response.text)
+            if attempt == max_retries - 1:
+                print('Max retries reached. Exiting.')
+                sys.exit(1)
+        
+        print(f'Retrying... (attempt {attempt + 2} of {max_retries})')
+    
+    print('Failed to start build after maximum retries.')
+    sys.exit(1)
+    
 def cancel_build(id):
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
 
