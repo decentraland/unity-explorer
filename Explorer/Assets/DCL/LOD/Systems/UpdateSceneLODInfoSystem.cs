@@ -32,15 +32,16 @@ namespace DCL.LOD.Systems
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-
+        private readonly Transform lodsTransformParent;
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
-            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
         {
             this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.lodsTransformParent = lodsTransformParent;
         }
 
         protected override void Update(float t)
@@ -59,16 +60,14 @@ namespace DCL.LOD.Systems
 
                 if (sceneLODInfo.LODAssets.Count == 0)
                 {
+                    sceneLODInfo.Root.transform.SetParent(lodsTransformParent);
                     AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
                 }
                 else
                 {
-                    //foreach (var lodAsset in sceneLODInfo.LODAssets)
+                    if (!sceneLODInfo.HasLODKey(newLODKey)) //If the current LOD is the candidate, no need to make a new promise or set anything new
                     {
-                        if (!sceneLODInfo.HasLODKey(newLODKey)) //If the current LOD is the candidate, no need to make a new promise or set anything new
-                        {
-                            AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
-                        }
+                        AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
                     }
                 }
             }
@@ -76,16 +75,18 @@ namespace DCL.LOD.Systems
 
         private void AddLODAsset(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, LODKey newLODKey, byte lodForAcquisition)
         {
+            if (lodCache.TryGet(newLODKey, out var cachedAsset))
+            {
+                //If its cached, no need to make a new promise
+                sceneLODInfo.LODAssets.Add(cachedAsset);
+                //CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
+                return;
+            }
+
             LODAsset lodAsset = new LODAsset(newLODKey, lodCache);
             lodAsset.currentLODLevel = lodForAcquisition;
             sceneLODInfo.LODAssets.Add(lodAsset);
-            // if (lodCache.TryGet(newLODKey, out var cachedAsset))
-            // {
-            //     //If its cached, no need to make a new promise
-            //     //sceneLODInfo.SetCurrentLOD(cachedAsset, null);
-            //     CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-            //     return;
-            // }
+
 
             string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
             var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
@@ -122,44 +123,6 @@ namespace DCL.LOD.Systems
 
             return sceneLODCandidate;
         }
-
-        // private void UpdateLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo,
-        //     byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
-        // {
-        //     // This function should really be called AcquireLOD()
-        //     // as we store more LODs than what we display.
-        //
-        //     byte lodForAcquisition = sceneLODCandidate;
-        //
-        //     //sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-        //     var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, lodForAcquisition);
-        //
-        //     //If the current LOD is the candidate, no need to make a new promise or set anything new
-        //     if (sceneLODInfo.HasLODKey(newLODKey))
-        //     {
-        //         return;
-        //     }
-        //
-        //     if (lodCache.TryGet(newLODKey, out var cachedAsset))
-        //     {
-        //         //If its cached, no need to make a new promise
-        //         //sceneLODInfo.SetCurrentLOD(cachedAsset, null);
-        //         CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-        //         return;
-        //     }
-        //
-        //     string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-        //     var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
-        //
-        //     var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
-        //         platformLODKey,
-        //         permittedSources: AssetSource.ALL,
-        //         customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-        //         manifest: manifest);
-        //
-        //     byte lodPromiseArrayIndex = (byte)(sceneLODInfo.CurrentLODLevel - 1); // We're not using 0 for RAW mesh yet, so it's adjusted
-        //     sceneLODInfo.CurrentLOD[lodPromiseArrayIndex].LODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
-        // }
 
         private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
         {

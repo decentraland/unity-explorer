@@ -78,7 +78,7 @@ namespace DCL.PluginSystem.Global
 
             if (lodEnabled)
             {
-                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue);
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, lodAssetsPool, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, lodContainer.transform);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);

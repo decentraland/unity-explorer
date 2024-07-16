@@ -26,10 +26,6 @@ namespace DCL.LOD.Components
                 lodVar?.Release(world);
             }
             UnityObjectUtils.SafeDestroy(Root);
-            //CurrentLODPromise.ForgetLoading(world);
-            // if (CurrentVisibleLOD != null && !CurrentVisibleLOD.LodKey.Equals(CurrentLOD))
-            //     CurrentVisibleLOD.Release();
-            //CurrentLOD?.Release();
         }
 
         public static SceneLODInfo Create()
@@ -38,7 +34,6 @@ namespace DCL.LOD.Components
             LODGroup lodGroup = root.AddComponent<LODGroup>();
             lodGroup.fadeMode = LODFadeMode.CrossFade;
             lodGroup.animateCrossFading = true;
-            //lodGroup.ForceLOD(0);
             return new SceneLODInfo
             {
                 CurrentLODLevel = byte.MaxValue,
@@ -64,8 +59,11 @@ namespace DCL.LOD.Components
             UnityEngine.LOD[] lods = new UnityEngine.LOD[LODAssets.Count];
             for (int i = 0; i < LODAssets.Count; ++i)
             {
-                lods[i] = LODAssets[i].lod;
-                lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f;
+                if (LODAssets[i].State == LODAsset.LOD_STATE.SUCCESS)
+                {
+                    lods[i] = LODAssets[i].lod;
+                    lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f;
+                }
             }
 
             if (lods.Length == 1)

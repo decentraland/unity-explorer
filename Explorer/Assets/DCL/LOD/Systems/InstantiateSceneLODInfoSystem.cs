@@ -60,6 +60,8 @@ namespace DCL.LOD.Systems
             // if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget()))
             //     return;
 
+            bool bNewAssetAdded = false;
+
             foreach (var lodAsset in sceneLODInfo.LODAssets)
             {
                 if (lodAsset.LODPromise.IsConsumed)
@@ -67,22 +69,12 @@ namespace DCL.LOD.Systems
 
                 if (lodAsset.LODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
                 {
-                    //LODAsset newLod = default;
                     if (result.Succeeded)
                     {
-                        //Remove everything down here once Unity fixes AsyncInstantiation
-                        //Uncomment everything above here and the InstantiateCurrentLODQuery
-
                         GameObject instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
                                                                             sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                                                                             Quaternion.identity,
                                                                             lodsTransformParent);
-
-                        // if (sceneLODInfo.CurrentLOD == null)
-                        //     sceneLODInfo.CreateLODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache, result.Asset, null);
-
-                        // newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel),
-                        //     lodCache, result.Asset, null);
 
                         var slots = Array.Empty<TextureArraySlot?>();
                         if (!lodAsset.LodKey.Level.Equals(0))
@@ -95,6 +87,7 @@ namespace DCL.LOD.Systems
 
                         lodAsset.SetAssetBundleReference(result.Asset);
                         lodAsset.FinalizeInstantiation(instantiatedLOD, slots);
+                        bNewAssetAdded = true;
                     }
                     else
                     {
@@ -105,7 +98,8 @@ namespace DCL.LOD.Systems
                     CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                 }
             }
-            sceneLODInfo.ReEvaluateLODGroup(lodsTransformParent);
+            if(bNewAssetAdded)
+                sceneLODInfo.ReEvaluateLODGroup(lodsTransformParent);
         }
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
