@@ -16,8 +16,6 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     /// </summary>
     public struct SceneDefinitionComponent
     {
-        private static readonly SceneMetadataScene EMPTY_METADATA = new ();
-
         public SceneEntityDefinition Definition { get; }
         public IReadOnlyList<Vector2Int> Parcels { get; }
         public IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners { get; }
@@ -50,6 +48,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
     public static class SceneDefinitionComponentFactory
     {
+        private static readonly SceneMetadataScene EMPTY_METADATA = new ();
         private static ParcelMathHelper.SceneGeometry cachedPortableExperiencesSceneGeometry;
         private static List<ParcelMathHelper.ParcelCorners> cachedParcelsCorners;
 
@@ -99,7 +98,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
                 new SceneMetadata
                 {
                     main = "bin/game.js",
-                    scene = new SceneMetadataScene(),
+                    scene = EMPTY_METADATA,
 
                     // content will be filled by the loading system
                 }

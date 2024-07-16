@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene;
@@ -25,14 +26,14 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object Spawn(string pid, string ens)
         {
-            try { return api.SpawnAsync(pid, ens, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            try { return api.SpawnAsync(new URN(pid), new ENS(ens), cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
-        public object Kill(string pid, string ens)
+        public object Kill(string ens)
         {
-            try { return api.KillAsync(ens, cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            try { return api.KillAsync(new ENS(ens), cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 

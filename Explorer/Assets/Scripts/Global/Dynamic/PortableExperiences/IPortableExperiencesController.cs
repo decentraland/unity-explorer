@@ -1,4 +1,5 @@
 ﻿using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using System.Collections.Generic;
@@ -8,13 +9,13 @@ namespace PortableExperiences.Controller
 {
     public interface IPortableExperiencesController
     {
-        Dictionary<string, Entity> PortableExperienceEntities { get; }
+        Dictionary<ENS, Entity> PortableExperienceEntities { get; }
 
-        bool CanKillPortableExperience(string ens);
+        bool CanKillPortableExperience(ENS ens);
 
-        UniTask<IPortableExperiencesApi.SpawnResponse> CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct, bool isGlobalPortableExperience = false);
+        UniTask<IPortableExperiencesApi.SpawnResponse> CreatePortableExperienceAsync(ENS ens, URN urn, CancellationToken ct, bool isGlobalPortableExperience = false);
 
-        UniTask<IPortableExperiencesApi.ExitResponse> UnloadPortableExperienceAsync(string ens, CancellationToken ct);
+        UniTask<IPortableExperiencesApi.ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct);
 
         List<IPortableExperiencesApi.SpawnResponse> GetAllPortableExperiences();
 

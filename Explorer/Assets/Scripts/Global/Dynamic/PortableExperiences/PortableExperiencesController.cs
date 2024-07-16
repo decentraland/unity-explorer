@@ -32,7 +32,7 @@ namespace PortableExperiences.Controller
 
         private readonly ObjectProxy<World> globalWorldProxy;
         private List<Entity> entitiesToDestroy = new ();
-        public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
+        public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
         private World world => globalWorldProxy.Object;
         private List<IPortableExperiencesApi.SpawnResponse> spawnResponsesList = new ();
 
@@ -48,7 +48,7 @@ namespace PortableExperiences.Controller
             this.scenesCache = scenesCache;
         }
 
-        public async UniTask<IPortableExperiencesApi.SpawnResponse> CreatePortableExperienceAsync(string ens, string urn, CancellationToken ct, bool isGlobalPortableExperience = false)
+        public async UniTask<IPortableExperiencesApi.SpawnResponse> CreatePortableExperienceAsync(ENS ens, URN urn, CancellationToken ct, bool isGlobalPortableExperience = false)
         {
             //According to kernel implementation, the id value is used as an urn
             //https://github.com/decentraland/unity-renderer/blob/b3b170e404ec43bb8bc08ec1f6072812005ebad3/browser-interface/packages/shared/apis/host/PortableExperiences.ts#L28
@@ -62,7 +62,7 @@ namespace PortableExperiences.Controller
                 //worldUrl = IpfsHelper.ParseUrn(urn).BaseUrl.Value;
             }
 
-            if (EnsUtils.ValidateEns(ens)) { worldUrl = EnsUtils.ConvertEnsToWorldUrl(ens); }
+            if (ens.IsValid) { worldUrl = ENSUtils.ConvertEnsToWorldUrl(ens); }
 
             if (!worldUrl.IsValidUrl()) throw new ArgumentException("Invalid Spawn params. Provide a URN or an ENS name");
 
@@ -94,10 +94,10 @@ namespace PortableExperiences.Controller
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
             return new IPortableExperiencesApi.SpawnResponse
-                { name = realmData.RealmName, ens = ens, parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
+                { name = realmData.RealmName, ens = ens.ToString(), parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
         }
 
-        public bool CanKillPortableExperience(string ens)
+        public bool CanKillPortableExperience(ENS ens)
         {
             ISceneFacade currentSceneFacade = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             if (currentSceneFacade == null) return false;
@@ -121,7 +121,7 @@ namespace PortableExperiences.Controller
 
                 spawnResponsesList.Add(new IPortableExperiencesApi.SpawnResponse {
                         name = pxRealmComponent.RealmData.RealmName,
-                        ens = portableExperience.Key,
+                        ens = portableExperience.Key.ToString(),
                         parent_cid = pxRealmComponent.ParentSceneId,
                         pid = portableExperience.Value.Id.ToString() });
             }
@@ -129,9 +129,9 @@ namespace PortableExperiences.Controller
             return spawnResponsesList;
         }
 
-        public async UniTask<IPortableExperiencesApi.ExitResponse> UnloadPortableExperienceAsync(string ens, CancellationToken ct)
+        public async UniTask<IPortableExperiencesApi.ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct)
         {
-            if (!EnsUtils.ValidateEns(ens)) throw new ArgumentException($"The provided ens {ens} is invalid");
+            if (ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
 
             //TODO: We need to be able to kill PX using only the urn as well, it will mean some changes to this code, this will be done in the next iteration.
 

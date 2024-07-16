@@ -1,3 +1,4 @@
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
@@ -8,9 +9,9 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
 {
     public interface IPortableExperiencesApi : IDisposable
     {
-        UniTask<SpawnResponse> SpawnAsync(string pid, string ens, CancellationToken ct);
+        UniTask<SpawnResponse> SpawnAsync(URN pid, ENS ens, CancellationToken ct);
 
-        UniTask<ExitResponse> KillAsync(string ens, CancellationToken ct);
+        UniTask<ExitResponse> KillAsync(ENS ens, CancellationToken ct);
 
         UniTask<ExitResponse> ExitAsync(CancellationToken ct);
 

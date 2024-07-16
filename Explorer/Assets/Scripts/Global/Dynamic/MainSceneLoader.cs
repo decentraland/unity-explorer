@@ -1,4 +1,5 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
@@ -24,7 +25,7 @@ namespace Global.Dynamic
         public bool showLoading;
         public bool enableLandscape;
         public bool enableLOD;
-        public string[]? portableExperiencesEnsToLoadAtGameStart;
+        public string[]? portableExperiencesEnsToLoad;
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
         public DebugSettings Get() =>
@@ -38,7 +39,7 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
-                portableExperiencesEnsToLoadAtGameStart = null,
+                portableExperiencesEnsToLoad = null,
             };
     }
 
@@ -146,11 +147,11 @@ namespace Global.Dynamic
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
 
                 //TODO: Implement loading this (or more addresses) from Unleash
-                if (debugSettings.portableExperiencesEnsToLoadAtGameStart != null && staticContainer != null)
+                if (debugSettings.portableExperiencesEnsToLoad != null && staticContainer != null)
                 {
-                    foreach (string pxEns in debugSettings.portableExperiencesEnsToLoadAtGameStart)
+                    foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
                     {
-                        await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(pxEns, string.Empty, ct, true);
+                        await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(new ENS(pxEns), string.Empty, ct, true);
                     }
                 }
             }
