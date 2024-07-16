@@ -9,6 +9,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using Arch.Core;
+using DCL.CharacterMotion.Components;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -3050,6 +3052,20 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     public int FindBinding(InputBinding bindingMask, out InputAction action)
     {
         return asset.FindBinding(bindingMask, out action);
+    }
+
+    public void BlockPlayerMovements(World world, Entity player)
+    {
+        world.AddOrGet(player, new MovementBlockerComponent());
+        Shortcuts.Disable();
+        Camera.Disable();
+    }
+
+    public void UnblockPlayerMovement(World world, Entity player)
+    {
+        world.Remove<MovementBlockerComponent>(player);
+        Shortcuts.Enable();
+        Camera.Enable();
     }
 
     // Player

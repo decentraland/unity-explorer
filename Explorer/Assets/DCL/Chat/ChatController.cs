@@ -238,26 +238,12 @@ namespace DCL.Chat
             viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
 
             if (viewInstance.EmojiPanel.EmojiContainer.gameObject.activeInHierarchy)
-                BlockPlayerMovement();
+                dclInput.BlockPlayerMovements(world, playerEntity);
             else
-                UnblockPlayerMovement();
+                dclInput.UnblockPlayerMovement(world, playerEntity);
 
             viewInstance.InputField.ActivateInputField();
             return UniTask.CompletedTask;
-        }
-
-        private void BlockPlayerMovement()
-        {
-            world.AddOrGet(playerEntity, new MovementBlockerComponent());
-            dclInput.Shortcuts.Disable();
-            dclInput.Camera.Disable();
-        }
-
-        private void UnblockPlayerMovement()
-        {
-            world.Remove<MovementBlockerComponent>(playerEntity);
-            dclInput.Shortcuts.Enable();
-            dclInput.Camera.Enable();
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)
@@ -370,7 +356,7 @@ namespace DCL.Chat
             viewInstance.EmojiPanelButton.SetColor(false);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
-            UnblockPlayerMovement();
+            dclInput.UnblockPlayerMovement(world, playerEntity);
         }
 
         private void OnInputSelected(string inputText)
@@ -387,7 +373,7 @@ namespace DCL.Chat
             viewInstance.EmojiPanelButton.SetColor(true);
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
-            BlockPlayerMovement();
+            dclInput.BlockPlayerMovements(world, playerEntity);
         }
 
         private void OnInputChanged(string inputText)
