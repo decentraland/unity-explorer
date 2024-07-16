@@ -597,15 +597,11 @@ namespace DCL.Passport.Modules
             async UniTaskVoid SaveLinksAsync(CancellationToken ct)
             {
                 SetLinksSectionAsSavingStatus(true);
-
-                if (currentProfile.Links == null)
-                    currentProfile.Links = new List<LinkJsonDto>();
-                else
-                    currentProfile.Links.Clear();
+                currentProfile.ClearLinks();
 
                 foreach (var link in instantiatedLinksForEdition)
                 {
-                    currentProfile.Links.Add(new LinkJsonDto
+                    currentProfile.Links!.Add(new LinkJsonDto
                     {
                         title = link.Title.text,
                         url = link.Url,

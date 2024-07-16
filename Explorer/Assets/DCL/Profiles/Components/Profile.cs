@@ -170,5 +170,13 @@ namespace DCL.Profiles
 
             return string.IsNullOrEmpty(UserId) || UserId.Length < 4 ? result : $"{result}#{UserId[^4..]}";
         }
+
+        public void ClearLinks()
+        {
+            if (Links == null)
+                Links = new List<LinkJsonDto>();
+            else
+                Links.Clear();
+        }
     }
 }
