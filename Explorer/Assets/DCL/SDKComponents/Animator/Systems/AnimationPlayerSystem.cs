@@ -20,14 +20,12 @@ namespace DCL.SDKComponents.Animator.Systems
     [ThrottlingEnabled]
     public partial class AnimationPlayerSystem : BaseUnityLoopSystem
     {
-        private static readonly int LOOP_PARAM = UAnimator.StringToHash("Loop");
-
         public AnimationPlayerSystem(World world) : base(world) { }
 
         protected override void Update(float t)
         {
             LoadAnimatorQuery(World);
-            UpdateAnimationStateQuery(World, t);
+            UpdateAnimationStateQuery(World);
             HandleComponentRemovalQuery(World);
             World.Remove<SDKAnimatorComponent>(in HandleComponentRemoval_QueryDescription);
         }
@@ -66,15 +64,16 @@ namespace DCL.SDKComponents.Animator.Systems
 
         [Query]
         [None(typeof(LegacyGltfAnimation))]
-        private void UpdateAnimationState([Data] float dt, ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
+        private void UpdateAnimationState(ref SDKAnimatorComponent sdkAnimatorComponent, ref GltfContainerComponent gltfContainerComponent)
         {
             if (!sdkAnimatorComponent.IsDirty) return;
+            if (gltfContainerComponent.State != LoadingState.Finished) return;
 
             List<UAnimator> animators = gltfContainerComponent.Promise.Result!.Value.Asset.Animators;
             sdkAnimatorComponent.IsDirty = false;
 
             foreach (var animator in animators)
-                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animator, dt);
+                SetAnimationState(sdkAnimatorComponent.SDKAnimationStates, animator);
         }
 
         [Query]
@@ -94,10 +93,8 @@ namespace DCL.SDKComponents.Animator.Systems
             animator.enabled = true;
         }
 
-        private static void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator, float dt)
+        private void SetAnimationState(ICollection<SDKAnimationState> sdkAnimationStates, UAnimator animator)
         {
-            const int DEFAULT_LAYER_INDEX = 0;
-
             if (sdkAnimationStates.Count == 0)
                 return;
 
@@ -106,28 +103,44 @@ namespace DCL.SDKComponents.Animator.Systems
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
                 isAnyAnimPlaying |= sdkAnimationState.Playing;
 
-            if (!isAnyAnimPlaying)
-            {
-                // Reset to anim initial state
-                animator.CrossFade(animator.GetCurrentAnimatorStateInfo(DEFAULT_LAYER_INDEX).fullPathHash, 0f);
-                animator.Update(dt);
-                animator.enabled = false;
-                return;
-            }
+            animator.enabled = isAnyAnimPlaying;
 
-            animator.enabled = true;
+            if (!isAnyAnimPlaying) return;
 
             foreach (SDKAnimationState sdkAnimationState in sdkAnimationStates)
             {
-                if (!sdkAnimationState.Playing) continue;
+                string name = sdkAnimationState.Clip;
+                int layerIndex = animator.GetLayerIndex(name);
 
-                animator.SetLayerWeight(DEFAULT_LAYER_INDEX, sdkAnimationState.Weight);
-                animator.SetBool(LOOP_PARAM, sdkAnimationState.Loop);
-                animator.speed = sdkAnimationState.Speed;
-                animator.SetTrigger(sdkAnimationState.Clip);
+                if (layerIndex == -1)
+                {
+                    ReportHub.LogWarning(new ReportData(GetReportCategory()), $"Cannot find animator layer for clip {name}");
+                    continue;
+                }
 
-                if (sdkAnimationState.ShouldReset)
-                    animator.CrossFade(sdkAnimationState.Clip, 0f);
+                animator.SetBool($"{name}_Enabled", sdkAnimationState.Playing);
+                animator.SetBool($"{name}_Loop", sdkAnimationState.Loop);
+
+                if (sdkAnimationState.Playing)
+                {
+                    animator.SetLayerWeight(layerIndex, sdkAnimationState.Weight);
+                    animator.SetTrigger($"{name}_Trigger");
+
+                    // Animators don't support speed by state, just a global speed
+                    animator.speed = sdkAnimationState.Speed;
+
+                    // The animation state is reset automatically when the state is changed, either stops playing or exit on loop:false,
+                    // it is how the animator works
+                    // This behaviour could bring unexpected results since it works differently than unity-renderer
+                    // TODO: support reset
+                    // sdkAnimationState.ShouldReset
+                }
+                else
+                {
+                    // Since animation states are now executed through layers, we need to force to 0 if the state is not playing
+                    // otherwise it overrides the current playing state
+                    animator.SetLayerWeight(layerIndex, 0f);
+                }
             }
         }
     }

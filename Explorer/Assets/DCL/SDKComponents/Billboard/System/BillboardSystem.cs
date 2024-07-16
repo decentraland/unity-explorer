@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Billboard.Extensions;
 using DCL.CharacterCamera;
 using DCL.ECSComponents;
 using ECS.Abstract;
@@ -45,7 +46,7 @@ namespace DCL.Billboard.System
 
             Vector3 cameraPos = cameraPosition;
 
-            var billboardMode = (uint)billboard.BillboardMode;
+            var billboardMode = (uint)billboard.GetBillboardMode();
 
             if (billboardMode == BILLBOARD_NONE)
                 return;

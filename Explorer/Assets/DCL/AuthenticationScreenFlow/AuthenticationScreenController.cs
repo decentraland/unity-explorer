@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
@@ -36,6 +37,7 @@ namespace DCL.AuthenticationScreenFlow
 
         private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
+        private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -44,6 +46,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
         private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly AudioMixer generalAudioMixer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -51,6 +54,7 @@ namespace DCL.AuthenticationScreenFlow
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
         private World? world;
+        private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -62,7 +66,8 @@ namespace DCL.AuthenticationScreenFlow
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
-            FeatureFlagsCache featureFlagsCache)
+            FeatureFlagsCache featureFlagsCache,
+            AudioMixer generalAudioMixer)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -72,6 +77,7 @@ namespace DCL.AuthenticationScreenFlow
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
             this.featureFlagsCache = featureFlagsCache;
+            this.generalAudioMixer = generalAudioMixer;
         }
 
         public override void Dispose()
@@ -114,6 +120,9 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
+
+            generalAudioMixer.GetFloat(WORLD_VOLUME_EXPOSED_PARAM, out originalWorldAudioVolume);
+            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, -80);
         }
 
         protected override void OnViewClose()
@@ -124,6 +133,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             viewInstance.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
+            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, originalWorldAudioVolume);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()

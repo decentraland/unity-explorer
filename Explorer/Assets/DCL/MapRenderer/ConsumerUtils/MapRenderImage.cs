@@ -1,4 +1,5 @@
 ﻿using DCL.MapRenderer.MapCameraController;
+using DCL.MapRenderer.MapLayers.Pins;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -17,6 +18,7 @@ namespace DCL.MapRenderer.ConsumerUtils
         {
             public Vector2Int Parcel;
             public Vector2 WorldPosition;
+            public IPinMarker PinMarker;
         }
 
         private static readonly string DRAG_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnDrag));
@@ -24,12 +26,14 @@ namespace DCL.MapRenderer.ConsumerUtils
         private static readonly string POINTER_CLICK_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnPointerClick));
 
         public event Action<ParcelClickData> ParcelClicked;
+        public event Action<ParcelClickData> MapPinHovered;
 
         /// <summary>
         /// Notifies with the world position
         /// </summary>
         public event Action<Vector2> Hovered;
         public event Action<Vector2> HoveredParcel;
+        public event Action<Vector2Int, IPinMarker> HoveredMapPin;
 
         public event Action DragStarted;
 
@@ -100,17 +104,20 @@ namespace DCL.MapRenderer.ConsumerUtils
         {
             Profiler.BeginSample(POINTER_CLICK_SAMPLE_NAME);
 
-            if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _))
+            //Process different click types if normal parcel or a map pin
+            if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _, out IPinMarker pinMarker))
                 ParcelClicked?.Invoke(new ParcelClickData
                 {
                     Parcel = parcel,
                     WorldPosition = GetParcelWorldPosition(parcel),
+                    PinMarker = pinMarker
                 });
 
             Profiler.EndSample();
         }
 
         private bool dragging => dragBehavior is { dragging: true };
+        private Vector2Int previousParcel;
 
         private Vector2 GetParcelWorldPosition(Vector2Int parcel)
         {
@@ -118,22 +125,46 @@ namespace DCL.MapRenderer.ConsumerUtils
             return rectTransform.TransformPoint(rectTransform.rect.size * (normalizedDiscretePosition - rectTransform.pivot));
         }
 
+        private IPinMarker previousMarker;
+
         private void ProcessHover(PointerEventData eventData)
         {
-            if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition))
+            if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition, out IPinMarker pinMarker))
             {
-                if (highlightEnabled)
-                    interactivityController.HighlightParcel(parcel);
+                if (highlightEnabled && previousParcel != parcel)
+                {
+                    if (previousMarker != null)
+                    {
+                        previousMarker.AnimateOut();
+                        previousMarker = null;
+                    }
 
-                Hovered?.Invoke(worldPosition);
-                HoveredParcel?.Invoke(parcel);
+                    previousParcel = parcel;
+                    if (pinMarker == null)
+                    {
+                        interactivityController.HighlightParcel(parcel);
+                    }
+                    else
+                    {
+                        previousMarker = pinMarker;
+                        pinMarker.AnimateIn();
+                        interactivityController.RemoveHighlight();
+                    }
+
+                    Hovered?.Invoke(worldPosition);
+                    HoveredParcel?.Invoke(parcel);
+
+                    if(pinMarker != null)
+                        HoveredMapPin?.Invoke(parcel, pinMarker);
+                }
             }
             else if (highlightEnabled)
                 interactivityController.RemoveHighlight();
         }
 
-        private bool TryGetParcelUnderPointer(PointerEventData eventData, out Vector2Int parcel, out Vector2 localPosition, out Vector3 worldPosition)
+        private bool TryGetParcelUnderPointer(PointerEventData eventData, out Vector2Int parcel, out Vector2 localPosition, out Vector3 worldPosition, out IPinMarker pinMarker)
         {
+            pinMarker = null;
             Vector2 screenPoint = eventData.position;
 
             if (RectTransformUtility.ScreenPointToWorldPointInRectangle(rectTransform, screenPoint, hudCamera, out worldPosition))
@@ -141,7 +172,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                 Vector2 rectSize = rectTransform.rect.size;
                 localPosition = (Vector2)rectTransform.InverseTransformPoint(worldPosition);
                 Vector2 leftCornerRelativeLocalPosition = localPosition + (rectTransform.pivot * rectSize);
-                return interactivityController.TryGetParcel(leftCornerRelativeLocalPosition / rectSize, out parcel);
+                return interactivityController.TryGetParcel(leftCornerRelativeLocalPosition / rectSize, out parcel, out pinMarker);
             }
 
             parcel = Vector2Int.zero;

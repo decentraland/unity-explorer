@@ -27,6 +27,9 @@ namespace DCL.Navmap
         public NavmapZoomView zoomView;
 
         [field: SerializeField]
+        public MapPinTooltipView MapPinTooltip;
+
+        [field: SerializeField]
         public NavmapLocationView LocationView { get; private set; }
 
         [field: SerializeField]

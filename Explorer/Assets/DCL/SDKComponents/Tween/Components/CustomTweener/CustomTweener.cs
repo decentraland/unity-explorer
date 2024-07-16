@@ -1,4 +1,5 @@
-﻿using DCL.ECSComponents;
+﻿using CrdtEcsBridge.Components.Transform;
+using DCL.ECSComponents;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
@@ -11,11 +12,11 @@ namespace DCL.SDKComponents.Tween.Components
         where TU : struct, IPlugOptions
     {
         private bool Finished;
-        protected TweenResult CurrentValue;
+        protected T CurrentValue;
         protected TweenerCore<T, T, TU> core;
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
-
         protected abstract (T, T) GetTweenValues(PBTween pbTween, Transform startTransform);
+        public abstract void SetResult(ref SDKTransform sdkTransform);
         
         public void Play()
         {
@@ -52,30 +53,13 @@ namespace DCL.SDKComponents.Tween.Components
             core.SetEase(ease).SetAutoKill(false).OnComplete(() => { Finished = true; }).Goto(tweenModelCurrentTime, isPlaying);
         }
 
-        public TweenResult GetResult()
-        {
-            return CurrentValue;
-        }
-
         public void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds)
         {
             core?.Kill();
             Finished = false;
-            CurrentValue = new TweenResult
-            {
-                Position = startTransform.localPosition, Rotation = startTransform.localRotation, Scale = startTransform.localScale
-            };
             var tweenValues = GetTweenValues(pbTween, startTransform);
             core = CreateTweener(tweenValues.Item1, tweenValues.Item2, durationInSeconds);
         }
-
-        protected void WriteResult(Vector3 position, Quaternion rotation, Vector3 scale)
-        {
-            CurrentValue.Position = position;
-            CurrentValue.Rotation = rotation;
-            CurrentValue.Scale = scale;
-        }
-
 
     }
 }

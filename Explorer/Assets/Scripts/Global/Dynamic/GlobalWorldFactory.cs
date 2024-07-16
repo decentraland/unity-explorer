@@ -112,11 +112,11 @@ namespace Global.Dynamic
             LoadSceneSystemLogicBase loadSceneSystemLogic = null;
 
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams.HybridSceneID, hybridSceneParams.HybridSceneContent);
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams);
             else
                 loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
 
-            
+
             LoadSceneSystem.InjectToWorld(ref builder,
                 loadSceneSystemLogic,
                 new LoadEmptySceneSystemLogic(),
@@ -167,7 +167,7 @@ namespace Global.Dynamic
 
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 
