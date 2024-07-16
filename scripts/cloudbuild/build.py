@@ -54,10 +54,8 @@ def clone_current_target():
 
         return body
 
-    # Set target name based on branch
-    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
-    # Append commit SHA to target and lowercase all:
-    new_target_name = f'{new_target_name}_{os.getenv('COMMIT_SHA')}'.lower()
+    # Set target name based on branch, without commit SHA
+    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
     # Generate request body
     body = generate_body(
@@ -67,31 +65,24 @@ def clone_current_target():
         os.getenv('BUILD_OPTIONS').split(','),
         (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
 
-    # Check if the target already exists (re-use of a branch)
-    if 'error' in get_target(new_target_name):
-        # Create new
+    existing_target = get_target(new_target_name)
+    
+    if 'error' in existing_target:
+        # Create new target
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
     else:
-        # Check if it's in use
-        if get_any_running_builds(new_target_name, False):
-            print(f'Target "{new_target_name} has running builds! Creating a variant using a timestamp..."')
-
-            new_target_name = f'{new_target_name}_{int(time.time())}'
-            body['name'] = new_target_name
-            response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
-        else:
-            # Update existing
-            response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+        # Target exists, update it
+        response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     if response.status_code == 200 or response.status_code == 201:
         # Override target ENV
         os.environ['TARGET'] = new_target_name
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
-        print('Target failed to clone as it already exists! Possible race condition with another build')
-        print('Retrying flow from start...')
-        clone_current_target()
+        print('Target update failed due to a possible race condition. Retrying...')
+        time.sleep(2)  # Add a small delay before retrying
+        clone_current_target()  # Retry the whole process
     else:
-        print('Target failed to clone with status code:', response.status_code)
+        print('Target failed to clone/update with status code:', response.status_code)
         print('Response body:', response.text)
         sys.exit(1)
 
