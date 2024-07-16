@@ -3054,19 +3054,7 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
         return asset.FindBinding(bindingMask, out action);
     }
 
-    public void BlockPlayerMovements(World world, Entity player)
-    {
-        world.AddOrGet(player, new MovementBlockerComponent());
-        Shortcuts.Disable();
-        Camera.Disable();
-    }
 
-    public void UnblockPlayerMovement(World world, Entity player)
-    {
-        world.Remove<MovementBlockerComponent>(player);
-        Shortcuts.Enable();
-        Camera.Enable();
-    }
 
     // Player
     private readonly InputActionMap m_Player;

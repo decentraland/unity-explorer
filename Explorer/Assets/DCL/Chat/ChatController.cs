@@ -8,6 +8,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
@@ -49,6 +50,7 @@ namespace DCL.Chat
         private readonly Entity playerEntity;
         private readonly Mouse device;
         private readonly DCLInput dclInput;
+        private readonly IInputBlock inputBlock;
         private readonly ChatCommandsHandler commandsHandler;
 
         private CancellationTokenSource cts;
@@ -77,6 +79,7 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
+            IInputBlock inputBlock,
             IEventSystem eventSystem
         ) : base(viewFactory)
         {
@@ -93,6 +96,7 @@ namespace DCL.Chat
             this.world = world;
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
+            this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
 
             chatMessagesBus.MessageAdded += OnMessageAdded;
@@ -238,9 +242,9 @@ namespace DCL.Chat
             viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
 
             if (viewInstance.EmojiPanel.EmojiContainer.gameObject.activeInHierarchy)
-                dclInput.BlockPlayerMovements(world, playerEntity);
+                inputBlock.BlockMovement();
             else
-                dclInput.UnblockPlayerMovement(world, playerEntity);
+                inputBlock.UnblockMovement();
 
             viewInstance.InputField.ActivateInputField();
             return UniTask.CompletedTask;
@@ -356,7 +360,7 @@ namespace DCL.Chat
             viewInstance.EmojiPanelButton.SetColor(false);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
-            dclInput.UnblockPlayerMovement(world, playerEntity);
+            inputBlock.UnblockMovement();
         }
 
         private void OnInputSelected(string inputText)
@@ -373,7 +377,7 @@ namespace DCL.Chat
             viewInstance.EmojiPanelButton.SetColor(true);
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
-            dclInput.BlockPlayerMovements(world, playerEntity);
+            inputBlock.BlockMovement();
         }
 
         private void OnInputChanged(string inputText)
