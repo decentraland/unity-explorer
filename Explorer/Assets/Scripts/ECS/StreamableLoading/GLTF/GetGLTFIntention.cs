@@ -20,10 +20,12 @@ namespace ECS.StreamableLoading.GLTF
         {
             Name = name;
             Hash = hash;
-            CancellationTokenSource = cancellationTokenSource;
+            CancellationTokenSource = cancellationTokenSource ?? new CancellationTokenSource();
+
+            // TODO: Review how to setup CommonArguments correctly...
             CommonArguments = new CommonLoadingArguments(
                 URLAddress.EMPTY,
-                cancellationTokenSource: cancellationTokenSource);
+                cancellationTokenSource: CancellationTokenSource);
         }
 
         public static GetGLTFIntention Create(string name, string hash) => new (name: name, hash: hash);
