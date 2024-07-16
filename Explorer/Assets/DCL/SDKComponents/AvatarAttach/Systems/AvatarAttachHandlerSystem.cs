@@ -1,8 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -38,10 +36,10 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             if (!mainPlayerAvatarBaseProxy.Configured) return;
 
-            SetupAvatarAttachQuery(World);
-            UpdateAvatarAttachTransformQuery(World);
+            SetupAvatarAttachQuery(World!);
+            UpdateAvatarAttachTransformQuery(World!);
 
-            World.Remove<AvatarAttachComponent>(COMPONENT_REMOVAL_QUERY);
+            World!.Remove<AvatarAttachComponent>(COMPONENT_REMOVAL_QUERY);
             World.Remove<AvatarAttachComponent, PBAvatarAttach>(ENTITY_DESTRUCTION_QUERY);
         }
 
@@ -51,15 +49,15 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
-            var component = new AvatarAttachComponent
-            {
-                anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId),
-            };
+            var component = new AvatarAttachComponent(
+                GetAnchorPointTransform(pbAvatarAttach.AnchorPointId),
+                pbAvatarAttach.AnchorPointId
+            );
 
             ApplyAnchorPointTransformValues(transformComponent, component);
             transformComponent.UpdateCache();
 
-            World.Add(entity, component);
+            World!.Add(entity, component);
         }
 
         [Query]
@@ -68,7 +66,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             if (!sceneStateProvider.IsCurrent) return;
 
             if (pbAvatarAttach.IsDirty)
-                avatarAttachComponent.anchorPointTransform = GetAnchorPointTransform(pbAvatarAttach.AnchorPointId);
+                avatarAttachComponent.Update(GetAnchorPointTransform(pbAvatarAttach.AnchorPointId), pbAvatarAttach.AnchorPointId);
 
             if (ApplyAnchorPointTransformValues(transformComponent, avatarAttachComponent))
                 transformComponent.UpdateCache();
@@ -78,79 +76,50 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
         [All(typeof(AvatarAttachComponent))]
         private void FinalizeComponents(in Entity entity)
         {
-            World.Remove<AvatarAttachComponent>(entity);
+            World!.Remove<AvatarAttachComponent>(entity);
         }
 
         public void FinalizeComponents(in Query query)
         {
-            FinalizeComponentsQuery(World);
+            FinalizeComponentsQuery(World!);
         }
 
-private Transform GetAnchorPointTransform(AvatarAnchorPointType anchorPointType)
-{
-    switch (anchorPointType)
-    {
-        case AvatarAnchorPointType.AaptPosition:
-            return mainPlayerAvatarBaseProxy.Object!.transform;
-        case AvatarAnchorPointType.AaptNameTag:
-            return mainPlayerAvatarBaseProxy.Object!.NameTagAnchorPoint;
-        case AvatarAnchorPointType.AaptHead:
-            return mainPlayerAvatarBaseProxy.Object!.HeadAnchorPoint;
-        case AvatarAnchorPointType.AaptNeck:
-            return mainPlayerAvatarBaseProxy.Object!.NeckAnchorPoint;
-        case AvatarAnchorPointType.AaptSpine:
-            return mainPlayerAvatarBaseProxy.Object!.SpineAnchorPoint;
-        case AvatarAnchorPointType.AaptSpine1:
-            return mainPlayerAvatarBaseProxy.Object!.Spine1AnchorPoint;
-        case AvatarAnchorPointType.AaptSpine2:
-            return mainPlayerAvatarBaseProxy.Object!.Spine2AnchorPoint;
-        case AvatarAnchorPointType.AaptHip:
-            return mainPlayerAvatarBaseProxy.Object!.HipAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftShoulder:
-            return mainPlayerAvatarBaseProxy.Object!.LeftShoulderAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftArm:
-            return mainPlayerAvatarBaseProxy.Object!.LeftArmAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftForearm:
-            return mainPlayerAvatarBaseProxy.Object!.LeftForearmAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftHand:
-            return mainPlayerAvatarBaseProxy.Object!.LeftHandAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftHandIndex:
-            return mainPlayerAvatarBaseProxy.Object!.LeftHandIndexAnchorPoint;
-        case AvatarAnchorPointType.AaptRightShoulder:
-            return mainPlayerAvatarBaseProxy.Object!.RightShoulderAnchorPoint;
-        case AvatarAnchorPointType.AaptRightArm:
-            return mainPlayerAvatarBaseProxy.Object!.RightArmAnchorPoint;
-        case AvatarAnchorPointType.AaptRightForearm:
-            return mainPlayerAvatarBaseProxy.Object!.RightForearmAnchorPoint;
-        case AvatarAnchorPointType.AaptRightHand:
-            return mainPlayerAvatarBaseProxy.Object!.RightHandAnchorPoint;
-        case AvatarAnchorPointType.AaptRightHandIndex:
-            return mainPlayerAvatarBaseProxy.Object!.RightHandIndexAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftUpLeg:
-            return mainPlayerAvatarBaseProxy.Object!.LeftUpLegAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftLeg:
-            return mainPlayerAvatarBaseProxy.Object!.LeftLegAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftFoot:
-            return mainPlayerAvatarBaseProxy.Object!.LeftFootAnchorPoint;
-        case AvatarAnchorPointType.AaptLeftToeBase:
-            return mainPlayerAvatarBaseProxy.Object!.LeftToeBaseAnchorPoint;
-        case AvatarAnchorPointType.AaptRightUpLeg:
-            return mainPlayerAvatarBaseProxy.Object!.RightUpLegAnchorPoint;
-        case AvatarAnchorPointType.AaptRightLeg:
-            return mainPlayerAvatarBaseProxy.Object!.RightLegAnchorPoint;
-        case AvatarAnchorPointType.AaptRightFoot:
-            return mainPlayerAvatarBaseProxy.Object!.RightFootAnchorPoint;
-        case AvatarAnchorPointType.AaptRightToeBase:
-            return mainPlayerAvatarBaseProxy.Object!.RightToeBaseAnchorPoint;
-        default:
-            throw new ArgumentOutOfRangeException(nameof(anchorPointType), anchorPointType, "Unknown anchor point type");
-    }
-}
+        private Transform GetAnchorPointTransform(AvatarAnchorPointType anchorPointType) =>
+            anchorPointType switch
+            {
+                AvatarAnchorPointType.AaptPosition => mainPlayerAvatarBaseProxy.Object!.transform,
+                AvatarAnchorPointType.AaptNameTag => mainPlayerAvatarBaseProxy.Object!.NameTagAnchorPoint,
+                AvatarAnchorPointType.AaptHead => mainPlayerAvatarBaseProxy.Object!.HeadAnchorPoint,
+                AvatarAnchorPointType.AaptNeck => mainPlayerAvatarBaseProxy.Object!.NeckAnchorPoint,
+                AvatarAnchorPointType.AaptSpine => mainPlayerAvatarBaseProxy.Object!.SpineAnchorPoint,
+                AvatarAnchorPointType.AaptSpine1 => mainPlayerAvatarBaseProxy.Object!.Spine1AnchorPoint,
+                AvatarAnchorPointType.AaptSpine2 => mainPlayerAvatarBaseProxy.Object!.Spine2AnchorPoint,
+                AvatarAnchorPointType.AaptHip => mainPlayerAvatarBaseProxy.Object!.HipAnchorPoint,
+                AvatarAnchorPointType.AaptLeftShoulder => mainPlayerAvatarBaseProxy.Object!.LeftShoulderAnchorPoint,
+                AvatarAnchorPointType.AaptLeftArm => mainPlayerAvatarBaseProxy.Object!.LeftArmAnchorPoint,
+                AvatarAnchorPointType.AaptLeftForearm => mainPlayerAvatarBaseProxy.Object!.LeftForearmAnchorPoint,
+                AvatarAnchorPointType.AaptLeftHand => mainPlayerAvatarBaseProxy.Object!.LeftHandAnchorPoint,
+                AvatarAnchorPointType.AaptLeftHandIndex => mainPlayerAvatarBaseProxy.Object!.LeftHandIndexAnchorPoint,
+                AvatarAnchorPointType.AaptRightShoulder => mainPlayerAvatarBaseProxy.Object!.RightShoulderAnchorPoint,
+                AvatarAnchorPointType.AaptRightArm => mainPlayerAvatarBaseProxy.Object!.RightArmAnchorPoint,
+                AvatarAnchorPointType.AaptRightForearm => mainPlayerAvatarBaseProxy.Object!.RightForearmAnchorPoint,
+                AvatarAnchorPointType.AaptRightHand => mainPlayerAvatarBaseProxy.Object!.RightHandAnchorPoint,
+                AvatarAnchorPointType.AaptRightHandIndex => mainPlayerAvatarBaseProxy.Object!.RightHandIndexAnchorPoint,
+                AvatarAnchorPointType.AaptLeftUpLeg => mainPlayerAvatarBaseProxy.Object!.LeftUpLegAnchorPoint,
+                AvatarAnchorPointType.AaptLeftLeg => mainPlayerAvatarBaseProxy.Object!.LeftLegAnchorPoint,
+                AvatarAnchorPointType.AaptLeftFoot => mainPlayerAvatarBaseProxy.Object!.LeftFootAnchorPoint,
+                AvatarAnchorPointType.AaptLeftToeBase => mainPlayerAvatarBaseProxy.Object!.LeftToeBaseAnchorPoint,
+                AvatarAnchorPointType.AaptRightUpLeg => mainPlayerAvatarBaseProxy.Object!.RightUpLegAnchorPoint,
+                AvatarAnchorPointType.AaptRightLeg => mainPlayerAvatarBaseProxy.Object!.RightLegAnchorPoint,
+                AvatarAnchorPointType.AaptRightFoot => mainPlayerAvatarBaseProxy.Object!.RightFootAnchorPoint,
+                AvatarAnchorPointType.AaptRightToeBase => mainPlayerAvatarBaseProxy.Object!.RightToeBaseAnchorPoint,
+                _ => throw new ArgumentOutOfRangeException(nameof(anchorPointType), anchorPointType, "Unknown anchor point type")
+            };
 
-        private bool ApplyAnchorPointTransformValues(TransformComponent targetTransform, AvatarAttachComponent avatarAttachComponent)
+        private static bool ApplyAnchorPointTransformValues(TransformComponent targetTransform, AvatarAttachComponent avatarAttachComponent)
         {
-            Vector3 anchorPointPosition = avatarAttachComponent.anchorPointTransform.position;
-            Quaternion anchorPointRotation = avatarAttachComponent.anchorPointTransform.rotation;
+            Vector3 anchorPointPosition = avatarAttachComponent.AnchorPointTransform!.position;
+            Quaternion anchorPointRotation = avatarAttachComponent.AnchorPointTransform.rotation;
             var modifiedComponent = false;
 
             if (anchorPointPosition != targetTransform.Cached.WorldPosition)
