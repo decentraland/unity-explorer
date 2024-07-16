@@ -39,6 +39,8 @@ namespace DCL.Notification.NewNotification
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.webRequestController = webRequestController;
             notificationsBusController.OnNotificationAdded += QueueNewNotification;
+            cts = new CancellationTokenSource();
+            cts.Token.ThrowIfCancellationRequested();
         }
 
         protected override void OnViewInstantiated()
@@ -51,6 +53,8 @@ namespace DCL.Notification.NewNotification
         private void StopAnimation()
         {
             cts.SafeCancelAndDispose();
+            cts = new CancellationTokenSource();
+            cts.Token.ThrowIfCancellationRequested();
         }
 
         private void ClickedOnNotification(NotificationType notificationType)
@@ -72,10 +76,6 @@ namespace DCL.Notification.NewNotification
         {
             while (notificationQueue.Count > 0)
             {
-                cts.SafeCancelAndDispose();
-                cts = new CancellationTokenSource();
-                cts.Token.ThrowIfCancellationRequested();
-
                 isDisplaying = true;
                 INotification notification = notificationQueue.Dequeue();
                 viewInstance.NotificationView.HeaderText.text = notification.GetHeader();
@@ -109,10 +109,10 @@ namespace DCL.Notification.NewNotification
 
         private void ProcessCustomMetadata(INotification notification)
         {
-            switch (notification.Type)
+            switch (notification)
             {
-                case NotificationType.REWARD_ASSIGNMENT:
-                    viewInstance.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(((RewardAssignedNotification)notification).Metadata.Rarity);
+                case RewardAssignedNotification rewardAssignedNotification:
+                    viewInstance.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
                     break;
             }
         }
