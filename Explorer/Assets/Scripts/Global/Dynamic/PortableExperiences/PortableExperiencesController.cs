@@ -71,7 +71,6 @@ namespace PortableExperiences.Controller
             var portableExperiencePath = URLDomain.FromString(worldUrl);
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
 
-            await UniTask.SwitchToMainThread();
 
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
@@ -93,7 +92,7 @@ namespace PortableExperiences.Controller
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
-            Entity portableExperienceEntity = world.Create(new PortableExperienceComponent(realmData, parentSceneName, isGlobalPortableExperience));
+            Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience));
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
             return new IPortableExperiencesApi.SpawnResponse
@@ -107,8 +106,8 @@ namespace PortableExperiences.Controller
 
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                PortableExperienceComponent portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
-                return portableExperienceComponent.ParentSceneId == currentSceneFacade.Info.Name;
+                PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
+                return portableExperienceRealmComponent.ParentSceneId == currentSceneFacade.Info.Name;
             }
 
             return false;
@@ -120,12 +119,12 @@ namespace PortableExperiences.Controller
 
             foreach (var portableExperience in PortableExperienceEntities)
             {
-                PortableExperienceComponent pxComponent = world.Get<PortableExperienceComponent>(portableExperience.Value);
+                PortableExperienceRealmComponent pxRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperience.Value);
 
                 spawnResponsesList.Add(new IPortableExperiencesApi.SpawnResponse {
-                        name = pxComponent.RealmData.RealmName,
+                        name = pxRealmComponent.RealmData.RealmName,
                         ens = portableExperience.Key,
-                        parent_cid = pxComponent.ParentSceneId,
+                        parent_cid = pxRealmComponent.ParentSceneId,
                         pid = portableExperience.Value.Id.ToString() });
             }
 
@@ -138,15 +137,13 @@ namespace PortableExperiences.Controller
 
             //TODO: We need to be able to kill PX using only the urn as well, it will mean some changes to this code, this will be done in the next iteration.
 
-            await UniTask.SwitchToMainThread();
-
             //We need to dispose the scene that the PX has created.
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                PortableExperienceComponent portableExperienceComponent = world.Get<PortableExperienceComponent>(portableExperienceEntity);
+                PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
 
                 //Portable Experiences only have one scene
-                string? sceneUrn = portableExperienceComponent.Ipfs.SceneUrns[0];
+                string? sceneUrn = portableExperienceRealmComponent.Ipfs.SceneUrns[0];
                 string sceneEntityId = string.Empty;
 
                 if (sceneUrn != null)
@@ -175,7 +172,6 @@ namespace PortableExperiences.Controller
 
                 world.Destroy(portableExperienceEntity);
                 PortableExperienceEntities.Remove(ens);
-                GC.Collect();
 
                 return new IPortableExperiencesApi.ExitResponse
                     { status = true };

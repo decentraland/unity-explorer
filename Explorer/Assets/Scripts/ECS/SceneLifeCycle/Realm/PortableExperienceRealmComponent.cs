@@ -2,7 +2,7 @@
 
 namespace ECS
 {
-    public readonly struct PortableExperienceComponent
+    public readonly struct PortableExperienceRealmComponent
     {
         public IIpfsRealm Ipfs => RealmData.Ipfs;
         public IRealmData RealmData { get; }
@@ -12,7 +12,7 @@ namespace ECS
 
         public string ParentSceneId { get; }
 
-        public PortableExperienceComponent(IRealmData realmData, string parentSceneId, bool isGlobalPortableExperience)
+        public PortableExperienceRealmComponent(IRealmData realmData, string parentSceneId, bool isGlobalPortableExperience)
         {
             RealmData = realmData;
             ParentSceneId = parentSceneId;

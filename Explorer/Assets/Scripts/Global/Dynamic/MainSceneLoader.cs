@@ -24,6 +24,7 @@ namespace Global.Dynamic
         public bool showLoading;
         public bool enableLandscape;
         public bool enableLOD;
+        public string[]? portableExperiencesEnsToLoadAtGameStart;
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
         public DebugSettings Get() =>
@@ -37,6 +38,7 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
+                portableExperiencesEnsToLoadAtGameStart = null,
             };
     }
 
@@ -144,8 +146,13 @@ namespace Global.Dynamic
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
 
                 //TODO: Implement loading this (or more addresses) from Unleash
-                var pxEns = "globalpx.dcl.eth";
-                await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(pxEns, string.Empty, ct, true);
+                if (debugSettings.portableExperiencesEnsToLoadAtGameStart != null && staticContainer != null)
+                {
+                    foreach (string pxEns in debugSettings.portableExperiencesEnsToLoadAtGameStart)
+                    {
+                        await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(pxEns, string.Empty, ct, true);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {

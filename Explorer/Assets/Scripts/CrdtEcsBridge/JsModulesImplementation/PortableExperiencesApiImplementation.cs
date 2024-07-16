@@ -21,22 +21,28 @@ namespace CrdtEcsBridge.PortableExperiencesApi
 
         public void Dispose() { }
 
-        public async UniTask<IPortableExperiencesApi.SpawnResponse> SpawnAsync(string pid, string ens, CancellationToken ct) =>
-            await portableExperiencesController.CreatePortableExperienceAsync(ens, pid, ct);
+        public async UniTask<IPortableExperiencesApi.SpawnResponse> SpawnAsync(string pid, string ens, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+            return await portableExperiencesController.CreatePortableExperienceAsync(ens, pid, ct);
+        }
 
         public async UniTask<IPortableExperiencesApi.ExitResponse> KillAsync(string ens, CancellationToken ct)
         {
             if (!portableExperiencesController.CanKillPortableExperience(ens))
-                return new IPortableExperiencesApi.ExitResponse
-                    { status = false };
+                return new IPortableExperiencesApi.ExitResponse { status = false };
 
+            await UniTask.SwitchToMainThread();
             return await portableExperiencesController.UnloadPortableExperienceAsync(ens, ct);
         }
 
-        public async UniTask<IPortableExperiencesApi.ExitResponse> ExitAsync(CancellationToken ct) =>
-            await portableExperiencesController.UnloadPortableExperienceAsync(sceneData.SceneEntityDefinition.id, ct);
+        public async UniTask<IPortableExperiencesApi.ExitResponse> ExitAsync(CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+            return await portableExperiencesController.UnloadPortableExperienceAsync(sceneData.SceneEntityDefinition.id, ct);
+        }
 
-        public List<IPortableExperiencesApi.SpawnResponse> GetxLoadedgetPortableExperiences(CancellationToken ct) =>
+        public List<IPortableExperiencesApi.SpawnResponse> GetLoadedPortableExperiences(CancellationToken ct) =>
             portableExperiencesController.GetAllPortableExperiences();
     }
 }

@@ -77,6 +77,14 @@ namespace CrdtEcsBridge.RestrictedActions
             return true;
         }
 
+        public void TryTriggerEmote(string predefinedEmote)
+        {
+            if (!sceneStateProvider.IsCurrent)
+                return;
+
+            globalWorldActions.TriggerEmote(predefinedEmote);
+        }
+
         public async UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct)
         {
             if (!sceneStateProvider.IsCurrent)

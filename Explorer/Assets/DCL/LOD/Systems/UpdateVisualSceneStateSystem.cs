@@ -34,7 +34,7 @@ namespace ECS.SceneLifeCycle.Systems
         private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
                                                                            .WithAll<VisualSceneState, PartitionComponent, SceneDefinitionComponent>()
                                                                            .WithAny<SceneLODInfo, ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>()
-                                                                           .WithNone<DeleteEntityIntention>();
+                                                                           .WithNone<DeleteEntityIntention, PortableExperienceComponent>();
 
         private readonly ContinuationMethod<ISceneFacade> sceneFacadeToLODContinuation;
         private readonly ContinuationMethod<AssetPromise<ISceneFacade, GetSceneFacadeIntention>> scenePromiseToLODContinuation;
@@ -99,9 +99,6 @@ namespace ECS.SceneLifeCycle.Systems
                 foreach (int entityIndex in chunk)
                 {
                     ref SceneDefinitionComponent sceneDefinitionComponent = ref Unsafe.Add(ref scenedefinitioncomponentFirstElement, entityIndex);
-
-                    if (sceneDefinitionComponent.IsPortableExperience) continue;
-
                     ref readonly Entity entity = ref Unsafe.Add(ref entityFirstElement, entityIndex);
                     ref VisualSceneState visualSceneStateComponent = ref Unsafe.Add(ref visualscenestateFirstElement, entityIndex);
 
@@ -122,8 +119,6 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void SwapScenePromiseToLOD(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> switchcomponent)
         {
-            if (sceneDefinitionComponent.IsPortableExperience) return;
-
             if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_LOD) return;
 
             var sceneLODInfo = SceneLODInfo.Create();
@@ -139,8 +134,6 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void SwapLODToScenePromise(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLODInfo switchComponent)
         {
-            if (sceneDefinitionComponent.IsPortableExperience) return;
-
             if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_SCENE) return;
 
             switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
@@ -156,8 +149,6 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void SwapSceneFacadeToLOD(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref ISceneFacade switchComponent)
         {
-            if (sceneDefinitionComponent.IsPortableExperience) { return; }
-
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_LOD)
             {
                 //Create LODInfo

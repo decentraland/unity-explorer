@@ -7,6 +7,10 @@ using Utility;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
+    public struct PortableExperienceComponent
+    { };
+
+
     /// <summary>
     ///     Scene definition in ECS, indicates the definition is loaded but does not tell the state of SceneFacade itself
     /// </summary>
@@ -51,7 +55,7 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath)
         {
-            if (definition.metadata.isPortableExperience) { return CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath); }
+            if (definition.metadata.isPortableExperience) { return CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath);}
 
             return CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isEmpty: false, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
         }

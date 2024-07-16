@@ -45,7 +45,7 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object GetLoadedPortableExperiences() =>
-            api.GetxLoadedgetPortableExperiences(cancellationTokenSource.Token);
+            api.GetLoadedPortableExperiences(cancellationTokenSource.Token);
 
         protected override void DisposeInternal()
         {

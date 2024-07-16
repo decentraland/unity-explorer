@@ -25,19 +25,19 @@ namespace ECS.SceneLifeCycle.Systems
 
         [Query]
         [None(typeof(PortableExperienceScenePointers))]
-        private void InitiateDefinitionLoading(in Entity entity, ref PortableExperienceComponent portableExperienceComponent)
+        private void InitiateDefinitionLoading(in Entity entity, ref PortableExperienceRealmComponent portableExperienceRealmComponent)
         {
             // tolerate allocations as it's once per realm only
-            var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[portableExperienceComponent.Ipfs.SceneUrns.Count];
+            var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[portableExperienceRealmComponent.Ipfs.SceneUrns.Count];
 
-            for (var i = 0; i < portableExperienceComponent.Ipfs.SceneUrns.Count; i++)
+            for (var i = 0; i < portableExperienceRealmComponent.Ipfs.SceneUrns.Count; i++)
             {
-                string urn = portableExperienceComponent.Ipfs.SceneUrns[i];
+                string urn = portableExperienceRealmComponent.Ipfs.SceneUrns[i];
                 IpfsPath ipfsPath = IpfsHelper.ParseUrn(urn);
 
                 // can't prioritize scenes definition - they are always top priority
                 var promise = AssetPromise<SceneEntityDefinition, GetSceneDefinition>
-                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(portableExperienceComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
+                   .Create(World, new GetSceneDefinition(new CommonLoadingArguments(ipfsPath.GetUrl(portableExperienceRealmComponent.Ipfs.ContentBaseUrl)), ipfsPath), PartitionComponent.TOP_PRIORITY);
 
                 promises[i] = promise;
             }

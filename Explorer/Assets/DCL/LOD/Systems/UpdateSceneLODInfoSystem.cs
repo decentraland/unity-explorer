@@ -51,11 +51,9 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneDefinitionComponent.IsPortableExperience) return;
-
             //New LOD infront of you. Update
             if (!partitionComponent.IsBehind && sceneLODInfo.CurrentLODLevel == byte.MaxValue)
             {
