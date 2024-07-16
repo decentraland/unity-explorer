@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Chat;
+using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,6 +17,7 @@ namespace DCL.Passport.Modules
         private readonly UserBasicInfo_PassportModuleView view;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly ISelfProfile selfProfile;
+        private readonly PassportErrorsController passportErrorsController;
 
         private Profile currentProfile;
         private CancellationTokenSource checkEditionAvailabilityCts;
@@ -22,11 +25,13 @@ namespace DCL.Passport.Modules
         public UserBasicInfo_PassportModuleController(
             UserBasicInfo_PassportModuleView view,
             ChatEntryConfigurationSO chatEntryConfiguration,
-            ISelfProfile selfProfile)
+            ISelfProfile selfProfile,
+            PassportErrorsController passportErrorsController)
         {
             this.view = view;
             this.chatEntryConfiguration = chatEntryConfiguration;
             this.selfProfile = selfProfile;
+            this.passportErrorsController = passportErrorsController;
 
             view.CopyNameWarningNotification.Hide(true);
             view.CopyWalletWarningNotification.Hide(true);
@@ -72,6 +77,7 @@ namespace DCL.Passport.Modules
 
         public void Dispose()
         {
+            checkEditionAvailabilityCts.SafeCancelAndDispose();
             view.CopyUserNameButton.onClick.RemoveAllListeners();
             view.CopyWalletAddressButton.onClick.RemoveAllListeners();
             view.CopyNameWarningNotification.Hide(true);
@@ -91,10 +97,21 @@ namespace DCL.Passport.Modules
 
         private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
         {
-            view.EditionButton.gameObject.SetActive(false);
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile?.UserId == currentProfile.UserId)
-                view.EditionButton.gameObject.SetActive(true);
+            try
+            {
+                view.EditionButton.gameObject.SetActive(false);
+                var ownProfile = await selfProfile.ProfileAsync(ct);
+
+                if (ownProfile?.UserId == currentProfile.UserId)
+                    view.EditionButton.gameObject.SetActive(true);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while trying to check your profile. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
     }
 }

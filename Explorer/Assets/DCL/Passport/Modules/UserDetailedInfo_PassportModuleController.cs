@@ -398,13 +398,23 @@ namespace DCL.Passport.Modules
 
         private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)
         {
-            view.InfoEditionButton.gameObject.SetActive(false);
-            view.LinksEditionButton.gameObject.SetActive(false);
-            var ownProfile = await selfProfile.ProfileAsync(ct);
-            if (ownProfile?.UserId == currentProfile.UserId)
+            try
             {
-                view.InfoEditionButton.gameObject.SetActive(true);
-                view.LinksEditionButton.gameObject.SetActive(true);
+                view.InfoEditionButton.gameObject.SetActive(false);
+                view.LinksEditionButton.gameObject.SetActive(false);
+                var ownProfile = await selfProfile.ProfileAsync(ct);
+                if (ownProfile?.UserId == currentProfile.UserId)
+                {
+                    view.InfoEditionButton.gameObject.SetActive(true);
+                    view.LinksEditionButton.gameObject.SetActive(true);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while trying to check your profile. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
@@ -638,8 +648,9 @@ namespace DCL.Passport.Modules
             catch (OperationCanceledException) { }
             catch (Exception e)
             {
+                const string ERROR_MESSAGE = "There was an error while trying to update your profile. Please try again!";
                 passportErrorsController.Show();
-                ReportHub.LogError(ReportCategory.PROFILE, $"Error updating profile from passport: {e.Message}");
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
             finally
             {

@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Diagnostics;
 using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
@@ -37,6 +38,8 @@ namespace DCL.Passport.Modules
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly RectTransform scrollContainer;
         private readonly IWebBrowser webBrowser;
+        private readonly PassportErrorsController passportErrorsController;
+
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
         private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
@@ -45,7 +48,7 @@ namespace DCL.Passport.Modules
         private readonly List<EquippedItem_PassportFieldView> instantiatedEmptyItems = new();
 
         private Profile currentProfile;
-        private CancellationTokenSource cts;
+        private CancellationTokenSource getEquippedItemsCts;
 
         public EquippedItems_PassportModuleController(
             EquippedItems_PassportModuleView view,
@@ -55,7 +58,8 @@ namespace DCL.Passport.Modules
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
             RectTransform scrollContainer,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            PassportErrorsController passportErrorsController)
         {
             this.view = view;
             this.world = world;
@@ -65,6 +69,7 @@ namespace DCL.Passport.Modules
             this.thumbnailProvider = thumbnailProvider;
             this.scrollContainer = scrollContainer;
             this.webBrowser = webBrowser;
+            this.passportErrorsController = passportErrorsController;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
                 InstantiateEquippedItemPrefab,
@@ -122,8 +127,11 @@ namespace DCL.Passport.Modules
             ClearEmptyItems();
         }
 
-        public void Dispose() =>
+        public void Dispose()
+        {
+            getEquippedItemsCts.SafeCancelAndDispose();
             Clear();
+        }
 
         private EquippedItem_PassportFieldView InstantiateEquippedItemPrefab()
         {
@@ -146,13 +154,12 @@ namespace DCL.Passport.Modules
                 EmoteComponentsUtils.CreateGetEmotesByPointersIntention(currentProfile.Avatar.BodyShape, currentProfile.Avatar.Emotes),
                 PartitionComponent.TOP_PRIORITY);
 
-            AwaitEquippedItemsPromiseAsync(equippedWearablesPromise, equippedEmotesPromise, cts.Token).Forget();
+            getEquippedItemsCts = getEquippedItemsCts.SafeRestart();
+            AwaitEquippedItemsPromiseAsync(equippedWearablesPromise, equippedEmotesPromise, getEquippedItemsCts.Token).Forget();
         }
 
         private void SetGridAsLoading()
         {
-            cts = cts.SafeRestart();
-
             for (var i = 0; i < LOADING_ITEMS_POOL_DEFAULT_CAPACITY; i++)
             {
                 var loadingItem = loadingItemsPool.Get();
@@ -195,7 +202,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.BuyButton.interactable = wearable.IsCollectible() && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
-                WaitForThumbnailAsync(wearable, equippedWearableItem, cts.Token).Forget();
+                WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
             }
@@ -219,7 +226,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.BuyButton.interactable = emote.IsCollectible() && rarityName != "base" && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
-                WaitForThumbnailAsync(emote, equippedWearableItem, cts.Token).Forget();
+                WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
             }
@@ -245,35 +252,59 @@ namespace DCL.Passport.Modules
 
         private async UniTaskVoid AwaitEquippedItemsPromiseAsync(WearablePromise equippedWearablesPromise, EmotePromise equippedEmotesPromise, CancellationToken ct)
         {
-            var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
-            var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
+            try
+            {
+                var wearablesUniTaskAsync = await equippedWearablesPromise.ToUniTaskAsync(world, cancellationToken: ct);
+                var emotesUniTaskAsync = await equippedEmotesPromise.ToUniTaskAsync(world, cancellationToken: ct);
 
-            if (!wearablesUniTaskAsync.Result!.Value.Succeeded || !emotesUniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
-                return;
+                //if (!wearablesUniTaskAsync.Result!.Value.Succeeded || !emotesUniTaskAsync.Result!.Value.Succeeded || ct.IsCancellationRequested)
+                //    return;
 
-            var currentWearables = wearablesUniTaskAsync.Result.Value.Asset.Wearables;
-            var currentEmotes = emotesUniTaskAsync.Result.Value.Asset.Emotes;
-            SetGridElements(currentWearables, currentEmotes);
+                var currentWearables = wearablesUniTaskAsync.Result!.Value.Asset.Wearables;
+                var currentEmotes = emotesUniTaskAsync.Result!.Value.Asset.Emotes;
+                SetGridElements(currentWearables, currentEmotes);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while trying to load the equipped items. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IWearable itemWearable, EquippedItem_PassportFieldView itemView, CancellationToken ct)
         {
-            Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
-
-            if (ct.IsCancellationRequested)
-                return;
-
-            itemView.EquippedItemThumbnail.sprite = sprite;
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                itemView.EquippedItemThumbnail.sprite = sprite;
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                itemView.EquippedItemThumbnail.sprite = null;
+                const string ERROR_MESSAGE = "There was an error while trying to load wearable thumbnails. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private async UniTaskVoid WaitForThumbnailAsync(IEmote itemEmote, EquippedItem_PassportFieldView itemView, CancellationToken ct)
         {
-            Sprite? sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
-
-            if (ct.IsCancellationRequested)
-                return;
-
-            itemView.EquippedItemThumbnail.sprite = sprite;
+            try
+            {
+                Sprite sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
+                itemView.EquippedItemThumbnail.sprite = sprite;
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                itemView.EquippedItemThumbnail.sprite = null;
+                const string ERROR_MESSAGE = "There was an error while trying to load emote thumbnails. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private void ClearLoadingItems()

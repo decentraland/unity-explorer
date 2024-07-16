@@ -7,7 +7,7 @@ namespace DCL.Passport
 {
     public class PassportErrorsController
     {
-        private const int HIDE_TIME_MS = 3000;
+        private const int HIDE_TIME_MS = 5000;
         private const string DEFAULT_MESSAGE = "There was an error while trying to process your request. Please try again!";
 
         private readonly WarningNotificationView errorNotification;

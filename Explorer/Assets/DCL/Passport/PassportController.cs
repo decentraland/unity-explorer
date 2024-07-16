@@ -5,12 +5,14 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.Passport.Modules;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using JetBrains.Annotations;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -87,9 +89,9 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile));
+            passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
             passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, passportErrorsController));
-            passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer, webBrowser));
+            passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer, webBrowser, passportErrorsController));
         }
 
         protected override void OnViewShow()
@@ -130,20 +132,30 @@ namespace DCL.Passport
 
         private async UniTaskVoid LoadUserProfileAsync(string userId, CancellationToken ct)
         {
-            // Load user profile
-            var profile = await profileRepository.GetAsync(userId, 0, ct);
-            if (profile == null)
-                return;
+            try
+            {
+                // Load user profile
+                var profile = await profileRepository.GetAsync(userId, 0, ct);
+                if (profile == null)
+                    return;
 
-            viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, chatEntryConfiguration.GetNameColor(profile.Name));
+                viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, chatEntryConfiguration.GetNameColor(profile.Name));
 
-            // Load avatar preview
-            characterPreviewController.Initialize(profile.Avatar);
-            characterPreviewController.OnShow();
+                // Load avatar preview
+                characterPreviewController.Initialize(profile.Avatar);
+                characterPreviewController.OnShow();
 
-            // Load passport modules
-            foreach (IPassportModuleController module in passportModules)
-                module.Setup(profile);
+                // Load passport modules
+                foreach (IPassportModuleController module in passportModules)
+                    module.Setup(profile);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error while trying to load the profile. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
     }
 }
