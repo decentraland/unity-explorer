@@ -51,7 +51,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             return;
 
             Profile CloneProfile(Profile p) =>
-                profileBuilder.From(p).Build();
+                profileBuilder.From(p)
+                              .WithAvatar(p.Avatar)
+                              .Build();
         }
     }
 }
