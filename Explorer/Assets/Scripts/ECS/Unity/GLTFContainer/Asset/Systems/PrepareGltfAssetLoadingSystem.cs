@@ -40,16 +40,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache
-            if (cache.TryGet(intention.Hash, out GltfContainerAsset asset))
+            /*if (cache.TryGet(intention.Hash, out GltfContainerAsset asset))
             {
                 // construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
                 return;
-            }
-            // branch aca si usar assetbundles o rawgltf
+            }*/
 
-            // primero forzar el raw para ver que ande
-            // hacer un fallback
+            // TODO: for debugging only, CHANGE later
             var useRawGLTFLoad = true;
 
             if (useRawGLTFLoad)

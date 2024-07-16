@@ -34,10 +34,13 @@ namespace ECS.StreamableLoading.GLTF
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
-            GLTFData data = new (intention.Name);
+            if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl))
+                return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
+            Debug.Log($"content final download URL: {finalDownloadUrl}");
 
-            Debug.Log($"sceneData.SceneContent.ContentBaseUrl+intention.Name: {sceneData.SceneContent.ContentBaseUrl+intention.Name}");
-            using (UnityWebRequest webRequest = new UnityWebRequest(sceneData.SceneContent.ContentBaseUrl+intention.Name))
+            GLTFData data = new (intention.Name!);
+
+            using (UnityWebRequest webRequest = new UnityWebRequest(finalDownloadUrl))
             {
                 // ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
                 // await webRequest.SendWebRequest().WithCancellation(ct);
@@ -53,9 +56,7 @@ namespace ECS.StreamableLoading.GLTF
                 //     throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
             }
 
-
-
-            return new Common.Components.StreamableLoadingResult<GLTFData>(data);
+            return new StreamableLoadingResult<GLTFData>(data);
         }
 
     }

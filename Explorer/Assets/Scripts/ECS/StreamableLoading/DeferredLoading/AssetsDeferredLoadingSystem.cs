@@ -3,6 +3,7 @@ using Arch.SystemGroups;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
+using ECS.StreamableLoading.GLTF;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.Textures;
@@ -28,6 +29,7 @@ namespace ECS.StreamableLoading.DeferredLoading
             COMPONENT_HANDLERS = new[]
             {
                 CreateQuery<GetAssetBundleIntention, AssetBundleData>(),
+                CreateQuery<GetGLTFIntention, GLTFData>(),
                 CreateQuery<GetTextureIntention, Texture2D>(),
                 CreateQuery<GetNFTShapeIntention, Texture2D>(),
                 CreateQuery<GetAudioClipIntention, AudioClip>(),

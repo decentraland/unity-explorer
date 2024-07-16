@@ -41,7 +41,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             ref GetGLTFIntention gltfIntention
             )
         {
-            GltfContainerAsset result = CreateGltfObject(gltfIntention.Name);
+            // GltfContainerAsset result = CreateGltfObject(gltfIntention.Name);
             Debug.Log($"gltfIntention: {gltfIntention.Name}");
             World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>());
         }
