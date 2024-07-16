@@ -57,8 +57,10 @@ namespace DCL.PluginSystem.World
 
             // Asset loading
             PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
-            CreateGltfAssetFromPathSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+
+            CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
             //CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 
             // GLTF Container

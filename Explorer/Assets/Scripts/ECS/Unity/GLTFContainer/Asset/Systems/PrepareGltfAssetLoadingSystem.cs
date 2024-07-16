@@ -51,16 +51,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             var useRawGLTFLoad = true;
 
             if (useRawGLTFLoad)
-            {
-                Debug.Log($"PrepareGltfAssetLoadingSystem.Prepare: {intention.Name}, {intention.Hash}");
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
-            }
             else
-            {
-                //intention.
-                // If not in cache, try load from asset bundle
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetPlatform()}", intention.Name));
-            }
         }
     }
 }

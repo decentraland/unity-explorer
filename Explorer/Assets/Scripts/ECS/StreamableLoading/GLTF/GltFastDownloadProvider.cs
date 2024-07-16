@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
+using GLTFast;
 using GLTFast.Loading;
 using System;
 using System.Collections.Generic;
@@ -12,29 +13,6 @@ namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-        // public delegate bool AssetIdConverter(string uri, out string id);
-
-        // private readonly IWebRequestController webRequestController;
-        // private readonly AssetIdConverter fileToUrl;
-        // private readonly AssetPromiseKeeper_Texture texturePromiseKeeper;
-
-        // private List<IDisposable> disposables = new ();
-        // private string baseUrl;
-        // private bool isDisposed;
-
-        /*public GltFastDownloadProvider(string baseUrl, IWebRequestController webRequestController, AssetIdConverter fileToUrl/*, AssetPromiseKeeper_Texture texturePromiseKeeper#1#)
-        {
-             this.baseUrl = baseUrl;
-             this.webRequestController = webRequestController;
-             this.fileToUrl = fileToUrl;
-            this.texturePromiseKeeper = texturePromiseKeeper;
-        }*/
-
-        public GltFastDownloadProvider()
-        {
-            // webRequestController = new WebRequestController();
-        }
-
         public async Task<IDownload> Request(Uri uri)
         {
             // var asyncOp = await webRequestController.GetAsync(
@@ -43,19 +21,17 @@ namespace ECS.StreamableLoading.GLTF
             //     timeout: 30,
             //     requestAttemps: 3);
 
+            // TODO: Replace for WebRequestController ???
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
             {
                 webRequest.downloadHandler = new DownloadHandlerBuffer();
 
                 await webRequest.SendWebRequest().WithCancellation(new CancellationToken());
 
-                // (DownloadHandlerBuffer)
-                // (DownloadHandlerFile)
-
                 if (!string.IsNullOrEmpty(webRequest.downloadHandler.error))
                     throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}");
 
-                return new DownloadResult()
+                return new GltfDownloadResult()
                 {
                     Data = webRequest.downloadHandler.data,
                     Error = webRequest.downloadHandler.error,
@@ -63,48 +39,7 @@ namespace ECS.StreamableLoading.GLTF
                     Success = webRequest.result == UnityWebRequest.Result.Success
                 };
             }
-
-            // if (isDisposed)
-            //     return null;
-            //
-            // string finalUrl = GetFinalUrl(uri, false);
-
-            // var asyncOp = await webRequestController.GetAsync(
-            //     url: finalUrl,
-            //     downloadHandler: new DownloadHandlerBuffer(),
-            //     timeout: 30,
-            //     requestAttemps: 3);
-
-            //GltfDownloaderWrapper wrapper = new GltfDownloaderWrapper(asyncOp);
-            //disposables.Add(wrapper);
-
-            //if (!wrapper.Success) { Debug.LogError($"<color=Red>[GLTFast WebRequest Failed]</color> {asyncOp.url} {asyncOp.error}"); }
-
-            //return wrapper;
-            return default;
         }
-
-        /*private string GetFinalUrl(Uri uri, bool isTexture)
-        {
-            string fileName = uri.OriginalString;
-
-            if (string.IsNullOrEmpty(baseUrl))
-                return fileName;
-
-            fileName = fileName.Replace(baseUrl, "");
-
-            if (fileName.StartsWith("file://"))
-                return fileName;
-
-            // this can return false and the url is valid, only happens with asset with hash as a name ( mostly gltf )
-            if (fileToUrl(fileName, out string finalUrl))
-                return finalUrl;
-
-            if (isTexture)
-                throw new Exception($"File not found in scene {finalUrl}");
-
-            return uri.OriginalString;
-        }*/
 
         public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable, bool forceLinear)
         {
@@ -153,14 +88,9 @@ namespace ECS.StreamableLoading.GLTF
         }
     }
 
-    public struct DownloadResult : IDownload
+    public struct GltfDownloadResult : IDownload
     {
         private const uint GLB_SIGNATURE = 0x46546c67;
-
-        public void Dispose()
-        {
-            // throw new NotImplementedException();
-        }
 
         public bool Success { get; set; }
         public string Error { get; set; }
@@ -173,6 +103,32 @@ namespace ECS.StreamableLoading.GLTF
                 var gltfBinarySignature = BitConverter.ToUInt32(Data, 0);
                 return gltfBinarySignature == GLB_SIGNATURE;
             }
+        }
+
+        public void Dispose()
+        {
+            Data = null!;
+        }
+    }
+
+    public struct TextureDownloadResult : ITextureDownload
+    {
+        public bool Success { get; set; }
+        public string Error { get; set; }
+        public byte[] Data => Array.Empty<byte>();
+        public string Text => string.Empty;
+        public bool? IsBinary => true;
+
+        public IDisposableTexture GetTexture(bool forceSampleLinear)
+        {
+            // TODO...
+
+            throw new NotImplementedException();
+        }
+
+        public void Dispose()
+        {
+
         }
     }
 }

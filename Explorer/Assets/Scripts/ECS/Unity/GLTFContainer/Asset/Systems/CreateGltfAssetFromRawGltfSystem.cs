@@ -17,12 +17,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
-    public partial class CreateGltfAssetFromPathSystem : BaseUnityLoopSystem
+    public partial class CreateGltfAssetFromRawGltfSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
 
-        internal CreateGltfAssetFromPathSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
+        internal CreateGltfAssetFromRawGltfSystem(World world, IPerformanceBudget instantiationFrameTimeBudget, IPerformanceBudget memoryBudget) : base(world)
         {
             this.instantiationFrameTimeBudget = instantiationFrameTimeBudget;
             this.memoryBudget = memoryBudget;
