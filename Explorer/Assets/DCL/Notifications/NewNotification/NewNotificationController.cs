@@ -14,6 +14,7 @@ namespace DCL.Notification.NewNotification
 {
     public class NewNotificationController : ControllerBase<NewNotificationView>
     {
+        private const float ANIMATION_DURATION = 0.5f;
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         private readonly INotificationsBusController notificationsBusController;
@@ -85,11 +86,12 @@ namespace DCL.Notification.NewNotification
                     thumbnailImageController.RequestImage(notification.GetThumbnail());
 
                 viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
                 try
                 {
                     viewInstance.NotificationViewCanvasGroup.interactable = true;
                     viewInstance.NotificationViewCanvasGroup.blocksRaycasts = true;
-                    await viewInstance.NotificationViewCanvasGroup.DOFade(1, 0.5f).ToUniTask(cancellationToken: cts.Token);
+                    await viewInstance.NotificationViewCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
                     await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: cts.Token);
                 }
                 catch (OperationCanceledException)
@@ -99,7 +101,7 @@ namespace DCL.Notification.NewNotification
                 {
                     viewInstance.NotificationViewCanvasGroup.interactable = false;
                     viewInstance.NotificationViewCanvasGroup.blocksRaycasts = false;
-                    await viewInstance.NotificationViewCanvasGroup.DOFade(0, 0.5f).ToUniTask();
+                    await viewInstance.NotificationViewCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
                 }
             }
             isDisplaying = false;

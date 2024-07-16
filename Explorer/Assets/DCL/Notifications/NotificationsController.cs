@@ -43,14 +43,14 @@ namespace DCL.Notification
             lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             commonArgumentsForSetRead = new CommonArguments(new URLBuilder().AppendDomain(URLDomain.FromString(NOTIFICATION_READ_URL)).Build());
 
-            GetNewNotificationAsync().Forget();
+            GetNewNotificationAsync().SuppressCancellationThrow().Forget();
         }
 
-        private async UniTaskVoid GetNewNotificationAsync()
+        private async UniTask GetNewNotificationAsync()
         {
             do
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(5));
+                await UniTask.Delay(TimeSpan.FromSeconds(5), DelayType.Realtime, cancellationToken: cancellationToken.Token);
 
                 if(web3IdentityCache.Identity == null)
                     continue;
@@ -66,7 +66,7 @@ namespace DCL.Notification
                 List<INotification> notifications =
                     await webRequestController.GetAsync(
                         commonArguments,
-                        new CancellationToken(),
+                        cancellationToken.Token,
                         signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
                         headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);

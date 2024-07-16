@@ -15,13 +15,13 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class NotificationPlugin : DCLGlobalPluginBase<NotificationPlugin.NotificationSettings>
+    public class NotificationPlugin : IDCLGlobalPlugin<NotificationPlugin.NotificationSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
-        private NotificationsController notificationsController;
+        private readonly NotificationsController notificationsController;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -37,32 +37,29 @@ namespace DCL.PluginSystem.Global
             notificationsController = new NotificationsController(webRequestController, notificationsBusController, web3IdentityCache);
         }
 
-        protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-        }
-
-        protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(NotificationSettings notificationSettings, CancellationToken ct)
+        public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)
         {
             NewNotificationView newNotificationView = (await assetsProvisioner.ProvideMainAssetAsync(settings.NewNotificationView, ct: ct)).Value.GetComponent<NewNotificationView>();
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
 
-            return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
-            {
-                NewNotificationController newNotificationController =
-                    new NewNotificationController(
-                        NewNotificationController.CreateLazily(newNotificationView, null),
+            NewNotificationController newNotificationController =
+                new NewNotificationController(
+                    NewNotificationController.CreateLazily(newNotificationView, null),
                         notificationsBusController,
                         notificationIconTypes,
                         rarityBackgroundMapping,
                         webRequestController);
-                mvcManager.RegisterController(newNotificationController);
-            };
+            mvcManager.RegisterController(newNotificationController);
         }
 
-        public override void Dispose()
+        public void Dispose()
         {
             notificationsController.Dispose();
+        }
+
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
+        {
         }
 
         public class NotificationSettings : IDCLPluginSettings
