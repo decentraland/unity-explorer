@@ -55,8 +55,7 @@ namespace DCL.Chat
         private CancellationTokenSource emojiPanelCts;
         private SingleInstanceEntity cameraEntity;
         private (IChatCommand command, Match param) chatCommand;
-        private CancellationTokenSource commandCts = new ();
-        private bool isChatClosed = false;
+        private bool isChatClosed;
         private IReadOnlyList<RaycastResult> raycastResults;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
