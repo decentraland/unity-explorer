@@ -37,24 +37,22 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
         private void PutStreamableLoadingResult(in Entity entity,
             ref GetGltfContainerAssetIntention assetIntention,
-            //ref StreamableLoadingResult<AssetBundleData> assetBundleResult
-            ref GetGLTFIntention gltfIntention
-            )
+            ref StreamableLoadingResult<GLTFData> gltfData)
         {
-            // GltfContainerAsset result = CreateGltfObject(gltfIntention.Name);
-            Debug.Log($"gltfIntention: {gltfIntention.Name}");
-            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>());
+            if (assetIntention.CancellationTokenSource.IsCancellationRequested)
+                return;
+
+            World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(CreateGltfObject(ref gltfData)));
         }
 
-        private static GltfContainerAsset CreateGltfObject(string assetName)
+        private static GltfContainerAsset CreateGltfObject(ref StreamableLoadingResult<GLTFData> gltfData)
         {
-            var container = new GameObject(assetName);
+            // TODO: Create container GameObject, containerTransform, instantiate GLTF GameObject and
+            // populate GltfContainerAsset; Check 'CreateGltfAssetFromAssetBundleSystem.CreateGltfObject()'...
 
-            // Let the upper layer decide what to do with the root
-            container.SetActive(false);
-            Transform containerTransform = container.transform;
+            // var result = GltfContainerAsset.Create(container, gltfData);
 
-            //var result = GltfContainerAsset.Create(container, new AssetBundleData());
+            // ...
 
             return default;
         }
