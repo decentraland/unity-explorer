@@ -27,7 +27,7 @@ namespace DCL.LOD.Systems
         {
             this.lodSettingsAsset = lodSettingsAsset;
             this.missingSceneParent = missingSceneParent;
-            lodSettingsAsset.IsColorDebuging = false;
+            lodSettingsAsset.IsColorDebugging = false;
 
             var debugWidgetBuilder = debugBuilder.AddWidget("LOD");
             debugWidgetBuilder
@@ -54,9 +54,9 @@ namespace DCL.LOD.Systems
 
         private void ToggleLODColor()
         {
-            lodSettingsAsset.IsColorDebuging = !lodSettingsAsset.IsColorDebuging;
+            lodSettingsAsset.IsColorDebugging = !lodSettingsAsset.IsColorDebugging;
 
-            if (!lodSettingsAsset.IsColorDebuging)
+            if (!lodSettingsAsset.IsColorDebugging)
                 World.Query(REMOVE_QUERY,
                     (Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug) =>
                     {
@@ -67,7 +67,7 @@ namespace DCL.LOD.Systems
 
         protected override void Update(float t)
         {
-            if (lodSettingsAsset.IsColorDebuging)
+            if (lodSettingsAsset.IsColorDebugging)
             {
                 AddSceneLODInfoDebugQuery(World);
                 RemoveSceneLODInfoQuery(World);
@@ -104,11 +104,16 @@ namespace DCL.LOD.Systems
         [Query]
         private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
         {
-            // if (sceneLODInfo.CurrentLOD == null) return;
-            //
-            // var lodAsset = sceneLODInfo.CurrentLOD;
-            // if (lodAsset.LodKey.Level != sceneLODInfoDebug.CurrentLODLevel || lodAsset.State != sceneLODInfoDebug.CurrentLODState)
-            //     sceneLODInfoDebug.Update(lodAsset);
+            if (sceneLODInfo.LODAssets.Count == 0)
+                return;
+
+            sceneLODInfoDebug.Update(sceneLODInfo);
+
+            // foreach (var lodAsset in sceneLODInfo.LODAssets)
+            // {
+            //     if (lodAsset.LodKey.Level != sceneLODInfoDebug.CurrentLODLevel || lodAsset.State != sceneLODInfoDebug.CurrentLODState)
+            //         sceneLODInfoDebug.Update(lodAsset);
+            // }
         }
     }
 
