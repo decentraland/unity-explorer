@@ -9,6 +9,8 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
+using GLTFast;
+using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -23,6 +25,8 @@ namespace ECS.StreamableLoading.GLTF
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
         private ISceneData sceneData;
+        private GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider();
+        private GltfastEditorConsoleLogger gltfConsoleLogger = new GltfastEditorConsoleLogger();
 
         internal LoadGLTFSystem(
             World world,
@@ -38,26 +42,26 @@ namespace ECS.StreamableLoading.GLTF
                 return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
             Debug.Log($"content final download URL: {finalDownloadUrl}");
 
-            GLTFData data = new (intention.Name!);
+            var gltfImport = new GltfImport(downloadProvider: gltfDownloadProvider, logger: gltfConsoleLogger);
 
-            using (UnityWebRequest webRequest = new UnityWebRequest(finalDownloadUrl))
+            var gltFastSettings = new ImportSettings
             {
-                // ((DownloadHandlerAssetBundle)webRequest.downloadHandler).autoLoadAssetBundle = false;
-                // await webRequest.SendWebRequest().WithCancellation(ct);
-                //
-                // using (AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct))
-                //     assetBundle = DownloadHandlerAssetBundle.GetContent(webRequest);
-                //
-                // // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
-                // acquiredBudget.Release();
-                //
-                // // if GetContent prints an error, null will be thrown
-                // if (assetBundle == null)
-                //     throw new NullReferenceException($"{intention.Hash} Asset Bundle is null: {webRequest.downloadHandler.error}");
-            }
+                GenerateMipMaps = false,
+                AnisotropicFilterLevel = 3,
+                NodeNameMethod = NameImportMethod.OriginalUnique
+            };
 
-            return new StreamableLoadingResult<GLTFData>(data);
+            bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
+            Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - SUCCESS: {success}");
+
+            // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
+            acquiredBudget.Release();
+
+            if (success)
+                return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport));
+
+            return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
+            // Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - LOADING ERROR: {gltfImport.LoadingError}");
         }
-
     }
 }

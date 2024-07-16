@@ -1,19 +1,20 @@
+using GLTFast;
 using System;
 
 namespace ECS.StreamableLoading.GLTF
 {
     public class GLTFData : IDisposable
     {
-        public readonly string Source;
+        public readonly GltfImport gltfImportedData;
 
-        public GLTFData(string source)
+        public GLTFData(GltfImport gltfImportedData)
         {
-            Source = source;
+            this.gltfImportedData = gltfImportedData;
         }
 
         public void Dispose()
         {
-
+            gltfImportedData.Dispose();
         }
     }
 }

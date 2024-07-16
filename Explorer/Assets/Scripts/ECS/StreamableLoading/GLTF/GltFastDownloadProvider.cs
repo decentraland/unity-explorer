@@ -1,39 +1,73 @@
+using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
 using GLTFast.Loading;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.GLTF
 {
-internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
+    internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-        public delegate bool AssetIdConverter(string uri, out string id);
+        // public delegate bool AssetIdConverter(string uri, out string id);
 
-        private readonly IWebRequestController webRequestController;
-        private readonly AssetIdConverter fileToUrl;
-        //private readonly AssetPromiseKeeper_Texture texturePromiseKeeper;
+        // private readonly IWebRequestController webRequestController;
+        // private readonly AssetIdConverter fileToUrl;
+        // private readonly AssetPromiseKeeper_Texture texturePromiseKeeper;
 
-        private List<IDisposable> disposables = new ();
-        private string baseUrl;
-        private bool isDisposed;
+        // private List<IDisposable> disposables = new ();
+        // private string baseUrl;
+        // private bool isDisposed;
 
-        public GltFastDownloadProvider(string baseUrl, IWebRequestController webRequestController, AssetIdConverter fileToUrl/*, AssetPromiseKeeper_Texture texturePromiseKeeper*/)
+        /*public GltFastDownloadProvider(string baseUrl, IWebRequestController webRequestController, AssetIdConverter fileToUrl/*, AssetPromiseKeeper_Texture texturePromiseKeeper#1#)
         {
-            this.baseUrl = baseUrl;
-            this.webRequestController = webRequestController;
-            this.fileToUrl = fileToUrl;
-            //this.texturePromiseKeeper = texturePromiseKeeper;
+             this.baseUrl = baseUrl;
+             this.webRequestController = webRequestController;
+             this.fileToUrl = fileToUrl;
+            this.texturePromiseKeeper = texturePromiseKeeper;
+        }*/
+
+        public GltFastDownloadProvider()
+        {
+            // webRequestController = new WebRequestController();
         }
 
         public async Task<IDownload> Request(Uri uri)
         {
-            if (isDisposed)
-                return null;
+            // var asyncOp = await webRequestController.GetAsync(
+            //     url: uri,
+            //     downloadHandler: new DownloadHandlerBuffer(),
+            //     timeout: 30,
+            //     requestAttemps: 3);
 
-            string finalUrl = GetFinalUrl(uri, false);
+            using (UnityWebRequest webRequest = new UnityWebRequest(uri))
+            {
+                webRequest.downloadHandler = new DownloadHandlerBuffer();
+
+                await webRequest.SendWebRequest().WithCancellation(new CancellationToken());
+
+                // (DownloadHandlerBuffer)
+                // (DownloadHandlerFile)
+
+                if (!string.IsNullOrEmpty(webRequest.downloadHandler.error))
+                    throw new Exception($"Error on GLTF download: {webRequest.downloadHandler.error}");
+
+                return new DownloadResult()
+                {
+                    Data = webRequest.downloadHandler.data,
+                    Error = webRequest.downloadHandler.error,
+                    Text = webRequest.downloadHandler.text,
+                    Success = webRequest.result == UnityWebRequest.Result.Success
+                };
+            }
+
+            // if (isDisposed)
+            //     return null;
+            //
+            // string finalUrl = GetFinalUrl(uri, false);
 
             // var asyncOp = await webRequestController.GetAsync(
             //     url: finalUrl,
@@ -50,7 +84,7 @@ internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
             return default;
         }
 
-        private string GetFinalUrl(Uri uri, bool isTexture)
+        /*private string GetFinalUrl(Uri uri, bool isTexture)
         {
             string fileName = uri.OriginalString;
 
@@ -70,7 +104,7 @@ internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
                 throw new Exception($"File not found in scene {finalUrl}");
 
             return uri.OriginalString;
-        }
+        }*/
 
         public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable, bool forceLinear)
         {
@@ -113,9 +147,32 @@ internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
 
         public void Dispose()
         {
-            foreach (IDisposable disposable in disposables) { disposable.Dispose(); }
-            disposables.Clear();
-            isDisposed = true;
+            // foreach (IDisposable disposable in disposables) { disposable.Dispose(); }
+            // disposables.Clear();
+            // isDisposed = true;
+        }
+    }
+
+    public struct DownloadResult : IDownload
+    {
+        private const uint GLB_SIGNATURE = 0x46546c67;
+
+        public void Dispose()
+        {
+            // throw new NotImplementedException();
+        }
+
+        public bool Success { get; set; }
+        public string Error { get; set; }
+        public byte[] Data { get; set; }
+        public string Text { get; set; }
+        public bool? IsBinary
+        {
+            get {
+                if (Data == null) return false;
+                var gltfBinarySignature = BitConverter.ToUInt32(Data, 0);
+                return gltfBinarySignature == GLB_SIGNATURE;
+            }
         }
     }
 }
