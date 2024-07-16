@@ -30,8 +30,6 @@ namespace PortableExperiences.Controller
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
 
-        private readonly RealmData realmData = new ();
-
         private readonly ObjectProxy<World> globalWorldProxy;
         private List<Entity> entitiesToDestroy = new ();
         public Dictionary<string, Entity> PortableExperienceEntities { get; } = new ();
@@ -81,7 +79,7 @@ namespace PortableExperiences.Controller
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
                 throw new Exception($"Scene not Available in provided Portable Experience with ens:{ens} - urn: {urn}");
             }
-
+            var realmData = new RealmData();
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
