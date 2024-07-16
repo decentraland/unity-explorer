@@ -8,6 +8,7 @@ using DCL.Notification.NotificationsBus;
 using DCL.Settings;
 using DCL.UI;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -67,17 +68,14 @@ namespace DCL.ExplorePanel
             this.dclInput = dclInput;
             this.notificationBusController = notificationBusController;
             this.mvcManager = mvcManager;
-            this.notificationBusController.OnNotificationClicked += OnNotificationClicked;
+            this.notificationBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT, OnEventTriggered);
         }
 
-        private void OnNotificationClicked(NotificationType notificationType)
+        private void OnEventTriggered(object[] parameters)
         {
-            if (notificationType == NotificationType.REWARD_ASSIGNMENT)
-            {
-                mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
-                lastShownSection = ExploreSections.Backpack;
-                OnBackpackHotkeyPressed(default);
-            }
+            mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
+            lastShownSection = ExploreSections.Backpack;
+            OnBackpackHotkeyPressed(default);
         }
 
         public override void Dispose()
