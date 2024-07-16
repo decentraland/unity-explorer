@@ -64,11 +64,11 @@ namespace DCL.Notification.NewNotification
             notificationQueue.Enqueue(newNotification);
             if (!isDisplaying)
             {
-                DisplayNewNotification().Forget();
+                DisplayNewNotificationAsync().Forget();
             }
         }
 
-        private async UniTaskVoid DisplayNewNotification()
+        private async UniTaskVoid DisplayNewNotificationAsync()
         {
             while (notificationQueue.Count > 0)
             {
