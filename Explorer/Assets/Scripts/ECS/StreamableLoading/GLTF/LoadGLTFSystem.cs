@@ -59,18 +59,40 @@ namespace ECS.StreamableLoading.GLTF
 
             if (success)
             {
-                var container = new GameObject(gltfImport.GetSceneName(0));
+                // We do the GameObject instantiation in this system since 'InstantiateMainSceneAsync()' is async.
+                var rootContainer = new GameObject(gltfImport.GetSceneName(0));
 
                 // Let the upper layer decide what to do with the root
-                container.SetActive(false);
+                rootContainer.SetActive(false);
 
-                await gltfImport.InstantiateMainSceneAsync(container.transform, ct);
+                await InstantiateGltfAsync(gltfImport, rootContainer.transform);
 
-                return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, container));
+                return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, rootContainer));
             }
 
             return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
             // Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - LOADING ERROR: {gltfImport.LoadingError}");
+        }
+
+        public async UniTask InstantiateGltfAsync(GltfImport gltfImport, Transform rootContainerTransform)
+        {
+            if (gltfImport.SceneCount > 1)
+                for (int i = 0; i < gltfImport.SceneCount; i++)
+                {
+                    var targetTransform = rootContainerTransform;
+
+                    if (i != 0)
+                    {
+                        var go = new GameObject($"{rootContainerTransform.name}_{i}");
+                        Transform goTransform = go.transform;
+                        goTransform.SetParent(rootContainerTransform, false);
+                        targetTransform = goTransform;
+                    }
+
+                    await gltfImport.InstantiateSceneAsync(targetTransform, i);
+                }
+            else
+                await gltfImport.InstantiateSceneAsync(rootContainerTransform);
         }
     }
 }
