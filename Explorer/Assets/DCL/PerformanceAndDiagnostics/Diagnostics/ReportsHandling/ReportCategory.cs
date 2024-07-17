@@ -219,6 +219,11 @@
         public const string MULTIPLAYER_SDK_EMOTE_COMMAND_DATA = nameof(MULTIPLAYER_SDK_EMOTE_COMMAND_DATA);
 
         /// <summary>
+        ///     Multiplayer SDK other players Transform component propagator
+        /// </summary>
+        public const string MULTIPLAYER_SDK_PLAYER_TRANSFORM_DATA = nameof(MULTIPLAYER_SDK_PLAYER_TRANSFORM_DATA);
+
+        /// <summary>
         ///     PBPlayerIdentityData component writer
         /// </summary>
         public const string PLAYER_IDENTITY_DATA = nameof(PLAYER_IDENTITY_DATA);
