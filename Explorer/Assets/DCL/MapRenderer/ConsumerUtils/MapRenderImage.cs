@@ -116,7 +116,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                     previousClickedMarker = null;
                 }
 
-                if (pinMarker != null)
+                if (pinMarker != null && pinMarker != previousClickedMarker)
                 {
                     previousClickedMarker = pinMarker;
                     pinMarker.AnimateIn();
