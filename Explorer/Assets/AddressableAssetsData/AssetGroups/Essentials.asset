@@ -307,8 +307,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
-    m_Address: RemoteAvatarCollider
+  - m_GUID: a1d5d4f99234041159f0c215eef3eff3
+    m_Address: NewNotificationPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b896bc1397444f00a2b45725af2b263
+    m_Address: NotificationIconTypesSO
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
