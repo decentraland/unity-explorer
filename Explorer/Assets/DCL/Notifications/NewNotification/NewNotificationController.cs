@@ -46,7 +46,7 @@ namespace DCL.Notification.NewNotification
         protected override void OnViewInstantiated()
         {
             thumbnailImageController = new ImageController(viewInstance.NotificationView.NotificationImage, webRequestController);
-            viewInstance.NotificationView.OnNotificationClicked += ClickedOnNotification;
+            viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
         }
 
@@ -57,7 +57,7 @@ namespace DCL.Notification.NewNotification
             cts.Token.ThrowIfCancellationRequested();
         }
 
-        private void ClickedOnNotification(NotificationType notificationType)
+        private void ClickedNotification(NotificationType notificationType)
         {
             StopAnimation();
             notificationsBusController.ClickNotification(notificationType);

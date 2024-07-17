@@ -68,10 +68,10 @@ namespace DCL.ExplorePanel
             this.dclInput = dclInput;
             this.notificationBusController = notificationBusController;
             this.mvcManager = mvcManager;
-            this.notificationBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT, OnEventTriggered);
+            this.notificationBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
         }
 
-        private void OnEventTriggered(object[] parameters)
+        private void OnRewardAssigned(object[] parameters)
         {
             mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
             lastShownSection = ExploreSections.Backpack;

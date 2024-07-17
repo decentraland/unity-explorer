@@ -21,7 +21,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
-        private readonly NotificationsController notificationsController;
+        private readonly NotificationsRequestController notificationsRequestController;
 
         public NotificationPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
-            notificationsController = new NotificationsController(webRequestController, notificationsBusController, web3IdentityCache);
+            notificationsRequestController = new NotificationsRequestController(webRequestController, notificationsBusController, web3IdentityCache);
         }
 
         public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose()
         {
-            notificationsController.Dispose();
+            notificationsRequestController.Dispose();
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)

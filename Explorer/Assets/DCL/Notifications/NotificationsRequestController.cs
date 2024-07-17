@@ -14,7 +14,7 @@ using Utility.Times;
 
 namespace DCL.Notification
 {
-    public class NotificationsController : IDisposable
+    public class NotificationsRequestController : IDisposable
     {
         private const string NOTIFICATION_URL = "https://notifications.decentraland.org/notifications";
         private const string NOTIFICATION_READ_URL = "https://notifications.decentraland.org/notifications/read";
@@ -33,7 +33,7 @@ namespace DCL.Notification
         private ulong unixTimestamp;
         private ulong lastPolledTimestamp;
 
-        public NotificationsController(IWebRequestController webRequestController, INotificationsBusController notificationsBusController, IWeb3IdentityCache web3IdentityCache)
+        public NotificationsRequestController(IWebRequestController webRequestController, INotificationsBusController notificationsBusController, IWeb3IdentityCache web3IdentityCache)
         {
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;

@@ -9,7 +9,7 @@ namespace DCL.Notification.NotificationEntry
 {
     public class NotificationView : MonoBehaviour, IPointerClickHandler
     {
-        public event Action<NotificationType> OnNotificationClicked;
+        public event Action<NotificationType> NotificationClicked;
         public NotificationType NotificationType { get; set; }
 
         [field: SerializeField]
@@ -35,7 +35,7 @@ namespace DCL.Notification.NotificationEntry
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            OnNotificationClicked?.Invoke(NotificationType);
+            NotificationClicked?.Invoke(NotificationType);
         }
     }
 }
