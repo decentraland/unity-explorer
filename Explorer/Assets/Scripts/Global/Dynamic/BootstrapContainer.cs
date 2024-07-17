@@ -139,11 +139,11 @@ namespace Global.Dynamic
         public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, BootstrapSettings settings, CancellationToken ct)
         {
             BootstrapSettings.ReportHandlingSettingsRef reportHandlingSettings =
-// #if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
-                // settings.ReportHandlingSettingsDevelopment;
-// #else
+#if (DEVELOPMENT_BUILD || UNITY_EDITOR) && !ENABLE_PROFILING
+                settings.ReportHandlingSettingsDevelopment;
+#else
                 settings.ReportHandlingSettingsProduction;
-// #endif
+#endif
 
             return await assetsProvisioner.ProvideMainAssetAsync(reportHandlingSettings, ct, nameof(ReportHandlingSettings));
         }

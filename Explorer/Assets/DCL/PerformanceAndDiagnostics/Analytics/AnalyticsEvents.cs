@@ -2,6 +2,11 @@
 {
     public static class AnalyticsEvents
     {
+        // TODO (Vit): Add more events
+        // - Used emote
+        // - Equip item
+        // - Open passport
+
         public static class General
         {
             public const string SYSTEM_INFO_REPORT = "system_info_report"; // 🟢
