@@ -8,6 +8,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using ECS.Abstract;
@@ -49,14 +50,14 @@ namespace DCL.Chat
         private readonly Entity playerEntity;
         private readonly Mouse device;
         private readonly DCLInput dclInput;
+        private readonly IInputBlock inputBlock;
         private readonly ChatCommandsHandler commandsHandler;
 
         private CancellationTokenSource cts;
         private CancellationTokenSource emojiPanelCts;
         private SingleInstanceEntity cameraEntity;
         private (IChatCommand command, Match param) chatCommand;
-        private CancellationTokenSource commandCts = new ();
-        private bool isChatClosed = false;
+        private bool isChatClosed;
         private IReadOnlyList<RaycastResult> raycastResults;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -78,6 +79,7 @@ namespace DCL.Chat
             World world,
             Entity playerEntity,
             DCLInput dclInput,
+            IInputBlock inputBlock,
             IEventSystem eventSystem
         ) : base(viewFactory)
         {
@@ -94,6 +96,7 @@ namespace DCL.Chat
             this.world = world;
             this.playerEntity = playerEntity;
             this.dclInput = dclInput;
+            this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
 
             chatMessagesBus.MessageAdded += OnMessageAdded;
@@ -239,26 +242,12 @@ namespace DCL.Chat
             viewInstance.EmojiPanel.EmojiContainer.gameObject.SetActive(viewInstance.EmojiPanel.gameObject.activeInHierarchy);
 
             if (viewInstance.EmojiPanel.EmojiContainer.gameObject.activeInHierarchy)
-                BlockPlayerMovement();
+                inputBlock.BlockMovement();
             else
-                UnblockPlayerMovement();
+                inputBlock.UnblockMovement();
 
             viewInstance.InputField.ActivateInputField();
             return UniTask.CompletedTask;
-        }
-
-        private void BlockPlayerMovement()
-        {
-            world.AddOrGet(playerEntity, new MovementBlockerComponent());
-            dclInput.Shortcuts.Disable();
-            dclInput.Camera.Disable();
-        }
-
-        private void UnblockPlayerMovement()
-        {
-            world.Remove<MovementBlockerComponent>(playerEntity);
-            dclInput.Shortcuts.Enable();
-            dclInput.Camera.Enable();
         }
 
         private void OnSubmitAction(InputAction.CallbackContext obj)
@@ -371,7 +360,7 @@ namespace DCL.Chat
             viewInstance.EmojiPanelButton.SetColor(false);
             viewInstance.CharacterCounter.gameObject.SetActive(false);
             viewInstance.StartChatEntriesFadeout();
-            UnblockPlayerMovement();
+            inputBlock.UnblockMovement();
         }
 
         private void OnInputSelected(string inputText)
@@ -388,7 +377,7 @@ namespace DCL.Chat
             viewInstance.EmojiPanelButton.SetColor(true);
             viewInstance.CharacterCounter.gameObject.SetActive(true);
             viewInstance.StopChatEntriesFadeout();
-            BlockPlayerMovement();
+            inputBlock.BlockMovement();
         }
 
         private void OnInputChanged(string inputText)
