@@ -7,7 +7,6 @@ using DCL.Profiles.Self;
 using MVC;
 using System;
 using System.Threading;
-using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Passport.Modules
@@ -129,8 +128,6 @@ namespace DCL.Passport.Modules
                 view.AdditionalInfoContainer.gameObject.SetActive(additionalFieldsController.CurrentAdditionalFieldsCount > 0);
                 saveInfoCts.SafeCancelAndDispose();
             }
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
         }
 
         private void SaveInfoSection()

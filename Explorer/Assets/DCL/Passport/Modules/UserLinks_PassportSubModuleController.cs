@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.Pool;
-using UnityEngine.UI;
 using Utility;
 
 namespace DCL.Passport.Modules
@@ -166,8 +165,6 @@ namespace DCL.Passport.Modules
                 instantiatedLinksForEdition.Add(newLink);
                 SetNewLinkButtonActive(instantiatedLinksForEdition.Count < LINKS_MAX_AMOUNT);
             }
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(newLink.Container);
         }
 
         private async UniTask OpenUrlAsync(string url) =>
@@ -202,15 +199,10 @@ namespace DCL.Passport.Modules
                 view.LinksContainer.gameObject.SetActive(currentProfile.Links is { Count: > 0 });
                 saveLinksCts.SafeCancelAndDispose();
             }
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
         }
 
-        private void CreateNewLink(string title, string url)
-        {
+        private void CreateNewLink(string title, string url) =>
             AddLink(Guid.NewGuid().ToString(), title, url, true);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.MainContainer);
-        }
 
         private void RemoveLink(Link_PassportFieldView linkToRemove)
         {

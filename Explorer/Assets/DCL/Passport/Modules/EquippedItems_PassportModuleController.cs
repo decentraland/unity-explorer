@@ -16,7 +16,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
-using UnityEngine.UI;
 using Utility;
 using WearablePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Wearables.Components.WearablesResolution, DCL.AvatarRendering.Wearables.Components.Intentions.GetWearablesByPointersIntention>;
 using EmotePromise = ECS.StreamableLoading.Common.AssetPromise<DCL.AvatarRendering.Emotes.EmotesResolution, DCL.AvatarRendering.Emotes.GetEmotesByPointersIntention>;
@@ -199,7 +198,6 @@ namespace DCL.Passport.Modules
                 string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
                 equippedWearableItem.BuyButton.interactable = wearable.IsCollectible() && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
-                LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -223,7 +221,6 @@ namespace DCL.Passport.Modules
                 string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
                 equippedWearableItem.BuyButton.interactable = emote.IsCollectible() && rarityName != "base" && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
-                LayoutRebuilder.ForceRebuildLayoutImmediate(equippedWearableItem.RarityLabelContainer);
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
                 elementsAddedInTheGird++;
@@ -236,9 +233,6 @@ namespace DCL.Passport.Modules
                 emptyItem.gameObject.name = "EmptyItem";
                 instantiatedEmptyItems.Add(emptyItem);
             }
-
-            LayoutRebuilder.ForceRebuildLayoutImmediate(view.EquippedItemsContainer);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(scrollContainer);
         }
 
         private int CalculateMissingEmptyItems(int totalItems)
