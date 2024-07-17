@@ -11,6 +11,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
 using DCL.Navmap;
+using DCL.Notification.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -66,6 +67,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
+        private readonly INotificationsBusController notificationsBusController;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -88,7 +90,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             IRealmData realmData,
             IProfileCache profileCache,
-            URLDomain assetBundleURL)
+            URLDomain assetBundleURL,
+            INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -110,6 +113,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.profileCache = profileCache;
             this.assetBundleURL = assetBundleURL;
+            this.notificationsBusController = notificationsBusController;
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
         }
@@ -165,7 +169,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache),
-                    dclInput));
+                    dclInput, notificationsBusController, mvcManager));
 
                 explorePanelOpener = new PersistentExplorePanelOpenerController(
                     PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager);
