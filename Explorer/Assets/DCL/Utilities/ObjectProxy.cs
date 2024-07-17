@@ -5,7 +5,7 @@ namespace DCL.Utilities
     public class ObjectProxy<T>
     {
         /// <summary>
-        ///
+        ///     Returns the object if it's configured, otherwise throws an exception
         /// </summary>
         public T StrictObject
         {
