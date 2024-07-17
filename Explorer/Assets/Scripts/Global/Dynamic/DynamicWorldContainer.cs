@@ -36,6 +36,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
+using DCL.Notification.NotificationsBus;
 using DCL.ParcelsService;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -316,6 +317,8 @@ namespace Global.Dynamic
                 )
             );
 
+            INotificationsBusController notificationsBusController = new NotificationsBusController();
+
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
             var remotePoses = new DebounceRemotePoses(
@@ -389,7 +392,8 @@ namespace Global.Dynamic
                     dclInput,
                     staticContainer.RealmData,
                     profileCache,
-                    ASSET_BUNDLES_URL
+                    ASSET_BUNDLES_URL,
+                    notificationsBusController
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -411,6 +415,7 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
+                new NotificationPlugin(assetsProvisioner, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, identityCache, notificationsBusController)
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
