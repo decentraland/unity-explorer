@@ -92,8 +92,8 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            RemoteAvatarTransform remoteAvatarTransform = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarTransformPrefab, ct)).Value.GetComponent<RemoteAvatarTransform>();
-            remoteEntities.Initialize(remoteAvatarTransform);
+            RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarTransformPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
+            remoteEntities.Initialize(remoteAvatarCollider);
         }
 
         public void Dispose() { }

@@ -308,7 +308,7 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
-    m_Address: RemoteAvatarTransform
+    m_Address: RemoteAvatarCollider
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
