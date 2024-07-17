@@ -99,7 +99,7 @@ namespace DCL.SDKComponents.Tween.Systems
             if (sdkTransform.IsDirty)
             {
                 transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
-                Debug.Log($"VVV {entity.Id} <Tween-Trans> {Time.frameCount} {Time.time} [Update]: {transformComponent.Transform.rotation}");
+                ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween-Trans> {Time.frameCount} {Time.time} [Update]: {transformComponent.Transform.rotation}");
                 sdkTransform.IsDirty = false;
             }
         }
@@ -175,7 +175,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsActive;
                 UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
 
-                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Setup]: TsActive | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
+                ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Setup]: TsActive | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
             else
             {
@@ -183,7 +183,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
                 UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
 
-                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Setup]: Paused | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
+                ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Setup]: Paused | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
 
             sdkTweenComponent.IsDirty = false;
@@ -206,16 +206,16 @@ namespace DCL.SDKComponents.Tween.Systems
             {
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
-                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Update]: new state {newState} | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
+                ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Update]: new state {newState} | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
             else if (newState == TweenStateStatus.TsActive)
             {
                 UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
-                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Update]: TsActive | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
+                ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Update]: TsActive | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
             else
             {
-                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [UPDATE] Empty {newState} | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
+                ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [UPDATE] Empty {newState} | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
         }
 
