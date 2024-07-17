@@ -1,7 +1,23 @@
+using System;
+
 namespace DCL.Utilities
 {
     public class ObjectProxy<T>
     {
+        /// <summary>
+        ///
+        /// </summary>
+        public T StrictObject
+        {
+            get
+            {
+                if (Configured == false)
+                    throw new InvalidOperationException($"{typeof(T).Name} proxy is not configured");
+
+                return Object!;
+            }
+        }
+
         public T? Object { get; private set; }
 
         public bool Configured { get; private set; }
