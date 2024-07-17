@@ -57,8 +57,8 @@ namespace DCL.LOD.Systems
             if (sceneLODInfo.ArePromisesConsumed())
                 return;
 
-            // if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget()))
-            //     return;
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget()))
+                return;
 
             bool bNewAssetAdded = false;
 
@@ -71,10 +71,12 @@ namespace DCL.LOD.Systems
                 {
                     if (result.Succeeded)
                     {
+                        Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodsTransformParent);
+
                         GameObject instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
                                                                             sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                                                                             Quaternion.identity,
-                                                                            lodsTransformParent);
+                                                                            lodGroupTransform);
 
                         var slots = Array.Empty<TextureArraySlot?>();
                         if (!lodAsset.LodKey.Level.Equals(0))
@@ -99,29 +101,13 @@ namespace DCL.LOD.Systems
                 }
             }
             if(bNewAssetAdded)
-                sceneLODInfo.ReEvaluateLODGroup(lodsTransformParent);
+                sceneLODInfo.ReEvaluateLODGroup();
         }
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            //if (IsLOD0(ref sceneLODInfo))
-            {
-                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
-            }
-
-            //sceneLODInfo.IsDirty = false;
+            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
+            LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
         }
-
-        private void FinalizeInstantiation(ref SceneLODInfo sceneLODInfo, LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD, byte currentLODLevel)
-        {
-
-
-        }
-
-        // private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
-        // {
-        //     return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
-        // }
     }
 }

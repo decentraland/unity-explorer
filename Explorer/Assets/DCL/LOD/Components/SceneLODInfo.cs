@@ -15,30 +15,27 @@ namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {
-        public GameObject Root;
-        public byte CurrentLODLevel;
+        public LODGroup LodGroup;
         public List<LODAsset> LODAssets;
 
         public void Dispose(World world)
         {
             foreach (var lodVar in LODAssets)
             {
-                lodVar?.Release(world);
+                if(LodGroup != null)
+                    lodVar.lodGO?.transform.SetParent(LodGroup.transform.parent);
+                lodVar.Release(world);
             }
-            UnityObjectUtils.SafeDestroy(Root);
+            LODAssets.Clear();
+            if (LodGroup != null)
+                UnityObjectUtils.SafeDestroy(LodGroup.gameObject);
         }
 
         public static SceneLODInfo Create()
         {
-            GameObject root = new GameObject();
-            LODGroup lodGroup = root.AddComponent<LODGroup>();
-            lodGroup.fadeMode = LODFadeMode.CrossFade;
-            lodGroup.animateCrossFading = true;
             return new SceneLODInfo
             {
-                CurrentLODLevel = byte.MaxValue,
                 LODAssets = new List<LODAsset>(),
-                Root = root,
             };
         }
 
@@ -53,25 +50,56 @@ namespace DCL.LOD.Components
             return true;
         }
 
-        public void ReEvaluateLODGroup(Transform lodTransformParent)
+        public Transform CreateLODGroup(Transform lodTransformParent)
         {
-            LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
-            UnityEngine.LOD[] lods = new UnityEngine.LOD[LODAssets.Count];
-            for (int i = 0; i < LODAssets.Count; ++i)
+            // Create LODGroup
+            if (LodGroup == null)
             {
-                if (LODAssets[i].State == LODAsset.LOD_STATE.SUCCESS)
+                LodGroup = new GameObject().AddComponent<LODGroup>();
+                LodGroup.fadeMode = LODFadeMode.CrossFade;
+                LodGroup.animateCrossFading = true;
+                LodGroup.transform.SetParent(lodTransformParent);
+            }
+
+            return LodGroup.transform;
+        }
+
+        private int AvailableLODAssetCount()
+        {
+            int nCount = 0;
+            foreach (var lodAsset in LODAssets)
+            {
+                if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
+                    ++nCount;
+            }
+
+            return nCount;
+        }
+
+        public void ReEvaluateLODGroup()
+        {
+            if (LodGroup == null || LODAssets.Count == 0)
+                return;
+
+            LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
+            UnityEngine.LOD[] lods = new UnityEngine.LOD[AvailableLODAssetCount()];
+            int nCount = 0;
+            foreach (var lodAsset in LODAssets)
+            {
+                if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
                 {
-                    lods[i] = LODAssets[i].lod;
-                    lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f;
+                    Renderer[] lodRenderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+                    float screenRelativeTransitionHeight = 0.05f;
+                    lods[nCount] = new UnityEngine.LOD(screenRelativeTransitionHeight, lodRenderers);
+                    lods[nCount].screenRelativeTransitionHeight = (nCount == 0) ? 0.5f : 0.05f;
+                    ++nCount;
                 }
             }
 
             if (lods.Length == 1)
                 lods[0].screenRelativeTransitionHeight = 0.05f;
 
-            LODGroup lodGroup = Root.GetComponent<LODGroup>();
-            lodGroup.transform.SetParent(lodTransformParent);
-            lodGroup.SetLODs(lods.ToArray());
+            LodGroup.SetLODs(lods.ToArray());
         }
 
         public bool HasLODKey(LODKey lodKey)

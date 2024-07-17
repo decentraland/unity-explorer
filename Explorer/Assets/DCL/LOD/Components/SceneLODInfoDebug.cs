@@ -128,7 +128,7 @@ namespace DCL.LOD
         {
             if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
             {
-                var renderers = lodAsset.lod.renderers;
+                var renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
                 var originalColorsList = new List<Color>();
                 for (int i = 0; i < renderers.Length; i++)
                 {

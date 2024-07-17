@@ -76,9 +76,6 @@ namespace DCL.LOD.Tests
 
             //Act
             system.Update(0);
-
-            //Assert
-            Assert.AreEqual(expectedLODLevel, world.Get<SceneLODInfo>(entity).CurrentLODLevel);
         }
 
 

@@ -16,10 +16,8 @@ namespace DCL.LOD
         public LOD_STATE State;
         public readonly LODKey LodKey; // Hashmap would probably be better
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> LODPromise;
-
-        public UnityEngine.LOD lod;
+        public GameObject lodGO;
         public  TextureArraySlot?[] Slots;
-
         private readonly ILODAssetsPool Pool;
         internal AssetBundleData AssetBundleReference;
 
@@ -31,13 +29,13 @@ namespace DCL.LOD
             WAITING_INSTANTIATION,
         }
 
-        public LODAsset(LODKey lodKey,
-                        ILODAssetsPool pool)
+        public LODAsset(LODKey lodKey, ILODAssetsPool pool)
         {
             LodKey = lodKey;
             Pool = pool;
             Slots = Array.Empty<TextureArraySlot?>();
             AssetBundleReference = null;
+            lodGO = null;
 
             State = LOD_STATE.WAITING_INSTANTIATION;
 
@@ -60,9 +58,6 @@ namespace DCL.LOD
             for (int i = 0; i < Slots.Length; i++)
                 Slots[i]?.FreeSlot();
 
-            // if (State == LOD_STATE.SUCCESS)
-            //     UnityObjectUtils.SafeDestroy(Root);
-
             ProfilingCounters.LODAssetAmount.Value--;
             ProfilingCounters.LODInstantiatedInCache.Value--;
         }
@@ -71,6 +66,8 @@ namespace DCL.LOD
         {
             if (State == LOD_STATE.FAILED)
                 return;
+
+            lodGO?.SetActive(true);
 
             if (State == LOD_STATE.SUCCESS)
             {
@@ -84,8 +81,11 @@ namespace DCL.LOD
             if (State == LOD_STATE.FAILED)
                 return;
 
+            lodGO?.SetActive(false);
+
             // This logic should not be executed if the application is quitting
-            if (UnityObjectUtils.IsQuitting) return;
+            if (UnityObjectUtils.IsQuitting)
+                return;
 
             if (State == LOD_STATE.SUCCESS)
             {
@@ -102,10 +102,8 @@ namespace DCL.LOD
 
         public void FinalizeInstantiation(GameObject newRoot, TextureArraySlot?[] slots)
         {
-            Renderer[] nextLOD = newRoot.GetComponentsInChildren<Renderer>();
-            float screenRelativeTransitionHeight = 0.05f;
-            lod = new UnityEngine.LOD(screenRelativeTransitionHeight, nextLOD);
-
+            newRoot.SetActive(true);
+            lodGO = newRoot;
             Slots = slots;
             State = LOD_STATE.SUCCESS;
         }

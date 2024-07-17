@@ -60,7 +60,6 @@ namespace DCL.LOD.Systems
 
                 if (sceneLODInfo.LODAssets.Count == 0)
                 {
-                    sceneLODInfo.Root.transform.SetParent(lodsTransformParent);
                     AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
                 }
                 else
@@ -75,29 +74,41 @@ namespace DCL.LOD.Systems
 
         private void AddLODAsset(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, LODKey newLODKey, byte lodForAcquisition)
         {
+            LODAsset tempLODAsset = null;
             if (lodCache.TryGet(newLODKey, out var cachedAsset))
             {
                 //If its cached, no need to make a new promise
+                tempLODAsset = cachedAsset;
                 sceneLODInfo.LODAssets.Add(cachedAsset);
-                //CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-                return;
+
+                if (cachedAsset.lodGO != null)
+                {
+                    Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodsTransformParent);
+                    cachedAsset.lodGO.transform.SetParent(lodGroupTransform);
+                    sceneLODInfo.ReEvaluateLODGroup();
+                }
+            }
+            else
+            {
+                LODAsset lodAsset = new LODAsset(newLODKey, lodCache);
+                lodAsset.currentLODLevel = lodForAcquisition;
+                tempLODAsset = lodAsset;
+                sceneLODInfo.LODAssets.Add(lodAsset);
             }
 
-            LODAsset lodAsset = new LODAsset(newLODKey, lodCache);
-            lodAsset.currentLODLevel = lodForAcquisition;
-            sceneLODInfo.LODAssets.Add(lodAsset);
+            if (tempLODAsset.State != LODAsset.LOD_STATE.SUCCESS)
+            {
+                string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+                var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
+                var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
+                    platformLODKey,
+                    permittedSources: AssetSource.ALL,
+                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+                    manifest: manifest);
 
-            string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
-
-            var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
-                platformLODKey,
-                permittedSources: AssetSource.ALL,
-                customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                manifest: manifest);
-
-            lodAsset.LODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
+                tempLODAsset.LODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
+            }
         }
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
