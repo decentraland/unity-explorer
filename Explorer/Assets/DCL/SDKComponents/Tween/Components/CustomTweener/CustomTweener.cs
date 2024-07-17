@@ -3,6 +3,7 @@ using DCL.ECSComponents;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Components
@@ -17,7 +18,12 @@ namespace DCL.SDKComponents.Tween.Components
         protected abstract TweenerCore<T, T, TU> CreateTweener(T start, T end, float duration);
         protected abstract (T, T) GetTweenValues(PBTween pbTween, Transform startTransform);
         public abstract void SetResult(ref SDKTransform sdkTransform);
-        
+
+        public virtual void Clear()
+        {
+            core?.Kill();
+        }
+
         public void Play()
         {
             core.Play();
@@ -60,6 +66,5 @@ namespace DCL.SDKComponents.Tween.Components
             var tweenValues = GetTweenValues(pbTween, startTransform);
             core = CreateTweener(tweenValues.Item1, tweenValues.Item2, durationInSeconds);
         }
-
     }
 }

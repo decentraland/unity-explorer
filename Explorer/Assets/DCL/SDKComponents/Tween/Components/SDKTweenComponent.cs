@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using NSubstitute.ClearExtensions;
 
 namespace DCL.SDKComponents.Tween.Components
 {
@@ -14,13 +15,21 @@ namespace DCL.SDKComponents.Tween.Components
             return CustomTweener != null && CustomTweener.IsActive();
         }
 
+        public void Clear()
+        {
+            IsDirty = false;
+            TweenStateStatus = TweenStateStatus.TsCompleted;
+            CustomTweener?.Clear();
+            CustomTweener = null;
+        }
+
         public void Rewind()
         {
             CustomTweener.Pause();
             CustomTweener.Rewind();
         }
 
-       
+
     }
-    
+
 }

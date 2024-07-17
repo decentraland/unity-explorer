@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.HighPerformance.Helpers;
-using CrdtEcsBridge.Components.Conversion;
+﻿using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DG.Tweening;
@@ -17,9 +16,9 @@ namespace DCL.SDKComponents.Tween.Components
         {
             return DOTween.To(() => CurrentValue, x => CurrentValue = x, end, duration);
         }
-    } 
-    
-    
+    }
+
+
     public class PositionTweener : Vector3Tweener
     {
         protected override (Vector3, Vector3) GetTweenValues(PBTween pbTween, Transform startTransform)
@@ -81,7 +80,8 @@ namespace DCL.SDKComponents.Tween.Components
 
         public override void SetResult(ref SDKTransform sdkTransform)
         {
-            sdkTransform.Rotation = CurrentValue;
+            if(core.IsPlaying())
+                sdkTransform.Rotation = CurrentValue;
         }
     }
 }

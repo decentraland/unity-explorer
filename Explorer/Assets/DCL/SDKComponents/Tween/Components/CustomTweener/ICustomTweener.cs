@@ -20,6 +20,7 @@ namespace DCL.SDKComponents.Tween.Components
         void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds);
         void SetResult(ref SDKTransform sdkTransform);
 
+        void Clear();
     }
 
     public struct TweenResult

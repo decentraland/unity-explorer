@@ -42,6 +42,8 @@ namespace DCL.SDKComponents.Tween.Components
             if (sdkTweenComponent.CustomTweener == null)
                 return;
 
+            sdkTweenComponent.CustomTweener.Clear();
+
             switch (sdkTweenComponent.CustomTweener)
             {
                 case PositionTweener positionTweener:
