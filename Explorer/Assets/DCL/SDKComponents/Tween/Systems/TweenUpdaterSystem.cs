@@ -28,14 +28,14 @@ using static DG.Tweening.Ease;
 namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(UpdateTransformSystem))]
+    [UpdateAfter(typeof(UpdateTransformSystem))]
     [UpdateAfter(typeof(TweenLoaderSystem))]
+    // [UpdateAfter(typeof(ParentingTransformSystem))]
     [LogCategory(ReportCategory.TWEEN)]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
         private readonly TweenerPool tweenerPool;
-        
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
         {
@@ -84,12 +84,24 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             UpdatePBTweenQuery(World);
             UpdateTweenSequenceQuery(World);
+            UpdateTransformQuery(World);
 
             HandleEntityDestructionQuery(World);
             HandleComponentRemovalQuery(World);
 
             World.Remove<SDKTweenComponent>(in HandleEntityDestruction_QueryDescription);
             World.Remove<SDKTweenComponent>(in HandleComponentRemoval_QueryDescription);
+        }
+
+        [Query]
+        private void UpdateTransform(Entity entity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
+        {
+            if (sdkTransform.IsDirty)
+            {
+                transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
+                Debug.Log($"VVV {entity.Id} <Tween-Trans> {Time.frameCount} {Time.time} [Update]: {transformComponent.Transform.rotation}");
+                sdkTransform.IsDirty = false;
+            }
         }
 
         public void FinalizeComponents(in Query query)
@@ -117,7 +129,7 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
         }
-        
+
         [Query]
         private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
         {
@@ -128,21 +140,19 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
+        private void UpdateTweenSequence(Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
             if (sdkTweenComponent.IsDirty)
             {
-                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);  
+                SetupTween(entity, ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);
             }
-
             else
             {
-                UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity);
+                UpdateTweenState(entity, ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity);
             }
-
         }
 
-        private void SetupTween(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
+        private void SetupTween(Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
             bool isPlaying = !pbTween.HasPlaying || pbTween.Playing;
             var entityTransform = transformComponent.Transform;
@@ -150,37 +160,66 @@ namespace DCL.SDKComponents.Tween.Systems
 
             SetupTweener(ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity, entityTransform, durationInSeconds, isPlaying);
 
+            Quaternion start = Quaternion.identity;
+            Quaternion end = Quaternion.identity;
+
+            if (pbTween.Rotate != null)
+            {
+                start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
+                end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
+            }
+
             if (isPlaying)
             {
                 sdkTweenComponent.CustomTweener.Play();
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsActive;
+                UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
+
+                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Setup]: TsActive | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
             else
             {
                 sdkTweenComponent.CustomTweener.Pause();
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
+                UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
+
+                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Setup]: Paused | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
 
-            UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             sdkTweenComponent.IsDirty = false;
         }
 
-        private void UpdateTweenState(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, CRDTEntity sdkEntity)
+        private void UpdateTweenState(Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity)
         {
             var newState = GetCurrentTweenState(sdkTweenComponent);
+
+            Quaternion start = Quaternion.identity;
+            Quaternion end = Quaternion.identity;
+
+            if (pbTween.Rotate != null)
+            {
+                start = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.Start);
+                end = PrimitivesConversionExtensions.PBQuaternionToUnityQuaternion(pbTween.Rotate.End);
+            }
 
             if (newState != sdkTweenComponent.TweenStateStatus)
             {
                 sdkTweenComponent.TweenStateStatus = newState;
-                UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
+                UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
+                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Update]: new state {newState} | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
             else if (newState == TweenStateStatus.TsActive)
             {
                 UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
+                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [Update]: TsActive | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
+            }
+            else
+            {
+                Debug.Log($"VVV {entity.Id} <Tween> {Time.frameCount} {Time.time} [UPDATE] Empty {newState} | {sdkTransform.Rotation} | {pbTween.CurrentTime} - {pbTween.Duration} | {start} -> {end}");
             }
         }
 
-        private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
+        private void UpdateTweenPositionAndState(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
             UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
