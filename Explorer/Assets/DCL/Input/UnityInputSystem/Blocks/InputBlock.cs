@@ -20,40 +20,16 @@ namespace DCL.Input.UnityInputSystem.Blocks
 
         public void BlockMovement()
         {
-            World().AddOrGet(PlayerEntity(), new MovementBlockerComponent());
-            DclInput().Shortcuts.Disable();
-            DclInput().Camera.Disable();
+            globalWorld.StrictObject.AddOrGet(playerEntity.StrictObject, new MovementBlockerComponent());
+            dclInput.StrictObject.Shortcuts.Disable();
+            dclInput.StrictObject.Camera.Disable();
         }
 
         public void UnblockMovement()
         {
-            World().Remove<MovementBlockerComponent>(PlayerEntity());
-            DclInput().Shortcuts.Enable();
-            DclInput().Camera.Enable();
-        }
-
-        private World World()
-        {
-            if (globalWorld.Configured == false)
-                throw new InvalidOperationException("World not configured");
-
-            return globalWorld.Object!;
-        }
-
-        private DCLInput DclInput()
-        {
-            if (dclInput.Configured == false)
-                throw new InvalidOperationException("World not configured");
-
-            return dclInput.Object!;
-        }
-
-        private Entity PlayerEntity()
-        {
-            if (playerEntity.Configured == false)
-                throw new InvalidOperationException("World not configured");
-
-            return playerEntity.Object!;
+            globalWorld.StrictObject.Remove<MovementBlockerComponent>(playerEntity.StrictObject);
+            dclInput.StrictObject.Shortcuts.Enable();
+            dclInput.StrictObject.Camera.Enable();
         }
     }
 }
