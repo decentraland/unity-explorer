@@ -72,6 +72,8 @@ namespace DCL.Interaction.Raycast.Tests
                            .Do(c => raycastResult = c.Arg<PBRaycastResult>());
 
             sceneStateProvider.TickNumber.Returns(5u);
+            sceneStateProvider.IsCurrent.Returns(true);
+                
 
             pbRaycast = new PBRaycast
             {

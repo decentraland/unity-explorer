@@ -17,6 +17,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
+        private readonly ProfileBuilder profileBuilder = new ();
+
         public PlayerProfileDataPropagationSystem(World world) : base(world) { }
 
         protected override void Update(float t)
@@ -42,10 +44,16 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         private void PropagateComponent(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity, bool useSet = false)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-            if (useSet)
-                sceneEcsExecutor.World.Set(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
-            else
-                sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+
+            ref Profile profileComponent = ref sceneEcsExecutor.World.AddOrGet<Profile>(playerCRDTEntity.SceneWorldEntity);
+            profileComponent = CloneProfile(profile);
+
+            return;
+
+            Profile CloneProfile(Profile p) =>
+                profileBuilder.From(p)
+                              .WithAvatar(p.Avatar)
+                              .Build();
         }
     }
 }

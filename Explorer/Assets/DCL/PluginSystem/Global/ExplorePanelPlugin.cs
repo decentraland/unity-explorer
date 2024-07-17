@@ -114,6 +114,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
         }
 
+
         public override void Dispose()
         {
             navmapController?.Dispose();
@@ -169,8 +170,7 @@ namespace DCL.PluginSystem.Global
                 explorePanelOpener = new PersistentExplorePanelOpenerController(
                     PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager);
 
-                mvcManager.RegisterController(explorePanelOpener
-                );
+                mvcManager.RegisterController(explorePanelOpener);
 
                 inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
             };

@@ -12,7 +12,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 {
     public static class UiElementUtils
     {
-        public static void SetupVisualElement(ref VisualElement visualElementToSetup, ref PBUiTransform model)
+        public static void SetupVisualElement(VisualElement visualElementToSetup, ref PBUiTransform model)
         {
             visualElementToSetup.style.display = GetDisplay(model.Display);
             visualElementToSetup.style.overflow = GetOverflow(model.Overflow);
@@ -130,9 +130,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
                 visualElementToSetup.style.left = new Length(model.PositionLeft, GetUnit(model.PositionLeftUnit));
             else
                 visualElementToSetup.style.left = StyleKeyword.Null;
-
-            visualElementToSetup.style.backgroundImage = new StyleBackground(StyleKeyword.Null);
-            visualElementToSetup.style.backgroundColor = new StyleColor(StyleKeyword.None);
         }
 
         public static void SetupLabel(ref Label labelToSetup, ref PBUiText model, ref UITransformComponent uiTransformComponent)
@@ -145,10 +142,18 @@ namespace DCL.SDKComponents.SceneUI.Utils
             labelToSetup.style.color = model.GetColor();
             labelToSetup.style.fontSize = model.GetFontSize();
             labelToSetup.style.unityTextAlign = model.GetTextAlign();
-            //labelToSetup.style.unityFont = model.GetFont();
+
+            if (model.HasTextWrap)
+            {
+                labelToSetup.style.whiteSpace = model.TextWrap == TextWrap.TwWrap ? WhiteSpace.Normal : WhiteSpace.NoWrap;
+            }
+            else
+            {
+                labelToSetup.style.whiteSpace = WhiteSpace.NoWrap;
+            }
         }
 
-        public static void SetupDCLImage(ref DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
+        public static void SetupFromSdkModel(this DCLImage imageToSetup, ref PBUiBackground model, Texture2D texture = null)
         {
             imageToSetup.Color = model.GetColor();
             imageToSetup.Slices = model.GetBorder();
@@ -194,6 +199,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             elementStyle.position = new StyleEnum<Position>(Position.Absolute);
             elementStyle.justifyContent = new StyleEnum<Justify>(Justify.Center);
             elementStyle.alignItems = new StyleEnum<Align>(Align.Center);
+            elementStyle.whiteSpace = new StyleEnum<WhiteSpace>(WhiteSpace.Normal);
         }
 
         public static void ReleaseUIElement(VisualElement visualElement) =>

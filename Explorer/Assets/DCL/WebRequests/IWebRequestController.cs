@@ -68,7 +68,7 @@ namespace DCL.WebRequests
             this IWebRequestController controller,
             CommonArguments commonArguments,
             TOp webRequestOp,
-            string jsonMetaData,
+            string signatureMetadata,
             CancellationToken ct
         )
             where TOp: struct, IWebRequestOp<GenericPostRequest, TResult>
@@ -80,8 +80,8 @@ namespace DCL.WebRequests
                 webRequestOp,
                 GenericPostArguments.Empty,
                 ct,
-                signInfo: WebRequestSignInfo.NewFromRaw(jsonMetaData, commonArguments.URL, unixTimestamp, "post"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(jsonMetaData, unixTimestamp)
+                signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
+                headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
             );
         }
 
@@ -148,14 +148,8 @@ namespace DCL.WebRequests
         {
             await UniTask.SwitchToMainThread();
 
-            try
-            {
-                await controller.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct).WithNoOpAsync();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            try { await controller.HeadAsync(new CommonArguments(url), default(GenericHeadArguments), ct).WithNoOpAsync(); }
+            catch (Exception) { return false; }
 
             return true;
         }
@@ -188,5 +182,11 @@ namespace DCL.WebRequests
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) where TOp: struct, IWebRequestOp<GetAudioClipWebRequest, AudioClip> =>
             controller.SendAsync<GetAudioClipWebRequest, GetAudioClipArguments, TOp, AudioClip>(GET_AUDIO_CLIP, commonArguments, args, webRequestOp, ct, reportCategory, headersInfo, signInfo);
+
+        public static IWebRequestController WithArtificialDelay(this IWebRequestController origin, ArtificialDelayWebRequestController.IReadOnlyOptions options) =>
+            new ArtificialDelayWebRequestController(origin, options);
+
+        public static IWebRequestController WithLog(this IWebRequestController origin) =>
+            new LogWebRequestController(origin);
     }
 }

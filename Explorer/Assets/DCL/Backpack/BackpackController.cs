@@ -3,6 +3,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.AvatarShape.Components;
 using DCL.AvatarRendering.Wearables;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
 using DCL.Backpack.EmotesSection;
@@ -171,6 +172,9 @@ namespace DCL.Backpack
             if (ct.IsCancellationRequested) return;
 
             backpackCommandBus.SendCommand(new BackpackUnEquipAllCommand());
+            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.HairColor, WearablesConstants.Categories.HAIR));
+            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.EyesColor, WearablesConstants.Categories.EYES));
+            backpackCommandBus.SendCommand(new BackpackChangeColorCommand(avatar.SkinColor, WearablesConstants.Categories.BODY_SHAPE));
             backpackCommandBus.SendCommand(new BackpackHideCommand(avatar.ForceRender, true));
             backpackCommandBus.SendCommand(new BackpackEquipWearableCommand(avatar.BodyShape.Value));
 

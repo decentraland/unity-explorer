@@ -1,4 +1,5 @@
 ﻿using DCL.DebugUtilities.Views;
+using System;
 using Utility.UIToolkit;
 
 namespace DCL.DebugUtilities.UIBindings
@@ -10,20 +11,28 @@ namespace DCL.DebugUtilities.UIBindings
     {
         private readonly bool initialValue;
 
-        private DebugWidget debugWidget;
+        private DebugWidget? debugWidget;
 
         /// <summary>
         ///     Whether the widget's foldout is toggled
         /// </summary>
-        public bool IsExpanded => debugWidget.isExpanded;
+        public bool IsExpanded => debugWidget?.isExpanded
+                                  ?? throw new InvalidOperationException("DebugWidgetVisibilityBinding is not connected to a widget");
+
+        public bool IsConnectedAndExpanded => debugWidget is { isExpanded: true };
 
         public DebugWidgetVisibilityBinding(bool initialValue)
         {
             this.initialValue = initialValue;
         }
 
-        public void SetVisible(bool visible) =>
+        public void SetVisible(bool visible)
+        {
+            if (debugWidget == null)
+                throw new InvalidOperationException("DebugWidgetVisibilityBinding is not connected to a widget");
+
             debugWidget.SetDisplayed(visible);
+        }
 
         /// <summary>
         ///     Will be called upon construction with an instance of the widget

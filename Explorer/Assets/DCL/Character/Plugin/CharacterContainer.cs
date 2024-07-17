@@ -2,6 +2,7 @@ using Arch.Core;
 using Arch.SystemGroups;
 using CRDT;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Transform;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Character.Components;
@@ -9,6 +10,7 @@ using DCL.CharacterCamera;
 using DCL.CharacterCamera.Systems;
 using DCL.CharacterMotion.Systems;
 using DCL.Multiplayer.Movement;
+using DCL.Optimization.Pools;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
@@ -26,11 +28,13 @@ namespace DCL.Character.Plugin
     ///     Character container is isolated to provide access
     ///     to Character/Player related assets and settings only
     /// </summary>
-    public class CharacterContainer : IDCLPlugin<CharacterContainer.Settings>
+    public class CharacterContainer : DCLGlobalContainer<CharacterContainer.Settings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IExposedCameraData exposedCameraData;
-        private readonly ExposedTransform transform;
+
+        public readonly ExposedTransform Transform;
+
         private byte bucketPropagationLimit;
 
         private ProvidedInstance<CharacterObject> characterObject;
@@ -40,7 +44,7 @@ namespace DCL.Character.Plugin
             this.assetsProvisioner = assetsProvisioner;
             this.exposedCameraData = exposedCameraData;
 
-            transform = exposedPlayerTransform;
+            Transform = exposedPlayerTransform;
         }
 
         /// <summary>
@@ -48,12 +52,12 @@ namespace DCL.Character.Plugin
         /// </summary>
         public ICharacterObject CharacterObject => characterObject.Value;
 
-        public void Dispose()
+        public override void Dispose()
         {
             characterObject.Dispose();
         }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        protected override async UniTask InitializeInternalAsync(Settings settings, CancellationToken ct)
         {
             characterObject = await assetsProvisioner.ProvideInstanceAsync(
                 settings.CharacterObject,
@@ -66,11 +70,11 @@ namespace DCL.Character.Plugin
             bucketPropagationLimit = settings.sceneBucketPropagationLimit;
         }
 
-        public WorldPlugin CreateWorldPlugin() =>
-            new (transform, exposedCameraData, bucketPropagationLimit);
+        public WorldPlugin CreateWorldPlugin(IComponentPoolsRegistry componentPoolsRegistry) =>
+            new (Transform, exposedCameraData, componentPoolsRegistry, bucketPropagationLimit);
 
         public GlobalPlugin CreateGlobalPlugin() =>
-            new (transform);
+            new (Transform);
 
         public UniTask InitializeAsync(NoExposedPluginSettings settings, CancellationToken ct) =>
             UniTask.CompletedTask;
@@ -102,21 +106,24 @@ namespace DCL.Character.Plugin
             private readonly byte bucketPropagationLimit;
             private readonly IExposedCameraData exposedCameraData;
             private readonly ExposedTransform exposedTransform;
+            private readonly IComponentPool<SDKTransform> sdkTransformPool;
 
-            public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData, byte bucketPropagationLimit)
+            public WorldPlugin(ExposedTransform exposedTransform, IExposedCameraData exposedCameraData,
+                IComponentPoolsRegistry componentPoolsRegistry, byte bucketPropagationLimit)
             {
                 this.exposedTransform = exposedTransform;
                 this.bucketPropagationLimit = bucketPropagationLimit;
                 this.exposedCameraData = exposedCameraData;
+                sdkTransformPool = componentPoolsRegistry.GetReferenceTypePool<SDKTransform>();
             }
 
             public void InjectToWorld(ref ArchSystemsWorldBuilder<World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
             {
                 WriteMainPlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData,
-                    exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit);
+                    exposedTransform, sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Player);
 
                 WriteCameraComponentsSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, exposedCameraData, sharedDependencies.SceneData,
-                    sharedDependencies.ScenePartition, bucketPropagationLimit);
+                    sharedDependencies.ScenePartition, bucketPropagationLimit, sdkTransformPool, persistentEntities.Camera);
             }
         }
 

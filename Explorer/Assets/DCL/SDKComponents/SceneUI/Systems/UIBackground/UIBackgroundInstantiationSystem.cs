@@ -10,6 +10,7 @@ using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using DCL.SDKComponents.SceneUI.Groups;
 using DCL.SDKComponents.SceneUI.Utils;
+using DCL.SDKComponents.Utils;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading;
@@ -62,9 +63,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             var image = imagesPool.Get();
             image.Initialize(uiTransformComponent.Transform);
+
             var uiBackgroundComponent = new UIBackgroundComponent();
             uiBackgroundComponent.Image = image;
             uiBackgroundComponent.Status = LifeCycle.LoadingNotStarted;
+
             World.Add(entity, uiBackgroundComponent);
         }
 
@@ -77,13 +80,18 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
             // Create texture promise if needed
             TextureComponent? backgroundTexture = sdkModel.Texture.CreateTextureComponent(sceneData);
             TryCreateGetTexturePromise(in backgroundTexture, ref uiBackgroundComponent.TexturePromise, ref partitionComponent);
-            uiBackgroundComponent.Status = LifeCycle.LoadingInProgress;
 
+            // No need to wait for the texture promise
             if (uiBackgroundComponent.TexturePromise == null)
             {
-                // Backgrounds without texture
-                UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel);
+                // Ensure image is setup of it has no image promise
+                uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel);
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
+            }
+            else if(uiBackgroundComponent is { TexturePromise: not null, Status: LifeCycle.LoadingFinished })
+            {
+                // Ensure texture has latest data from model
+                uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, uiBackgroundComponent.Image.Texture);
             }
 
             sdkModel.IsDirty = false;
@@ -92,22 +100,24 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         [Query]
         private void LoadUIBackgroundTexture(ref PBUiBackground sdkModel, ref UIBackgroundComponent uiBackgroundComponent)
         {
-            if (uiBackgroundComponent.Status != LifeCycle.LoadingInProgress ||
-                uiBackgroundComponent.TexturePromise == null ||
-                uiBackgroundComponent.TexturePromise.Value.IsConsumed ||
-                !frameTimeBudgetProvider.TrySpendBudget() ||
-                !memoryBudgetProvider.TrySpendBudget())
+            if (uiBackgroundComponent.TexturePromise == null ||
+                uiBackgroundComponent.TexturePromise.Value.IsConsumed)
+                return;
+
+            if(!frameTimeBudgetProvider.TrySpendBudget() ||
+               !memoryBudgetProvider.TrySpendBudget())
                 return;
 
             var texturePromise = uiBackgroundComponent.TexturePromise.Value;
 
             if (texturePromise.TryConsume(World, out StreamableLoadingResult<Texture2D> promiseResult))
             {
+                // Backgrounds with texture
                 if (promiseResult.Succeeded)
-                    // Backgrounds with texture
-                    UiElementUtils.SetupDCLImage(ref uiBackgroundComponent.Image, ref sdkModel, promiseResult.Asset);
+                    uiBackgroundComponent.Image.SetupFromSdkModel(ref sdkModel, promiseResult.Asset);
                 else
                     ReportHub.LogError(ReportCategory.SCENE_UI, "Error consuming texture promise");
+
                 uiBackgroundComponent.Status = LifeCycle.LoadingFinished;
 
                 // Write value back as it's nullable (and can't be accessed by ref)
@@ -128,7 +138,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             // If data inside promise has not changed just reuse the same promise
             // as creating and waiting for a new one can be expensive
-            if (Equals(ref textureComponentValue, ref promise))
+            if (TextureComponentUtils.Equals(ref textureComponentValue, ref promise))
                 return;
 
             // If component is being reused forget the previous promise
@@ -151,19 +161,6 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 
             // Nullify the entity reference
             promise = null;
-        }
-
-        private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
-        {
-            if (promise == null)
-                return false;
-
-            Promise promiseValue = promise.Value;
-            GetTextureIntention intention = promiseValue.LoadingIntention;
-
-            return textureComponent.Src == promiseValue.LoadingIntention.CommonArguments.URL &&
-                   textureComponent.WrapMode == intention.WrapMode &&
-                   textureComponent.FilterMode == intention.FilterMode;
         }
     }
 }

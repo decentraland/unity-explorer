@@ -5,6 +5,13 @@
     /// </summary>
     public static class ReportCategory
     {
+        public const string FEATURE_FLAGS = nameof(FEATURE_FLAGS);
+
+        /// <summary>
+        ///     Everything connected to raw assets and addressables
+        /// </summary>
+        public const string ANALYTICS = nameof(ANALYTICS);
+
         /// <summary>
         ///     Everything connected to raw assets and addressables
         /// </summary>
@@ -271,6 +278,11 @@
         ///     Whatever is coming from external pure C# plugins
         /// </summary>
         public const string PLUGINS = nameof(PLUGINS);
+
+        /// <summary>
+        ///     To show intended debug messages
+        /// </summary>
+        public const string DEBUG = nameof(DEBUG);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

@@ -1,4 +1,4 @@
-using DCL.Chat.MessageBus;
+using DCL.Chat.Commands;
 using DCL.DebugUtilities;
 using DCL.Profiles;
 using DCL.Web3.Identities;
@@ -7,12 +7,11 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Utility;
 
-namespace DCL.Chat
+namespace DCL.Chat.MessageBus
 {
     public interface IChatMessagesBus : IDisposable
     {
-        public event Action<ChatMessage> OnMessageAdded;
-
+        public event Action<ChatMessage> MessageAdded;
         public void Send(string message);
     }
 

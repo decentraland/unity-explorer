@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62a6ffa33ea54298a6351ae0db9affb3, type: 3}
+  m_Name: AnalyticsConfiguration
+  m_EditorClassIdentifier: 
+  groups:
+  - groupName: General
+    events:
+    - eventName: system_info_report
+      isEnabled: 1
+    - eventName: initial_loading
+      isEnabled: 1
+    - eventName: performance_report
+      isEnabled: 1
+    - eventName: critical_logs
+      isEnabled: 0
+  - groupName: Chat
+    events:
+    - eventName: chat_message_sent
+      isEnabled: 1
+    - eventName: chat_bubble_switched
+      isEnabled: 1
+  - groupName: Map
+    events:
+    - eventName: map_jump_in
+      isEnabled: 1
+  - groupName: World
+    events:
+    - eventName: move_to_parcel
+      isEnabled: 1
+    - eventName: walked_distance
+      isEnabled: 1
+    - eventName: time_spent_in_world
+      isEnabled: 1
+  flushSize: 20
+  flushInterval: 30
+  <PerformanceReportInterval>k__BackingField: 15
+  <Mode>k__BackingField: 1

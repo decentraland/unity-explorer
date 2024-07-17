@@ -10,9 +10,13 @@ import argparse
 # Local
 import utils
 
+# Force a build
+
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
+
+build_healthy = True
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
@@ -36,36 +40,51 @@ def get_target(target):
 # So we *always* create a new target, no matter what
 # by appending the commit's SHA
 def clone_current_target():
-    body = get_target(os.getenv('TARGET'))
-    # Set target name based on branch
-    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
-    # Ensure a new target:
-    new_target_name = f'{new_target_name}_{os.getenv('COMMIT_SHA')}'
+    def generate_body(template_target, name, branch, options, cache):
+        body = get_target(template_target)
 
-    body['name'] = new_target_name
-    body['settings']['scm']['branch'] = os.getenv('BRANCH_NAME')
-    body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = os.getenv('BUILD_OPTIONS').split(',')
+        body['name'] = name
+        body['settings']['scm']['branch'] = branch
+        body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
 
-    # Copy cache check
-    use_cache = os.getenv('USE_CACHE')
-    if use_cache == 'true' or use_cache == '':
-        body['settings']['buildTargetCopyCache'] = os.getenv('TARGET')
-    else:
-        if 'buildTargetCopyCache' in body['settings']:
-            del body['settings']['buildTargetCopyCache']
+        # Copy cache check
+        if cache:
+            body['settings']['buildTargetCopyCache'] = template_target
+        else:
+            if 'buildTargetCopyCache' in body['settings']:
+                del body['settings']['buildTargetCopyCache']
 
-    # Check if the target already exists (re-use of a branch)
-    if 'error' in get_target(new_target_name):
-        # Create new
+        return body
+
+    # Set target name based on branch, without commit SHA
+    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+
+    # Generate request body
+    body = generate_body(
+        os.getenv('TARGET'),
+        new_target_name,
+        os.getenv('BRANCH_NAME'),
+        os.getenv('BUILD_OPTIONS').split(','),
+        (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
+
+    existing_target = get_target(new_target_name)
+    
+    if 'error' in existing_target:
+        # Create new target
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
     else:
-        # Update existing
+        # Target exists, update it
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     if response.status_code == 200 or response.status_code == 201:
+        # Override target ENV
         os.environ['TARGET'] = new_target_name
+    elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
+        print('Target update failed due to a possible race condition. Retrying...')
+        time.sleep(2)  # Add a small delay before retrying
+        clone_current_target()  # Retry the whole process
     else:
-        print('Target failed to clone with status code:', response.status_code)
+        print('Target failed to clone/update with status code:', response.status_code)
         print('Response body:', response.text)
         sys.exit(1)
 
@@ -91,23 +110,63 @@ def set_parameters(params):
         print("Response body:", response.text)
         sys.exit(1)
 
+def get_latest_build(target):
+    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
+    
+    if response.status_code == 200:
+        builds = response.json()
+        if builds:
+            return builds[0]
+    
+    print('Failed to get the latest build.')
+    return None
+    
 def run_build(branch):
-    body = {
-        'branch': branch,
-        # 'commit': '7d6423555eb96a1e7208adec2b8b7e2f74f1a18f'
-    }
-    response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
+    max_retries = 10
+    retry_delay = 20  # seconds
 
-    if response.status_code == 202:
-        response_json = response.json()
-        print('Build started successfully. Response:', response_json)
-        return int(response_json[0]['build'])
-    else:
-        print('Build failed to start with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
-        return -1
+    for attempt in range(max_retries):
+        body = {
+            'branch': branch,
+        }
+        response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
 
+        if response.status_code == 202:
+            response_json = response.json()
+            print(f'Build response (attempt {attempt + 1}):', response_json)
+            
+            if 'error' in response_json[0] and 'already a build pending' in response_json[0]['error']:
+                print('A build is already pending. Attempting to cancel it...')
+                latest_build = get_latest_build(os.getenv('TARGET'))
+                if latest_build:
+                    cancel_build(latest_build['build'])
+                    print(f'Waiting {retry_delay} seconds before retrying...')
+                    time.sleep(retry_delay)
+                else:
+                    print('Failed to get the latest build ID.')
+                    if attempt == max_retries - 1:
+                        print('Max retries reached. Exiting.')
+                        sys.exit(1)
+            elif 'build' in response_json[0]:
+                print('Build started successfully.')
+                return int(response_json[0]['build'])
+            else:
+                print('Unexpected response format.')
+                if attempt == max_retries - 1:
+                    print('Max retries reached. Exiting.')
+                    sys.exit(1)
+        else:
+            print(f'Build failed to start with status code: {response.status_code}')
+            print('Response body:', response.text)
+            if attempt == max_retries - 1:
+                print('Max retries reached. Exiting.')
+                sys.exit(1)
+        
+        print(f'Retrying... (attempt {attempt + 2} of {max_retries})')
+    
+    print('Failed to start build after maximum retries.')
+    sys.exit(1)
+    
 def cancel_build(id):
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
 
@@ -121,7 +180,7 @@ def cancel_build(id):
 def poll_build(id):
     if id == -1:
         print('Error: No build ID known (-1)')
-        return
+        sys.exit(1)
 
     retries = 0
     max_retries = 5
@@ -145,6 +204,7 @@ def poll_build(id):
         print('Response body:', response.text)
         sys.exit(1)
 
+    global build_healthy
     response_json = response.json()
 
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
@@ -158,7 +218,7 @@ def poll_build(id):
             return False
         case 'failure' | 'canceled' | 'unknown':
             print(f'Build error! Last known status: "{status}"')
-            sys.exit(1)
+            build_healthy = False
             return False
         case _:
             print(f'Build status is not known!: "{status}"')
@@ -174,7 +234,11 @@ def download_artifact(id):
         sys.exit(1)
 
     response_json = response.json()
-    artifact_url = response_json['links']['download_primary']['href']
+    try:
+        artifact_url = response_json['links']['download_primary']['href']
+    except KeyError:
+        print(f'Failed to locate any build artifacts - Nothing to download')
+        return
 
     download_dir = 'build'
     filepath = os.path.join(download_dir, 'artifact.zip')
@@ -217,6 +281,25 @@ def delete_build(id):
         print('Response body:', response.text)
         sys.exit(1)
 
+def get_any_running_builds(target, trueOnError = True):
+    response = requests.get(f'{URL}/buildtargets/{target}/builds?buildStatus=created,queued,sentToBuilder,started,restarted', headers=HEADERS)
+
+    if response.status_code == 200:
+        response_json = response.json()
+        if response_json == []:
+            return False
+        else:
+            print('Found at least one running build on build target')
+            return True;
+    else:
+        print('Failed to check running builds on build target with status code:', response.status_code)
+        print('Response body:', response.text)
+        if trueOnError:
+            print('Failover - Assuming at least one running, returning True')
+            return True
+        else:
+            sys.exit(1)
+
 def delete_current_target():
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=HEADERS)
 
@@ -248,6 +331,9 @@ else:
     # Clone current target
     # This will clone the current $TARGET and replace the value in $TARGET with it
     # Also sets the branch to $BRANCH_NAME
+    #
+    # If the target already exists, it will check if it has running builds on it
+    # If it has running builds, a new target will be created with an added timestamp (Unity can't queue)
     clone_current_target()
 
     # Set ENVs (Parameters)
@@ -278,7 +364,15 @@ download_artifact(id)
 # Handle build log
 download_log(id)
 
-# Cleanup
-#delete_build(id) Deleting the parent target also removes all builds
-delete_current_target()
+if not build_healthy:
+    print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
+    sys.exit(1)
+
+# Cleanup (only if build is healthy)
+if get_any_running_builds(os.getenv('TARGET')):
+    delete_build(id)
+else:
+    # Deleting the parent target also removes all builds
+    delete_current_target()
+
 utils.delete_build_info()

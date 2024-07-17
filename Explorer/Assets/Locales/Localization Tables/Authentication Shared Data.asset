@@ -83,6 +83,24 @@ MonoBehaviour:
     m_Key: VERIFICATION_COUNTDOWN
     m_Metadata:
       m_Items: []
+  - m_Id: 65641274080747520
+    m_Key: APPLY_ALPHA_ACCESS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65641370348412928
+    m_Key: 'USE_DIFFERENT_ACCOUNT
+
+'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65641847559544832
+    m_Key: RESTRICTED_USER_DESCRIPTION
+    m_Metadata:
+      m_Items: []
+  - m_Id: 65642051994116096
+    m_Key: RESTRICTED_USER_TITLE
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

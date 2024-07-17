@@ -7,11 +7,20 @@ using ECS.LifeCycle;
 using ECS.LifeCycle.Systems;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.SDKComponents.Tween.Components;
+using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.World
 {
     public class TweenPlugin : IDCLWorldPluginWithoutSettings
     {
+        private readonly TweenerPool tweenerPool;
+
+        public TweenPlugin()
+        {
+            tweenerPool = new TweenerPool();
+        }
+        
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;
 
@@ -19,7 +28,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
             TweenLoaderSystem.InjectToWorld(ref builder);
-            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter);
+            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
         }
     }

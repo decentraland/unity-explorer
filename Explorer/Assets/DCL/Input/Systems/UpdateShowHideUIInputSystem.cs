@@ -4,8 +4,6 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using ECS.Abstract;
 using MVC;
-using System.Linq;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace DCL.Input.Systems
@@ -15,8 +13,8 @@ namespace DCL.Input.Systems
     public partial class UpdateShowHideUIInputSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput dclInput;
-        private readonly MVCManager mvcManager;
-        private readonly DebugContainerBuilder debugContainerBuilder;
+        private readonly IMVCManager mvcManager;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument cursorUIDocument;
 
@@ -25,8 +23,8 @@ namespace DCL.Input.Systems
         private UpdateShowHideUIInputSystem(
             World world,
             DCLInput dclInput,
-            MVCManager mvcManager,
-            DebugContainerBuilder debugContainerBuilder,
+            IMVCManager mvcManager,
+            IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument cursorUIDocument) : base(world)
         {

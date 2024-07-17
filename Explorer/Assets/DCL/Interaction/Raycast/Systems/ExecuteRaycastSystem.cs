@@ -20,7 +20,7 @@ using ECS.Unity.Transforms.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ECS.LifeCycle;
 using UnityEngine;
 using UnityEngine.Pool;
 using Utility;
@@ -30,7 +30,7 @@ namespace DCL.Interaction.Raycast.Systems
 {
     [UpdateInGroup(typeof(RaycastGroup))]
     [UpdateAfter(typeof(InitializeRaycastSystem))]
-    public partial class ExecuteRaycastSystem : BaseUnityLoopSystem
+    public partial class ExecuteRaycastSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private static readonly RaycastHit[] SHARED_RAYCAST_HIT_ARRAY = new RaycastHit[10];
 
@@ -45,6 +45,8 @@ namespace DCL.Interaction.Raycast.Systems
 
         private readonly ISceneData sceneData;
         private List<RaycastData> orderedRaycastData;
+
+        private readonly PBRaycastResult EMPTY_RAYCAST_RESULT;
 
         internal ExecuteRaycastSystem(World world,
             ISceneData sceneData,
@@ -66,6 +68,7 @@ namespace DCL.Interaction.Raycast.Systems
             this.entitiesMap = entitiesMap;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
             this.sceneStateProvider = sceneStateProvider;
+            EMPTY_RAYCAST_RESULT = raycastComponentPool.Get();
         }
 
         public override void Initialize()
@@ -76,10 +79,13 @@ namespace DCL.Interaction.Raycast.Systems
         public override void Dispose()
         {
             ListPool<RaycastData>.Release(orderedRaycastData);
+            raycastComponentPool.Release(EMPTY_RAYCAST_RESULT);
         }
 
         protected override void Update(float t)
         {
+            if (!sceneStateProvider.IsCurrent) return;
+            
             BudgetAndExecute(sceneData.Geometry.BaseParcelPosition);
         }
 
@@ -205,10 +211,14 @@ namespace DCL.Interaction.Raycast.Systems
 
                 Collider collider = hit.collider;
 
-                if (!TryGetQualifiedEntity(collider, collisionMask, out foundEntity)) continue;
-
                 if (closestQualifiedHit == null || hit.distance < closestQualifiedHit.Value.distance)
-                    closestQualifiedHit = hit;
+                {
+                    if (TryGetQualifiedEntity(collider, collisionMask, out CRDTEntity entity))
+                    {
+                        foundEntity = entity;
+                        closestQualifiedHit = hit;
+                    }
+                }
             }
 
             if (closestQualifiedHit != null)
@@ -270,6 +280,22 @@ namespace DCL.Interaction.Raycast.Systems
             public CRDTEntity CRDTEntity;
             public PBRaycast SDKComponent;
             public PBRaycastResult RaycastResult;
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if (!value)
+                ClearRaycastIntentsQuery(World);
+        }
+
+     
+
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void ClearRaycastIntents(ref CRDTEntity crdtEntity, ref PBRaycast raycast)
+        {
+            EMPTY_RAYCAST_RESULT.Hits.Clear();
+            ecsToCRDTWriter.PutMessage(EMPTY_RAYCAST_RESULT, crdtEntity);
         }
     }
 }

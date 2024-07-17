@@ -1,4 +1,8 @@
-﻿using System;
+﻿using DCL.PluginSystem.Global;
+using DCL.PluginSystem.World;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -6,11 +10,13 @@ using UnityEngine.UIElements;
 
 namespace DCL.PluginSystem.Editor
 {
-    [CustomEditor(typeof(PluginSettingsContainer))]
+    [CustomEditor(typeof(PluginSettingsContainer), true)]
     public class PluginsContainerEditor : UnityEditor.Editor
     {
         private SerializedProperty settings;
         private PluginSettingsContainer targetObj;
+
+        public Func<Type, bool> AdditionalTypeFiler { private get; set; } = static _ => true;
 
         private void OnEnable()
         {
@@ -18,17 +24,48 @@ namespace DCL.PluginSystem.Editor
             targetObj = (PluginSettingsContainer)target;
         }
 
+        private IReadOnlyCollection<Type> GetEligibleSettingsTypes()
+        {
+            Type targetPluginType;
+            Type targetContainerType;
+
+            if (targetObj.GetType() == typeof(GlobalPluginSettingsContainer))
+            {
+                targetPluginType = typeof(IDCLGlobalPlugin<>);
+                targetContainerType = typeof(DCLGlobalContainer<>);
+            }
+            else if (targetObj.GetType() == typeof(WorldPluginSettingsContainer))
+            {
+                targetPluginType = typeof(IDCLWorldPlugin<>);
+                targetContainerType = typeof(DCLWorldContainer<>);
+            }
+            else return TypeCache.GetTypesDerivedFrom<IDCLPluginSettings>().Where(AdditionalTypeFiler).ToList();
+
+            // Get their settings types
+            var derivedTypes = TypeCache.GetTypesDerivedFrom(targetPluginType).Concat(TypeCache.GetTypesDerivedFrom(targetContainerType));
+            var targetCollection = new List<Type>();
+
+            foreach (Type pluginType in derivedTypes.Where(AdditionalTypeFiler))
+            {
+                Type genericType = pluginType.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDCLPlugin<>));
+                targetCollection.Add(genericType.GenericTypeArguments[0]);
+            }
+
+            return targetCollection;
+        }
+
         public override VisualElement CreateInspectorGUI()
         {
             var container = new VisualElement();
 
             var settingsField = new PropertyField(settings);
+            settingsField.Bind(serializedObject);
             container.Add(settingsField);
 
             var addSettingsButton = new Button(() =>
             {
                 var menu = new GenericMenu();
-                TypeCache.TypeCollection types = TypeCache.GetTypesDerivedFrom<IDCLPluginSettings>();
+                IReadOnlyCollection<Type> types = GetEligibleSettingsTypes();
 
                 foreach (Type type in types)
                 {

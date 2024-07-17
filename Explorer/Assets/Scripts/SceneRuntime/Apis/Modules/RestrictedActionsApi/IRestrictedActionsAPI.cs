@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
 using UnityEngine;
 
 namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
@@ -10,7 +12,7 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
         void TryTeleportTo(Vector2Int newCoords);
         bool TryChangeRealm(string message, string realm);
         void TryTriggerEmote(string predefinedEmote);
-        bool TryTriggerSceneEmote(string src, bool loop);
+        UniTask<bool> TryTriggerSceneEmoteAsync(string src, bool loop, CancellationToken ct);
         bool TryOpenNftDialog(string urn);
     }
 }

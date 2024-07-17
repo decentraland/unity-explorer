@@ -14,6 +14,7 @@ using ECS.StreamableLoading.Common.Systems;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
+using AssetManagement;
 using UnityEngine;
 using UnityEngine.Networking;
 using Utility.Multithreading;
@@ -111,8 +112,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
                 ct.ThrowIfCancellationRequested();
 
+                string version = intention.Manifest != null ? intention.Manifest.GetVersion() : string.Empty;
+                string source = intention.CommonArguments.CurrentSource.ToStringNonAlloc();
+
                 // if the type was not specified don't load any assets
-                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset,loadingMutex, dependencies, GetReportCategory(), ct);
+                return await CreateAssetBundleDataAsync(assetBundle, metrics, intention.ExpectedObjectType, mainAsset, loadingMutex, dependencies, GetReportCategory(), version, source, ct);
             }
             catch (Exception e)
             {
@@ -132,6 +136,8 @@ namespace ECS.StreamableLoading.AssetBundles
             AssetBundleLoadingMutex loadingMutex,
             AssetBundleData[] dependencies,
             string reportCategory,
+            string version,
+            string source,
             CancellationToken ct)
         {
             // if the type was not specified don't load any assets
@@ -139,11 +145,12 @@ namespace ECS.StreamableLoading.AssetBundles
                 return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, dependencies));
 
             var asset = await LoadAllAssetsAsync(assetBundle, expectedObjType, mainAsset, loadingMutex, reportCategory, ct);
-            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies));
-        }
 
-        protected override void OnAssetSuccessfullyLoaded(AssetBundleData asset) =>
-            asset.AddReference();
+
+            return new StreamableLoadingResult<AssetBundleData>(new AssetBundleData(assetBundle, metrics, asset, expectedObjType, dependencies,
+                version: version,
+                source: source));
+        }
 
         private static async UniTask<Object> LoadAllAssetsAsync(AssetBundle assetBundle, Type objectType, string? mainAsset, AssetBundleLoadingMutex loadingMutex, string reportCategory, CancellationToken ct) {
             using AssetBundleLoadingMutex.LoadingRegion _ = await loadingMutex.AcquireAsync(ct);

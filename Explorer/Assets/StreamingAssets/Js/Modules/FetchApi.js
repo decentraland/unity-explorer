@@ -178,3 +178,4 @@ class Headers {
 }
 
 module.exports.fetch = restrictedFetch
+module.exports.RequestHeaders = Headers

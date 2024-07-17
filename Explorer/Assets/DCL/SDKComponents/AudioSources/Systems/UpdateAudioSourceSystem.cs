@@ -5,15 +5,14 @@ using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.Unity.Transforms.Components;
-using Microsoft.Extensions.ObjectPool;
 using SceneRunner.Scene;
-using System;
 using UnityEngine;
 using UnityEngine.Audio;
 using Utility;
@@ -32,10 +31,10 @@ namespace DCL.SDKComponents.AudioSources
         private readonly World world;
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
-        private readonly IDereferencableCache<AudioClip, GetAudioClipIntention> cache;
+        private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
         private readonly AudioMixerGroup audioMixerGroup;
 
-        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
+        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider, AudioMixerGroup audioMixerGroup) : base(world)
         {
@@ -47,7 +46,7 @@ namespace DCL.SDKComponents.AudioSources
             this.cache = cache;
             this.audioMixerGroup = audioMixerGroup;
 
-            audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>();
+            audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
         }
 
         protected override void Update(float t)
@@ -61,20 +60,18 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (NoBudget()
                 || audioSourceComponent.ClipPromise.IsConsumed
-                || !audioSourceComponent.ClipPromise.TryConsume(World, out StreamableLoadingResult<AudioClip> promiseResult))
+                || !audioSourceComponent.ClipPromise.TryConsume(World!, out StreamableLoadingResult<AudioClip> promiseResult))
                 return;
 
-            if (!audioSourceComponent.AudioSourceAssigned)
-            {
-                audioSourceComponent.SetAudioSource(audioSourcesPool.Get(), audioMixerGroup);
-            }
+            if (audioSourceComponent.AudioSourceAssigned == false)
+                audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, audioMixerGroup);
 
-            audioSourceComponent.AudioSource.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
+            audioSourceComponent.AudioSource!.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
             // Reset isDirty as we just applied the PBAudioSource to the AudioSource
             sdkAudioSource.IsDirty = false;
 
-            Transform transform = audioSourceComponent.AudioSource.transform;
+            Transform transform = audioSourceComponent.AudioSource!.transform;
             transform.SetParent(entityTransform.Transform, false);
             transform.ResetLocalTRS();
 
@@ -89,7 +86,7 @@ namespace DCL.SDKComponents.AudioSources
         private void UpdateAudioSource(ref PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent)
         {
             if (component.AudioSourceAssigned)
-                component.AudioSource.volume = sceneStateProvider.IsCurrent ? sdkComponent.GetVolume() : 0;
+                component.AudioSource!.volume = sceneStateProvider.IsCurrent ? sdkComponent.GetVolume() : 0;
 
             HandleSDKChanges(sdkComponent, ref component, partitionComponent);
         }
@@ -99,14 +96,15 @@ namespace DCL.SDKComponents.AudioSources
             if (!sdkComponent.IsDirty) return;
 
             if (component.AudioSourceAssigned)
-                component.AudioSource.ApplyPBAudioSource(sdkComponent);
+                component.AudioSource!.ApplyPBAudioSource(sdkComponent);
 
             if (component.AudioClipUrl != sdkComponent.AudioClipUrl)
             {
                 component.CleanUp(world, cache);
-                component.AudioClipUrl = sdkComponent.AudioClipUrl;
+                component.AudioClipUrl = sdkComponent.AudioClipUrl!;
 
-                if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl, partitionComponent, out Promise? clipPromise)) { component.ClipPromise = clipPromise!.Value; }
+                if (AudioUtils.TryCreateAudioClipPromise(world, sceneData, sdkComponent.AudioClipUrl!, partitionComponent, out Promise? clipPromise))
+                    component.ClipPromise = clipPromise!.Value;
             }
 
             sdkComponent.IsDirty = false;

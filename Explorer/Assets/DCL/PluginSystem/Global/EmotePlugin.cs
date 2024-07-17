@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility.Multithreading;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
 
 namespace DCL.PluginSystem.Global
@@ -34,7 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
-        private readonly DebugContainerBuilder debugBuilder;
+        private readonly IDebugContainerBuilder debugBuilder;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
@@ -50,7 +49,7 @@ namespace DCL.PluginSystem.Global
             IEmoteCache emoteCache,
             IRealmData realmData,
             IEmotesMessageBus messageBus,
-            DebugContainerBuilder debugBuilder,
+            IDebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
@@ -85,10 +84,14 @@ namespace DCL.PluginSystem.Global
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
+
+            FinalizeEmoteAssetBundleSystem.InjectToWorld(ref builder);
+
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
                 emoteCache, realmData,
-                URLSubdirectory.FromString("/Emotes/"));
+                customStreamingSubdirectory);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
@@ -96,9 +99,11 @@ namespace DCL.PluginSystem.Global
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 
-            LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
+            LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
+
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteCache, customStreamingSubdirectory);
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)

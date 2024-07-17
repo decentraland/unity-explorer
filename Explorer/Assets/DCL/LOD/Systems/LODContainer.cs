@@ -8,19 +8,19 @@ using DCL.Roads.Settings;
 using DCL.Roads.Systems;
 using ECS;
 using Global;
+using Global.Dynamic;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.LOD.Systems
 {
     /// <summary>
     /// LOD Container unites LOD and Road Plugins and their common dependencies
     /// </summary>
-    public class LODContainer : DCLContainer<LODContainer.LODContainerSettings>
+    public class LODContainer : DCLWorldContainer<LODContainer.LODContainerSettings>
     {
         [Serializable]
         public class LODContainerSettings : IDCLPluginSettings
@@ -48,16 +48,17 @@ namespace DCL.LOD.Systems
         }
 
         public static async UniTask<(LODContainer? container, bool success)> CreateAsync(
+            IAssetsProvisioner assetsProvisioner,
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             RealmData realmData,
             TextureArrayContainerFactory textureArrayContainerFactory,
-            DebugContainerBuilder debugBuilder,
+            IDebugContainerBuilder debugBuilder,
             bool lodEnabled,
             CancellationToken ct)
         {
-            var container = new LODContainer(staticContainer.AssetsProvisioner);
-            
+            var container = new LODContainer(assetsProvisioner);
+
             return await container.InitializeContainerAsync<LODContainer, LODContainerSettings>(settingsContainer, ct, c =>
             {
                 var roadDataDictionary = new Dictionary<Vector2Int, RoadDescription>();
@@ -66,7 +67,7 @@ namespace DCL.LOD.Systems
                     roadDataDictionary.Add(roadDescription.RoadCoordinate, roadDescription);
 
                 var visualSceneStateResolver = new VisualSceneStateResolver(roadDataDictionary.Keys.ToHashSet());
-                
+
                 // Create plugins
                 c.RoadPlugin = new RoadPlugin(staticContainer.CacheCleaner,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
@@ -77,7 +78,8 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
-                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, lodEnabled);
+                    visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
+                    lodEnabled);
 
                 return UniTask.CompletedTask;
             });

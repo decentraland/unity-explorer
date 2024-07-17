@@ -44,7 +44,7 @@ namespace ECS.SceneLifeCycle.Systems
                 ResetProcessedParcel();
                 return;
             }
-            
+
             Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
             Vector2Int parcel = ParcelMathHelper.FloorToParcel(playerPos);
             UpdateSceneReadiness(parcel);
@@ -53,8 +53,12 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
-            if (scenesCache.TryGetByParcel(parcel, out var currentScene))
-                sceneAssetLock.IsLocked = !currentScene.IsSceneReady();
+            if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
+                return;
+
+            sceneAssetLock.TryLock(currentScene);
+            if (!currentScene.SceneStateProvider.IsCurrent)
+                currentScene.SetIsCurrent(true);
         }
 
         private void UpdateCurrentScene(Vector2Int parcel)
@@ -65,12 +69,10 @@ namespace ECS.SceneLifeCycle.Systems
             scenesCache.TryGetByParcel(parcel, out var currentScene);
 
             if (lastProcessedScene != currentScene)
-            {
                 lastProcessedScene?.SetIsCurrent(false);
-                currentScene?.SetIsCurrent(true);
-            }
-            else
-                currentScene?.SetIsCurrent(true);
+
+            if (currentScene is { SceneStateProvider: { IsCurrent: false } })
+                currentScene.SetIsCurrent(true);
 
             lastParcelProcessed = parcel;
         }
