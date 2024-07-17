@@ -13,6 +13,7 @@ using SceneRunner.Scene;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
+
     // [UpdateBefore(typeof(CleanUpGroup))]
     // [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
     public partial class PlayerTransformPropagationSystem : BaseUnityLoopSystem
@@ -21,34 +22,26 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         protected override void Update(float t)
         {
-            PropagateTransformToSceneQuery(World);
+            PropagateTransformToSceneQuery(World!);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void PropagateTransformToScene(ref AvatarBase avatarBase, ref PlayerCRDTEntity playerCRDTEntity)
+        private void PropagateTransformToScene(ref IAvatarView avatarView, ref PlayerCRDTEntity playerCRDTEntity)
         {
             // Main player Transform is handled by 'WriteMainPlayerTransformSystem'
             if (playerCRDTEntity.CRDTEntity.Id == SpecialEntitiesID.PLAYER_ENTITY) return;
-
-            if (playerCRDTEntity.IsDirty)
-            {
-                PropagateComponent(ref avatarBase, ref playerCRDTEntity);
-                return;
-            }
-
-            PropagateComponent(ref avatarBase, ref playerCRDTEntity, true);
+            PropagateComponent(ref avatarView, ref playerCRDTEntity, playerCRDTEntity.IsDirty == false);
         }
 
-        private void PropagateComponent(ref AvatarBase avatarBase, ref PlayerCRDTEntity playerCRDTEntity, bool useSet = false)
+        private static void PropagateComponent(ref IAvatarView avatarBase, ref PlayerCRDTEntity playerCRDTEntity, bool useSet = false)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
-            var avatarTransform = avatarBase.transform;
-            var sdkTransform = new SDKTransform()
+            var sdkTransform = new SDKTransform
             {
-                Position = avatarTransform.position, // updated to scene-relative on the writer system
-                Rotation = avatarTransform.transform.rotation
+                Position = avatarBase.Position, // updated to scene-relative on the writer system
+                Rotation = avatarBase.Rotation,
             };
 
             if (useSet)
