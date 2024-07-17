@@ -1,6 +1,7 @@
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -16,6 +17,7 @@ namespace DCL.LOD.Tests
     {
         private SceneLODInfo sceneLODInfo;
         private LODAssetsPool lodAssetsPool;
+        private GameObjectPool<LODGroup> lodGroupPool;
         private PartitionComponent partitionComponent;
         private SceneDefinitionComponent sceneDefinitionComponent;
 
@@ -55,7 +57,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform);
+            system = new UpdateSceneLODInfoSystem(world, lodGroupPool, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform);
         }
 
 

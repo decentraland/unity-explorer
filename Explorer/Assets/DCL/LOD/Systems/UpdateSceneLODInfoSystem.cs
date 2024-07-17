@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -33,8 +34,9 @@ namespace DCL.LOD.Systems
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly Transform lodsTransformParent;
+        private GameObjectPool<LODGroup> lodGroupPool;
 
-        public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
+        public UpdateSceneLODInfoSystem(World world, GameObjectPool<LODGroup> lodGroupPool, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
         {
             this.lodCache = lodCache;
@@ -42,6 +44,7 @@ namespace DCL.LOD.Systems
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodsTransformParent = lodsTransformParent;
+            this.lodGroupPool = lodGroupPool;
         }
 
         protected override void Update(float t)
@@ -83,7 +86,7 @@ namespace DCL.LOD.Systems
 
                 if (cachedAsset.lodGO != null)
                 {
-                    Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodsTransformParent);
+                    Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
                     cachedAsset.lodGO.transform.SetParent(lodGroupTransform);
                     sceneLODInfo.ReEvaluateLODGroup();
                 }

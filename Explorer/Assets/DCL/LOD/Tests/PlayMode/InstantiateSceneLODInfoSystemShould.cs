@@ -5,6 +5,7 @@ using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -24,6 +25,7 @@ namespace DCL.LOD.Tests
     {
         private SceneLODInfo sceneLODInfo;
         private LODAssetsPool lodAssetsPool;
+        private GameObjectPool<LODGroup> lodGroupPool;
         private SceneDefinitionComponent sceneDefinitionComponent;
 
         private const string fakeHash = "FAKE_HASH";
@@ -69,7 +71,7 @@ namespace DCL.LOD.Tests
             lodAssetsPool = new LODAssetsPool();
 
             var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
-            system = new InstantiateSceneLODInfoSystem(world,  frameCapBudget, memoryBudget, lodAssetsPool, scenesCache, sceneReadinessReportQueue,
+            system = new InstantiateSceneLODInfoSystem(world,  frameCapBudget, memoryBudget, lodGroupPool, lodAssetsPool, scenesCache, sceneReadinessReportQueue,
                 textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
                 {
                     new TextureArrayResolutionDescriptor(256, 500, 1)

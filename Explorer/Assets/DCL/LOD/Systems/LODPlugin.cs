@@ -28,6 +28,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
+        private GameObjectPool<LODGroup> lodGroupPool;
         private readonly bool lodEnabled;
 
         private IExtendedObjectPool<Material> lodMaterialPool;
@@ -67,6 +68,7 @@ namespace DCL.PluginSystem.Global
             var lodContainer = new GameObject("POOL_CONTAINER_LODS");
             var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
             lodDebugContainer.transform.SetParent(lodContainer.transform);
+            lodGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform);
 
             AsyncInstantiateOperation.SetIntegrationTimeMS(lodSettingsAsset.AsyncIntegrationTimeMS);
 
@@ -78,9 +80,9 @@ namespace DCL.PluginSystem.Global
 
             if (lodEnabled)
             {
-                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodGroupPool, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
-                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, lodAssetsPool, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, lodContainer.transform);
+                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, lodGroupPool, lodAssetsPool, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, lodContainer.transform);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
             }
             else
@@ -93,6 +95,7 @@ namespace DCL.PluginSystem.Global
         public void Dispose()
         {
             lodAssetsPool.Unload(frameCapBudget, 3);
+            lodGroupPool?.Dispose();
         }
 
     }

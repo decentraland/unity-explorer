@@ -8,6 +8,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
@@ -31,9 +32,9 @@ namespace DCL.LOD.Systems
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly TextureArrayContainer lodTextureArrayContainer;
         private readonly Transform lodsTransformParent;
+        private GameObjectPool<LODGroup> lodGroupPool;
 
-
-        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, ILODAssetsPool lodCache, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, Transform lodsTransformParent) : base(world)
+        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, GameObjectPool<LODGroup> lodGroupPool, ILODAssetsPool lodCache, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, Transform lodsTransformParent) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
@@ -42,6 +43,7 @@ namespace DCL.LOD.Systems
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
             this.lodsTransformParent = lodsTransformParent;
+            this.lodGroupPool = lodGroupPool;
         }
 
 
@@ -71,7 +73,7 @@ namespace DCL.LOD.Systems
                 {
                     if (result.Succeeded)
                     {
-                        Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodsTransformParent);
+                        Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
 
                         GameObject instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
                                                                             sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,

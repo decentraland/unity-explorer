@@ -3,6 +3,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using System;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.Optimization.Pools;
 using DCL.Profiling;
 using NUnit.Framework;
 using System.Collections.Generic;
@@ -17,6 +18,7 @@ namespace DCL.LOD.Components
     {
         public LODGroup LodGroup;
         public List<LODAsset> LODAssets;
+        private GameObjectPool<LODGroup> lodGroupPool;
 
         public void Dispose(World world)
         {
@@ -27,8 +29,8 @@ namespace DCL.LOD.Components
                 lodVar.Release(world);
             }
             LODAssets.Clear();
-            if (LodGroup != null)
-                UnityObjectUtils.SafeDestroy(LodGroup.gameObject);
+            lodGroupPool.Release(LodGroup);
+            LodGroup = null;
         }
 
         public static SceneLODInfo Create()
@@ -36,6 +38,8 @@ namespace DCL.LOD.Components
             return new SceneLODInfo
             {
                 LODAssets = new List<LODAsset>(),
+                LodGroup = null,
+                lodGroupPool = null,
             };
         }
 
@@ -50,12 +54,13 @@ namespace DCL.LOD.Components
             return true;
         }
 
-        public Transform CreateLODGroup(Transform lodTransformParent)
+        public Transform CreateLODGroup(GameObjectPool<LODGroup> lodGroupPool, Transform lodTransformParent)
         {
             // Create LODGroup
             if (LodGroup == null)
             {
-                LodGroup = new GameObject().AddComponent<LODGroup>();
+                this.lodGroupPool = lodGroupPool;
+                LodGroup = lodGroupPool.Get();
                 LodGroup.fadeMode = LODFadeMode.CrossFade;
                 LodGroup.animateCrossFading = true;
                 LodGroup.transform.SetParent(lodTransformParent);
