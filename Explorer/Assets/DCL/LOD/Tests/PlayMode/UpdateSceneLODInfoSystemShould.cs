@@ -79,43 +79,5 @@ namespace DCL.LOD.Tests
             //Act
             system.Update(0);
         }
-
-
-
-
-
-
-        /*
-   TODO: Uncomment when LOD Async Instantiation is back up
-  [Test]
-  public void ResolvePromiseAndDontInstantiate()
-  {
-      var frameCapBudget = Substitute.For<IPerformanceBudget>();
-      frameCapBudget.TrySpendBudget().Returns(true, false);
-
-      system.frameCapBudget = frameCapBudget;
-
-      //Arrange
-      var promiseGenerated = GenerateLODPromise();
-      sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
-      sceneLODInfo.CurrentLODLevel = 1;
-      sceneLODInfo.IsDirty = true;
-      var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
-
-      //Act
-      system.Update(0);
-
-      //Assert
-      var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
-      Assert.IsTrue(sceneLODInfoRetrieved.IsDirty);
-      Assert.Null(sceneLODInfoRetrieved.CurrentLOD?.Root);
-      Assert.AreNotEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
-      Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
-      Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
-  }
-  */
-
-
-
     }
 }

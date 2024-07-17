@@ -30,7 +30,6 @@ namespace DCL.LOD.Tests
 
         private const string fakeHash = "FAKE_HASH";
 
-
         [SetUp]
         public void Setup()
         {
@@ -82,54 +81,55 @@ namespace DCL.LOD.Tests
         [Test]
         public void ResolvePromiseAndInstantiate()
         {
-            // //Arrange
-            // var promiseGenerated = GenerateLODPromise();
-            // sceneLODInfo.CurrentLODLevel = 1;
-            // byte lodPromiseArrayIndex = (byte)(sceneLODInfo.CurrentLODLevel - 1); // We're not using 0 for RAW mesh yet, so it's adjusted
-            // sceneLODInfo.LODPromiseArray[lodPromiseArrayIndex] = promiseGenerated.Item2;
-            // //sceneLODInfo.IsDirty = true;
-            // var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
-            //
-            // //Act
-            // system.Update(0);
-            //
-            // //Assert
-            // var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
-            // //Assert.IsFalse(sceneLODInfoRetrieved.IsDirty);
-            // Assert.NotNull(sceneLODInfoRetrieved.CurrentLOD?.Root);
-            // //Assert.AreEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
-            // Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
-            // Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
+            //Arrange
+            var promiseGenerated = GenerateLODPromise();
+            LODAsset testLODAsset = new LODAsset(new LODKey(fakeHash, 1), lodAssetsPool);
+            testLODAsset.currentLODLevel = 1;
+            sceneLODInfo.LODAssets.Add(testLODAsset);
+            testLODAsset.LODPromise = promiseGenerated.Item2;
+            var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
+            Assert.NotNull(sceneLODInfoRetrieved.LODAssets[0]!.lodGO);
+            Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.LODAssets[0]!.LodKey);
+            Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.LODAssets[0]!.AssetBundleReference);
         }
 
         [Test]
         public void UpdateCache()
         {
-            // //Arrange
-            // sceneLODInfo.CurrentLODLevel = 1;
-            // byte lodPromiseArrayIndex = (byte)(sceneLODInfo.CurrentLODLevel - 1); // We're not using 0 for RAW mesh yet, so it's adjusted
-            // var promiseGenerated = GenerateLODPromise();
-            // sceneLODInfo.LODPromiseArray[lodPromiseArrayIndex] = promiseGenerated.Item2;
-            //
-            // //sceneLODInfo.IsDirty = true;
-            // world.Create(sceneLODInfo, sceneDefinitionComponent);
-            // system.Update(0);
-            //
-            // world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
-            //     (ref SceneLODInfo sceneLODInfo) =>
-            //     {
-            //         var newPromiseGenerated = GenerateLODPromise();
-            //         sceneLODInfo.CurrentLODLevel = 2;
-            //         lodPromiseArrayIndex = (byte)(sceneLODInfo.CurrentLODLevel - 1); // We're not using 0 for RAW mesh yet, so it's adjusted
-            //         sceneLODInfo.LODPromiseArray[lodPromiseArrayIndex] = newPromiseGenerated.Item2;
-            //         //sceneLODInfo.IsDirty = true;
-            //     });
-            //
-            // //Act
-            // system.Update(0);
-            //
-            // //Assert
-            // Assert.AreEqual(lodAssetsPool.vacantInstances.Count, 1);
+            //Arrange
+            LODAsset testLODAsset = new LODAsset(new LODKey(fakeHash, 1), lodAssetsPool);
+
+            testLODAsset.currentLODLevel = 1;
+            sceneLODInfo.LODAssets.Add(testLODAsset);
+
+            var promiseGenerated = GenerateLODPromise();
+            testLODAsset.LODPromise = promiseGenerated.Item2;
+
+            //sceneLODInfo.IsDirty = true;
+            world.Create(sceneLODInfo, sceneDefinitionComponent);
+            system.Update(0);
+            byte lodPromiseArrayIndex = (byte)(sceneLODInfo.LODAssets[0].currentLODLevel - 1); // We're not using 0 for RAW mesh yet, so it's adjusted
+
+            world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
+                (ref SceneLODInfo sceneLODInfo) =>
+                {
+                    var newPromiseGenerated = GenerateLODPromise();
+                    sceneLODInfo.LODAssets[0].currentLODLevel = 2;
+                    lodPromiseArrayIndex = (byte)(sceneLODInfo.LODAssets[0].currentLODLevel - 1); // We're not using 0 for RAW mesh yet, so it's adjusted
+                    sceneLODInfo.LODAssets[0].LODPromise = newPromiseGenerated.Item2;
+                });
+
+            //Act
+            system.Update(0);
+
+            //Assert
+            Assert.AreEqual(lodAssetsPool.vacantInstances.Count, 1);
         }
 
         private (AssetBundleData, Promise) GenerateLODPromise()
