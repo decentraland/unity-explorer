@@ -17,6 +17,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.ExplorePanel;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
@@ -156,6 +157,8 @@ namespace Global.Dynamic
 
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
+            staticContainer.InputProxy.SetObject(dclInput);
+
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
@@ -302,8 +305,7 @@ namespace Global.Dynamic
                                 .WithCommands(chatCommandsFactory)
                                 .WithDebugPanel(debugBuilder);
 
-            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics?
-                new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
+            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics ? new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
 
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
@@ -367,7 +369,7 @@ namespace Global.Dynamic
                     wearableCatalog
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()), new MapRendererPlugin(mapRendererContainer.MapRenderer), new MinimapPlugin(assetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache),
-                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem),
+                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, staticContainer.InputBlock, unityEventSystem),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     container.MvcManager,
