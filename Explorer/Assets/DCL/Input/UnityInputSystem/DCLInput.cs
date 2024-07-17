@@ -9,6 +9,8 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
+using Arch.Core;
+using DCL.CharacterMotion.Components;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -3051,6 +3053,8 @@ public partial class @DCLInput: IInputActionCollection2, IDisposable
     {
         return asset.FindBinding(bindingMask, out action);
     }
+
+
 
     // Player
     private readonly InputActionMap m_Player;

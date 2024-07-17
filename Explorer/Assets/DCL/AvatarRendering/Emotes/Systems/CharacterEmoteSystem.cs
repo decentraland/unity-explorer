@@ -38,7 +38,6 @@ namespace DCL.AvatarRendering.Emotes
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly IEmoteCache emoteCache;
-        private readonly string reportCategory;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
 
@@ -47,7 +46,6 @@ namespace DCL.AvatarRendering.Emotes
             this.messageBus = messageBus;
             this.emoteCache = emoteCache;
             this.debugContainerBuilder = debugContainerBuilder;
-            reportCategory = GetReportCategory();
             emotePlayer = new EmotePlayer(audioSource);
         }
 
@@ -123,10 +121,12 @@ namespace DCL.AvatarRendering.Emotes
         [None(typeof(CharacterEmoteIntent))]
         private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
         {
+            const float CUTOFF_LIMIT = 0.2f;
+
             float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
             float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
 
-            bool canEmoteBeCancelled = velocity > 0.2f || verticalVelocity > 0.2f;
+            bool canEmoteBeCancelled = velocity > CUTOFF_LIMIT || verticalVelocity > CUTOFF_LIMIT;
 
             if (!canEmoteBeCancelled) return;
 
@@ -165,7 +165,7 @@ namespace DCL.AvatarRendering.Emotes
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(reportCategory, $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                        ReportHub.LogError(GetReportCategory(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
@@ -191,13 +191,13 @@ namespace DCL.AvatarRendering.Emotes
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                        ReportHub.LogWarning(GetReportCategory(), $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                     emoteComponent.EmoteUrn = emoteId;
                     World.Remove<CharacterEmoteIntent>(entity);
                 }
             }
-            catch (Exception e) { ReportHub.LogException(e, reportCategory); }
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet
