@@ -92,7 +92,7 @@ namespace DCL.PluginSystem.Global
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarTransformPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
+            RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarColliderPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
             remoteEntities.Initialize(remoteAvatarCollider);
         }
 
@@ -134,7 +134,7 @@ namespace DCL.PluginSystem.Global
             [field: Header(nameof(MultiplayerPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReferenceGameObject RemoteAvatarTransformPrefab;
+            public AssetReferenceGameObject RemoteAvatarColliderPrefab;
         }
     }
 }
