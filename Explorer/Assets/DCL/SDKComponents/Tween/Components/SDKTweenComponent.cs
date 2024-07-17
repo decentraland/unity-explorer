@@ -1,5 +1,4 @@
 using DCL.ECSComponents;
-using NSubstitute.ClearExtensions;
 
 namespace DCL.SDKComponents.Tween.Components
 {

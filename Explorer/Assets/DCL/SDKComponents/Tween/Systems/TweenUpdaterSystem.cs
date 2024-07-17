@@ -1,27 +1,23 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using CRDT;
 using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.Tween.Components;
 using DCL.SDKComponents.Tween.Helpers;
 using DG.Tweening;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
 using ECS.Groups;
 using ECS.Unity.Transforms.Systems;
 using UnityEngine;
-using UnityEngine.Pool;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -266,6 +262,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private void ReturnTweenToPool(ref SDKTweenComponent sdkTweenComponent)
         {
             tweenerPool.Return(sdkTweenComponent);
+            sdkTweenComponent.Clear();
             sdkTweenComponent.CustomTweener.Clear();
             sdkTweenComponent.CustomTweener = null;
         }
