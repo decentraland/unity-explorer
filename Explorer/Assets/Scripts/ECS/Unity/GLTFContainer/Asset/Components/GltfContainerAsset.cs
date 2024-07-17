@@ -1,7 +1,9 @@
 ﻿using DCL.Optimization.Pools;
 using DCL.Profiling;
 using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.GLTF;
 using ECS.Unity.SceneBoundsChecker;
+using GLTFast;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -53,7 +55,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         /// </summary>
         public List<SDKCollider>? DecodedVisibleSDKColliders;
 
-        private AssetBundleData assetBundleReference;
+        private AssetBundleData? assetBundleReference = null;
+        private GLTFData? gltfDataReference = null;
 
         private GltfContainerAsset(GameObject root, AssetBundleData assetBundleReference, List<SDKCollider> invisibleColliders,
             List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
@@ -71,10 +74,28 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
             ProfilingCounters.GltfContainerAssetsAmount.Value++;
         }
 
+        private GltfContainerAsset(GameObject root, GLTFData gltfData, List<SDKCollider> invisibleColliders,
+            List<VisibleMeshCollider> visibleColliderMeshes, List<Renderer> renderers, List<Animation> animations,
+            List<Animator> animators)
+        {
+            gltfDataReference = gltfData;
+
+            Root = root;
+            InvisibleColliders = invisibleColliders;
+            VisibleColliderMeshes = visibleColliderMeshes;
+            Renderers = renderers;
+            Animations = animations;
+            Animators = animators;
+
+            ProfilingCounters.GltfContainerAssetsAmount.Value++;
+        }
+
         public void Dispose()
         {
-            assetBundleReference.Dereference();
+            assetBundleReference?.Dereference();
             assetBundleReference = null;
+
+            gltfDataReference?.Dispose();
 
             COLLIDERS_POOL.Release(InvisibleColliders);
             VISIBLE_MESH_COLLIDERS_POOL.Release(VisibleColliderMeshes);
@@ -92,5 +113,8 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
 
         public static GltfContainerAsset Create(GameObject root, AssetBundleData assetBundleReference) =>
             new (root, assetBundleReference, COLLIDERS_POOL.Get(), VISIBLE_MESH_COLLIDERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get());
+
+        public static GltfContainerAsset Create(GameObject root, GLTFData gltfData) =>
+            new (root, gltfData, COLLIDERS_POOL.Get(), VISIBLE_MESH_COLLIDERS_POOL.Get(), RENDERERS_POOL.Get(), ANIMATIONS_POOL.Get(), ANIMATORS_POOL.Get());
     }
 }

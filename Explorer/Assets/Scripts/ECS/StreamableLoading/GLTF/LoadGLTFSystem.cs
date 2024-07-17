@@ -58,7 +58,16 @@ namespace ECS.StreamableLoading.GLTF
             acquiredBudget.Release();
 
             if (success)
-                return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport));
+            {
+                var container = new GameObject(gltfImport.GetSceneName(0));
+
+                // Let the upper layer decide what to do with the root
+                container.SetActive(false);
+
+                await gltfImport.InstantiateMainSceneAsync(container.transform, ct);
+
+                return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, container));
+            }
 
             return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
             // Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - LOADING ERROR: {gltfImport.LoadingError}");
