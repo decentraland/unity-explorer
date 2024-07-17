@@ -25,7 +25,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             var e = (Exception)args.ExceptionObject;
 
-            analytics.Track(AnalyticsEvents.General.CRITICAL_LOGS, new JsonObject
+            analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", "unhandled exception" },
                 { "category", "UNDEFINED" },
@@ -38,7 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             if(logType != LogType.Error && logType != LogType.Exception) return;
 
-            analytics.Track(AnalyticsEvents.General.CRITICAL_LOGS, new JsonObject
+            analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", logType.ToString() },
                 { "category", reportData.Category },
@@ -56,7 +56,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void LogException<T>(T ecsSystemException) where T : Exception, IDecentralandException
         {
-            analytics.Track(AnalyticsEvents.General.CRITICAL_LOGS, new JsonObject
+            analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", "exception" },
                 { "category", "ecs" },
@@ -67,7 +67,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void LogException(Exception exception, ReportData reportData, Object context)
         {
-            analytics.Track(AnalyticsEvents.General.CRITICAL_LOGS, new JsonObject
+            analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", "exception" },
                 { "category", reportData.Category },
