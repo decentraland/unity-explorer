@@ -62,6 +62,9 @@ namespace DCL.SDKComponents.MapPins.Systems
             World.Add(entity, new MapPinHolderComponent(globalWorldProxy.Object!.Create(pbMapPin, mapPinComponent)));
         }
 
+
+        //This query is required because in the global world otherwise we cannot resolve easily
+        //the promise of the texture, as it is bound to the entity in the scene world
         [Query]
         private void ResolvePromise(ref MapPinHolderComponent mapPinHolderComponent)
         {
