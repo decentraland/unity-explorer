@@ -38,10 +38,10 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             if (!profile.IsDirty) return;
 
-            PropagateComponent(ref profile, ref playerCRDTEntity, true);
+            PropagateComponent(ref profile, ref playerCRDTEntity);
         }
 
-        private void PropagateComponent(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity, bool useSet = false)
+        private void PropagateComponent(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
         {
             SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
 
