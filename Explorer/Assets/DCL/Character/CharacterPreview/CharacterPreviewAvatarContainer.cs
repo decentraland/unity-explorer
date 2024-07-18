@@ -19,6 +19,7 @@ namespace DCL.CharacterPreview
         [field: SerializeField] internal Transform cameraTarget { get; private set; }
         [field: SerializeField] internal Transform rotationTarget { get; private set; }
         [field: SerializeField] internal CinemachineFreeLook freeLookCamera { get; private set; }
+        [field: SerializeField] internal GameObject previewPlatform { get; private set; }
 
         public void Dispose()
         {
@@ -56,5 +57,8 @@ namespace DCL.CharacterPreview
         {
             fovTween?.Kill();
         }
+
+        public void SetPreviewPlatformActive(bool isActive) =>
+            previewPlatform.SetActive(isActive);
     }
 }
