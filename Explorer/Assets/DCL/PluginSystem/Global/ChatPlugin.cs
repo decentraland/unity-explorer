@@ -6,6 +6,7 @@ using DCL.Chat.History;
 using DCL.Chat.MessageBus;
 using DCL.Emoji;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using MVC;
@@ -25,6 +26,7 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
         private readonly DCLInput dclInput;
+        private readonly IInputBlock inputBlock;
         private ChatController chatController;
         private readonly IEventSystem eventSystem;
 
@@ -36,6 +38,7 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
+            IInputBlock inputBlock,
             IEventSystem eventSystem
         )
         {
@@ -46,6 +49,7 @@ namespace DCL.PluginSystem.Global
             this.entityParticipantTable = entityParticipantTable;
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
+            this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
         }
 
@@ -77,6 +81,7 @@ namespace DCL.PluginSystem.Global
                     builder.World,
                     arguments.PlayerEntity,
                     dclInput,
+                    inputBlock,
                     eventSystem
                 );
 
