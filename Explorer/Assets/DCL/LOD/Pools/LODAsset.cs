@@ -12,7 +12,7 @@ namespace DCL.LOD
 {
     public class LODAsset : IDisposable
     {
-        public byte currentLODLevel;
+        public byte currentLODLevel; // Only used for sorting during ReEvaluateLODGroup() in SceneLODInfo
         public LOD_STATE State;
         public readonly LODKey LodKey; // Hashmap would probably be better
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> LODPromise;

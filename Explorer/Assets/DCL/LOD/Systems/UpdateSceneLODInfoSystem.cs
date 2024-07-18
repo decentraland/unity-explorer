@@ -56,16 +56,18 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (!partitionComponent.IsBehind)
+            if (!partitionComponent.IsBehind) // Only want to load scene in our direction of travel
             {
+                // LOD distances are currently using the old system so will only load in the LOD when the gameobject
+                // is in the correct bucket. Once the lods are in it will change LODs based on screenspace size in relation
+                // to height and dither the transition.
                 byte lodForAcquisition = CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
                 LODKey newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, lodForAcquisition);
-
-                if (sceneLODInfo.LODAssets.Count == 0)
+                if (sceneLODInfo.LODAssets.Count == 0) // If no lods have been loaded, assume required
                 {
                     AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
                 }
-                else
+                else // otherwise check the requested LODkey doesn't already exist and add to list
                 {
                     if (!sceneLODInfo.HasLODKey(newLODKey)) //If the current LOD is the candidate, no need to make a new promise or set anything new
                     {
@@ -78,14 +80,15 @@ namespace DCL.LOD.Systems
         private void AddLODAsset(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, LODKey newLODKey, byte lodForAcquisition)
         {
             LODAsset tempLODAsset = null;
-            if (lodCache.TryGet(newLODKey, out var cachedAsset))
+            if (lodCache.TryGet(newLODKey, out var cachedAsset)) // Try to get from the cache of previously loaded/unloaded LODAssets
             {
-                //If its cached, no need to make a new promise
+                // If its cached, no need to make a new promise
                 tempLODAsset = cachedAsset;
                 sceneLODInfo.LODAssets.Add(cachedAsset);
 
-                if (cachedAsset.lodGO != null)
+                if (cachedAsset.lodGO != null) // Previous promise might not have been completed before removal, or promise failed and need retrying
                 {
+                    // ...otherwise re-parent to the LODGroup entity and re-evaluate the LODGroup
                     Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
                     cachedAsset.lodGO.transform.SetParent(lodGroupTransform);
                     sceneLODInfo.ReEvaluateLODGroup();
@@ -94,12 +97,12 @@ namespace DCL.LOD.Systems
             else
             {
                 LODAsset lodAsset = new LODAsset(newLODKey, lodCache);
-                lodAsset.currentLODLevel = lodForAcquisition;
+                lodAsset.currentLODLevel = lodForAcquisition; // All LODAssets are marked to their LOD level for order sorting
                 tempLODAsset = lodAsset;
                 sceneLODInfo.LODAssets.Add(lodAsset);
             }
 
-            if (tempLODAsset.State != LODAsset.LOD_STATE.SUCCESS)
+            if (tempLODAsset.State != LODAsset.LOD_STATE.SUCCESS) // Create promise if not already loaded.
             {
                 string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
                 var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];

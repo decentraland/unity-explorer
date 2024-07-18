@@ -97,7 +97,5 @@ namespace DCL.PluginSystem.Global
             lodAssetsPool.Unload(frameCapBudget, 3);
             lodGroupPool?.Dispose();
         }
-
     }
-
 }

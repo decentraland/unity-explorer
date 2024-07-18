@@ -56,13 +56,13 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.ArePromisesConsumed())
+            if (sceneLODInfo.ArePromisesConsumed()) // Only continue if promises need to be processed
                 return;
 
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget()))
+            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
                 return;
 
-            bool bNewAssetAdded = false;
+            bool bNewAssetAdded = false; // Used to know whether the LODGroup need re-evaluating
 
             foreach (var lodAsset in sceneLODInfo.LODAssets)
             {

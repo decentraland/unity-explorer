@@ -63,7 +63,7 @@ namespace DCL.LOD.Components
                 LodGroup = lodGroupPool.Get();
                 LodGroup.fadeMode = LODFadeMode.CrossFade;
                 LodGroup.animateCrossFading = true;
-                LodGroup.transform.SetParent(lodTransformParent);
+                LodGroup.transform.SetParent(lodTransformParent); // The parent is the LODs pool parent
             }
 
             return LodGroup.transform;
@@ -86,6 +86,8 @@ namespace DCL.LOD.Components
             if (LodGroup == null || LODAssets.Count == 0)
                 return;
 
+            // Ordered sort as the LOD Group expects the screen relative transition heights to be in order
+            // and we might not have necessarily loaded them in order.
             LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
             UnityEngine.LOD[] lods = new UnityEngine.LOD[AvailableLODAssetCount()];
             int nCount = 0;
@@ -96,17 +98,18 @@ namespace DCL.LOD.Components
                     Renderer[] lodRenderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
                     float screenRelativeTransitionHeight = 0.05f;
                     lods[nCount] = new UnityEngine.LOD(screenRelativeTransitionHeight, lodRenderers);
-                    lods[nCount].screenRelativeTransitionHeight = (nCount == 0) ? 0.5f : 0.05f;
+                    lods[nCount].screenRelativeTransitionHeight = (nCount == 0) ? 0.5f : 0.05f; // Not the best options, but without triangle density, it's just guess work really.
                     ++nCount;
                 }
             }
 
             if (lods.Length == 1)
-                lods[0].screenRelativeTransitionHeight = 0.05f;
+                lods[0].screenRelativeTransitionHeight = 0.05f; // if only one LOD exists make it visible the same distance as two LODs
 
             LodGroup.SetLODs(lods.ToArray());
         }
 
+        // Quick function to check if LODAsset has already been loaded
         public bool HasLODKey(LODKey lodKey)
         {
             foreach (var lodAsset in LODAssets)
