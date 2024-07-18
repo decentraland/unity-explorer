@@ -32,6 +32,7 @@ MonoBehaviour:
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
         AudioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+        AudioMixerController: {fileID: 24100000, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
     - rid: 758312842344792066
       type: {class: InteractionsAudioPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

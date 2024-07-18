@@ -32,11 +32,11 @@ namespace DCL.SDKComponents.AudioSources
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
-        private readonly AudioMixerGroup audioMixerGroup;
+        private readonly AudioMixer audioMixerController;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
-            IPerformanceBudget memoryBudgetProvider, AudioMixerGroup audioMixerGroup) : base(world)
+            IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixerController) : base(world)
         {
             this.world = world;
             this.sceneData = sceneData;
@@ -44,7 +44,7 @@ namespace DCL.SDKComponents.AudioSources
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
-            this.audioMixerGroup = audioMixerGroup;
+            this.audioMixerController = audioMixerController;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
         }
@@ -64,7 +64,11 @@ namespace DCL.SDKComponents.AudioSources
                 return;
 
             if (audioSourceComponent.AudioSourceAssigned == false)
-                audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, audioMixerGroup);
+            {
+                AudioMixerGroup[]? worldMixerGroups = audioMixerController.FindMatchingGroups("World");
+                if (worldMixerGroups is { Length: > 0 })
+                    audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, worldMixerGroups[0]);
+            }
 
             audioSourceComponent.AudioSource!.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
