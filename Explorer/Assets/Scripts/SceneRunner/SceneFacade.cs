@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.PluginSystem.World;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -19,6 +20,7 @@ namespace SceneRunner
 
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
+        public PersistentEntities PersistentEntities => deps.SyncDeps.ECSWorldFacade.PersistentEntities;
 
         private ISceneRuntime runtimeInstance => deps.Runtime;
         private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
@@ -37,6 +39,11 @@ namespace SceneRunner
         {
             this.deps = deps;
             SceneData = sceneData;
+        }
+
+        public void Initialize()
+        {
+            deps.SyncDeps.ECSWorldFacade.Initialize();
         }
 
         public void Dispose()

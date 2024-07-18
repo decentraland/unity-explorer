@@ -108,18 +108,18 @@ namespace SceneRunner.Scene
                    contentDefinitionFile.EndsWith("png", StringComparison.OrdinalIgnoreCase);
         }
 
-        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HibridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, string reportCategory)
+        public async UniTask<bool> TryGetRemoteSceneIDAsync(URLDomain contentDomain, HybridSceneContentServer remoteContentServer, Vector2Int coordinate, string world, string reportCategory)
         {
             IGetHash getHash;
             switch (remoteContentServer)
             {
-                case HibridSceneContentServer.Genesis:
+                case HybridSceneContentServer.Genesis:
                     getHash = new GetHashGenesis();
                     break;
-                case HibridSceneContentServer.Goerli:
+                case HybridSceneContentServer.Goerli:
                     getHash = new GetHashGoerli();
                     break;
-                case HibridSceneContentServer.World:
+                case HybridSceneContentServer.World:
                     getHash = new GetHashWorld(world);
                     break;
                 default:

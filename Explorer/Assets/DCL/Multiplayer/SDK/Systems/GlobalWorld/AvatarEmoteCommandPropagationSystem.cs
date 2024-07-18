@@ -13,7 +13,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateBefore(typeof(CharacterEmoteSystem))]
-    [LogCategory(ReportCategory.MULTIPLAYER_SDK_EMOTE_COMMAND_DATA)]
+    [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class AvatarEmoteCommandPropagationSystem : BaseUnityLoopSystem
     {
         private readonly IEmoteCache emoteCache;

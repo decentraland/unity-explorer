@@ -22,8 +22,8 @@ namespace DCL.Multiplayer.SDK.Tests
 
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
-        private Profile profile;
-        private PlayerCRDTEntity playerCRDTEntity;
+        private ProfileSDKSubProduct profile;
+        private PlayerSceneCRDTEntity playerCRDTEntity;
 
         private Avatar CreateTestAvatar() =>
             new (BodyShape.MALE,
@@ -39,14 +39,10 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system = new WriteAvatarEquippedDataSystem(world, ecsToCRDTWriter);
 
-            profile = new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar());
-            profile.IsDirty = true;
+            profile = new ProfileSDKSubProduct();
+            profile.OverrideWith(new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()));
 
-            playerCRDTEntity = new PlayerCRDTEntity(
-                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                Substitute.For<ISceneFacade>(),
-                entity
-            );
+            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
             entity = world.Create(playerCRDTEntity);
         }
@@ -65,7 +61,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarEquippedData, Profile>>(),
+                                Arg.Any<Action<PBAvatarEquippedData, ProfileSDKSubProduct>>(),
                                 playerCRDTEntity.CRDTEntity,
                                 profile);
 
@@ -78,7 +74,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarEquippedData, Profile>>(),
+                                Arg.Any<Action<PBAvatarEquippedData, ProfileSDKSubProduct>>(),
                                 playerCRDTEntity.CRDTEntity,
                                 profile);
         }

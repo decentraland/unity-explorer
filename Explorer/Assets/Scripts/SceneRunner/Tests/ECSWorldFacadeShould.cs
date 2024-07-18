@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
+using DCL.PluginSystem.World;
 using ECS.LifeCycle;
 using NSubstitute;
 using NUnit.Framework;
@@ -22,6 +23,7 @@ namespace SceneRunner.Tests
             simulationTestSystem1 = SimulationTestSystem1.InjectToWorld(ref builder);
 
             ecsWorldFacade = new ECSWorldFacade(builder.Finish(), world,
+                new PersistentEntities(),
                 new[] { finalizeWorldSystem = Substitute.For<IFinalizeWorldSystem>() },
                 new[] { sceneIsCurrentListener = Substitute.For<ISceneIsCurrentListener>() });
         }

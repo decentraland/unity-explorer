@@ -20,8 +20,8 @@ namespace DCL.Multiplayer.SDK.Tests
 
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
-        private Profile profile;
-        private PlayerCRDTEntity playerCRDTEntity;
+        private ProfileSDKSubProduct profile;
+        private PlayerSceneCRDTEntity playerCRDTEntity;
 
         [SetUp]
         public void Setup()
@@ -30,13 +30,10 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system = new WritePlayerIdentityDataSystem(world, ecsToCRDTWriter);
 
-            profile = Profile.NewRandomProfile(FAKE_USER_ID);
+            profile = new ProfileSDKSubProduct();
+            profile.OverrideWith(Profile.NewRandomProfile(FAKE_USER_ID));
 
-            playerCRDTEntity = new PlayerCRDTEntity(
-                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                Substitute.For<ISceneFacade>(),
-                entity
-            );
+            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
             entity = world.Create(playerCRDTEntity);
         }

@@ -1,6 +1,6 @@
 ﻿namespace SceneRunner.Scene
 {
-    public enum HibridSceneContentServer
+    public enum HybridSceneContentServer
     {
         Genesis,
         Goerli,

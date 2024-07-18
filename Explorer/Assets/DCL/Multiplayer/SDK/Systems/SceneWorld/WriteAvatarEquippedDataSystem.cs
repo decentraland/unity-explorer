@@ -17,8 +17,8 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
-    [LogCategory(ReportCategory.PLAYER_AVATAR_EQUIPPED)]
+    [UpdateBefore(typeof(ResetDirtyFlagSystem<ProfileSDKSubProduct>))]
+    [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem
     {
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
@@ -41,11 +41,11 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEquippedData([Data] bool force, PlayerCRDTEntity playerCRDTEntity, Profile profile)
+        private void UpdateAvatarEquippedData([Data] bool force, PlayerSceneCRDTEntity crdtEntity, ProfileSDKSubProduct profile)
         {
             if (!force && !profile.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, Profile>(static (pbComponent, profile) =>
+            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, ProfileSDKSubProduct>(static (pbComponent, profile) =>
             {
                 foreach (URN urn in profile.Avatar.Wearables) { pbComponent.WearableUrns.Add(urn); }
 
@@ -54,12 +54,12 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                     if (!urn.IsNullOrEmpty())
                         pbComponent.EmoteUrns.Add(urn);
                 }
-            }, playerCRDTEntity.CRDTEntity, profile);
+            }, crdtEntity.CRDTEntity, profile);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(PlayerSceneCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEquippedData>(playerCRDTEntity.CRDTEntity);
         }

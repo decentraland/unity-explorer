@@ -2,6 +2,7 @@
 using DCL.Diagnostics;
 using DCL.Optimization.Pools;
 using DCL.Optimization.ThreadSafePool;
+using DCL.PluginSystem.World;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
@@ -21,6 +22,8 @@ namespace SceneRunner.EmptyScene
         public SceneShortInfo Info => args.ShortInfo;
         public ISceneStateProvider SceneStateProvider { get; }
         public SceneEcsExecutor EcsExecutor { get; }
+        public PersistentEntities PersistentEntities => default;
+
         public bool IsEmpty => true;
 
         public void Dispose()
@@ -35,10 +38,10 @@ namespace SceneRunner.EmptyScene
             Dispose();
         }
 
-        public bool IsSceneReady()
-        {
-            return true;
-        }
+        public bool IsSceneReady() =>
+            true;
+
+        public void Initialize() { }
 
         public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct) =>
             UniTask.CompletedTask;
