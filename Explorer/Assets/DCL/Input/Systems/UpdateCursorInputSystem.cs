@@ -34,6 +34,7 @@ namespace DCL.Input.Systems
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
         private bool wantsToUnlockForced;
+        private bool isGoingToFirstPerson;
 
         private readonly Mouse mouseDevice;
         private readonly DCLInput.ShortcutsActions shortcuts;
@@ -75,7 +76,21 @@ namespace DCL.Input.Systems
         protected override void Update(float t)
         {
             GetSDKInteractionStateQuery(World);
+            CheckCameraModeChangeQuery(World);
             UpdateCursorQuery(World);
+        }
+
+        [Query]
+        private void CheckCameraModeChange(ref CameraComponent cameraComponent, ref CameraInput input)
+        {
+            isGoingToFirstPerson = false;
+
+            if (input is { ZoomIn: false, ZoomOut: false })
+                return;
+
+            var direction = input.ZoomOut ? 1 : -1;
+            if (cameraComponent.Mode == CameraMode.FirstPerson && direction < 0)
+                isGoingToFirstPerson = true;
         }
 
         [Query]
@@ -156,7 +171,8 @@ namespace DCL.Input.Systems
             bool inputWantsToUnlock = cameraActions.Unlock.WasPressedThisFrame();
             bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
-            if (!isMouseOutOfBounds && inputWantsToLock && cursorComponent is { CursorState: CursorState.Free, IsOverUI: false })
+            if (!isMouseOutOfBounds && (inputWantsToLock || isGoingToFirstPerson) && cursorComponent is
+                    { CursorState: CursorState.Free, IsOverUI: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
                 {
