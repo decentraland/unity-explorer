@@ -22,6 +22,8 @@ namespace DCL.Input.Systems
     [LogCategory(ReportCategory.INPUT)]
     public partial class UpdateCursorInputSystem : UpdateInputSystem<CameraInput, CameraComponent>
     {
+        private static int previousMouseLocks;
+        
         private const int MOUSE_BOUNDS_OFFSET = 10;
         private static readonly Vector2 CURSOR_OFFSET = new (0, 15);
 
@@ -34,7 +36,7 @@ namespace DCL.Input.Systems
         private bool isAtDistance;
         private bool isHoveringAnInteractable;
         private bool wantsToUnlockForced;
-        private bool isGoingToFirstPerson;
+        private bool shouldBeLocked;
 
         private readonly Mouse mouseDevice;
         private readonly DCLInput.ShortcutsActions shortcuts;
@@ -76,22 +78,30 @@ namespace DCL.Input.Systems
         protected override void Update(float t)
         {
             GetSDKInteractionStateQuery(World);
-            CheckCameraModeChangeQuery(World);
+            CheckExternalCameraLockQuery(World);
             UpdateCursorQuery(World);
         }
 
         [Query]
-        private void CheckCameraModeChange(ref CameraComponent cameraComponent, ref CameraInput input)
+        private void CheckExternalCameraLock(ref CameraComponent cameraComponent, ref CameraInput input)
         {
-            isGoingToFirstPerson = false;
+            shouldBeLocked = false;
 
-            if (input is { ZoomIn: false, ZoomOut: false })
-                return;
+            if (input is { ZoomIn: true, ZoomOut: true })
+            {
+                var direction = input.ZoomOut ? 1 : -1;
+                if (cameraComponent.Mode == CameraMode.FirstPerson && direction < 0)
+                    shouldBeLocked = true;
+            }
 
-            var direction = input.ZoomOut ? 1 : -1;
-            if (cameraComponent.Mode == CameraMode.FirstPerson && direction < 0)
-                isGoingToFirstPerson = true;
+            if (previousMouseLocks != cameraComponent.CameraInputLocks)
+            {
+                shouldBeLocked = cameraComponent.CameraInputLocks > 0;
+                previousMouseLocks = cameraComponent.CameraInputLocks;
+            }
         }
+        
+       
 
         [Query]
         private void GetSDKInteractionState(in HoverStateComponent hoverStateComponent)
@@ -171,7 +181,7 @@ namespace DCL.Input.Systems
             bool inputWantsToUnlock = cameraActions.Unlock.WasPressedThisFrame();
             bool isTemporalLock = cameraActions.TemporalLock.IsPressed();
 
-            if (!isMouseOutOfBounds && (inputWantsToLock || isGoingToFirstPerson) && cursorComponent is
+            if (!isMouseOutOfBounds && (inputWantsToLock || shouldBeLocked ) && cursorComponent is
                     { CursorState: CursorState.Free, IsOverUI: false })
             {
                 if (raycastResults.Count == 0 && !isHoveringAnInteractable)
