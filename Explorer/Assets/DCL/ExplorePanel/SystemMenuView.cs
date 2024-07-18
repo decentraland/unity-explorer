@@ -15,6 +15,9 @@ namespace DCL.ExplorePanel
         public Button CloseButton { get; private set; } = null!;
 
         [field: SerializeField]
+        public Button PreviewProfileButton { get; private set; } = null!;
+
+        [field: SerializeField]
         public Button LogoutButton { get; private set; } = null!;
 
         [field: SerializeField]

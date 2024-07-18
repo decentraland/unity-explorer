@@ -18,7 +18,7 @@ namespace DCL.Profiles
         private HashSet<string>? forceRender;
         private HashSet<string>? blocked;
         private List<string>? interests;
-        private List<string>? links;
+        private List<LinkJsonDto>? links;
         private DateTime? birthdate;
         private string? country;
         private string? description;

@@ -8,26 +8,26 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 {
     public static class HoverFeedbackUtils
     {
-        public static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResult raycastResult, in GlobalColliderEntityInfo previousEntityInfo)
+        public static void TryIssueLeaveHoverEventForPreviousEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, in GlobalColliderSceneEntityInfo previousSceneEntityInfo)
         {
-            World world = previousEntityInfo.EcsExecutor.World;
+            World world = previousSceneEntityInfo.EcsExecutor.World;
 
             // Entity died or PointerEvents component was removed, nothing to do
-            if (!previousEntityInfo.ColliderEntityInfo.EntityReference.IsAlive(world) ||
-                !world.TryGet(previousEntityInfo.ColliderEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
+            if (!previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference.IsAlive(world) ||
+                !world.TryGet(previousSceneEntityInfo.ColliderSceneEntityInfo.EntityReference, out PBPointerEvents pbPointerEvents))
                 return;
 
-            TryAppendHoverInput(ref pbPointerEvents, in raycastResult, PointerEventType.PetHoverLeave);
+            TryAppendHoverInput(ref pbPointerEvents, in raycastResultForSceneEntities, PointerEventType.PetHoverLeave);
         }
 
-        private static void TryAppendHoverInput(ref PBPointerEvents pbPointerEvents, in PlayerOriginRaycastResult raycastResult, PointerEventType type)
+        private static void TryAppendHoverInput(ref PBPointerEvents pbPointerEvents, in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, PointerEventType type)
         {
             for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
             {
                 PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
                 PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
 
-                if (!InteractionInputUtils.IsQualifiedByDistance(raycastResult, info)) continue;
+                if (!InteractionInputUtils.IsQualifiedByDistance(raycastResultForSceneEntities, info)) continue;
 
                 InteractionInputUtils.TryAppendHoverInput(ref pbPointerEvents.AppendPointerEventResultsIntent, type, pointerEvent, i);
             }
