@@ -43,7 +43,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void IssueHoverLeaveForPreviousEntity()
         {
-            GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();
+            GlobalColliderSceneEntityInfo previousColliderSceneInfo = CreateColliderInfo();
 
             // Add PBPointerEvents component
             var pbPointerEvents = new PBPointerEvents
@@ -56,11 +56,11 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            previousColliderInfo.EcsExecutor.World.Add(previousColliderInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
+            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
-            PlayerOriginRaycastResult raycastResult = GetRaycastAt(99);
+            PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(99);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(1));
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices[0], Is.EqualTo(0));
@@ -69,7 +69,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void NotIssueHoverLeaveIfOutOfRange()
         {
-            GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();
+            GlobalColliderSceneEntityInfo previousColliderSceneInfo = CreateColliderInfo();
 
             // Add PBPointerEvents component
             var pbPointerEvents = new PBPointerEvents
@@ -82,11 +82,11 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            previousColliderInfo.EcsExecutor.World.Add(previousColliderInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
+            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
-            PlayerOriginRaycastResult raycastResult = GetRaycastAt(150);
+            PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(150);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(0));
         }
@@ -94,13 +94,13 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void NotIssueHoverLeaveIfComponentWasRemoved()
         {
-            GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();
+            GlobalColliderSceneEntityInfo previousColliderSceneInfo = CreateColliderInfo();
 
             // Don't add PBPointerEvents component
 
-            PlayerOriginRaycastResult raycastResult = GetRaycastAt(50);
+            PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(50);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
             // Nothing to assert, just checking that no exception is thrown
         }
@@ -108,7 +108,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void NotIssueHoverLeaveIfEntityDied()
         {
-            GlobalColliderEntityInfo previousColliderInfo = CreateColliderInfo();
+            GlobalColliderSceneEntityInfo previousColliderSceneInfo = CreateColliderInfo();
 
             // Add PBPointerEvents component
             var pbPointerEvents = new PBPointerEvents
@@ -121,25 +121,25 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            previousColliderInfo.EcsExecutor.World.Add(previousColliderInfo.ColliderEntityInfo.EntityReference, pbPointerEvents);
+            previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
-            PlayerOriginRaycastResult raycastResult = GetRaycastAt(50);
+            PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(50);
 
-            world.Destroy(previousColliderInfo.ColliderEntityInfo.EntityReference);
+            world.Destroy(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference);
 
-            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResult, in previousColliderInfo);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
             Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(0));
         }
 
-        private GlobalColliderEntityInfo CreateColliderInfo() =>
+        private GlobalColliderSceneEntityInfo CreateColliderInfo() =>
             new (new SceneEcsExecutor(world),
-                new ColliderEntityInfo(world.Reference(world.Create(new CRDTEntity(123))), 123, ColliderLayer.ClPhysics));
+                new ColliderSceneEntityInfo(world.Reference(world.Create(new CRDTEntity(123))), 123, ColliderLayer.ClPhysics));
 
-        private static PlayerOriginRaycastResult GetRaycastAt(float distance)
+        private static PlayerOriginRaycastResultForSceneEntities GetRaycastAt(float distance)
         {
-            var raycastResult = new PlayerOriginRaycastResult();
-            raycastResult.SetupHit(new RaycastHit { distance = distance }, default(GlobalColliderEntityInfo), distance);
+            var raycastResult = new PlayerOriginRaycastResultForSceneEntities();
+            raycastResult.SetupHit(new RaycastHit { distance = distance }, default(GlobalColliderSceneEntityInfo), distance);
             return raycastResult;
         }
     }

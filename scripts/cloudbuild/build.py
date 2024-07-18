@@ -10,6 +10,8 @@ import argparse
 # Local
 import utils
 
+# Force a build
+
 URL = utils.create_base_url(os.getenv('ORG_ID'), os.getenv('PROJECT_ID'))
 HEADERS = utils.create_headers(os.getenv('API_KEY'))
 POLL_TIME = int(os.getenv('POLL_TIME', '60')) # Seconds
@@ -54,10 +56,8 @@ def clone_current_target():
 
         return body
 
-    # Set target name based on branch
-    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'
-    # Append commit SHA to target and lowercase all:
-    new_target_name = f'{new_target_name}_{os.getenv('COMMIT_SHA')}'.lower()
+    # Set target name based on branch, without commit SHA
+    new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
     # Generate request body
     body = generate_body(
@@ -67,31 +67,24 @@ def clone_current_target():
         os.getenv('BUILD_OPTIONS').split(','),
         (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
 
-    # Check if the target already exists (re-use of a branch)
-    if 'error' in get_target(new_target_name):
-        # Create new
+    existing_target = get_target(new_target_name)
+    
+    if 'error' in existing_target:
+        # Create new target
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
     else:
-        # Check if it's in use
-        if get_any_running_builds(new_target_name, False):
-            print(f'Target "{new_target_name} has running builds! Creating a variant using a timestamp..."')
-
-            new_target_name = f'{new_target_name}_{int(time.time())}'
-            body['name'] = new_target_name
-            response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
-        else:
-            # Update existing
-            response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+        # Target exists, update it
+        response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     if response.status_code == 200 or response.status_code == 201:
         # Override target ENV
         os.environ['TARGET'] = new_target_name
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
-        print('Target failed to clone as it already exists! Possible race condition with another build')
-        print('Retrying flow from start...')
-        clone_current_target()
+        print('Target update failed due to a possible race condition. Retrying...')
+        time.sleep(2)  # Add a small delay before retrying
+        clone_current_target()  # Retry the whole process
     else:
-        print('Target failed to clone with status code:', response.status_code)
+        print('Target failed to clone/update with status code:', response.status_code)
         print('Response body:', response.text)
         sys.exit(1)
 
@@ -117,23 +110,63 @@ def set_parameters(params):
         print("Response body:", response.text)
         sys.exit(1)
 
+def get_latest_build(target):
+    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
+    
+    if response.status_code == 200:
+        builds = response.json()
+        if builds:
+            return builds[0]
+    
+    print('Failed to get the latest build.')
+    return None
+    
 def run_build(branch):
-    body = {
-        'branch': branch,
-        # 'commit': f'{os.getenv('COMMIT_SHA')}',
-    }
-    response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
+    max_retries = 10
+    retry_delay = 20  # seconds
 
-    if response.status_code == 202:
-        response_json = response.json()
-        print('Build started successfully. Response:', response_json)
-        return int(response_json[0]['build'])
-    else:
-        print('Build failed to start with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
-        return -1
+    for attempt in range(max_retries):
+        body = {
+            'branch': branch,
+        }
+        response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
 
+        if response.status_code == 202:
+            response_json = response.json()
+            print(f'Build response (attempt {attempt + 1}):', response_json)
+            
+            if 'error' in response_json[0] and 'already a build pending' in response_json[0]['error']:
+                print('A build is already pending. Attempting to cancel it...')
+                latest_build = get_latest_build(os.getenv('TARGET'))
+                if latest_build:
+                    cancel_build(latest_build['build'])
+                    print(f'Waiting {retry_delay} seconds before retrying...')
+                    time.sleep(retry_delay)
+                else:
+                    print('Failed to get the latest build ID.')
+                    if attempt == max_retries - 1:
+                        print('Max retries reached. Exiting.')
+                        sys.exit(1)
+            elif 'build' in response_json[0]:
+                print('Build started successfully.')
+                return int(response_json[0]['build'])
+            else:
+                print('Unexpected response format.')
+                if attempt == max_retries - 1:
+                    print('Max retries reached. Exiting.')
+                    sys.exit(1)
+        else:
+            print(f'Build failed to start with status code: {response.status_code}')
+            print('Response body:', response.text)
+            if attempt == max_retries - 1:
+                print('Max retries reached. Exiting.')
+                sys.exit(1)
+        
+        print(f'Retrying... (attempt {attempt + 2} of {max_retries})')
+    
+    print('Failed to start build after maximum retries.')
+    sys.exit(1)
+    
 def cancel_build(id):
     response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
 

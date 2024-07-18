@@ -102,7 +102,7 @@ namespace SceneRunner.ECSWorld
 
         private static PersistentEntities CreateReservedEntities(World world, ECSWorldInstanceSharedDependencies sharedDependencies)
         {
-            Entity sceneRootEntity = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), new SceneRootComponent(), world);
+            Entity sceneRootEntity = world.Create(new CRDTEntity(SpecialEntitiesID.SCENE_ROOT_ENTITY), new SceneRootComponent(), RemovedComponents.CreateDefault());
             Entity playerEntity = world.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), RemovedComponents.CreateDefault());
             Entity cameraEntity = world.Create(new CRDTEntity(SpecialEntitiesID.CAMERA_ENTITY), RemovedComponents.CreateDefault());
 

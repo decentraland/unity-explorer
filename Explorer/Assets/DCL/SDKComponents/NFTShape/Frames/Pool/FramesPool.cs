@@ -18,6 +18,8 @@ namespace DCL.SDKComponents.NFTShape.Frames.Pool
             this.framePrefabs = framePrefabs;
         }
 
+        public bool IsInitialized => framePrefabs.IsInitialized;
+
         public AbstractFrame NewFrame(NftFrameType frameType, Transform parent)
         {
             var g = Pool(frameType).Get()!;

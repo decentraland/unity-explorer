@@ -18,6 +18,7 @@ namespace DCL.Interaction.PlayerOriginated
             this.globalWorld = globalWorld;
         }
 
-        public ref PlayerOriginRaycastResult PlayerOriginRaycastResult => ref globalWorld.Get<PlayerOriginRaycastResult>(Entity);
+        public ref PlayerOriginRaycastResultForSceneEntities PlayerOriginRaycastResultForSceneEntities => ref globalWorld.Get<PlayerOriginRaycastResultForSceneEntities>(Entity);
+        public ref PlayerOriginRaycastResultForGlobalEntities PlayerOriginRaycastResultForGlobalEntities => ref globalWorld.Get<PlayerOriginRaycastResultForGlobalEntities>(Entity);
     }
 }
