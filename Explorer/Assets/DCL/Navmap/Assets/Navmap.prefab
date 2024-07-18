@@ -1902,6 +1902,46 @@ PrefabInstance:
       propertyPath: m_Name
       value: FloatingPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 3873045629940108890, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873045629940108890, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873045629940108890, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873045629940108890, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873045629940108890, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6600233201442909434, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6600233201442909434, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6600233201442909434, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6600233201442909434, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6600233201442909434, guid: dc095fdc2631c4557bb7133c59237bee, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3672,7 +3712,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 154
+      value: 123
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3708,7 +3748,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -100.09982
+      value: -95.664795
       objectReference: {fileID: 0}
     - target: {fileID: 1001436015316186579, guid: d3b1c0d4cb6ff45f2a76af7807b296a3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

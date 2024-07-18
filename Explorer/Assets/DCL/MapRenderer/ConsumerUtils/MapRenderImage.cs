@@ -43,6 +43,9 @@ namespace DCL.MapRenderer.ConsumerUtils
         private IMapInteractivityController interactivityController;
         private Camera hudCamera;
 
+        private IPinMarker previousClickedMarker;
+        private IPinMarker previousMarker;
+
         private bool isActive;
 
         public void EmbedMapCameraDragBehavior(MapCameraDragBehavior.MapCameraDragBehaviorData data)
@@ -106,12 +109,30 @@ namespace DCL.MapRenderer.ConsumerUtils
 
             //Process different click types if normal parcel or a map pin
             if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _, out IPinMarker pinMarker))
+            {
+                if (pinMarker != null)
+                {
+                    if (previousClickedMarker != pinMarker)
+                        pinMarker.AnimateIn();
+
+                    if (previousClickedMarker != null && previousClickedMarker != pinMarker)
+                        previousClickedMarker.AnimateOut();
+
+                    previousClickedMarker = pinMarker;
+                }
+                else if (previousClickedMarker != null)
+                {
+                    previousClickedMarker.AnimateOut();
+                    previousClickedMarker = null;
+                }
+
                 ParcelClicked?.Invoke(new ParcelClickData
                 {
                     Parcel = parcel,
                     WorldPosition = GetParcelWorldPosition(parcel),
                     PinMarker = pinMarker
                 });
+            }
 
             Profiler.EndSample();
         }
@@ -125,8 +146,6 @@ namespace DCL.MapRenderer.ConsumerUtils
             return rectTransform.TransformPoint(rectTransform.rect.size * (normalizedDiscretePosition - rectTransform.pivot));
         }
 
-        private IPinMarker previousMarker;
-
         private void ProcessHover(PointerEventData eventData)
         {
             if (TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out Vector3 worldPosition, out IPinMarker pinMarker))
@@ -135,7 +154,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                 {
                     if (previousMarker != null)
                     {
-                        previousMarker.AnimateOut();
+                        previousMarker.SetIconOutline(false);
                         previousMarker = null;
                     }
 
@@ -147,7 +166,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                     else
                     {
                         previousMarker = pinMarker;
-                        pinMarker.AnimateIn();
+                        pinMarker.SetIconOutline(true);
                         interactivityController.RemoveHighlight();
                     }
 
