@@ -20,6 +20,8 @@ namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
+        public string targetGltfOriginalPath = string.Empty;
+
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
@@ -61,7 +63,7 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable, bool forceLinear)
         {
-            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() -> \n"
+            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() - 1 -> \n"
                       + $"uri.AbsoluteUri: {uri.AbsoluteUri};\n"
                       + $"uri.Host: {uri.Host};\n"
                       + $"uri.AbsolutePath: {uri.AbsolutePath};\n"
@@ -71,15 +73,21 @@ namespace ECS.StreamableLoading.GLTF
                       + $"uri.Query: {uri.Query};\n"
                       + $"uri.PathAndQuery: {uri.PathAndQuery}");
 
+            string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
+            string textureOriginalPath = $"{targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/')+1)}{textureFileName}";
+
+            sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
+            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() - 2 - texture final url: {tryGetContentUrlResult}");
+
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(uri.AbsoluteUri, attempts: 6),
+                CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: 6),
                 // WrapMode = textureComponentValue.WrapMode,
                 // FilterMode = textureComponentValue.FilterMode,
             }, partitionComponent);
 
             // The textures fetching need to finish before the GLTF loading can continue its flow...
-            while (texturePromise.Result.Value is {Succeeded: false, Exception: null })
+            while (texturePromise.Result == null || texturePromise.Result.Value is {Succeeded: false, Exception: null })
             {
                 await UniTask.Yield();
             }

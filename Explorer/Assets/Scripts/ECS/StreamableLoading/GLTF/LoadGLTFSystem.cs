@@ -48,6 +48,7 @@ namespace ECS.StreamableLoading.GLTF
                 return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
             Debug.Log($"content final download URL: {finalDownloadUrl}");
 
+            gltfDownloadProvider.targetGltfOriginalPath = intention.Name!;
             var gltfImport = new GltfImport(downloadProvider: gltfDownloadProvider, logger: gltfConsoleLogger);
 
             var gltFastSettings = new ImportSettings
