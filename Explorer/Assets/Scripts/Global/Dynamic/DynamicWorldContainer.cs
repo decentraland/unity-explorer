@@ -375,7 +375,8 @@ namespace Global.Dynamic
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new SidebarPlugin(assetsProvisioner, container.MvcManager, mainUIContainer, notificationsBusController, identityCache, container.ProfileRepository, staticContainer.WebRequestsContainer.WebRequestController),
+                new SidebarPlugin(assetsProvisioner, container.MvcManager, mainUIContainer, notificationsBusController, identityCache, container.ProfileRepository, staticContainer.WebRequestsContainer.WebRequestController,
+                    webBrowser, dynamicWorldDependencies.Web3Authenticator, container.UserInAppInitializationFlow,profileCache),
                 new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIContainer),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIContainer, staticContainer.InputBlock),
                 new ExplorePanelPlugin(

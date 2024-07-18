@@ -9,6 +9,10 @@ namespace DCL.UI.Sidebar
     {
         [field: SerializeField]
         public ProfileWidgetView ProfileWidget { get; private set; }
+        [field: SerializeField]
+        public SystemMenuView SystemMenuView { get; private set; }
+        [field: SerializeField]
+        public ProfileWidgetView ProfileMenuWidget { get; private set; }
 
         [field: SerializeField]
         internal Button mapButton { get; private set; }
@@ -24,5 +28,9 @@ namespace DCL.UI.Sidebar
 
         [field: SerializeField]
         internal Button emotesButton { get; private set; }
+
+        [field: SerializeField]
+        internal GameObject profileMenu { get; private set; }
+
     }
 }
