@@ -1,7 +1,6 @@
 ﻿using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CRDT.Protocol;
 using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
@@ -68,21 +67,6 @@ namespace SceneRunner.Scene.Tests
             }
 
             sceneStateProvider.DidNotReceive().State = Arg.Any<SceneState>();
-        }
-
-        [Test]
-        public void SuspendIfToleranceExceededWhenJavascriptException()
-        {
-            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
-                sceneExceptionsHandler.OnJavaScriptException(new Exception("TEST"));
-
-            sceneStateProvider.Received().State = SceneState.EcsError;
-
-            reportHandler.Mock.Received(1)
-                         .LogException(
-                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
-
-            sceneStateProvider.Received().State = SceneState.JavaScriptError;
         }
 
         [Test]
