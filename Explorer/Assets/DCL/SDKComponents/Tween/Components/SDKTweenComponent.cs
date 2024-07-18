@@ -4,10 +4,10 @@ namespace DCL.SDKComponents.Tween.Components
 {
     public struct SDKTweenComponent
     {
+
         public bool IsDirty { get; set; }
         public TweenStateStatus TweenStateStatus { get; set; }
         public ICustomTweener CustomTweener { get; set; }
-
 
         public bool IsActive()
         {
@@ -27,8 +27,5 @@ namespace DCL.SDKComponents.Tween.Components
             CustomTweener.Pause();
             CustomTweener.Rewind();
         }
-
-
     }
-
 }

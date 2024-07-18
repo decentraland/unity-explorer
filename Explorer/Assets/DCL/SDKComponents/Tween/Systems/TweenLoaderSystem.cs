@@ -7,6 +7,7 @@ using DCL.ECSComponents;
 using DCL.SDKComponents.Tween.Components;
 using ECS.Abstract;
 using ECS.Groups;
+using UnityEngine;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
@@ -36,8 +37,7 @@ namespace DCL.SDKComponents.Tween.Systems
             };
 
             World.Add(entity, sdkTweenComponent);
+            ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} [Load]");
         }
-
-
     }
 }

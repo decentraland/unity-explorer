@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.World
         {
             tweenerPool = new TweenerPool();
         }
-        
+
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;
 
