@@ -24,5 +24,8 @@ namespace DCL.SDKComponents.NFTShape.Component
 
             return promise.TryConsume(world, out result);
         }
+
+        public override readonly string ToString() =>
+            $"NFTLoadingComponent {{ promise: {promise.Entity.Entity} {promise.LoadingIntention.CommonArguments.URL} }}";
     }
 }
