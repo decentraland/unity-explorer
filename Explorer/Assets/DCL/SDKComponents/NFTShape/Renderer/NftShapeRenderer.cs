@@ -23,13 +23,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
         public void ApplyParent(Transform parent)
         {
             this.transform = parent;
-
-            if (frame != null)
-            {
-                frame.transform.SetParent(parent, false);
-                frame.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
-                frame.transform.localScale = Vector3.one;
-            }
+            TryAdjustFrameTransform();
         }
 
         public void Apply(PBNftShape nftShape)
@@ -43,6 +37,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
             frame = framesPool.NewFrame(nftShape.Style, transform);
             frame.Paint(nftShape.Color.ToUnityColor());
             frame.UpdateStatus(AbstractFrame.Status.Loading);
+            TryAdjustFrameTransform();
         }
 
         public void Apply(Texture2D material)
@@ -72,6 +67,16 @@ namespace DCL.SDKComponents.NFTShape.Renderer
 
             framesPool.Release(frame);
             frame = null;
+        }
+
+        private void TryAdjustFrameTransform()
+        {
+            if (frame != null)
+            {
+                frame.transform.SetParent(this.transform, false);
+                frame.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                frame.transform.localScale = Vector3.one;
+            }
         }
     }
 }
