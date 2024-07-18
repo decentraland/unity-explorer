@@ -49,8 +49,10 @@ namespace SceneRunner.Scene.ExceptionsHandling
             // Can be already disposed of
             if (sceneState == null) return;
 
-            if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber)) != ISystemGroupExceptionHandler.Action.Continue)
-                sceneState!.State = SceneState.JavaScriptError;
+            // We only report the exception here.
+            // Stopping the scene execution after a javascript exception causes some scenes to not work at all, since they intentionally have execution errors. ie: events-board-api goerli 78,1.
+            // The sdk7 runtime at kernel just does a try/catch and error reporting as well: https://github.com/decentraland/scene-runtime/blob/adbf9e78c3b5d85d619c41494a177dfd7b6b5581/src/worker-sdk7/sdk7-runtime.ts#L119-L130
+            ReportException(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber));
         }
 
         public async UniTask<T> ReportAndRethrowExceptionAsync<T>(UniTask<T> task)
@@ -101,17 +103,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
             // 60 seconds
             const float INTERVAL_TICKS = 60 * 10000 * 1000;
 
-            // Report exception
-            if (exception is EcsSystemException ecsSystemException)
-            {
-                // Add scene information, we don't add this info in the BaseUnityLoopSystem as we would need to propagate it for all systems
-                // and it's inconvenient and cumbersome
-                ecsSystemException.reportData.SceneShortInfo = sceneShortInfo;
-
-                ReportHub.LogException(ecsSystemException);
-            }
-            else
-                ReportHub.LogException(exception, reportData);
+            ReportException(exception, reportData);
 
             long time = DateTime.UtcNow.Ticks;
 
@@ -172,6 +164,20 @@ namespace SceneRunner.Scene.ExceptionsHandling
 
                 return ISystemGroupExceptionHandler.Action.Continue;
             }
+        }
+
+        private void ReportException(Exception exception, ReportData reportData)
+        {
+            if (exception is EcsSystemException ecsSystemException)
+            {
+                // Add scene information, we don't add this info in the BaseUnityLoopSystem as we would need to propagate it for all systems
+                // and it's inconvenient and cumbersome
+                ecsSystemException.reportData.SceneShortInfo = sceneShortInfo;
+
+                ReportHub.LogException(ecsSystemException);
+            }
+            else
+                ReportHub.LogException(exception, reportData);
         }
 
         private struct ExceptionEntry
