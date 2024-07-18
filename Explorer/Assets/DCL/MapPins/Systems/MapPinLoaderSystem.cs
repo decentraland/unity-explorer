@@ -74,6 +74,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             {
                 if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> texture))
                 {
+                    mapPinComponent.ThumbnailIsDirty = true;
                     mapPinComponent.Thumbnail = texture.Asset;
                     mapPinComponent.TexturePromise = null;
                     globalWorldProxy.Object!.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent);

@@ -79,7 +79,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
                 mapPinComponent.IsDirty = false;
             }
 
-            if (mapPinComponent.Thumbnail != null)
+            if (mapPinComponent.ThumbnailIsDirty)
             {
                 IPinMarker marker;
                 if (!markers.TryGetValue(e, out IPinMarker pinMarker))
@@ -92,7 +92,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
                     marker = pinMarker;
                 }
                 marker.SetTexture(mapPinComponent.Thumbnail);
-                mapPinComponent.Thumbnail = null;
+                mapPinComponent.ThumbnailIsDirty = false;
             }
         }
 

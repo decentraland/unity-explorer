@@ -9,6 +9,8 @@ namespace DCL.MapPins.Components
     {
         public Promise? TexturePromise;
         public Texture2D Thumbnail;
+
+        public bool ThumbnailIsDirty { get; set; }
         public bool IsDirty { get; set; }
         public Vector2Int Position { get; set; }
     }
