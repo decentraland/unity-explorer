@@ -43,7 +43,7 @@ namespace Global.Dynamic
     public struct HybridSceneParams
     {
         public bool EnableHybridScene { get; set; }
-        public HibridSceneContentServer HybridSceneContentServer { get; set; }
+        public HybridSceneContentServer HybridSceneContentServer { get; set; }
         public Vector2Int StartParcel { get; init; }
 
         public string World { get; init; }
