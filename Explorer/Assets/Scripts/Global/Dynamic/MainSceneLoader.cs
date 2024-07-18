@@ -6,6 +6,8 @@ using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Utilities;
+using DCL.Utilities.Extensions;
+using SceneRunner.Debugging;
 using System;
 using System.Linq;
 using System.Threading;
@@ -23,26 +25,25 @@ namespace Global.Dynamic
         public bool enableLandscape;
         public bool enableLOD;
 
-
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
         public DebugSettings Get() =>
             Debug.isDebugBuild ? this : Release();
 
         public static DebugSettings Release() =>
-                new()
-                {
-                    showSplash = true,
-                    showAuthentication = true,
-                    showLoading = true,
-                    enableLandscape = true,
-                    enableLOD = true,
-                };
+            new ()
+            {
+                showSplash = true,
+                showAuthentication = true,
+                showLoading = true,
+                enableLandscape = true,
+                enableLOD = true,
+            };
     }
 
     public class MainSceneLoader : MonoBehaviour
     {
-        [Header("Startup Config")]
-        [SerializeField] private RealmLaunchSettings launchSettings;
+        [Header("Startup Config")] [SerializeField]
+        private RealmLaunchSettings launchSettings = null!;
 
         [Space]
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
@@ -61,6 +62,7 @@ namespace Global.Dynamic
         [SerializeField] private GameObject splashRoot = null!;
         [SerializeField] private Animator splashScreenAnimation = null!;
         [SerializeField] private AudioClipConfig backgroundMusic = null!;
+        [SerializeField] private WorldInfoTool worldInfoTool = null!;
 
         private BootstrapContainer? bootstrapContainer;
         private StaticContainer? staticContainer;
@@ -119,7 +121,7 @@ namespace Global.Dynamic
                 }
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, destroyCancellationToken);
+                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
 
                 if (!isLoaded)
                 {
@@ -137,6 +139,9 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
                 (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
+
+                staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
+
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
             }

@@ -17,6 +17,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.ExplorePanel;
 using DCL.Input;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
@@ -35,6 +36,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
+using DCL.Notification.NotificationsBus;
 using DCL.ParcelsService;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -155,6 +157,8 @@ namespace Global.Dynamic
 
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
+            staticContainer.InputProxy.SetObject(dclInput);
+
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
@@ -238,7 +242,8 @@ namespace Global.Dynamic
                 container.RoomHub,
                 entityParticipantTable,
                 staticContainer.ComponentsContainer.ComponentPoolsRegistry,
-                queuePoolFullMovementMessage
+                queuePoolFullMovementMessage,
+                staticContainer.EntityCollidersGlobalCache
             );
 
             ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
@@ -278,12 +283,16 @@ namespace Global.Dynamic
                 staticContainer.CharacterContainer.CharacterObject
             );
 
+            dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
+
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
-                { ChatCommands.GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator) },
+                {
+                    GoToChatCommand.REGEX, () => new GoToChatCommand(realmNavigator)
+                },
                 { ChangeRealmChatCommand.REGEX, () => new ChangeRealmChatCommand(realmNavigator) },
                 { DebugPanelChatCommand.REGEX, () => new DebugPanelChatCommand(debugBuilder) },
                 { ShowEntityInfoChatCommand.REGEX, () => new ShowEntityInfoChatCommand(worldInfoHub) },
@@ -297,8 +306,7 @@ namespace Global.Dynamic
                                 .WithCommands(chatCommandsFactory)
                                 .WithDebugPanel(debugBuilder);
 
-            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics?
-                new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
+            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics ? new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
 
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
@@ -310,15 +318,20 @@ namespace Global.Dynamic
                 )
             );
 
+            INotificationsBusController notificationsBusController = new NotificationsBusController();
+
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
             var remotePoses = new DebounceRemotePoses(
                 new RemotePoses(container.RoomHub)
             );
 
+            var characterPreviewEventBus = new CharacterPreviewEventBus();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
+                    assetsProvisioner,
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
                     container.RoomHub,
@@ -338,7 +351,7 @@ namespace Global.Dynamic
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
                 new InputPlugin(dclInput, dclCursor, unityEventSystem, assetsProvisioner, dynamicWorldDependencies.CursorUIDocument, multiplayerEmotesMessageBus, container.MvcManager, debugBuilder, dynamicWorldDependencies.RootUIDocument, dynamicWorldDependencies.CursorUIDocument),
-                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem),
+                new GlobalInteractionPlugin(dclInput, dynamicWorldDependencies.RootUIDocument, assetsProvisioner, staticContainer.EntityCollidersGlobalCache, exposedGlobalDataContainer.GlobalInputEvents, dclCursor, unityEventSystem, container.MvcManager),
                 new CharacterCameraPlugin(assetsProvisioner, realmSamplingData, exposedGlobalDataContainer.ExposedCameraData, debugBuilder, dclInput),
                 new WearablePlugin(assetsProvisioner, staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData, ASSET_BUNDLES_URL, staticContainer.CacheCleaner, wearableCatalog),
                 new EmotePlugin(staticContainer.WebRequestsContainer.WebRequestController, emotesCache, staticContainer.RealmData, multiplayerEmotesMessageBus, debugBuilder, assetsProvisioner, selfProfile, container.MvcManager, dclInput, staticContainer.CacheCleaner, identityCache, entityParticipantTable, ASSET_BUNDLES_URL),
@@ -360,7 +373,7 @@ namespace Global.Dynamic
                     wearableCatalog
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()), new MapRendererPlugin(mapRendererContainer.MapRenderer), new MinimapPlugin(assetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache),
-                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem),
+                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, staticContainer.InputBlock, unityEventSystem),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     container.MvcManager,
@@ -383,11 +396,13 @@ namespace Global.Dynamic
                     dclInput,
                     staticContainer.RealmData,
                     profileCache,
-                    ASSET_BUNDLES_URL
+                    ASSET_BUNDLES_URL,
+                    notificationsBusController,
+                    characterPreviewEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator, staticContainer.FeatureFlagsCache),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator, characterPreviewEventBus, staticContainer.FeatureFlagsCache),
                 new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(assetsProvisioner, container.MvcManager),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor), new TeleportPromptPlugin(assetsProvisioner, realmNavigator, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor),
@@ -405,6 +420,21 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
+                new NotificationPlugin(assetsProvisioner, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, identityCache, notificationsBusController),
+                new PassportPlugin(
+                    assetsProvisioner,
+                    container.MvcManager,
+                    dclCursor,
+                    container.ProfileRepository,
+                    characterPreviewFactory,
+                    chatEntryConfiguration,
+                    staticContainer.RealmData,
+                    ASSET_BUNDLES_URL,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    characterPreviewEventBus,
+                    selfProfile,
+                    dclInput,
+                    webBrowser),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);
