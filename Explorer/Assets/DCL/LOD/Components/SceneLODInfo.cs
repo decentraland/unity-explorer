@@ -29,7 +29,8 @@ namespace DCL.LOD.Components
                 lodVar.Release(world);
             }
             LODAssets.Clear();
-            lodGroupPool.Release(LodGroup);
+            lodGroupPool?.Release(LodGroup);
+            lodGroupPool = null;
             LodGroup = null;
         }
 
@@ -89,24 +90,47 @@ namespace DCL.LOD.Components
             // Ordered sort as the LOD Group expects the screen relative transition heights to be in order
             // and we might not have necessarily loaded them in order.
             LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
-            UnityEngine.LOD[] lods = new UnityEngine.LOD[AvailableLODAssetCount()];
-            int nCount = 0;
-            foreach (var lodAsset in LODAssets)
+            int assetCount = AvailableLODAssetCount();
+            UnityEngine.LOD[] lods = new UnityEngine.LOD[LODAssets.Count];
+            float screenRelativeTransitionHeight = 0.05f;
+            int nBitMask = 0;
+            for (int i = 0; i < lods.Length; i++)
             {
-                if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
+                if (LODAssets[i].State == LODAsset.LOD_STATE.SUCCESS)
                 {
-                    Renderer[] lodRenderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
-                    float screenRelativeTransitionHeight = 0.05f;
-                    lods[nCount] = new UnityEngine.LOD(screenRelativeTransitionHeight, lodRenderers);
-                    lods[nCount].screenRelativeTransitionHeight = (nCount == 0) ? 0.5f : 0.05f; // Not the best options, but without triangle density, it's just guess work really.
-                    ++nCount;
+                    Renderer[] lodRenderers = LODAssets[i].lodGO.GetComponentsInChildren<Renderer>();
+                    lods[i] = new UnityEngine.LOD(screenRelativeTransitionHeight, lodRenderers);
+                    lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f; // Not the best options, but without triangle density, it's just guess work really.
+                    nBitMask += 1 << i;
+                }
+                else
+                {
+                    lods[i] = new UnityEngine.LOD(screenRelativeTransitionHeight, null);
+                    lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f; // Not the best options, but without triangle density, it's just guess work really.
                 }
             }
 
-            if (lods.Length == 1)
-                lods[0].screenRelativeTransitionHeight = 0.05f; // if only one LOD exists make it visible the same distance as two LODs
-
             LodGroup.SetLODs(lods.ToArray());
+
+            if (nBitMask != 3)
+            {
+                if ((nBitMask & 1) == 0)
+                {
+                    LodGroup.ForceLOD(0);
+                }
+                else if ((nBitMask & 2) == 0)
+                {
+                    LodGroup.ForceLOD(1);
+                }
+                else
+                {
+                    Assert.IsTrue(false); // Shouldn't get here, we have a problem
+                }
+            }
+            else
+            {
+                LodGroup.ForceLOD(-1);
+            }
         }
 
         // Quick function to check if LODAsset has already been loaded
