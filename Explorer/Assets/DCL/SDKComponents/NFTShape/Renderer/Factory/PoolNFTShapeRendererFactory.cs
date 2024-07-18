@@ -11,20 +11,20 @@ namespace DCL.SDKComponents.NFTShape.Renderer.Factory
     {
         private readonly IComponentPool<INftShapeRenderer> componentPool;
 
-        private Transform tempTransform = null!;
-
         public PoolNFTShapeRendererFactory(IComponentPoolsRegistry componentPoolsRegistry, IFramesPool framesPool) : this(new NFTShapeRendererFactory(framesPool), componentPoolsRegistry) { }
 
         private PoolNFTShapeRendererFactory(INFTShapeRendererFactory origin, IComponentPoolsRegistry componentPoolsRegistry)
         {
-            componentPool = new ComponentPool.WithFactory<INftShapeRenderer>(() => origin.New(tempTransform));
+            var poolRegistry = new GameObject(nameof(PoolNFTShapeRendererFactory));
+            componentPool = new ComponentPool.WithFactory<INftShapeRenderer>(() => origin.New(poolRegistry.transform));
             componentPoolsRegistry.AddComponentPool(componentPool);
         }
 
         public INftShapeRenderer New(Transform parent)
         {
-            tempTransform = parent;
-            return componentPool.Get()!;
+            var component = componentPool.Get()!;
+            component.ApplyParent(parent);
+            return component;
         }
     }
 }

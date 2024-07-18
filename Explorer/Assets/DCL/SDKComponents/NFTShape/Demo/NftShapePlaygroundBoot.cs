@@ -25,7 +25,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
         private async UniTask LaunchAsync()
         {
             var framesPrefabs = new AssetProvisionerFramePrefabs(new AddressablesProvisioner());
-            var world = new WarmUpSettingsNftShapeDemoWorld(new FramesPool(framesPrefabs), nftShapeProperties, () => visible);
+            var world = new WarmUpSettingsNftShapeDemoWorld(new FramesPool(framesPrefabs), framesPrefabs, nftShapeProperties, () => visible);
 
             await framesPrefabs.InitializeAsync(
                 settings.FramePrefabs(),
