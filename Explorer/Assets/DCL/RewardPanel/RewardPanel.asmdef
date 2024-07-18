@@ -1,21 +1,27 @@
 {
-  "name": "RewardPanel",
-  "rootNamespace": "",
-  "references": [
-    "GUID:45f6fff651a0a514f8edfdaf9cce45af",
-    "GUID:f51ebe6a0ceec4240a699833d6309b23",
-    "GUID:6055be8ebefd69e48b49212b09b47b2f",
-    "GUID:91cf8206af184dac8e30eb46747e9939",
-    "GUID:28964ef7dc9441b6b8671b61a8106690",
-    "GUID:ac3295688c7c22745a96e6ac34718181"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "RewardPanel",
+    "rootNamespace": "",
+    "references": [
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:91cf8206af184dac8e30eb46747e9939",
+        "GUID:28964ef7dc9441b6b8671b61a8106690",
+        "GUID:ac3295688c7c22745a96e6ac34718181",
+        "GUID:2f30d6e5229a74284acedda491abcc6e",
+        "GUID:029c1c1b674aaae47a6841a0b89ad80e",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
+        "GUID:6830e2f56251b492e9934f1fafbc8c7d"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

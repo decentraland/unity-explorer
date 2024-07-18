@@ -19,6 +19,7 @@ namespace DCL.Notification
         LAND_RENTAL_ENDED,
         LAND_RENTED,
         REWARD_ASSIGNMENT,
+        REWARD_INCOMING,
         ROYALTIES_EARNED,
         WORLDS_ACCESS_RESTORED,
         WORLDS_ACCESS_RESTRICTED,
