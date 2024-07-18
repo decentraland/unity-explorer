@@ -1,18 +1,36 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.WebRequests;
+using ECS.Prioritization.Components;
+using ECS.StreamableLoading.Common.Components;
+using ECS.StreamableLoading.Textures;
 using GLTFast;
 using GLTFast.Loading;
+using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
+using Object = UnityEngine.Object;
+using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
+        private ISceneData sceneData;
+        private World world;
+        private IPartitionComponent partitionComponent;
+
+        public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent)
+        {
+            this.world = world;
+            this.sceneData = sceneData;
+            this.partitionComponent = partitionComponent;
+        }
+
         public async Task<IDownload> Request(Uri uri)
         {
             // var asyncOp = await webRequestController.GetAsync(
@@ -43,6 +61,39 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable, bool forceLinear)
         {
+            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() -> \n"
+                      + $"uri.AbsoluteUri: {uri.AbsoluteUri};\n"
+                      + $"uri.Host: {uri.Host};\n"
+                      + $"uri.AbsolutePath: {uri.AbsolutePath};\n"
+                      + $"uri.OriginalString: {uri.OriginalString};\n"
+                      + $"uri.LocalPath: {uri.LocalPath};\n"
+                      + $"uri.Fragment: {uri.Fragment};\n"
+                      + $"uri.Query: {uri.Query};\n"
+                      + $"uri.PathAndQuery: {uri.PathAndQuery}");
+
+            var texturePromise = Promise.Create(world, new GetTextureIntention
+            {
+                CommonArguments = new CommonLoadingArguments(uri.AbsoluteUri, attempts: 6),
+                // WrapMode = textureComponentValue.WrapMode,
+                // FilterMode = textureComponentValue.FilterMode,
+            }, partitionComponent);
+
+            // The textures fetching need to finish before the GLTF loading can continue its flow...
+            while (texturePromise.Result.Value is {Succeeded: false, Exception: null })
+            {
+                await UniTask.Yield();
+            }
+
+            // TODO: Check if we need to avoid this throwing here depending on how it affects the GLTF loading flow...
+            if (!texturePromise.Result.Value.Succeeded)
+                throw new Exception($"Error on GLTF Texture download: {texturePromise.Result.Value.Exception?.Message}");
+
+            return new TextureDownloadResult(texturePromise.Result.Value.Asset)
+            {
+                Error = texturePromise.Result.Value.Exception?.Message,
+                Success = texturePromise.Result.Value.Succeeded
+            };
+
 //             if (isDisposed)
 //                 return null;
 //
@@ -114,21 +165,33 @@ namespace ECS.StreamableLoading.GLTF
     public struct TextureDownloadResult : ITextureDownload
     {
         public bool Success { get; set; }
-        public string Error { get; set; }
+        public string? Error { get; set; }
         public byte[] Data => Array.Empty<byte>();
         public string Text => string.Empty;
         public bool? IsBinary => true;
+        public IDisposableTexture Texture;
 
-        public IDisposableTexture GetTexture(bool forceSampleLinear)
+        public TextureDownloadResult(Texture2D? texture)
         {
-            // TODO...
-
-            throw new NotImplementedException();
+            Texture = new DisposableTexture() { Texture = texture};
+            Error = null!;
+            Success = false;
         }
+
+        public IDisposableTexture GetTexture(bool forceSampleLinear) =>
+            Texture;
+
+        public void Dispose() => Texture.Dispose();
+    }
+
+    public struct DisposableTexture : IDisposableTexture
+    {
+        public Texture2D? Texture { get; set; }
 
         public void Dispose()
         {
-
+            if (Texture != null)
+                Object.Destroy(Texture);
         }
     }
 }

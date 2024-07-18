@@ -25,15 +25,21 @@ namespace ECS.StreamableLoading.GLTF
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
         private ISceneData sceneData;
-        private GltFastDownloadProvider gltfDownloadProvider = new GltFastDownloadProvider();
-        private GltfastEditorConsoleLogger gltfConsoleLogger = new GltfastEditorConsoleLogger();
+        private GltFastDownloadProvider gltfDownloadProvider;
+        private GltfastEditorConsoleLogger gltfConsoleLogger = new GltfastEditorConsoleLogger(); // TODO: Remove ???
 
         internal LoadGLTFSystem(
             World world,
             IStreamableCache<GLTFData, GetGLTFIntention> cache,
-            ISceneData sceneData) : base(world, cache)
+            ISceneData sceneData,
+            IPartitionComponent partitionComponent) : base(world, cache)
         {
             this.sceneData = sceneData;
+
+            // Inject sceneData into GltFastDownloadProvider???
+            // sceneData.TryGetMediaUrl()
+
+            gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partitionComponent);
         }
 
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
