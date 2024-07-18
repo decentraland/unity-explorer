@@ -112,5 +112,11 @@ namespace DCL.CharacterPreview
             ref CharacterEmoteComponent emoteComponent = ref globalWorld.Get<CharacterEmoteComponent>(characterPreviewEntity);
             emoteComponent.StopEmote = true;
         }
+
+        public void SetPreviewPlatformActive(bool isActive) =>
+            characterPreviewAvatarContainer.SetPreviewPlatformActive(isActive);
+
+        public void SetCharacterPreviewAvatarContainerActive(bool isActive) =>
+            characterPreviewAvatarContainer.gameObject.SetActive(isActive);
     }
 }
