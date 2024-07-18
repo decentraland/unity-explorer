@@ -53,11 +53,15 @@ namespace DCL.ExplorePanel
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, ct);
 
-            viewInstance.NameLabel.text = profile?.Name ?? "Guest";
-            viewInstance.AddressLabel.gameObject.SetActive(!profile!.HasClaimedName);
+            if (viewInstance.NameLabel != null) viewInstance.NameLabel.text = profile?.Name ?? "Guest";
 
-            if (!profile.HasClaimedName)
-                viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
+            if (viewInstance.AddressLabel != null)
+            {
+                viewInstance.AddressLabel.gameObject.SetActive(!profile!.HasClaimedName);
+
+                if (!profile.HasClaimedName)
+                    viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
+            }
 
             profileImageController!.StopLoading();
 

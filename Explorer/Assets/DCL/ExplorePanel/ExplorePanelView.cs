@@ -6,7 +6,6 @@ using MVC;
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.Audio;
 using UnityEngine.UI;
 
 namespace DCL.ExplorePanel

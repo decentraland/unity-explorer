@@ -43,6 +43,7 @@ using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.SceneLoadingScreens.LoadingScreen;
+using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -153,11 +154,14 @@ namespace Global.Dynamic
 
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
+
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
+
+            MainUIContainer mainUIContainer = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, ct: CancellationToken.None)).Value.GetComponent<MainUIContainer>());
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
@@ -316,9 +320,8 @@ namespace Global.Dynamic
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
-            var remotePoses = new DebounceRemotePoses(
-                new RemotePoses(container.RoomHub)
-            );
+            var remotePoses = new DebounceRemotePoses(new RemotePoses(container.RoomHub));
+
 
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
@@ -363,8 +366,11 @@ namespace Global.Dynamic
                     container.DefaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog
                 ),
-                new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()), new MapRendererPlugin(mapRendererContainer.MapRenderer), new MinimapPlugin(assetsProvisioner, container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache),
-                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem),
+                new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
+                new MapRendererPlugin(mapRendererContainer.MapRenderer),
+                new SidebarPlugin(assetsProvisioner, container.MvcManager, mainUIContainer),
+                new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIContainer),
+                new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIContainer),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     container.MvcManager,

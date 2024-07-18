@@ -8,6 +8,7 @@ using DCL.Emoji;
 using DCL.Input;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
+using DCL.UI.MainUI;
 using MVC;
 using System;
 using System.Threading;
@@ -25,8 +26,10 @@ namespace DCL.PluginSystem.Global
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
         private readonly NametagsData nametagsData;
         private readonly DCLInput dclInput;
-        private ChatController chatController;
         private readonly IEventSystem eventSystem;
+        private readonly MainUIContainer mainUIContainer;
+
+        private ChatController chatController;
 
         public ChatPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -36,8 +39,8 @@ namespace DCL.PluginSystem.Global
             IReadOnlyEntityParticipantTable entityParticipantTable,
             NametagsData nametagsData,
             DCLInput dclInput,
-            IEventSystem eventSystem
-        )
+            IEventSystem eventSystem,
+            MainUIContainer mainUIContainer)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -47,6 +50,7 @@ namespace DCL.PluginSystem.Global
             this.nametagsData = nametagsData;
             this.dclInput = dclInput;
             this.eventSystem = eventSystem;
+            this.mainUIContainer = mainUIContainer;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -58,12 +62,17 @@ namespace DCL.PluginSystem.Global
             EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
             EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
             EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
-            ChatView chatView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>();
+            //ChatView chatView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>();
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
                 chatController = new ChatController(
-                    ChatController.CreateLazily(chatView, null),
+                    () =>
+                    {
+                        var view = mainUIContainer.ChatView;
+                        view.gameObject.SetActive(true);
+                        return view;
+                    },
                     chatEntryConfiguration,
                     chatMessagesBus,
                     chatHistory,
@@ -109,6 +118,7 @@ namespace DCL.PluginSystem.Global
             [field: SerializeField]
             public TextAsset EmojiMappingJson { get; private set; }
 
+
             [Serializable]
             public class EmojiSuggestionPanelRef : ComponentReference<EmojiSuggestionPanelView>
             {
@@ -144,6 +154,13 @@ namespace DCL.PluginSystem.Global
             {
                 public ChatViewRef(string guid) : base(guid) { }
             }
+
+            [Serializable]
+            public class MainUIRef : ComponentReference<MainUIContainer>
+            {
+                public MainUIRef(string guid) : base(guid) { }
+            }
+
         }
     }
 }

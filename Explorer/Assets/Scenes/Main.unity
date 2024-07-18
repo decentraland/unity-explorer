@@ -470,8 +470,9 @@ MonoBehaviour:
       - {x: 145, y: 60}
     targetWorld: MetadyneLabs.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
-    remoteSceneID: bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q
-    remoteSceneContentServer: 0
+    remoteHibridWorld: MetadyneLabs.dcl.eth
+    remoteHibridSceneContentServer: 1
+    useRemoteAssetsBundles: 1
   debugViewsCatalog:
     <Widget>k__BackingField: {fileID: 9197481963319205126, guid: f3bf08b2b62097d4aa0574f7bafa4a86, type: 3}
     <ControlContainer>k__BackingField: {fileID: 9197481963319205126, guid: 6da3ff28c8a87e0428fa07019c15fa2f, type: 3}
@@ -566,6 +567,11 @@ MonoBehaviour:
       m_EditorAssetChanged: 0
     <CursorSettings>k__BackingField:
       m_AssetGUID: 7382805fd18299d41925547efbad99f0
+      m_SubObjectName: 
+      m_SubObjectType: 
+      m_EditorAssetChanged: 0
+    <MainUIView>k__BackingField:
+      m_AssetGUID: c7887090193b1ec4c994ad22169b86db
       m_SubObjectName: 
       m_SubObjectType: 
       m_EditorAssetChanged: 0

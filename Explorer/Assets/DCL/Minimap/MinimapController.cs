@@ -152,12 +152,12 @@ namespace DCL.Minimap
 
         protected override void OnBlur()
         {
-            mapCameraController.SuspendRendering();
+            mapCameraController?.SuspendRendering();
         }
 
         protected override void OnFocus()
         {
-            mapCameraController.ResumeRendering();
+            mapCameraController?.ResumeRendering();
 
             mapRenderer.SetSharedLayer(MapLayer.SatelliteAtlas, true);
             mapRenderer.SetSharedLayer(MapLayer.ParcelsAtlas, false);

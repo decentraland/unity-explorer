@@ -1,0 +1,19 @@
+{
+    "name": "Sidebar",
+    "rootNamespace": "",
+    "references": [
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:9ca29a7d75ab84bab806a20bbd350fd8",
+        "GUID:e169fa6683c924c7e99a85981a91d953"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

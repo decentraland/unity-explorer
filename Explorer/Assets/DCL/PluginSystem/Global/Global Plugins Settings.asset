@@ -253,6 +253,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <MainUIPrefab>k__BackingField:
+          m_AssetGUID: c7887090193b1ec4c994ad22169b86db
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
@@ -275,6 +280,11 @@ MonoBehaviour:
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
+        AnalyticsConfigRef:
+          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <ReportHandlingSettingsDevelopment>k__BackingField:
           m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
           m_SubObjectName: 
@@ -282,11 +292,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <ReportHandlingSettingsProduction>k__BackingField:
           m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        AnalyticsConfigRef:
-          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -395,6 +400,11 @@ MonoBehaviour:
           m_SubObjectType: 
           m_EditorAssetChanged: 0
         <EmojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
+        <MainUIPrefab>k__BackingField:
+          m_AssetGUID: c7887090193b1ec4c994ad22169b86db
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 4340256782807990272
       type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

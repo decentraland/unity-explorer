@@ -12,6 +12,7 @@ using DCL.Minimap;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.UI.Sidebar;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
@@ -176,6 +177,7 @@ namespace Global.Dynamic
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
+            mvcManager.ShowAsync(SidebarController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
