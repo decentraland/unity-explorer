@@ -1,11 +1,6 @@
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Profiling;
-using ECS.StreamableLoading.Cache;
-using System;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Assertions;
-using Utility;
 using Utility.Multithreading;
 using Utility.PriorityQueue;
 

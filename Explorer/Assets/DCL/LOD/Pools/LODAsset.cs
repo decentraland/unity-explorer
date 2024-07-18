@@ -4,7 +4,6 @@ using ECS.StreamableLoading.AssetBundles;
 using System;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using ECS.StreamableLoading.Common;
-using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 

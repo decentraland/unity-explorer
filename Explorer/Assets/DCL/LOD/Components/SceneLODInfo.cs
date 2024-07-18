@@ -1,16 +1,9 @@
 ﻿using Arch.Core;
-using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Common;
-using System;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Optimization.Pools;
-using DCL.Profiling;
-using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using UnityEngine;
-using Utility;
+using UnityEngine.Assertions;
 
 namespace DCL.LOD.Components
 {
