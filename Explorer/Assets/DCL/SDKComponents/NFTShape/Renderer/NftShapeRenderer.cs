@@ -9,7 +9,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
 {
     public class NftShapeRenderer : INftShapeRenderer
     {
-        private readonly Transform transform;
+        private Transform transform;
         private readonly IFramesPool framesPool;
 
         private AbstractFrame? frame;
@@ -20,6 +20,18 @@ namespace DCL.SDKComponents.NFTShape.Renderer
             this.framesPool = framesPool;
         }
 
+        public void ApplyParent(Transform parent)
+        {
+            this.transform = parent;
+
+            if (frame != null)
+            {
+                frame.transform.SetParent(parent, false);
+                frame.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+                frame.transform.localScale = Vector3.one;
+            }
+        }
+
         public void Apply(PBNftShape nftShape)
         {
             if (frame != null)
@@ -27,6 +39,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
                 framesPool.Release(frame);
                 frame = null;
             }
+
             frame = framesPool.NewFrame(nftShape.Style, transform);
             frame.Paint(nftShape.Color.ToUnityColor());
             frame.UpdateStatus(AbstractFrame.Status.Loading);
@@ -50,6 +63,15 @@ namespace DCL.SDKComponents.NFTShape.Renderer
         public void Show()
         {
             if (frame != null) { frame.gameObject.SetActive(true); }
+        }
+
+        public void Dispose()
+        {
+            if (frame == null)
+                return;
+
+            framesPool.Release(frame);
+            frame = null;
         }
     }
 }
