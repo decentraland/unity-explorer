@@ -79,7 +79,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
                 mapPinComponent.IsDirty = false;
             }
 
-            if (mapPinComponent.TexturePromise is not null && !mapPinComponent.TexturePromise.Value.IsConsumed)
+            if (mapPinComponent.ThumbnailIsDirty)
             {
                 IPinMarker marker;
                 if (!markers.TryGetValue(e, out IPinMarker pinMarker))
@@ -91,11 +91,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
                 {
                     marker = pinMarker;
                 }
-
-                if (mapPinComponent.TexturePromise.Value.TryConsume(world, out StreamableLoadingResult<Texture2D> texture))
-                {
-                    marker.SetTexture(texture.Asset);
-                }
+                marker.SetTexture(mapPinComponent.Thumbnail);
+                mapPinComponent.ThumbnailIsDirty = false;
             }
         }
 

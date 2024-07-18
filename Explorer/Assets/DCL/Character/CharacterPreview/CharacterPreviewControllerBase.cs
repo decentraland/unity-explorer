@@ -20,6 +20,7 @@ namespace DCL.CharacterPreview
         private readonly CharacterPreviewView view;
         private readonly ICharacterPreviewFactory previewFactory;
         private readonly CharacterPreviewCursorController cursorController;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private readonly World world;
         protected CharacterPreviewAvatarModel previewAvatarModel;
@@ -31,12 +32,20 @@ namespace DCL.CharacterPreview
         private bool initialized;
         private CancellationTokenSource updateModelCancellationToken;
         private Color profileColor;
+        private bool isPreviewPlatformActive;
 
-        protected CharacterPreviewControllerBase(CharacterPreviewView view, ICharacterPreviewFactory previewFactory, World world)
+        protected CharacterPreviewControllerBase(
+            CharacterPreviewView view,
+            ICharacterPreviewFactory previewFactory,
+            World world,
+            bool isPreviewPlatformActive,
+            CharacterPreviewEventBus characterPreviewEventBus)
         {
             this.view = view;
             this.previewFactory = previewFactory;
             this.world = world;
+            this.isPreviewPlatformActive = isPreviewPlatformActive;
+            this.characterPreviewEventBus = characterPreviewEventBus;
 
             if (view.EnableZooming)
                 view.CharacterPreviewInputDetector.OnScrollEvent += OnScroll;
@@ -48,6 +57,9 @@ namespace DCL.CharacterPreview
 
             inputEventBus = new CharacterPreviewInputEventBus();
             cursorController = new CharacterPreviewCursorController(view.CharacterPreviewCursorContainer, inputEventBus, view.CharacterPreviewSettingsSo.cursorSettings);
+
+            characterPreviewEventBus.OnAnyCharacterPreviewShowEvent += OnAnyCharacterPreviewShow;
+            characterPreviewEventBus.OnAnyCharacterPreviewHideEvent += OnAnyCharacterPreviewHide;
         }
 
         public virtual void Initialize(Avatar avatar)
@@ -95,6 +107,8 @@ namespace DCL.CharacterPreview
             view.CharacterPreviewInputDetector.OnPointerUpEvent -= OnPointerUp;
             view.CharacterPreviewInputDetector.OnPointerDownEvent -= OnPointerDown;
             view.CharacterPreviewInputDetector.OnPointerEnterEvent -= OnPointerEnter;
+            characterPreviewEventBus.OnAnyCharacterPreviewShowEvent -= OnAnyCharacterPreviewShow;
+            characterPreviewEventBus.OnAnyCharacterPreviewHideEvent -= OnAnyCharacterPreviewHide;
             cursorController.Dispose();
             updateModelCancellationToken.SafeCancelAndDispose();
         }
@@ -155,6 +169,9 @@ namespace DCL.CharacterPreview
                 OnModelUpdated();
             }
             else if (previewAvatarModel.Initialized) { Initialize(); }
+
+            previewController?.SetPreviewPlatformActive(isPreviewPlatformActive);
+            characterPreviewEventBus.OnAnyCharacterPreviewShow(this);
         }
 
         public void OnHide()
@@ -166,6 +183,27 @@ namespace DCL.CharacterPreview
                 previewController = null;
                 initialized = false;
             }
+
+            characterPreviewEventBus.OnAnyCharacterPreviewHide(this);
+        }
+
+        // If another character preview is shown, we deactivate the current one in order to avoid rendering issues.
+        // We can only have one character preview active at a time.
+        private void OnAnyCharacterPreviewShow(CharacterPreviewControllerBase characterPreviewController)
+        {
+            if (characterPreviewController == this)
+                return;
+
+            previewController?.SetCharacterPreviewAvatarContainerActive(false);
+        }
+
+        // Once any other character preview is closed, we activate back the current one.
+        private void OnAnyCharacterPreviewHide(CharacterPreviewControllerBase characterPreviewController)
+        {
+            if (characterPreviewController == this)
+                return;
+
+            previewController?.SetCharacterPreviewAvatarContainerActive(true);
         }
 
         protected void OnModelUpdated()
@@ -182,6 +220,7 @@ namespace DCL.CharacterPreview
 
             DisableSpinner(spinner);
         }
+
 
         private void DisableSpinner(GameObject spinner)
         {

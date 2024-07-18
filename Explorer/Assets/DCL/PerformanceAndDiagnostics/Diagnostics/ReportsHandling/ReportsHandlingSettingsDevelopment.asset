@@ -58,8 +58,6 @@ MonoBehaviour:
       Severity: 0
     - Category: STREAMABLE_LOADING
       Severity: 0
-    - Category: ASSET_BUNDLES
-      Severity: 0
     - Category: TEXTURES
       Severity: 0
     - Category: GLTF_CONTAINER
@@ -173,8 +171,6 @@ MonoBehaviour:
     - Category: AUDIO_CLIP_WEB_REQUEST
       Severity: 4
     - Category: STREAMABLE_LOADING
-      Severity: 4
-    - Category: ASSET_BUNDLES
       Severity: 4
     - Category: TEXTURES
       Severity: 4
