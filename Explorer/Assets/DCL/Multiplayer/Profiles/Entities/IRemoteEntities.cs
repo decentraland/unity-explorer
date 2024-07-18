@@ -8,7 +8,7 @@ namespace DCL.Multiplayer.Profiles.Entities
 {
     public interface IRemoteEntities
     {
-        void Initialize();
+        void Initialize(RemoteAvatarCollider remoteAvatarCollider);
 
         void TryCreateOrUpdate(IReadOnlyCollection<RemoteProfile> list, World world);
 
