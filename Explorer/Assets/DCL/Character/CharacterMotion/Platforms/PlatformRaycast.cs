@@ -32,7 +32,10 @@ namespace DCL.CharacterMotion.Platforms
                 }
             }
             else
+            {
+                Debug.Log("No platform found!");
                 platformComponent.CurrentPlatform = null;
+            }
         }
     }
 }

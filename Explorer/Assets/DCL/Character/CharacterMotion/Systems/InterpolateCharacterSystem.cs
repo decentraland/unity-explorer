@@ -79,8 +79,16 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
             Vector3 finalGravity = rigidTransform.IsOnASteepSlope && !rigidTransform.IsStuck ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
-            Vector3 gravityDelta = finalGravity * dt;
+            var gravityDelta = platformComponent.CurrentPlatform != null ? Vector3.zero : finalGravity * dt;
             Vector3 platformDelta = rigidTransform.PlatformDelta;
+
+            Debug.Log($"{UnityEngine.Time.frameCount} JUANI PLATFORM DELTA {platformDelta}");
+            Debug.Log($"{UnityEngine.Time.frameCount} JUANI GRAVITY MODIFIER {gravityDelta}");
+            Debug.Log($"{UnityEngine.Time.frameCount} JUANI MOVEMENT MODIFIER {movementDelta}");
+            Debug.Log(
+                $"{UnityEngine.Time.frameCount} JUANI MOVE DELTA {movementDelta + gravityDelta + slopeModifier + platformDelta}");
+            Debug.Log($"{UnityEngine.Time.frameCount} JUANI PLATFORM COMPONET {platformComponent.CurrentPlatform}");
+
 
             // In order for some systems to work correctly we move the character horizontally and then vertically
             Vector3 prevPos = transform.position;
