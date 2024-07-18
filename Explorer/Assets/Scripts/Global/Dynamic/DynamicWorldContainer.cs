@@ -156,7 +156,6 @@ namespace Global.Dynamic
 
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
-
             var realmSamplingData = new RealmSamplingData();
             var dclInput = new DCLInput();
             staticContainer.InputProxy.SetObject(dclInput);
@@ -304,11 +303,11 @@ namespace Global.Dynamic
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(reloadSceneController) },
             };
 
-            var chatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
-                                .WithSelfResend(identityCache, container.ProfileRepository)
-                                .WithIgnoreSymbols()
-                                .WithCommands(chatCommandsFactory)
-                                .WithDebugPanel(debugBuilder);
+            IChatMessagesBus chatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
+                                             .WithSelfResend(identityCache, container.ProfileRepository)
+                                             .WithIgnoreSymbols()
+                                             .WithCommands(chatCommandsFactory)
+                                             .WithDebugPanel(debugBuilder);
 
             container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics ? new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
 
@@ -327,7 +326,6 @@ namespace Global.Dynamic
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
             var remotePoses = new DebounceRemotePoses(new RemotePoses(container.RoomHub));
-
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
 
@@ -377,7 +375,7 @@ namespace Global.Dynamic
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new SidebarPlugin(assetsProvisioner, container.MvcManager, mainUIContainer),
+                new SidebarPlugin(assetsProvisioner, container.MvcManager, mainUIContainer, notificationsBusController, identityCache, container.ProfileRepository, staticContainer.WebRequestsContainer.WebRequestController),
                 new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIContainer),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIContainer, staticContainer.InputBlock),
                 new ExplorePanelPlugin(

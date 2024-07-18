@@ -1,4 +1,5 @@
-﻿using MVC;
+﻿using DCL.ExplorePanel;
+using MVC;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,7 +8,7 @@ namespace DCL.UI.Sidebar
     public class SidebarView : ViewBase, IView
     {
         [field: SerializeField]
-        internal Button profileButton { get; private set; }
+        public ProfileWidgetView ProfileWidget { get; private set; }
 
         [field: SerializeField]
         internal Button mapButton { get; private set; }
