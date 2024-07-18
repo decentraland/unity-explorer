@@ -48,7 +48,7 @@ namespace ECS.StreamableLoading.GLTF
                 return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
             Debug.Log($"content final download URL: {finalDownloadUrl}");
 
-            gltfDownloadProvider.targetGltfOriginalPath = intention.Name!;
+            gltfDownloadProvider.targetGltfOriginalPath = intention.Name!; // TODO: look for a better way
             var gltfImport = new GltfImport(downloadProvider: gltfDownloadProvider, logger: gltfConsoleLogger);
 
             var gltFastSettings = new ImportSettings
@@ -59,7 +59,7 @@ namespace ECS.StreamableLoading.GLTF
             };
 
             bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
-            Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - SUCCESS: {success}");
+            Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - SUCCESS ({intention.Name}): {success}");
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             acquiredBudget.Release();

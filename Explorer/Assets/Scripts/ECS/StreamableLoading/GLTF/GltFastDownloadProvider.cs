@@ -35,12 +35,6 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<IDownload> Request(Uri uri)
         {
-            // var asyncOp = await webRequestController.GetAsync(
-            //     url: uri,
-            //     downloadHandler: new DownloadHandlerBuffer(),
-            //     timeout: 30,
-            //     requestAttemps: 3);
-
             // TODO: Replace for WebRequestController ???
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
             {
@@ -87,56 +81,21 @@ namespace ECS.StreamableLoading.GLTF
             }, partitionComponent);
 
             // The textures fetching need to finish before the GLTF loading can continue its flow...
-            while (texturePromise.Result == null || texturePromise.Result.Value is {Succeeded: false, Exception: null })
+            StreamableLoadingResult<Texture2D> promiseResult;
+            while (!texturePromise.TryGetResult(world, out promiseResult))
             {
                 await UniTask.Yield();
             }
 
             // TODO: Check if we need to avoid this throwing here depending on how it affects the GLTF loading flow...
-            if (!texturePromise.Result.Value.Succeeded)
+            if (!promiseResult.Succeeded)
                 throw new Exception($"Error on GLTF Texture download: {texturePromise.Result.Value.Exception?.Message}");
 
-            return new TextureDownloadResult(texturePromise.Result.Value.Asset)
+            return new TextureDownloadResult(promiseResult.Asset)
             {
-                Error = texturePromise.Result.Value.Exception?.Message,
-                Success = texturePromise.Result.Value.Succeeded
+                Error = promiseResult.Exception?.Message,
+                Success = promiseResult.Succeeded
             };
-
-//             if (isDisposed)
-//                 return null;
-//
-//             string finalUrl = GetFinalUrl(uri, true);
-//
-//             var promise = new AssetPromise_Texture(
-//                 finalUrl,
-//                 storeTexAsNonReadable: nonReadable,
-//                 overrideMaxTextureSize: DataStore.i.textureConfig.gltfMaxSize.Get(),
-//                 overrideCompression:
-// #if UNITY_WEBGL
-//                 true
-// #else
-//                 false
-// #endif
-//               , linear: forceLinear
-//             );
-//
-//             var wrapper = new GLTFastTexturePromiseWrapper(texturePromiseKeeper, promise);
-//             disposables.Add(wrapper);
-//
-//             Exception promiseException = null;
-//             promise.OnFailEvent += (_,e) => promiseException = e;
-//
-//             texturePromiseKeeper.Keep(promise);
-//             await promise;
-//
-//             if (!wrapper.Success)
-//             {
-//                 string errorMessage = promiseException != null ? promiseException.Message : wrapper.Error;
-//                 Debug.LogError($"[GLTFast Texture WebRequest Failed] Error: {errorMessage} | url: " + finalUrl);
-//             }
-//
-//             return wrapper;
-            return default;
         }
 
         public void Dispose()
@@ -177,11 +136,11 @@ namespace ECS.StreamableLoading.GLTF
         public byte[] Data => Array.Empty<byte>();
         public string Text => string.Empty;
         public bool? IsBinary => true;
-        public IDisposableTexture Texture;
+        public readonly IDisposableTexture Texture;
 
         public TextureDownloadResult(Texture2D? texture)
         {
-            Texture = new DisposableTexture() { Texture = texture};
+            Texture = new DisposableTexture() { Texture = texture };
             Error = null!;
             Success = false;
         }
@@ -198,8 +157,10 @@ namespace ECS.StreamableLoading.GLTF
 
         public void Dispose()
         {
-            if (Texture != null)
-                Object.Destroy(Texture);
+            // TODO: if we enable texture destruction on disposal, the external-fetched textures get destroyed before
+            // the GLTF finishes loading... investigate why...
+            // if (Texture != null)
+            //     Object.Destroy(Texture);
         }
     }
 }
