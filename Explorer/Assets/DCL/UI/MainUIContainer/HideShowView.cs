@@ -49,6 +49,7 @@ namespace DCL.UI.MainUI
 
             if (!showing && !waitingToShow)
             {
+                waitingToShow = true;
                 showCancellationTokenSource = showCancellationTokenSource.SafeRestart();
                 WaitAndShow(showCancellationTokenSource.Token).Forget();
             }
@@ -73,6 +74,7 @@ namespace DCL.UI.MainUI
 
             if (!waitingToHide && showing)
             {
+                waitingToHide = true;
                 hideCancellationTokenSource = hideCancellationTokenSource.SafeRestart();
                 WaitAndHide(hideCancellationTokenSource.Token).Forget();
             }
@@ -80,25 +82,25 @@ namespace DCL.UI.MainUI
 
         private async UniTask WaitAndHide(CancellationToken ct)
         {
-            if (ct.IsCancellationRequested) return;
-            waitingToHide = true;
             await UniTask.Delay(TimeSpan.FromSeconds(hideWaitTime), cancellationToken: ct);
             waitingToHide = false;
             if (ct.IsCancellationRequested) return;
 
             await AnimateWidthAsync(hideLayoutWidth, ct);
+
+            if (ct.IsCancellationRequested) return;
             showing = false;
         }
 
         private async UniTask WaitAndShow(CancellationToken ct)
         {
-            if (ct.IsCancellationRequested) return;
-            waitingToShow = true;
             await UniTask.Delay(TimeSpan.FromSeconds(showWaitTime), cancellationToken: ct);
             waitingToShow = false;
             if (ct.IsCancellationRequested) return;
 
             await AnimateWidthAsync(showLayoutWidth, ct);
+
+            if (ct.IsCancellationRequested) return;
             showing = true;
         }
 
