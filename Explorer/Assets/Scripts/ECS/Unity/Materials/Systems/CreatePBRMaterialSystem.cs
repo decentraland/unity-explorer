@@ -32,7 +32,7 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        private void Handle(ref MaterialComponent materialComponent)
+        private void Handle(in Entity id, ref MaterialComponent materialComponent)
         {
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
@@ -42,10 +42,10 @@ namespace ECS.Unity.Materials.Systems
 
             // if there are no textures to load we can construct a material right away
             if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
-                ConstructMaterial(ref materialComponent);
+                ConstructMaterial(id, ref materialComponent);
         }
 
-        private void ConstructMaterial(ref MaterialComponent materialComponent)
+        private void ConstructMaterial(in Entity id, ref MaterialComponent materialComponent)
         {
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
@@ -55,6 +55,9 @@ namespace ECS.Unity.Materials.Systems
                 && TryGetTextureResult(ref materialComponent.AlphaTexPromise, out StreamableLoadingResult<Texture2D> alphaResult)
                 && TryGetTextureResult(ref materialComponent.BumpTexPromise, out StreamableLoadingResult<Texture2D> bumpResult))
             {
+                Debug.Log(
+                    $"JUANI CREATING MATERIAL {id} {materialComponent.Data.TransparencyMode} {materialComponent.Data.AlphaTexture} {materialComponent.Data.AlphaTest}");
+                
                 materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();

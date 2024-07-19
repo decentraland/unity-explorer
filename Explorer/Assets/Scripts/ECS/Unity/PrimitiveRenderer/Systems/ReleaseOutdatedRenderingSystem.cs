@@ -11,6 +11,7 @@ using ECS.LifeCycle.Components;
 using ECS.Unity.Groups;
 using ECS.Unity.Materials;
 using ECS.Unity.PrimitiveRenderer.Components;
+using UnityEngine;
 
 namespace ECS.Unity.PrimitiveRenderer.Systems
 {
@@ -39,8 +40,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
         [Query]
         [None(typeof(PBMeshRenderer), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
+        private void HandleComponentRemoval(in Entity id, ref PrimitiveMeshRendererComponent rendererComponent)
         {
+            Debug.Log($"JUANI SHOULD HANDLE REMOVAL PRIMITIVE {id}");
             Release(ref rendererComponent);
         }
 
