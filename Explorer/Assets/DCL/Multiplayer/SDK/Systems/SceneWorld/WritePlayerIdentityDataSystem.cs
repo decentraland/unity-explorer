@@ -37,7 +37,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void CreatePlayerIdentityData([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, ProfileSDKSubProduct profile)
+        private void CreatePlayerIdentityData([Data] bool force, PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
         {
             if (!force && !playerCRDTEntity.IsDirty) return;
 

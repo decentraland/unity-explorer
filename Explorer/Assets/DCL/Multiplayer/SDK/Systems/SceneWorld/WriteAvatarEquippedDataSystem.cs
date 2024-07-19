@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [UpdateAfter(typeof(WritePlayerIdentityDataSystem))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<ProfileSDKSubProduct>))]
+    [UpdateBefore(typeof(ResetDirtyFlagSystem<SDKProfile>))]
     [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class WriteAvatarEquippedDataSystem : BaseUnityLoopSystem
     {
@@ -41,11 +41,11 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEquippedData([Data] bool force, PlayerSceneCRDTEntity crdtEntity, ProfileSDKSubProduct profile)
+        private void UpdateAvatarEquippedData([Data] bool force, PlayerSceneCRDTEntity crdtEntity, SDKProfile profile)
         {
             if (!force && !profile.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, ProfileSDKSubProduct>(static (pbComponent, profile) =>
+            ecsToCRDTWriter.PutMessage<PBAvatarEquippedData, SDKProfile>(static (pbComponent, profile) =>
             {
                 foreach (URN urn in profile.Avatar.Wearables) { pbComponent.WearableUrns.Add(urn); }
 

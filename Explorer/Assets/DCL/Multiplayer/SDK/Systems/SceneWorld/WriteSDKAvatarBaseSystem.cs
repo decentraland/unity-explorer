@@ -33,14 +33,14 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarBase(PlayerSceneCRDTEntity playerCRDTEntity, ProfileSDKSubProduct profile)
+        private void UpdateAvatarBase(PlayerSceneCRDTEntity playerCRDTEntity, SDKProfile profile)
         {
             if (!profile.IsDirty) return;
 
-            ecsToCRDTWriter.PutMessage<PBAvatarBase, ProfileSDKSubProduct>(static (pbComponent, profile) =>
+            ecsToCRDTWriter.PutMessage<PBAvatarBase, SDKProfile>(static (pbComponent, profile) =>
             {
                 pbComponent.Name = profile.Name;
-                ProfileSDKSubProduct.AvatarSubProduct avatar = profile.Avatar;
+                SDKProfile.SDKAvatar avatar = profile.Avatar;
                 pbComponent.BodyShapeUrn = avatar.BodyShape;
                 pbComponent.SkinColor = avatar.SkinColor.ToColor3();
                 pbComponent.EyesColor = avatar.EyesColor.ToColor3();

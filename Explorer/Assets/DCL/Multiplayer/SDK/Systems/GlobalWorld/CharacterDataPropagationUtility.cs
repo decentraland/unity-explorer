@@ -12,9 +12,9 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
     /// </summary>
     public class CharacterDataPropagationUtility : ICharacterDataPropagationUtility
     {
-        private readonly IComponentPool<ProfileSDKSubProduct> profileSDKSubProductPool;
+        private readonly IComponentPool<SDKProfile> profileSDKSubProductPool;
 
-        public CharacterDataPropagationUtility(IComponentPool<ProfileSDKSubProduct> componentPool)
+        public CharacterDataPropagationUtility(IComponentPool<SDKProfile> componentPool)
         {
             profileSDKSubProductPool = componentPool;
         }
@@ -29,7 +29,7 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
         public void CopyProfileToSceneEntity(Profile profile, SceneEcsExecutor sceneEcsExecutor, Entity sceneEntity)
         {
-            if (!sceneEcsExecutor.World.TryGet(sceneEntity, out ProfileSDKSubProduct? profileSDKSubProduct))
+            if (!sceneEcsExecutor.World.TryGet(sceneEntity, out SDKProfile? profileSDKSubProduct))
             {
                 profileSDKSubProduct = profileSDKSubProductPool.Get();
                 sceneEcsExecutor.World.Add(sceneEntity, profileSDKSubProduct);

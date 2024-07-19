@@ -22,7 +22,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
-        private ProfileSDKSubProduct profile;
+        private SDKProfile profile;
         private PlayerSceneCRDTEntity playerCRDTEntity;
 
         private Avatar CreateTestAvatar() =>
@@ -39,7 +39,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             system = new WriteAvatarEquippedDataSystem(world, ecsToCRDTWriter);
 
-            profile = new ProfileSDKSubProduct();
+            profile = new SDKProfile();
             profile.OverrideWith(new Profile(FAKE_USER_ID, "fake user", CreateTestAvatar()));
 
             playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarEquippedData, ProfileSDKSubProduct>>(),
+                                Arg.Any<Action<PBAvatarEquippedData, SDKProfile>>(),
                                 playerCRDTEntity.CRDTEntity,
                                 profile);
 
@@ -74,7 +74,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             ecsToCRDTWriter.Received(1)
                            .PutMessage(
-                                Arg.Any<Action<PBAvatarEquippedData, ProfileSDKSubProduct>>(),
+                                Arg.Any<Action<PBAvatarEquippedData, SDKProfile>>(),
                                 playerCRDTEntity.CRDTEntity,
                                 profile);
         }

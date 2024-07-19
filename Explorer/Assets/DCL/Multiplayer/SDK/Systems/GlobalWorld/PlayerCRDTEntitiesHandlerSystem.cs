@@ -40,13 +40,13 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 
             RemoveComponentQuery(World);
 
-            AddPlayerCRDTEntityQuery(World);
+            AddRemotePlayerCRDTEntityQuery(World);
         }
 
         [Query]
         [All(typeof(Profile))]
         [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention), typeof(PlayerComponent))]
-        private void AddPlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
+        private void AddRemotePlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
         {
             if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
                 return;

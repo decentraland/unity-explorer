@@ -9,9 +9,9 @@ namespace DCL.Profiles
     /// <summary>
     ///     Contains data related to the Player needed for SDK only
     /// </summary>
-    public class ProfileSDKSubProduct : IDirtyMarker
+    public class SDKProfile : IDirtyMarker
     {
-        public AvatarSubProduct Avatar { get; } = new ();
+        public SDKAvatar Avatar { get; } = new ();
 
         public bool IsDirty { get; set; }
 
@@ -32,7 +32,7 @@ namespace DCL.Profiles
             IsDirty = true;
         }
 
-        public class AvatarSubProduct
+        public class SDKAvatar
         {
             private readonly URN[] emotes = new URN[Profiles.Avatar.MAX_EQUIPPED_EMOTES];
 

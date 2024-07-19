@@ -289,7 +289,7 @@ namespace Global.Dynamic
 
             dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
 
-            container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<ProfileSDKSubProduct>());
+            container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();

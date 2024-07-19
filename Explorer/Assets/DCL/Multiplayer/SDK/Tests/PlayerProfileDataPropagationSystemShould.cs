@@ -35,8 +35,8 @@ namespace DCL.Multiplayer.SDK.Tests
             Entity sceneWorldEntity = sceneWorld.Create();
             ISceneFacade sceneFacade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, sceneWorld);
 
-            IComponentPool<ProfileSDKSubProduct> fakePool = Substitute.For<IComponentPool<ProfileSDKSubProduct>>();
-            fakePool.Get().Returns(new ProfileSDKSubProduct());
+            IComponentPool<SDKProfile> fakePool = Substitute.For<IComponentPool<SDKProfile>>();
+            fakePool.Get().Returns(new SDKProfile());
 
             system = new PlayerProfileDataPropagationSystem(world, characterDataPropagationUtility = new CharacterDataPropagationUtility(fakePool), playerEntity);
 
@@ -66,7 +66,7 @@ namespace DCL.Multiplayer.SDK.Tests
                 scene.IsEmpty.Returns(false);
                 var localSceneWorld = World.Create();
 
-                var profile = new ProfileSDKSubProduct();
+                var profile = new SDKProfile();
                 profile.OverrideWith(Profile.NewRandomProfile(Path.GetRandomFileName()));
                 profile.IsDirty = false;
                 Entity scenePlayerEntity = localSceneWorld.Create(new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY), profile, new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY));
@@ -93,7 +93,7 @@ namespace DCL.Multiplayer.SDK.Tests
             {
                 Entity playerEntity = scene.PersistentEntities.Player;
                 World sceneWorld = scene.EcsExecutor.World;
-                Assert.IsTrue(sceneWorld.TryGet(playerEntity, out ProfileSDKSubProduct sceneEntityProfile));
+                Assert.IsTrue(sceneWorld.TryGet(playerEntity, out SDKProfile sceneEntityProfile));
                 Assert.That(sceneWorld.Has<Profile>(playerEntity), Is.False);
                 Assert.That(sceneEntityProfile.IsDirty, Is.True);
                 Assert.AreEqual(newGlobalProfile.Name, sceneEntityProfile.Name);
@@ -117,7 +117,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             characterDataPropagationUtility.PropagateGlobalPlayerToScenePlayer(world, entity, scene);
 
-            Assert.IsTrue(sceneWorld.TryGet(scenePlayerEntity, out ProfileSDKSubProduct sceneEntityProfile));
+            Assert.IsTrue(sceneWorld.TryGet(scenePlayerEntity, out SDKProfile sceneEntityProfile));
             Assert.That(sceneWorld.Has<Profile>(scenePlayerEntity), Is.False);
             Assert.IsTrue(sceneWorld.TryGet(scenePlayerEntity, out PlayerSceneCRDTEntity playerSceneCRDTEntity));
             Assert.That(playerSceneCRDTEntity.CRDTEntity.Id, Is.EqualTo(SpecialEntitiesID.PLAYER_ENTITY));
@@ -135,11 +135,11 @@ namespace DCL.Multiplayer.SDK.Tests
             profile.IsDirty = false;
             world.Add(entity, profile);
 
-            Assert.IsFalse(sceneWorld.Has<ProfileSDKSubProduct>(playerCRDTEntity.SceneWorldEntity));
+            Assert.IsFalse(sceneWorld.Has<SDKProfile>(playerCRDTEntity.SceneWorldEntity));
 
             system.Update(0);
 
-            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out ProfileSDKSubProduct sceneEntityProfile));
+            Assert.IsTrue(sceneWorld.TryGet(playerCRDTEntity.SceneWorldEntity, out SDKProfile sceneEntityProfile));
             Assert.That(sceneWorld.Has<Profile>(playerCRDTEntity.SceneWorldEntity), Is.False);
 
             Assert.AreEqual(profile.Name, sceneEntityProfile.Name);
@@ -159,7 +159,7 @@ namespace DCL.Multiplayer.SDK.Tests
             AssertAvatarIsEqual(profile.Avatar, sceneEntityProfile.Avatar);
         }
 
-        private void AssertAvatarIsEqual(Avatar avatar, ProfileSDKSubProduct.AvatarSubProduct subProduct)
+        private void AssertAvatarIsEqual(Avatar avatar, SDKProfile.SDKAvatar subProduct)
         {
             Assert.AreEqual(avatar.BodyShape, subProduct.BodyShape);
             Assert.AreEqual(avatar.EyesColor, subProduct.EyesColor);
