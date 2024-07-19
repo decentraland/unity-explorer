@@ -46,21 +46,21 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void AnimateIn()
         {
-            poolableBehavior.instance.gameObject.transform.DOScaleX(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
-            poolableBehavior.instance.gameObject.transform.DOScaleY(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
+            poolableBehavior.instance?.gameObject.transform.DOScaleX(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
+            poolableBehavior.instance?.gameObject.transform.DOScaleY(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
             SetIconOutline(true);
         }
 
         public void AnimateOut()
         {
-            poolableBehavior.instance.gameObject.transform.DOScaleX(currentNewScale, 0.5f).SetEase(Ease.OutBack);
-            poolableBehavior.instance.gameObject.transform.DOScaleY(currentNewScale, 0.5f).SetEase(Ease.OutBack);
+            poolableBehavior.instance?.gameObject.transform.DOScaleX(currentNewScale, 0.5f).SetEase(Ease.OutBack);
+            poolableBehavior.instance?.gameObject.transform.DOScaleY(currentNewScale, 0.5f).SetEase(Ease.OutBack);
             SetIconOutline(false);
         }
 
         public void SetIconOutline(bool isActive)
         {
-            poolableBehavior.instance.mapPinIconOutline.gameObject.SetActive(isActive);
+            poolableBehavior.instance?.mapPinIconOutline.gameObject.SetActive(isActive);
         }
 
         public void SetData(string title, string description)
@@ -71,7 +71,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetTexture(Texture2D texture)
         {
-            poolableBehavior.instance.SetTexture(texture);
+            poolableBehavior.instance?.SetTexture(texture);
         }
 
         public void OnBecameVisible()
@@ -79,7 +79,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             poolableBehavior.OnBecameVisible();
 
             if(currentBaseScale != 0)
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+                poolableBehavior.instance?.SetScale(currentBaseScale, currentNewScale);
         }
 
         public void OnBecameInvisible()
@@ -92,16 +92,13 @@ namespace DCL.MapRenderer.MapLayers.Pins
             currentBaseScale = baseScale;
             currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
 
-            if (poolableBehavior.instance != null)
-                poolableBehavior.instance.SetScale(currentBaseScale, currentNewScale);
+            poolableBehavior.instance?.SetScale(currentBaseScale, currentNewScale);
         }
 
         public void ResetScale(float scale)
         {
             currentNewScale = scale;
-
-            if (poolableBehavior.instance != null)
-                poolableBehavior.instance.SetScale(scale, scale);
+            poolableBehavior.instance?.SetScale(scale, scale);
         }
     }
 }
