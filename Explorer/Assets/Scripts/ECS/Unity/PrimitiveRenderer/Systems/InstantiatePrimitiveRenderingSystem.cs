@@ -96,10 +96,8 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
             // The model has changed entirely, so we need to reinstall the renderer
             if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))
-            {
                 Instantiate(entity, setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
                     ref transform);
-            }
             else
 
                 // This means that the UVs have changed during runtime of a scene (should be an unusual case), so we update the mesh accordingly
