@@ -28,8 +28,8 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
 
         protected override void Update(float t)
         {
-            InstantiateUITextQuery(World);
-            UpdateUITextQuery(World);
+            InstantiateUITextQuery(World!);
+            UpdateUITextQuery(World!);
         }
 
         [Query]
@@ -37,14 +37,14 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIText
         [None(typeof(UITextComponent))]
         private void InstantiateUIText(in Entity entity, ref UITransformComponent uiTransformComponent)
         {
-            var label = labelsPool.Get();
+            var label = labelsPool.Get()!;
             label.name = UiElementUtils.BuildElementName(COMPONENT_NAME, entity);
             label.pickingMode = PickingMode.Ignore;
-            UiElementUtils.SetElementDefaultStyle(label.style);
+            UiElementUtils.SetElementDefaultStyle(label.style!);
             uiTransformComponent.Transform.Add(label);
             var uiTextComponent = new UITextComponent();
             uiTextComponent.Label = label;
-            World.Add(entity, uiTextComponent);
+            World!.Add(entity, uiTextComponent);
         }
 
         [Query]
