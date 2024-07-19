@@ -11,6 +11,7 @@ using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -42,8 +43,17 @@ namespace ECS.Unity.Transforms.Systems
         {
             foreach (EntityReference childEntity in transformComponentToBeDeleted.Children)
             {
-                SetNewChild(ref World.Get<TransformComponent>(childEntity.Entity),
-                    childEntity, 0, sceneRoot, SpecialEntitiesID.SCENE_ROOT_ENTITY);
+                ref var transformComponent = ref World.Get<TransformComponent>(childEntity.Entity);
+
+                SetNewChild(
+                    ref transformComponent,
+                    childEntity,
+                    0,
+                    sceneRoot,
+                    SpecialEntitiesID.SCENE_ROOT_ENTITY
+                );
+
+                transformComponent.SetTransform(Vector3.zero, Quaternion.identity, Vector3.one);
             }
 
             transformComponentToBeDeleted.Children.Clear();

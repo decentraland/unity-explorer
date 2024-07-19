@@ -26,21 +26,28 @@ namespace DCL.PluginSystem.Editor
 
         private IReadOnlyCollection<Type> GetEligibleSettingsTypes()
         {
-            Type targetType;
+            Type targetPluginType;
+            Type targetContainerType;
 
             if (targetObj.GetType() == typeof(GlobalPluginSettingsContainer))
-                targetType = typeof(IDCLGlobalPlugin<>);
+            {
+                targetPluginType = typeof(IDCLGlobalPlugin<>);
+                targetContainerType = typeof(DCLGlobalContainer<>);
+            }
             else if (targetObj.GetType() == typeof(WorldPluginSettingsContainer))
-                targetType = typeof(IDCLWorldPlugin<>);
+            {
+                targetPluginType = typeof(IDCLWorldPlugin<>);
+                targetContainerType = typeof(DCLWorldContainer<>);
+            }
             else return TypeCache.GetTypesDerivedFrom<IDCLPluginSettings>().Where(AdditionalTypeFiler).ToList();
 
             // Get their settings types
-            TypeCache.TypeCollection derivedTypes = TypeCache.GetTypesDerivedFrom(targetType);
+            var derivedTypes = TypeCache.GetTypesDerivedFrom(targetPluginType).Concat(TypeCache.GetTypesDerivedFrom(targetContainerType));
             var targetCollection = new List<Type>();
 
             foreach (Type pluginType in derivedTypes.Where(AdditionalTypeFiler))
             {
-                Type genericType = pluginType.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == targetType);
+                Type genericType = pluginType.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDCLPlugin<>));
                 targetCollection.Add(genericType.GenericTypeArguments[0]);
             }
 

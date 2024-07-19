@@ -1,10 +1,20 @@
 name: Unity Mac Build IL2CPP
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Set to true, profiling will be enabled auto-connect profiler will be set to on'
+        required: true
+        default: 'false'
+      deep_profile:
+        description: 'Set to true, deep profiling will also be enabled'
+        required: false
+        default: 'false'
   
 env:
   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+  SEGMENT_WRITE_KEY: ${{ secrets.SEGMENT_WRITE_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -19,14 +29,12 @@ jobs:
           - targetPlatform: StandaloneOSX
             dockerImage: macos-latest-xl
 
-
     name: Build
     runs-on: ${{ matrix.dockerImage }}
     steps:
       - name: Install PowerShell
         run: brew install powershell
-      # This step is required if PowerShell is not pre-installed on the runner.
-
+      
       - name: Set SHA env variable
         shell: pwsh
         run: |
@@ -73,6 +81,8 @@ jobs:
             
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
         
       - name: Create LFS file list
         run: git lfs ls-files -l | cut -d' ' -f1 | sort > .lfs-assets-id
@@ -90,6 +100,43 @@ jobs:
           git add .
           git reset --hard
 
+      - name: Create Version
+        id: create-version
+        run: | 
+          $latestTag = git describe --tags
+          
+          # Extract version components
+          if ($latestTag -match '^v(\d+)\.(\d+)-(\d+)-(.+)$') {
+          $version = $matches[1]
+          $minorVersion = $matches[2]
+          $build = $matches[3]
+          $commit = $matches[4]
+          
+          Write-Output "Version: $version"
+          Write-Output "Minor Version: $minorVersion"
+          Write-Output "Build: $build"
+          Write-Output "Commit: $commit"
+          } else {
+            Write-Output "String does not match expected pattern. No Version Added!"
+          }
+          
+          if ($env:GITHUB_EVENT_NAME -eq 'pull_request') {
+            $branchName = $env:GITHUB_HEAD_REF
+          } else {
+            $branchName = ($env:GITHUB_REF -split '/')[2]
+          }
+          
+          $semVer = "v$($version).$($minorVersion).$($build)-$($commit)-$($branchName)"
+          Write-Output "Version: $semVer"
+          Write-Output "version=$($semVer)" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: 'Using Version'
+        run: |
+          Write-Output "Version: ${{ steps.create-version.outputs.version }}"
+          Write-Output "Version: ($env:SELECTED_COLOR)"
+        shell: pwsh
+
       - name: Restore Library cache
         uses: actions/cache@v3
         with:
@@ -98,7 +145,59 @@ jobs:
             !Explorer/Library/Bee/**
             !Explorer/Library/BuildPlayerData/**
           key: Library-Explorer-IL2CPP-${{ matrix.targetPlatform }}
+
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 'Add GitHub to the SSH known hosts file'
+        run: |
+          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+
+      - name: Manage custom input parameters
+        run: |
+          profileEnabled="${{ github.event.inputs.profile }}"
+          deepProfileEnabled="${{ github.event.inputs.deep_profile }}"
           
+          profilingParam=""
+          deepProfilingParam=""
+          
+          if [ "$profileEnabled" = "true" ]; then
+            profilingParam="-profile"
+          fi
+
+          if [ "$deepProfileEnabled" = "true" ]; then
+            deepProfilingParam="-deepProfile"
+          fi
+
+          echo "UNITY_CUSTOM_PARAMS=$profilingParam $deepProfilingParam" >> $GITHUB_ENV
+          echo "Profiling parameters: $profilingParam $deepProfilingParam"
+
+      - name: Clone Packages To Use Locally
+        run: |
+          # Clone the repository
+          git clone git@github.com:decentraland/unity-explorer-packages.git
+          
+          # Display message
+          echo "Editing package manifest"
+          
+          # Specify the path to the manifest.json file
+          jsonFilePath="Explorer/Packages/manifest.json"
+          
+          # Replace the strings in manifest.json
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader|file:../../unity-explorer-packages/StylizedGrassShader|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2|file:../../unity-explorer-packages/StylizedWater2|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/AVProVideo|file:../../unity-explorer-packages/AVProVideo|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView|file:../../unity-explorer-packages/SuperScrollView|g' $jsonFilePath
+          sed -i '' 's|git@github.com:decentraland/unity-explorer-packages.git?path=/SoftMask|file:../../unity-explorer-packages/SoftMask|g' $jsonFilePath
+          
+          # Display the content of manifest.json
+          cat $jsonFilePath
+          
+          # Display list of files
+          ls
+
       - uses: decentraland/unity-builder@0.9
         id: build
         timeout-minutes: 120
@@ -109,8 +208,13 @@ jobs:
         with:
           projectPath: Explorer
           targetPlatform: ${{ matrix.targetPlatform }}
-          versioning: Semantic
-          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }}
+          buildMethod: Editor.BuildScript.Build
+          buildName: Decentraland
+          versioning: Custom
+          version: ${{ steps.create-version.outputs.version }}
+          customParameters: -sentryDsn ${{ secrets.SENTRY_DSN }} -sentryEnvironment ${{ env.SENTRY_ENVIRONMENT }} -sentryCliAuthToken ${{ secrets.SENTRY_CLI_AUTH_TOKEN }} -sentryUploadDebugSymbols ${{ env.SENTRY_UPLOAD_DEBUG_SYMBOLS }} ${{ env.UNITY_CUSTOM_PARAMS }} -segmentWriteKey ${{ secrets.SEGMENT_WRITE_KEY }}
+          sshAgent: ${{ env.SSH_AUTH_SOCK }}
+          allowDirtyBuild: true
           
       # Tar build files to maintain file permissions
       - name: Tar MacOSX/Linux build files
@@ -128,8 +232,17 @@ jobs:
           
       # Upload artifact
       - name: Upload mac artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}.tar
+          if-no-files-found: error
+
+      # Upload build report
+      - name: Uploading build report
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build Report
+          path: |
+            Explorer/Library/LastBuild.buildreport
           if-no-files-found: error

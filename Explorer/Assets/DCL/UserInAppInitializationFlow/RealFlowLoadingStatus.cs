@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DCL.Utilities;
+using System.Collections.Generic;
 using Utility;
 
 namespace DCL.UserInAppInitializationFlow
@@ -7,29 +8,32 @@ namespace DCL.UserInAppInitializationFlow
     {
         public enum Stage : byte
         {
-            ProfileLoaded = 0,
-            LandscapeLoaded = 1,
+            Init = 0,
+            ProfileLoaded = 1,
+            LandscapeLoaded = 2,
 
             /// <summary>
             ///     Player has teleported to the spawn point of the starting scene
             /// </summary>
-            PlayerTeleported = 2,
+            PlayerTeleported = 3,
 
-            Completed = 3,
+            Completed = 4,
         }
 
         public static readonly Dictionary<Stage, float> PROGRESS = new (EnumUtils.GetEqualityComparer<Stage>())
         {
-            [Stage.ProfileLoaded] = 0.1f, [Stage.LandscapeLoaded] = 0.5f,
+            [Stage.Init] = 0f,
+            [Stage.ProfileLoaded] = 0.1f,
+            [Stage.LandscapeLoaded] = 0.5f,
             [Stage.PlayerTeleported] = 0.95f,
             [Stage.Completed] = 1f,
         };
 
-        public Stage CurrentStage { get; private set; }
+        public ReactiveProperty<Stage> CurrentStage { get; } = new (Stage.Init);
 
         public float SetStage(Stage stage)
         {
-            CurrentStage = stage;
+            CurrentStage.Value = stage;
             return PROGRESS[stage];
         }
     }

@@ -8,9 +8,12 @@ namespace DCL.Profiling
         public ulong HiccupsCountInBuffer { get; private set; }
         public long MinFrameTimeInNS => counter.MinValue;
         public long MaxFrameTimeInNS => counter.MaxValue;
+        public int BufferSize { get; private set; }
 
         public LinearBufferHiccupCounter(int bufferSize, int hiccupThresholdInNs)
         {
+            BufferSize = bufferSize;
+
             counter = new LinearBufferCounter(bufferSize);
             hiccupThresholdInNS = hiccupThresholdInNs;
         }

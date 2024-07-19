@@ -24,7 +24,7 @@ namespace ECS.StreamableLoading.AssetBundles
         public readonly Type? ExpectedObjectType;
 
         /// <summary>
-        ///     Name not resolved into <see cref="Hash" />
+        ///     Left to have a reference of what went wrong in PrepareAssetBundleLoadingParametersSystemBase
         /// </summary>
         public readonly string? Name;
 
@@ -69,9 +69,6 @@ namespace ECS.StreamableLoading.AssetBundles
 
         public CancellationTokenSource CancellationTokenSource => CommonArguments.CancellationTokenSource;
 
-        public static GetAssetBundleIntention FromName(string name, AssetSource permittedSources = AssetSource.ALL, URLSubdirectory customEmbeddedSubDirectory = default) =>
-            new (typeof(GameObject), name: name, permittedSources: permittedSources, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
-
         public static GetAssetBundleIntention FromHash(Type? expectedAssetType, string hash, AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
 
@@ -79,6 +76,8 @@ namespace ECS.StreamableLoading.AssetBundles
             SceneAssetBundleManifest manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
             new (expectedAssetType, hash: hash, permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory, cancellationTokenSource: cancellationTokenSource);
 
+        public static GetAssetBundleIntention Create(Type? expectedAssetType, string hash, string name,AssetSource permittedSources = AssetSource.ALL, SceneAssetBundleManifest? manifest = null, URLSubdirectory customEmbeddedSubDirectory = default) =>
+            new (expectedAssetType, hash: hash, name: name,permittedSources: permittedSources, assetBundleManifest: manifest, customEmbeddedSubDirectory: customEmbeddedSubDirectory);
         public override bool Equals(object obj) =>
             obj is GetAssetBundleIntention other && Equals(other);
 

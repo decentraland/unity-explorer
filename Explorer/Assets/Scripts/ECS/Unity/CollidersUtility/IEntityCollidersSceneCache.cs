@@ -15,12 +15,12 @@ namespace DCL.Interaction.Utility
         ///     Get information attached to the specified collider
         /// </summary>
         /// <returns></returns>
-        bool TryGetEntity(Collider collider, out ColliderEntityInfo entity);
+        bool TryGetEntity(Collider collider, out ColliderSceneEntityInfo sceneEntity);
 
         /// <summary>
         ///     Cache Collider for alive entity, if collider is already cached the entity information will be overriden
         /// </summary>
-        void Associate(Collider collider, ColliderEntityInfo entityInfo);
+        void Associate(Collider collider, ColliderSceneEntityInfo sceneEntityInfo);
 
         /// <summary>
         ///     Remove collider association

@@ -36,10 +36,5 @@ namespace ECS.StreamableLoading.AssetBundles
             base.PrepareCommonArguments(in entity, ref assetBundleIntention, ref state);
         }
 
-        /// <summary>
-        ///     Can't resolve hash for global asset bundles
-        /// </summary>
-        protected override bool TryResolveHash(ref GetAssetBundleIntention assetBundleIntention) =>
-            false;
     }
 }

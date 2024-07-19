@@ -36,9 +36,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task ResolveSimpleScene()
         {
-            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM);
+            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH);
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, new CancellationTokenSource()), ab);
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, new CancellationTokenSource()), ab);
 
             system.Update(0);
 
@@ -63,9 +63,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task ResolveSceneWithColliders()
         {
-            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER);
+            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH);
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER, new CancellationTokenSource()), ab);
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.SCENE_WITH_COLLIDER_NAME, GltfContainerTestResources.SCENE_WITH_COLLIDER_HASH, new CancellationTokenSource()), ab);
 
             system.Update(0);
 
@@ -90,11 +90,11 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public async Task DoNothingIfCancelled()
         {
-            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM);
+            StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH);
 
             var canceledSource = new CancellationTokenSource();
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, canceledSource), ab);
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, canceledSource), ab);
 
             canceledSource.Cancel();
 
@@ -108,7 +108,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             StreamableLoadingResult<AssetBundleData> ab = await resources.LoadAssetBundle(GltfContainerTestResources.NO_GAME_OBJECTS);
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.NO_GAME_OBJECTS, new CancellationTokenSource()), ab);
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.NO_GAME_OBJECTS, GltfContainerTestResources.NO_GAME_OBJECTS, new CancellationTokenSource()), ab);
 
             system.Update(0);
 
@@ -122,7 +122,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         {
             var exception = new ArgumentException();
 
-            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM, new CancellationTokenSource()),
+            Entity e = world.Create(new GetGltfContainerAssetIntention(GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_NAME, GltfContainerTestResources.RENDERER_WITH_LEGACY_ANIM_HASH, new CancellationTokenSource()),
                 new StreamableLoadingResult<AssetBundleData>(exception));
 
             system.Update(0);

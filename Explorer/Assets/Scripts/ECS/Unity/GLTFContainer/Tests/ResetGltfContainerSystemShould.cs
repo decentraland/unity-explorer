@@ -44,7 +44,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         {
             var sdkComponent = new PBGltfContainer { IsDirty = true, Src = "2" };
             var c = new GltfContainerComponent();
-            c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
+            c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1","1_Hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
             var asset = GltfContainerAsset.Create(new GameObject(), null);
             asset.DecodedVisibleSDKColliders = new List<SDKCollider> { new () };
             world.Add(c.Promise.Entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
@@ -59,7 +59,7 @@ namespace ECS.Unity.GLTFContainer.Tests
             Assert.That(eventBuffer.Relations, Contains.Item(new EntityRelation<GltfContainerComponent>(entity, component)));
             Assert.That(component.Promise, Is.EqualTo(AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.NULL));
 
-            cache.Received(1).Dereference("1", Arg.Any<GltfContainerAsset>());
+            cache.Received(1).Dereference("1_Hash", Arg.Any<GltfContainerAsset>());
             entityCollidersSceneCache.Received(1).Remove(Arg.Any<Collider>());
         }
 
@@ -67,7 +67,7 @@ namespace ECS.Unity.GLTFContainer.Tests
         public void ReleaseIfComponentRemoved()
         {
             var c = new GltfContainerComponent();
-            c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
+            c.Promise = AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(world, new GetGltfContainerAssetIntention("1","1_Hash", new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY);
 
             var asset = GltfContainerAsset.Create(new GameObject(), null);
             asset.DecodedVisibleSDKColliders = new List<SDKCollider> { new () };

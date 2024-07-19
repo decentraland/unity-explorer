@@ -101,7 +101,7 @@ namespace DCL.SDKComponents.Animator.Tests
         {
             var component = new GltfContainerComponent(ColliderLayer.ClPhysics, ColliderLayer.ClPointer,
                 AssetPromise<GltfContainerAsset, GetGltfContainerAssetIntention>.Create(
-                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.ANIMATION, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
+                    world, new GetGltfContainerAssetIntention(GltfContainerTestResources.ANIMATION, GltfContainerTestResources.ANIMATION, new CancellationTokenSource()), PartitionComponent.TOP_PRIORITY));
 
             component.State = LoadingState.Loading;
 

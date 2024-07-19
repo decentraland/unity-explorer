@@ -1,7 +1,9 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace MVC
 {
@@ -16,7 +18,7 @@ namespace MVC
     /// <summary>
     ///     Base for the main controller (not sub-ordinate)
     /// </summary>
-    public abstract class ControllerBase<TView, TInputData> : IController<TView, TInputData> where TView: IView
+    public abstract class ControllerBase<TView, TInputData> : IDisposable, IController<TView, TInputData> where TView: IView
     {
         public delegate TView ViewFactoryMethod();
 

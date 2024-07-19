@@ -35,6 +35,9 @@ namespace DCL.MapRenderer.ComponentsFactory
         public Transform PlayerMarkerRoot { get; private set; }
 
         [field: SerializeField]
+        public Transform PinMarkerRoot { get; private set; }
+
+        [field: SerializeField]
         public Transform ParcelHighlightRoot { get; private set; }
 
         [field: SerializeField]

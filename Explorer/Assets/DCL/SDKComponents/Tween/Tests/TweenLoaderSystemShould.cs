@@ -27,7 +27,7 @@ namespace DCL.SDKComponents.Tween.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new TweenLoaderSystem(world, new ObjectPool<PBTween>(() => new PBTween()));
+            system = new TweenLoaderSystem(world);
 
             var startVector = new Vector3() { X = 0, Y = 0, Z = 0};
             var endVector = new Vector3() { X = 10, Y = 0, Z = 0 };
@@ -63,44 +63,7 @@ namespace DCL.SDKComponents.Tween.Tests
 
             Assert.AreEqual(1, world.CountEntities(new QueryDescription().WithAll<SDKTweenComponent>()));
         }
-
-        [Test]
-        public void UpdateTweenComponentIfPBTweenIsDifferentThanStoredModel()
-        {
-            system.Update(0);
-            pbTween.CurrentTime = 5555;
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsFalse(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CachedTween)));
-
-            system.Update(0);
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(TweenSDKComponentHelper.AreSameModels(pbTween, comp.CachedTween)));
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(comp.IsDirty));
-        }
-
-        [Test]
-        public void DirtyTweenComponentIfPBTweenIsDirty()
-        {
-            system.Update(0);
-            world.Get<SDKTweenComponent>(entity).IsDirty = false;
-
-            pbTween.IsDirty = true;
-            system.Update(0);
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsTrue(comp.IsDirty));
-        }
-
-        [Test]
-        public void DontUpdateTweenComponentIfPBTweenIsNotDifferentThanStoredModelAndNotDirty()
-        {
-            system.Update(0);
-            world.Get<SDKTweenComponent>(entity).IsDirty = false;
-
-            pbTween.IsDirty = false;
-            system.Update(0);
-
-            world.Query(new QueryDescription().WithAll<PBTween>(), (ref SDKTweenComponent comp) => Assert.IsFalse(comp.IsDirty));
-        }
+     
           
     }
   

@@ -2,7 +2,7 @@
 
 namespace DCL.MapRenderer.MapLayers
 {
-    internal interface IMapRendererMarker
+    public interface IMapRendererMarker
     {
         Vector2 Pivot { get; }
     }

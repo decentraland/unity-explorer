@@ -81,7 +81,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
             await InitializeFeatureFlagsAsync(ct);
-            
+
             Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
             parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
 
@@ -122,7 +122,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
         }
-        
+
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
             try

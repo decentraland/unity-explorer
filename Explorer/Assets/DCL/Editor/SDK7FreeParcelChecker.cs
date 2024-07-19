@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -35,7 +36,7 @@ namespace DCL.Editor
     public class SDK7FreeParcelChecker : EditorWindow
     {
         private const string BASE_URL = "https://raw.githubusercontent.com/decentraland/sdk7-goerli-plaza/main/";
-        private static readonly List<string> FETCHED_PARCELS = new ();
+        private static readonly Dictionary<string, string> FETCHED_PARCELS = new ();
 
         private TextField xInput;
         private TextField yInput;
@@ -83,7 +84,7 @@ namespace DCL.Editor
             rootVisualElement.Add(resultLabel);
         }
 
-        [MenuItem("Decentraland/SDK/Check Parcel Availability")]
+        [MenuItem("Decentraland/SDK/[Goerli] Check Parcel Availability")]
         public static void ShowExample()
         {
             SDK7FreeParcelChecker wnd = GetWindow<SDK7FreeParcelChecker>();
@@ -97,8 +98,7 @@ namespace DCL.Editor
 
             if (workspace != null)
             {
-                Debug.Log("Occupied parcels:");
-
+                Debug.Log($"Occupied parcels for {workspace.folders}:");
                 foreach (Folder folder in workspace.folders)
                     await FetchSceneCoordinates(folder.path);
             }
@@ -113,12 +113,13 @@ namespace DCL.Editor
                 foreach (string parcel in sceneInfo.scene.parcels)
                 {
                     Debug.Log(parcel);
-                    FETCHED_PARCELS.Add(parcel);
+                    FETCHED_PARCELS[parcel] = scenePath;
                 }
         }
 
         private static async UniTask<T> FetchJsonData<T>(string url)
         {
+            Debug.Log(url);
             using var webRequest = UnityWebRequest.Get(url);
             await webRequest.SendWebRequest().ToUniTask();
 
@@ -153,16 +154,20 @@ namespace DCL.Editor
                 button.SetEnabled(true);
             }
 
-            if (FETCHED_PARCELS.Contains(userCoordinate))
+            string message;
+            if (FETCHED_PARCELS.Keys.ToList().Contains(userCoordinate))
             {
-                resultLabel.text = $"Parcel {userCoordinate} is occupied.";
+                message = $"Parcel {userCoordinate} is occupied by {FETCHED_PARCELS[userCoordinate]}.";
                 resultLabel.style.color = new StyleColor(Color.red);
             }
             else
             {
-                resultLabel.text = $"Parcel {userCoordinate} is available.";
+                message = $"Parcel {userCoordinate} is available.";
                 resultLabel.style.color = new StyleColor(Color.green);
             }
+
+            Debug.Log(message);
+            resultLabel.text = message;
         }
     }
 }

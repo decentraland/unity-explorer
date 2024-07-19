@@ -12,12 +12,7 @@ namespace Global.Dynamic
         Custom,
     }
 
-    public enum ContentServer
-    {
-        World,
-        Genesis,
-        Goerli
-    }
+
     
     
 }

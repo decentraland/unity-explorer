@@ -3,20 +3,18 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.CharacterCamera.Components;
-using DCL.CharacterCamera.Components;
 using DCL.ECSComponents;
 using DCL.Interaction.PlayerOriginated.Components;
-using DCL.Interaction.PlayerOriginated.Systems;
+using DCL.Interaction.Systems;
 using ECS.Abstract;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.UIToolkit;
-using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
 
 namespace DCL.Interaction.HoverCanvas.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
-    [UpdateAfter(typeof(ProcessPointerEventsSystem))]
+    [UpdateAfter(typeof(ProcessOtherAvatarsInteractionSystem))]
     public partial class ShowHoverFeedbackSystem : BaseUnityLoopSystem
     {
         private readonly UI.HoverCanvas hoverCanvasInstance;

@@ -15,17 +15,19 @@ namespace DCL.Chat.MessageBus
         private CancellationTokenSource commandCts = new ();
         private (IChatCommand command, Match param) commandTuple;
 
-        public event Action<ChatMessage>? OnMessageAdded;
+        public event Action<ChatMessage>? MessageAdded;
 
         public CommandsHandleChatMessageBus(IChatMessagesBus origin, IReadOnlyDictionary<Regex, Func<IChatCommand>> commandsFactory)
         {
             this.origin = origin;
             this.chatCommandsHandler = new ChatCommandsHandler(commandsFactory);
-            origin.OnMessageAdded += OriginOnOnMessageAdded;
+            origin.MessageAdded += OriginOnOnMessageAdded;
         }
 
         public void Dispose()
         {
+            origin.MessageAdded -= OriginOnOnMessageAdded;
+
             origin.Dispose();
             commandCts.SafeCancelAndDispose();
         }
@@ -58,12 +60,12 @@ namespace DCL.Chat.MessageBus
 
         private void SendFromSystem(string message)
         {
-            OnMessageAdded?.Invoke(ChatMessage.NewFromSystem(message));
+            MessageAdded?.Invoke(ChatMessage.NewFromSystem(message));
         }
 
         private void OriginOnOnMessageAdded(ChatMessage obj)
         {
-            OnMessageAdded?.Invoke(obj);
+            MessageAdded?.Invoke(obj);
         }
     }
 }

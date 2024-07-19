@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using SceneRunner.Scene;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Global.Dynamic
 {
@@ -18,43 +20,31 @@ namespace Global.Dynamic
         }
 
         [SerializeField] private InitialRealm initialRealm;
+        [SerializeField] private Vector2Int targetScene;
         [SerializeField] private PredefinedScenes predefinedScenes;
         [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
         [SerializeField] private string customRealm = IRealmNavigator.GOERLI_URL;
-        [SerializeField] private string remoteSceneID = "bafkreihpuayzjkiiluobvq5lxnvhrjnsl24n4xtrtauhu5cf2bk6sthv5q";
-        [SerializeField] private ContentServer remoteSceneContentServer = ContentServer.World;
+        [SerializeField] private string remoteHibridWorld = "MetadyneLabs.dcl.eth";
+        [SerializeField] private HibridSceneContentServer remoteHibridSceneContentServer = HibridSceneContentServer.Goerli;
+        [SerializeField] private bool useRemoteAssetsBundles = true;
 
-        [SerializeField] public Vector2Int targetScene;
-        public string CustomRealm => customRealm;
+        public Vector2Int TargetScene => targetScene;
 
         public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
             ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()
             : Array.Empty<int2>();
 
-        public HybridSceneParams CreateHybridSceneParams()
+        public HybridSceneParams CreateHybridSceneParams(Vector2Int startParcel)
         {
             if (initialRealm == InitialRealm.Localhost)
             {
                 return new HybridSceneParams
                 {
-                    EnableHybridScene = true,
-                    HybridSceneID = remoteSceneID,
-                    HybridSceneContent = remoteSceneContentServer switch
-                                         {
-                                             ContentServer.Genesis => IRealmNavigator.GENESIS_CONTENT_URL,
-                                             ContentServer.Goerli => IRealmNavigator.GOERLI_CONTENT_URL,
-                                             ContentServer.World => IRealmNavigator.WORLDS_CONTENT_URL,
-                                         }
+                    StartParcel = startParcel, EnableHybridScene = useRemoteAssetsBundles, HybridSceneContentServer = remoteHibridSceneContentServer, World = remoteHibridSceneContentServer.Equals(HibridSceneContentServer.World) ? remoteHibridWorld : ""
                 };
             }
 
             return new HybridSceneParams();
-        }
-
-        public void SetCustomStartingRealm(string targetRealm)
-        {
-            customRealm = targetRealm;
-            initialRealm = InitialRealm.Custom;
         }
 
         public string GetStartingRealm()
@@ -71,6 +61,14 @@ namespace Global.Dynamic
                        InitialRealm.Custom => customRealm,
                        _ => IRealmNavigator.GENESIS_URL,
                    };
+        }
+
+        public void SetTargetScene(Vector2Int newTargetScene) => targetScene = newTargetScene;
+
+        public void SetCustomStartingRealm(string targetRealm)
+        {
+            customRealm = targetRealm;
+            initialRealm = InitialRealm.Custom;
         }
     }
 }

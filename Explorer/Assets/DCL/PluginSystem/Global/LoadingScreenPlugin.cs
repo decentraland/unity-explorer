@@ -12,11 +12,11 @@ namespace DCL.PluginSystem.Global
     public partial class LoadingScreenPlugin : IDCLGlobalPlugin<LoadingScreenPlugin.LoadingScreenPluginSettings>
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly MVCManager mvcManager;
+        private readonly IMVCManager mvcManager;
 
         public LoadingScreenPlugin(
             IAssetsProvisioner assetsProvisioner,
-            MVCManager mvcManager)
+            IMVCManager mvcManager)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;

@@ -29,13 +29,12 @@ namespace DCL.SDKComponents.Tween.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateBefore(typeof(UpdateTransformSystem))]
+    [UpdateAfter(typeof(TweenLoaderSystem))]
     [LogCategory(ReportCategory.TWEEN)]
-    [ThrottlingEnabled]
     public partial class TweenUpdaterSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
         private readonly TweenerPool tweenerPool;
-        private readonly IObjectPool<PBTween> pbTweenPool;
         
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
@@ -75,15 +74,15 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, IObjectPool<PBTween> pbTweenPool) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
         {
             this.tweenerPool = tweenerPool;
-            this.pbTweenPool = pbTweenPool;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
         {
+            UpdatePBTweenQuery(World);
             UpdateTweenSequenceQuery(World);
 
             HandleEntityDestructionQuery(World);
@@ -118,14 +117,29 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
         }
+        
+        [Query]
+        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
+        {
+            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
+
+            if (pbTween.IsDirty)
+                tweenComponent.IsDirty = true;
+        }
 
         [Query]
         private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
             if (sdkTweenComponent.IsDirty)
-                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);
+            {
+                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);  
+            }
+
             else
+            {
                 UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity);
+            }
+
         }
 
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
@@ -147,7 +161,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
             }
 
-            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
+            UpdateTweenStateAndPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
             sdkTweenComponent.IsDirty = false;
         }
 
@@ -168,8 +182,8 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private void UpdateTweenStateAndPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
-            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
             UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
+            TweenSDKComponentHelper.WriteTweenStateInCRDT(ecsToCRDTWriter, sdkEntity, sdkTweenComponent.TweenStateStatus);
         }
 
         private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
@@ -202,7 +216,6 @@ namespace DCL.SDKComponents.Tween.Systems
         private void CleanUpTweenBeforeRemoval(CRDTEntity sdkEntity, ref SDKTweenComponent sdkTweenComponent)
         {
             ReturnTweenToPool(ref sdkTweenComponent);
-            pbTweenPool.Release(sdkTweenComponent.CachedTween);
             ecsToCRDTWriter.DeleteMessage<PBTweenState>(sdkEntity);
         }
 

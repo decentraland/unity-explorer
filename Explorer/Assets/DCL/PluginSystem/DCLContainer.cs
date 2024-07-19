@@ -4,6 +4,14 @@ using System.Threading;
 
 namespace DCL.PluginSystem
 {
+    public abstract class DCLGlobalContainer<TSettings> : DCLContainer<TSettings> where TSettings: IDCLPluginSettings, new() { }
+
+    public abstract class DCLWorldContainer<TSettings> : DCLContainer<TSettings> where TSettings: IDCLPluginSettings, new() { }
+
+    /// <summary>
+    ///     Should not be inherited directly, use <see cref="DCLGlobalContainer{TSettings}" /> or <see cref="DCLWorldContainer{TSettings}" />
+    /// </summary>
+    /// <typeparam name="TSettings"></typeparam>
     public abstract class DCLContainer<TSettings> : IDCLPlugin<TSettings> where TSettings: IDCLPluginSettings, new()
     {
         protected TSettings settings { get; private set; } = default!;

@@ -1,5 +1,6 @@
 ﻿using System;
 using CRDT;
+using CrdtEcsBridge.Components.Transform;
 using DCL.ECSComponents;
 using DG.Tweening;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace DCL.SDKComponents.Tween.Components
         bool IsActive();
 
         void Initialize(PBTween pbTween, Transform startTransform, float durationInSeconds);
-        TweenResult GetResult();
+        void SetResult(ref SDKTransform sdkTransform);
 
     }
 

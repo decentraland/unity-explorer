@@ -20,9 +20,7 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
-        public const string GOERLI_CONTENT_URL = "https://sdk-team-cdn.decentraland.org/ipfs/";
-        public const string GENESIS_CONTENT_URL = "https://peer.decentraland.org/content/contents/";
-        public const string WORLDS_CONTENT_URL = "https://worlds-content-server.decentraland.org/contents/";
+
 
         URLDomain CurrentRealm { get; }
 

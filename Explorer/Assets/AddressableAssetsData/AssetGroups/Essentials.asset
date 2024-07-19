@@ -297,8 +297,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e7d14406516774d91886b6b4d1a26a58
+    m_Address: MapPin
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 90c5ebf3fa8f7a643976616957cc83a2
     m_Address: Assets/DCL/UI/Assets/ColorToggle.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a1d5d4f99234041159f0c215eef3eff3
+    m_Address: NewNotificationPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4b896bc1397444f00a2b45725af2b263
+    m_Address: NotificationIconTypesSO
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c4c0e79124f01744a5f969e08ad0370
+    m_Address: RemoteAvatarCollider
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

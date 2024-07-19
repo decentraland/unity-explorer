@@ -24,7 +24,10 @@ namespace ECS.StreamableLoading.AssetBundles
         internal int referencesCount;
         public long LastUsedFrame { get; private set; }
 
-        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies)
+        private readonly string version;
+        private readonly string source;
+
+        public AssetBundleData(AssetBundle assetBundle, AssetBundleMetrics? metrics, Object mainAsset, Type assetType, AssetBundleData[] dependencies, string version = "", string source = "")
         {
             AssetBundle = assetBundle;
             Metrics = metrics;
@@ -32,6 +35,8 @@ namespace ECS.StreamableLoading.AssetBundles
             this.mainAsset = mainAsset;
             Dependencies = dependencies;
             this.assetType = assetType;
+            this.version = version;
+            this.source = source;
 
             ProfilingCounters.ABDataAmount.Value++;
         }
@@ -97,6 +102,11 @@ namespace ECS.StreamableLoading.AssetBundles
 
             if (referencesCount == 0)
                 ProfilingCounters.ABReferencedAmount.Value--;
+        }
+
+        public string GetInstanceName()
+        {
+            return $"AB:{AssetBundle.name}_{version}_{source}";
         }
     }
 }

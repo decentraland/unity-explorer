@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly ICursor cursor;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly UIDocument canvas;
-        private readonly MVCManager mvcManager;
+        private readonly IMVCManager mvcManager;
         private readonly IDebugContainerBuilder debugContainerBuilder;
         private readonly UIDocument rootUIDocument;
         private readonly UIDocument cursorUIDocument;
@@ -51,7 +51,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             UIDocument canvas,
             MultiplayerEmotesMessageBus messageBus,
-            MVCManager mvcManager,
+            IMVCManager mvcManager,
             IDebugContainerBuilder debugContainerBuilder,
             UIDocument rootUIDocument,
             UIDocument cursorUIDocument)

@@ -1,5 +1,6 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
 using DCL.DebugUtilities;
@@ -26,12 +27,16 @@ using ECS;
 using ECS.LifeCycle.Systems;
 using ECS.SceneLifeCycle;
 using LiveKit.Internal.FFIClients;
+using System;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class MultiplayerPlugin : IDCLGlobalPluginWithoutSettings
+    public class MultiplayerPlugin : IDCLGlobalPlugin<MultiplayerPlugin.Settings>
     {
+        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IArchipelagoIslandRoom archipelagoIslandRoom;
         private readonly ICharacterObject characterObject;
         private readonly IDebugContainerBuilder debugContainerBuilder;
@@ -49,6 +54,7 @@ namespace DCL.PluginSystem.Global
         private readonly IScenesCache scenesCache;
 
         public MultiplayerPlugin(
+            IAssetsProvisioner assetsProvisioner,
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IRoomHub roomHub,
@@ -66,6 +72,7 @@ namespace DCL.PluginSystem.Global
             IEmoteCache emoteCache
         )
         {
+            this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
             this.gateKeeperSceneRoom = gateKeeperSceneRoom;
             this.roomHub = roomHub;
@@ -83,11 +90,13 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
         }
 
-        public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
+        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            remoteEntities.Initialize();
-            return UniTask.CompletedTask;
+            RemoteAvatarCollider remoteAvatarCollider = (await assetsProvisioner.ProvideMainAssetAsync(settings.RemoteAvatarColliderPrefab, ct)).Value.GetComponent<RemoteAvatarCollider>();
+            remoteEntities.Initialize(remoteAvatarCollider);
         }
+
+        public void Dispose() { }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
         {
@@ -117,6 +126,15 @@ namespace DCL.PluginSystem.Global
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
 #endif
+        }
+
+        [Serializable]
+        public class Settings : IDCLPluginSettings
+        {
+            [field: Header(nameof(MultiplayerPlugin) + "." + nameof(Settings))]
+            [field: Space]
+            [field: SerializeField]
+            public AssetReferenceGameObject RemoteAvatarColliderPrefab;
         }
     }
 }

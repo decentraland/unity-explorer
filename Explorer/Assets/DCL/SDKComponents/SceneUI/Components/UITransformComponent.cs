@@ -13,7 +13,12 @@ namespace DCL.SDKComponents.SceneUI.Components
     {
         private static readonly Comparison<VisualElement> CACHED_COMPARISON = TabIndexComparison;
 
-        public VisualElement Transform;
+        public VisualElement Transform
+        {
+            get => isRoot ? rootTransform : reusableTransform;
+            internal set { if (isRoot) rootTransform = value; else reusableTransform = value;}
+        }
+
         public bool IsHidden;
         public PointerEventType? PointerEventTriggered;
 
@@ -24,9 +29,12 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         private bool isRoot;
 
+        private VisualElement rootTransform;
+        private VisualElement reusableTransform;
+
         public void InitializeAsRoot(VisualElement root)
         {
-            Transform = root;
+            this.rootTransform ??= root;
             IsHidden = false;
             PointerEventTriggered = null;
 
@@ -35,11 +43,12 @@ namespace DCL.SDKComponents.SceneUI.Components
             isRoot = true;
         }
 
-        public void Initialize(string componentName, CRDTEntity entity, CRDTEntity rightOf)
+        public void InitializeAsChild(string componentName, CRDTEntity entity, CRDTEntity rightOf)
         {
-            Transform ??= new VisualElement();
+            reusableTransform ??= new VisualElement();
             Transform.name = UiElementUtils.BuildElementName(componentName, entity);
             IsHidden = false;
+            isRoot = false;
             PointerEventTriggered = null;
 
             RelationData.parent = EntityReference.Null;
@@ -80,14 +89,14 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         public void Dispose()
         {
-            this.UnregisterPointerCallbacks();
             RelationData.Dispose();
 
-            if (isRoot)
-                return;
+            // If it's not a root its transform can be reused
+            if (isRoot) return;
 
-            Transform.tabIndex = 0;
-            Transform.RemoveFromHierarchy();
+            this.UnregisterPointerCallbacks();
+            reusableTransform.tabIndex = 0;
+            reusableTransform.RemoveFromHierarchy();
         }
     }
 }

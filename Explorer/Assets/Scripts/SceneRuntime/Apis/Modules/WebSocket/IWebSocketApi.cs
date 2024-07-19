@@ -44,7 +44,8 @@ namespace SceneRuntime.Apis.Modules
             ///     Either "Binary" or "Text"
             /// </summary>
             public string type;
-            public ITypedArray<byte> data;
+            public ITypedArray<byte> binary;
+            public string text;
         }
     }
 }
