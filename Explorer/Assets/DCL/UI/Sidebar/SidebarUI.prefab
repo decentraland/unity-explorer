@@ -303,6 +303,7 @@ MonoBehaviour:
   <SystemMenuView>k__BackingField: {fileID: 1662532686973913164}
   <PersistentEmoteWheelOpener>k__BackingField: {fileID: 5415830858801336587}
   <ProfileMenuWidget>k__BackingField: {fileID: 293695653590666180}
+  <notificationsButton>k__BackingField: {fileID: 7474329147563909817}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
   <settingsButton>k__BackingField: {fileID: 9220203987770033458}
@@ -848,7 +849,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 29.65, y: -12.19}
+  m_AnchoredPosition: {x: 29.65, y: -12.189941}
   m_SizeDelta: {x: 12.5, y: 12.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7519443570380126381
@@ -2771,3 +2772,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2788950014895397509, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
   m_PrefabInstance: {fileID: 8316371661593613686}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7474329147563909817 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1500693959885502415, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+  m_PrefabInstance: {fileID: 8316371661593613686}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

@@ -56,6 +56,7 @@ namespace DCL.UI.Sidebar
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePopup);
+            viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             notificationsBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
         }
@@ -85,6 +86,11 @@ namespace DCL.UI.Sidebar
         {
             viewInstance.profileMenu.gameObject.SetActive(true);
             ShowSystemMenu();
+        }
+
+        private void OpenNotificationsPanel()
+        {
+            notificationsMenuController.ToggleNotificationsPanel();
         }
 
         private void ShowSystemMenu()

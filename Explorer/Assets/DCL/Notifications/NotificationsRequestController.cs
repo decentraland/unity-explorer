@@ -16,8 +16,8 @@ namespace DCL.Notification
 {
     public class NotificationsRequestController : IDisposable
     {
-        private const string NOTIFICATION_URL = "https://notifications.decentraland.org/notifications";
-        private const string NOTIFICATION_READ_URL = "https://notifications.decentraland.org/notifications/read";
+        private const string NOTIFICATION_URL = "https://notifications.decentraland.zone/notifications";
+        private const string NOTIFICATION_READ_URL = "https://notifications.decentraland.zone/notifications/read";
 
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
 
@@ -28,6 +28,7 @@ namespace DCL.Notification
         private readonly CommonArguments commonArgumentsForSetRead;
         private readonly StringBuilder bodyBuilder = new ();
         private readonly URLParameter onlyUnreadParameter = new ("onlyUnread", "true");
+        private readonly URLParameter limitParameter = new ("limit", "50");
         private readonly URLBuilder urlBuilder = new();
         private CommonArguments commonArguments;
         private ulong unixTimestamp;
@@ -49,7 +50,8 @@ namespace DCL.Notification
         public async UniTask<List<INotification>> RequestNotifications()
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(NOTIFICATION_URL));
+            urlBuilder.AppendDomain(URLDomain.FromString(NOTIFICATION_URL))
+                      .AppendParameter(limitParameter);
             commonArguments = new CommonArguments(urlBuilder.Build());
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             List<INotification> notifications =

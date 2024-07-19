@@ -25,6 +25,9 @@ namespace DCL.UI.Sidebar
         public ProfileWidgetView ProfileMenuWidget { get; private set; }
 
         [field: SerializeField]
+        internal Button notificationsButton { get; private set; }
+
+        [field: SerializeField]
         internal Button mapButton { get; private set; }
 
         [field: SerializeField]

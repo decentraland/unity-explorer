@@ -25,6 +25,11 @@ namespace DCL.Notification.NotificationsMenu
             InitialNotificationRequest().Forget();
         }
 
+        public void ToggleNotificationsPanel()
+        {
+            view.gameObject.SetActive(!view.gameObject.activeSelf);
+        }
+
         private async UniTaskVoid InitialNotificationRequest()
         {
             List<INotification> RequestNotifications = await notificationsRequestController.RequestNotifications();
