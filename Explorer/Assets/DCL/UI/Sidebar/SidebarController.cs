@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.ExplorePanel;
 using DCL.Notification;
 using DCL.Notification.NotificationsBus;
+using DCL.Notification.NotificationsMenu;
 using MVC;
 using System.Threading;
 using Utility;
@@ -17,12 +18,19 @@ namespace DCL.UI.Sidebar
         private readonly ProfileWidgetController profileMenuWidgetController;
         private readonly SystemMenuController systemMenuController;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsMenuController notificationsMenuController;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
 
-        public SidebarController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, INotificationsBusController notificationsBusController,
-            ProfileWidgetController profileIconWidgetController, ProfileWidgetController profileMenuWidgetController, SystemMenuController systemMenuController)
+        public SidebarController(
+            ViewFactoryMethod viewFactory,
+            IMVCManager mvcManager,
+            INotificationsBusController notificationsBusController,
+            NotificationsMenuController notificationsMenuController,
+            ProfileWidgetController profileIconWidgetController,
+            ProfileWidgetController profileMenuWidgetController,
+            SystemMenuController systemMenuController)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -30,6 +38,7 @@ namespace DCL.UI.Sidebar
             this.profileMenuWidgetController = profileMenuWidgetController;
             this.systemMenuController = systemMenuController;
             this.notificationsBusController = notificationsBusController;
+            this.notificationsMenuController = notificationsMenuController;
         }
 
         public override void Dispose()

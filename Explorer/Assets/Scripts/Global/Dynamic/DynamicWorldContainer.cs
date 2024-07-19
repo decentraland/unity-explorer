@@ -36,6 +36,7 @@ using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
+using DCL.Notification;
 using DCL.Notification.NotificationsBus;
 using DCL.ParcelsService;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -322,6 +323,7 @@ namespace Global.Dynamic
             );
 
             INotificationsBusController notificationsBusController = new NotificationsBusController();
+            NotificationsRequestController notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, identityCache);
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
@@ -375,8 +377,18 @@ namespace Global.Dynamic
                 ),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
-                new SidebarPlugin(assetsProvisioner, container.MvcManager, mainUIContainer, notificationsBusController, identityCache, container.ProfileRepository, staticContainer.WebRequestsContainer.WebRequestController,
-                    webBrowser, dynamicWorldDependencies.Web3Authenticator, container.UserInAppInitializationFlow,profileCache),
+                new SidebarPlugin(
+                    assetsProvisioner,
+                    container.MvcManager,
+                    mainUIContainer,
+                    notificationsBusController,
+                    notificationsRequestController,
+                    identityCache,
+                    container.ProfileRepository,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    webBrowser,
+                    dynamicWorldDependencies.Web3Authenticator,
+                    container.UserInAppInitializationFlow,profileCache),
                 new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIContainer),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIContainer, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
@@ -425,7 +437,13 @@ namespace Global.Dynamic
                 container.LODContainer.RoadPlugin,
                 new AudioPlaybackPlugin(genesisTerrain, assetsProvisioner, dynamicWorldParams.EnableLandscape),
                 new RealmDataDirtyFlagPlugin(staticContainer.RealmData),
-                new NotificationPlugin(assetsProvisioner, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, identityCache, notificationsBusController),
+                new NotificationPlugin(
+                    assetsProvisioner,
+                    container.MvcManager,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    identityCache,
+                    notificationsBusController,
+                    notificationsRequestController),
                 new PassportPlugin(
                     assetsProvisioner,
                     container.MvcManager,

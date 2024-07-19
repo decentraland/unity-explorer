@@ -3,7 +3,9 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.ExplorePanel;
+using DCL.Notification;
 using DCL.Notification.NotificationsBus;
+using DCL.Notification.NotificationsMenu;
 using DCL.Profiles;
 using DCL.UI.MainUI;
 using DCL.UI.Sidebar;
@@ -22,6 +24,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly MainUIContainer mainUIContainer;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
@@ -30,14 +33,25 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
 
-        public SidebarPlugin(IAssetsProvisioner assetsProvisioner, IMVCManager mvcManager, MainUIContainer mainUIContainer, INotificationsBusController notificationsBusController, IWeb3IdentityCache web3IdentityCache,
-            IProfileRepository profileRepository, IWebRequestController webRequestController, IWebBrowser webBrowser, IWeb3Authenticator web3Authenticator, IUserInAppInitializationFlow userInAppInitializationFlow,
+        public SidebarPlugin(
+            IAssetsProvisioner assetsProvisioner,
+            IMVCManager mvcManager,
+            MainUIContainer mainUIContainer,
+            INotificationsBusController notificationsBusController,
+            NotificationsRequestController notificationsRequestController,
+            IWeb3IdentityCache web3IdentityCache,
+            IProfileRepository profileRepository,
+            IWebRequestController webRequestController,
+            IWebBrowser webBrowser,
+            IWeb3Authenticator web3Authenticator,
+            IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.mainUIContainer = mainUIContainer;
             this.notificationsBusController = notificationsBusController;
+            this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
             this.profileRepository = profileRepository;
             this.webRequestController = webRequestController;
@@ -59,7 +73,9 @@ namespace DCL.PluginSystem.Global
                         view.gameObject.SetActive(true);
                         return view;
                     },
-                    mvcManager, notificationsBusController,
+                    mvcManager,
+                    notificationsBusController,
+                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
                     new SystemMenuController(() => mainUIContainer.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager)

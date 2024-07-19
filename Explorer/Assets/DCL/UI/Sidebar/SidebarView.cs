@@ -1,5 +1,6 @@
 ﻿using DCL.EmotesWheel;
 using DCL.ExplorePanel;
+using DCL.Notification.NotificationsMenu;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,11 @@ namespace DCL.UI.Sidebar
     public class SidebarView : ViewBase, IView
     {
         [field: SerializeField]
+        public NotificationsMenuView NotificationsMenuView { get; private set; }
+
+        [field: SerializeField]
         public ProfileWidgetView ProfileWidget { get; private set; }
+
         [field: SerializeField]
         public SystemMenuView SystemMenuView { get; private set; }
 

@@ -46,6 +46,23 @@ namespace DCL.Notification
             GetNewNotificationAsync().SuppressCancellationThrow().Forget();
         }
 
+        public async UniTask<List<INotification>> RequestNotifications()
+        {
+            urlBuilder.Clear();
+            urlBuilder.AppendDomain(URLDomain.FromString(NOTIFICATION_URL));
+            commonArguments = new CommonArguments(urlBuilder.Build());
+            unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+            List<INotification> notifications =
+                await webRequestController.GetAsync(
+                                               commonArguments,
+                                               cancellationToken.Token,
+                                               signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
+                                               headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                          .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
+
+            return notifications;
+        }
+
         private async UniTask GetNewNotificationAsync()
         {
             do
