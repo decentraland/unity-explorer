@@ -25,10 +25,13 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
     public partial class ReleaseOutdatedRenderingSystem : BaseUnityLoopSystem
     {
         private readonly IComponentPoolsRegistry poolsRegistry;
+        private readonly IComponentPool<MeshRenderer> rendererPoolRegistry;
+
 
         internal ReleaseOutdatedRenderingSystem(World world, IComponentPoolsRegistry poolsRegistry) : base(world)
         {
             this.poolsRegistry = poolsRegistry;
+            rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
         }
 
         protected override void Update(float t)
@@ -40,10 +43,10 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
 
         [Query]
         [None(typeof(PBMeshRenderer), typeof(DeleteEntityIntention))]
-        private void HandleComponentRemoval(in Entity id, ref PrimitiveMeshRendererComponent rendererComponent)
+        private void HandleComponentRemoval(ref PrimitiveMeshRendererComponent rendererComponent)
         {
-            Debug.Log($"JUANI SHOULD HANDLE REMOVAL PRIMITIVE {id}");
             Release(ref rendererComponent);
+            rendererPoolRegistry.Release(rendererComponent.MeshRenderer);
         }
 
         [Query]

@@ -49,10 +49,6 @@ namespace ECS.Unity.Materials.Systems
 
             if (TryGetTextureResult(ref materialComponent.AlbedoTexPromise, out StreamableLoadingResult<Texture2D> albedoResult))
             {
-                Debug.Log(
-                    $"JUANI CREATING MATERIAL 2 {id} {materialComponent.Data.TransparencyMode} {materialComponent.Data.AlphaTexture} {materialComponent.Data.AlphaTest}");
-
-                
                 materialComponent.Status = StreamableLoading.LifeCycle.LoadingFinished;
 
                 materialComponent.Result ??= CreateNewMaterialInstance();

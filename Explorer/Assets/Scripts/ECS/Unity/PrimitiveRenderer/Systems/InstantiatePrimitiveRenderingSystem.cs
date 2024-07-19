@@ -97,7 +97,6 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             // The model has changed entirely, so we need to reinstall the renderer
             if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))
             {
-                Debug.Log("REINSTANTIATING");
                 Instantiate(entity, setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
                     ref transform);
             }
