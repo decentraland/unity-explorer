@@ -13,7 +13,6 @@ using System.Linq;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
-using System.Text.RegularExpressions;
 
 namespace Global.Dynamic
 {
@@ -139,10 +138,6 @@ namespace Global.Dynamic
                     return;
                 }
 
-                localSceneDevelopment = DetectLocalSceneDevelopment(); // we may need to inject this bool somewhere else...
-                if (localSceneDevelopment)
-                    dynamicWorldContainer.LocalSceneDevelopmentController.Initialize(launchSettings.GetStartingRealm());
-
                 Entity playerEntity;
                 (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
 
@@ -161,51 +156,6 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
-        }
-
-        private bool DetectLocalSceneDevelopment()
-        {
-            // When started in preview mode (local scene development) a command line argument is used
-            // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
-
-            // FOR DEBUGGING IN UNITY ONLY
-            // string[] cmdArgs = new[] { "", "decentraland://realm=http://127.0.0.1:8000&position=100,100" };
-            string[] cmdArgs = System.Environment.GetCommandLineArgs();
-
-            if (cmdArgs.Length > 1)
-            {
-                // Regex to detect different parameters in Uri based on first param after '//' and then separated by '&'
-                var pattern = @"(?<=://|&)[^?&]+=[^&]+";
-                var regex = new Regex(pattern);
-                var matches = regex.Matches(cmdArgs[1]);
-
-                if (matches.Count == 0 || !matches[0].Value.Contains("realm=http://127.0.0.1:"))
-                    return false;
-
-                string localRealm = matches[0].Value.Replace("realm=", "");
-                launchSettings.SetCustomStartingRealm(localRealm);
-
-                if (matches.Count > 1)
-                {
-                    for (var i = 1; i < matches.Count; i++)
-                    {
-                        string param = matches[i].Value;
-
-                        if (param.Contains("position="))
-                        {
-                            param = param.Replace("position=", "");
-
-                            launchSettings.SetTargetScene(new Vector2Int(
-                                int.Parse(param.Substring(0, param.IndexOf(','))),
-                                int.Parse(param.Substring(param.IndexOf(',') + 1))));
-                        }
-                    }
-                }
-
-                return true;
-            }
-
-            return false;
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]

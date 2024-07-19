@@ -22,6 +22,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Text.RegularExpressions;
 
 namespace Global.Dynamic
 {
@@ -32,11 +33,12 @@ namespace Global.Dynamic
         private readonly bool showLoading;
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
+
         public bool EnableAnalytics { private get; init; }
 
         private string startingRealm = IRealmNavigator.GENESIS_URL;
         private Vector2Int startingParcel;
-
+        private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
 
         public Bootstrap(DebugSettings debugSettings)
@@ -53,6 +55,8 @@ namespace Global.Dynamic
         {
             splashRoot.SetActive(showSplash);
             cursorRoot.EnsureNotNull();
+
+            localSceneDevelopment = DetectAndConfigureLocalSceneDevelopment(launchSettings);
 
             startingRealm = launchSettings.GetStartingRealm();
             startingParcel = launchSettings.TargetScene;
@@ -89,7 +93,7 @@ namespace Global.Dynamic
                 WorldInfoTool = worldInfoTool,
             };
 
-            return await DynamicWorldContainer.CreateAsync(
+            (var dynamicWorldContainer, bool loaded) =  await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
                 new DynamicWorldParams
@@ -103,6 +107,11 @@ namespace Global.Dynamic
                 },
                 backgroundMusic,
                 ct);
+
+            if (loaded && localSceneDevelopment)
+                dynamicWorldContainer!.LocalSceneDevelopmentController.Initialize(launchSettings.GetStartingRealm());
+
+            return (dynamicWorldContainer, loaded);
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
@@ -172,6 +181,52 @@ namespace Global.Dynamic
 
             splashRoot.SetActive(false);
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+        }
+
+        private bool DetectAndConfigureLocalSceneDevelopment(RealmLaunchSettings launchSettings)
+        {
+            // When started in preview mode (local scene development) a command line argument is used
+            // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
+
+            // FOR DEBUGGING IN UNITY ONLY
+            // string[] cmdArgs = new[] { "", "decentraland://realm=http://127.0.0.1:8000&position=0,0" };
+            string[] cmdArgs = System.Environment.GetCommandLineArgs();
+
+            if (cmdArgs.Length > 1)
+            {
+                // Regex to detect different parameters in Uri based on first param after '//' and then separated by '&'
+                var pattern = @"(?<=://|&)[^?&]+=[^&]+";
+                var regex = new Regex(pattern);
+                var matches = regex.Matches(cmdArgs[1]);
+
+                if (matches.Count == 0 || !matches[0].Value.Contains("realm=http://127.0.0.1:"))
+                    return false;
+
+                string localRealm = matches[0].Value.Replace("realm=", "");
+                launchSettings.SetCustomStartingRealm(localRealm);
+
+                var positionParam = "position=";
+                if (matches.Count > 1)
+                {
+                    for (var i = 1; i < matches.Count; i++)
+                    {
+                        string param = matches[i].Value;
+
+                        if (param.Contains(positionParam))
+                        {
+                            param = param.Replace(positionParam, "");
+
+                            launchSettings.SetTargetScene(new Vector2Int(
+                                int.Parse(param.Substring(0, param.IndexOf(','))),
+                                int.Parse(param.Substring(param.IndexOf(',') + 1))));
+                        }
+                    }
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
