@@ -1,18 +1,16 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using ECS.SceneLifeCycle.Systems;
 using System;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
-    // TODO: Refactor logs for ReportHandler with new tag...
+    [LogCategory(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT)]
     public class LocalSceneDevelopmentController
     {
-        private const int TIMEOUT_SECONDS = 60;
-        private const string SCENE_CODE_UPDATE_MESSAGE = "update";
         private bool initialized = false;
         private ReloadSceneController reloadController;
         private string localSceneWebsocketServer;
@@ -29,7 +27,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
             initialized = true;
             localSceneWebsocketServer = localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws");
-            Debug.Log("LocalSceneDevelopmentController - trying to connect to: " + localSceneWebsocketServer);
+            ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Trying to connect to: {localSceneWebsocketServer}");
 
             ConnectToServerAsync().Forget();
         }
@@ -39,7 +37,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             webSocket = new ClientWebSocket();
             var uri = new Uri(localSceneWebsocketServer);
             await webSocket.ConnectAsync(uri, CancellationToken.None).AsUniTask();
-            Debug.Log($"PRAVs - websocket connection state: {webSocket.State}");
+            ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection state: {webSocket.State}");
 
             var receiveBuffer = new byte[1024];
 
@@ -47,9 +45,9 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
             {
                 var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
                 var receivedMessage = Encoding.UTF8.GetString(receiveBuffer, 0, receiveResult.Count);
-                Debug.Log($"PRAVs - websocket connection received message: {receivedMessage}");
+                ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection received message: {receivedMessage}");
 
-                if (receivedMessage == SCENE_CODE_UPDATE_MESSAGE)
+                if (!string.IsNullOrEmpty(receivedMessage))
                     await reloadController.TryReloadSceneAsync();
             }
         }
