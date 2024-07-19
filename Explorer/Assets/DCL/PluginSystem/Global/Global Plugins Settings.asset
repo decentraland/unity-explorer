@@ -42,6 +42,7 @@ MonoBehaviour:
   - rid: 2872862648882692098
   - rid: 2872862648882692099
   - rid: 4816187900846407682
+  - rid: 4816187913298509826
   references:
     version: 2
     RefIds:
@@ -469,6 +470,24 @@ MonoBehaviour:
     - rid: 4816187900846407682
       type: {class: SidebarPlugin/SidebarSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data: 
+    - rid: 4816187913298509826
+      type: {class: RewardPanelPlugin/RewardPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <RewardPanelView>k__BackingField:
+          m_AssetGUID: 70c6f2eab01fc462a9a2cac0d661417e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

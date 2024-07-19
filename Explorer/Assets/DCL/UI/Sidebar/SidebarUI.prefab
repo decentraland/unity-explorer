@@ -167,7 +167,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &952730195263594949
 RectTransform:
   m_ObjectHideFlags: 0
@@ -454,11 +454,13 @@ MonoBehaviour:
   <PersistentEmoteWheelOpener>k__BackingField: {fileID: 5415830858801336587}
   <ProfileMenuWidget>k__BackingField: {fileID: 293695653590666180}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
+  <notificationsButton>k__BackingField: {fileID: 7474329147563909817}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
   <settingsButton>k__BackingField: {fileID: 9220203987770033458}
   <autoHideToggle>k__BackingField: {fileID: 0}
   <profileMenu>k__BackingField: {fileID: 617051157247145518}
   <backpackNotificationIndicator>k__BackingField: {fileID: 7805156087351757482}
+  <notificationsNotificationIndicator>k__BackingField: {fileID: 1545797327826886678}
 --- !u!114 &359438563268453406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2780,3 +2782,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2788950014895397509, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
   m_PrefabInstance: {fileID: 8316371661593613686}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7474329147563909817 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1500693959885502415, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+  m_PrefabInstance: {fileID: 8316371661593613686}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
