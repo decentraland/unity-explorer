@@ -148,9 +148,12 @@ namespace Global.Dynamic
 
             FindLoadedScenes();
 
+            if (scenesCache.PortableExperiencesScenes.Count == 0) //If there are PX we dont Finalize World Systems as it breaks PX functionality
             // release pooled entities
-            for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+            {
+                for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
+                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+            }
 
             world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
