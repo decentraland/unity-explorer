@@ -89,8 +89,27 @@ namespace CommunicationData.URLHelpers
                 return URLAddress.EMPTY;
             }
 
+            index--;
+            ReadOnlySpan<char> ercType = CutBeforeColon(ref index, out success);
+
+            if (success == false)
+            {
+                LogError();
+                return URLAddress.EMPTY;
+            }
+
+            index--;
+            ReadOnlySpan<char> chain = CutBeforeColon(ref index, out success);
+
+            if (success == false)
+            {
+                LogError();
+                return URLAddress.EMPTY;
+            }
+
             return URLAddress.FromString(
                 baseUrl.Value
+                       .Replace("{chain}", new string(chain))
                        .Replace("{address}", new string(address)) //may be optimized further, or create custom ReplaceMethod that works with spans
                        .Replace("{id}", new string(id))
             );

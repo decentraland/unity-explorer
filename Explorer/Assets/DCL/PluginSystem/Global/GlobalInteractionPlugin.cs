@@ -10,6 +10,7 @@ using DCL.Interaction.PlayerOriginated;
 using DCL.Interaction.PlayerOriginated.Components;
 using DCL.Interaction.PlayerOriginated.Systems;
 using DCL.Interaction.Utility;
+using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -17,6 +18,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Utility.UIToolkit;
 using ProcessPointerEventsSystem = DCL.Interaction.Systems.ProcessPointerEventsSystem;
+using ProcessOtherAvatarsInteractionSystem = DCL.Interaction.Systems.ProcessOtherAvatarsInteractionSystem;
 
 namespace DCL.PluginSystem.Global
 {
@@ -30,6 +32,7 @@ namespace DCL.PluginSystem.Global
         private readonly GlobalInputEvents globalInputEvents;
         private readonly ICursor cursor;
         private readonly IEventSystem eventSystem;
+        private readonly IMVCManager mvcManager;
 
         private HoverCanvas hoverCanvas;
         private Settings settings;
@@ -42,7 +45,8 @@ namespace DCL.PluginSystem.Global
             IEntityCollidersGlobalCache entityCollidersGlobalCache,
             GlobalInputEvents globalInputEvents,
             ICursor cursor,
-            IEventSystem eventSystem)
+            IEventSystem eventSystem,
+            IMVCManager mvcManager)
         {
             this.dclInput = dclInput;
             this.canvas = canvas;
@@ -51,6 +55,7 @@ namespace DCL.PluginSystem.Global
             this.globalInputEvents = globalInputEvents;
             this.cursor = cursor;
             this.eventSystem = eventSystem;
+            this.mvcManager = mvcManager;
         }
 
         public void Dispose() { }
@@ -72,7 +77,7 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var playerInteractionEntity = new PlayerInteractionEntity(
-                builder.World.Create(new PlayerOriginRaycastResult(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
+                builder.World.Create(new PlayerOriginRaycastResultForSceneEntities(), new PlayerOriginRaycastResultForGlobalEntities(), new HoverStateComponent(), new HoverFeedbackComponent(hoverCanvas.TooltipsCount)),
                 builder.World);
 
             PlayerOriginatedRaycastSystem.InjectToWorld(ref builder, dclInput.Camera.Point, entityCollidersGlobalCache,
@@ -98,6 +103,7 @@ namespace DCL.PluginSystem.Global
             };
 
             ProcessPointerEventsSystem.InjectToWorld(ref builder, actionsMap, entityCollidersGlobalCache, eventSystem);
+            ProcessOtherAvatarsInteractionSystem.InjectToWorld(ref builder, eventSystem, dclInput, mvcManager);
             ShowHoverFeedbackSystem.InjectToWorld(ref builder, hoverCanvas, settings.hoverCanvasSettings.InputButtons);
             PrepareGlobalInputEventsSystem.InjectToWorld(ref builder, globalInputEvents, actionsMap);
         }
