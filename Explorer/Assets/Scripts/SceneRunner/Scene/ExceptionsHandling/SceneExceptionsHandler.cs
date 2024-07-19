@@ -14,7 +14,7 @@ namespace SceneRunner.Scene.ExceptionsHandling
     public class SceneExceptionsHandler : ISceneExceptionsHandler
     {
         // Experiment with this, maybe tolerance should be 0
-        internal const int ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE = 3;
+        internal const int ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE = 30;
 
         private static readonly ThreadSafeObjectPool<SceneExceptionsHandler> POOL = new (() => new SceneExceptionsHandler(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
@@ -49,10 +49,11 @@ namespace SceneRunner.Scene.ExceptionsHandling
             // Can be already disposed of
             if (sceneState == null) return;
 
-            // We only report the exception here.
             // Stopping the scene execution after a javascript exception causes some scenes to not work at all, since they intentionally have execution errors. ie: events-board-api goerli 78,1.
-            // The sdk7 runtime at kernel just does a try/catch and error reporting as well: https://github.com/decentraland/scene-runtime/blob/adbf9e78c3b5d85d619c41494a177dfd7b6b5581/src/worker-sdk7/sdk7-runtime.ts#L119-L130
-            ReportException(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber));
+            // In order to keep the scenes running we need to increase the error tolerance. Scenes that exceed will need a fix on the scene level.
+            // This works different from the old kernel. The sdk7 runtime just does a try/catch: https://github.com/decentraland/scene-runtime/blob/adbf9e78c3b5d85d619c41494a177dfd7b6b5581/src/worker-sdk7/sdk7-runtime.ts#L119-L130
+            if (Handle(exception, new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo, sceneTickNumber: sceneState.TickNumber)) != ISystemGroupExceptionHandler.Action.Continue)
+                sceneState!.State = SceneState.JavaScriptError;
         }
 
         public async UniTask<T> ReportAndRethrowExceptionAsync<T>(UniTask<T> task)
