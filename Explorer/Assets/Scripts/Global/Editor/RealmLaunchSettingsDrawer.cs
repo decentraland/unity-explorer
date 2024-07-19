@@ -17,7 +17,7 @@ namespace Global.Editor
         private const string TARGET_SCENE_FIELD_NAME = "targetScene";
         private const string TARGET_WORLD_FIELD_NAME = "targetWorld";
         private const string CUSTOM_REALM_FIELD_NAME = "customRealm";
-        private const string REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteHibridSceneContentServer";
+        private const string REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteHybridSceneContentServer";
         private const string REMOTE_HIBRID_SCENE_ENABLED = "useRemoteAssetsBundles";
         private const string REMOTE_HIBRID_WORLD_FIELD_NAME = "remoteHibridWorld";
         private const string PREDEFINED_SCENES_FIELD_NAME = "predefinedScenes";
