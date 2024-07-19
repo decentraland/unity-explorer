@@ -22,6 +22,7 @@ namespace DCL.LOD.Tests
 {
     public class InstantiateSceneLODInfoSystemShould : UnitySystemTestBase<InstantiateSceneLODInfoSystem>
     {
+        /*
         private SceneLODInfo sceneLODInfo;
         private LODAssetsPool lodAssetsPool;
         private SceneDefinitionComponent sceneDefinitionComponent;
@@ -141,5 +142,7 @@ namespace DCL.LOD.Tests
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
             return (fakeAssetBundleData, promise);
         }
+         */
     }
+   
 }

@@ -114,29 +114,14 @@ namespace DCL.LOD.Systems
         private void UpdateLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo,
             byte sceneLODCandidate, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
             sceneLODInfo.CurrentLODLevel = sceneLODCandidate;
-            var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel);
-
+            sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+            var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, sceneLODCandidate);
+            
             //If the current LOD is the candidate, no need to make a new promise or set anything new
-            if (newLODKey.Equals(sceneLODInfo.CurrentLOD))
+            if (sceneLODInfo.LoadedLODs.Contains(sceneLODCandidate))
             {
                 sceneLODInfo.IsDirty = false;
-                return;
-            }
-
-            if (newLODKey.Equals(sceneLODInfo.CurrentVisibleLOD))
-            {
-                sceneLODInfo.ResetToCurrentVisibleLOD();
-                sceneLODInfo.IsDirty = false;
-                return;
-            }
-
-            if (lodCache.TryGet(newLODKey, out var cachedAsset))
-            {
-                //If its cached, no need to make a new promise
-                sceneLODInfo.SetCurrentLOD(cachedAsset);
-                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                 return;
             }
 
@@ -179,7 +164,8 @@ namespace DCL.LOD.Systems
 
         private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
         {
-            return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
+            return true;
+            //return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
         }
     }
 }

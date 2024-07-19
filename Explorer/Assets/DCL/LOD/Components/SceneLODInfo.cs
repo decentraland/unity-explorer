@@ -1,54 +1,84 @@
-﻿using Arch.Core;
+﻿using System.Collections.Generic;
+using Arch.Core;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
-using System;
-using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
-using DCL.Profiling;
 using UnityEngine;
-using Utility;
 
 namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {
+        public List<byte> LoadedLODs;
         public byte CurrentLODLevel;
-        public LODAsset CurrentLOD;
-        public LODAsset CurrentVisibleLOD;
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public bool IsDirty;
+
+        private LODGroup lodGroup;
+        private int currentSuccessfullLOD;
+
+        private UnityEngine.LOD lod0;
+        private UnityEngine.LOD lod1;
         
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
-            if (CurrentVisibleLOD != null && !CurrentVisibleLOD.LodKey.Equals(CurrentLOD))
-                CurrentVisibleLOD.Release();
-            CurrentLOD?.Release();
+
+            Object.Destroy(lodGroup.gameObject);
         }
 
-        public static SceneLODInfo Create() =>
-            new()
+        public static SceneLODInfo Create()
+        {
+            var lodGroup = new GameObject().AddComponent<LODGroup>();
+            lodGroup.fadeMode = LODFadeMode.CrossFade;
+            lodGroup.animateCrossFading = true;
+
+            var lod0 = new UnityEngine.LOD(1.0f, null);
+            var lod1 = new UnityEngine.LOD(0.999f, null);
+            lodGroup.SetLODs(new[] { lod0, lod1 });
+
+            return new SceneLODInfo
             {
-                CurrentLODLevel = byte.MaxValue
+                LoadedLODs = new List<byte>(),
+                CurrentLODLevel = byte.MaxValue,
+                lodGroup = lodGroup,
+                lod0 = lod0,
+                lod1 = lod1
             };
-
-        public void SetCurrentLOD(LODAsset newLod)
-        {
-            CurrentLOD = newLod;
-            UpdateCurrentVisibleLOD();
         }
 
-        public void UpdateCurrentVisibleLOD()
+        public void RecalculateLODGroup(LODAsset newLod)
         {
-            if (CurrentLOD?.State == LODAsset.LOD_STATE.SUCCESS)
+            LoadedLODs.Add(newLod.LodKey.Level);
+            if (newLod.State == LODAsset.LOD_STATE.SUCCESS)
             {
-                CurrentVisibleLOD?.Release();
-                CurrentVisibleLOD = CurrentLOD;
-            }
-        }
+                newLod.Root.transform.SetParent(lodGroup.transform);
+                currentSuccessfullLOD++;
 
-        public void ResetToCurrentVisibleLOD()
-        {
-            CurrentLOD = CurrentVisibleLOD;
+                if (newLod.LodKey.Level == 0)
+                    lod0.renderers = newLod.Root.GetComponentsInChildren<Renderer>();
+                else if (newLod.LodKey.Level == 1)
+                    lod1.renderers = newLod.Root.GetComponentsInChildren<Renderer>();
+
+                if (currentSuccessfullLOD == 1 && newLod.LodKey.Level == 0)
+                {
+                    lod0.screenRelativeTransitionHeight = 0.1f;
+                    lod1.screenRelativeTransitionHeight = 0.099f;
+                }
+                else if (currentSuccessfullLOD == 1 && newLod.LodKey.Level == 1)
+                {
+                    lod0.screenRelativeTransitionHeight = 0.99f;
+                    lod1.screenRelativeTransitionHeight = 0.1f;
+                }
+                else if (currentSuccessfullLOD == 2)
+                {
+                    lod0.screenRelativeTransitionHeight = 0.5f;
+                    lod1.screenRelativeTransitionHeight = 0.1f;
+                }
+
+                UnityEngine.LOD[] lods = { lod0, lod1 };
+                lodGroup.SetLODs(lods);
+                lodGroup.RecalculateBounds();
+            }
         }
     }
 

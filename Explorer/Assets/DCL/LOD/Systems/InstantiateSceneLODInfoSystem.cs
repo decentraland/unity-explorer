@@ -89,7 +89,7 @@ namespace DCL.LOD.Systems
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevel), lodCache);
                 }
 
-                sceneLODInfo.SetCurrentLOD(newLod);
+                sceneLODInfo.RecalculateLODGroup(newLod);
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
@@ -119,7 +119,8 @@ namespace DCL.LOD.Systems
 
         private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
         {
-            return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
+            return true;
+            //return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
         }
     }
 }
