@@ -10,6 +10,8 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
         private readonly ProfileWidgetController profileMenuWidgetController;
@@ -18,8 +20,6 @@ namespace DCL.UI.Sidebar
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
-
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Fullscreen;
 
         public SidebarController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, INotificationsBusController notificationsBusController,
             ProfileWidgetController profileIconWidgetController, ProfileWidgetController profileMenuWidgetController, SystemMenuController systemMenuController)
@@ -31,9 +31,6 @@ namespace DCL.UI.Sidebar
             this.systemMenuController = systemMenuController;
             this.notificationsBusController = notificationsBusController;
         }
-
-        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
-            new ();
 
         public override void Dispose()
         {
@@ -52,7 +49,6 @@ namespace DCL.UI.Sidebar
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePopup);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             notificationsBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
-            //viewInstance.emotesButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Backpack, BackpackSections.Emotes));
         }
 
         private void OnRewardNotificationReceived(object[] parameters)
@@ -109,5 +105,9 @@ namespace DCL.UI.Sidebar
                 ExplorePanelController.IssueCommand(
                     new ExplorePanelParameter(section, backpackSection)));
         }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
+
     }
 }

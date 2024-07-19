@@ -32,9 +32,6 @@ namespace DCL.UI.Sidebar
         internal Toggle autoHideToggle { get; private set; }
 
         [field: SerializeField]
-        internal Button emotesButton { get; private set; }
-
-        [field: SerializeField]
         internal GameObject profileMenu { get; private set; }
 
         [field: SerializeField]

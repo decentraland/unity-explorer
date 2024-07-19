@@ -122,9 +122,7 @@ namespace DCL.PluginSystem.Global
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
-            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(
-                () => mainUIContainer.SidebarView.PersistentEmoteWheelOpener,
-                mvcManager);
+            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIContainer.SidebarView.PersistentEmoteWheelOpener, mvcManager);
 
             mvcManager.RegisterController(persistentEmoteWheelOpenerController);
 
