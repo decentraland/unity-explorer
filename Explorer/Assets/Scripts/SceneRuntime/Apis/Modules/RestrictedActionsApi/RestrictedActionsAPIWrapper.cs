@@ -52,10 +52,6 @@ namespace SceneRuntime.Apis.Modules.RestrictedActionsApi
             api.TryChangeRealm(message, realm);
 
         [UsedImplicitly]
-        public void TriggerEmote(string predefinedEmote) =>
-            api.TryTriggerEmote(predefinedEmote);
-
-        [UsedImplicitly]
         public object TriggerSceneEmote(string src, bool loop)
         {
             triggerSceneEmoteCancellationToken = triggerSceneEmoteCancellationToken.SafeRestart();

@@ -12,7 +12,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
@@ -32,6 +31,7 @@ using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -41,6 +41,7 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
+using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
@@ -87,7 +88,8 @@ namespace SceneRunner.Tests
             sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
                 new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
                 Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>());
+                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>(),
+                Substitute.For<IPortableExperiencesController>());
         }
 
         [OneTimeTearDown]
@@ -233,7 +235,8 @@ namespace SceneRunner.Tests
 
             var apis = new List<IJsApiWrapper>();
 
-            var runtime = sceneFacade.deps.Runtime;
+            ISceneRuntime runtime = sceneFacade.deps.Runtime;
+
             runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<IJsApiWrapper>()))
                    .Do(info => apis.Add(info.ArgAt<IJsApiWrapper>(1)));
 
@@ -245,6 +248,7 @@ namespace SceneRunner.Tests
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.WebSocketAipImplementation));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.CommunicationsControllerAPI));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RuntimeImplementation));
+            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.PortableExperiencesApi));
 
             await UniTask.SwitchToThreadPool();
 
@@ -355,7 +359,8 @@ namespace SceneRunner.Tests
                     Substitute.For<ISystemGroupsUpdateGate>(),
                     Substitute.For<IWorldTimeProvider>(),
                     new ECSWorldInstanceSharedDependencies()),
-                Substitute.For<ISceneRuntime>()) { }
+                Substitute.For<ISceneRuntime>(),
+                Substitute.For<IPortableExperiencesApi>()) { }
         }
 
         public class TestAPIWrapper : IJsApiWrapper

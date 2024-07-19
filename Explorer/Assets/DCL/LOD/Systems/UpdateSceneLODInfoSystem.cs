@@ -7,6 +7,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.PluginSystem.Global;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -15,12 +16,12 @@ using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
+using SceneRunner.Scene;
 using UnityEngine;
 using Utility;
 using Object = UnityEngine.Object;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-
 
 namespace DCL.LOD.Systems
 {
@@ -32,7 +33,6 @@ namespace DCL.LOD.Systems
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-
 
         public UpdateSceneLODInfoSystem(World world, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
@@ -46,11 +46,12 @@ namespace DCL.LOD.Systems
         protected override void Update(float t)
         {
             UpdateLODLevelQuery(World);
+
             //InstantiateCurrentLODQuery(World);
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
+        [None(typeof(DeleteEntityIntention), typeof(PortableExperienceComponent))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
             //New LOD infront of you. Update
@@ -65,26 +66,26 @@ namespace DCL.LOD.Systems
                 CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
         }
 
-/*
-        [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLOD == null) return;
+        /*
+                [Query]
+                [None(typeof(DeleteEntityIntention))]
+                private void InstantiateCurrentLOD(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
+                {
+                    if (!sceneLODInfo.IsDirty || sceneLODInfo.CurrentLOD == null) return;
 
-            if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
+                    if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) return;
 
-            var currentLOD = sceneLODInfo.CurrentLOD;
+                    var currentLOD = sceneLODInfo.CurrentLOD;
 
-            if (currentLOD.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
-                currentLOD.AsyncInstantiation.IsWaitingForSceneActivation())
-            {
-                FinalizeAsyncInstantiation(currentLOD, sceneDefinitionComponent);
-                sceneLODInfo.UpdateCurrentVisibleLOD();
-                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-            }
-        }
-*/
+                    if (currentLOD.State == LODAsset.LOD_STATE.WAITING_INSTANTIATION &&
+                        currentLOD.AsyncInstantiation.IsWaitingForSceneActivation())
+                    {
+                        FinalizeAsyncInstantiation(currentLOD, sceneDefinitionComponent);
+                        sceneLODInfo.UpdateCurrentVisibleLOD();
+                        CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
+                    }
+                }
+        */
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             if (IsLOD0(ref sceneLODInfo))
@@ -92,6 +93,7 @@ namespace DCL.LOD.Systems
                 scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
                 LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
             }
+
             sceneLODInfo.IsDirty = false;
         }
 
@@ -132,7 +134,7 @@ namespace DCL.LOD.Systems
                 return;
             }
 
-            if (lodCache.TryGet(newLODKey, out var cachedAsset))
+            if (lodCache.TryGet(newLODKey, out LODAsset? cachedAsset))
             {
                 //If its cached, no need to make a new promise
                 sceneLODInfo.SetCurrentLOD(cachedAsset);
@@ -141,9 +143,9 @@ namespace DCL.LOD.Systems
             }
 
             string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
+            SceneAssetBundleManifest manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-            var assetBundleIntention =  GetAssetBundleIntention.FromHash(typeof(GameObject),
+            var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
                 permittedSources: AssetSource.ALL,
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
@@ -177,9 +179,7 @@ namespace DCL.LOD.Systems
         }
         */
 
-        private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
-        {
-            return sceneLODInfo.CurrentLOD.LodKey.Level == 0;
-        }
+        private bool IsLOD0(ref SceneLODInfo sceneLODInfo) =>
+            sceneLODInfo.CurrentLOD.LodKey.Level == 0;
     }
 }

@@ -14,8 +14,17 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected LoadScenePointerSystemBase(World world) : base(world) { }
 
-        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
-            World.Create(new SceneDefinitionComponent(definition, ipfsPath));
+        protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath, bool forcePortableExperience = false)
+        {
+            if (definition.metadata.isPortableExperience || forcePortableExperience)
+            {
+                //TODO FRAN: forcePortableExperience is a dirty CHEAT to be able to load any world as PX even if their metadata isn't set as PX, this should be removed before merging
+                return World.Create(SceneDefinitionComponentFactory.CreatePortableExperienceSceneDefinitionComponent(definition, ipfsPath), new PortableExperienceComponent());
+            }
+
+            return World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
+        }
+
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet
@@ -35,7 +44,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                World.Create(new SceneDefinitionComponent(definition, ipfsPath));
+                World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
             }
         }
     }

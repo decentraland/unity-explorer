@@ -35,6 +35,7 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle.Components;
+using PortableExperiences.Controller;
 using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
@@ -97,6 +98,7 @@ namespace Global
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
+        public IPortableExperiencesController PortableExperiencesController { get; private set; }
 
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
 
@@ -187,8 +189,10 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
+            container.PortableExperiencesController = new PortableExperiencesController(container.GlobalWorldProxy, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache);
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
+
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 

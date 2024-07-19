@@ -15,6 +15,7 @@ namespace DCL.Ipfs
         public List<string> allowedMediaHostnames;
         public List<string> requiredPermissions;
         public List<SpawnPoint>? spawnPoints;
+        public bool isPortableExperience;
 
         [Serializable]
         public struct SpawnPoint
@@ -38,7 +39,7 @@ namespace DCL.Ipfs
             }
 
             /// <summary>
-            /// Coordinates is either a single value or a list of values
+            ///     Coordinates is either a single value or a list of values
             /// </summary>
             [JsonConverter(typeof(SpawnPointCoordinateConverter))]
             public struct Coordinate

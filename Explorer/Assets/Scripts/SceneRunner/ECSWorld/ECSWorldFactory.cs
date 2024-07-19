@@ -21,6 +21,7 @@ using ECS.Unity.EngineInfo;
 using ECS.Unity.Systems;
 using System.Collections.Generic;
 using SystemGroups.Visualiser;
+using Utility.Multithreading;
 
 namespace SceneRunner.ECSWorld
 {
@@ -61,7 +62,7 @@ namespace SceneRunner.ECSWorld
             var builder = new ArchSystemsWorldBuilder<World>(world, systemGroupsUpdateGate, systemGroupsUpdateGate,
                 sharedDependencies.SceneExceptionsHandler);
 
-            var mutex = sharedDependencies.MutexSync;
+            MutexSync mutex = sharedDependencies.MutexSync;
 
             builder
                .InjectCustomGroup(new SyncedInitializationSystemGroup(mutex, sharedDependencies.SceneStateProvider))
@@ -93,6 +94,7 @@ namespace SceneRunner.ECSWorld
             SystemGroupWorld systemsWorld = builder.Finish(singletonDependencies.AggregateFactory, scenePartition).EnsureNotNull();
 
             SystemGroupSnapshot.Instance!.Register(args.SceneData.SceneShortInfo.ToString(), systemsWorld);
+
             singletonDependencies.SceneMapping.Register(args.SceneData.SceneShortInfo.Name, args.SceneData.Parcels, world);
 
             return new ECSWorldFacade(systemsWorld, world, finalizeWorldSystems, isCurrentListeners);
