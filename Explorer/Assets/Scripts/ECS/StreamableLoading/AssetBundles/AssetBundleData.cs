@@ -11,7 +11,7 @@ namespace ECS.StreamableLoading.AssetBundles
     /// <summary>
     ///     A wrapper over <see cref="AssetBundle" /> to provide additional data
     /// </summary>
-    public class AssetBundleData : IDisposable
+    public class AssetBundleData : IAssetData
     {
         private readonly Object? mainAsset;
         private readonly Type? assetType;

@@ -41,7 +41,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Tests
         [Test]
         public void LoadFromCache()
         {
-            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetBundleReference: null);
+            var asset = GltfContainerAsset.Create(new GameObject("GLTF_ROOT"), assetData: null);
 
             cache.TryGet("TEST_HASH", out Arg.Any<GltfContainerAsset>())
                  .Returns(c =>

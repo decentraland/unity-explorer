@@ -1,11 +1,9 @@
 using GLTFast;
-using System;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace ECS.StreamableLoading.GLTF
 {
-    public class GLTFData : IDisposable
+    public class GLTFData : IAssetData
     {
         public readonly GltfImport gltfImportedData;
         public readonly GameObject containerGameObject;
