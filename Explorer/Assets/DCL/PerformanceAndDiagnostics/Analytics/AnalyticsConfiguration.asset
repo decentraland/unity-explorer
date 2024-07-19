@@ -12,10 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62a6ffa33ea54298a6351ae0db9affb3, type: 3}
   m_Name: AnalyticsConfiguration
   m_EditorClassIdentifier: 
-  flushSize: 20
-  flushInterval: 30
-  <PerformanceReportInterval>k__BackingField: 15
-  <Mode>k__BackingField: 0
   groups:
   - groupName: General
     events:
@@ -45,3 +41,7 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: time_spent_in_world
       isEnabled: 1
+  flushSize: 20
+  flushInterval: 30
+  <PerformanceReportInterval>k__BackingField: 15
+  <Mode>k__BackingField: 1

@@ -3,9 +3,12 @@ using Cysharp.Threading.Tasks;
 using DCL.Backpack;
 using DCL.CharacterMotion.Components;
 using DCL.Navmap;
+using DCL.Notification;
+using DCL.Notification.NotificationsBus;
 using DCL.Settings;
 using DCL.UI;
 using MVC;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -24,6 +27,8 @@ namespace DCL.ExplorePanel
         private readonly ProfileWidgetController profileWidgetController;
         private readonly SystemMenuController systemMenuController;
         private readonly DCLInput dclInput;
+        private readonly INotificationsBusController notificationBusController;
+        private readonly IMVCManager mvcManager;
         private Dictionary<ExploreSections, TabSelectorView> tabsBySections;
         private Dictionary<ExploreSections, ISection> exploreSections;
 
@@ -48,7 +53,9 @@ namespace DCL.ExplorePanel
             World world,
             ProfileWidgetController profileWidgetController,
             SystemMenuController systemMenuController,
-            DCLInput dclInput)
+            DCLInput dclInput,
+            INotificationsBusController notificationBusController,
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             this.NavmapController = navmapController;
@@ -59,6 +66,16 @@ namespace DCL.ExplorePanel
             this.profileWidgetController = profileWidgetController;
             this.systemMenuController = systemMenuController;
             this.dclInput = dclInput;
+            this.notificationBusController = notificationBusController;
+            this.mvcManager = mvcManager;
+            this.notificationBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+        }
+
+        private void OnRewardAssigned(object[] parameters)
+        {
+            mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
+            lastShownSection = ExploreSections.Backpack;
+            OnBackpackHotkeyPressed(default);
         }
 
         public override void Dispose()

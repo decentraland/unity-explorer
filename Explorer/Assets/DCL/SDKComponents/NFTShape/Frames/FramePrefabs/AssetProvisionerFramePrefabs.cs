@@ -20,6 +20,8 @@ namespace DCL.SDKComponents.NFTShape.Frames.FramePrefabs
             this.assetsProvisioner = assetsProvisioner;
         }
 
+        public bool IsInitialized => prefabs != null && defaultPrefab != null;
+
         public AbstractFrame FrameOrDefault(NftFrameType frameType)
         {
             if (prefabs == null || defaultPrefab == null)

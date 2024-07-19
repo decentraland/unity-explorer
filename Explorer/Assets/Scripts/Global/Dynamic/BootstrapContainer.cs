@@ -6,6 +6,7 @@ using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using Segment.Analytics;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -86,19 +87,27 @@ namespace Global.Dynamic
 
         private static IAnalyticsService CreateAnalyticsService(AnalyticsConfiguration analyticsConfig)
         {
-            return new DebugAnalyticsService();
-
-            // force segment in release
+            // Force segment in release
             if (!Debug.isDebugBuild)
-                return new SegmentAnalyticsService(analyticsConfig);
+                return CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig);
 
             return analyticsConfig.Mode switch
                    {
-                       AnalyticsMode.SEGMENT => new SegmentAnalyticsService(analyticsConfig),
+                       AnalyticsMode.SEGMENT => CreateSegmentAnalyticsOrFallbackToDebug(analyticsConfig),
                        AnalyticsMode.DEBUG_LOG => new DebugAnalyticsService(),
                        AnalyticsMode.DISABLED => throw new InvalidOperationException("Trying to create analytics when it is disabled"),
                        _ => throw new ArgumentOutOfRangeException(),
                    };
+        }
+
+        private static IAnalyticsService CreateSegmentAnalyticsOrFallbackToDebug(AnalyticsConfiguration analyticsConfig)
+        {
+            if (analyticsConfig.TryGetSegmentConfiguration(out Configuration segmentConfiguration))
+                return new SegmentAnalyticsService(segmentConfiguration);
+
+            // Fall back to debug if segment is not configured
+            ReportHub.LogWarning(ReportCategory.ANALYTICS, $"Segment configuration not found. Falling back to {nameof(DebugAnalyticsService)}.");
+            return new DebugAnalyticsService();
         }
 
         private static (LogWeb3IdentityCache identityCache, DappWeb3Authenticator web3VerifiedAuthenticator, ProxyVerifiedWeb3Authenticator web3Authenticator)

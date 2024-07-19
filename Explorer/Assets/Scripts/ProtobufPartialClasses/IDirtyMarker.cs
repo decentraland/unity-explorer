@@ -47,6 +47,11 @@ namespace DCL.ECSComponents
         public bool IsDirty { get; set; }
     }
 
+    public partial class PBNftShape : IDirtyMarker
+    {
+        public bool IsDirty { get; set; }
+    }
+
     public partial class PBTextShape : IDirtyMarker
     {
         public bool IsDirty { get; set; }

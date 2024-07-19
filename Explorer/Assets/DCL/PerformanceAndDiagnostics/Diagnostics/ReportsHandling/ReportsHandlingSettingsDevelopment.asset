@@ -24,247 +24,277 @@ MonoBehaviour:
       Severity: 4
     - Category: REMOTE_MOVEMENT
       Severity: 1
+    - Category: AUDIO_SOURCES
+      Severity: 0
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 0
+    - Category: AUDIO_SOURCES
+      Severity: 4
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 4
+    - Category: ANALYTICS
+      Severity: 0
+    - Category: ANIMATOR
+      Severity: 0
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 0
+    - Category: ASSET_BUNDLES
+      Severity: 0
     - Category: ASSETS_PROVISION
       Severity: 0
-    - Category: ENGINE
+    - Category: AUDIO
+      Severity: 0
+    - Category: AUDIO_CLIP_WEB_REQUEST
+      Severity: 0
+    - Category: AUTHENTICATION
+      Severity: 0
+    - Category: AVATAR
+      Severity: 0
+    - Category: AVATAR_ATTACH
+      Severity: 0
+    - Category: CAMERA_MODE_AREA
+      Severity: 0
+    - Category: CHARACTER_TRIGGER_AREA
       Severity: 0
     - Category: CRDT
       Severity: 0
     - Category: CRDT_ECS_BRIDGE
       Severity: 0
-    - Category: REALM
-      Severity: 0
-    - Category: SCENE_FACTORY
-      Severity: 0
-    - Category: SCENE_LOADING
-      Severity: 0
-    - Category: SCENE_UI
-      Severity: 0
-    - Category: JAVASCRIPT
-      Severity: 0
-    - Category: ARCHIPELAGO_REQUEST
+    - Category: DEBUG
       Severity: 0
     - Category: ECS
       Severity: 0
-    - Category: GENERIC_WEB_REQUEST
-      Severity: 0
-    - Category: TEXTURE_WEB_REQUEST
-      Severity: 0
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 0
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 0
-    - Category: AUDIO_CLIP_WEB_REQUEST
-      Severity: 0
-    - Category: STREAMABLE_LOADING
-      Severity: 0
-    - Category: ASSET_BUNDLES
-      Severity: 0
-    - Category: TEXTURES
-      Severity: 0
-    - Category: GLTF_CONTAINER
-      Severity: 0
-    - Category: MATERIALS
-      Severity: 0
-    - Category: PRIMITIVE_COLLIDERS
-      Severity: 0
-    - Category: PRIMITIVE_MESHES
-      Severity: 0
-    - Category: AUDIO_SOURCES
-      Severity: 0
-    - Category: MEDIA_STREAM
-      Severity: 0
-    - Category: PRIORITIZATION
-      Severity: 0
-    - Category: MOTION
-      Severity: 0
-    - Category: LANDSCAPE
-      Severity: 0
-    - Category: INPUT
-      Severity: 0
-    - Category: AVATAR
-      Severity: 0
-    - Category: PROFILE
-      Severity: 0
-    - Category: TWEEN
-      Severity: 0
-    - Category: ANIMATOR
-      Severity: 0
-    - Category: WEARABLE
-      Severity: 0
     - Category: EMOTE
       Severity: 0
-    - Category: AUTHENTICATION
-      Severity: 0
-    - Category: LOD
-      Severity: 0
-    - Category: AVATAR_ATTACH
-      Severity: 0
-    - Category: QUALITY
-      Severity: 0
-    - Category: RESTRICTED_ACTIONS
-      Severity: 0
-    - Category: CHARACTER_TRIGGER_AREA
-      Severity: 0
-    - Category: CAMERA_MODE_AREA
-      Severity: 0
-    - Category: AVATAR_MODIFIER_AREA
-      Severity: 0
-    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
-      Severity: 0
-    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
-      Severity: 0
-    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
-      Severity: 0
-    - Category: PLAYER_IDENTITY_DATA
-      Severity: 0
-    - Category: PLAYER_AVATAR_BASE
-      Severity: 0
-    - Category: PLAYER_AVATAR_EQUIPPED
-      Severity: 0
-    - Category: PLAYER_AVATAR_EMOTE_COMMAND
-      Severity: 0
-    - Category: ROADS
-      Severity: 0
-    - Category: LIVEKIT
-      Severity: 0
-    - Category: MULTIPLAYER_MOVEMENT
-      Severity: 0
-    - Category: AUDIO
-      Severity: 0
-    - Category: SCENE_FETCH_REQUEST
-      Severity: 0
-    - Category: MVC
-      Severity: 0
-    - Category: SETTINGS_MENU
-      Severity: 0
-    - Category: UNSPECIFIED
-      Severity: 0
-    - Category: ASSETS_PROVISION
-      Severity: 4
     - Category: ENGINE
-      Severity: 4
-    - Category: CRDT
-      Severity: 4
-    - Category: CRDT_ECS_BRIDGE
-      Severity: 4
-    - Category: REALM
-      Severity: 4
-    - Category: SCENE_FACTORY
-      Severity: 4
-    - Category: SCENE_LOADING
-      Severity: 4
-    - Category: SCENE_UI
-      Severity: 4
-    - Category: JAVASCRIPT
-      Severity: 4
-    - Category: ARCHIPELAGO_REQUEST
-      Severity: 4
-    - Category: ECS
-      Severity: 4
+      Severity: 0
+    - Category: FEATURE_FLAGS
+      Severity: 0
     - Category: GENERIC_WEB_REQUEST
-      Severity: 4
-    - Category: TEXTURE_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_SHAPE_WEB_REQUEST
-      Severity: 4
-    - Category: NFT_INFO_WEB_REQUEST
-      Severity: 4
-    - Category: AUDIO_CLIP_WEB_REQUEST
-      Severity: 4
-    - Category: STREAMABLE_LOADING
-      Severity: 4
-    - Category: ASSET_BUNDLES
-      Severity: 4
-    - Category: TEXTURES
-      Severity: 4
+      Severity: 0
     - Category: GLTF_CONTAINER
-      Severity: 4
-    - Category: MATERIALS
-      Severity: 4
-    - Category: PRIMITIVE_COLLIDERS
-      Severity: 4
-    - Category: PRIMITIVE_MESHES
-      Severity: 4
-    - Category: AUDIO_SOURCES
-      Severity: 4
-    - Category: MEDIA_STREAM
-      Severity: 4
-    - Category: PRIORITIZATION
-      Severity: 4
-    - Category: MOTION
-      Severity: 4
-    - Category: LANDSCAPE
-      Severity: 4
+      Severity: 0
     - Category: INPUT
-      Severity: 4
-    - Category: AVATAR
-      Severity: 4
-    - Category: PROFILE
-      Severity: 4
-    - Category: TWEEN
-      Severity: 4
-    - Category: ANIMATOR
-      Severity: 4
-    - Category: WEARABLE
-      Severity: 4
-    - Category: EMOTE
-      Severity: 4
-    - Category: AUTHENTICATION
-      Severity: 4
-    - Category: LOD
-      Severity: 4
-    - Category: AVATAR_ATTACH
-      Severity: 4
-    - Category: QUALITY
-      Severity: 4
-    - Category: RESTRICTED_ACTIONS
-      Severity: 4
-    - Category: CHARACTER_TRIGGER_AREA
-      Severity: 4
-    - Category: CAMERA_MODE_AREA
-      Severity: 4
-    - Category: AVATAR_MODIFIER_AREA
-      Severity: 4
-    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
-      Severity: 4
-    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
-      Severity: 4
-    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
-      Severity: 4
-    - Category: PLAYER_IDENTITY_DATA
-      Severity: 4
-    - Category: PLAYER_AVATAR_BASE
-      Severity: 4
-    - Category: PLAYER_AVATAR_EQUIPPED
-      Severity: 4
-    - Category: PLAYER_AVATAR_EMOTE_COMMAND
-      Severity: 4
-    - Category: ROADS
-      Severity: 4
+      Severity: 0
+    - Category: JAVASCRIPT
+      Severity: 0
+    - Category: LANDSCAPE
+      Severity: 0
     - Category: LIVEKIT
-      Severity: 4
+      Severity: 0
+    - Category: LOD
+      Severity: 0
+    - Category: MATERIALS
+      Severity: 0
+    - Category: MEDIA_STREAM
+      Severity: 0
+    - Category: MOTION
+      Severity: 0
+    - Category: MULTIPLAYER
+      Severity: 0
     - Category: MULTIPLAYER_MOVEMENT
-      Severity: 4
-    - Category: AUDIO
-      Severity: 4
-    - Category: SCENE_FETCH_REQUEST
-      Severity: 4
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+      Severity: 0
     - Category: MVC
-      Severity: 4
-    - Category: SETTINGS_MENU
-      Severity: 4
-    - Category: UNSPECIFIED
-      Severity: 4
+      Severity: 0
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 0
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 0
+    - Category: PLAYER_AVATAR_BASE
+      Severity: 0
+    - Category: PLAYER_AVATAR_EMOTE_COMMAND
+      Severity: 0
+    - Category: PLAYER_AVATAR_EQUIPPED
+      Severity: 0
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 0
     - Category: PLUGINS
       Severity: 0
-    - Category: DEBUG
-      Severity: 3
-    - Category: DEBUG
+    - Category: PRIMITIVE_COLLIDERS
       Severity: 0
+    - Category: PRIMITIVE_MESHES
+      Severity: 0
+    - Category: PRIORITIZATION
+      Severity: 0
+    - Category: PROFILE
+      Severity: 0
+    - Category: QUALITY
+      Severity: 0
+    - Category: REALM
+      Severity: 0
+    - Category: REALM_DATA_DIRTY_RESET_SYSTEM
+      Severity: 0
+    - Category: RESTRICTED_ACTIONS
+      Severity: 0
+    - Category: ROADS
+      Severity: 0
+    - Category: SCENE_FACTORY
+      Severity: 0
+    - Category: SCENE_FETCH_REQUEST
+      Severity: 0
+    - Category: SCENE_LOADING
+      Severity: 0
+    - Category: SCENE_UI
+      Severity: 0
+    - Category: SDK_AUDIO_SOURCES
+      Severity: 0
+    - Category: SDK_OBSERVABLES
+      Severity: 0
+    - Category: SETTINGS_MENU
+      Severity: 0
+    - Category: STREAMABLE_LOADING
+      Severity: 0
+    - Category: TEXTURE_WEB_REQUEST
+      Severity: 0
+    - Category: TEXTURES
+      Severity: 0
+    - Category: TWEEN
+      Severity: 0
+    - Category: UI
+      Severity: 0
+    - Category: UNSPECIFIED
+      Severity: 0
+    - Category: WEARABLE
+      Severity: 0
+    - Category: ANALYTICS
+      Severity: 4
+    - Category: ANIMATOR
+      Severity: 4
+    - Category: ARCHIPELAGO_REQUEST
+      Severity: 4
+    - Category: ASSET_BUNDLES
+      Severity: 4
+    - Category: ASSETS_PROVISION
+      Severity: 4
+    - Category: AUDIO
+      Severity: 4
+    - Category: AUDIO_CLIP_WEB_REQUEST
+      Severity: 4
+    - Category: AUTHENTICATION
+      Severity: 4
+    - Category: AVATAR
+      Severity: 4
+    - Category: AVATAR_ATTACH
+      Severity: 4
+    - Category: CAMERA_MODE_AREA
+      Severity: 4
+    - Category: CHARACTER_TRIGGER_AREA
+      Severity: 4
+    - Category: CRDT
+      Severity: 4
+    - Category: CRDT_ECS_BRIDGE
+      Severity: 4
     - Category: DEBUG
-      Severity: 2
-    - Category: DEBUG
+      Severity: 4
+    - Category: ECS
+      Severity: 4
+    - Category: EMOTE
+      Severity: 4
+    - Category: ENGINE
+      Severity: 4
+    - Category: FEATURE_FLAGS
+      Severity: 4
+    - Category: GENERIC_WEB_REQUEST
+      Severity: 4
+    - Category: GLTF_CONTAINER
+      Severity: 4
+    - Category: INPUT
+      Severity: 4
+    - Category: JAVASCRIPT
+      Severity: 4
+    - Category: LANDSCAPE
+      Severity: 4
+    - Category: LIVEKIT
+      Severity: 4
+    - Category: LOD
+      Severity: 4
+    - Category: MATERIALS
+      Severity: 4
+    - Category: MEDIA_STREAM
+      Severity: 4
+    - Category: MOTION
+      Severity: 4
+    - Category: MULTIPLAYER
+      Severity: 4
+    - Category: MULTIPLAYER_MOVEMENT
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+      Severity: 4
+    - Category: MVC
+      Severity: 4
+    - Category: NFT_INFO_WEB_REQUEST
+      Severity: 4
+    - Category: NFT_SHAPE_WEB_REQUEST
+      Severity: 4
+    - Category: PLAYER_AVATAR_BASE
+      Severity: 4
+    - Category: PLAYER_AVATAR_EMOTE_COMMAND
+      Severity: 4
+    - Category: PLAYER_AVATAR_EQUIPPED
+      Severity: 4
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 4
+    - Category: PLUGINS
+      Severity: 4
+    - Category: PRIMITIVE_COLLIDERS
+      Severity: 4
+    - Category: PRIMITIVE_MESHES
+      Severity: 4
+    - Category: PRIORITIZATION
+      Severity: 4
+    - Category: PROFILE
+      Severity: 4
+    - Category: QUALITY
+      Severity: 4
+    - Category: REALM
+      Severity: 4
+    - Category: REALM_DATA_DIRTY_RESET_SYSTEM
+      Severity: 4
+    - Category: RESTRICTED_ACTIONS
+      Severity: 4
+    - Category: ROADS
+      Severity: 4
+    - Category: SCENE_FACTORY
+      Severity: 4
+    - Category: SCENE_FETCH_REQUEST
+      Severity: 4
+    - Category: SCENE_LOADING
+      Severity: 4
+    - Category: SCENE_UI
+      Severity: 4
+    - Category: SDK_AUDIO_SOURCES
+      Severity: 4
+    - Category: SDK_OBSERVABLES
+      Severity: 4
+    - Category: SETTINGS_MENU
+      Severity: 4
+    - Category: STREAMABLE_LOADING
+      Severity: 4
+    - Category: TEXTURE_WEB_REQUEST
+      Severity: 4
+    - Category: TEXTURES
+      Severity: 4
+    - Category: TWEEN
+      Severity: 4
+    - Category: UI
+      Severity: 4
+    - Category: UNSPECIFIED
+      Severity: 4
+    - Category: WEARABLE
+      Severity: 4
+    - Category: PLAYER_SDK_DATA
+      Severity: 0
+    - Category: PLAYER_SDK_DATA
       Severity: 4
   sentryMatrix:
     entries:

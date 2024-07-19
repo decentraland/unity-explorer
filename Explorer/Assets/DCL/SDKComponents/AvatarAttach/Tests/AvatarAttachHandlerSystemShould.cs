@@ -77,25 +77,25 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
 
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             playerAvatarBase.transform.position += Vector3.one * 5;
             playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             playerAvatarBase.transform.position += Vector3.one * 6;
             playerAvatarBase.transform.rotation = Quaternion.Euler(50, 45, 66);
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             playerAvatarBase.transform.position += Vector3.one * 10;
             playerAvatarBase.transform.rotation = Quaternion.Euler(99, 99, 99);
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
 
@@ -253,6 +253,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
 
                 // After update, position should match the anchor point
                 var position = anchorPoint.Value().position;
+
+                if (anchorPoint.Key == AvatarAnchorPointType.AaptPosition)
+                    position += Vector3.up * AvatarAttachHandlerSystem.OLD_CLIENT_PIVOT_CORRECTION;
+
                 Assert.IsTrue(ApproximatelyEqual(position, entityTransformComponent.Transform.position),
                     $"Position should match {anchorPoint.Key} after update");
             }
@@ -273,9 +277,9 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
 
             playerAvatarBase.transform.position += Vector3.one * 5;
             playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
             Assert.AreEqual(Vector3.one * 3, entityTransformComponent.Transform.localScale);
 
@@ -284,7 +288,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             playerAvatarBase.transform.position += Vector3.one * 7;
             playerAvatarBase.transform.rotation = Quaternion.Euler(0, 50, 66);
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
             Assert.AreEqual(Vector3.one * 1.77f, entityTransformComponent.Transform.localScale);
 
@@ -293,10 +297,13 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             playerAvatarBase.transform.position += Vector3.one * 60;
             playerAvatarBase.transform.rotation = Quaternion.Euler(15, 37, 55);
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
             Assert.AreEqual(Vector3.one * 5, entityTransformComponent.Transform.localScale);
         }
+
+        private Vector3 GetExpectedRootPosition() =>
+            playerAvatarBase.transform.position + (Vector3.up * AvatarAttachHandlerSystem.OLD_CLIENT_PIVOT_CORRECTION);
 
         [Test]
         public async Task StopUpdatingTransformOnComponentRemoval()
@@ -308,17 +315,17 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
 
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             playerAvatarBase.transform.position += Vector3.one * 5;
             playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
             world.Remove<PBAvatarAttach>(entity);
             system.Update(0);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
 
@@ -332,10 +339,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
 
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             world.Add<DeleteEntityIntention>(entity);
@@ -344,7 +351,7 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             playerAvatarBase.transform.position += Vector3.one * 5;
             playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
             system.Update(0);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
 
@@ -358,10 +365,10 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             world.Add(entity, pbAvatarAttachComponent);
 
             Assert.AreEqual(Vector3.zero, entityTransformComponent.Transform.position);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
 
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             // Simulate leaving the scene
@@ -369,19 +376,19 @@ namespace DCL.SDKComponents.AvatarAttach.Tests
             playerAvatarBase.transform.position += Vector3.one * 5;
             playerAvatarBase.transform.rotation = Quaternion.Euler(30, 60, 90);
             system.Update(0);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             playerAvatarBase.transform.position += Vector3.one * 5;
             system.Update(0);
-            Assert.AreNotEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreNotEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreNotEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
 
             // Simulate re-entering the scene
             sceneStateProvider.IsCurrent.Returns(true);
             playerAvatarBase.transform.position += Vector3.one * 5;
             system.Update(0);
-            Assert.AreEqual(playerAvatarBase.transform.position, entityTransformComponent.Transform.position);
+            Assert.AreEqual(GetExpectedRootPosition(), entityTransformComponent.Transform.position);
             Assert.AreEqual(playerAvatarBase.transform.rotation, entityTransformComponent.Transform.rotation);
         }
     }

@@ -57,6 +57,9 @@ namespace DCL.MapRenderer.ComponentsFactory
             for (var i = 0; i < pinMarkerObject.renderers.Length; i++)
                 pinMarkerObject.renderers[i].sortingOrder = MapRendererDrawOrder.PIN_MARKER;
 
+            pinMarkerObject.mapPinIcon.sortingOrder = MapRendererDrawOrder.PIN_MARKER_THUMBNAIL;
+            pinMarkerObject.mapPinIconOutline.sortingOrder = MapRendererDrawOrder.PIN_MARKER_OUTLINE;
+
             coordsUtils.SetObjectScale(pinMarkerObject);
             return pinMarkerObject;
         }

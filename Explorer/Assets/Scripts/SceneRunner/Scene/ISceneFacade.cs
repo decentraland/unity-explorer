@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.PluginSystem.World;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -11,7 +12,10 @@ namespace SceneRunner.Scene
         SceneShortInfo Info { get; }
         ISceneStateProvider SceneStateProvider { get; }
         SceneEcsExecutor EcsExecutor { get; }
+        PersistentEntities PersistentEntities { get; }
         bool IsEmpty { get; }
+
+        void Initialize();
 
         /// <summary>
         ///     Start an update loop with a given FPS

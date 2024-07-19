@@ -182,6 +182,12 @@ MonoBehaviour:
       Severity: 4
     - Category: AVATAR_MODIFIER_AREA
       Severity: 1
+    - Category: ANALYTICS
+      Severity: 0
+    - Category: ANALYTICS
+      Severity: 4
+    - Category: ANALYTICS
+      Severity: 1
   sentryMatrix:
     entries:
     - Category: ASSETS_PROVISION

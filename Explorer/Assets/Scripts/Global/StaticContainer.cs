@@ -9,6 +9,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
 using DCL.Multiplayer.Connections.RoomHubs;
@@ -49,6 +50,8 @@ namespace Global
     public class StaticContainer : IDCLPlugin<StaticSettings>
     {
         public readonly ObjectProxy<World> GlobalWorldProxy = new ();
+        public readonly ObjectProxy<Entity> PlayerEntityProxy = new ();
+        public readonly ObjectProxy<DCLInput> InputProxy = new ();
         public readonly ObjectProxy<AvatarBase> MainPlayerAvatarBaseProxy = new ();
         public readonly ObjectProxy<IRoomHub> RoomHubProxy = new ();
         public readonly RealmData RealmData = new ();
@@ -89,6 +92,7 @@ namespace Global
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
         public IEthereumApi EthereumApi { get; private set; }
+        public IInputBlock InputBlock { get; private set; }
         public IScenesCache ScenesCache { get; private set; }
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
@@ -148,6 +152,7 @@ namespace Global
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
 
+            container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
 
             container.assetsProvisioner = assetsProvisioner;
             var exposedPlayerTransform = new ExposedTransform();
@@ -208,7 +213,7 @@ namespace Global
                 new AudioSourcesPlugin(sharedDependencies, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 assetBundlePlugin, new GltfContainerPlugin(sharedDependencies, container.CacheCleaner, container.SceneReadinessReportQueue, container.SingletonSharedDependencies.SceneAssetLock),
                 new InteractionPlugin(sharedDependencies, profilingProvider, exposedGlobalDataContainer.GlobalInputEvents, componentsContainer.ComponentPoolsRegistry, container.assetsProvisioner),
-                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner),
+                new SceneUIPlugin(sharedDependencies, container.assetsProvisioner, container.InputBlock),
                 container.CharacterContainer.CreateWorldPlugin(componentsContainer.ComponentPoolsRegistry),
                 new AnimatorPlugin(),
                 new TweenPlugin(),

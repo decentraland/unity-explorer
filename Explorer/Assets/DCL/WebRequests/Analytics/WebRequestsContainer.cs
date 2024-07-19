@@ -49,26 +49,36 @@ namespace DCL.WebRequests.Analytics
             return new WebRequestsContainer(webRequestController, analyticsContainer);
         }
 
-        private class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
+        public class ElementBindingOptions : ArtificialDelayWebRequestController.IReadOnlyOptions
         {
+            private readonly PersistentSetting<bool> enableSetting;
+            private readonly PersistentSetting<float> delaySetting;
             public readonly IElementBinding<bool> Enable;
             public readonly IElementBinding<float> Delay;
 
             public ElementBindingOptions() : this(
-                new PersistentElementBinding<bool>(PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false)),
-                new PersistentElementBinding<float>(PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10))
+                PersistentSetting.CreateBool("webRequestsArtificialDelayEnable", false),
+                PersistentSetting.CreateFloat("webRequestsArtificialDelaySeconds", 10)
             ) { }
 
-            public ElementBindingOptions(IElementBinding<bool> enable, IElementBinding<float> delay)
+            public ElementBindingOptions(PersistentSetting<bool> enableSetting, PersistentSetting<float> delaySetting)
             {
-                this.Enable = enable;
-                this.Delay = delay;
+                this.enableSetting = enableSetting;
+                this.delaySetting = delaySetting;
+                this.Enable = new PersistentElementBinding<bool>(enableSetting);
+                this.Delay = new PersistentElementBinding<float>(delaySetting);
             }
 
             public async UniTask<(float ArtificialDelaySeconds, bool UseDelay)> GetOptionsAsync()
             {
                 await using (await ExecuteOnMainThreadScope.NewScopeWithReturnOnOriginalThreadAsync())
                     return (Delay.Value, Enable.Value);
+            }
+
+            public void ApplyValues(bool enable, float delay)
+            {
+                enableSetting.ForceSave(enable);
+                delaySetting.ForceSave(delay);
             }
         }
     }

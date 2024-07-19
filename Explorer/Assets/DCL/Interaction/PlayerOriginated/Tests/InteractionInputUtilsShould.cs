@@ -60,7 +60,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         [Test]
         public void QualifyByDistance()
         {
-            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(new PlayerOriginRaycastResult(new RaycastHit { distance = 100 }), new PBPointerEvents.Types.Info { MaxDistance = 110 }));
+            Assert.IsTrue(InteractionInputUtils.IsQualifiedByDistance(new PlayerOriginRaycastResultForSceneEntities(new RaycastHit { distance = 100 }), new PBPointerEvents.Types.Info { MaxDistance = 110 }));
         }
 
         [Test]

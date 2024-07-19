@@ -9,6 +9,7 @@ using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Minimap;
+using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -98,8 +99,7 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = enableLandscape,
                     EnableLOD = enableLOD,
-                    EnableAnalytics = EnableAnalytics,
-                    HybridSceneParams = launchSettings.CreateHybridSceneParams(),
+                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel)
                 },
                 backgroundMusic,
                 ct);
@@ -180,6 +180,7 @@ namespace Global.Dynamic
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }
     }

@@ -20,7 +20,7 @@ namespace DCL.Multiplayer.SDK.Tests
         private readonly URN emoteUrn2 = new ("more-human-than-human");
         private Entity entity;
         private IECSToCRDTWriter ecsToCRDTWriter;
-        private PlayerCRDTEntity playerCRDTEntity;
+        private PlayerSceneCRDTEntity playerCRDTEntity;
         private AvatarEmoteCommandComponent emoteCommand;
         private ISceneStateProvider sceneStateProvider;
 
@@ -32,11 +32,7 @@ namespace DCL.Multiplayer.SDK.Tests
             sceneStateProvider = Substitute.For<ISceneStateProvider>();
             system = new WriteAvatarEmoteCommandSystem(world, ecsToCRDTWriter, sceneStateProvider);
 
-            playerCRDTEntity = new PlayerCRDTEntity(
-                SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM,
-                Substitute.For<ISceneFacade>(),
-                entity
-            );
+            playerCRDTEntity = new PlayerSceneCRDTEntity(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM);
 
             entity = world.Create(playerCRDTEntity);
 

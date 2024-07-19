@@ -1,6 +1,5 @@
 using Segment.Analytics;
 using Segment.Serialization;
-using System;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -8,9 +7,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     {
         private readonly Segment.Analytics.Analytics analytics;
 
-        public SegmentAnalyticsService(AnalyticsConfiguration configuration)
+        public SegmentAnalyticsService(Configuration segmentConfiguration)
         {
-            analytics = new Segment.Analytics.Analytics(configuration.SegmentConfiguration);
+            analytics = new Segment.Analytics.Analytics(segmentConfiguration);
             Segment.Analytics.Analytics.Logger = new SegmentLogger();
         }
 

@@ -37,7 +37,10 @@ MonoBehaviour:
   - rid: 6697045322133929986
   - rid: 4132209997426458630
   - rid: 758312859982102531
+  - rid: 3601421940623147010
   - rid: 2306906494740202818
+  - rid: 2872862648882692098
+  - rid: 2872862648882692099
   references:
     version: 2
     RefIds:
@@ -275,6 +278,11 @@ MonoBehaviour:
     - rid: 2306906494740202818
       type: {class: BootstrapSettings, ns: Global.Dynamic, asm: DCL.Plugins}
       data:
+        AnalyticsConfigRef:
+          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
         <ReportHandlingSettingsDevelopment>k__BackingField:
           m_AssetGUID: 0dd75559898ca8d4db9fc8ab99ac2269
           m_SubObjectName: 
@@ -285,8 +293,39 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        AnalyticsConfigRef:
-          m_AssetGUID: 134b7bf082a11ae499e9e62958051ca7
+    - rid: 2872862648882692098
+      type: {class: PassportPlugin/PassportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        PassportPrefab:
+          m_AssetGUID: bf1104b23d6ed8f4ab84e9a0da93e10d
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 1
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityInfoPanelBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 66f8f8427a5c4443e95b0d298addd639
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 2872862648882692099
+      type: {class: MultiplayerPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        RemoteAvatarColliderPrefab:
+          m_AssetGUID: 9c4c0e79124f01744a5f969e08ad0370
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -305,6 +344,24 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         parsedParcels:
           m_AssetGUID: 86bf0204cf3bb75429342452a2a460af
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3601421940623147010
+      type: {class: NotificationPlugin/NotificationSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <NewNotificationView>k__BackingField:
+          m_AssetGUID: a1d5d4f99234041159f0c215eef3eff3
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <NotificationIconTypesSO>k__BackingField:
+          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

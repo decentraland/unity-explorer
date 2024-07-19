@@ -70,7 +70,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static GltfContainerAsset CreateGltfObject(AssetBundleData assetBundleData)
         {
-            var container = new GameObject($"AB:{assetBundleData.AssetBundle.name}");
+            var container = new GameObject(assetBundleData.GetInstanceName());
 
             // Let the upper layer decide what to do with the root
             container.SetActive(false);

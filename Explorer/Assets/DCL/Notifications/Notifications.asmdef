@@ -1,0 +1,27 @@
+{
+    "name": "Notification",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:0b3eab7834a09c24ca4e84fe0d8a43ce",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:2f30d6e5229a74284acedda491abcc6e",
+        "GUID:029c1c1b674aaae47a6841a0b89ad80e",
+        "GUID:e169fa6683c924c7e99a85981a91d953",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:6830e2f56251b492e9934f1fafbc8c7d"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

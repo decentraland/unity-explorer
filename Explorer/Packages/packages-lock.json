@@ -63,13 +63,6 @@
       "dependencies": {},
       "hash": "da64c14a820e151ed5291eef6869e1b3a1307498"
     },
-    "com.decentraland.unity-shared-dependencies": {
-      "version": "https://github.com/decentraland/unity-shared-dependencies.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "08012f4d8072199fc2650ac32fb29a43b54297a2"
-    },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",
       "depth": 0,

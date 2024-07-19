@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4939b83af98f4064a8b8803b02fe65a7, type: 3}
+  m_Name: NotificationIcons
+  m_EditorClassIdentifier: 
+  notificationIcons:
+  - key: 2
+    value: {fileID: 21300000, guid: db2b47b588339407289cfbc2c09d5be0, type: 3}
+  - key: 16
+    value: {fileID: 21300000, guid: de68e65bf4fba44b7a66667b1e4e3c6e, type: 3}
+  defaultIcon: {fileID: 21300000, guid: 51d0609124e474b04a9b42ec3746f089, type: 3}
