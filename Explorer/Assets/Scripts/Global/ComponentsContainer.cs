@@ -1,7 +1,6 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
-using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;

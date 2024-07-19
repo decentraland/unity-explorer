@@ -79,10 +79,11 @@ namespace CrdtEcsBridge.Components
             return sdkComponentBuilder;
         }
 
-        public static void SetAsDirty(IDirtyMarker dirtyMarker) =>
+        public static void SetAsDirty<T>(T dirtyMarker) where T: IDirtyMarker
+        {
             dirtyMarker.IsDirty = true;
+        }
 
-        
         //When Protobuff components are manipulated manually, you should first call this method.
         //Since defaults are ignored in Protobuff, this method will clear all fields to their default values.
         public static void ClearProtobufComponent<T>(this T component) where T: class, IMessage<T>, new()
