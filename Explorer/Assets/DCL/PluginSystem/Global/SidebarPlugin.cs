@@ -59,7 +59,7 @@ namespace DCL.PluginSystem.Global
                         view.gameObject.SetActive(true);
                         return view;
                     },
-                    mvcManager,
+                    mvcManager, notificationsBusController,
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
                     new SystemMenuController(() => mainUIContainer.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager)

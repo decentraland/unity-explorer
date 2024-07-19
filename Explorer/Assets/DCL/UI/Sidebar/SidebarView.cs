@@ -32,5 +32,8 @@ namespace DCL.UI.Sidebar
         [field: SerializeField]
         internal GameObject profileMenu { get; private set; }
 
+        [field: SerializeField]
+        internal GameObject backpackNotificationIndicator { get; private set; }
+
     }
 }

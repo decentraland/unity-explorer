@@ -13,5 +13,7 @@ namespace DCL.UI.MainUI
         public MinimapView MinimapView;
         [SerializeField]
         public SidebarView SidebarView;
+
+
     }
 }
