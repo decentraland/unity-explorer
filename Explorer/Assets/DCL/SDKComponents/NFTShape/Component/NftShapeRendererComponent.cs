@@ -23,6 +23,7 @@ namespace DCL.SDKComponents.NFTShape.Component
 
         public void Dispose()
         {
+            nftShape.Dispose();
         }
 
         public INftShapeRenderer PoolableComponent => nftShape;
