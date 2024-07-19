@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7658d3710a3e48ea90498ca8133f1cf5, type: 3}
+  m_Name: PassportAdditionalFieldsConfiguration
+  m_EditorClassIdentifier: 
+  additionalInfoFieldPrefab: {fileID: 6567217071925536827, guid: 3690a85fc0a8d7e4fbde5f59b3903085, type: 3}
+  additionalFields:
+  - type: 0
+    title: GENDER
+    logo: {fileID: 21300000, guid: 69882a153b3754ba4b9e42e933a0f3be, type: 3}
+    editionValues: {fileID: 11400000, guid: 0b491502c5a432d47b337443b23cd6de, type: 2}
+  - type: 1
+    title: COUNTRY
+    logo: {fileID: 21300000, guid: 61436eac9e799411693c5c3f04229dd6, type: 3}
+    editionValues: {fileID: 11400000, guid: dadea395e1656384b9337333d6e1f2a9, type: 2}
+  - type: 2
+    title: BIRTH DATE
+    logo: {fileID: 21300000, guid: e73d2e74ed0d4423894e66f6c9e924ff, type: 3}
+    editionValues: {fileID: 0}
+  - type: 3
+    title: PRONOUNS
+    logo: {fileID: 21300000, guid: 2798bb76c52a746f6a7c3da5f2ecd60a, type: 3}
+    editionValues: {fileID: 11400000, guid: 1164283c2e82be047be119434070c97c, type: 2}
+  - type: 4
+    title: RELATIONSHIP STATUS
+    logo: {fileID: 21300000, guid: ff045775f28f14c34b70bb85b799374a, type: 3}
+    editionValues: {fileID: 11400000, guid: bb9e4a61fb4420544bafea5255680008, type: 2}
+  - type: 5
+    title: SEXUAL ORIENTATION
+    logo: {fileID: 21300000, guid: ac0a0cb2efaca43ba977becfd175f46c, type: 3}
+    editionValues: {fileID: 11400000, guid: 600a5ae13db1b6c48ada81fa0763e903, type: 2}
+  - type: 6
+    title: LANGUAGE
+    logo: {fileID: 21300000, guid: 60cedc8ed59f84f3f9b5330778693eda, type: 3}
+    editionValues: {fileID: 11400000, guid: 921e77a693a604f48a6070cced36150b, type: 2}
+  - type: 7
+    title: PROFESSION
+    logo: {fileID: 21300000, guid: f4645bdfc540840d895b75b76fd229fa, type: 3}
+    editionValues: {fileID: 0}
+  - type: 8
+    title: EMPLOYMENT STATUS
+    logo: {fileID: 21300000, guid: 1b4d0df87e5e94b5bb432204bb1d26c6, type: 3}
+    editionValues: {fileID: 11400000, guid: 5ac76ba89a93911468d5218dc64b3258, type: 2}
+  - type: 9
+    title: HOBBIES
+    logo: {fileID: 21300000, guid: dbf95ee638ebe41219ba427998387333, type: 3}
+    editionValues: {fileID: 0}
+  - type: 10
+    title: REAL NAME
+    logo: {fileID: 21300000, guid: 4b6cb0d89a12445539eb343fb60fa639, type: 3}
+    editionValues: {fileID: 0}

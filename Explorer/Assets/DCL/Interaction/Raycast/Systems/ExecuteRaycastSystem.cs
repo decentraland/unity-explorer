@@ -259,7 +259,7 @@ namespace DCL.Interaction.Raycast.Systems
             }
 
             // If the collider is not a character, we need to check if it's in the collision mask
-            if (!collidersSceneCache.TryGetEntity(collider, out ColliderEntityInfo entityInfo))
+            if (!collidersSceneCache.TryGetEntity(collider, out ColliderSceneEntityInfo entityInfo))
 
                 // Can't do anything without collider info, just skip
                 return false;

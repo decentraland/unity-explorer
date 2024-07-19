@@ -48,12 +48,19 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             poolableBehavior.instance.gameObject.transform.DOScaleX(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
             poolableBehavior.instance.gameObject.transform.DOScaleY(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
+            SetIconOutline(true);
         }
 
         public void AnimateOut()
         {
             poolableBehavior.instance.gameObject.transform.DOScaleX(currentNewScale, 0.5f).SetEase(Ease.OutBack);
             poolableBehavior.instance.gameObject.transform.DOScaleY(currentNewScale, 0.5f).SetEase(Ease.OutBack);
+            SetIconOutline(false);
+        }
+
+        public void SetIconOutline(bool isActive)
+        {
+            poolableBehavior.instance.mapPinIconOutline.gameObject.SetActive(isActive);
         }
 
         public void SetData(string title, string description)

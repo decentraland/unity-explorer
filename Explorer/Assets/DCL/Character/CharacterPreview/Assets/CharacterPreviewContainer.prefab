@@ -1071,6 +1071,7 @@ MonoBehaviour:
   <cameraTarget>k__BackingField: {fileID: 8263753172317840554}
   <rotationTarget>k__BackingField: {fileID: 618782347525725431}
   <freeLookCamera>k__BackingField: {fileID: 1653081050115794389}
+  <previewPlatform>k__BackingField: {fileID: 38504064483759473}
 --- !u!1 &4857768151630023528
 GameObject:
   m_ObjectHideFlags: 3

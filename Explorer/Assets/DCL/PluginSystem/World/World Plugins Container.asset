@@ -25,6 +25,7 @@ MonoBehaviour:
   - rid: 4769369655026384898
   - rid: 892605770607624195
   - rid: 892605770607624196
+  - rid: 7615904969758605314
   references:
     version: 2
     RefIds:
@@ -166,3 +167,12 @@ MonoBehaviour:
         <LoadingAttemptsCount>k__BackingField: 6
         <PoolInitialCapacity>k__BackingField: 256
         <PoolMaxSize>k__BackingField: 2048
+    - rid: 7387084847885844480
+      type: {class: DynamicWorldSettings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data: 
+    - rid: 7615904969758605314
+      type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <Settings>k__BackingField: {fileID: 11400000, guid: f50de1a2a7dab4e4d952a8071d0273a1, type: 2}
+        <MaxSizeOfNftForDownload>k__BackingField:
+          maxSizeInBytes: 8388608

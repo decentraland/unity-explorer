@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DCL.Interaction.PlayerOriginated.Components
 {
-    public struct PlayerOriginRaycastResult
+    public struct PlayerOriginRaycastResultForSceneEntities
     {
         /// <summary>
         ///     Collider is hit and it belongs to an entity
@@ -12,11 +12,11 @@ namespace DCL.Interaction.PlayerOriginated.Components
         public bool IsValidHit => entityInfo.HasValue;
 
         private float distance;
-        private GlobalColliderEntityInfo? entityInfo;
+        private GlobalColliderSceneEntityInfo? entityInfo;
         private RaycastHit unityRaycastHit;
         private Ray originRay;
 
-        public PlayerOriginRaycastResult(RaycastHit unityRaycastHit) : this()
+        public PlayerOriginRaycastResultForSceneEntities(RaycastHit unityRaycastHit) : this()
         {
             this.unityRaycastHit = unityRaycastHit;
         }
@@ -35,15 +35,15 @@ namespace DCL.Interaction.PlayerOriginated.Components
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetupHit(RaycastHit hitInfo, GlobalColliderEntityInfo entityInfo, float distance)
+        public void SetupHit(RaycastHit hitInfo, GlobalColliderSceneEntityInfo sceneEntityInfo, float distance)
         {
             unityRaycastHit = hitInfo;
-            this.entityInfo = entityInfo;
+            this.entityInfo = sceneEntityInfo;
             this.distance = distance;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public GlobalColliderEntityInfo? GetEntityInfo() =>
+        public GlobalColliderSceneEntityInfo? GetEntityInfo() =>
             entityInfo;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
