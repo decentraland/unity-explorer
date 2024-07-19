@@ -12,6 +12,7 @@ namespace DCL.LOD.Components
         public LODGroup LodGroup;
         public List<LODAsset> LODAssets;
         private GameObjectPool<LODGroup> lodGroupPool;
+        private UnityEngine.LOD lod0, lod1;
 
         public void Dispose(World world)
         {
@@ -58,34 +59,16 @@ namespace DCL.LOD.Components
                 LodGroup.fadeMode = LODFadeMode.CrossFade;
                 LodGroup.animateCrossFading = true;
                 LodGroup.transform.SetParent(lodTransformParent); // The parent is the LODs pool parent
+                lod0 = new UnityEngine.LOD(1.0f, null);
+                lod1 = new UnityEngine.LOD(0.999f, null);
+                UnityEngine.LOD[] lods = {lod0, lod1};
+                LodGroup.SetLODs(lods.ToArray());
             }
 
             return LodGroup.transform;
         }
 
-        private int AvailableLODAssetCount()
-        {
-            int nCount = 0;
-            foreach (var lodAsset in LODAssets)
-            {
-                if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
-                    ++nCount;
-            }
-
-            return nCount;
-        }
-
-        private int GetHighestLOD()
-        {
-            int nLODLevel = 0;
-            foreach (var lodAsset in LODAssets)
-            {
-                nLODLevel = nLODLevel > lodAsset.currentLODLevel ? nLODLevel : lodAsset.currentLODLevel;
-            }
-            return nLODLevel;
-        }
-
-        public void ReEvaluateLODGroup()
+        public void ReEvaluateLODGroup(LODAsset lodAsset)
         {
             if (LodGroup == null || LODAssets.Count == 0)
                 return;
@@ -93,54 +76,78 @@ namespace DCL.LOD.Components
             // Ordered sort as the LOD Group expects the screen relative transition heights to be in order
             // and we might not have necessarily loaded them in order.
             LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
-            int assetCount = AvailableLODAssetCount();
-            int lodCount = GetHighestLOD() + 1;
-            UnityEngine.LOD[] lods = new UnityEngine.LOD[lodCount];
-            float screenRelativeTransitionHeight = 0.05f;
-            int nBitMask = 0;
-            int lodArrayPositionIterator = 0;
-            foreach (var lodAsset in LODAssets)
+
+            float distance = 20 * 16;
+            float fScreenRelativeTransitionHeight = 0.1f;
+            bool bDistanceEvaluatedScreenRelativeTransitionHeight = false;
+            if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
             {
-                for (int i = lodArrayPositionIterator; i < lodCount; ++i)
+                if (bDistanceEvaluatedScreenRelativeTransitionHeight == false)
                 {
-                    ++lodArrayPositionIterator;
-                    if (i == lodAsset.currentLODLevel)
-                    {
-                        Renderer[] lodRenderers = null;
-                        if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
-                            lodRenderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
-
-                        lods[i] = new UnityEngine.LOD(screenRelativeTransitionHeight, lodRenderers);
-                        lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f; // Not the best options, but without triangle density, it's just guess work really.
-                        nBitMask += 1 << i;
-                        break;
-                    }
-
-                    lods[i] = new UnityEngine.LOD(screenRelativeTransitionHeight, null);
-                    lods[i].screenRelativeTransitionHeight = (i == 0) ? 0.5f : 0.05f; // Not the best options, but without triangle density, it's just guess work really.
+                    if (lodAsset.currentLODLevel == 0)
+                        lod0.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+                    else if (lodAsset.currentLODLevel == 1)
+                        lod1.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
                 }
-            }
-
-            LodGroup.SetLODs(lods.ToArray());
-            LodGroup.RecalculateBounds();
-            ForceLOD(nBitMask);
-        }
-
-        private void ForceLOD(int nBitMask)
-        {
-            if (nBitMask != 3)
-            {
-                if ((nBitMask & 1) != 0) { LodGroup.ForceLOD(0); }
-                else if ((nBitMask & 2) != 0) { LodGroup.ForceLOD(1); }
                 else
                 {
-                    Assert.IsTrue(false); // Shouldn't get here, we have a problem
+                    if (lodAsset.currentLODLevel == 0)
+                    {
+                        lod0.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+
+                        Bounds mergedBounds = lod0.renderers[0].bounds;
+                        // Encapsulate the bounds of the remaining renderers
+                        for (int i = 1; i < lod0.renderers.Length; i++)
+                        {
+                            mergedBounds.Encapsulate(lod0.renderers[i].bounds);
+                        }
+
+                        fScreenRelativeTransitionHeight = CalculateScreenRelativeTransitionHeight(distance, mergedBounds);
+                    }
+                    else if (lodAsset.currentLODLevel == 1)
+                    {
+                        lod1.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+
+                        Bounds mergedBounds = lod0.renderers[0].bounds;
+                        // Encapsulate the bounds of the remaining renderers
+                        for (int i = 1; i < lod0.renderers.Length; i++)
+                        {
+                            mergedBounds.Encapsulate(lod0.renderers[i].bounds);
+                        }
+
+                        fScreenRelativeTransitionHeight = CalculateScreenRelativeTransitionHeight(distance, mergedBounds);
+                    }
                 }
             }
-            else
+
+            if (LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0)
             {
-                LodGroup.ForceLOD(-1);
+                lod0.screenRelativeTransitionHeight = 0.1f;
+                lod1.screenRelativeTransitionHeight = 0.099f;
             }
+            else if (LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1)
+            {
+                lod0.screenRelativeTransitionHeight = 0.99f;
+                lod1.screenRelativeTransitionHeight = 0.1f;
+            }
+            else if (LODAssets.Count == 2)
+            {
+                lod0.screenRelativeTransitionHeight = 0.5f;
+                lod1.screenRelativeTransitionHeight = 0.1f;
+            }
+
+            UnityEngine.LOD[] lods = {lod0, lod1 };
+            LodGroup.SetLODs(lods);
+            LodGroup.RecalculateBounds();
+        }
+
+        public float CalculateScreenRelativeTransitionHeight(float distance, Bounds rendererBounds)
+        {
+            float objectSize = rendererBounds.extents.magnitude;
+            float defaultFOV = 60.0f;
+            float fov = (Camera.main ? Camera.main.fieldOfView : defaultFOV) * Mathf.Deg2Rad;
+            float halfFov = fov / 2f;
+            return (objectSize * 0.5f) / (distance * Mathf.Tan(halfFov));
         }
 
         // Quick function to check if LODAsset has already been loaded

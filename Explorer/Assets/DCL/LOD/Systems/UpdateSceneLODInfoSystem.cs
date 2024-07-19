@@ -86,7 +86,7 @@ namespace DCL.LOD.Systems
                     // ...otherwise re-parent to the LODGroup entity and re-evaluate the LODGroup
                     Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
                     cachedAsset.lodGO.transform.SetParent(lodGroupTransform);
-                    sceneLODInfo.ReEvaluateLODGroup();
+                    sceneLODInfo.ReEvaluateLODGroup(cachedAsset);
                 }
             }
             else

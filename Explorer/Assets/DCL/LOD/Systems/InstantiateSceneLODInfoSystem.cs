@@ -90,7 +90,7 @@ namespace DCL.LOD.Systems
 
                         lodAsset.SetAssetBundleReference(result.Asset);
                         lodAsset.FinalizeInstantiation(instantiatedLOD, slots);
-                        bNewAssetAdded = true;
+                        sceneLODInfo.ReEvaluateLODGroup(lodAsset);
                     }
                     else
                     {
@@ -101,8 +101,6 @@ namespace DCL.LOD.Systems
                     CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                 }
             }
-            if(bNewAssetAdded)
-                sceneLODInfo.ReEvaluateLODGroup();
         }
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
