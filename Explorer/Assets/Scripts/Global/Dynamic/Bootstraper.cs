@@ -180,7 +180,7 @@ namespace Global.Dynamic
             // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
             mvcManager.ShowAsync(SidebarController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
+            //mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();

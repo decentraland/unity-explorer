@@ -1,4 +1,5 @@
-﻿using DCL.ExplorePanel;
+﻿using DCL.EmotesWheel;
+using DCL.ExplorePanel;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,10 @@ namespace DCL.UI.Sidebar
         public ProfileWidgetView ProfileWidget { get; private set; }
         [field: SerializeField]
         public SystemMenuView SystemMenuView { get; private set; }
+
+        [field: SerializeField]
+        public PersistentEmoteWheelOpenerView PersistentEmoteWheelOpener { get; private set; }
+
         [field: SerializeField]
         public ProfileWidgetView ProfileMenuWidget { get; private set; }
 

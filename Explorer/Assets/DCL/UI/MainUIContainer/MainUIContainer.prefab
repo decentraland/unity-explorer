@@ -178,9 +178,9 @@ MonoBehaviour:
   <layoutElement>k__BackingField: {fileID: 3900643109725378707}
   <showLayoutWidth>k__BackingField: 60
   <hideLayoutWidth>k__BackingField: 8
-  <hideWaitTime>k__BackingField: 0.5
-  <showWaitTime>k__BackingField: 0.5
-  <animationTime>k__BackingField: 0.5
+  <hideWaitTime>k__BackingField: 0.3
+  <showWaitTime>k__BackingField: 0.3
+  <animationTime>k__BackingField: 0.2
 --- !u!1 &5452332328544057486
 GameObject:
   m_ObjectHideFlags: 0
@@ -1067,7 +1067,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 243621710923428424, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}
       propertyPath: m_Value
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 510719210599564447, guid: f3b1d401bc50845629a6b982f9793f16, type: 3}
       propertyPath: m_AnchorMax.y
