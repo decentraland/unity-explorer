@@ -56,6 +56,9 @@ namespace DCL.ECSComponents {
   /// AvatarAnchorPointType determines the part of the avatar's body that anchors the Entity.
   /// </summary>
   public enum AvatarAnchorPointType {
+    /// <summary>
+    /// @deprecated test
+    /// </summary>
     [pbr::OriginalName("AAPT_POSITION")] AaptPosition = 0,
     [pbr::OriginalName("AAPT_NAME_TAG")] AaptNameTag = 1,
     [pbr::OriginalName("AAPT_HEAD")] AaptHead = 4,
@@ -88,11 +91,11 @@ namespace DCL.ECSComponents {
 
   #region Messages
   /// <summary>
-  /// The AvatarAttach component automatically repositions an Entity to maintain the same position and 
-  /// rotation relative to some part of an avatar, called the "anchor point". The Entity 
+  /// The AvatarAttach component automatically repositions an Entity to maintain the same position and
+  /// rotation relative to some part of an avatar, called the "anchor point". The Entity
   /// will follow this anchor as it moves.
   ///
-  /// The Entity's own Transform is overridden by this component. To offset position and adjust scale, 
+  /// The Entity's own Transform is overridden by this component. To offset position and adjust scale,
   /// add a child to the anchored Entity and set a Transform on it instead.
   ///
   /// AvatarAnchorPointType indicates which part of the avatar the Entity must follow.

@@ -185,7 +185,7 @@ namespace Global.Dynamic
 
         private bool DetectAndConfigureLocalSceneDevelopment(RealmLaunchSettings launchSettings)
         {
-            // When started in preview mode (local scene development) a command line argument is used
+            // When started in local scene development mode (AKA preview mode) a command line argument is used
             // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
 
             // FOR DEBUGGING IN UNITY ONLY
