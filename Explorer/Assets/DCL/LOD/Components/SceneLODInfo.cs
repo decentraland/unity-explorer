@@ -94,7 +94,7 @@ namespace DCL.LOD.Components
             // and we might not have necessarily loaded them in order.
             LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
             int assetCount = AvailableLODAssetCount();
-            int lodCount = 2;//GetHighestLOD() + 1;
+            int lodCount = GetHighestLOD() + 1;
             UnityEngine.LOD[] lods = new UnityEngine.LOD[lodCount];
             float screenRelativeTransitionHeight = 0.05f;
             int nBitMask = 0;
