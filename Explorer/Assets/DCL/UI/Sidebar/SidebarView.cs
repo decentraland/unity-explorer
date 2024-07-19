@@ -21,6 +21,8 @@ namespace DCL.UI.Sidebar
 
         [field: SerializeField]
         internal Button mapButton { get; private set; }
+        [field: SerializeField]
+        internal Button notificationsButton { get; private set; }
 
         [field: SerializeField]
         internal Button backpackButton { get; private set; }
@@ -36,6 +38,8 @@ namespace DCL.UI.Sidebar
 
         [field: SerializeField]
         internal GameObject backpackNotificationIndicator { get; private set; }
+        [field: SerializeField]
+        internal GameObject notificationsNotificationIndicator { get; private set; }
 
     }
 }

@@ -44,13 +44,27 @@ namespace DCL.UI.Sidebar
                 viewInstance.backpackNotificationIndicator.SetActive(false);
                 OpenExplorePanelInSection(ExploreSections.Backpack);
             });
+
+            viewInstance.notificationsButton.onClick.AddListener(() =>
+            {
+                viewInstance.notificationsNotificationIndicator.SetActive(false);
+                //Open Notifications Window
+            });
+
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePopup);
             viewInstance.backpackNotificationIndicator.SetActive(false);
-            notificationsBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
+            viewInstance.notificationsNotificationIndicator.SetActive(false);
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT,  OnNewNotificationReceived);
         }
 
+        private void OnNewNotificationReceived(INotification newNotification)
+        {
+            viewInstance.notificationsNotificationIndicator.SetActive(true);
+        }
+        
         private void OnRewardNotificationReceived(object[] parameters)
         {
             viewInstance.backpackNotificationIndicator.SetActive(true);
