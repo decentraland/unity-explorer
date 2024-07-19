@@ -122,7 +122,7 @@ namespace DCL.Passport
 
         public override void Dispose()
         {
-            passportErrorsController.Hide(true);
+            passportErrorsController?.Hide(true);
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController.Dispose();
 
