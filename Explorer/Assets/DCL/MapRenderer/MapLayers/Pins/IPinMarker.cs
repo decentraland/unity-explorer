@@ -22,6 +22,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void AnimateOut();
 
+        void SetIconOutline(bool isActive);
+
         void SetTexture(Texture2D texture);
 
         void OnBecameVisible();

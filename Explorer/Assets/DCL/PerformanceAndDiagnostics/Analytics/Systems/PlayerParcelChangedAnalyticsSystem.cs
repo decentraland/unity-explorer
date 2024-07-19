@@ -60,10 +60,10 @@ namespace DCL.Analytics.Systems
 
                 analytics.Track(AnalyticsEvents.World.MOVE_TO_PARCEL, new JsonObject
                 {
-                    { "old parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
-                    { "new parcel", newParcel.ToString() },
-                    { "scene hash", sceneIsDefined ? currentScene.Info.Name : UNDEFINED },
-                    { "is empty scene", sceneIsDefined ? currentScene.IsEmpty : UNDEFINED },
+                    { "old_parcel", oldParcel == MIN_INT2 ? "(NaN, NaN)" : oldParcel.ToString() },
+                    { "new_parcel", newParcel.ToString() },
+                    { "scene_hash", sceneIsDefined ? currentScene.Info.Name : UNDEFINED },
+                    { "is_empty_scene", sceneIsDefined ? currentScene.IsEmpty : UNDEFINED },
                 });
 
                 oldParcel = newParcel;
