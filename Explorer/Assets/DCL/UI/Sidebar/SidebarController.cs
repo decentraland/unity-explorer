@@ -57,14 +57,14 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackNotificationIndicator.SetActive(false);
             viewInstance.notificationsNotificationIndicator.SetActive(false);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT,  OnNewNotificationReceived);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.EVENTS_STARTED,  OnNewNotificationReceived);
         }
 
         private void OnNewNotificationReceived(INotification newNotification)
         {
             viewInstance.notificationsNotificationIndicator.SetActive(true);
         }
-        
+
         private void OnRewardNotificationReceived(object[] parameters)
         {
             viewInstance.backpackNotificationIndicator.SetActive(true);
