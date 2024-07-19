@@ -66,7 +66,8 @@ namespace DCL.LOD
             if (State == LOD_STATE.FAILED)
                 return;
 
-            lodGO?.SetActive(true);
+            if (lodGO != null)
+                lodGO.SetActive(true);
 
             if (State == LOD_STATE.SUCCESS)
             {
@@ -80,7 +81,8 @@ namespace DCL.LOD
             if (State == LOD_STATE.FAILED)
                 return;
 
-            lodGO?.SetActive(false);
+            if (lodGO != null)
+                lodGO.SetActive(false);
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting)

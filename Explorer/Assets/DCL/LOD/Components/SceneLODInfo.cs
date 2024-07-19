@@ -94,7 +94,7 @@ namespace DCL.LOD.Components
             // and we might not have necessarily loaded them in order.
             LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
             int assetCount = AvailableLODAssetCount();
-            int lodCount = GetHighestLOD() + 1;
+            int lodCount = 2;//GetHighestLOD() + 1;
             UnityEngine.LOD[] lods = new UnityEngine.LOD[lodCount];
             float screenRelativeTransitionHeight = 0.05f;
             int nBitMask = 0;
@@ -121,19 +121,17 @@ namespace DCL.LOD.Components
                 }
             }
 
-
             LodGroup.SetLODs(lods.ToArray());
+            LodGroup.RecalculateBounds();
+            ForceLOD(nBitMask);
+        }
 
+        private void ForceLOD(int nBitMask)
+        {
             if (nBitMask != 3)
             {
-                if ((nBitMask & 1) != 0)
-                {
-                    LodGroup.ForceLOD(0);
-                }
-                else if ((nBitMask & 2) != 0)
-                {
-                    LodGroup.ForceLOD(1);
-                }
+                if ((nBitMask & 1) != 0) { LodGroup.ForceLOD(0); }
+                else if ((nBitMask & 2) != 0) { LodGroup.ForceLOD(1); }
                 else
                 {
                     Assert.IsTrue(false); // Shouldn't get here, we have a problem
