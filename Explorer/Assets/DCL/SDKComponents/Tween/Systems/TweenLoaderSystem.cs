@@ -37,7 +37,7 @@ namespace DCL.SDKComponents.Tween.Systems
             };
 
             World.Add(entity, sdkTweenComponent);
-            ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} [Load]");
+            // ReportHub.Log(ReportCategory.TWEEN,$"VVV {entity.Id} <Tween> {Time.frameCount} [Load]");
         }
     }
 }

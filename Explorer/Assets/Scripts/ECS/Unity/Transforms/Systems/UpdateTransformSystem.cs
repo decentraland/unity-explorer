@@ -6,7 +6,6 @@ using CrdtEcsBridge.Components.Transform;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
-using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -24,13 +23,12 @@ namespace ECS.Unity.Transforms.Systems
         [Query]
         private void UpdateTransform(Entity entity, ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
-
             if (sdkTransform.IsDirty)
             {
                 transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
 
-                if(entity.Id  == 8)
-                    Debug.Log($"VVV {entity.Id} <Trans> {World.Id} {Time.frameCount} [Update]: {transformComponent.Transform.rotation}");
+                // if(entity.Id  == 8)
+                //     Debug.Log($"VVV {entity.Id} <Trans> {Time.frameCount} [Update]: {transformComponent.Transform.rotation}");
 
                 sdkTransform.IsDirty = false;
             }

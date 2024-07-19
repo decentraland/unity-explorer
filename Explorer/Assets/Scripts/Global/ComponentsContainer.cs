@@ -97,6 +97,7 @@ namespace Global
                .Add(SDKComponentBuilder<PBAudioStream>.Create(ComponentID.AUDIO_STREAM).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTween>.Create(ComponentID.TWEEN).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBTweenState>.Create(ComponentID.TWEEN_STATE).AsProtobufComponent())
+               .Add(SDKComponentBuilder<PBTweenSequence>.Create(ComponentID.TWEEN_SEQUENCE).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBVideoPlayer>.Create(ComponentID.VIDEO_PLAYER).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAvatarAttach>.Create(ComponentID.AVATAR_ATTACH).AsProtobufComponent())
                .Add(SDKComponentBuilder<PBAnimator>.Create(ComponentID.ANIMATOR).AsProtobufComponent())

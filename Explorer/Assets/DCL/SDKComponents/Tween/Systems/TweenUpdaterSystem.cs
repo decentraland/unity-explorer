@@ -69,6 +69,7 @@ namespace DCL.SDKComponents.Tween.Systems
         private readonly TweenerPool tweenerPool;
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
+        private int targetEntity = 8;
 
         public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
         {
@@ -80,12 +81,20 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             UpdatePBTweenQuery(World);
             UpdateTweenSequenceQuery(World, t);
+            // UpdatePBTweenSequenceQuery(World);
 
-            // HandleEntityDestructionQuery(World);
-            // HandleComponentRemovalQuery(World);
-            //
-            // World.Remove<SDKTweenComponent>(in HandleEntityDestruction_QueryDescription);
-            // World.Remove<SDKTweenComponent>(in HandleComponentRemoval_QueryDescription);
+            HandleEntityDestructionQuery(World);
+            HandleComponentRemovalQuery(World);
+
+            World.Remove<SDKTweenComponent>(in HandleEntityDestruction_QueryDescription);
+            World.Remove<SDKTweenComponent>(in HandleComponentRemoval_QueryDescription);
+        }
+
+        [Query]
+        private void UpdatePBTweenSequence(Entity entity, ref PBTween pbTween, ref PBTweenSequence pbTweenSq, ref SDKTweenComponent tweenComponent)
+        {
+            if (pbTween.IsDirty == false) return;
+            // ReportHub.Log(ReportCategory.TWEEN, $"VVV {entity.Id} <Tween> {Time.frameCount} [PBSequence]: {pbTweenSq.Loop} | {pbTweenSq.Sequence.Count}");
         }
 
         public void FinalizeComponents(in Query query)
@@ -114,8 +123,11 @@ namespace DCL.SDKComponents.Tween.Systems
         }
 
         [Query]
-        private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
+        private void UpdatePBTween(Entity entity, ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
         {
+            if(entity.Id  == targetEntity)
+                ReportHub.Log(ReportCategory.TWEEN, $"VVV {entity.Id} <Tween> {Time.frameCount} [PB]: {pbTween.ModeCase} | {pbTween.IsDirty}");
+
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
             if (pbTween.IsDirty)
@@ -126,8 +138,10 @@ namespace DCL.SDKComponents.Tween.Systems
         private void UpdateTweenSequence(Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent,
             CRDTEntity sdkEntity, [Data] float t)
         {
-            if (sdkTweenComponent.IsDirty) { SetupTween(entity, ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity, t); }
-            else { UpdateTweenState(entity, ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity); }
+            if (sdkTweenComponent.IsDirty)
+                SetupTween(entity, ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity, t);
+            else
+                UpdateTweenState(entity, ref sdkTweenComponent, ref sdkTransform, in pbTween, sdkEntity);
         }
 
         private void SetupTween(Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent,
@@ -155,7 +169,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
                 UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
 
-                if(entity.Id  == 8)
+                if(entity.Id  == targetEntity)
                     ReportHub.Log(ReportCategory.TWEEN, $"VVV {entity.Id} <Tween> {Time.frameCount} [Setup]: TsActive | {sdkTransform.Rotation} | {start} -> {end}");
             }
             else
@@ -164,7 +178,7 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = TweenStateStatus.TsPaused;
                 UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
 
-                if(entity.Id  == 8)
+                if(entity.Id  == targetEntity)
                     ReportHub.Log(ReportCategory.TWEEN, $"VVV {entity.Id} <Tween> {Time.frameCount} [Setup]: Paused | {sdkTransform.Rotation} | {start} -> {end}");
             }
 
@@ -173,7 +187,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private void UpdateTweenState(Entity entity, ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, CRDTEntity sdkEntity)
         {
-            TweenStateStatus newState = GetCurrentTweenState(sdkTweenComponent);
+            TweenStateStatus newState = GetCurrentTweenerState(sdkTweenComponent);
 
             Quaternion start = Quaternion.identity;
             Quaternion end = Quaternion.identity;
@@ -189,19 +203,19 @@ namespace DCL.SDKComponents.Tween.Systems
                 sdkTweenComponent.TweenStateStatus = newState;
                 UpdateTweenPositionAndState(sdkEntity, sdkTweenComponent, ref sdkTransform);
 
-                if(entity.Id  == 8)
+                if(entity.Id  == targetEntity)
                     ReportHub.Log(ReportCategory.TWEEN, $"VVV {entity.Id} <Tween> {Time.frameCount} [Update]: new state {newState} | {sdkTransform.Rotation} | {start} -> {end}");
             }
             else if (newState == TweenStateStatus.TsActive)
             {
                 UpdateTweenPosition(sdkEntity, sdkTweenComponent, ref sdkTransform);
 
-                if(entity.Id  == 8)
+                if(entity.Id  == targetEntity)
                     ReportHub.Log(ReportCategory.TWEEN, $"VVV {entity.Id} <Tween> {Time.frameCount} [Update]: TsActive | {sdkTransform.Rotation} | {start} -> {end}");
             }
             else
             {
-                if(entity.Id  == 8)
+                if(entity.Id  == targetEntity)
                     ReportHub.Log(ReportCategory.TWEEN, $"VVV {entity.Id} <Tween> {Time.frameCount} [UPDATE] Empty {newState} | {sdkTransform.Rotation} | {start} -> {end}");
             }
         }
@@ -223,16 +237,17 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             //NOTE: Left this per legacy reasons, Im not sure if this can happen in new renderer
             // There may be a tween running for the entity transform, e.g: during preview mode hot-reload.
-            // if (sdkTweenComponent.IsActive())
-            // {
-            //     sdkTweenComponent.Rewind();
-            //     TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
-            //     TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, entity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
-            // }
-            // ReturnTweenToPool(ref sdkTweenComponent);
+            if (sdkTweenComponent.IsActive())
+            {
+                sdkTweenComponent.Rewind();
+                TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+                TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, entity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
+            }
+            ReturnTweenToPool(ref sdkTweenComponent);
 
             Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
+            sdkTweenComponent.pbTween = tweenModel;
             sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, entityTransform, durationInSeconds);
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
@@ -245,11 +260,13 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private void ReturnTweenToPool(ref SDKTweenComponent sdkTweenComponent)
         {
+            // ReportHub.Log(ReportCategory.TWEEN, $"VVV <Tween> {Time.frameCount} [POOL RELEASE]");
+
             tweenerPool.Return(sdkTweenComponent);
             sdkTweenComponent.Clear();
         }
 
-        private TweenStateStatus GetCurrentTweenState(SDKTweenComponent tweener)
+        private TweenStateStatus GetCurrentTweenerState(SDKTweenComponent tweener)
         {
             if (tweener.CustomTweener == null || tweener.CustomTweener.IsFinished()) return TweenStateStatus.TsCompleted;
             if (tweener.CustomTweener.IsPaused()) return TweenStateStatus.TsPaused;
