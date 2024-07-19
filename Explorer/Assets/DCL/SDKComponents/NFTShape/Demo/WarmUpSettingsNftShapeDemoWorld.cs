@@ -2,6 +2,7 @@ using Arch.Core;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.SDKComponents.NFTShape.Component;
+using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
 using DCL.SDKComponents.NFTShape.Frames.Pool;
 using System;
 
@@ -16,13 +17,14 @@ namespace DCL.SDKComponents.NFTShape.Demo
         private readonly PBNftShape nftShape;
         private readonly PBVisibilityComponent visibility;
 
-        public WarmUpSettingsNftShapeDemoWorld(IFramesPool framesPool, NftShapeProperties nftShapeProperties, Func<bool> visible) : this(World.Create(), framesPool, nftShapeProperties, visible) { }
+        public WarmUpSettingsNftShapeDemoWorld(IFramesPool framesPool, IReadOnlyFramePrefabs framePrefabs, NftShapeProperties nftShapeProperties, Func<bool> visible) : this(World.Create(), framesPool, framePrefabs, nftShapeProperties, visible) { }
 
-        public WarmUpSettingsNftShapeDemoWorld(World world, IFramesPool framesPool, NftShapeProperties nftShapeProperties, Func<bool> visible) : this(world, framesPool, new PBNftShape(), new PBVisibilityComponent(), new PBBillboard(), nftShapeProperties, visible) { }
+        public WarmUpSettingsNftShapeDemoWorld(World world, IFramesPool framesPool, IReadOnlyFramePrefabs framePrefabs, NftShapeProperties nftShapeProperties, Func<bool> visible) : this(world, framesPool, framePrefabs, new PBNftShape(), new PBVisibilityComponent(), new PBBillboard(), nftShapeProperties, visible) { }
 
         public WarmUpSettingsNftShapeDemoWorld(
             World world,
             IFramesPool framesPool,
+            IReadOnlyFramePrefabs framePrefabs,
             PBNftShape nftShape,
             PBVisibilityComponent visibility,
             PBBillboard billboard,
@@ -40,6 +42,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                 new NFTShapeDemoWorld(
                     world,
                     framesPool,
+                    framePrefabs,
                     (nftShape, visibility, billboard)
                 )
             );
