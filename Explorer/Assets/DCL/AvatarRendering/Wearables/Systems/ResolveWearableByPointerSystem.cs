@@ -87,7 +87,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get();
 
             var successfulResults = 0;
-            var successfulDtos = 0;
+            int finishedDTOs = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
             {
@@ -115,12 +115,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (wearable.WearableDTO.Succeeded)
                 {
-                    successfulDtos++;
+                    finishedDTOs++;
                     resolvedDTOs.Add(wearable);
                 }
                 else if (wearable.WearableDTO.Exception != null)
                 {
-                    successfulDtos++;
+                    finishedDTOs++;
                 }
             }
 
@@ -132,7 +132,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ref HideWearablesResolution hideWearablesResolution = ref wearablesByPointersIntention.HideWearablesResolution;
 
-            if (successfulDtos == wearablesByPointersIntention.Pointers.Count)
+            if (finishedDTOs == wearablesByPointersIntention.Pointers.Count)
             {
                 if (hideWearablesResolution.VisibleWearables == null)
                     WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, resolvedDTOs.Count, ref hideWearablesResolution);
