@@ -25,21 +25,21 @@ namespace Decentraland.Sdk.Development {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
             "CjRkZWNlbnRyYWxhbmQvc2RrL2RldmVsb3BtZW50L2xvY2FsX2RldmVsb3Bt",
-            "ZW50LnByb3RvEhxkZWNlbnRyYWxhbmQuc2RrLmRldmVsb3BtZW50IicKC1Vw",
-            "ZGF0ZVNjZW5lEgoKAmlkGAEgASgJEgwKBHR5cGUYAiABKAkicQoLVXBkYXRl",
-            "TW9kZWwSCgoCaWQYASABKAkSCwoDc3JjGAIgASgJEgwKBGhhc2gYAyABKAkS",
-            "OwoEdHlwZRgEIAEoDjItLmRlY2VudHJhbGFuZC5zZGsuZGV2ZWxvcG1lbnQu",
-            "VXBkYXRlTW9kZWxUeXBlIqEBCg5Xc1NjZW5lTWVzc2FnZRJBCgx1cGRhdGVf",
-            "c2NlbmUYASABKAsyKS5kZWNlbnRyYWxhbmQuc2RrLmRldmVsb3BtZW50LlVw",
-            "ZGF0ZVNjZW5lSAASQQoMdXBkYXRlX21vZGVsGAIgASgLMikuZGVjZW50cmFs",
-            "YW5kLnNkay5kZXZlbG9wbWVudC5VcGRhdGVNb2RlbEgAQgkKB21lc3NhZ2Uq",
-            "PgoPVXBkYXRlTW9kZWxUeXBlEgsKB1VNVF9BREQQABIOCgpVTVRfUkVNT1ZF",
-            "EAESDgoKVU1UX0NIQU5HRRACYgZwcm90bzM="));
+            "ZW50LnByb3RvEhxkZWNlbnRyYWxhbmQuc2RrLmRldmVsb3BtZW50Ih8KC1Vw",
+            "ZGF0ZVNjZW5lEhAKCHNjZW5lX2lkGAEgASgJIncKC1VwZGF0ZU1vZGVsEhAK",
+            "CHNjZW5lX2lkGAEgASgJEgsKA3NyYxgCIAEoCRIMCgRoYXNoGAMgASgJEjsK",
+            "BHR5cGUYBCABKA4yLS5kZWNlbnRyYWxhbmQuc2RrLmRldmVsb3BtZW50LlVw",
+            "ZGF0ZU1vZGVsVHlwZSKhAQoOV3NTY2VuZU1lc3NhZ2USQQoMdXBkYXRlX3Nj",
+            "ZW5lGAEgASgLMikuZGVjZW50cmFsYW5kLnNkay5kZXZlbG9wbWVudC5VcGRh",
+            "dGVTY2VuZUgAEkEKDHVwZGF0ZV9tb2RlbBgCIAEoCzIpLmRlY2VudHJhbGFu",
+            "ZC5zZGsuZGV2ZWxvcG1lbnQuVXBkYXRlTW9kZWxIAEIJCgdtZXNzYWdlKjEK",
+            "D1VwZGF0ZU1vZGVsVHlwZRIOCgpVTVRfQ0hBTkdFEAASDgoKVU1UX1JFTU9W",
+            "RRABYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Decentraland.Sdk.Development.UpdateModelType), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Sdk.Development.UpdateScene), global::Decentraland.Sdk.Development.UpdateScene.Parser, new[]{ "Id", "Type" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Sdk.Development.UpdateModel), global::Decentraland.Sdk.Development.UpdateModel.Parser, new[]{ "Id", "Src", "Hash", "Type" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Sdk.Development.UpdateScene), global::Decentraland.Sdk.Development.UpdateScene.Parser, new[]{ "SceneId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Sdk.Development.UpdateModel), global::Decentraland.Sdk.Development.UpdateModel.Parser, new[]{ "SceneId", "Src", "Hash", "Type" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Decentraland.Sdk.Development.WsSceneMessage), global::Decentraland.Sdk.Development.WsSceneMessage.Parser, new[]{ "UpdateScene", "UpdateModel" }, new[]{ "Message" }, null, null, null)
           }));
     }
@@ -48,14 +48,16 @@ namespace Decentraland.Sdk.Development {
   }
   #region Enums
   public enum UpdateModelType {
-    [pbr::OriginalName("UMT_ADD")] UmtAdd = 0,
+    [pbr::OriginalName("UMT_CHANGE")] UmtChange = 0,
     [pbr::OriginalName("UMT_REMOVE")] UmtRemove = 1,
-    [pbr::OriginalName("UMT_CHANGE")] UmtChange = 2,
   }
 
   #endregion
 
   #region Messages
+  /// <summary>
+  /// ts code &amp; main.crdt updates
+  /// </summary>
   public sealed partial class UpdateScene : pb::IMessage<UpdateScene>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -90,8 +92,7 @@ namespace Decentraland.Sdk.Development {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public UpdateScene(UpdateScene other) : this() {
-      id_ = other.id_;
-      type_ = other.type_;
+      sceneId_ = other.sceneId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -101,27 +102,15 @@ namespace Decentraland.Sdk.Development {
       return new UpdateScene(this);
     }
 
-    /// <summary>Field number for the "id" field.</summary>
-    public const int IdFieldNumber = 1;
-    private string id_ = "";
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 1;
+    private string sceneId_ = "";
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Id {
-      get { return id_; }
+    public string SceneId {
+      get { return sceneId_; }
       set {
-        id_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
-      }
-    }
-
-    /// <summary>Field number for the "type" field.</summary>
-    public const int TypeFieldNumber = 2;
-    private string type_ = "";
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Type {
-      get { return type_; }
-      set {
-        type_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
     }
 
@@ -140,8 +129,7 @@ namespace Decentraland.Sdk.Development {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (Id != other.Id) return false;
-      if (Type != other.Type) return false;
+      if (SceneId != other.SceneId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -149,8 +137,7 @@ namespace Decentraland.Sdk.Development {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Id.Length != 0) hash ^= Id.GetHashCode();
-      if (Type.Length != 0) hash ^= Type.GetHashCode();
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -169,13 +156,9 @@ namespace Decentraland.Sdk.Development {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Id.Length != 0) {
+      if (SceneId.Length != 0) {
         output.WriteRawTag(10);
-        output.WriteString(Id);
-      }
-      if (Type.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteString(Type);
+        output.WriteString(SceneId);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
@@ -187,13 +170,9 @@ namespace Decentraland.Sdk.Development {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Id.Length != 0) {
+      if (SceneId.Length != 0) {
         output.WriteRawTag(10);
-        output.WriteString(Id);
-      }
-      if (Type.Length != 0) {
-        output.WriteRawTag(18);
-        output.WriteString(Type);
+        output.WriteString(SceneId);
       }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
@@ -205,11 +184,8 @@ namespace Decentraland.Sdk.Development {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Id.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Id);
-      }
-      if (Type.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Type);
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -223,11 +199,8 @@ namespace Decentraland.Sdk.Development {
       if (other == null) {
         return;
       }
-      if (other.Id.Length != 0) {
-        Id = other.Id;
-      }
-      if (other.Type.Length != 0) {
-        Type = other.Type;
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -245,11 +218,7 @@ namespace Decentraland.Sdk.Development {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            Id = input.ReadString();
-            break;
-          }
-          case 18: {
-            Type = input.ReadString();
+            SceneId = input.ReadString();
             break;
           }
         }
@@ -268,11 +237,7 @@ namespace Decentraland.Sdk.Development {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            Id = input.ReadString();
-            break;
-          }
-          case 18: {
-            Type = input.ReadString();
+            SceneId = input.ReadString();
             break;
           }
         }
@@ -282,6 +247,9 @@ namespace Decentraland.Sdk.Development {
 
   }
 
+  /// <summary>
+  /// .glb &amp; .gltf model udpates
+  /// </summary>
   public sealed partial class UpdateModel : pb::IMessage<UpdateModel>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
@@ -316,7 +284,7 @@ namespace Decentraland.Sdk.Development {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public UpdateModel(UpdateModel other) : this() {
-      id_ = other.id_;
+      sceneId_ = other.sceneId_;
       src_ = other.src_;
       hash_ = other.hash_;
       type_ = other.type_;
@@ -329,24 +297,21 @@ namespace Decentraland.Sdk.Development {
       return new UpdateModel(this);
     }
 
-    /// <summary>Field number for the "id" field.</summary>
-    public const int IdFieldNumber = 1;
-    private string id_ = "";
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 1;
+    private string sceneId_ = "";
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public string Id {
-      get { return id_; }
+    public string SceneId {
+      get { return sceneId_; }
       set {
-        id_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
       }
     }
 
     /// <summary>Field number for the "src" field.</summary>
     public const int SrcFieldNumber = 2;
     private string src_ = "";
-    /// <summary>
-    /// or hash ?
-    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public string Src {
@@ -370,7 +335,7 @@ namespace Decentraland.Sdk.Development {
 
     /// <summary>Field number for the "type" field.</summary>
     public const int TypeFieldNumber = 4;
-    private global::Decentraland.Sdk.Development.UpdateModelType type_ = global::Decentraland.Sdk.Development.UpdateModelType.UmtAdd;
+    private global::Decentraland.Sdk.Development.UpdateModelType type_ = global::Decentraland.Sdk.Development.UpdateModelType.UmtChange;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public global::Decentraland.Sdk.Development.UpdateModelType Type {
@@ -395,7 +360,7 @@ namespace Decentraland.Sdk.Development {
       if (ReferenceEquals(other, this)) {
         return true;
       }
-      if (Id != other.Id) return false;
+      if (SceneId != other.SceneId) return false;
       if (Src != other.Src) return false;
       if (Hash != other.Hash) return false;
       if (Type != other.Type) return false;
@@ -406,10 +371,10 @@ namespace Decentraland.Sdk.Development {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override int GetHashCode() {
       int hash = 1;
-      if (Id.Length != 0) hash ^= Id.GetHashCode();
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
       if (Src.Length != 0) hash ^= Src.GetHashCode();
       if (Hash.Length != 0) hash ^= Hash.GetHashCode();
-      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtAdd) hash ^= Type.GetHashCode();
+      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtChange) hash ^= Type.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -428,9 +393,9 @@ namespace Decentraland.Sdk.Development {
     #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       output.WriteRawMessage(this);
     #else
-      if (Id.Length != 0) {
+      if (SceneId.Length != 0) {
         output.WriteRawTag(10);
-        output.WriteString(Id);
+        output.WriteString(SceneId);
       }
       if (Src.Length != 0) {
         output.WriteRawTag(18);
@@ -440,7 +405,7 @@ namespace Decentraland.Sdk.Development {
         output.WriteRawTag(26);
         output.WriteString(Hash);
       }
-      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtAdd) {
+      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtChange) {
         output.WriteRawTag(32);
         output.WriteEnum((int) Type);
       }
@@ -454,9 +419,9 @@ namespace Decentraland.Sdk.Development {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (Id.Length != 0) {
+      if (SceneId.Length != 0) {
         output.WriteRawTag(10);
-        output.WriteString(Id);
+        output.WriteString(SceneId);
       }
       if (Src.Length != 0) {
         output.WriteRawTag(18);
@@ -466,7 +431,7 @@ namespace Decentraland.Sdk.Development {
         output.WriteRawTag(26);
         output.WriteString(Hash);
       }
-      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtAdd) {
+      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtChange) {
         output.WriteRawTag(32);
         output.WriteEnum((int) Type);
       }
@@ -480,8 +445,8 @@ namespace Decentraland.Sdk.Development {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public int CalculateSize() {
       int size = 0;
-      if (Id.Length != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeStringSize(Id);
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
       }
       if (Src.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Src);
@@ -489,7 +454,7 @@ namespace Decentraland.Sdk.Development {
       if (Hash.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Hash);
       }
-      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtAdd) {
+      if (Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtChange) {
         size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) Type);
       }
       if (_unknownFields != null) {
@@ -504,8 +469,8 @@ namespace Decentraland.Sdk.Development {
       if (other == null) {
         return;
       }
-      if (other.Id.Length != 0) {
-        Id = other.Id;
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
       }
       if (other.Src.Length != 0) {
         Src = other.Src;
@@ -513,7 +478,7 @@ namespace Decentraland.Sdk.Development {
       if (other.Hash.Length != 0) {
         Hash = other.Hash;
       }
-      if (other.Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtAdd) {
+      if (other.Type != global::Decentraland.Sdk.Development.UpdateModelType.UmtChange) {
         Type = other.Type;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
@@ -532,7 +497,7 @@ namespace Decentraland.Sdk.Development {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
             break;
           case 10: {
-            Id = input.ReadString();
+            SceneId = input.ReadString();
             break;
           }
           case 18: {
@@ -563,7 +528,7 @@ namespace Decentraland.Sdk.Development {
             _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
             break;
           case 10: {
-            Id = input.ReadString();
+            SceneId = input.ReadString();
             break;
           }
           case 18: {
@@ -640,7 +605,7 @@ namespace Decentraland.Sdk.Development {
     /// <summary>Field number for the "update_scene" field.</summary>
     public const int UpdateSceneFieldNumber = 1;
     /// <summary>
-    /// direction: scene->explorer
+    /// direction: scene -> explorer
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]

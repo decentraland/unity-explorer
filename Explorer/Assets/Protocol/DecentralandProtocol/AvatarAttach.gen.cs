@@ -57,7 +57,7 @@ namespace DCL.ECSComponents {
   /// </summary>
   public enum AvatarAnchorPointType {
     /// <summary>
-    /// @deprecated test
+    /// @deprecated consider parenting to `engine.PlayerEntity`, this will attach to player position with an arbitrary offset
     /// </summary>
     [pbr::OriginalName("AAPT_POSITION")] AaptPosition = 0,
     [pbr::OriginalName("AAPT_NAME_TAG")] AaptNameTag = 1,
