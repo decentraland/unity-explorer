@@ -205,11 +205,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             continue;
                         }
 
-                        try { component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)); }
+                        try
+                        {
+                            component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity));
+                            unresolvedDTO.Remove(assetEntity.metadata.id);
+                        }
                         catch (AssertionException e) { ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}"); }
 
                         component.IsLoading = false;
-                        unresolvedDTO.Remove(assetEntity.metadata.id);
+                        
                     }
 
                     //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
