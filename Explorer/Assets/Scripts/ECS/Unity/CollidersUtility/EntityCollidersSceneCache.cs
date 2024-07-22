@@ -10,7 +10,7 @@ namespace DCL.Interaction.Utility
         private static readonly ThreadSafeObjectPool<EntityCollidersSceneCache> POOL = new (
             () => new EntityCollidersSceneCache(), defaultCapacity: PoolConstants.SCENES_COUNT);
 
-        private readonly Dictionary<Collider, ColliderEntityInfo> map = new (100);
+        private readonly Dictionary<Collider, ColliderSceneEntityInfo> map = new (100);
 
         private IEntityCollidersGlobalCache globalCache;
 
@@ -23,13 +23,13 @@ namespace DCL.Interaction.Utility
             POOL.Release(this);
         }
 
-        public bool TryGetEntity(Collider collider, out ColliderEntityInfo entity) =>
-            map.TryGetValue(collider, out entity);
+        public bool TryGetEntity(Collider collider, out ColliderSceneEntityInfo sceneEntity) =>
+            map.TryGetValue(collider, out sceneEntity);
 
-        public void Associate(Collider collider, ColliderEntityInfo entityInfo)
+        public void Associate(Collider collider, ColliderSceneEntityInfo sceneEntityInfo)
         {
-            map[collider] = entityInfo;
-            globalCache.Associate(collider, this, entityInfo);
+            map[collider] = sceneEntityInfo;
+            globalCache.Associate(collider, this, sceneEntityInfo);
         }
 
         public void Remove(Collider collider)
@@ -37,7 +37,7 @@ namespace DCL.Interaction.Utility
             if (collider)
             {
                 map.Remove(collider);
-                globalCache.RemoveAssociation(collider);
+                globalCache.RemoveSceneEntityAssociation(collider);
             }
         }
 

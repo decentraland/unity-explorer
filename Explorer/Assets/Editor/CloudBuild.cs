@@ -1,10 +1,10 @@
-﻿
 using DCL.PerformanceAndDiagnostics.Analytics;
 using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DCL.Rendering.Menus;
 using UnityEditor;
 using UnityEngine;
 
@@ -31,6 +31,8 @@ namespace Editor
             //Unity suggestion: 1793168
             //This should ensure that the rosyln compiler has been ran and everything is generated as needed.
             EditorApplication.ExecuteMenuItem("File/Save Project");
+
+            CompileSceneShader.CompileTheSceneShader(EditorUserBuildSettings.activeBuildTarget);
 
             // Set version for this build
             var buildVersion = Parameters["BUILD_VERSION"] as string;

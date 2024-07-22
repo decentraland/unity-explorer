@@ -1,3 +1,4 @@
+using DCL.Utilities.Json;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using UnityEngine;
 namespace DCL.Ipfs
 {
     [Serializable]
-    public class SceneMetadata
+    public class SceneMetadata : PreserveOriginalJson
     {
         public string main;
         public SceneMetadataScene scene;

@@ -30,9 +30,13 @@ namespace DCL.UI
             CanvasGroup.blocksRaycasts = true;
         }
 
-        public void Hide()
+        public void Hide(bool instant = false)
         {
-            CanvasGroup.DOFade(0, 0.3f);
+            if (!instant)
+                CanvasGroup.DOFade(0, 0.3f);
+            else
+                CanvasGroup.alpha = 0;
+
             CanvasGroup.interactable = false;
             CanvasGroup.blocksRaycasts = false;
         }

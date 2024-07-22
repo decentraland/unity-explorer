@@ -34,6 +34,8 @@ namespace DCL.Gizmos.Plugin
 
         public void Dispose()
         {
+            if (hub == null) return;
+
             // Release providers to the pool
             DrawSceneGizmosHub.ProviderState[] providers = hub.GetCachedProviders();
 

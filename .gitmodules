@@ -1,0 +1,3 @@
+[submodule "Explorer/Assets/git-submodules/unity-shared-dependencies"]
+	path = Explorer/Assets/git-submodules/unity-shared-dependencies
+	url = https://github.com/decentraland/unity-shared-dependencies.git

@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Arch.Core;
+using System;
 using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Ipfs;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
-using ECS.SceneLifeCycle.SceneDefinition;
 using SceneRunner;
 using SceneRunner.Scene;
-using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.Systems
@@ -20,10 +19,16 @@ namespace ECS.SceneLifeCycle.Systems
     {
         protected readonly URLDomain assetBundleURL;
         protected readonly IWebRequestController webRequestController;
+        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly World globalWorld;
+        private readonly Entity playerEntity;
 
-        public LoadSceneSystemLogicBase(IWebRequestController webRequestController, URLDomain assetBundleURL)
+        protected LoadSceneSystemLogicBase(IWebRequestController webRequestController, ICharacterDataPropagationUtility characterDataPropagationUtility, URLDomain assetBundleURL, World globalWorld, Entity playerEntity)
         {
             this.assetBundleURL = assetBundleURL;
+            this.globalWorld = globalWorld;
+            this.playerEntity = playerEntity;
+            this.characterDataPropagationUtility = characterDataPropagationUtility;
             this.webRequestController = webRequestController;
         }
 
@@ -44,7 +49,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             // Before a scene can be ever loaded the asset bundle manifest should be retrieved
             var loadAssetBundleManifest = LoadAssetBundleManifestAsync(GetAssetBundleSceneId(ipfsPath.EntityId), reportCategory, ct);
-            var loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, ipfsPath.EntityId, reportCategory, ct);
+            UniTask<UniTaskVoid> loadSceneMetadata = OverrideSceneMetadataAsync(hashedContent, intention, reportCategory, ipfsPath.EntityId, ct);
             var loadMainCrdt = LoadMainCrdtAsync(hashedContent, reportCategory, ct);
 
             (SceneAssetBundleManifest manifest, _, ReadOnlyMemory<byte> mainCrdt) = await UniTask.WhenAll(loadAssetBundleManifest, loadSceneMetadata, loadMainCrdt);
@@ -57,7 +62,15 @@ namespace ECS.SceneLifeCycle.Systems
             // Launch at the end of the frame
             await UniTask.SwitchToMainThread(PlayerLoopTiming.LastPostLateUpdate, ct);
 
-            return await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+            ISceneFacade? sceneFacade = await sceneFactory.CreateSceneFromSceneDefinition(sceneData, partition, ct);
+
+            await UniTask.SwitchToMainThread();
+
+            // ensure PlayerData is available on Initialize
+            characterDataPropagationUtility.PropagateGlobalPlayerToScenePlayer(globalWorld, playerEntity, sceneFacade);
+
+            sceneFacade.Initialize();
+            return sceneFacade;
         }
 
         protected abstract string GetAssetBundleSceneId(string ipfsPathEntityId);

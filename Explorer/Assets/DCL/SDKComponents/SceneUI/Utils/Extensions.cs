@@ -1,4 +1,5 @@
 using DCL.ECSComponents;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
 using Google.Protobuf.Collections;
@@ -40,7 +41,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
             }
         }
 
-        public static DCLUVs ToDCLUVs([CanBeNull] this RepeatedField<float> uvs) =>
+        public static DCLUVs ToDCLUVs(this RepeatedField<float>? uvs) =>
             uvs is not { Count: 8 }
                 ? DCLUVs.Default
                 : new DCLUVs(
@@ -78,12 +79,13 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiTransformComponent.Transform.UnregisterCallback(uiTransformComponent.currentOnPointerUpCallback);
         }
 
-        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent)
+        public static void RegisterInputCallbacks(this UIInputComponent uiInputComponent, IInputBlock inputBlock)
         {
             EventCallback<ChangeEvent<string>> newOnChangeCallback = evt =>
             {
                 evt.StopPropagation();
                 uiInputComponent.IsOnValueChangedTriggered = true;
+                inputBlock.BlockMovement();
             };
 
             EventCallback<KeyDownEvent> newOnSubmitCallback = evt =>
@@ -93,6 +95,7 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
                 evt.StopPropagation();
                 uiInputComponent.IsOnSubmitTriggered = true;
+                inputBlock.UnblockMovement();
             };
 
             uiInputComponent.UnregisterInputCallbacks();
