@@ -32,7 +32,6 @@ namespace DCL.SDKComponents.NFTShape.Frames
 
             // Enforce renderer scale for backward compatibility (hardcoded in unity-renderer)
             renderer.transform.localScale = new Vector3(0.5f, 0.5f, 1);
-            ;
 
             emptyTexture.EnsureNotNull();
             viewNftShapeMaterial.EnsureNotNull();

@@ -39,6 +39,7 @@ namespace DCL.SDKComponents.NFTShape.System
 
         protected override void Update(float t)
         {
+            ReconfigureNftShapeQuery(World);
             InstantiateRemainingQuery(World!);
         }
 
@@ -53,6 +54,22 @@ namespace DCL.SDKComponents.NFTShape.System
 
             World!.Add(entity, component);
             changedNftShapes.Add(entity, component);
+        }
+
+        [Query]
+        private void ReconfigureNftShape(Entity entity, PBNftShape pbNftShape, ref NftShapeRendererComponent nftShapeRendererComponent,
+            ref NFTLoadingComponent loadingComponent)
+        {
+            if (!pbNftShape.IsDirty) return;
+
+            nftShapeRendererComponent.PoolableComponent.Apply(pbNftShape);
+
+            // If URN has changed forget and delete the current loading promise so it will be started again in `LoadCycleNftShapeSystem`
+            if (pbNftShape.Urn == loadingComponent.Promise.LoadingIntention.URN) return;
+
+            changedNftShapes.Add(entity, nftShapeRendererComponent);
+            loadingComponent.Promise.ForgetLoading(World);
+            World.Remove<NFTLoadingComponent>(entity);
         }
 
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)
