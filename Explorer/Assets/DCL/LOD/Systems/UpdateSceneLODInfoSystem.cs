@@ -75,6 +75,7 @@ namespace DCL.LOD.Systems
         private void AddLODAsset(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, LODKey newLODKey, byte lodForAcquisition)
         {
             LODAsset tempLODAsset = null;
+            Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
             if (lodCache.TryGet(newLODKey, out var cachedAsset)) // Try to get from the cache of previously loaded/unloaded LODAssets
             {
                 // If its cached, no need to make a new promise
@@ -84,7 +85,7 @@ namespace DCL.LOD.Systems
                 if (cachedAsset.lodGO != null) // Previous promise might not have been completed before removal, or promise failed and need retrying
                 {
                     // ...otherwise re-parent to the LODGroup entity and re-evaluate the LODGroup
-                    Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
+                    //Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
                     cachedAsset.lodGO.transform.SetParent(lodGroupTransform);
                     sceneLODInfo.ReEvaluateLODGroup(cachedAsset);
                 }
@@ -112,15 +113,6 @@ namespace DCL.LOD.Systems
             }
         }
 
-        private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
-        {
-            if (IsLOD0(ref sceneLODInfo))
-            {
-                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
-            }
-        }
-
         private byte CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             //If we are in an SDK6 scene, this value will be kept.
@@ -133,13 +125,10 @@ namespace DCL.LOD.Systems
                     sceneLODCandidate = (byte)(i + 1);
             }
 
-            return sceneLODCandidate;
-        }
+            if (sceneLODInfo.fScreenRelativeTransitionHeight >= 0.3f && sceneLODCandidate == 1)
+                sceneLODCandidate = 0;
 
-        private bool IsLOD0(ref SceneLODInfo sceneLODInfo)
-        {
-            //return sceneLODInfo.CurrentLOD[0].LodKey.Level == 0;
-            return true;
+            return sceneLODCandidate;
         }
     }
 }

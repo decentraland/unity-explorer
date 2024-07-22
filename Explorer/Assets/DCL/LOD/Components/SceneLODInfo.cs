@@ -1,5 +1,6 @@
 ﻿using Arch.Core;
 using DCL.Optimization.Pools;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace DCL.LOD.Components
         public List<LODAsset> LODAssets;
         private GameObjectPool<LODGroup> lodGroupPool;
         private UnityEngine.LOD lod0, lod1;
+        public float fScreenRelativeTransitionHeight;
 
         public void Dispose(World world)
         {
@@ -35,6 +37,7 @@ namespace DCL.LOD.Components
                 LODAssets = new List<LODAsset>(),
                 LodGroup = null,
                 lodGroupPool = null,
+                fScreenRelativeTransitionHeight = 0.02f,
             };
         }
 
@@ -73,67 +76,66 @@ namespace DCL.LOD.Components
             if (LodGroup == null || LODAssets.Count == 0)
                 return;
 
+            if (lodAsset.State != LODAsset.LOD_STATE.SUCCESS)
+                return;
+
             // Ordered sort as the LOD Group expects the screen relative transition heights to be in order
             // and we might not have necessarily loaded them in order.
             LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
 
-            float distance = 20 * 16;
-            float fScreenRelativeTransitionHeight = 0.1f;
-            bool bDistanceEvaluatedScreenRelativeTransitionHeight = false;
-            if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
+            const float distance = 20 * 16;
+
+            if (lodAsset.currentLODLevel == 0)
+                lod0.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+            else if (lodAsset.currentLODLevel == 1)
+                lod1.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+
+            if (fScreenRelativeTransitionHeight == 0.02f)
             {
-                if (bDistanceEvaluatedScreenRelativeTransitionHeight == false)
+                Renderer[] lodRenderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+                if (lodRenderers != null)
                 {
-                    if (lodAsset.currentLODLevel == 0)
-                        lod0.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
-                    else if (lodAsset.currentLODLevel == 1)
-                        lod1.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
-                }
-                else
-                {
-                    if (lodAsset.currentLODLevel == 0)
+                    if (lodRenderers.Length > 0)
                     {
-                        lod0.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+                        Bounds mergedBounds = lodRenderers[0].bounds;
 
-                        Bounds mergedBounds = lod0.renderers[0].bounds;
                         // Encapsulate the bounds of the remaining renderers
-                        for (int i = 1; i < lod0.renderers.Length; i++)
-                        {
-                            mergedBounds.Encapsulate(lod0.renderers[i].bounds);
-                        }
+                        for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
 
-                        fScreenRelativeTransitionHeight = CalculateScreenRelativeTransitionHeight(distance, mergedBounds);
-                    }
-                    else if (lodAsset.currentLODLevel == 1)
-                    {
-                        lod1.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
-
-                        Bounds mergedBounds = lod0.renderers[0].bounds;
-                        // Encapsulate the bounds of the remaining renderers
-                        for (int i = 1; i < lod0.renderers.Length; i++)
-                        {
-                            mergedBounds.Encapsulate(lod0.renderers[i].bounds);
-                        }
-
-                        fScreenRelativeTransitionHeight = CalculateScreenRelativeTransitionHeight(distance, mergedBounds);
+                        fScreenRelativeTransitionHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(distance, mergedBounds)));
                     }
                 }
             }
 
             if (LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0)
             {
-                lod0.screenRelativeTransitionHeight = 0.1f;
-                lod1.screenRelativeTransitionHeight = 0.099f;
+                lod0.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight;
+                lod1.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight - 0.01f;
+                Assert.IsTrue(lod0.screenRelativeTransitionHeight <= 1.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+                Assert.IsTrue(lod1.screenRelativeTransitionHeight >= 0.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+
+                Assert.IsTrue(lod0.screenRelativeTransitionHeight > lod1.screenRelativeTransitionHeight,
+                    $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
             }
             else if (LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1)
             {
-                lod0.screenRelativeTransitionHeight = 0.99f;
-                lod1.screenRelativeTransitionHeight = 0.1f;
+                lod0.screenRelativeTransitionHeight = 1.0f;
+                lod1.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight;
+                Assert.IsTrue(lod0.screenRelativeTransitionHeight <= 1.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+                Assert.IsTrue(lod1.screenRelativeTransitionHeight >= 0.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+
+                Assert.IsTrue(lod0.screenRelativeTransitionHeight > lod1.screenRelativeTransitionHeight,
+                    $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
             }
             else if (LODAssets.Count == 2)
             {
-                lod0.screenRelativeTransitionHeight = 0.5f;
-                lod1.screenRelativeTransitionHeight = 0.1f;
+                lod0.screenRelativeTransitionHeight = ((1.0f - fScreenRelativeTransitionHeight) * 0.5f) + fScreenRelativeTransitionHeight;
+                lod1.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight;
+                Assert.IsTrue(lod0.screenRelativeTransitionHeight <= 1.0f, $"LODAssets.Count == 2 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+                Assert.IsTrue(lod1.screenRelativeTransitionHeight >= 0.0f, $"LODAssets.Count == 2 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+
+                Assert.IsTrue(lod0.screenRelativeTransitionHeight > lod1.screenRelativeTransitionHeight,
+                    $"LODAssets.Count == 2 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
             }
 
             UnityEngine.LOD[] lods = {lod0, lod1 };
@@ -143,11 +145,13 @@ namespace DCL.LOD.Components
 
         public float CalculateScreenRelativeTransitionHeight(float distance, Bounds rendererBounds)
         {
-            float objectSize = rendererBounds.extents.magnitude;
+            float lodBias = QualitySettings.lodBias / 0.8f;
+            float objectSize = rendererBounds.extents.magnitude * lodBias;
             float defaultFOV = 60.0f;
             float fov = (Camera.main ? Camera.main.fieldOfView : defaultFOV) * Mathf.Deg2Rad;
-            float halfFov = fov / 2f;
-            return (objectSize * 0.5f) / (distance * Mathf.Tan(halfFov));
+            float halfFov = fov / 2.0f;
+            float ScreenRelativeTransitionHeight = (objectSize * 0.5f) / (distance * Mathf.Tan(halfFov));
+            return ScreenRelativeTransitionHeight;
         }
 
         // Quick function to check if LODAsset has already been loaded
