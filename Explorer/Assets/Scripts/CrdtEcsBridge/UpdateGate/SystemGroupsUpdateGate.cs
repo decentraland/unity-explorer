@@ -17,6 +17,7 @@ namespace CrdtEcsBridge.UpdateGate
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, PoolConstants.SCENES_COUNT);
 
         private HashSet<Type> openGroups;
+        private HashSet<Type> throttledThisFrameGroups;
 
         // Ensure that the gate will be opened from the beginning of the next frame,
         // If we open it in the middle of the current frame the update order will be broken
@@ -27,6 +28,7 @@ namespace CrdtEcsBridge.UpdateGate
         public SystemGroupsUpdateGate()
         {
             openGroups = POOL.Get();
+            throttledThisFrameGroups = POOL.Get();
         }
 
         public void Dispose()
@@ -34,25 +36,45 @@ namespace CrdtEcsBridge.UpdateGate
             if (openGroups == null) return;
 
             POOL.Release(openGroups);
+            POOL.Release(throttledThisFrameGroups);
+
             openGroups = null;
+            throttledThisFrameGroups = null;
         }
 
-        public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info timeInfo)
+        // Close the group so it won't be updated unless the gate is opened again
+        public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info _ = default)
         {
-            // Close the group so it won't be updated unless the gate is opened again
-            // Sync is required as ShouldThrottle is called from the main thread
+            // Let systems run in the remaining of the current frame
+            if (Time.frameCount < keepOpenFrame)
+                return false;
+
+            // Otherwise, close group but let it run one frame (current)
+            return !TryCloseThisFrame(systemGroupType);
+        }
+
+        private bool TryCloseThisFrame(Type systemGroupType)
+        {
+            if (throttledThisFrameGroups.Contains(systemGroupType)) return true;
+            if (!openGroups.Contains(systemGroupType)) return false;
+
+            // Sync is required as TryCloseThisFrame is called from the main thread
             lock (openGroups)
             {
-                // Let systems run in the remaining of the current frame
-                if (Time.frameCount < keepOpenFrame)
-                    return false;
-
-                // Otherwise, just let them run once
-                return !openGroups.Remove(systemGroupType);
+                if (openGroups.Remove(systemGroupType))
+                {
+                    throttledThisFrameGroups.Add(systemGroupType);
+                    return true;
+                }
             }
+
+            return false;
         }
 
-        public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled) { }
+        public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled)
+        {
+            throttledThisFrameGroups.Clear();
+        }
 
         public void Open()
         {

@@ -23,7 +23,7 @@ namespace ECS.Unity.Transforms.Tests
 
             world.Create(sdkTransform, testTransformComponent);
 
-            system = new UpdateTransformSystem(world);
+            system = new UpdateTransformSystem(world, null);
         }
 
         [TearDown]

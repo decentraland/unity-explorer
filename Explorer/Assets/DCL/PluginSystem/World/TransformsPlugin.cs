@@ -43,7 +43,7 @@ namespace DCL.PluginSystem.World
         {
             CreateReservedTransforms(builder, sharedDependencies, persistentEntities);
 
-            UpdateTransformSystem.InjectToWorld(ref builder);
+            UpdateTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsGroupThrottler);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot, sharedDependencies.SceneData.SceneShortInfo);
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);

@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
+using CrdtEcsBridge.UpdateGate;
 using DCL.Interaction.Utility;
 using DCL.Time;
 using ECS.Abstract;
@@ -23,6 +24,7 @@ namespace DCL.PluginSystem.World.Dependencies
         public readonly ISceneStateProvider SceneStateProvider;
         public readonly EntityEventsBuilder EntityEventsBuilder;
         public readonly MutexSync MutexSync;
+        public readonly ISystemGroupsUpdateGate EcsGroupThrottler;
 
         public readonly IWorldTimeProvider WorldTimeProvider;
 
@@ -34,7 +36,7 @@ namespace DCL.PluginSystem.World.Dependencies
             ISceneExceptionsHandler sceneExceptionsHandler,
             IEntityCollidersSceneCache entityCollidersSceneCache,
             ISceneStateProvider sceneStateProvider, EntityEventsBuilder entityEventsBuilder,
-            MutexSync mutexSync, IWorldTimeProvider worldTimeProvider)
+            MutexSync mutexSync, IWorldTimeProvider worldTimeProvider, ISystemGroupsUpdateGate ecsGroupThrottler)
         {
             SceneData = sceneData;
             EcsToCRDTWriter = ecsToCRDTWriter;
@@ -46,6 +48,7 @@ namespace DCL.PluginSystem.World.Dependencies
             EntityCollidersSceneCache = entityCollidersSceneCache;
             SceneStateProvider = sceneStateProvider;
             WorldTimeProvider = worldTimeProvider;
+            EcsGroupThrottler = ecsGroupThrottler;
             EntityEventsBuilder = entityEventsBuilder;
         }
     }

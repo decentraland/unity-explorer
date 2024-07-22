@@ -1,8 +1,9 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
+using Arch.SystemGroups.UnityBridge;
 using CrdtEcsBridge.Components.Transform;
+using CrdtEcsBridge.UpdateGate;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
@@ -11,14 +12,19 @@ namespace ECS.Unity.Transforms.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(ParentingTransformSystem))]
-    [ThrottlingEnabled]
     public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
-        public UpdateTransformSystem(World world) : base(world) { }
+        private readonly ISystemGroupsUpdateGate ecsGroupThrottler;
+
+        public UpdateTransformSystem(World world, ISystemGroupsUpdateGate ecsGroupThrottler) : base(world)
+        {
+            this.ecsGroupThrottler = ecsGroupThrottler;
+        }
 
         protected override void Update(float _)
         {
-            UpdateTransformQuery(World);
+            if (ecsGroupThrottler.ShouldThrottle(typeof(SyncedSimulationSystemGroup), new TimeProvider.Info()))
+                UpdateTransformQuery(World);
         }
 
         [Query]
