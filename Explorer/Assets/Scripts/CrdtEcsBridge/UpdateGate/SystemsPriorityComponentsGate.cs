@@ -11,25 +11,25 @@ namespace CrdtEcsBridge.UpdateGate
         private const int PRIORITY_COMPONENTS_COUNT = 1; // As for now it is only SDKTransform
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (PRIORITY_COMPONENTS_COUNT, PoolConstants.SCENES_COUNT);
 
-        private HashSet<Type> opened = POOL.Get();
+        private HashSet<Type> priorityList = POOL.Get();
 
         public void Dispose()
         {
-            if (opened != null)
+            if (priorityList != null)
             {
-                POOL.Release(opened);
-                opened = null;
+                POOL.Release(priorityList);
+                priorityList = null;
             }
         }
 
         public void Open<T>() where T: IMessage
         {
-            lock (opened) { opened.Add(typeof(T)); }
+            lock (priorityList) { priorityList.Add(typeof(T)); }
         }
 
         public bool IsOpen<T>() where T: IMessage
         {
-            lock (opened) { return opened.Remove(typeof(T)); }
+            lock (priorityList) { return priorityList.Remove(typeof(T)); }
         }
     }
 }
