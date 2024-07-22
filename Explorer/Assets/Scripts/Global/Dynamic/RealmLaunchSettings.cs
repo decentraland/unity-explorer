@@ -65,10 +65,11 @@ namespace Global.Dynamic
 
         public void SetTargetScene(Vector2Int newTargetScene) => targetScene = newTargetScene;
 
-        public void SetCustomStartingRealm(string targetRealm)
+        public void SetLocalSceneDevelopmentRealm(string targetRealm)
         {
             customRealm = targetRealm;
             initialRealm = InitialRealm.Custom;
+            useRemoteAssetsBundles = false;
         }
     }
 }

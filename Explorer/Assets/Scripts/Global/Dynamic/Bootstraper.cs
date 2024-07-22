@@ -188,7 +188,7 @@ namespace Global.Dynamic
             // When started in local scene development mode (AKA preview mode) a command line argument is used
             // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
 
-            // FOR DEBUGGING IN UNITY ONLY
+            // FOR DEBUGGING IN UNITY ONLY (REMOVE BEFORE REVIEW)
             // string[] cmdArgs = new[] { "", "decentraland://realm=http://127.0.0.1:8000&position=0,0" };
             string[] cmdArgs = System.Environment.GetCommandLineArgs();
 
@@ -203,7 +203,7 @@ namespace Global.Dynamic
                     return false;
 
                 string localRealm = matches[0].Value.Replace("realm=", "");
-                launchSettings.SetCustomStartingRealm(localRealm);
+                launchSettings.SetLocalSceneDevelopmentRealm(localRealm);
 
                 var positionParam = "position=";
                 if (matches.Count > 1)

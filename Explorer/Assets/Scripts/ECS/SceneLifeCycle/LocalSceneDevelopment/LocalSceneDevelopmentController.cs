@@ -69,6 +69,8 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                     ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection received message: {receivedMessage}");
                 }*/
             }
+
+            ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection closed.");
         }
 
         public void Dispose()
