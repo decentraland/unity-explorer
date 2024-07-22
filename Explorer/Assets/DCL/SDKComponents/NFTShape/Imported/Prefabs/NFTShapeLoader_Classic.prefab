@@ -26,13 +26,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5515390903474656546}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.000000081460335, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 1, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5045080973058696022}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 180}
 --- !u!33 &5928639960081986510
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -135,7 +135,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6745490361802555816, guid: fd29dbb6c443041429f61480d858f979, type: 3}
       propertyPath: m_Name
-      value: NFTShapeLoader_Classic Variant
+      value: NFTShapeLoader_Classic
       objectReference: {fileID: 0}
     - target: {fileID: 8462995621656260544, guid: fd29dbb6c443041429f61480d858f979, type: 3}
       propertyPath: renderer
