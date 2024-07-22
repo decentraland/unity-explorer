@@ -8,9 +8,9 @@ namespace ECS.SceneLifeCycle.Realm
     {
         IRealmData RealmData { get; }
 
-        UniTask RestartRealmAsync(CancellationToken ct);
-
         UniTask SetRealmAsync(URLDomain realm, CancellationToken ct);
+
+        UniTask RestartRealmAsync(CancellationToken ct);
 
         UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct);
 

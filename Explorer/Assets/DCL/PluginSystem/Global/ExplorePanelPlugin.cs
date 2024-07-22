@@ -59,7 +59,6 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IUnloadAllScenes unloadAllScenes;
-        private readonly IRealmController realmController;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -97,8 +96,7 @@ namespace DCL.PluginSystem.Global
             URLDomain assetBundleURL,
             INotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
-            IUnloadAllScenes unloadAllScenes,
-            IRealmController realmController)
+            IUnloadAllScenes unloadAllScenes)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -125,7 +123,6 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.unloadAllScenes = unloadAllScenes;
-            this.realmController = realmController;
         }
 
         public override void Dispose()
@@ -178,7 +175,7 @@ namespace DCL.PluginSystem.Global
 
                 mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager, unloadAllScenes, realmController),
+                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager, unloadAllScenes),
                     dclInput, notificationsBusController, mvcManager));
 
                 explorePanelOpener = new PersistentExplorePanelOpenerController(

@@ -34,7 +34,7 @@ namespace Global.Dynamic
         private readonly bool enableLandscape;
         public bool EnableAnalytics { private get; init; }
 
-        private string startingRealm = IRealmNavigator.GENESIS_URL;
+        private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
 
         private DynamicWorldDependencies dynamicWorldDependencies;
@@ -54,7 +54,7 @@ namespace Global.Dynamic
             splashRoot.SetActive(showSplash);
             cursorRoot.EnsureNotNull();
 
-            startingRealm = launchSettings.GetStartingRealm();
+            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
@@ -156,7 +156,7 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
-            await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm, ct);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
@@ -167,7 +167,7 @@ namespace Global.Dynamic
 
             splashScreenAnimation.transform.SetSiblingIndex(1);
 
-            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
+            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading, false,
                 globalWorld!.EcsWorld, playerEntity, ct);
 
             splashRoot.SetActive(false);

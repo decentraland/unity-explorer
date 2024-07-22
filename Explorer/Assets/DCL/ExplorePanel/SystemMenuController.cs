@@ -8,7 +8,6 @@ using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle;
-using ECS.SceneLifeCycle.Realm;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -30,7 +29,6 @@ namespace DCL.ExplorePanel
         private readonly World world;
         private readonly IMVCManager mvcManager;
         private readonly IUnloadAllScenes unloadAllScenes;
-        private readonly IRealmController realmController;
 
         private CancellationTokenSource? logoutCts;
 
@@ -45,8 +43,7 @@ namespace DCL.ExplorePanel
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
             IMVCManager mvcManager,
-            IUnloadAllScenes unloadAllScenes,
-            IRealmController realmController)
+            IUnloadAllScenes unloadAllScenes)
             : base(viewFactory)
         {
             this.webBrowser = webBrowser;
@@ -58,7 +55,6 @@ namespace DCL.ExplorePanel
             this.world = world;
             this.mvcManager = mvcManager;
             this.unloadAllScenes = unloadAllScenes;
-            this.realmController = realmController;
         }
 
         public override void Dispose()
@@ -125,13 +121,7 @@ namespace DCL.ExplorePanel
                 profileCache.Remove(address);
 
                 await unloadAllScenes.ExecuteAsync(ct);
-                // TODO: we might get a race condition since the authentication screen requires a valid realm assigned
-                // (through userInAppInitializationFlow.ExecuteAsync).
-                // We could do one call after another, but the user will see how the world is destroyed
-                // We could add some full screen ui until the auth screen is shown
-                await UniTask.WhenAll(
-                    realmController.RestartRealmAsync(ct),
-                    userInAppInitializationFlow.ExecuteAsync(true, true, world, playerEntity, ct));
+                await userInAppInitializationFlow.ExecuteAsync(true, true, true, world, playerEntity, ct);
             }
 
             logoutCts = logoutCts.SafeRestart();

@@ -135,7 +135,8 @@ namespace Global.Dynamic
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(BootstrapContainer bootstrapContainer,
             DynamicWorldDependencies dynamicWorldDependencies,
             DynamicWorldParams dynamicWorldParams,
-            AudioClipConfig backgroundMusic, CancellationToken ct)
+            AudioClipConfig backgroundMusic,
+            CancellationToken ct)
         {
             var container = new DynamicWorldContainer();
             DynamicSettings dynamicSettings = dynamicWorldDependencies.DynamicSettings;
@@ -287,7 +288,8 @@ namespace Global.Dynamic
                 realmNavigator,
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
-                identityCache
+                identityCache,
+                container.RealmController
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
@@ -413,8 +415,7 @@ namespace Global.Dynamic
                     ASSET_BUNDLES_URL,
                     notificationsBusController,
                     characterPreviewEventBus,
-                    container.unloadAllScenes,
-                    container.RealmController
+                    container.unloadAllScenes
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

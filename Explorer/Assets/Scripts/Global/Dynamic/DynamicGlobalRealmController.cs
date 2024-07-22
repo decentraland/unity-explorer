@@ -83,14 +83,6 @@ namespace Global.Dynamic
             this.sceneAssetLock = sceneAssetLock;
         }
 
-        public async UniTask RestartRealmAsync(CancellationToken ct)
-        {
-            if (!currentDomain.HasValue)
-                throw new Exception("Cannot restart realm, no domain set. Call TryChangeRealmAsync(domain) first");
-
-            await SetRealmAsync(currentDomain.Value, ct);
-        }
-
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
         {
             World world = globalWorld!.EcsWorld;
@@ -128,6 +120,14 @@ namespace Global.Dynamic
             partitionDataContainer.Restart();
 
             currentDomain = realm;
+        }
+
+        public async UniTask RestartRealmAsync(CancellationToken ct)
+        {
+            if (!currentDomain.HasValue)
+                throw new Exception("Cannot restart realm, no valid domain set. First call SetRealmAsync(domain)");
+
+            await SetRealmAsync(currentDomain.Value, ct);
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
