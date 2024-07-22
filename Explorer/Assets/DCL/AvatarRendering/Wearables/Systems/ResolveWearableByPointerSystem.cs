@@ -190,10 +190,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     //No wearable representation is going to be possible 
                     foreach (string pointerID in promise.LoadingIntention.Pointers)
-                        ReportDTOException(pointerID);
+                        ReportAndFinalizeWithError(pointerID);
                 }
                 else
                 {
+                    var unresolvedDTO = WearableComponentsUtils.POINTERS_POOL.Get();
+                    unresolvedDTO.AddRange(promise.LoadingIntention.Pointers);
+                    
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
                         if (!wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component))
@@ -206,20 +209,22 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         catch (AssertionException e) { ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}"); }
 
                         component.IsLoading = false;
-                        promise.LoadingIntention.Pointers.Remove(assetEntity.pointers[0]);
+                        unresolvedDTO.Remove(assetEntity.pointers[0]);
                     }
 
-                    foreach (var currentPointer in promise.LoadingIntention.Pointers)
+                    //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
+                    foreach (var urn in unresolvedDTO)
                     {
-                        //This means that at least one DTO was not resolved. We need to mark it as exception
-                        ReportDTOException(currentPointer);
+                        ReportAndFinalizeWithError(urn);
                     }
+
+                    WearableComponentsUtils.POINTERS_POOL.Release(unresolvedDTO);
                 }
 
                 WearableComponentsUtils.POINTERS_POOL.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
 
-                void ReportDTOException(URN urn)
+                void ReportAndFinalizeWithError(URN urn)
                 {
                     //We have some missing pointers that were not completed. We have to consider them as failure
                     var e = new Exception($"Wearable DTO could not be retrieved for {urn}");
