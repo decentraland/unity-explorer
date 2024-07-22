@@ -11,6 +11,7 @@ using ECS.StreamableLoading.AudioClips;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Audio;
 
 namespace DCL.PluginSystem.World
@@ -52,18 +53,15 @@ namespace DCL.PluginSystem.World
         public void Dispose()
         { }
 
-        public UniTask InitializeAsync(AudioSourcesPluginSettings settings, CancellationToken ct)
-        {
-            audioMixerGroup = settings.AudioMixerGroup;
-            return new UniTask();
-        }
+        public async UniTask InitializeAsync(AudioSourcesPluginSettings settings, CancellationToken ct) =>
+            audioMixerGroup = await settings.AudioMixerGroup.LoadAssetAsync<AudioMixerGroup>();
 
         public class AudioSourcesPluginSettings : IDCLPluginSettings
         {
             [field: Header(nameof(AudioSourcesPlugin) + "." + nameof(AudioSourcesPluginSettings))]
             [field: Space]
             [field: SerializeField]
-            public AudioMixerGroup AudioMixerGroup;
+            public AssetReference AudioMixerGroup;
         }
 
     }
