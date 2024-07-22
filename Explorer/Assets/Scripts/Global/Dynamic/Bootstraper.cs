@@ -123,9 +123,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity identity, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity.Address, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -142,7 +142,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.ProfileRepository,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RoomHub,
-                dynamicWorldContainer.RealmController.GetRealm(),
+                dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.MessagePipesHub
             );
 

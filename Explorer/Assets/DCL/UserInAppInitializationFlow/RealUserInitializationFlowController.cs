@@ -67,8 +67,6 @@ namespace DCL.UserInAppInitializationFlow
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
 
-
-
             if (showLoading)
                 await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(parentLoadReport, world, playerEntity, ct), ct);
             else

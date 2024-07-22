@@ -14,6 +14,7 @@ using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
+using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
-    public class RealmController : IRealmController
+    public class DynamicGlobalRealmController : IGlobalRealmController
     {
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
@@ -43,7 +44,10 @@ namespace Global.Dynamic
         private readonly SceneAssetLock sceneAssetLock;
 
         private GlobalWorld? globalWorld;
-        public Entity RealmEntity { get; private set; }
+        private Entity realmEntity;
+        private URLDomain? currentDomain;
+
+        public IRealmData RealmData => realmData;
 
         public GlobalWorld GlobalWorld
         {
@@ -55,7 +59,7 @@ namespace Global.Dynamic
             }
         }
 
-        public RealmController(
+        public DynamicGlobalRealmController(
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             TeleportController teleportController,
@@ -77,6 +81,14 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
+        }
+
+        public async UniTask RestartRealmAsync(CancellationToken ct)
+        {
+            if (!currentDomain.HasValue)
+                throw new Exception("Cannot restart realm, no domain set. Call TryChangeRealmAsync(domain) first");
+
+            await SetRealmAsync(currentDomain.Value, ct);
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -104,42 +116,53 @@ namespace Global.Dynamic
             // Add the realm component
             var realmComp = new RealmComponent(realmData);
 
-            RealmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
+            realmEntity = world.Create(realmComp, ProcessedScenePointers.Create());
 
-            if (!ComplimentWithStaticPointers(world, RealmEntity) && !realmComp.ScenesAreFixed)
-                ComplimentWithVolatilePointers(world, RealmEntity);
+            if (!ComplimentWithStaticPointers(world, realmEntity) && !realmComp.ScenesAreFixed)
+                ComplimentWithVolatilePointers(world, realmEntity);
 
             IRetrieveScene sceneProviderStrategy = realmData.ScenesAreFixed ? retrieveSceneFromFixedRealm : retrieveSceneFromVolatileWorld;
             sceneProviderStrategy.World = globalWorld.EcsWorld;
 
             teleportController.SceneProviderStrategy = sceneProviderStrategy;
             partitionDataContainer.Restart();
+
+            currentDomain = realm;
         }
 
         public async UniTask<bool> IsReachableAsync(URLDomain realm, CancellationToken ct) =>
             await webRequestController.IsReachableAsync(realm.Append(new URLPath("/about")), ct);
 
-        public IRealmData GetRealm() =>
-            realmData;
-
-        private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
+        public async UniTask<AssetPromise<SceneEntityDefinition, GetSceneDefinition>[]> WaitForFixedScenePromisesAsync(CancellationToken ct)
         {
-            world.Add(realmEntity, VolatileScenePointers.Create());
+            FixedScenePointers fixedScenePointers = default;
+
+            await UniTask.WaitUntil(() => GlobalWorld.EcsWorld.TryGet(realmEntity, out fixedScenePointers)
+                                          && fixedScenePointers.AllPromisesResolved, cancellationToken: ct);
+
+            return fixedScenePointers.Promises!;
         }
 
-        private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
+        public void DisposeGlobalWorld()
         {
-            if (staticLoadPositions is { Count: > 0 })
+            if (globalWorld != null)
             {
-                // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
-                world.Add(realmEntity, new StaticScenePointers(staticLoadPositions));
-                return true;
+                World world = globalWorld.EcsWorld;
+                FindLoadedScenes();
+                world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+
+                // Destroy everything without awaiting as it's Application Quit
+                globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
 
-            return false;
+            foreach (ISceneFacade scene in allScenes)
+
+                // Scene Info is contained in the ReportData, don't include it into the exception
+                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
+                    static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
         }
 
-        public async UniTask UnloadCurrentRealmAsync()
+        private async UniTask UnloadCurrentRealmAsync()
         {
             if (globalWorld == null) return;
 
@@ -164,27 +187,27 @@ namespace Global.Dynamic
             await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
             sceneAssetLock.Reset();
 
+            currentDomain = null;
+
             // Collect garbage, good moment to do it
             GC.Collect();
         }
 
-        public void DisposeGlobalWorld()
+        private void ComplimentWithVolatilePointers(World world, Entity realmEntity)
         {
-            if (globalWorld != null)
-            {
-                World world = globalWorld.EcsWorld;
-                FindLoadedScenes();
-                world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+            world.Add(realmEntity, VolatileScenePointers.Create());
+        }
 
-                // Destroy everything without awaiting as it's Application Quit
-                globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
+        private bool ComplimentWithStaticPointers(World world, Entity realmEntity)
+        {
+            if (staticLoadPositions is { Count: > 0 })
+            {
+                // Static scene pointers don't replace the logic of fixed pointers loading but compliment it
+                world.Add(realmEntity, new StaticScenePointers(staticLoadPositions));
+                return true;
             }
 
-            foreach (ISceneFacade scene in allScenes)
-
-                // Scene Info is contained in the ReportData, don't include it into the exception
-                scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
-                    static _ => "Scene's thrown an exception on Disposal: it could leak unpredictably");
+            return false;
         }
 
         private void FindLoadedScenes()

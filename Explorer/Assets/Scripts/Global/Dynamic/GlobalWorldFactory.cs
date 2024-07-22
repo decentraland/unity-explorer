@@ -60,14 +60,13 @@ namespace Global.Dynamic
         private readonly CharacterContainer characterContainer;
 
         private readonly HybridSceneParams hybridSceneParams;
-        private readonly ReloadSceneController reloadSceneController;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
 
         public GlobalWorldFactory( in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, HybridSceneParams hybridSceneParams, ReloadSceneController reloadSceneController,
+            IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
             ICharacterDataPropagationUtility characterDataPropagationUtility)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
@@ -87,7 +86,6 @@ namespace Global.Dynamic
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
             this.hybridSceneParams = hybridSceneParams;
-            this.reloadSceneController = reloadSceneController;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
@@ -160,7 +158,6 @@ namespace Global.Dynamic
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
-            reloadSceneController.Initialize(world, playerEntity, staticContainer.ScenesCache, debugContainerBuilder);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
 

@@ -112,6 +112,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 StartScenesLoading(ref realmComponent, maxLoadingSqrDistance);
         }
 
+        private Entity[] Bleh = new Entity[100];
+
         private void StartScenesLoading(ref RealmComponent realmComponent, float maxLoadingSqrDistance)
         {
             if (sortingJobHandle is { IsCompleted: true })
@@ -126,6 +128,8 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Order the scenes definitions by the CURRENT partition and serve first N of them
 
             orderedData.Clear();
+
+            int candidates = World.CountEntities(in new QueryDescription().WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>());
 
             foreach (ref Chunk chunk in World.Query(in START_SCENES_LOADING))
             {

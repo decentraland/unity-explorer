@@ -23,6 +23,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -57,6 +58,8 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly IUnloadAllScenes unloadAllScenes;
+        private readonly IRealmController realmController;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -93,7 +96,9 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             URLDomain assetBundleURL,
             INotificationsBusController notificationsBusController,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IUnloadAllScenes unloadAllScenes,
+            IRealmController realmController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -119,8 +124,9 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.unloadAllScenes = unloadAllScenes;
+            this.realmController = realmController;
         }
-
 
         public override void Dispose()
         {
@@ -172,7 +178,7 @@ namespace DCL.PluginSystem.Global
 
                 mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
+                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager, unloadAllScenes, realmController),
                     dclInput, notificationsBusController, mvcManager));
 
                 explorePanelOpener = new PersistentExplorePanelOpenerController(
