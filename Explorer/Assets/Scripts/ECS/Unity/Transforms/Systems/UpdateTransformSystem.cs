@@ -7,6 +7,7 @@ using CrdtEcsBridge.UpdateGate;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
+using System;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -15,20 +16,23 @@ namespace ECS.Unity.Transforms.Systems
     public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
         private readonly ISystemGroupsUpdateGate ecsGroupThrottler;
-        private readonly ISystemsUpdateGate systemsUpdateDirtyMarkerPriorityGate;
+        private readonly ISystemsUpdateGate systemsPriorityComponentsGate;
 
-        public UpdateTransformSystem(World world, ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate systemsUpdateDirtyMarkerPriorityGate) : base(world)
+        private static readonly Type PARENT_GROUP_TYPE = ((UpdateInGroupAttribute)Attribute
+           .GetCustomAttribute(typeof(UpdateTransformSystem), typeof(UpdateInGroupAttribute)))?.GroupType!;
+
+        public UpdateTransformSystem(World world, ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate systemsPriorityComponentsGate) : base(world)
         {
             this.ecsGroupThrottler = ecsGroupThrottler;
-            this.systemsUpdateDirtyMarkerPriorityGate = systemsUpdateDirtyMarkerPriorityGate;
+            this.systemsPriorityComponentsGate = systemsPriorityComponentsGate;
         }
 
         protected override void Update(float _)
         {
-            if (systemsUpdateDirtyMarkerPriorityGate.IsClosed<SDKTransform>() && ecsGroupThrottler.ShouldThrottle(typeof(SyncedSimulationSystemGroup), new TimeProvider.Info()))
-                return;
-
-            UpdateTransformQuery(World);
+            if (systemsPriorityComponentsGate.IsOpen<SDKTransform>())
+                UpdateTransformQuery(World);
+            else if (!ecsGroupThrottler.ShouldThrottle(PARENT_GROUP_TYPE, new TimeProvider.Info()))
+                UpdateTransformQuery(World);
         }
 
         [Query]

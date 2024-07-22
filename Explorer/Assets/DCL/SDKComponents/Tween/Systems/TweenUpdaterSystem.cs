@@ -80,8 +80,6 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
-            systemsUpdateDirtyMarkerPriorityGate.Close<SDKTransform>();
-
             UpdatePBTweenQuery(World);
             UpdateTweenSequenceQuery(World);
 

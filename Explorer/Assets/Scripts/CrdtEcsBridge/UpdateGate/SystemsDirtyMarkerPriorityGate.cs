@@ -1,42 +1,35 @@
-﻿using DCL.ECSComponents;
+﻿using DCL.Optimization.Pools;
+using DCL.Optimization.ThreadSafePool;
+using Google.Protobuf;
 using System;
 using System.Collections.Generic;
 
 namespace CrdtEcsBridge.UpdateGate
 {
-    public class SystemsDirtyMarkerPriorityGate : ISystemsUpdateGate
+    public class SystemsPriorityComponentsGate : ISystemsUpdateGate, IDisposable
     {
-        private readonly HashSet<Type> opened = new ();
+        private const int PRIORITY_COMPONENTS_COUNT = 1; // As for now it is only SDKTransform
+        private static readonly ThreadSafeHashSetPool<Type> POOL = new (PRIORITY_COMPONENTS_COUNT, PoolConstants.SCENES_COUNT);
 
-        public void Open<T>()
+        private HashSet<Type> opened = POOL.Get();
+
+        public void Dispose()
+        {
+            if (opened != null)
+            {
+                POOL.Release(opened);
+                opened = null;
+            }
+        }
+
+        public void Open<T>() where T: IMessage
         {
             lock (opened) { opened.Add(typeof(T)); }
         }
 
-        public void Close<T>()
+        public bool IsOpen<T>() where T: IMessage
         {
-            lock (opened) { opened.Remove(typeof(T)); }
+            lock (opened) { return opened.Remove(typeof(T)); }
         }
-
-        public bool IsOpen<T>() where T: IDirtyMarker
-        {
-            lock (opened) { return opened.Contains(typeof(T)); }
-        }
-
-        public bool IsClosed<T>() where T: IDirtyMarker
-        {
-            lock (opened) { return !IsOpen<T>(); }
-        }
-    }
-
-    public interface ISystemsUpdateGate
-    {
-        public void Open<T>();
-
-        public void Close<T>();
-
-        bool IsOpen<T>() where T: IDirtyMarker;
-
-        bool IsClosed<T>() where T: IDirtyMarker;
     }
 }

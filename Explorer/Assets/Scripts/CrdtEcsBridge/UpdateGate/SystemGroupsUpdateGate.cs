@@ -16,20 +16,14 @@ namespace CrdtEcsBridge.UpdateGate
     {
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, PoolConstants.SCENES_COUNT);
 
-        private HashSet<Type> openGroups;
-        private HashSet<Type> throttledThisFrameGroups;
+        private HashSet<Type> openGroups = POOL.Get();
+        private HashSet<Type> throttledThisFrameGroups = POOL.Get();
 
         // Ensure that the gate will be opened from the beginning of the next frame,
         // If we open it in the middle of the current frame the update order will be broken
         private long keepOpenFrame;
 
         internal IReadOnlyCollection<Type> OpenGroups => openGroups;
-
-        public SystemGroupsUpdateGate()
-        {
-            openGroups = POOL.Get();
-            throttledThisFrameGroups = POOL.Get();
-        }
 
         public void Dispose()
         {
