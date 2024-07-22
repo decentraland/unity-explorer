@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.Assertions;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
@@ -117,6 +118,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     successfulDtos++;
                     resolvedDTOs.Add(wearable);
                 }
+                else if (wearable.WearableDTO.Exception != null)
+                {
+                    successfulDtos++;
+                }
             }
 
             if (missingPointers.Count > 0)
@@ -183,12 +188,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 if (!promiseResult.Succeeded)
                 {
+                    //No wearable representation is going to be possible 
                     foreach (string pointerID in promise.LoadingIntention.Pointers)
-                    {
-                        wearableCatalog.TryGetWearable(pointerID, out IWearable component);
-                        SetDefaultWearables(defaultWearablesResolved, component, in bodyShape);
-                        component.IsLoading = false;
-                    }
+                        ReportDTOException(pointerID);
                 }
                 else
                 {
@@ -204,11 +206,28 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         catch (AssertionException e) { ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}"); }
 
                         component.IsLoading = false;
+                        promise.LoadingIntention.Pointers.Remove(assetEntity.pointers[0]);
+                    }
+
+                    foreach (var currentPointer in promise.LoadingIntention.Pointers)
+                    {
+                        //This means that at least one DTO was not resolved. We need to mark it as exception
+                        ReportDTOException(currentPointer);
                     }
                 }
 
                 WearableComponentsUtils.POINTERS_POOL.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
+
+                void ReportDTOException(URN urn)
+                {
+                    //We have some missing pointers that were not completed. We have to consider them as failure
+                    var e = new Exception($"Wearable DTO could not be retrieved for {urn}");
+                    ReportHub.LogError(new ReportData(GetReportCategory()), e);
+                    wearableCatalog.TryGetWearable(urn, out var component);
+                    component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(e));
+                    component.IsLoading = false;
+                }
             }
         }
 
