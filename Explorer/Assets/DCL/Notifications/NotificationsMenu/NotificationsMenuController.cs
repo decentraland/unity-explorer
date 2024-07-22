@@ -62,7 +62,11 @@ namespace DCL.Notification.NotificationsMenu
             NotificationView notificationView = listItem!.GetComponent<NotificationView>();
             INotification notificationData = notifications[index];
 
-            notificationsReferenceCache.TryAdd(notificationData.Id, (notificationData, notificationView));
+            if (!notificationsReferenceCache.TryAdd(notificationData.Id, (notificationData, notificationView)))
+            {
+                notificationsReferenceCache[notificationData.Id] = (notificationData, notificationView);
+            }
+
             SetItemData(notificationView, notificationData);
 
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
@@ -94,6 +98,9 @@ namespace DCL.Notification.NotificationsMenu
         {
             if (notificationsReferenceCache.TryGetValue(notificationId, out (INotification, NotificationView) notificationReference))
             {
+                if (notificationReference.Item1.Read)
+                    return;
+
                 notificationReference.Item1.Read = true;
                 notificationReference.Item2.UnreadImage.gameObject.SetActive(false);
                 notificationsRequestController.SetNotificationAsRead(notificationId);
