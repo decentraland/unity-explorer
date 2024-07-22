@@ -48,7 +48,7 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             this.changedMeshes = changedMeshes;
             poolRegistry = poolsRegistry;
 
-            rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>();
+            rendererPoolRegistry = poolsRegistry.GetReferenceTypePool<MeshRenderer>()!;
         }
 
         protected override void Update(float t)
@@ -69,9 +69,9 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
                 return;
 
             var meshRendererComponent = new PrimitiveMeshRendererComponent();
-            MeshRenderer meshRendererGo = rendererPoolRegistry.Get();
-            Instantiate(entity, setupMesh, ref meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
-            World.Add(entity, meshRendererComponent);
+            MeshRenderer meshRendererGo = rendererPoolRegistry.Get()!;
+            Instantiate(entity, setupMesh!, meshRendererGo, ref meshRendererComponent, sdkComponent, ref transform);
+            World!.Add(entity, meshRendererComponent);
         }
 
         [Query]
@@ -94,29 +94,31 @@ namespace ECS.Unity.PrimitiveRenderer.Systems
             if (!instantiationFrameTimeBudget.TrySpendBudget())
                 return;
 
-            // The model has changed entirely, so we need to reinstall the renderer
-            if (ReferenceEquals(meshRendererComponent.PrimitiveMesh, null))
-                Instantiate(entity, setupMesh, ref meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
+            if (meshRendererComponent.IsReadyToReinstall())
+                Instantiate(entity, setupMesh, meshRendererComponent.MeshRenderer, ref meshRendererComponent, sdkComponent,
                     ref transform);
             else
 
                 // This means that the UVs have changed during runtime of a scene (should be an unusual case), so we update the mesh accordingly
-                setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh.Mesh);
+                setupMesh.Execute(sdkComponent, meshRendererComponent.PrimitiveMesh!.Mesh);
         }
 
         /// <summary>
         ///     It is either called when there is no mesh or mesh was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(Entity entity, ISetupMesh meshSetup, ref MeshRenderer meshRendererGo,
+        private void Instantiate(
+            Entity entity,
+            ISetupMesh meshSetup,
+            MeshRenderer meshRendererGo,
             ref PrimitiveMeshRendererComponent rendererComponent,
-            PBMeshRenderer sdkComponent, ref TransformComponent transformComponent)
+            PBMeshRenderer sdkComponent,
+            ref TransformComponent transformComponent
+        )
         {
             var primitiveMesh = (IPrimitiveMesh)poolRegistry.GetPool(meshSetup.MeshType).Rent();
             meshSetup.Execute(sdkComponent, primitiveMesh.Mesh);
 
-            rendererComponent.PrimitiveMesh = primitiveMesh;
-            rendererComponent.MeshRenderer = meshRendererGo;
-            rendererComponent.SDKType = sdkComponent.MeshCase;
+            rendererComponent.Reinstall(primitiveMesh, meshRendererGo, sdkComponent.MeshCase);
 
             meshRendererGo.GetComponent<MeshFilter>().mesh = primitiveMesh.Mesh;
 

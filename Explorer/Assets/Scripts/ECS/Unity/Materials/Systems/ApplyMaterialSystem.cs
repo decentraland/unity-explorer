@@ -44,7 +44,7 @@ namespace ECS.Unity.Materials.Systems
                 case StreamableLoading.LifeCycle.Applied when pbMeshRenderer.IsDirty:
                     materialComponent.Status = StreamableLoading.LifeCycle.Applied;
 
-                    ReleaseMaterial.TryReleaseDefault(ref meshRendererComponent);
+                    meshRendererComponent.TryReleaseDefaultMaterial();
                     ConfigureSceneMaterial.EnableSceneBounds(materialComponent.Result, sceneData.Geometry.CircumscribedPlanes);
 
                     meshRendererComponent.MeshRenderer.sharedMaterial = materialComponent.Result;

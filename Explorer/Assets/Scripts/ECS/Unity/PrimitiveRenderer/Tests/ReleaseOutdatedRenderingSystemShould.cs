@@ -27,11 +27,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         [Test]
         public void InvalidateRenderingIfTypeChanged()
         {
-            var comp = new PrimitiveMeshRendererComponent
-            {
-                PrimitiveMesh = new BoxPrimitive(),
-                SDKType = PBMeshRenderer.MeshOneofCase.Box,
-            };
+            var comp = PrimitiveMeshRendererComponent.NewBoxMeshRendererComponent();
 
             var sdkComp = new PBMeshRenderer { Sphere = new PBMeshRenderer.Types.SphereMesh(), IsDirty = true };
 
@@ -47,11 +43,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
         [Test]
         public void ReleaseRendererIfComponentRemoved()
         {
-            var comp = new PrimitiveMeshRendererComponent
-            {
-                PrimitiveMesh = new BoxPrimitive(),
-                SDKType = PBMeshRenderer.MeshOneofCase.Box,
-            };
+            var comp = PrimitiveMeshRendererComponent.NewBoxMeshRendererComponent();
 
             Entity entity = world.Create(comp);
 
@@ -67,11 +59,7 @@ namespace ECS.Unity.PrimitiveRenderer.Tests
             var oldRenderer = new Mesh();
             BoxFactory.Create(ref oldRenderer);
 
-            var comp = new PrimitiveMeshRendererComponent
-            {
-                PrimitiveMesh = new BoxPrimitive(),
-                SDKType = PBMeshRenderer.MeshOneofCase.Box,
-            };
+            var comp = PrimitiveMeshRendererComponent.NewBoxMeshRendererComponent();
 
             var sdkComp = new PBMeshRenderer { Sphere = new PBMeshRenderer.Types.SphereMesh(), IsDirty = false };
 

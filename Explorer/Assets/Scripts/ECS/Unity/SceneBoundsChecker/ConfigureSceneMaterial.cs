@@ -16,7 +16,7 @@ namespace ECS.Unity.SceneBoundsChecker
         ///     We can use this shared instance as this API is single-threaded
         /// </summary>
         private static readonly List<Material> TEMP_MATERIALS = new (3);
-        
+
         /// <summary>
         ///     Enables Scene Bounds Checking
         /// </summary>
@@ -45,9 +45,7 @@ namespace ECS.Unity.SceneBoundsChecker
         {
             Material dm = DefaultMaterial.Get();
             EnableSceneBounds(dm, sceneCircumscribedPlanes);
-
-            primitiveMeshRendererComponent.MeshRenderer.sharedMaterial = dm;
-            primitiveMeshRendererComponent.DefaultMaterialIsUsed = true;
+            primitiveMeshRendererComponent.UseDefaultMaterial(dm);
         }
     }
 }
