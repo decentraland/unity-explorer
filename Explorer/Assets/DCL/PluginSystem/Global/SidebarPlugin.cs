@@ -75,7 +75,7 @@ namespace DCL.PluginSystem.Global
                     },
                     mvcManager,
                     notificationsBusController,
-                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController),
+                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, webRequestController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
                     new SystemMenuController(() => mainUIContainer.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager)

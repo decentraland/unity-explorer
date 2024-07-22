@@ -83,7 +83,7 @@ namespace DCL.Notification.NewNotification
                 viewInstance.NotificationView.NotificationType = notification.Type;
                 ProcessCustomMetadata(notification);
                 if(!string.IsNullOrEmpty(notification.GetThumbnail()))
-                    thumbnailImageController.RequestImage(notification.GetThumbnail());
+                    thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
 
                 viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
