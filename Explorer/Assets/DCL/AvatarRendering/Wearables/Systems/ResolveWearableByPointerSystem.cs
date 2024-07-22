@@ -208,10 +208,10 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         try
                         {
                             component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity));
-                            unresolvedDTO.Remove(assetEntity.metadata.id);
                         }
                         catch (AssertionException e) { ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}"); }
 
+                        unresolvedDTO.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
                         
                     }
