@@ -15,6 +15,8 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using MVC;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -65,6 +67,7 @@ namespace DCL.PluginSystem.Global
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(SidebarSettings settings, CancellationToken ct)
         {
+            NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
                 mvcManager.RegisterController(new SidebarController(() =>
@@ -75,7 +78,7 @@ namespace DCL.PluginSystem.Global
                     },
                     mvcManager,
                     notificationsBusController,
-                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, webRequestController),
+                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
                     new SystemMenuController(() => mainUIContainer.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager)
@@ -83,6 +86,10 @@ namespace DCL.PluginSystem.Global
             };
         }
 
-        public class SidebarSettings : IDCLPluginSettings { }
+        public class SidebarSettings : IDCLPluginSettings
+        {
+            [field: SerializeField]
+            public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
+        }
     }
 }

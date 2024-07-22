@@ -57,7 +57,7 @@ namespace DCL.Notification.NewNotification
             cts.Token.ThrowIfCancellationRequested();
         }
 
-        private void ClickedNotification(NotificationType notificationType)
+        private void ClickedNotification(NotificationType notificationType, string notificationId)
         {
             StopAnimation();
             notificationsBusController.ClickNotification(notificationType);

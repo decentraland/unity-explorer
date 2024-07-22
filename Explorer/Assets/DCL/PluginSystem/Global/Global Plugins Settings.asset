@@ -468,7 +468,12 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
     - rid: 4816187900846407682
       type: {class: SidebarPlugin/SidebarSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data: 
+      data:
+        <NotificationIconTypesSO>k__BackingField:
+          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
