@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Notification.NotificationEntry;
 using DCL.Notification.NotificationsBus;
+using DCL.Utilities;
 using DCL.WebRequests;
 using SuperScrollView;
 using System;
@@ -89,6 +90,7 @@ namespace DCL.Notification.NotificationsMenu
             notificationView.NotificationId = notificationData.Id;
             notificationView.CloseButton.gameObject.SetActive(false);
             notificationView.UnreadImage.SetActive(!notificationData.Read);
+            notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             notificationView.NotificationClicked -= OnNotificationClicked;
             notificationView.NotificationClicked += OnNotificationClicked;
