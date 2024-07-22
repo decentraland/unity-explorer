@@ -35,6 +35,14 @@ namespace ECS.Unity.Materials
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingNotStarted;
         }
 
+        public static void TryReleaseDefault(ref PrimitiveMeshRendererComponent primitiveMeshRendererComponent)
+        {
+            if (!primitiveMeshRendererComponent.DefaultMaterialIsUsed) return;
+
+            DefaultMaterial.Release(primitiveMeshRendererComponent.MeshRenderer.sharedMaterial);
+            primitiveMeshRendererComponent.DefaultMaterialIsUsed = false;
+        }
+
         public static void Execute(World world, ref MaterialComponent materialComponent, DestroyMaterial destroyMaterial)
         {
             switch (materialComponent.Status)
