@@ -199,7 +199,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        if (wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component))
+                        if (!wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component))
                         {
                             ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot finalize wearable DTO: {assetEntity.metadata.id}. This situation should not be possible, there is something wrong in the logic");
                             continue;
