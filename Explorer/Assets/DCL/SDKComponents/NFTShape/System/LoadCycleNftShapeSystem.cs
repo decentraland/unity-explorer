@@ -45,7 +45,7 @@ namespace DCL.SDKComponents.NFTShape.System
             if (nftLoadingComponent.TryGetResult(World!, out var result))
             {
                 if (result.Succeeded)
-                    nftShapeRendererComponent.PoolableComponent.Apply(result.Asset);
+                    nftShapeRendererComponent.PoolableComponent.Apply(result.Asset!);
                 else
                     nftShapeRendererComponent.PoolableComponent.NotifyFailed();
             }
