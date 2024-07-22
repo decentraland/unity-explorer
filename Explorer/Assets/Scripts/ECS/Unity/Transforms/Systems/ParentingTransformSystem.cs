@@ -38,9 +38,14 @@ namespace ECS.Unity.Transforms.Systems
         }
 
         [Query]
-        [All(typeof(SDKTransform), typeof(TransformComponent), typeof(DeleteEntityIntention))]
-        private void OrphanChildrenOfDeletedEntity(ref TransformComponent transformComponentToBeDeleted)
+        [All(typeof(SDKTransform), typeof(DeleteEntityIntention))]
+        private void OrphanChildrenOfDeletedEntity(in Entity entity, ref TransformComponent transformComponentToBeDeleted)
         {
+            var parentTransform = World!.TryGetRef<TransformComponent>(transformComponentToBeDeleted.Parent, out bool exists);
+
+            if (exists && parentTransform.Children.Remove(World.Reference(entity)) == false)
+                throw new System.Exception($"Entity {entity} is not a child of its parent {transformComponentToBeDeleted.Parent}");
+
             foreach (EntityReference childEntity in transformComponentToBeDeleted.Children)
             {
                 ref var transformComponent = ref World.Get<TransformComponent>(childEntity.Entity);
