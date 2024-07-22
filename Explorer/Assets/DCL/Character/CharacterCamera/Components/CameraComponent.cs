@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.CharacterCamera
 {
@@ -11,6 +12,7 @@ namespace DCL.CharacterCamera
         public CameraMode Mode;
         public ThirdPersonCameraShoulder Shoulder;
         public readonly Camera Camera;
+        public bool IsDirty;
 
         public CameraComponent(Camera camera) : this()
         {
@@ -23,10 +25,17 @@ namespace DCL.CharacterCamera
         public bool CameraInputChangeEnabled => CameraInputLocks == 0;
         public Transform PlayerFocus { get; set; }
 
-        public void AddCameraInputLock() =>
+        public void AddCameraInputLock()
+        {
             CameraInputLocks++;
+            IsDirty = true;
+        }
 
-        public void RemoveCameraInputLock() =>
+        public void RemoveCameraInputLock()
+        {
             CameraInputLocks = CameraInputLocks - 1 < 0 ? 0 : CameraInputLocks - 1;
+            IsDirty = true;
+        }
+            
     }
 }
