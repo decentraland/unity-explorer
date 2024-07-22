@@ -139,7 +139,7 @@ namespace Global.Editor
                     EditorGUI.PropertyField(position, remoteSceneContentServerProperty);
                     position.y += singleLineHeight;
 
-                    if (remoteSceneContentServerProperty.enumValueIndex == (int)HibridSceneContentServer.World)
+                    if (remoteSceneContentServerProperty.enumValueIndex == (int)HybridSceneContentServer.World)
                     {
                         EditorGUI.LabelField(position, "Write down the remote world from where to get the content");
                         position.y += singleLineHeight;
@@ -251,7 +251,8 @@ namespace Global.Editor
                     {
                         fieldToAdd += 2;
                         var remoteSceneContentServerProperty = property.FindPropertyRelative(REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME);
-                        if (remoteSceneContentServerProperty.enumValueIndex == (int)HibridSceneContentServer.World)
+
+                        if (remoteSceneContentServerProperty.enumValueIndex == (int)HybridSceneContentServer.World)
                             fieldToAdd += 2;
                     }
 
