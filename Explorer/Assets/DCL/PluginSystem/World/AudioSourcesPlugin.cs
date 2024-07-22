@@ -1,5 +1,6 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -22,11 +23,12 @@ namespace DCL.PluginSystem.World
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly FrameTimeCapBudget frameTimeBudgetProvider;
         private readonly MemoryBudget memoryBudgetProvider;
-        private AudioMixerGroup audioMixerGroup;
+        private readonly IAssetsProvisioner assetsProvisioner;
+        private AudioMixer audioMixer;
 
         internal readonly AudioClipsCache audioClipsCache;
 
-        public AudioSourcesPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController, CacheCleaner cacheCleaner)
+        public AudioSourcesPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IWebRequestController webRequestController, CacheCleaner cacheCleaner, IAssetsProvisioner assetsProvisioner)
         {
             this.webRequestController = webRequestController;
 
@@ -39,13 +41,15 @@ namespace DCL.PluginSystem.World
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
+
+            this.assetsProvisioner = assetsProvisioner;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
         {
             StartAudioSourceLoadingSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, frameTimeBudgetProvider);
             LoadAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
-            UpdateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, audioClipsCache, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider, audioMixerGroup);
+            UpdateAudioSourceSystem.InjectToWorld(ref builder, sharedDependencies.SceneData, sharedDependencies.SceneStateProvider, audioClipsCache, componentPoolsRegistry, frameTimeBudgetProvider, memoryBudgetProvider, audioMixer);
 
             finalizeWorldSystems.Add(CleanUpAudioSourceSystem.InjectToWorld(ref builder, audioClipsCache, componentPoolsRegistry));
         }
@@ -54,14 +58,14 @@ namespace DCL.PluginSystem.World
         { }
 
         public async UniTask InitializeAsync(AudioSourcesPluginSettings settings, CancellationToken ct) =>
-            audioMixerGroup = await settings.AudioMixerGroup.LoadAssetAsync<AudioMixerGroup>();
+            audioMixer = (await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct)).Value;
 
         public class AudioSourcesPluginSettings : IDCLPluginSettings
         {
             [field: Header(nameof(AudioSourcesPlugin) + "." + nameof(AudioSourcesPluginSettings))]
             [field: Space]
             [field: SerializeField]
-            public AssetReference AudioMixerGroup;
+            public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         }
 
     }
