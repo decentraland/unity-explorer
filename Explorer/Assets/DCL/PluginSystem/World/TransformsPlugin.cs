@@ -1,6 +1,4 @@
 ﻿using Arch.SystemGroups;
-using CrdtEcsBridge.Components;
-using CrdtEcsBridge.Components.Transform;
 using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
@@ -43,7 +41,7 @@ namespace DCL.PluginSystem.World
         {
             CreateReservedTransforms(builder, sharedDependencies, persistentEntities);
 
-            UpdateTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsGroupThrottler);
+            UpdateTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsGroupThrottler, sharedDependencies.EcsSystemsGate);
             InstantiateTransformSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             ParentingTransformSystem.InjectToWorld(ref builder, sharedDependencies.EntitiesMap, persistentEntities.SceneRoot, sharedDependencies.SceneData.SceneShortInfo);
             AssertDisconnectedTransformsSystem.InjectToWorld(ref builder);

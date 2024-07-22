@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.World
         {
             tweenerPool = new TweenerPool();
         }
-        
+
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;
 
@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.World
         {
             ResetDirtyFlagSystem<PBTween>.InjectToWorld(ref builder);
             TweenLoaderSystem.InjectToWorld(ref builder);
-            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool);
+            var tweenUpdaterSystem = TweenUpdaterSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, tweenerPool, sharedDependencies.EcsSystemsGate);
             finalizeWorldSystems.Add(tweenUpdaterSystem);
         }
     }

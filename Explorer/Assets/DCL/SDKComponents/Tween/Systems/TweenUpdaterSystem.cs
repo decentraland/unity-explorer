@@ -1,27 +1,23 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
 using CRDT;
-using CrdtEcsBridge.Components.Conversion;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.Tween.Components;
 using DCL.SDKComponents.Tween.Helpers;
 using DG.Tweening;
 using ECS.Abstract;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
-using ECS.Unity.Groups;
 using ECS.Unity.Transforms.Components;
 using System.Collections.Generic;
 using CrdtEcsBridge.Components.Transform;
+using CrdtEcsBridge.UpdateGate;
 using ECS.Groups;
 using ECS.Unity.Transforms.Systems;
 using UnityEngine;
-using UnityEngine.Pool;
 using static DCL.ECSComponents.EasingFunction;
 using static DG.Tweening.Ease;
 
@@ -35,7 +31,8 @@ namespace DCL.SDKComponents.Tween.Systems
     {
         private const int MILLISECONDS_CONVERSION_INT = 1000;
         private readonly TweenerPool tweenerPool;
-        
+        private readonly ISystemsUpdateGate systemsUpdateDirtyMarkerPriorityGate;
+
 
         private static readonly Dictionary<EasingFunction, Ease> EASING_FUNCTIONS_MAP = new ()
         {
@@ -74,14 +71,17 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private readonly IECSToCRDTWriter ecsToCRDTWriter;
 
-        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool) : base(world)
+        public TweenUpdaterSystem(World world, IECSToCRDTWriter ecsToCRDTWriter, TweenerPool tweenerPool, ISystemsUpdateGate systemsUpdateDirtyMarkerPriorityGate) : base(world)
         {
             this.tweenerPool = tweenerPool;
+            this.systemsUpdateDirtyMarkerPriorityGate = systemsUpdateDirtyMarkerPriorityGate;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
         }
 
         protected override void Update(float t)
         {
+            systemsUpdateDirtyMarkerPriorityGate.Close<SDKTransform>();
+
             UpdatePBTweenQuery(World);
             UpdateTweenSequenceQuery(World);
 
@@ -117,7 +117,7 @@ namespace DCL.SDKComponents.Tween.Systems
         {
             CleanUpTweenBeforeRemoval(sdkEntity, ref tweenComponent);
         }
-        
+
         [Query]
         private void UpdatePBTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
         {
@@ -131,15 +131,9 @@ namespace DCL.SDKComponents.Tween.Systems
         private void UpdateTweenSequence(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
         {
             if (sdkTweenComponent.IsDirty)
-            {
-                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);  
-            }
-
+                SetupTween(ref sdkTweenComponent, ref sdkTransform, in pbTween, in transformComponent, sdkEntity);
             else
-            {
                 UpdateTweenState(ref sdkTweenComponent, ref sdkTransform, sdkEntity);
-            }
-
         }
 
         private void SetupTween(ref SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform, in PBTween pbTween, in TransformComponent transformComponent, CRDTEntity sdkEntity)
@@ -188,6 +182,7 @@ namespace DCL.SDKComponents.Tween.Systems
 
         private void UpdateTweenPosition(CRDTEntity sdkEntity, SDKTweenComponent sdkTweenComponent, ref SDKTransform sdkTransform)
         {
+            systemsUpdateDirtyMarkerPriorityGate.Open<SDKTransform>();
             TweenSDKComponentHelper.WriteTweenResult(ref sdkTransform, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
             TweenSDKComponentHelper.WriteTweenResultInCRDT(ecsToCRDTWriter, sdkEntity, (sdkTweenComponent.CustomTweener, sdkTransform.ParentId));
         }

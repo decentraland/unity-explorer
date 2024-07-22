@@ -59,6 +59,7 @@ namespace SceneRunner
         public readonly URLAddress SceneCodeUrl;
         public readonly SceneEcsExecutor EcsExecutor;
         internal readonly ISystemGroupsUpdateGate systemGroupThrottler;
+        private readonly SystemsDirtyMarkerPriorityGate systemsUpdateGate;
         internal readonly IWorldTimeProvider worldTimeProvider;
         private readonly ISceneData sceneData;
 
@@ -122,7 +123,7 @@ namespace SceneRunner
             worldTimeProvider = new WorldTimeProvider();
             SceneStateProvider = new SceneStateProvider();
             systemGroupThrottler = new SystemGroupsUpdateGate();
-
+            systemsUpdateGate = new SystemsDirtyMarkerPriorityGate();
             PoolsProvider = InstancePoolsProvider.Create().EnsureNotNull();
             CRDTMemoryAllocator = CRDTPooledMemoryAllocator.Create().EnsureNotNull();
             crdtDeserializer = new CRDTDeserializer(CRDTMemoryAllocator);
@@ -134,7 +135,7 @@ namespace SceneRunner
 
             /* Pass dependencies here if they are needed by the systems */
             ecsWorldSharedDependencies = new ECSWorldInstanceSharedDependencies(sceneData, partitionProvider, ecsToCRDTWriter, entitiesMap,
-                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMutexSync, worldTimeProvider, systemGroupThrottler);
+                ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMutexSync, worldTimeProvider, systemGroupThrottler, systemsUpdateGate);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);

@@ -15,16 +15,20 @@ namespace ECS.Unity.Transforms.Systems
     public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
         private readonly ISystemGroupsUpdateGate ecsGroupThrottler;
+        private readonly ISystemsUpdateGate systemsUpdateDirtyMarkerPriorityGate;
 
-        public UpdateTransformSystem(World world, ISystemGroupsUpdateGate ecsGroupThrottler) : base(world)
+        public UpdateTransformSystem(World world, ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate systemsUpdateDirtyMarkerPriorityGate) : base(world)
         {
             this.ecsGroupThrottler = ecsGroupThrottler;
+            this.systemsUpdateDirtyMarkerPriorityGate = systemsUpdateDirtyMarkerPriorityGate;
         }
 
         protected override void Update(float _)
         {
-            if (ecsGroupThrottler.ShouldThrottle(typeof(SyncedSimulationSystemGroup), new TimeProvider.Info()))
-                UpdateTransformQuery(World);
+            if (systemsUpdateDirtyMarkerPriorityGate.IsClosed<SDKTransform>() && ecsGroupThrottler.ShouldThrottle(typeof(SyncedSimulationSystemGroup), new TimeProvider.Info()))
+                return;
+
+            UpdateTransformQuery(World);
         }
 
         [Query]
