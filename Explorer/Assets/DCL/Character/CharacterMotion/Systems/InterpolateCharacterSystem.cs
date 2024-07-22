@@ -78,8 +78,8 @@ namespace DCL.CharacterMotion.Systems
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
-            Vector3 finalGravity = rigidTransform.IsOnASteepSlope && !rigidTransform.IsStuck ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
-            Vector3 gravityDelta = finalGravity * dt;
+            Vector3 finalGravity = rigidTransform is { IsOnASteepSlope: true, IsStuck: false } ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
+            Vector3 gravityDelta = platformComponent.IsMovingPlatform? Vector3.zero : finalGravity * dt;
             Vector3 platformDelta = rigidTransform.PlatformDelta;
 
             // In order for some systems to work correctly we move the character horizontally and then vertically
