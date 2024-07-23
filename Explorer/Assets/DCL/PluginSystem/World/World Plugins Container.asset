@@ -32,7 +32,7 @@ MonoBehaviour:
     - rid: 758312499805421571
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        <GeneralAudioMixer>k__BackingField:
+        GeneralAudioMixer:
           m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
           m_SubObjectName: 
           m_SubObjectType: 

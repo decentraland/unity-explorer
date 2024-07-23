@@ -65,9 +65,11 @@ namespace DCL.SDKComponents.AudioSources
 
             if (audioSourceComponent.AudioSourceAssigned == false)
             {
-                var worldGroup = audioMixer.FindMatchingGroups("World");
-                if (worldGroup.Length > 0)
-                    audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, worldGroup[0]);
+                AudioMixerGroup[]? worldGroup = null;
+                if (audioMixer != null)
+                    worldGroup = audioMixer.FindMatchingGroups("World");
+
+                audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, (worldGroup is { Length: > 0 } ? worldGroup[0] : null)!);
             }
 
             audioSourceComponent.AudioSource!.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);

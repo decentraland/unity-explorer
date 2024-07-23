@@ -9,6 +9,7 @@ using DCL.SDKComponents.AudioSources;
 using DCL.WebRequests;
 using ECS.LifeCycle;
 using ECS.StreamableLoading.AudioClips;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -60,12 +61,12 @@ namespace DCL.PluginSystem.World
         public async UniTask InitializeAsync(AudioSourcesPluginSettings settings, CancellationToken ct) =>
             audioMixer = (await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct)).Value;
 
+        [Serializable]
         public class AudioSourcesPluginSettings : IDCLPluginSettings
         {
             [field: Header(nameof(AudioSourcesPlugin) + "." + nameof(AudioSourcesPluginSettings))]
             [field: Space]
-            [field: SerializeField]
-            public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
+            [field: SerializeField] internal AssetReferenceT<AudioMixer> GeneralAudioMixer;
         }
 
     }
