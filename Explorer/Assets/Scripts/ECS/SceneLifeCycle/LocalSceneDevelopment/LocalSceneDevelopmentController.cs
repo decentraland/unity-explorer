@@ -13,10 +13,9 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
     public class LocalSceneDevelopmentController
     {
         private readonly ReloadSceneController reloadController;
-        private readonly SynchronizationContext synchContext = new SynchronizationContext();
 
         private bool initialized = false;
-        private ClientWebSocket webSocket;
+        private ClientWebSocket? webSocket;
 
         public LocalSceneDevelopmentController(ReloadSceneController reloadController)
         {
@@ -29,29 +28,30 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
             initialized = true;
 
-            UniTask.RunOnThreadPool(async () =>
-            {
-                    await UniTask.SwitchToThreadPool();
-                    SynchronizationContext.SetSynchronizationContext(synchContext);
-                    ConnectToServerAsync(
-                        localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws"),
-                        new WsSceneMessage(),
-                        new byte[1024]
-                    ).Forget();
-            }).Forget();
+            ConnectToServerAsync(
+                    localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws"),
+                    new WsSceneMessage(),
+                    new byte[1024]
+                )
+               .Forget();
         }
 
         private async UniTaskVoid ConnectToServerAsync(string localSceneWebsocketServer, WsSceneMessage wsSceneMessage, byte[] receiveBuffer)
         {
+            await UniTask.SwitchToThreadPool();
+
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Trying to connect to: {localSceneWebsocketServer}");
 
             webSocket = new ClientWebSocket();
-            await webSocket.ConnectAsync(new Uri(localSceneWebsocketServer), CancellationToken.None).AsUniTask();
+            await webSocket.ConnectAsync(new Uri(localSceneWebsocketServer), CancellationToken.None);
 
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection state: {webSocket.State}");
 
             while (webSocket.State == WebSocketState.Open)
             {
+                // every iteration starts on the thread pool
+                await UniTask.SwitchToThreadPool();
+
                 var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
 
                 if (receiveResult.MessageType == WebSocketMessageType.Binary)
@@ -67,10 +67,9 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                     // TODO: Discriminate 'wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel' to only update GLTF models...
 
+                    // Switch to the main thread because `TryReloadSceneAsync` requires that
                     await UniTask.SwitchToMainThread();
                     await reloadController.TryReloadSceneAsync();
-                    await UniTask.SwitchToThreadPool();
-                    SynchronizationContext.SetSynchronizationContext(synchContext);
                 }
                 else if (receiveResult.MessageType == WebSocketMessageType.Close)
                 {
