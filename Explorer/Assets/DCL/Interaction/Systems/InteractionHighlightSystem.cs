@@ -61,6 +61,9 @@ namespace DCL.Interaction.Systems
         }
 
         [Query]
+        private void DisparageHighlightsOnDeletion() { }
+
+        [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
@@ -82,23 +85,18 @@ namespace DCL.Interaction.Systems
 
         private void AddOrUpdateHighlight(in EntityReference entity, bool isAtDistance)
         {
-            List<Renderer> renderers = ListPool<Renderer>.Get()!;
-            AddRenderersFromEntity(entity, renderers);
+            using var scope = ListPool<Renderer>.Get(out List<Renderer> renderers)!;
+
+            AddRenderersFromEntity(entity, renderers!);
 
             ref TransformComponent entityTransform = ref World!.TryGetRef<TransformComponent>(entity, out bool containsTransform);
 
             // Fixes a crash by trying to access the transform of an entity when is not available
-            if (!containsTransform)
+            if (containsTransform)
             {
-                ListPool<Renderer>.Release(renderers);
-                return;
+                GetRenderersFromChildrenRecursive(ref entityTransform, renderers!);
+                HighlightRendererFeature.HighlightedObjects.Highlight(renderers!, GetColor(isAtDistance), settingsData.Thickness);
             }
-
-            GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-
-            HighlightRendererFeature.HighlightedObjects.Highlight(renderers, GetColor(isAtDistance), settingsData.Thickness);
-
-            ListPool<Renderer>.Release(renderers);
         }
 
         private Color GetColor(bool isAtDistance) =>
@@ -106,23 +104,18 @@ namespace DCL.Interaction.Systems
 
         private void RemoveHighlight(in EntityReference entity)
         {
-            List<Renderer> renderers = ListPool<Renderer>.Get()!;
-            AddRenderersFromEntity(entity, renderers);
+            using var scope = ListPool<Renderer>.Get(out var renderers)!;
+
+            AddRenderersFromEntity(entity, renderers!);
 
             ref TransformComponent entityTransform = ref World!.TryGetRef<TransformComponent>(entity, out bool containsTransform);
 
             // Fixes a crash by trying to access the transform of an entity when is not available
-            if (!containsTransform)
+            if (containsTransform)
             {
-                ListPool<Renderer>.Release(renderers);
-                return;
+                GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
+                HighlightRendererFeature.HighlightedObjects.Disparage(renderers);
             }
-
-            GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
-
-            HighlightRendererFeature.HighlightedObjects.Disparage(renderers);
-
-            ListPool<Renderer>.Release(renderers);
         }
 
         private void GetRenderersFromChildrenRecursive(ref TransformComponent entityTransform, List<Renderer> list)
