@@ -9,7 +9,6 @@ using System.Threading;
 
 namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 {
-    [LogCategory(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT)]
     public class LocalSceneDevelopmentController
     {
         private readonly ReloadSceneController reloadController;
