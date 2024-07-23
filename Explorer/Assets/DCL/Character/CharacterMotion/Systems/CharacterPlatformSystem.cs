@@ -37,7 +37,7 @@ namespace DCL.CharacterMotion.Systems
 
             if (rigidTransform.JustJumped)
             {
-                Debug.Log("VVV [Null Platform] - Jump");
+                // Debug.Log("VVV [Null Platform] - Jump");
                 platformComponent.CurrentPlatform = null;
                 return;
             }
@@ -64,7 +64,7 @@ namespace DCL.CharacterMotion.Systems
 
             if (platformComponent.CurrentPlatform == null)
             {
-                Debug.Log("VVV [Null Platform] - After raycast (No Hit?)");
+                // Debug.Log("VVV [Null Platform] - After raycast (No Hit?)");
                 return;
             }
 
