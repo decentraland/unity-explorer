@@ -52,17 +52,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
                 // every iteration starts on the thread pool
                 await UniTask.SwitchToThreadPool();
 
-                var receiveResult = await webSocket.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
+                WebSocketReceiveResult? receiveResult = await webSocket.ReceiveAsync(receiveBuffer, CancellationToken.None);
 
                 if (receiveResult.MessageType == WebSocketMessageType.Binary)
                 {
-                    byte[] finalBuffer = new byte[receiveResult.Count];
-                    for (int i = 0; i < receiveResult.Count; i++)
-                    {
-                        finalBuffer[i] = receiveBuffer[i];
-                    }
-
-                    wsSceneMessage.MergeFrom(new CodedInputStream(finalBuffer));
+                    wsSceneMessage.MergeFrom(receiveBuffer.AsSpan(0, receiveResult.Count));
                     ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket scene message received: {wsSceneMessage.MessageCase}");
 
                     // TODO: Discriminate 'wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel' to only update GLTF models...
