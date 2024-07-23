@@ -8,6 +8,8 @@ namespace DCL.Rendering.Highlight.HighlightedObject
         void Highlight(Renderer renderer, Color color, float thickness);
 
         void Disparage(Renderer renderer);
+
+        void DisparageAll();
     }
 
     public static class HighlightedObjectsExtensions

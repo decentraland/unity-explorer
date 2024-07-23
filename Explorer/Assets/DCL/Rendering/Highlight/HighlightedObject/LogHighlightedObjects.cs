@@ -29,5 +29,10 @@ namespace DCL.Rendering.Highlight.HighlightedObject
             log($"Disparage {renderer.name}, currently {highlighted.Count} highlighted objects");
             origin.Disparage(renderer);
         }
+
+        public void DisparageAll()
+        {
+            origin.DisparageAll();
+        }
     }
 }

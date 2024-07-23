@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -35,6 +36,11 @@ namespace DCL.Rendering.Highlight.HighlightedObject
         {
             if (highLightRenderers.ContainsKey(renderer))
                 highLightRenderers.Remove(renderer);
+        }
+
+        public void DisparageAll()
+        {
+            highLightRenderers.Clear();
         }
     }
 }

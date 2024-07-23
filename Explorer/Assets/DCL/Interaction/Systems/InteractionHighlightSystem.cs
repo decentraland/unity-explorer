@@ -42,6 +42,7 @@ namespace DCL.Interaction.Systems
         {
             if (!sceneStateProvider.IsCurrent) return;
 
+            HighlightRendererFeature.HighlightedObjects.DisparageAll();
             UpdateHighlightsQuery(World);
         }
 
