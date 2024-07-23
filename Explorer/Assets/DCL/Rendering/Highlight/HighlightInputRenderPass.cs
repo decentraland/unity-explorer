@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+// ReSharper disable InconsistentNaming
 
 namespace DCL.Rendering.Highlight
 {
@@ -42,10 +43,10 @@ namespace DCL.Rendering.Highlight
 
             private FilteringSettings m_FilteringSettings;
 
-            public HighlightInputRenderPass(Dictionary<Renderer, HighlightSettings> _HighLightRenderers)
+            public HighlightInputRenderPass(Dictionary<Renderer, HighlightSettings> highLightRenderers)
             {
                 m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
-                m_HighLightRenderers = _HighLightRenderers;
+                m_HighLightRenderers = highLightRenderers;
             }
 
             public void Setup(Material _highLightInputMaterial,
@@ -97,9 +98,9 @@ namespace DCL.Rendering.Highlight
 
             private void ExecuteCommand(ScriptableRenderContext context, RenderingData renderingData, bool clear, string bufferName, string profilerTag)
             {
-                CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName);
+                CommandBuffer commandBuffer = CommandBufferPool.Get(bufferName)!;
 
-                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                using (new ProfilingScope(null!, new ProfilingSampler(profilerTag)))
                 {
                     foreach ((Renderer renderer, HighlightSettings settings) in m_HighLightRenderers)
                     {
@@ -151,8 +152,8 @@ namespace DCL.Rendering.Highlight
                 if (_nBlurCount == 0)
                     return nOutputTexture;
 
-                CommandBuffer cmd = CommandBufferPool.Get(bufferName);
-                using (new ProfilingScope(null, new ProfilingSampler(profilerTag)))
+                CommandBuffer cmd = CommandBufferPool.Get(bufferName)!;
+                using (new ProfilingScope(null!, new ProfilingSampler(profilerTag)))
                 {
                     for (int nBlurPass = 0; nBlurPass < _nBlurCount; ++nBlurPass)
                     {
