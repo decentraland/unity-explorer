@@ -65,7 +65,7 @@ namespace DCL.Interaction.Systems
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
             if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
-                && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
+                && World!.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
                 highlightComponent.Disable();
 
             if (highlightComponent.ReadyForMaterial())
@@ -85,7 +85,7 @@ namespace DCL.Interaction.Systems
             List<Renderer> renderers = ListPool<Renderer>.Get()!;
             AddRenderersFromEntity(entity, renderers);
 
-            ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
+            ref TransformComponent entityTransform = ref World!.TryGetRef<TransformComponent>(entity, out bool containsTransform);
 
             // Fixes a crash by trying to access the transform of an entity when is not available
             if (!containsTransform)
@@ -109,7 +109,7 @@ namespace DCL.Interaction.Systems
             List<Renderer> renderers = ListPool<Renderer>.Get()!;
             AddRenderersFromEntity(entity, renderers);
 
-            ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
+            ref TransformComponent entityTransform = ref World!.TryGetRef<TransformComponent>(entity, out bool containsTransform);
 
             // Fixes a crash by trying to access the transform of an entity when is not available
             if (!containsTransform)
@@ -131,7 +131,7 @@ namespace DCL.Interaction.Systems
             {
                 AddRenderersFromEntity(child, list);
 
-                ref TransformComponent childTransform = ref World.TryGetRef<TransformComponent>(child, out bool containsTransform);
+                ref TransformComponent childTransform = ref World!.TryGetRef<TransformComponent>(child, out bool containsTransform);
                 if (!containsTransform) continue;
 
                 GetRenderersFromChildrenRecursive(ref childTransform, list);
@@ -140,7 +140,7 @@ namespace DCL.Interaction.Systems
 
         private void AddRenderersFromEntity(EntityReference child, List<Renderer> renderers)
         {
-            if (World.TryGet(child, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
+            if (World!.TryGet(child, out PrimitiveMeshRendererComponent primitiveMeshRendererComponent))
                 renderers.Add(primitiveMeshRendererComponent.MeshRenderer);
 
             if (!World.TryGet(child, out GltfContainerComponent gltfContainer))
