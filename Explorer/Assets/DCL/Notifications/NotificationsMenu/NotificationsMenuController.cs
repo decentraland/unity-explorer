@@ -22,7 +22,6 @@ namespace DCL.Notification.NotificationsMenu
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
-        private readonly Dictionary<string, (INotification, NotificationView)> notificationsReferenceCache = new ();
         private readonly List<INotification> notifications = new ();
 
         public NotificationsMenuController(
@@ -63,11 +62,6 @@ namespace DCL.Notification.NotificationsMenu
             NotificationView notificationView = listItem!.GetComponent<NotificationView>();
             INotification notificationData = notifications[index];
 
-            if (!notificationsReferenceCache.TryAdd(notificationData.Id, (notificationData, notificationView)))
-            {
-                notificationsReferenceCache[notificationData.Id] = (notificationData, notificationView);
-            }
-
             SetItemData(notificationView, notificationData);
 
             if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
@@ -92,21 +86,8 @@ namespace DCL.Notification.NotificationsMenu
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
-            notificationView.NotificationClicked -= OnNotificationClicked;
-            notificationView.NotificationClicked += OnNotificationClicked;
-        }
-
-        private void OnNotificationClicked(NotificationType notificationType, string notificationId)
-        {
-            if (notificationsReferenceCache.TryGetValue(notificationId, out (INotification, NotificationView) notificationReference))
-            {
-                if (notificationReference.Item1.Read)
-                    return;
-
-                notificationReference.Item1.Read = true;
-                notificationReference.Item2.UnreadImage.gameObject.SetActive(false);
-                notificationsRequestController.SetNotificationAsRead(notificationId);
-            }
+            notificationsRequestController.SetNotificationAsRead(notificationData.Id);
+            notificationData.Read = true;
         }
 
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData)
