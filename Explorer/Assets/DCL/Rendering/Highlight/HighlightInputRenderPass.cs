@@ -39,11 +39,11 @@ namespace DCL.Rendering.Highlight
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
             private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
 
-            private readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
+            private readonly IReadOnlyDictionary<Renderer, HighlightSettings> m_HighLightRenderers;
 
             private FilteringSettings m_FilteringSettings;
 
-            public HighlightInputRenderPass(Dictionary<Renderer, HighlightSettings> highLightRenderers)
+            public HighlightInputRenderPass(IReadOnlyDictionary<Renderer, HighlightSettings> highLightRenderers)
             {
                 m_FilteringSettings = new FilteringSettings(RenderQueueRange.opaque);
                 m_HighLightRenderers = highLightRenderers;
