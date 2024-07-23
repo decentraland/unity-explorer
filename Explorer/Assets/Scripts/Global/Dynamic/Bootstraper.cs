@@ -185,13 +185,9 @@ namespace Global.Dynamic
 
         private bool DetectAndConfigureLocalSceneDevelopment(RealmLaunchSettings launchSettings)
         {
-            // When started in local scene development mode (AKA preview mode) a command line argument is used
+            // When started in local scene development mode (AKA preview mode) command line arguments are used
             // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
-
-            // FOR DEBUGGING IN UNITY ONLY (REMOVE BEFORE REVIEW)
-            // string[] cmdArgs = new[] { "", "decentraland://realm=http://127.0.0.1:8000&position=0,0" };
             string[] cmdArgs = System.Environment.GetCommandLineArgs();
-
             if (cmdArgs.Length > 1)
             {
                 // Regex to detect different parameters in Uri based on first param after '//' and then separated by '&'

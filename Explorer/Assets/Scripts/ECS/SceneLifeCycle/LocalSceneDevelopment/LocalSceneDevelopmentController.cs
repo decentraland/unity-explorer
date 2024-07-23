@@ -63,11 +63,6 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                     await reloadController.TryReloadSceneAsync();
                 }
-                /*else // the old string message is sent more than once on the same scene update...
-                {
-                    var receivedMessage = Encoding.UTF8.GetString(receiveBuffer, 0, receiveResult.Count);
-                    ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection received message: {receivedMessage}");
-                }*/
             }
 
             ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection closed.");
