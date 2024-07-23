@@ -72,20 +72,28 @@ namespace DCL.CharacterMotion.Systems
                 return;
             }
 
-            Transform transform = characterController.transform;
-            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
+            Transform characterTransform = characterController.transform;
 
+            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
+
             Vector3 finalGravity = rigidTransform is { IsOnASteepSlope: true, IsStuck: false } ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
-            Vector3 gravityDelta = platformComponent.IsMovingPlatform? Vector3.zero : finalGravity * dt;
-            Vector3 platformDelta = rigidTransform.PlatformDelta;
+            Vector3 gravityDelta = finalGravity * dt;
+
+            if (rigidTransform.PlatformDelta.y >= 0 && rigidTransform.IsGrounded && platformComponent.IsMovingPlatform)
+                gravityDelta.y = 0;
 
             // In order for some systems to work correctly we move the character horizontally and then vertically
-            Vector3 prevPos = transform.position;
-            CollisionFlags collisionFlags = characterController.Move(movementDelta + gravityDelta + slopeModifier + platformDelta);
-            Vector3 deltaMovement = transform.position - prevPos;
+            Vector3 prevPos = characterTransform.position;
+
+            CollisionFlags collisionFlags = characterController.Move(movementDelta
+                                                                     + gravityDelta
+                                                                     // + slopeModifier
+                                                                     + rigidTransform.PlatformDelta);
+
+            Vector3 deltaMovement = characterTransform.position - prevPos;
 
             bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
@@ -95,7 +103,7 @@ namespace DCL.CharacterMotion.Systems
             rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Sides);
 
             // If we are on a platform we save our local position
-            PlatformSaveLocalPosition.Execute(ref platformComponent, transform.position);
+            PlatformSaveLocalPosition.Execute(ref platformComponent, characterTransform.position);
 
             // In order to detect if we got stuck between 2 slopes we just check if our vertical delta movement is zero when on a slope
             if (rigidTransform.IsOnASteepSlope && Mathf.Abs(deltaMovement.sqrMagnitude) <= ALMOST_ZERO)

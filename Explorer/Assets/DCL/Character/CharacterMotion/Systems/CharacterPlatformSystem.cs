@@ -22,12 +22,12 @@ namespace DCL.CharacterMotion.Systems
 
         protected override void Update(float t)
         {
-            ResolvePlatformMovementQuery(World);
+            ResolvePlatformMovementQuery(World, t);
         }
 
         [Query]
         [None(typeof(PlayerTeleportIntent))]
-        private void ResolvePlatformMovement(
+        private void ResolvePlatformMovement([Data] float t,
             in ICharacterControllerSettings settings,
             ref CharacterPlatformComponent platformComponent,
             ref CharacterRigidTransform rigidTransform,
@@ -37,26 +37,36 @@ namespace DCL.CharacterMotion.Systems
 
             if (rigidTransform.JustJumped)
             {
+                Debug.Log("VVV [Null Platform] - Jump");
                 platformComponent.CurrentPlatform = null;
                 return;
             }
 
-            if (!rigidTransform.IsGrounded)
-            {
-                platformComponent.FramesUngrounded++;
-
-                if (platformComponent.FramesUngrounded > UNGROUNDED_FRAMES)
-                    platformComponent.CurrentPlatform = null;
-                return;
-            }
+            // if (!rigidTransform.IsGrounded)
+            // {
+            //     platformComponent.FramesUngrounded++;
+            //
+            //     if (platformComponent.FramesUngrounded > UNGROUNDED_FRAMES)
+            //         platformComponent.CurrentPlatform = null;
+            //
+            //     Debug.Log("VVV [Null Platform] - Not Grounded");
+            //     return;
+            // }
 
             platformComponent.FramesUngrounded = 0;
 
             Transform transform = characterController.transform;
 
+            Physics.simulationMode = SimulationMode.Script;
+            Physics.Simulate(t);
             PlatformRaycast.Execute(platformComponent, characterController.radius, transform, settings);
+            Physics.simulationMode = SimulationMode.FixedUpdate;
 
-            if (platformComponent.CurrentPlatform == null) return;
+            if (platformComponent.CurrentPlatform == null)
+            {
+                Debug.Log("VVV [Null Platform] - After raycast (No Hit?)");
+                return;
+            }
 
             Transform platformTransform = platformComponent.CurrentPlatform.transform;
 
