@@ -15,7 +15,6 @@ namespace DCL.Rendering.Highlight
     {
         public Color Color;
         public float Width;
-        public Vector3 Offset;
     }
 
     [Serializable]
