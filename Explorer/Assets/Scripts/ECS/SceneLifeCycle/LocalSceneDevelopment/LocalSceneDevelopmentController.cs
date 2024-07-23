@@ -13,6 +13,7 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
     public class LocalSceneDevelopmentController
     {
         private readonly ReloadSceneController reloadController;
+        private readonly SynchronizationContext synchContext = new SynchronizationContext();
 
         private bool initialized = false;
         private ClientWebSocket webSocket;
@@ -28,11 +29,16 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
             initialized = true;
 
-            ConnectToServerAsync(
-                localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws"),
-                new WsSceneMessage(),
-                new byte[1024]
-                ).Forget();
+            UniTask.RunOnThreadPool(async () =>
+            {
+                    await UniTask.SwitchToThreadPool();
+                    SynchronizationContext.SetSynchronizationContext(synchContext);
+                    ConnectToServerAsync(
+                        localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws"),
+                        new WsSceneMessage(),
+                        new byte[1024]
+                    ).Forget();
+            }).Forget();
         }
 
         private async UniTaskVoid ConnectToServerAsync(string localSceneWebsocketServer, WsSceneMessage wsSceneMessage, byte[] receiveBuffer)
@@ -61,7 +67,10 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                     // TODO: Discriminate 'wsSceneMessage.MessageCase == WsSceneMessage.MessageOneofCase.UpdateModel' to only update GLTF models...
 
+                    await UniTask.SwitchToMainThread();
                     await reloadController.TryReloadSceneAsync();
+                    await UniTask.SwitchToThreadPool();
+                    SynchronizationContext.SetSynchronizationContext(synchContext);
                 }
                 else if (receiveResult.MessageType == WebSocketMessageType.Close)
                 {
