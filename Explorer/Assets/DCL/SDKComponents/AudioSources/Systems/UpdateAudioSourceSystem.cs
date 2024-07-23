@@ -32,7 +32,7 @@ namespace DCL.SDKComponents.AudioSources
         private readonly ISceneData sceneData;
         private readonly ISceneStateProvider sceneStateProvider;
         private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
-        private readonly AudioMixer audioMixer;
+        private readonly AudioMixerGroup[] worldGroup;
 
         internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
@@ -44,9 +44,11 @@ namespace DCL.SDKComponents.AudioSources
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
-            this.audioMixer = audioMixer;
 
             audioSourcesPool = poolsRegistry.GetReferenceTypePool<AudioSource>().EnsureNotNull();
+
+            if (audioMixer != null)
+                worldGroup = audioMixer.FindMatchingGroups("World");
         }
 
         protected override void Update(float t)
@@ -64,13 +66,7 @@ namespace DCL.SDKComponents.AudioSources
                 return;
 
             if (audioSourceComponent.AudioSourceAssigned == false)
-            {
-                AudioMixerGroup[]? worldGroup = null;
-                if (audioMixer != null)
-                    worldGroup = audioMixer.FindMatchingGroups("World");
-
                 audioSourceComponent.SetAudioSource(audioSourcesPool.Get()!, (worldGroup is { Length: > 0 } ? worldGroup[0] : null)!);
-            }
 
             audioSourceComponent.AudioSource!.FromPBAudioSourceWithClip(sdkAudioSource, clip: promiseResult.Asset);
 
