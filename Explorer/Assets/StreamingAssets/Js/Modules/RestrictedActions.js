@@ -66,7 +66,7 @@ module.exports.triggerSceneEmote = async function(message) {
     if (message.loop == undefined) {
         message.loop = false
     }
-    const isSuccess = UnityRestrictedActionsApi.TriggerSceneEmote(message.src, message.loop)
+    const isSuccess = await UnityRestrictedActionsApi.TriggerSceneEmote(message.src, message.loop)
     return {
         success: isSuccess
     };

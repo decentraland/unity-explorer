@@ -57,7 +57,7 @@ namespace SceneRuntime
             var unityOpsApi = new UnityOpsApi(engine, moduleHub, sceneScript, sceneShortInfo);
             engine.AddHostObject("UnityOpsApi", unityOpsApi);
 
-            engine.Execute(initCode.validateCode!);
+            // engine.Execute(initCode.validateCode!);
             engine.Execute(initCode.jsInitCode!);
 
             // Setup unitask resolver
@@ -92,7 +92,6 @@ namespace SceneRuntime
 
         public void Dispose()
         {
-            engineApi?.Dispose();
             engine.Dispose();
             jsApiBunch.Dispose();
         }
@@ -102,19 +101,19 @@ namespace SceneRuntime
             jsApiBunch.OnSceneIsCurrentChanged(isCurrent);
         }
 
+        public void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper)
+        {
+            engineApi = newWrapper;
+        }
+
         public void Register<T>(string itemName, T target) where T: IJsApiWrapper
         {
             jsApiBunch.AddHostObject(itemName, target);
         }
 
-        public void RegisterEngineApi(IEngineApi api, ISceneExceptionsHandler sceneExceptionsHandler)
-        {
-            Register("UnityEngineApi", engineApi = new EngineApiWrapper(api, instancePoolsProvider, sceneExceptionsHandler));
-        }
-
         public void SetIsDisposing()
         {
-            engineApi?.SetIsDisposing();
+            jsApiBunch.SetIsDisposing();
         }
 
         public UniTask StartScene()
@@ -141,6 +140,14 @@ namespace SceneRuntime
 
         public ITypedArray<byte> CreateUint8Array(int length) =>
             (ITypedArray<byte>)engine.Evaluate("(function () { return new Uint8Array(" + length + "); })()").EnsureNotNull();
+
+        public ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory)
+        {
+            var jsArray = CreateUint8Array(memory.Length);
+            if (!memory.IsEmpty)
+                jsArray.Write(memory, (ulong)memory.Length, 0);
+            return jsArray;
+        }
 
         public object ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays)
         {

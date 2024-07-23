@@ -28,6 +28,18 @@ namespace DCL.Backpack
 
         [field: SerializeField]
         public Animator HeaderAnimator { get; private set; }
+
+        private void OnEnable()
+        {
+            PanelAnimator.enabled = true;
+            HeaderAnimator.enabled = true;
+        }
+
+        private void OnDisable()
+        {
+            PanelAnimator.enabled = false;
+            HeaderAnimator.enabled = false;
+        }
     }
 
     [Serializable]

@@ -1,8 +1,11 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using CrdtEcsBridge.Components;
+using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.ECSComponents;
+using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Prioritization.Components;
@@ -22,21 +25,40 @@ namespace DCL.CharacterCamera.Systems
         private readonly ISceneData sceneData;
         private readonly IPartitionComponent scenePartition;
         private readonly byte propagationThreshold;
+        private readonly IComponentPool<SDKTransform> sdkTransformPool;
+        private readonly Entity cameraEntity;
+        
+
 
         internal WriteCameraComponentsSystem(World world, IECSToCRDTWriter ecsToCrdtWriter, IExposedCameraData exposedCameraData, ISceneData sceneData, IPartitionComponent scenePartition,
-            byte propagationThreshold) : base(world)
+            byte propagationThreshold, IComponentPool<SDKTransform> sdkTransformPool, Entity cameraEntity) : base(world)
         {
             this.ecsToCrdtWriter = ecsToCrdtWriter;
             this.exposedCameraData = exposedCameraData;
             this.sceneData = sceneData;
             this.propagationThreshold = propagationThreshold;
+            this.sdkTransformPool = sdkTransformPool;
+            this.cameraEntity = cameraEntity;
             this.scenePartition = scenePartition;
         }
 
         public override void Initialize()
         {
             // set camera position for a newly created scene
-            ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, false);
+            var sdkTransform = ExposedTransformUtils.Put(ecsToCrdtWriter, exposedCameraData, SpecialEntitiesID.CAMERA_ENTITY, sceneData.Geometry.BaseParcelPosition, false)
+                .EnsureNotNull();
+
+            if (!World.Has<SDKTransform>(cameraEntity))
+            {
+                var newComponent = sdkTransformPool.Get();
+                // Copy all fields
+                newComponent.Position = sdkTransform.Position;
+                newComponent.Rotation = sdkTransform.Rotation;
+                newComponent.Scale = sdkTransform.Scale;
+
+                World.Add(cameraEntity, newComponent);
+            }
+            
             PropagateCameraData(false);
         }
 

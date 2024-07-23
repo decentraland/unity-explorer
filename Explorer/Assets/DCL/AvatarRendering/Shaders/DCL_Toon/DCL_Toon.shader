@@ -524,17 +524,16 @@ Shader "DCL/DCL_Toon"
             Tags {
                 "LightMode" = "Outline"
             }
-            Cull [_SRPDefaultUnlitColMode]
-            ColorMask [_SPRDefaultUnlitColorMask]
-            Blend SrcAlpha OneMinusSrcAlpha
-            Stencil
-            {
-                Ref[_StencilNo]
-                Comp[_StencilComp]
-                Pass[_StencilOpPass]
-                Fail[_StencilOpFail]
-
-            }
+            Cull Front
+            //ColorMask [_SPRDefaultUnlitColorMask]
+            //Blend SrcAlpha OneMinusSrcAlpha
+//            Stencil
+//            {
+//                Ref[_StencilNo]
+//                Comp[_StencilComp]
+//                Pass[_StencilOpPass]
+//                Fail[_StencilOpFail]
+//            }
 
             HLSLPROGRAM
             //#pragma exclude_renderers gles gles3 glcore
@@ -666,7 +665,7 @@ Shader "DCL/DCL_Toon"
             // used in Shadow calculation 
             //#pragma shader_feature_local _ UTS_USE_RAYTRACING_SHADOW
             // used in DoubleShadeWithFeather
-            #pragma shader_feature _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
+            #pragma dynamic_branch _IS_CLIPPING_OFF _IS_CLIPPING_MODE _IS_CLIPPING_TRANSMODE
 
             #define _EMISSIVE_SIMPLE
             //#pragma shader_feature _EMISSIVE_SIMPLE// _EMISSIVE_ANIMATION

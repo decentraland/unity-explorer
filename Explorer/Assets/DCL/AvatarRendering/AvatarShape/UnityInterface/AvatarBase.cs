@@ -9,6 +9,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public class AvatarBase : MonoBehaviour, IAvatarView
     {
         [SerializeField] private Animator avatarAnimator;
+        private List<KeyValuePair<AnimationClip, AnimationClip>> animationOverrides;
+        private AnimationClip lastEmote;
+
+        private AnimatorOverrideController overrideController;
         [field: SerializeField] public SkinnedMeshRenderer AvatarSkinnedMeshRenderer { get; private set; }
 
         [field: Header("Feet IK")]
@@ -57,12 +61,31 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         [field: Header("Other")]
 
         // Anchor points to attach entities to, through the SDK
+        [field: SerializeField] public Transform NameTagAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform HeadAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform NeckAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform SpineAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform Spine1AnchorPoint { get; private set; }
+        [field: SerializeField] public Transform Spine2AnchorPoint { get; private set; }
+        [field: SerializeField] public Transform HipAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftShoulderAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftArmAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftForearmAnchorPoint { get; private set; }
         [field: SerializeField] public Transform LeftHandAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftHandIndexAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightShoulderAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightArmAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightForearmAnchorPoint { get; private set; }
         [field: SerializeField] public Transform RightHandAnchorPoint { get; private set; }
-
-        private AnimatorOverrideController overrideController;
-        private List<KeyValuePair<AnimationClip,AnimationClip>> animationOverrides;
-        private AnimationClip lastEmote;
+        [field: SerializeField] public Transform RightHandIndexAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftUpLegAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftLegAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftFootAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform LeftToeBaseAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightUpLegAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightLegAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightFootAnchorPoint { get; private set; }
+        [field: SerializeField] public Transform RightToeBaseAnchorPoint { get; private set; }
 
         private void Awake()
         {
@@ -130,7 +153,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
     public interface IAvatarView
     {
         Transform GetTransform();
+
         void SetAnimatorFloat(int hash, float value);
+
         void SetAnimatorInt(int hash, int value);
 
         void SetAnimatorTrigger(int hash);

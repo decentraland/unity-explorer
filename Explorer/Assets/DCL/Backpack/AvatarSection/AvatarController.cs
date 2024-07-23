@@ -1,5 +1,6 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
+using DCL.Character.CharacterMotion.Components;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -8,8 +9,6 @@ namespace DCL.Backpack
 {
     public class AvatarController : ISection, IDisposable
     {
-        private static readonly int IN = Animator.StringToHash("In");
-
         private readonly RectTransform rectTransform;
         private readonly BackpackSlotsController slotsController;
         private readonly BackpackGridController backpackGridController;
@@ -43,15 +42,11 @@ namespace DCL.Backpack
             backpackInfoPanelController?.Dispose();
         }
 
-        public void RequestInitialWearablesPage()
-        {
-            backpackGridController.RequestTotalNumber();
-        }
+        public void RequestInitialWearablesPage() =>
+            backpackGridController.RequestPage(1, true);
 
-        public void Activate()
-        {
+        public void Activate() =>
             backpackGridController.Activate();
-        }
 
         public void Deactivate()
         {
@@ -59,10 +54,8 @@ namespace DCL.Backpack
             backpackGridController.Deactivate();
         }
 
-        public void Animate(int triggerId)
-        {
-            view.gameObject.SetActive(triggerId == IN);
-        }
+        public void Animate(int triggerId) =>
+            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
 
         public void ResetAnimator() { }
 

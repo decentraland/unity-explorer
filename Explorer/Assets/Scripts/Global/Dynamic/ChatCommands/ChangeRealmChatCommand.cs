@@ -1,11 +1,12 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Chat;
+using DCL.Chat.Commands;
 using ECS.SceneLifeCycle.Realm;
+using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
-using static DCL.Chat.IChatCommand;
+using static DCL.Chat.Commands.IChatCommand;
 
 namespace Global.Dynamic.ChatCommands
 {
@@ -13,19 +14,18 @@ namespace Global.Dynamic.ChatCommands
     {
         private const string COMMAND_WORLD = "world";
         private const string WORLD_SUFFIX = ".dcl.eth";
+        private static readonly Dictionary<string, string> PARAMETER_URLS = new ()
+        {
+            { "genesis", IRealmNavigator.GENESIS_URL },
+            { "goerli", IRealmNavigator.GOERLI_URL },
+            { "goerli-old", IRealmNavigator.GOERLI_OLD_URL },
+            { "stream", IRealmNavigator.STREAM_WORLD_URL },
+            { "sdk", IRealmNavigator.SDK_TEST_SCENES_URL },
+            { "test", IRealmNavigator.TEST_SCENES_URL },
+        };
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+)$", RegexOptions.Compiled);
 
         // Parameters to URL mapping
-        private static readonly Dictionary<string, string> PARAMETER_URLS = new()
-        {
-            {"genesis", IRealmNavigator.GENESIS_URL},
-            {"goerli", IRealmNavigator.GOERLI_URL},
-            {"goerli-old", IRealmNavigator.GOERLI_OLD_URL},
-            {"stream", IRealmNavigator.STREAM_WORLD_URL},
-            {"sdk", IRealmNavigator.SDK_TEST_SCENES_URL},
-            {"test", IRealmNavigator.TEST_SCENES_URL},
-        };
-
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+)$", RegexOptions.Compiled);
 
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
@@ -52,14 +52,15 @@ namespace Global.Dynamic.ChatCommands
                 realmUrl = GetWorldAddress(worldName);
             }
 
-            bool isSuccess = await realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realmUrl!), ct);
+            var realm = URLDomain.FromString(realmUrl!);
+
+            bool isSuccess = await realmNavigator.TryChangeRealmAsync(realm, ct);
 
             if (ct.IsCancellationRequested)
                 return "🔴 Error. The operation was canceled!";
 
-            return isSuccess
-                ? $"🟢 Welcome to the {worldName} world!"
-                : $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
+            return isSuccess ? $"🟢 Welcome to the {worldName} world!" :
+                realm == realmNavigator.CurrentRealm ? $"🟡 You are already in {worldName}!" : $"🔴 Error. The world {worldName} doesn't exist or not reachable!";
         }
 
         private string GetWorldAddress(string worldPath)

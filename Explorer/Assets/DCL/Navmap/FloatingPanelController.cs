@@ -1,15 +1,10 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.ParcelsService;
+using DCL.Character.CharacterMotion.Components;
+using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
 using DCL.WebRequests;
-using ECS.SceneLifeCycle.Realm;
-using MVC;
-using DCL.PlacesAPIService;
-using DCL.UI;
-using DCL.WebRequests;
-using DG.Tweening;
 using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
@@ -21,7 +16,7 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
-        public event Action OnJumpIn;
+        public event Action<Vector2Int> OnJumpIn;
 
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
@@ -34,12 +29,7 @@ namespace DCL.Navmap
         private CancellationTokenSource cts;
 
         private readonly ImageController placeImageController;
-        private static readonly int OUT = Animator.StringToHash("Out");
-        private static readonly int IN = Animator.StringToHash("In");
-        private static readonly int LOADED = Animator.StringToHash("Loaded");
-        private static readonly int LOADING = Animator.StringToHash("Loading");
-        private static readonly int TO_LEFT = Animator.StringToHash("ToLeft");
-        private static readonly int TO_RIGHT = Animator.StringToHash("ToRight");
+        private readonly ImageController mapPinPlaceImageController;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -49,9 +39,11 @@ namespace DCL.Navmap
             this.realmNavigator = realmNavigator;
 
             view.closeButton.onClick.AddListener(HidePanel);
+            view.mapPinCloseButton.onClick.AddListener(HidePanel);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
             placeImageController = new ImageController(view.placeImage, webRequestController);
+            mapPinPlaceImageController = new ImageController(view.MapPinPlaceImage, webRequestController);
             categoriesDictionary = new Dictionary<string, GameObject>();
 
             for (var i = 0; i < view.categories.Length; i++)
@@ -79,15 +71,23 @@ namespace DCL.Navmap
             view.backButton.onClick.AddListener(HidePanelFromBackButton);
         }
 
-        public void HandlePanelVisibility(Vector2Int parcel, bool showBackButton)
+        public void HandlePanelVisibility(Vector2Int parcel, IPinMarker? pinMarker, bool showBackButton)
         {
             view.backButton.gameObject.SetActive(showBackButton);
+            view.PlaceSection.gameObject.SetActive(pinMarker == null);
+            view.MapPinSection.gameObject.SetActive(pinMarker != null);
+
+            if (pinMarker != null)
+            {
+                view.MapPinTitle.text = pinMarker.Title;
+                view.MapPinDescription.text = pinMarker.Description;
+            }
 
             if (showBackButton)
             {
                 view.panelAnimator.Rebind();
                 view.panelAnimator.Update(0f);
-                view.panelAnimator.SetTrigger(TO_LEFT);
+                view.panelAnimator.SetTrigger(AnimationHashes.TO_LEFT);
                 ShowPanel(parcel, -1);
             }
             else
@@ -96,13 +96,13 @@ namespace DCL.Navmap
                 {
                     view.panelAnimator.Rebind();
                     view.panelAnimator.Update(0f);
-                    view.panelAnimator.SetTrigger(IN);
-                    ShowPanel(parcel, LOADED);
+                    view.panelAnimator.SetTrigger(AnimationHashes.IN);
+                    ShowPanel(parcel, AnimationHashes.LOADED);
                 }
                 else
                 {
-                    view.panelAnimator.SetTrigger(LOADING);
-                    GetPlaceInfoAsync(parcel, LOADED).Forget();
+                    view.panelAnimator.SetTrigger(AnimationHashes.LOADING);
+                    GetPlaceInfoAsync(parcel, AnimationHashes.LOADED).Forget();
                 }
             }
         }
@@ -142,7 +142,7 @@ namespace DCL.Navmap
 
         private void JumpIn(Vector2Int parcel)
         {
-            OnJumpIn?.Invoke();
+            OnJumpIn?.Invoke(parcel);
             realmNavigator.TryInitializeTeleportToParcelAsync(parcel, cts.Token).Forget();
         }
 
@@ -156,14 +156,25 @@ namespace DCL.Navmap
             view.upvotes.text = "-";
             view.parcelsCount.text = "1";
             placeImageController.SetVisible(false);
+            mapPinPlaceImageController.SetVisible(false);
 
             ResetCategories();
         }
 
         private void SetFloatingPanelInfo(PlacesData.PlaceInfo placeInfo)
         {
-            placeImageController.SetVisible(true);
-            placeImageController.RequestImage(placeInfo.image);
+            if (view.PlaceSection.activeInHierarchy)
+            {
+                placeImageController.SetVisible(true);
+                placeImageController.RequestImage(placeInfo.image);
+            }
+
+            if (view.MapPinSection.activeInHierarchy)
+            {
+                mapPinPlaceImageController.SetVisible(true);
+                mapPinPlaceImageController.RequestImage(placeInfo.image);
+            }
+
             view.placeName.text = placeInfo.title;
             view.placeCreator.text = $"created by <b>{placeInfo.contact_name}</b>";
             view.placeCreator.gameObject.SetActive(!string.IsNullOrEmpty(placeInfo.contact_name));
@@ -228,14 +239,14 @@ namespace DCL.Navmap
 
         private void HidePanelFromBackButton()
         {
-            view.panelAnimator.SetTrigger(TO_RIGHT);
+            view.panelAnimator.SetTrigger(AnimationHashes.TO_RIGHT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }
 
         public void HidePanel()
         {
-            view.panelAnimator.SetTrigger(OUT);
+            view.panelAnimator.SetTrigger(AnimationHashes.OUT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }

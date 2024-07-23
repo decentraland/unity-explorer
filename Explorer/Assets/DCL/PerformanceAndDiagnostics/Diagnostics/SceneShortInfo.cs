@@ -16,9 +16,7 @@ namespace DCL.Diagnostics
             Name = name;
         }
 
-        public override string ToString()
-        {
-            return $"({BaseParcel.x},{BaseParcel.y}) - {Name}";
-        }
+        public override string ToString() =>
+            $"({BaseParcel.x},{BaseParcel.y}) - {Name}";
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using System;
 
@@ -22,6 +23,16 @@ namespace SceneRunner.Scene.ExceptionsHandling
         public void OnEngineException(Exception exception, string category = ReportCategory.ENGINE)
         {
             throw exception;
+        }
+
+        public UniTask<T> ReportAndRethrowExceptionAsync<T>(UniTask<T> task) =>
+            task;
+
+        public UniTask ReportAndRethrowExceptionAsync(UniTask task) =>
+            task;
+
+        public void ReportApiException(Exception e)
+        {
         }
     }
 }

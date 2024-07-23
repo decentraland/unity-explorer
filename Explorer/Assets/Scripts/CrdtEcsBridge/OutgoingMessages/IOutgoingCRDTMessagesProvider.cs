@@ -30,6 +30,6 @@ namespace CrdtEcsBridge.OutgoingMessages
         ///     Freeze the modification of the queue while it's being processed from the background thread
         /// </summary>
         /// <returns></returns>
-        OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock();
+        OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock([CanBeNull] Action<OutgoingCRDTMessagesProvider.PendingMessage> actOnPendingMessage);
     }
 }

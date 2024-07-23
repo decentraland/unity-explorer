@@ -7,6 +7,32 @@ namespace DCL.Optimization.Pools
 {
     public static class PoolExtensions
     {
+        private class EmptyPool<T> : IObjectPool<T> where T : class, new()
+        {
+            internal static readonly EmptyPool<T> INSTANCE = new ();
+
+            public T Get() =>
+                new ();
+
+            public PooledObject<T> Get(out T v) =>
+                throw new NotImplementedException();
+
+            public void Release(T element)
+            {
+
+            }
+
+            public void Clear()
+            {
+
+            }
+
+            public int CountInactive => 0;
+        }
+
+        public static Scope<TElement> EmptyScope<TElement>(TElement defaultValue) where TElement: class, new() =>
+            new (defaultValue, EmptyPool<TElement>.INSTANCE);
+
         public static Scope<List<TComponent>> GetComponentsInChildrenIntoPooledList<TComponent>(this GameObject go, bool includeInactive = false) where TComponent: class
         {
             Scope<List<TComponent>> scope = AutoScope(UnityComponentPool<TComponent>.INSTANCE);

@@ -1,4 +1,5 @@
 using DCL.Browser;
+using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
@@ -12,7 +13,6 @@ namespace DCL.Navmap
     public class SatelliteController : ISection
     {
         private const string GENESIS_CITY_LINK = "https://genesis.city/";
-        private static readonly int IN = Animator.StringToHash("In");
 
         private readonly SatelliteView view;
         private readonly MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData;
@@ -67,7 +67,7 @@ namespace DCL.Navmap
 
         public void Animate(int triggerId)
         {
-            view.gameObject.SetActive(triggerId == IN);
+            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
         }
 
         public void ResetAnimator() { }

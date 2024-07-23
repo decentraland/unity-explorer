@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.Character.CharacterMotion.Components;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -7,10 +8,6 @@ namespace DCL.UI
 {
     public class ButtonWithAnimationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private static readonly int HOVER = Animator.StringToHash("Hover");
-        private static readonly int UNHOVER = Animator.StringToHash("Unhover");
-        private static readonly int PRESSED = Animator.StringToHash("Pressed");
-
         [field: SerializeField]
         public Button Button { get; private set;}
 
@@ -39,19 +36,19 @@ namespace DCL.UI
 
         private void OnClick()
         {
-            ButtonAnimator.SetTrigger(PRESSED);
+            ButtonAnimator.SetTrigger(AnimationHashes.PRESSED);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            ButtonAnimator.SetTrigger(HOVER);
+            ButtonAnimator.SetTrigger(AnimationHashes.HOVER);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoverAudio);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            ButtonAnimator.SetTrigger(UNHOVER);
+            ButtonAnimator.SetTrigger(AnimationHashes.UNHOVER);
         }
     }
 }

@@ -1,3 +1,4 @@
+using DCL.UI;
 using UnityEngine;
 
 namespace DCL.Backpack.Breadcrumb
@@ -15,5 +16,8 @@ namespace DCL.Backpack.Breadcrumb
 
         [field: SerializeField]
         public NftSubCategoryFilterComponentView SearchButton { get; private set; }
+
+        [field: SerializeField]
+        public ColorPickerView ColorPickerView { get; private set; }
     }
 }

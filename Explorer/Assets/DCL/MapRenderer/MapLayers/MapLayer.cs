@@ -12,6 +12,7 @@ namespace DCL.MapRenderer.MapLayers
         HotUsersMarkers = 1 << 4,
         ParcelHoverHighlight = 1 << 6,
         Favorites = 1 << 7,
+        Pins = 1 << 8,
         PlayerMarker = 1 << 9,
         // Add yours
     }

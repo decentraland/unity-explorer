@@ -13,7 +13,7 @@ namespace DCL.Landscape
         private const int CHUNK_SIZE = 40;
         private const int GENESIS_HALF_PARCEL_WIDTH = 150;
         private const int SATELLITE_MAP_RESOLUTION = 8;
-        private const float Z_FIGHT_THRESHOLD = 0.02f;
+        private const float Z_FIGHT_THRESHOLD = 0.001f;
 
         private static readonly int BASE_MAP = Shader.PropertyToID("_BaseMap");
 

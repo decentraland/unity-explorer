@@ -12,7 +12,7 @@ namespace DCL.LOD
             IReadOnlyList<Vector2Int> parcels, World world)
         {
             sceneLODInfo.Dispose(world);
-            scenesCache.RemoveSceneLOD(parcels);
+            scenesCache.RemoveNonRealScene(parcels);
         }
     }
 }

@@ -71,6 +71,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 Material = material != null ? material : DefaultMaterial.New();
             }
         }
+
+        public string GetInstanceName()
+        {
+            return assetBundleData != null ? assetBundleData.GetInstanceName() : $"NOT_AB_{MainAsset.name}";
+        }
     }
 
     /// <summary>
@@ -78,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
     /// </summary>
     public abstract class WearableAssetBase : IDisposable
     {
-        private readonly AssetBundleData? assetBundleData;
+        protected readonly AssetBundleData? assetBundleData;
 
         private bool disposed;
 

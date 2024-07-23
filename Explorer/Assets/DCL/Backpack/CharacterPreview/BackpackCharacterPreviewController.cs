@@ -4,11 +4,14 @@ using Cysharp.Threading.Tasks;
 using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Components;
+using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
+using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Backpack.CharacterPreview
@@ -23,13 +26,16 @@ namespace DCL.Backpack.CharacterPreview
             ICharacterPreviewFactory previewFactory,
             BackpackEventBus backpackEventBus,
             World world,
-            IEquippedEmotes equippedEmotes)
-            : base(view, previewFactory, world)
+            IEquippedEmotes equippedEmotes,
+            CharacterPreviewEventBus characterPreviewEventBus)
+            : base(view, previewFactory, world, true, characterPreviewEventBus)
         {
             this.backpackEventBus = backpackEventBus;
             this.equippedEmotes = equippedEmotes;
             backpackEventBus.EquipWearableEvent += OnWearableEquipped;
+            backpackEventBus.ChangeColorEvent += OnColorChange;
             backpackEventBus.UnEquipWearableEvent += OnWearableUnequipped;
+            backpackEventBus.UnEquipAllEvent += UnEquipAll;
             backpackEventBus.EquipEmoteEvent += OnEmoteEquipped;
             backpackEventBus.SelectEmoteEvent += OnEmoteSelected;
             backpackEventBus.EmoteSlotSelectEvent += OnEmoteSlotSelected;
@@ -71,6 +77,7 @@ namespace DCL.Backpack.CharacterPreview
             base.Dispose();
 
             backpackEventBus.EquipWearableEvent -= OnWearableEquipped;
+            backpackEventBus.ChangeColorEvent -= OnColorChange;
             backpackEventBus.UnEquipWearableEvent -= OnWearableUnequipped;
             backpackEventBus.EquipEmoteEvent -= OnEmoteEquipped;
             backpackEventBus.UnEquipEmoteEvent -= OnEmoteUnEquipped;
@@ -79,6 +86,7 @@ namespace DCL.Backpack.CharacterPreview
             backpackEventBus.FilterCategoryByEnumEvent -= OnChangeCategory;
             backpackEventBus.ForceRenderEvent -= OnForceRenderChange;
             backpackEventBus.ChangedBackpackSectionEvent -= OnBackpackSectionChanged;
+            backpackEventBus.UnEquipAllEvent -= UnEquipAll;
 
             emotePreviewCancellationToken.SafeCancelAndDispose();
         }
@@ -108,10 +116,32 @@ namespace DCL.Backpack.CharacterPreview
             OnModelUpdated();
         }
 
+        private void OnColorChange(Color newColor, string category)
+        {
+            switch (category)
+            {
+                case WearablesConstants.Categories.EYES:
+                    previewAvatarModel.EyesColor = newColor;
+                    break;
+                case WearablesConstants.Categories.HAIR:
+                    previewAvatarModel.HairColor = newColor;
+                    break;
+                case WearablesConstants.Categories.BODY_SHAPE:
+                    previewAvatarModel.SkinColor = newColor;
+                    break;
+            }
+            OnModelUpdated();
+        }
+
         private void OnWearableUnequipped(IWearable i)
         {
             previewAvatarModel.Wearables.Remove(i.GetUrn());
             OnModelUpdated();
+        }
+
+        private void UnEquipAll()
+        {
+            previewAvatarModel.Wearables?.Clear();
         }
 
         private void OnEmoteUnEquipped(int slot, IEmote? emote)

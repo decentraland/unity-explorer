@@ -19,6 +19,7 @@ namespace DCL.Ipfs
         private readonly List<string> sceneUrns;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
+        private readonly URLDomain entitiesBaseUrl;
 
         public URLDomain CatalystBaseUrl { get; }
         public URLDomain ContentBaseUrl { get; }
@@ -40,6 +41,7 @@ namespace DCL.Ipfs
             if (serverAbout != null)
             {
                 sceneUrns = serverAbout.configurations.scenesUrn;
+                entitiesBaseUrl = URLBuilder.Combine(URLDomain.FromString(serverAbout.content.publicUrl), URLSubdirectory.FromString("entities/"));
                 ContentBaseUrl = URLDomain.FromString(serverAbout.content.publicUrl);
                 LambdasBaseUrl = URLDomain.FromString(serverAbout.lambdas.publicUrl);
 
@@ -50,6 +52,7 @@ namespace DCL.Ipfs
             else
             {
                 sceneUrns = new List<string>();
+                entitiesBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/"));
                 ContentBaseUrl = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/contents/"));
                 EntitiesActiveEndpoint = URLBuilder.Combine(CatalystBaseUrl, URLSubdirectory.FromString("content/entities/active"));
             }
@@ -116,7 +119,7 @@ namespace DCL.Ipfs
 
         private UniTask SendFormAsync(WWWForm form, CancellationToken ct)
         {
-            URLAddress url = Url();
+            URLAddress url = GetEntitiesUrl();
             return webRequestController.PostAsync(
                 new CommonArguments(url),
                 GenericPostArguments.CreateWWWForm(form),
@@ -125,13 +128,10 @@ namespace DCL.Ipfs
             ).WithNoOpAsync();
         }
 
-        private URLAddress Url()
+        private URLAddress GetEntitiesUrl()
         {
             urlBuilder.Clear();
-
-            urlBuilder.AppendDomain(CatalystBaseUrl)
-                      .AppendPath(URLPath.FromString("content/entities"));
-
+            urlBuilder.AppendDomain(entitiesBaseUrl);
             return urlBuilder.Build();
         }
 

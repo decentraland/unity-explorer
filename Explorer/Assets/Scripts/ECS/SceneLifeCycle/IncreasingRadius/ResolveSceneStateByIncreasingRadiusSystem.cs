@@ -74,12 +74,7 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 ProcessesFixedRealmQuery(World, maxLoadingSqrDistance);
             }
 
-            float unloadingDistance = (Mathf.Max(1, realmPartitionSettings.UnloadingDistanceToleranceInParcels) + realmPartitionSettings.MaxLoadingDistanceInParcels)
-                                      * ParcelMathHelper.PARCEL_SIZE;
-
-            float unloadingSqrDistance = unloadingDistance * unloadingDistance;
-
-            ProcessScenesUnloadingInRealmQuery(World, unloadingSqrDistance);
+            ProcessScenesUnloadingInRealmQuery(World);
         }
 
         [Query]
@@ -100,9 +95,9 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [Query]
         [None(typeof(StaticScenePointers))]
         [All(typeof(RealmComponent))]
-        private void ProcessScenesUnloadingInRealm([Data] float unloadingSqrDistance)
+        private void ProcessScenesUnloadingInRealm()
         {
-            StartUnloadingQuery(World, unloadingSqrDistance);
+            StartUnloadingQuery(World);
         }
 
         /// <summary>
@@ -194,10 +189,10 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
         [All(typeof(SceneDefinitionComponent))]
         [None(typeof(DeleteEntityIntention))]
         [Any(typeof(SceneLODInfo), typeof(ISceneFacade), typeof(AssetPromise<ISceneFacade, GetSceneFacadeIntention>), typeof(RoadInfo))]
-        private void StartUnloading([Data] float unloadingSqrDistance, in Entity entity, ref PartitionComponent partitionComponent)
+        private void StartUnloading(in Entity entity, ref PartitionComponent partitionComponent)
         {
-            if (partitionComponent.RawSqrDistance < unloadingSqrDistance) return;
-            World.Add(entity, DeleteEntityIntention.DeferredDeletion);
+            if (partitionComponent.OutOfRange)
+                World.Add(entity, DeleteEntityIntention.DeferredDeletion);
         }
 
         /// <summary>

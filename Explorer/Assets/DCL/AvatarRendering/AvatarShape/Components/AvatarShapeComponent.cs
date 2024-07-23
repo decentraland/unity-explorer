@@ -21,10 +21,10 @@ namespace DCL.AvatarRendering.AvatarShape.Components
         public WearablePromise WearablePromise;
         public EmotePromise EmotePromise;
 
-        public readonly string ID;
+        public string ID;
+        public string Name;
 
         public readonly List<CachedWearable> InstantiatedWearables;
-        public readonly string Name;
 
         public AvatarShapeComponent(string name, string id, BodyShape bodyShape, WearablePromise wearablePromise, EmotePromise emotePromise,
             Color skinColor, Color hairColor, Color eyesColor)

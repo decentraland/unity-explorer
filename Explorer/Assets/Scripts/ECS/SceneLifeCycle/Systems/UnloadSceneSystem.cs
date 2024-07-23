@@ -1,8 +1,10 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Cysharp.Threading.Tasks;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -15,13 +17,15 @@ namespace ECS.SceneLifeCycle.Systems
     ///     Based on formerly created intentions unloads the scene or interrupts its loading
     /// </summary>
     [UpdateInGroup(typeof(CleanUpGroup))]
-    public partial class UnloadSceneSystem : BaseUnityLoopSystem
+    public partial class UnloadSceneSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IScenesCache scenesCache;
+        private readonly SceneAssetLock sceneAssetLock;
 
-        internal UnloadSceneSystem(World world, IScenesCache scenesCache) : base(world)
+        internal UnloadSceneSystem(World world, IScenesCache scenesCache, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.scenesCache = scenesCache;
+            this.sceneAssetLock = sceneAssetLock;
         }
 
         protected override void Update(float t)
@@ -30,12 +34,17 @@ namespace ECS.SceneLifeCycle.Systems
             AbortLoadingScenesQuery(World);
         }
 
+        public void FinalizeComponents(in Query query)
+        {
+            AbortSucceededScenesPromisesQuery(World);
+        }
+
         [Query]
         [All(typeof(DeleteEntityIntention))]
         private void UnloadLoadedScene(in Entity entity, ref SceneDefinitionComponent definitionComponent, ref ISceneFacade sceneFacade)
         {
             // Keep definition so it won't be downloaded again = Cache in ECS itself
-            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels);
+            sceneFacade.DisposeSceneFacadeAndRemoveFromCache(scenesCache, definitionComponent.Parcels, sceneAssetLock);
             World.Remove<ISceneFacade, VisualSceneState, DeleteEntityIntention>(entity);
         }
 
@@ -44,8 +53,16 @@ namespace ECS.SceneLifeCycle.Systems
         private void AbortLoadingScenes(in Entity entity, ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
         {
             promise.ForgetLoading(World);
-            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState, DeleteEntityIntention>(
-                entity);
+            World.Remove<AssetPromise<ISceneFacade, GetSceneFacadeIntention>, VisualSceneState, DeleteEntityIntention>(entity);
+        }
+
+        [Query]
+        private void AbortSucceededScenesPromises(ref AssetPromise<ISceneFacade, GetSceneFacadeIntention> promise)
+        {
+            if (!promise.IsConsumed && promise.TryConsume(World, out var result) && result.Succeeded)
+                result.Asset!.DisposeAsync().Forget();
+            else
+                promise.ForgetLoading(World);
         }
     }
 }

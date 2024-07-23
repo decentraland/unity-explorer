@@ -29,29 +29,6 @@ namespace ECS.StreamableLoading.AssetBundles.Tests
         private static readonly URLDomain FAKE_AB_PATH = URLDomain.FromString("http://www.fakepath.com/v1/");
 
         [Test]
-        public void ResolveHashFromName()
-        {
-            sceneData.TryGetHash("TEST", out Arg.Any<string>())
-                     .Returns(c =>
-                      {
-                          c[1] = "abcd";
-                          return true;
-                      });
-
-            var intent = GetAssetBundleIntention.FromName("TEST", permittedSources: AssetSource.EMBEDDED);
-
-            Entity e = world.Create(intent, new StreamableLoadingState());
-
-            system.Update(0);
-
-            intent = world.Get<GetAssetBundleIntention>(e);
-
-            Assert.That(intent.CommonArguments.Attempts, Is.EqualTo(1));
-            Assert.That(intent.CommonArguments.CurrentSource, Is.EqualTo(AssetSource.EMBEDDED));
-            Assert.That(intent.CommonArguments.URL.Value, Is.EqualTo(path.Value + "abcd" + PlatformUtils.GetPlatform()).Or.EqualTo(path.Value + "abcd".GetHashCode()));
-        }
-
-        [Test]
         public void LoadFromEmbeddedFirst()
         {
             var intent = GetAssetBundleIntention.FromHash(typeof(GameObject), "TEST", permittedSources: AssetSource.EMBEDDED | AssetSource.WEB);

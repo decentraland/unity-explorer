@@ -4,9 +4,9 @@ namespace DCL.DebugUtilities
 {
     public class DebugFloatFieldDef : IDebugElementDef
     {
-        public readonly ElementBinding<float> Binding;
+        public readonly IElementBinding<float> Binding;
 
-        public DebugFloatFieldDef(ElementBinding<float> binding)
+        public DebugFloatFieldDef(IElementBinding<float> binding)
         {
             Binding = binding;
         }

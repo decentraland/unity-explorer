@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 
 namespace DCL.ECSComponents
@@ -25,11 +26,15 @@ namespace DCL.ECSComponents
         /// </summary>
         public FixedList64Bytes<byte> ValidIndices;
 
+        public Dictionary<InputAction, PointerEventType> ValidInputActions;
+
         public void Initialize(UnityEngine.RaycastHit raycastHit, Ray ray)
         {
             RaycastHit = raycastHit;
             Ray = ray;
             ValidIndices.Clear();
+            if (ValidInputActions == null) ValidInputActions = new ();
+            else ValidInputActions.Clear();
         }
     }
 

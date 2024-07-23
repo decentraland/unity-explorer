@@ -1,3 +1,4 @@
+using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
@@ -10,8 +11,6 @@ namespace DCL.Navmap
 {
     public class StreetViewController : ISection
     {
-        private static readonly int IN = Animator.StringToHash("In");
-
         private readonly StreetViewView view;
         private readonly RectTransform rectTransform;
         private readonly MapCameraDragBehavior.MapCameraDragBehaviorData mapCameraDragBehaviorData;
@@ -56,7 +55,7 @@ namespace DCL.Navmap
 
         public void Animate(int triggerId)
         {
-            view.gameObject.SetActive(triggerId == IN);
+            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
         }
 
         public void ResetAnimator() { }

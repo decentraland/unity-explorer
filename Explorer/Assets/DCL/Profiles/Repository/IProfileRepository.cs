@@ -24,7 +24,14 @@ namespace DCL.Profiles
 
             public UniTask SetAsync(Profile profile, CancellationToken ct)
             {
-                profiles[new Key(profile)] = profile;
+                var key = new Key(profile);
+
+                if (profiles.TryGetValue(key, out Profile? existingProfile))
+                    if (existingProfile != profile)
+                        existingProfile.Dispose();
+
+                profiles[key] = profile;
+
                 return UniTask.CompletedTask;
             }
 

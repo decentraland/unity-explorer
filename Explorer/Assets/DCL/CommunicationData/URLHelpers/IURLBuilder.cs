@@ -15,5 +15,6 @@
         IURLBuilder AppendParameter(in URLParameter parameter);
 
         IURLBuilder AppendPath(in URLPath path);
+
     }
 }

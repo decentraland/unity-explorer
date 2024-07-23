@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.WebRequests;
 using System.Threading;
 using UnityEngine;
@@ -43,7 +44,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas
             Texture2D texture =
                 await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
                     new GetTextureArguments(false),
-                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
+                    GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp)
+                                        .SuppressExceptionsWithFallback(Texture2D.whiteTexture, reportContext: ReportCategory.UI), ct);
 
             spriteRenderer.sprite =
                 Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);

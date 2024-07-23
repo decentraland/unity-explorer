@@ -101,5 +101,10 @@ namespace DCL.Multiplayer.Emotes
             using (sync.GetScope())
                 emoteIntentions.Add(new RemoteEmoteIntention(emoteURN, walletId));
         }
+
+        public void SaveForRetry(RemoteEmoteIntention intention)
+        {
+            emoteIntentions.Add(intention);
+        }
     }
 }

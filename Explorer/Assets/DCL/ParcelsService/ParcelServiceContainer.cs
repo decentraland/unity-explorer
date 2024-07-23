@@ -4,6 +4,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.SceneLoadingScreens;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using MVC;
 using System;
@@ -22,9 +23,10 @@ namespace DCL.ParcelsService
         public static ParcelServiceContainer Create(IRealmData realmData,
             ISceneReadinessReportQueue sceneReadinessReportQueue,
             IDebugContainerBuilder debugContainerBuilder,
-            MVCManager mvcManager)
+            IMVCManager mvcManager,
+            SceneAssetLock assetLock)
         {
-            var teleportController = new TeleportController(sceneReadinessReportQueue);
+            var teleportController = new TeleportController(sceneReadinessReportQueue, assetLock);
 
             BuildDebugWidget(teleportController, mvcManager, debugContainerBuilder);
 
@@ -36,7 +38,7 @@ namespace DCL.ParcelsService
             };
         }
 
-        private static void BuildDebugWidget(ITeleportController teleportController, MVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
+        private static void BuildDebugWidget(ITeleportController teleportController, IMVCManager mvcManager, IDebugContainerBuilder debugContainerBuilder)
         {
             var binding = new PersistentElementBinding<Vector2Int>(PersistentSetting.CreateVector2Int("teleportCoordinates"));
 

@@ -1,6 +1,7 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using CRDT;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -8,14 +9,13 @@ using DCL.Multiplayer.SDK.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.SceneWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<AvatarEmoteCommandComponent>))]
-    [LogCategory(ReportCategory.PLAYER_AVATAR_EMOTE_COMMAND)]
+    [UpdateBefore(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class WriteAvatarEmoteCommandSystem : BaseUnityLoopSystem
     {
         private readonly ISceneStateProvider sceneStateProvider;
@@ -27,17 +27,22 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
             this.sceneStateProvider = sceneStateProvider;
         }
 
+        public override void Initialize()
+        {
+            UpdateAvatarEmoteCommandQuery(World, true);
+        }
+
         protected override void Update(float t)
         {
             HandleComponentRemovalQuery(World);
-            UpdateAvatarEmoteCommandQuery(World);
+            UpdateAvatarEmoteCommandQuery(World, false);
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void UpdateAvatarEmoteCommand(ref PlayerCRDTEntity playerCRDTEntity, ref AvatarEmoteCommandComponent emoteCommand)
+        private void UpdateAvatarEmoteCommand([Data] bool force, PlayerSceneCRDTEntity crdtEntity, AvatarEmoteCommandComponent emoteCommand)
         {
-            if (!emoteCommand.IsDirty || emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
+            if ((!force && !emoteCommand.IsDirty) || emoteCommand.PlayingEmote.IsNullOrEmpty()) return;
 
             var tickNumber = (int)sceneStateProvider.TickNumber;
 
@@ -47,12 +52,12 @@ namespace DCL.Multiplayer.SDK.Systems.SceneWorld
                 pbComponent.EmoteUrn = data.emoteCommand.PlayingEmote;
                 pbComponent.Loop = data.emoteCommand.LoopingEmote;
                 pbComponent.Timestamp = data.timestamp;
-            }, playerCRDTEntity.CRDTEntity, tickNumber, (emoteCommand, (uint)tickNumber));
+            }, crdtEntity.CRDTEntity, tickNumber, (emoteCommand, (uint)tickNumber));
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(AvatarEmoteCommandComponent))]
-        private void HandleComponentRemoval(in Entity entity, ref PlayerCRDTEntity playerCRDTEntity)
+        private void HandleComponentRemoval(in Entity entity, PlayerSceneCRDTEntity playerCRDTEntity)
         {
             ecsToCRDTWriter.DeleteMessage<PBAvatarEmoteCommand>(playerCRDTEntity.CRDTEntity);
             World.Remove<AvatarEmoteCommandComponent>(entity);

@@ -49,6 +49,9 @@ namespace DCL.PerformanceAndDiagnostics.Diagnostics.ReportsHandling.Sentry.Edito
             options.Dsn = Environment.GetEnvironmentVariable("SENTRY_DSN") ?? options.Dsn;
             options.Release = Environment.GetEnvironmentVariable("SENTRY_RELEASE") ?? options.Release;
             cliOptions.Auth = Environment.GetEnvironmentVariable("SENTRY_CLI_AUTH_TOKEN") ?? cliOptions.Auth;
+
+            string envUploadSymbols = Environment.GetEnvironmentVariable("SENTRY_UPLOAD_DEBUG_SYMBOLS");
+            cliOptions.UploadSymbols = envUploadSymbols != null ? bool.Parse(envUploadSymbols) : cliOptions.UploadSymbols;
         }
 
         private static void ApplyFromProgramArgs(SentryUnityOptions options, SentryCliOptions cliOptions)

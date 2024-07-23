@@ -12,6 +12,8 @@ using DCL.Roads.Settings;
 using DCL.Roads.Systems;
 using DCL.Utilities;
 using ECS.Prioritization.Components;
+using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
 using NSubstitute;
@@ -69,7 +71,10 @@ public class RoadInstantiatorSystemShould : UnitySystemTestBase<RoadInstantiator
             return false;
         });
 
-        system = new RoadInstantiatorSystem(world, frameCapBudget, memoryBudget, roadDescriptions, roadAssetPool);
+        var scenesCache = Substitute.For<IScenesCache>();
+        var sceneReadinessReportQueue = Substitute.For<ISceneReadinessReportQueue>();
+
+        system = new RoadInstantiatorSystem(world, frameCapBudget, memoryBudget, roadDescriptions, roadAssetPool, sceneReadinessReportQueue, scenesCache);
     }
 
     [Test]

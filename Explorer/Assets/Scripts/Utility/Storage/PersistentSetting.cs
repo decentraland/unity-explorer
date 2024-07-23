@@ -1,4 +1,7 @@
+using Cysharp.Threading.Tasks;
 using System;
+using System.Diagnostics;
+using System.Threading;
 using UnityEngine;
 
 namespace Utility.Storage
@@ -25,7 +28,7 @@ namespace Utility.Storage
             return new PersistentSetting<int>(key, defaultValue);
         }
 
-        public static PersistentSetting<T> WithSetForceDefaultValue<T>(this PersistentSetting<T> persistentSetting)
+        public static PersistentSetting<T> WithSetForceDefaultValue<T>(this PersistentSetting<T> persistentSetting) where T: IEquatable<T>
         {
             persistentSetting.Value = persistentSetting.defaultValue;
             return persistentSetting;
@@ -41,7 +44,7 @@ namespace Utility.Storage
             return new PersistentSetting<float>(key, defaultValue);
         }
 
-        public static PersistentSetting<T> CreateEnum<T>(string key, T defaultValue) where T: unmanaged, Enum
+        public static PersistentSetting<T> CreateEnum<T>(string key, T defaultValue) where T: unmanaged, Enum, IEquatable<T>
         {
             PersistentSetting<T>.ApplyIfNot(
                 static (key, defaultValue) => EnumUtils.FromInt<T>(PlayerPrefs.GetInt(key, EnumUtils.ToInt(defaultValue))),
@@ -112,7 +115,7 @@ namespace Utility.Storage
         {
             this.key = key;
             this.defaultValue = defaultValue;
-            Value = getValue!(key, defaultValue);
+            Value = getValue!(key, defaultValue)!;
         }
 
         public static void ApplyIfNot(Func<string, T, T>? getValueFunc, Action<string, T>? setValueFunc)
@@ -125,20 +128,33 @@ namespace Utility.Storage
         {
             get
             {
-                // It's for runtime only, in case it is used from the Editor it should not be saved anywhere
-                if (Application.isPlaying)
-                    return getValue!(key, defaultValue);
-
-                return defaultValue;
+                EnsureMainThread();
+                return getValue!(key, defaultValue)!;
             }
 
             set
             {
+                EnsureMainThread();
+
+                // It's for runtime only, in case it is used from the Editor it should not be saved anywhere
                 if (!Application.isPlaying)
                     return;
 
                 setValue!(key, value);
             }
+        }
+
+        public void ForceSave(T newValue)
+        {
+            EnsureMainThread();
+            setValue!(key, newValue);
+        }
+
+        [Conditional("DEBUG")]
+        private void EnsureMainThread()
+        {
+            if (PlayerLoopHelper.IsMainThread == false)
+                throw new InvalidOperationException($"Cannot access PersistentSetting outside of the main thread, key: {key}, current thread: {Thread.CurrentThread.ManagedThreadId}, main thread: {PlayerLoopHelper.MainThreadId}");
         }
     }
 }

@@ -1,5 +1,6 @@
 using DCL.UI;
 using DCL.WebRequests;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -49,6 +50,16 @@ namespace DCL.Navmap
         public void OnPointerExit(PointerEventData eventData)
         {
             arrowImage.gameObject.SetActive(false);
+        }
+
+        private void OnEnable()
+        {
+            resultAnimator.enabled = true;
+        }
+
+        private void OnDisable()
+        {
+            resultAnimator.enabled = false;
         }
     }
 }

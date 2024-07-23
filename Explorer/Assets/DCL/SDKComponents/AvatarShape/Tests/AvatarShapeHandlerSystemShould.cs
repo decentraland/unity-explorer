@@ -61,7 +61,7 @@ namespace ECS.Unity.AvatarShape.Tests
 
             // Update
             pbAvatarShapeComponent.Name = "Dagon";
-            world.Add(entity, pbAvatarShapeComponent);
+            world.Set(entity, pbAvatarShapeComponent);
 
             system.Update(0);
 

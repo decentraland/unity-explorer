@@ -10,7 +10,7 @@ using Utility;
 
 namespace ECS.StreamableLoading.AudioClips
 {
-    public class AudioClipsCache : IDereferencableCache<AudioClip, GetAudioClipIntention>
+    public class AudioClipsCache : IStreamableCache<AudioClip, GetAudioClipIntention>
     {
         private static readonly Comparison<(GetAudioClipIntention intention, AudioClipData clipData)> COMPARE_BY_LAST_USED_FRAME_REVERSED =
             (pair1, pair2) => pair2.clipData.LastUsedFrame.CompareTo(pair1.clipData.LastUsedFrame);
@@ -31,14 +31,11 @@ namespace ECS.StreamableLoading.AudioClips
 
         public void Add(in GetAudioClipIntention key, AudioClip asset)
         {
-            if (cache.TryGetValue(key, out AudioClipData? clipData))
-                clipData.AddReference();
-            else
-            {
-                cache[key] = new AudioClipData(asset);
-                listedCache.Add((key, cache[key]));
-            }
+            if (cache.ContainsKey(key)) return;
 
+            var audioClipData = new AudioClipData(asset);
+            cache.Add(key, audioClipData); // reference will be added later
+            listedCache.Add((key, audioClipData));
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
         }
 
@@ -47,7 +44,6 @@ namespace ECS.StreamableLoading.AudioClips
             if (cache.TryGetValue(key, out AudioClipData? value))
             {
                 asset = value.AudioClip;
-                value.AddReference();
                 return true;
             }
 
@@ -72,6 +68,12 @@ namespace ECS.StreamableLoading.AudioClips
             }
 
             ProfilingCounters.AudioClipsInCache.Value = cache.Count;
+        }
+
+        public void AddReference(in GetAudioClipIntention key, AudioClip audioClip)
+        {
+            if (cache.TryGetValue(key, out AudioClipData audioClipData))
+                audioClipData.AddReference();
         }
 
         public void Dereference(in GetAudioClipIntention key, AudioClip _)

@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace DCL.UI
 {
-    public class HoverAudioHandler: MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class HoverAudioHandler : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: Header("Audio")]
         [field: SerializeField]

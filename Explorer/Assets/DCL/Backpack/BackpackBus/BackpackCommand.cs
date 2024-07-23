@@ -2,6 +2,7 @@ using DCL.CharacterPreview;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
@@ -82,10 +83,12 @@ namespace DCL.Backpack.BackpackBus
     public readonly struct BackpackHideCommand
     {
         public readonly IReadOnlyCollection<string> ForceRender;
+        public readonly bool IsInitialHide;
 
-        public BackpackHideCommand(IReadOnlyCollection<string> forceRender)
+        public BackpackHideCommand(IReadOnlyCollection<string> forceRender, bool isInitialHide = false)
         {
             ForceRender = new ReadOnlyCollection<string>(forceRender.ToList());
+            IsInitialHide = isInitialHide;
         }
     }
 
@@ -110,6 +113,20 @@ namespace DCL.Backpack.BackpackBus
             SearchText = searchText;
         }
     }
+
+    public readonly struct BackpackChangeColorCommand
+    {
+        public readonly Color NewColor;
+        public readonly string Category;
+
+        public BackpackChangeColorCommand(Color newColor, string category)
+        {
+            NewColor = newColor;
+            Category = category;
+        }
+    }
+
+    public readonly struct BackpackUnEquipAllCommand { }
 
     public readonly struct BackpackPublishProfileCommand { }
 }

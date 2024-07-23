@@ -21,9 +21,9 @@ namespace DCL.AvatarRendering.Wearables.Helpers
         /// <summary>
         ///     Adds an empty wearable to the catalog.
         /// </summary>
-        /// <param name="loadingIntentionPointer">The loading intention pointer.</param>
+        /// <param name="urn">The loading intention pointer.</param>
         /// <param name="qualifiedForUnloading">Determines if the wearable should be unloaded when memory is full</param>
-        void AddEmptyWearable(string loadingIntentionPointer, bool qualifiedForUnloading = true);
+        void AddEmptyWearable(URN urn, bool qualifiedForUnloading = true);
 
         /// <summary>
         ///     Attempts to retrieve a wearable from the catalog.

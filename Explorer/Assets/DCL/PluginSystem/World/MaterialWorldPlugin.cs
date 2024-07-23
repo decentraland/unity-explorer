@@ -19,18 +19,15 @@ namespace DCL.PluginSystem.World
 {
     public class MaterialsPlugin : IDCLWorldPlugin<MaterialsPlugin.Settings>
     {
-        // private const int CACHE_CAPACITY = 512;
-        // private readonly IMaterialsCache materialsCache;
-
         private readonly IPerformanceBudget capFrameTimeBudget;
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IExtendedObjectPool<Texture2D> videoTexturePool;
 
-        private IObjectPool<Material> basicMatPool;
-        private IObjectPool<Material> pbrMatPool;
+        private IObjectPool<Material> basicMatPool = null!;
+        private IObjectPool<Material> pbrMatPool = null!;
 
-        private DestroyMaterial destroyMaterial;
+        private DestroyMaterial destroyMaterial = null!;
 
         private int loadingAttemptsCount;
         private readonly MemoryBudget memoryBudgetProvider;
@@ -41,8 +38,6 @@ namespace DCL.PluginSystem.World
             capFrameTimeBudget = sharedDependencies.FrameTimeBudget;
             this.assetsProvisioner = assetsProvisioner;
             this.videoTexturePool = videoTexturePool;
-
-            // materialsCache = new MaterialsCappedCache(CACHE_CAPACITY, (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); });
         }
 
         public void Dispose() { }

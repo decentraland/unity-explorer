@@ -30,6 +30,7 @@ namespace DCL.Audio.Systems
     {
         private readonly TerrainGenerator terrainGenerator;
         private readonly ILandscapeAudioSystemSettings landscapeAudioSystemSettings;
+        private readonly WorldAudioPlaybackController worldAudioPlaybackController;
         private bool isTerrainViewInitialized;
 
         private NativeArray<LandscapeAudioState> landscapeAudioStates;
@@ -45,10 +46,12 @@ namespace DCL.Audio.Systems
 
         private LandscapeAudioCullingSystem(World world,
             TerrainGenerator terrainGenerator,
-            ILandscapeAudioSystemSettings landscapeAudioSystemSettings) : base(world)
+            ILandscapeAudioSystemSettings landscapeAudioSystemSettings,
+            WorldAudioPlaybackController worldAudioPlaybackController) : base(world)
         {
             this.terrainGenerator = terrainGenerator;
             this.landscapeAudioSystemSettings = landscapeAudioSystemSettings;
+            this.worldAudioPlaybackController = worldAudioPlaybackController;
         }
 
         public override void Initialize()
@@ -191,14 +194,14 @@ namespace DCL.Audio.Systems
                         audioState.IsHeard = true;
                         landscapeAudioState.AudioState = audioState;
                         landscapeAudioStates[i] = landscapeAudioState;
-                        WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, landscapeAudioSourcesPositions[i], WorldAudioClipType.Landscape);
+                        worldAudioPlaybackController.SetupAudioSourcesOnTerrain(i, landscapeAudioSourcesPositions[i], WorldAudioClipType.Landscape);
                     }
                     else if (audioState is { ShouldBeSilent: true, IsSilent: false })
                     {
                         audioState.IsSilent = true;
                         landscapeAudioState.AudioState = audioState;
                         landscapeAudioStates[i] = landscapeAudioState;
-                        WorldAudioEventsBus.Instance.SendStopTerrainAudioEvent(i, WorldAudioClipType.Landscape);
+                        worldAudioPlaybackController.ReleaseAudioSourcesFromTerrain(i, WorldAudioClipType.Landscape);
                     }
                 }
 
@@ -240,14 +243,14 @@ namespace DCL.Audio.Systems
                         oceanAudioStates[i] = oceanAudioState;
                         var closestPointArray = new NativeArray<int2>(1, Allocator.Temp);
                         closestPointArray[0] = (int2)oceanAudioState.CenterOfTerrain;
-                        WorldAudioEventsBus.Instance.SendPlayTerrainAudioEvent(i, closestPointArray, WorldAudioClipType.Ocean);
+                        worldAudioPlaybackController.SetupAudioSourcesOnTerrain(i, closestPointArray, WorldAudioClipType.Ocean);
                     }
                     else if (audioState is { ShouldBeSilent: true, IsSilent: false })
                     {
                         audioState.IsSilent = true;
                         oceanAudioState.AudioState = audioState;
                         oceanAudioStates[i] = oceanAudioState;
-                        WorldAudioEventsBus.Instance.SendStopTerrainAudioEvent(i, WorldAudioClipType.Ocean);
+                        worldAudioPlaybackController.ReleaseAudioSourcesFromTerrain(i, WorldAudioClipType.Ocean);
                     }
                 }
 

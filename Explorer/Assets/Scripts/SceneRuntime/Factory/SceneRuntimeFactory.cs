@@ -31,7 +31,7 @@ namespace SceneRuntime.Factory
         private readonly IJsSourcesCache jsSourcesCache;
 
         private static readonly IReadOnlyCollection<string> JS_MODULE_NAMES = new JsModulesNameList().ToList();
-        private readonly IJsSceneSourceCode jsSceneSourceCode = new IJsSceneSourceCode.Default();
+        private readonly IJsSceneLocalSourceCode jsSceneLocalSourceCode = new IJsSceneLocalSourceCode.Default();
 
         public SceneRuntimeFactory(IWebRequestController webRequestController, IRealmData realmData)
         {
@@ -94,7 +94,7 @@ namespace SceneRuntime.Factory
 
             // Provide basic Thread Pool synchronization context
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-            string wrappedSource = jsSceneSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? WrapInModuleCommonJs(sourceCode);
+            string wrappedSource = WrapInModuleCommonJs(jsSceneLocalSourceCode.CodeForScene(sceneShortInfo.BaseParcel) ?? sourceCode);
             return new SceneRuntimeImpl(wrappedSource, pair, moduleDictionary, instancePoolsProvider, sceneShortInfo);
         }
 
@@ -111,10 +111,11 @@ namespace SceneRuntime.Factory
             AssertCalledOnTheMainThread();
 
             string sourceCode = await webJsSources.SceneSourceCodeAsync(path, ct);
+
             return await CreateBySourceCodeAsync(sourceCode, instancePoolsProvider, sceneShortInfo, ct, instantiationBehavior);
         }
 
-        private void AssertCalledOnTheMainThread()
+        private static void AssertCalledOnTheMainThread()
         {
             if (!PlayerLoopHelper.IsMainThread)
                 throw new ThreadStateException($"{nameof(CreateByPathAsync)} must be called on the main thread");
@@ -150,11 +151,15 @@ namespace SceneRuntime.Factory
         // Wrap the source code in a CommonJS module wrapper
         internal string WrapInModuleCommonJs(string source)
         {
+            const string HEAD = "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {";
+            const string FOOT = "\n}).call(this, exports, require, module, __filename, __dirname); })";
+
+            if (source.StartsWith(HEAD))
+                return source;
+
             // create a wrapper for the script
             source = Regex.Replace(source, @"^#!.*?\n", "");
-            var head = "(function (exports, require, module, __filename, __dirname) { (function (exports, require, module, __filename, __dirname) {";
-            var foot = "\n}).call(this, exports, require, module, __filename, __dirname); })";
-            source = $"{head}{source}{foot}";
+            source = $"{HEAD}{source}{FOOT}";
             return source;
         }
     }

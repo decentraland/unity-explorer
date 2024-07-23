@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -44,6 +45,23 @@ namespace DCL.Profiles
 
             FaceSnapshotUrl = URLAddress.EMPTY;
             BodySnapshotUrl = URLAddress.EMPTY;
+        }
+
+        public void Clear()
+        {
+            this.wearables.Clear();
+            this.forceRender.Clear();
+
+            for (var i = 0; i < this.emotes.Length; i++)
+                this.emotes[i] = "";
+
+            this.BodyShape = default(BodyShape);
+            this.EyesColor = default(Color);
+            this.HairColor = default(Color);
+            this.SkinColor = default(Color);
+            this.SkinColor = default(Color);
+            this.BodySnapshotUrl = default(URLAddress);
+            this.FaceSnapshotUrl = default(URLAddress);
         }
     }
 }

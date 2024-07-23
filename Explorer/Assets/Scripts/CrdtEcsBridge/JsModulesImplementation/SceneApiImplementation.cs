@@ -14,13 +14,11 @@ namespace CrdtEcsBridge.JsModulesImplementation
             this.sceneData = sceneData;
         }
 
-        public void Dispose() { }
-
         public ISceneApi.GetSceneResponse GetSceneInfo() =>
             new (
                 cid: sceneData.SceneEntityDefinition.id,
                 contents: sceneData.SceneEntityDefinition.content,
-                metadata: JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata),
+                metadata: sceneData.SceneEntityDefinition.metadata.OriginalJson,
                 baseUrl: sceneData.SceneContent.ContentBaseUrl.Value
             );
     }

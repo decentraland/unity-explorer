@@ -16,7 +16,7 @@ namespace SceneRunner.Scene.Tests
         [SetUp]
         public void SetUp()
         {
-            sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo(), Substitute.For<CRDTProtocol>());
+            sceneExceptionsHandler = SceneExceptionsHandler.Create(sceneStateProvider = Substitute.For<ISceneStateProvider>(), new SceneShortInfo());
 
             reportHandler = new MockedReportScope();
         }
@@ -32,13 +32,57 @@ namespace SceneRunner.Scene.Tests
         private MockedReportScope reportHandler;
 
         [Test]
-        public void SetStateOnEngineException()
+        public void TolerateEngineException()
         {
-            var e = new Exception("TEST");
-            sceneExceptionsHandler.OnEngineException(e, "TEST");
+            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
+            {
+                var e = new Exception("TEST");
+                sceneExceptionsHandler.OnEngineException(e, "TEST");
+            }
+
+            sceneStateProvider.DidNotReceive().State = Arg.Any<SceneState>();
+        }
+
+        [Test]
+        public void SuspendIfToleranceExceededWhenEngineException()
+        {
+            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
+                sceneExceptionsHandler.OnEngineException(new Exception("TEST"), "TEST");
+
+            sceneStateProvider.Received().State = SceneState.EcsError;
+
+            reportHandler.Mock.Received(1)
+                         .LogException(
+                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
 
             sceneStateProvider.Received().State = SceneState.EngineError;
-            reportHandler.Mock.Received().LogException(e, new ReportData("TEST"), null);
+        }
+
+        [Test]
+        public void TolerateJavascriptException()
+        {
+            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
+            {
+                var e = new Exception("TEST");
+                sceneExceptionsHandler.OnJavaScriptException(e);
+            }
+
+            sceneStateProvider.DidNotReceive().State = Arg.Any<SceneState>();
+        }
+
+        [Test]
+        public void SuspendIfToleranceExceededWhenJavascriptException()
+        {
+            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
+                sceneExceptionsHandler.OnJavaScriptException(new Exception("TEST"));
+
+            sceneStateProvider.Received().State = SceneState.EcsError;
+
+            reportHandler.Mock.Received(1)
+                         .LogException(
+                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
+
+            sceneStateProvider.Received().State = SceneState.JavaScriptError;
         }
 
         [Test]

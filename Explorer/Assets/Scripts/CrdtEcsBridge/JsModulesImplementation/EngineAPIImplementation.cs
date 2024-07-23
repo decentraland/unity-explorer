@@ -36,10 +36,13 @@ namespace CrdtEcsBridge.JsModulesImplementation
         private readonly MutexSync mutexSync;
         private readonly IOutgoingCRDTMessagesProvider outgoingCrtdMessagesProvider;
         private readonly CustomSampler outgoingMessagesSampler;
-        private readonly ISharedPoolsProvider sharedPoolsProvider;
         private readonly ISystemGroupsUpdateGate systemGroupsUpdateGate;
         private readonly CustomSampler worldSyncBufferSampler;
         private bool isDisposing;
+
+        private readonly Action<OutgoingCRDTMessagesProvider.PendingMessage> processPendingMessage;
+
+        protected readonly ISharedPoolsProvider sharedPoolsProvider;
 
         public EngineAPIImplementation(
             ISharedPoolsProvider poolsProvider,
@@ -69,11 +72,8 @@ namespace CrdtEcsBridge.JsModulesImplementation
             outgoingMessagesSampler = CustomSampler.Create("OutgoingMessages");
             crdtProcessMessagesSampler = CustomSampler.Create("CRDTProcessMessage");
             applyBufferSampler = CustomSampler.Create(nameof(ApplySyncCommandBuffer));
-        }
 
-        public void Dispose()
-        {
-            systemGroupsUpdateGate.Dispose();
+            processPendingMessage = ProcessPendingMessage;
         }
 
         public PoolableByteArray CrdtSendToRenderer(ReadOnlyMemory<byte> dataMemory, bool returnData = true)
@@ -137,7 +137,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
             try
             {
                 // Apply outgoing messages straight-away so they are reflected in the current CRDT state
-                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = GetSerializationSyncBlock())
                     SyncOutgoingCRDTMessages(outgoingMessagesSyncBlock.Messages);
 
                 // Create CRDT Messages from the current state
@@ -170,9 +170,15 @@ namespace CrdtEcsBridge.JsModulesImplementation
             finally { Profiler.EndThreadProfiling(); }
         }
 
-        public void SetIsDisposing()
+        public virtual void SetIsDisposing()
         {
             isDisposing = true;
+        }
+
+        private OutgoingCRDTMessagesSyncBlock GetSerializationSyncBlock() => outgoingCrtdMessagesProvider.GetSerializationSyncBlock(processPendingMessage);
+
+        protected virtual void ProcessPendingMessage(OutgoingCRDTMessagesProvider.PendingMessage pendingMessage)
+        {
         }
 
         private PoolableByteArray SerializeOutgoingCRDTMessages()
@@ -183,7 +189,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
 
                 PoolableByteArray serializationBufferPoolable;
 
-                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = outgoingCrtdMessagesProvider.GetSerializationSyncBlock())
+                using (OutgoingCRDTMessagesSyncBlock outgoingMessagesSyncBlock = GetSerializationSyncBlock())
                 {
                     serializationBufferPoolable =
                         sharedPoolsProvider.GetSerializedStateBytesPool(outgoingMessagesSyncBlock.PayloadLength);
@@ -211,26 +217,30 @@ namespace CrdtEcsBridge.JsModulesImplementation
         {
             for (var i = 0; i < outgoingMessages.Count; i++)
             {
-                ProcessedCRDTMessage m = outgoingMessages[i];
+                SyncCRDTMessage(outgoingMessages[i]);
+            }
+        }
 
-                // We are interested in LWW messages only,
-                switch (m.message.Type)
-                {
-                    case CRDTMessageType.DELETE_COMPONENT:
-                    case CRDTMessageType.PUT_COMPONENT:
-                        // instead of processing via CRDTProtocol.ProcessMessage
-                        // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
-                        crdtProtocol.EnforceLWWState(m.message);
-                        break;
-                    default:
-                        // as this data is not kept in CRDTProtocol it must be released immediately
-                        m.message.Data.Dispose();
-                        break;
-                }
+        private void SyncCRDTMessage(ProcessedCRDTMessage message)
+        {
+            // We are interested in LWW messages only,
+            switch (message.message.Type)
+            {
+                case CRDTMessageType.DELETE_COMPONENT:
+                case CRDTMessageType.PUT_COMPONENT:
+                    // instead of processing via CRDTProtocol.ProcessMessage
+                    // we can skip part of the logic as we guarantee that the local message is the final valid state (see OutgoingCRDTMessagesProvider.AddLwwMessage)
+                    crdtProtocol.EnforceLWWState(message.message);
+                    break;
+                default:
+                    // as this data is not kept in CRDTProtocol it must be released immediately
+                    message.message.Data.Dispose();
+                    break;
             }
         }
 
         // Use mutex to apply command buffer from the background thread instead of synchronizing by the main one
+
         private void ApplySyncCommandBuffer(IWorldSyncCommandBuffer worldSyncBuffer)
         {
             try
@@ -256,7 +266,9 @@ namespace CrdtEcsBridge.JsModulesImplementation
             if (outgoingMessages.Count == 0) return;
 
             foreach (ProcessedCRDTMessage processedCRDTMessage in outgoingMessages)
+            {
                 crdtSerializer.Serialize(ref span, in processedCRDTMessage);
+            }
         }
     }
 }

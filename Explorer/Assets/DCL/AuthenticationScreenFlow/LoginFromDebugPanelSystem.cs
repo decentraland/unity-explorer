@@ -19,7 +19,7 @@ namespace DCL.AuthenticationScreenFlow
     public partial class LoginFromDebugPanelSystem : BaseUnityLoopSystem
     {
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
-        private readonly MVCManager mvcManager;
+        private readonly IMVCManager mvcManager;
         private readonly IRealmData realmData;
         private readonly DebugWidgetVisibilityBinding widgetVisibility;
         private CancellationTokenSource? cancellationTokenSource;
@@ -27,7 +27,7 @@ namespace DCL.AuthenticationScreenFlow
         public LoginFromDebugPanelSystem(World world,
             IDebugContainerBuilder debugContainerBuilder,
             IWeb3VerifiedAuthenticator web3Authenticator,
-            MVCManager mvcManager,
+            IMVCManager mvcManager,
             IRealmData realmData)
             : base(world)
         {

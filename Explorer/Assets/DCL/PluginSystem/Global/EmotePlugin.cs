@@ -23,7 +23,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using Utility.Multithreading;
 using CharacterEmoteSystem = DCL.AvatarRendering.Emotes.CharacterEmoteSystem;
 
 namespace DCL.PluginSystem.Global
@@ -34,7 +33,7 @@ namespace DCL.PluginSystem.Global
         private readonly IEmoteCache emoteCache;
         private readonly IRealmData realmData;
         private readonly IEmotesMessageBus messageBus;
-        private readonly DebugContainerBuilder debugBuilder;
+        private readonly IDebugContainerBuilder debugBuilder;
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly ISelfProfile selfProfile;
         private readonly IMVCManager mvcManager;
@@ -44,19 +43,20 @@ namespace DCL.PluginSystem.Global
         private AudioSource? audioSourceReference;
         private EmotesWheelController? emotesWheelController;
         private readonly AudioClipsCache audioClipsCache;
+        private readonly URLDomain assetBundleURL;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteCache emoteCache,
             IRealmData realmData,
             IEmotesMessageBus messageBus,
-            DebugContainerBuilder debugBuilder,
+            IDebugContainerBuilder debugBuilder,
             IAssetsProvisioner assetsProvisioner,
             ISelfProfile selfProfile,
             IMVCManager mvcManager,
             DCLInput dclInput,
             CacheCleaner cacheCleaner,
             IWeb3IdentityCache web3IdentityCache,
-            IReadOnlyEntityParticipantTable entityParticipantTable)
+            IReadOnlyEntityParticipantTable entityParticipantTable, URLDomain assetBundleURL)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -66,6 +66,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.web3IdentityCache = web3IdentityCache;
             this.entityParticipantTable = entityParticipantTable;
+            this.assetBundleURL = assetBundleURL;
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
@@ -83,23 +84,26 @@ namespace DCL.PluginSystem.Global
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var mutexSync = new MutexSync();
+            var customStreamingSubdirectory = URLSubdirectory.FromString("/Emotes/");
+
+            FinalizeEmoteAssetBundleSystem.InjectToWorld(ref builder);
 
             LoadEmotesByPointersSystem.InjectToWorld(ref builder, webRequestController,
                 new NoCache<EmotesDTOList, GetEmotesByPointersFromRealmIntention>(false, false),
-                mutexSync,
                 emoteCache, realmData,
-                URLSubdirectory.FromString("/Emotes/"));
+                customStreamingSubdirectory);
 
             LoadOwnedEmotesSystem.InjectToWorld(ref builder, realmData, webRequestController,
                 new NoCache<EmotesResolution, GetOwnedEmotesFromRealmIntention>(false, false),
-                emoteCache, mutexSync);
+                emoteCache);
 
             CharacterEmoteSystem.InjectToWorld(ref builder, emoteCache, messageBus, audioSourceReference, debugBuilder);
 
-            LoadEmoteAudioClipSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController, mutexSync);
+            LoadAudioClipGlobalSystem.InjectToWorld(ref builder, audioClipsCache, webRequestController);
 
             RemoteEmotesSystem.InjectToWorld(ref builder, web3IdentityCache, entityParticipantTable, messageBus, arguments.PlayerEntity);
+
+            LoadSceneEmotesSystem.InjectToWorld(ref builder, emoteCache, customStreamingSubdirectory);
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(EmoteSettings settings, CancellationToken ct)
@@ -130,7 +134,7 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
-                IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World);
+                IThumbnailProvider thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
 
                 emotesWheelController = new EmotesWheelController(EmotesWheelController.CreateLazily(emotesWheelPrefab, null),
                     selfProfile, emoteCache, emoteWheelRarityBackgrounds, builder.World, arguments.PlayerEntity, thumbnailProvider,

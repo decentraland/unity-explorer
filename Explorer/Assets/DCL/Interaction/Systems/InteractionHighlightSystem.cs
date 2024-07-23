@@ -13,7 +13,9 @@ using ECS.Unity.GLTFContainer.Asset.Components;
 using ECS.Unity.GLTFContainer.Components;
 using ECS.Unity.PrimitiveRenderer.Components;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
+using ECS.LifeCycle;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -24,41 +26,58 @@ namespace DCL.Interaction.Systems
     /// </summary>
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
     [LogCategory(ReportCategory.INPUT)]
-    public partial class InteractionHighlightSystem : BaseUnityLoopSystem
+    public partial class InteractionHighlightSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly InteractionSettingsData settingsData;
+        private readonly ISceneStateProvider sceneStateProvider;
 
-        internal InteractionHighlightSystem(World world, InteractionSettingsData settingsData) : base(world)
+        internal InteractionHighlightSystem(World world, InteractionSettingsData settingsData, ISceneStateProvider sceneStateProvider) : base(world)
         {
             this.settingsData = settingsData;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
         {
+            if (!sceneStateProvider.IsCurrent) return;
+
             UpdateHighlightsQuery(World);
+        }
+
+        [Query]
+        private void ResetHighlightComponent(ref HighlightComponent highlightComponent)
+        {
+            ResetHighlight(ref highlightComponent);
+        }
+
+        private void ResetHighlight(ref HighlightComponent highlightComponent)
+        {
+            if (highlightComponent.IsEmpty())
+                return;
+
+            RemoveHighlight(highlightComponent.CurrentEntityOrNull());
+            highlightComponent.MoveNextAndRemoveMaterial();
         }
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
-
             if (highlightComponent.CurrentEntityOrNull() != EntityReference.Null
                 && World.Has<DeleteEntityIntention>(highlightComponent.CurrentEntityOrNull()))
                 highlightComponent.Disable();
 
             if (highlightComponent.ReadyForMaterial())
             {
+                if (highlightComponent.HasToResetLastEntity())
+                    RemoveHighlight(highlightComponent.CurrentEntityOrNull());
+
                 highlightComponent.SwitchEntity();
                 AddOrUpdateHighlight(highlightComponent.CurrentEntityOrNull(), highlightComponent.IsAtDistance());
             }
             else
             {
-                if (highlightComponent.IsEmpty())
-                    return;
-
-                RemoveHighlight(highlightComponent.CurrentEntityOrNull());
-                highlightComponent.MoveNextAndRemoveMaterial();
+                ResetHighlight(ref highlightComponent);
             }
         }
 
@@ -67,7 +86,15 @@ namespace DCL.Interaction.Systems
             List<Renderer> renderers = ListPool<Renderer>.Get();
             AddRenderersFromEntity(entity, renderers);
 
-            TransformComponent entityTransform = World!.Get<TransformComponent>(entity);
+            ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
+
+            // Fixes a crash by trying to access the transform of an entity when is not available
+            if (!containsTransform)
+            {
+                ListPool<Renderer>.Release(renderers);
+                return;
+            }
+
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
@@ -101,7 +128,15 @@ namespace DCL.Interaction.Systems
             List<Renderer> renderers = ListPool<Renderer>.Get();
             AddRenderersFromEntity(entity, renderers);
 
-            TransformComponent entityTransform = World!.Get<TransformComponent>(entity);
+            ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
+
+            // Fixes a crash by trying to access the transform of an entity when is not available
+            if (!containsTransform)
+            {
+                ListPool<Renderer>.Release(renderers);
+                return;
+            }
+
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
@@ -117,7 +152,9 @@ namespace DCL.Interaction.Systems
             {
                 AddRenderersFromEntity(child, list);
 
-                TransformComponent childTransform = World!.Get<TransformComponent>(child);
+                ref TransformComponent childTransform = ref World.TryGetRef<TransformComponent>(child, out bool containsTransform);
+                if (!containsTransform) continue;
+
                 GetRenderersFromChildrenRecursive(ref childTransform, list);
             }
         }
@@ -135,6 +172,14 @@ namespace DCL.Interaction.Systems
 
             if (loadingResult.Asset?.Renderers != null)
                 renderers.AddRange(loadingResult.Asset.Renderers);
+        }
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            if (!value)
+            {
+                ResetHighlightComponentQuery(World);
+            }
         }
     }
 }

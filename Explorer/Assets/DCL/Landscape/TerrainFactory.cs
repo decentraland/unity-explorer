@@ -56,7 +56,7 @@ namespace DCL.Landscape
         {
             Transform side = Object.Instantiate(terrainGenData.cliffSide, at, rotation).transform;
             side.SetParent(parent, true);
-
+            side.name = "Cliff side " + at;
             return side;
         }
 
@@ -72,6 +72,7 @@ namespace DCL.Landscape
         {
             BoxCollider collider = new GameObject(name).AddComponent<BoxCollider>();
             collider.transform.SetParent(parent);
+            collider.gameObject.layer = LayerMask.NameToLayer("InvisibleColliders");
 
             collider.size = size;
             collider.transform.SetPositionAndRotation(position, Quaternion.Euler(0, yRotation, 0));

@@ -2,12 +2,14 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
+using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Systems.Debug;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
 using ECS.Abstract;
+using System;
 
 namespace DCL.Multiplayer.Connections.Systems
 {
@@ -38,7 +40,11 @@ namespace DCL.Multiplayer.Connections.Systems
                 debugBuilder
             );
 
-            var infoWidget = debugBuilder.AddWidget("Room: Info")!;
+            var infoVisibilityBinding = new DebugWidgetVisibilityBinding(true);
+
+            var infoWidget = debugBuilder
+                            .AddWidget("Room: Info")
+                            .SetVisibilityBinding(infoVisibilityBinding);
 
             var avatarsRoomDisplay = new AvatarsRoomDisplay(
                 entityParticipantTable,
@@ -50,11 +56,21 @@ namespace DCL.Multiplayer.Connections.Systems
                 infoWidget
             );
 
-            roomDisplay = new SeveralRoomDisplay(
-                gateKeeperRoomDisplay,
-                archipelagoRoomDisplay,
-                avatarsRoomDisplay,
-                remotePosesRoomDisplay
+            var infoRoomDisplay = new OnlyVisibleRoomDisplay(
+                new SeveralRoomDisplay(
+                    avatarsRoomDisplay,
+                    remotePosesRoomDisplay
+                ),
+                infoVisibilityBinding
+            );
+
+            roomDisplay = new DebounceRoomDisplay(
+                new SeveralRoomDisplay(
+                    gateKeeperRoomDisplay,
+                    archipelagoRoomDisplay,
+                    infoRoomDisplay
+                ),
+                TimeSpan.FromSeconds(1)
             );
         }
 

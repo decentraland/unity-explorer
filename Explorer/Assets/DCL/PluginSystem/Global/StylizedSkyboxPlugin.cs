@@ -1,18 +1,12 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
-using DCL.Chat;
 using DCL.DebugUtilities;
-using MVC;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.UIElements;
 using Object = UnityEngine.Object;
-using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 
 namespace DCL.PluginSystem.Global
@@ -21,9 +15,9 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly Light directionalLight;
+        private readonly IDebugContainerBuilder debugContainerBuilder;
         private SkyboxController skyboxController;
-        private ElementBinding<int> timeOfDay;
-        private IDebugContainerBuilder debugContainerBuilder;
+        private readonly ElementBinding<int> timeOfDay;
 
         public StylizedSkyboxPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -37,13 +31,9 @@ namespace DCL.PluginSystem.Global
             this.debugContainerBuilder = debugContainerBuilder;
         }
 
-        public void Dispose()
-        {
-        }
+        public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
-        {
-        }
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         public async UniTask InitializeAsync(StylizedSkyboxSettings settings, CancellationToken ct)
         {
@@ -54,10 +44,10 @@ namespace DCL.PluginSystem.Global
             skyboxController.Initialize(skyboxMaterial, directionalLight, skyboxAnimation);
 
             debugContainerBuilder.AddWidget("Skybox")
-            .AddSingleButton("Play", () => skyboxController.Play())
-            .AddSingleButton("Pause", () => skyboxController.Pause())
-            .AddIntSliderField("Time", timeOfDay, 0, skyboxController.SecondsInDay)
-            .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
+                                 .AddSingleButton("Play", () => skyboxController.Play())
+                                 .AddSingleButton("Pause", () => skyboxController.Pause())
+                                 .AddIntSliderField("Time", timeOfDay, 0, skyboxController.SecondsInDay)
+                                 .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
 
         public class StylizedSkyboxSettings : IDCLPluginSettings
@@ -79,8 +69,5 @@ namespace DCL.PluginSystem.Global
                 public StylizedSkyboxControllerRef(string guid) : base(guid) { }
             }
         }
-
-
     }
 }
-

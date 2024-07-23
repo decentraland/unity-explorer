@@ -21,6 +21,7 @@ using ECS;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.WebRequests;
 using UnityEngine.Pool;
 
 namespace DCL.PluginSystem.Global
@@ -40,6 +41,9 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackEventBus backpackEventBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly BackpackEquipStatusController backpackEquipStatusController;
+        private readonly URLDomain assetBundleURL;
+        private readonly IWebRequestController webRequestController;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private BackpackBusController? busController;
         private Arch.Core.World? world;
@@ -59,8 +63,10 @@ namespace DCL.PluginSystem.Global
             IReadOnlyCollection<URN> embeddedEmotes,
             ICollection<string> forceRender,
             IRealmData realmData,
-            DCLInput dclInput
-        )
+            DCLInput dclInput,
+            URLDomain assetBundleURL,
+            IWebRequestController webRequestController,
+            CharacterPreviewEventBus characterPreviewEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -72,6 +78,9 @@ namespace DCL.PluginSystem.Global
             this.embeddedEmotes = embeddedEmotes;
             this.realmData = realmData;
             this.dclInput = dclInput;
+            this.assetBundleURL = assetBundleURL;
+            this.webRequestController = webRequestController;
+            this.characterPreviewEventBus = characterPreviewEventBus;
 
             backpackCommandBus = new BackpackCommandBus();
             backpackEventBus = new BackpackEventBus();
@@ -82,7 +91,8 @@ namespace DCL.PluginSystem.Global
                 equippedWearables,
                 selfProfile,
                 forceRender,
-                ProvideEcsContext
+                ProvideEcsContext,
+                web3Identity
             );
         }
 
@@ -102,7 +112,13 @@ namespace DCL.PluginSystem.Global
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityBackgroundsMapping, ct),
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityInfoPanelBackgroundsMapping, ct));
 
+            (ColorPresetsSO hairColors, ColorPresetsSO eyesColors, ColorPresetsSO bodyshapeColors) = await UniTask.WhenAll(
+                assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.HairColors, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.EyesColors, ct),
+                assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.BodyshapeColors, ct));
+
             PageButtonView pageButtonView = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.PageButtonView, ct)).Value.GetComponent<PageButtonView>().EnsureNotNull();
+            ColorToggleView colorToggle = (await assetsProvisioner.ProvideMainAssetAsync(backpackSettings.ColorToggle, ct)).Value.GetComponent<ColorToggleView>().EnsureNotNull();
 
             AvatarView avatarView = view.GetComponentInChildren<AvatarView>().EnsureNotNull();
 
@@ -142,13 +158,13 @@ namespace DCL.PluginSystem.Global
                 world = builder.World!;
                 playerEntity = args.PlayerEntity;
 
-                var thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World);
+                var thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
 
                 var gridController = new BackpackGridController(
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
                     web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
                     equippedWearables, sortController, pageButtonView, gridPool, world,
-                    thumbnailProvider
+                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors
                 );
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,
@@ -159,7 +175,7 @@ namespace DCL.PluginSystem.Global
                     new BackpackEmoteSlotsController(emoteView.Slots, backpackEventBus, backpackCommandBus, rarityBackgroundsMapping), emoteGridController);
 
                 var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
-                    characterPreviewFactory, backpackEventBus, world, equippedEmotes);
+                    characterPreviewFactory, backpackEventBus, world, equippedEmotes, characterPreviewEventBus);
 
                 backpackController = new BackpackController(
                     view,

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Pools;
@@ -41,7 +42,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 await connection.ConnectAsync(adapterUrl, token);
                 await UniTask.WaitUntil(() => connection.IsConnected, cancellationToken: token);
             }
-            catch (Exception e) { throw new Exception($"Cannot ensure connection {adapterUrl}", e); }
+            catch (Exception e) { ReportHub.LogException(new Exception($"Cannot ensure connection {adapterUrl}", e), ReportCategory.LIVEKIT); }
         }
 
         public async UniTask<string> MessageForSignAsync(string ethereumAddress, CancellationToken token)
@@ -58,7 +59,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                 using var challengeResponse = new SmartWrap<ChallengeResponseMessage>(serverPacket.value.ChallengeResponse!, multiPool);
                 return challengeResponse.value.ChallengeToSign!;
             }
-            catch (Exception e) { throw new Exception($"Cannot message for sign for address {ethereumAddress}", e); }
+            catch (Exception e) { ReportHub.LogException(new Exception($"Cannot message for sign for address {ethereumAddress}", e), ReportCategory.LIVEKIT); }
+
+            return string.Empty;
         }
 
         public async UniTask<LightResult<string>> WelcomePeerIdAsync(string signedMessageAuthChainJson, CancellationToken token)
@@ -91,7 +94,9 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                 return LightResult<string>.FAILURE;
             }
-            catch (Exception e) { throw new Exception($"Cannot welcome peer id for signed message {signedMessageAuthChainJson}", e); }
+            catch (Exception e) { ReportHub.LogException(new Exception($"Cannot welcome peer id for signed message {signedMessageAuthChainJson}", e), ReportCategory.LIVEKIT); }
+
+            return LightResult<string>.FAILURE;
         }
 
         public async UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
@@ -112,7 +117,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 
                 await connection.SendAsync(clientPacket.value, memoryPool, token);
             }
-            catch (Exception e) { throw new Exception($"Cannot send heartbeat for position {playerPosition}", e); }
+            catch (Exception e) { ReportHub.LogException(new Exception($"Cannot send heartbeat for position {playerPosition}", e), ReportCategory.LIVEKIT); }
         }
 
         public async UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)
@@ -136,7 +141,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
                     }
                 }
             }
-            catch (Exception e) { throw new Exception("Cannot listen for connection string", e); }
+            catch (Exception e) { ReportHub.LogException(new Exception("Cannot listen for connection string", e), ReportCategory.LIVEKIT); }
         }
 
         public UniTask DisconnectAsync(CancellationToken token) =>

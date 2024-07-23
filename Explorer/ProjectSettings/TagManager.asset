@@ -12,7 +12,7 @@ TagManager:
   - Water
   - UI
   - Floor
-  - 
+  - InvisibleColliders
   - 
   - OnPointerEvent
   - 
@@ -35,7 +35,7 @@ TagManager:
   - Minimap
   - 
   - 
-  - 
+  - OtherAvatars
   - CharacterPreview
   m_SortingLayers:
   - name: Default

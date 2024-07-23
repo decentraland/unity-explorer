@@ -4,15 +4,13 @@ using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Optimization.Pools;
 using DCL.SDKComponents.Tween.Components;
-using DCL.SDKComponents.Tween.Helpers;
 using ECS.Abstract;
-using ECS.Unity.Groups;
+using ECS.Groups;
 
 namespace DCL.SDKComponents.Tween.Systems
 {
-    [UpdateInGroup(typeof(ComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [LogCategory(ReportCategory.TWEEN)]
     [ThrottlingEnabled]
     public partial class TweenLoaderSystem : BaseUnityLoopSystem
@@ -23,7 +21,6 @@ namespace DCL.SDKComponents.Tween.Systems
 
         protected override void Update(float t)
         {
-            UpdateTweenQuery(World);
             LoadTweenQuery(World);
         }
 
@@ -34,24 +31,13 @@ namespace DCL.SDKComponents.Tween.Systems
             if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
             SDKTweenComponent sdkTweenComponent = new SDKTweenComponent
-                {
-                    IsDirty = true,
-                    CurrentTweenModel = new SDKTweenModel(pbTween),
-                };
+            {
+                IsDirty = true
+            };
 
             World.Add(entity, sdkTweenComponent);
         }
 
-        [Query]
-        private void UpdateTween(ref PBTween pbTween, ref SDKTweenComponent tweenComponent)
-        {
-            if (pbTween.ModeCase == PBTween.ModeOneofCase.None) return;
 
-            if (pbTween.IsDirty || !TweenSDKComponentHelper.AreSameModels(pbTween, tweenComponent.CurrentTweenModel))
-            {
-                tweenComponent.CurrentTweenModel = new SDKTweenModel(pbTween);
-                tweenComponent.IsDirty = true;
-            }
-        }
     }
 }

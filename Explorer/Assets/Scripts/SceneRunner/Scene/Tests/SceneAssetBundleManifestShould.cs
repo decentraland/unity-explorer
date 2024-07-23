@@ -12,12 +12,12 @@ namespace SceneRunner.Scene.Tests
         {
             unsafe
             {
-                const string CONTENT_URL = "https://content-assets-as-bundle.decentraland.org/v125/";
+                const string CONTENT_URL = "https://content-assets-as-bundle.decentraland.org/";
                 const string HASH = "QmfNvE3nKmahA5emnBnXN2LzydpYncHVz4xy4piw84Er1D";
 
                 const string EXPECTED = "v125QmfNvE3nKmahA5emnBnXN2LzydpYncHVz4xy4piw84Er1D";
 
-                var manifest = new SceneAssetBundleManifest(URLDomain.FromString(CONTENT_URL), "", Array.Empty<string>());
+                var manifest = new SceneAssetBundleManifest(URLDomain.FromString(CONTENT_URL), "v125", Array.Empty<string>());
 
                 fixed (char* p = EXPECTED) { Assert.AreEqual(Hash128.Compute(p, (ulong)(EXPECTED.Length * sizeof(char))), manifest.ComputeHash(HASH)); }
             }

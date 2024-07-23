@@ -2,7 +2,9 @@
 using DCL.ECSComponents;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Raycast.Systems;
+using DCL.Optimization.Pools;
 using ECS.TestSuite;
+using NSubstitute;
 using NUnit.Framework;
 
 namespace DCL.Interaction.Raycast.Tests
@@ -12,7 +14,9 @@ namespace DCL.Interaction.Raycast.Tests
         [SetUp]
         public void Setup()
         {
-            system = new InitializeRaycastSystem(world);
+            IComponentPool<PBRaycastResult> pbRaycastResultPool = Substitute.For<IComponentPool<PBRaycastResult>>();
+
+            system = new InitializeRaycastSystem(world, pbRaycastResultPool);
         }
 
         [Test]

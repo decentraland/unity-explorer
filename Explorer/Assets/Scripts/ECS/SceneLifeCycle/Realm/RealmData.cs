@@ -10,14 +10,13 @@ namespace ECS
     {
         private const int DEFAULT_NETWORK_ID = 1;
 
-        private IIpfsRealm ipfs;
+        private IIpfsRealm ipfs = InvalidIpfsRealm.Instance;
         private bool scenesAreFixed;
 
         public string RealmName { get; private set; }
         public int NetworkId{ get; private set; }
         public string CommsAdapter { get; private set; }
-        public string BaseURL { get; private set;}
-
+        public string Protocol { get; private set; }
         public bool Configured { get; private set; }
 
         public IIpfsRealm Ipfs
@@ -39,16 +38,21 @@ namespace ECS
         }
 
         /// <summary>
-        ///     Create an empty data to configure later
+        /// Create an empty data to configure later
         /// </summary>
-        public RealmData() { }
+        public RealmData()
+        {
+            RealmName = string.Empty;
+            CommsAdapter = string.Empty;
+            Protocol = string.Empty;
+        }
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol)
         {
             IsDirty = true;
             Configured = true;
@@ -57,6 +61,7 @@ namespace ECS
             scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
             CommsAdapter = commsAdapter;
+            Protocol = protocol;
             NetworkId = networkId;
         }
 
@@ -66,7 +71,7 @@ namespace ECS
         public void Invalidate()
         {
             Configured = false;
-            ipfs = null;
+            ipfs = InvalidIpfsRealm.Instance;
         }
 
         private void Validate()

@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.Throttling;
+using CrdtEcsBridge.Components.Special;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
 using DCL.SDKComponents.SceneUI.Components;
@@ -22,11 +23,13 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
     {
         private readonly UIDocument canvas;
         private readonly ISceneStateProvider sceneStateProvider;
+        private readonly Entity sceneRoot;
 
-        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider) : base(world)
+        public UITransformUpdateSystem(World world, UIDocument canvas, ISceneStateProvider sceneStateProvider, Entity sceneRoot) : base(world)
         {
             this.canvas = canvas;
             this.sceneStateProvider = sceneStateProvider;
+            this.sceneRoot = sceneRoot;
         }
 
         protected override void Update(float _)
@@ -43,16 +46,17 @@ namespace DCL.SDKComponents.SceneUI.Systems.UITransform
             if (!sdkModel.IsDirty)
                 return;
 
-            UiElementUtils.SetupVisualElement(ref uiTransformComponent.Transform, ref sdkModel);
+            UiElementUtils.SetupVisualElement(uiTransformComponent.Transform, ref sdkModel);
             sdkModel.IsDirty = false;
         }
 
         [Query]
         [All(typeof(PBUiTransform), typeof(UITransformComponent))]
+        [None(typeof(SceneRootComponent))]
         private void CheckUITransformOutOfScene([Data] bool isCurrent, ref UITransformComponent uiTransformComponent)
         {
             // Ignore all the child transforms
-            if (uiTransformComponent.RelationData.parent != EntityReference.Null)
+            if (uiTransformComponent.RelationData.parent != sceneRoot)
                 return;
 
             // Depending on the scene state, we add or remove the root transform from the canvas

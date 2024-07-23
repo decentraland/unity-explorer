@@ -15,5 +15,7 @@ namespace DCL.AvatarRendering.Emotes.Equipped
         void EquipEmote(int slot, IEmote emote);
 
         void UnEquipEmote(int slot, IEmote? emote);
+
+        void UnEquipAll();
     }
 }

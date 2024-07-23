@@ -1,14 +1,11 @@
 using ECS.Unity.Materials.Components;
 using System;
-using System.Collections.Generic;
 
 namespace ECS.Unity.Materials
 {
-    internal class MaterialDataEqualityComparer : IEqualityComparer<MaterialData>
+    internal static class MaterialDataEqualityComparer
     {
-        internal static readonly MaterialDataEqualityComparer INSTANCE = new ();
-
-        public bool Equals(MaterialData x, MaterialData y) =>
+        public static bool Equals(in MaterialData x, in MaterialData y) =>
             x.IsPbrMaterial == y.IsPbrMaterial
             && Nullable.Equals(x.AlbedoTexture, y.AlbedoTexture)
             && x.AlphaTest.Equals(y.AlphaTest)
@@ -27,7 +24,7 @@ namespace ECS.Unity.Materials
             && x.EmissiveIntensity.Equals(y.EmissiveIntensity)
             && x.DirectIntensity.Equals(y.DirectIntensity);
 
-        public int GetHashCode(MaterialData obj)
+        public static int GetHashCode(MaterialData obj)
         {
             var hashCode = new HashCode();
             hashCode.Add(obj.IsPbrMaterial);

@@ -9,7 +9,7 @@ using Utility.PriorityQueue;
 
 namespace DCL.Profiles
 {
-    public class ProfileIntentionCache : IStreamableCache<Profile, GetProfileIntention>
+    public class ProfileIntentionCache : StreamableCacheBase<Profile, GetProfileIntention>, IStreamableCache<Profile, GetProfileIntention>
     {
         private readonly Dictionary<GetProfileIntention, Profile> cache = new ();
         private readonly SimplePriorityQueue<GetProfileIntention, long> unloadQueue = new ();
@@ -35,12 +35,7 @@ namespace DCL.Profiles
 
         public void Add(in GetProfileIntention key, Profile asset)
         {
-            if (cache.TryAdd(key, asset))
-                unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
-#endif
+            Add(cache, unloadQueue, ProfilingCounters.ProfilesInCache, in key, asset);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudgetProvider, int maxUnloadAmount)
@@ -52,7 +47,7 @@ namespace DCL.Profiles
                 cache.Remove(key);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            ProfilingCounters.ProfileIntentionsInCache.Value = cache.Count;
+            ProfilingCounters.ProfilesInCache.Value = cache.Count;
 #endif
         }
     }

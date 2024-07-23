@@ -52,6 +52,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         public void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
             Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
+
             WearableDTO = result;
 
             if (!result.Succeeded) return;
@@ -192,6 +193,27 @@ namespace DCL.AvatarRendering.Wearables.Components
                 return dto.Metadata.AbstractData.replaces;
 
             return representation.Value.overrideReplaces;
+        }
+
+        public static HashSet<string> ComposeHiddenCategories(string bodyShapeId, List<IWearable> wearables)
+        {
+            HashSet<string> result = new HashSet<string>();
+
+            foreach (var wearableItem in wearables)
+            {
+                if (wearableItem == null)
+                    continue;
+
+                if (result.Contains(wearableItem.GetDTO().Metadata.AbstractData.category))
+                    continue;
+
+                HashSet<string> wearableHidesList = new (StringComparer.OrdinalIgnoreCase);
+                wearableItem.GetHidingList(bodyShapeId, wearableHidesList);
+
+                result.UnionWith(wearableHidesList);
+            }
+
+            return result;
         }
     }
 }

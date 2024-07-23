@@ -66,7 +66,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
             setupColliders[input.MeshCase].Received(1).Execute(colliderComp.Collider, input);
-            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderEntityInfo>());
+            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderSceneEntityInfo>());
 
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }
@@ -89,7 +89,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
             setupColliders[input.MeshCase].Received(1).Execute(colliderComp.Collider, input);
-            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderEntityInfo>());
+            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderSceneEntityInfo>());
 
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }
@@ -115,7 +115,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
             Assert.AreEqual(expectedType, colliderComp.Collider.GetType());
             Assert.AreEqual(expectedType, colliderComp.ColliderType);
             setupColliders[input.MeshCase].Received(1).Execute(colliderComp.Collider, input);
-            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderEntityInfo>());
+            entityCollidersSceneCache.Received(1).Associate(colliderComp.Collider, Arg.Any<ColliderSceneEntityInfo>());
 
             Assert.AreEqual(input.MeshCase, colliderComp.SDKType);
         }

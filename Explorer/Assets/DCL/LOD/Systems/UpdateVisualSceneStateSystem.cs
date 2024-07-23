@@ -1,12 +1,8 @@
 ﻿using Arch.Core;
-using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using DCL.AssetsProvision;
 using DCL.Diagnostics;
 using DCL.LOD;
 using DCL.LOD.Components;
-using DCL.LOD.Systems;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -14,9 +10,7 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
-using System;
 using System.Runtime.CompilerServices;
-using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Systems
 {
@@ -30,6 +24,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly IScenesCache scenesCache;
         private readonly ILODAssetsPool lodAssetsPool;
         private readonly ILODSettingsAsset lodSettingsAsset;
+        private readonly SceneAssetLock sceneAssetLock;
 
         private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
                                                                            .WithAll<VisualSceneState, PartitionComponent, SceneDefinitionComponent>()
@@ -46,14 +41,15 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool, ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver) : base(world)
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool,
+            ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.lodAssetsPool = lodAssetsPool;
             this.lodSettingsAsset = lodSettingsAsset;
             this.visualSceneStateResolver = visualSceneStateResolver;
+            this.sceneAssetLock = sceneAssetLock;
             sceneFacadeToLODContinuation = SwapSceneFacadeToLOD;
             scenePromiseToLODContinuation = SwapScenePromiseToLOD;
             sceneLODToScenePromiseContinuation = SwapLODToScenePromise;
@@ -159,7 +155,7 @@ namespace ECS.SceneLifeCycle.Systems
                 var sceneLODInfo = SceneLODInfo.Create();
 
                 //Dispose scene
-                switchComponent.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels);
+                switchComponent.DisposeSceneFacadeAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, sceneAssetLock);
 
                 visualSceneState.IsDirty = false;
 

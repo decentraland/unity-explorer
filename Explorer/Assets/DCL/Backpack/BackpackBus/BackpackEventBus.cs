@@ -4,26 +4,28 @@ using DCL.CharacterPreview;
 using DCL.UI;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace DCL.Backpack.BackpackBus
 {
     public class BackpackEventBus : IBackpackEventBus
     {
-        public event Action<IWearable> SelectWearableEvent;
-        public event Action<IWearable> EquipWearableEvent;
-        public event Action<IWearable> UnEquipWearableEvent;
+        public event Action<IWearable>? SelectWearableEvent;
+        public event Action<IWearable>? EquipWearableEvent;
+        public event Action<IWearable>? UnEquipWearableEvent;
         public event Action<int, IEmote>? EquipEmoteEvent;
         public event Action<int, IEmote?>? UnEquipEmoteEvent;
         public event Action<int>? EmoteSlotSelectEvent;
         public event Action<IEmote>? SelectEmoteEvent;
-        public event Action<IReadOnlyCollection<string>> ForceRenderEvent;
-        public event Action<string> FilterCategoryEvent;
-        public event Action<AvatarWearableCategoryEnum> FilterCategoryByEnumEvent;
+        public event Action<IReadOnlyCollection<string>>? ForceRenderEvent;
+        public event Action<string>? FilterCategoryEvent;
+        public event Action<AvatarWearableCategoryEnum>? FilterCategoryByEnumEvent;
         public event Action<BackpackSections>? ChangedBackpackSectionEvent;
         public event Action? DeactivateEvent;
-        public event Action PublishProfileEvent;
-
-        public event Action<string> SearchEvent;
+        public event Action? UnEquipAllEvent;
+        public event Action<Color,string>? ChangeColorEvent;
+        public event Action? PublishProfileEvent;
+        public event Action<string>? SearchEvent;
 
         public void SendWearableSelect(IWearable equipWearable) =>
             SelectWearableEvent?.Invoke(equipWearable);
@@ -33,6 +35,12 @@ namespace DCL.Backpack.BackpackBus
 
         public void SendUnEquipWearable(IWearable unEquipWearable) =>
             UnEquipWearableEvent?.Invoke(unEquipWearable);
+
+        public void SendUnEquipAll() =>
+            UnEquipAllEvent?.Invoke();
+
+        public void SendChangeColor(Color newColor, string category) =>
+            ChangeColorEvent?.Invoke(newColor, category);
 
         public void SendForceRender(IReadOnlyCollection<string> forceRender) =>
             ForceRenderEvent?.Invoke(forceRender);

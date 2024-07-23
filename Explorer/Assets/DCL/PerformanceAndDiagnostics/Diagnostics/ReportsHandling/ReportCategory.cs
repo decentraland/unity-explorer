@@ -5,6 +5,13 @@
     /// </summary>
     public static class ReportCategory
     {
+        public const string FEATURE_FLAGS = nameof(FEATURE_FLAGS);
+
+        /// <summary>
+        ///     Everything connected to raw assets and addressables
+        /// </summary>
+        public const string ANALYTICS = nameof(ANALYTICS);
+
         /// <summary>
         ///     Everything connected to raw assets and addressables
         /// </summary>
@@ -123,7 +130,7 @@
         /// <summary>
         ///     Everything related to Scenes audio source components
         /// </summary>
-        public const string AUDIO_SOURCES = nameof(AUDIO_SOURCES);
+        public const string SDK_AUDIO_SOURCES = nameof(SDK_AUDIO_SOURCES);
 
         /// <summary>
         ///     Everything related to Media streaming components such as PBAudioStream or PBVideoPlayer
@@ -197,54 +204,19 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
-        ///     CameraTransform SDK System
+        ///     Player-related data propagated to SDK
         /// </summary>
-        public const string CAMERA_TRANSFORM = nameof(CAMERA_TRANSFORM);
-
-        /// <summary>
-        ///     AvatarModifierArea SDK component
-        /// </summary>
-        public const string AVATAR_MODIFIER_AREA = nameof(AVATAR_MODIFIER_AREA);
-
-        /// <summary>
-        ///     Multiplayer SDK Profile component propagator
-        /// </summary>
-        public const string MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY = nameof(MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY);
-
-        /// <summary>
-        ///     Multiplayer SDK Profile component propagator
-        /// </summary>
-        public const string MULTIPLAYER_SDK_PLAYER_PROFILE_DATA = nameof(MULTIPLAYER_SDK_PLAYER_PROFILE_DATA);
-
-        /// <summary>
-        ///     Multiplayer SDK Emote Command component propagator
-        /// </summary>
-        public const string MULTIPLAYER_SDK_EMOTE_COMMAND_DATA = nameof(MULTIPLAYER_SDK_EMOTE_COMMAND_DATA);
-
-        /// <summary>
-        ///     PBPlayerIdentityData component writer
-        /// </summary>
-        public const string PLAYER_IDENTITY_DATA = nameof(PLAYER_IDENTITY_DATA);
-
-        /// <summary>
-        ///     PBAvatarBase component writer
-        /// </summary>
-        public const string PLAYER_AVATAR_BASE = nameof(PLAYER_AVATAR_BASE);
-
-        /// <summary>
-        ///     PBAvatarEquipped component writer
-        /// </summary>
-        public const string PLAYER_AVATAR_EQUIPPED = nameof(PLAYER_AVATAR_EQUIPPED);
-
-        /// <summary>
-        ///     PBAvatarEmoteCommand component writer
-        /// </summary>
-        public const string PLAYER_AVATAR_EMOTE_COMMAND = nameof(PLAYER_AVATAR_EMOTE_COMMAND);
+        public const string PLAYER_SDK_DATA = nameof(PLAYER_SDK_DATA);
 
         /// <summary>
         ///     RealmData 'IsDirty' flag reset system
         /// </summary>
         public const string REALM_DATA_DIRTY_RESET_SYSTEM = nameof(REALM_DATA_DIRTY_RESET_SYSTEM);
+
+        /// <summary>
+        ///     SDK Observables layer
+        /// </summary>
+        public const string SDK_OBSERVABLES = nameof(SDK_OBSERVABLES);
 
         /// <summary>
         ///     Roads related systems
@@ -259,6 +231,11 @@
         public const string AUDIO = nameof(AUDIO);
 
         /// <summary>
+        ///     Generic UI category
+        /// </summary>
+        public const string UI = nameof(UI);
+
+        /// <summary>
         ///     Fetch requests initiated from the Scene side through the fetch API
         /// </summary>
         public const string SCENE_FETCH_REQUEST = nameof(SCENE_FETCH_REQUEST);
@@ -271,6 +248,11 @@
         ///     Whatever is coming from external pure C# plugins
         /// </summary>
         public const string PLUGINS = nameof(PLUGINS);
+
+        /// <summary>
+        ///     To show intended debug messages
+        /// </summary>
+        public const string DEBUG = nameof(DEBUG);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

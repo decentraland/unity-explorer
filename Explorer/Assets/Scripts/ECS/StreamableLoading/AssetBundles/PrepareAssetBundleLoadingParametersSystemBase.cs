@@ -20,29 +20,12 @@ namespace ECS.StreamableLoading.AssetBundles
             this.streamingAssetURL = streamingAssetURL;
         }
 
-        protected abstract bool TryResolveHash(ref GetAssetBundleIntention assetBundleIntention);
-
         protected void PrepareCommonArguments(in Entity entity, ref GetAssetBundleIntention assetBundleIntention, ref StreamableLoadingState state)
         {
             if (state.Value != StreamableLoadingState.Status.NotStarted) return;
 
             // Remove not supported flags
             assetBundleIntention.RemovePermittedSource(AssetSource.ADDRESSABLE); // addressables are not implemented
-
-            // If Hash is already provided just use it, otherwise resolve by the content provider
-            if (assetBundleIntention.Hash == null)
-            {
-                if (!TryResolveHash(ref assetBundleIntention))
-                {
-                    // Add the failure to the entity
-                    var exception = new ArgumentException($"Asset Bundle {assetBundleIntention.Name} not found in the content");
-                    World.Add(entity, new StreamableLoadingResult<AssetBundleData>(CreateException(exception)));
-
-                    return;
-                }
-
-                assetBundleIntention.Hash += PlatformUtils.GetPlatform();
-            }
 
             // First priority
             if (EnumUtils.HasFlag(assetBundleIntention.CommonArguments.PermittedSources, AssetSource.EMBEDDED))

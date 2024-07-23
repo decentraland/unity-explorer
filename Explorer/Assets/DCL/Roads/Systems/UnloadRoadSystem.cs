@@ -7,7 +7,10 @@ using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.SceneDefinition;
+using System.Runtime.CompilerServices;
 
 namespace DCL.Roads.Systems
 {
@@ -16,10 +19,12 @@ namespace DCL.Roads.Systems
     public partial class UnloadRoadSystem : BaseUnityLoopSystem
     {
         private readonly IRoadAssetPool roadAssetPool;
+        private readonly IScenesCache scenesCache;
 
-        public UnloadRoadSystem(World world, IRoadAssetPool roadAssetPool) : base(world)
+        public UnloadRoadSystem(World world, IRoadAssetPool roadAssetPool, IScenesCache scenesCache) : base(world)
         {
             this.roadAssetPool = roadAssetPool;
+            this.scenesCache = scenesCache;
         }
 
         protected override void Update(float t)
@@ -30,10 +35,11 @@ namespace DCL.Roads.Systems
 
         [Query]
         [All(typeof(DeleteEntityIntention), typeof(VisualSceneState))]
-        private void UnloadRoad(ref RoadInfo roadInfo)
+        private void UnloadRoad(Entity entity, ref RoadInfo roadInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
             roadInfo.Dispose(roadAssetPool);
+            scenesCache.RemoveNonRealScene(sceneDefinitionComponent.Parcels);
         }
-      
+
     }
 }

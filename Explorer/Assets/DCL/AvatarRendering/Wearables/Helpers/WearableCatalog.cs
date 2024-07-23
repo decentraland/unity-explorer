@@ -9,28 +9,30 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 {
     public partial class WearableCatalog : IWearableCatalog
     {
-        private readonly LinkedList<(string key, long lastUsedFrame)> listedCacheKeys = new ();
-        private readonly Dictionary<string, LinkedListNode<(string key, long lastUsedFrame)>> cacheKeysDictionary = new ();
-        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new ();
+        private readonly LinkedList<(URN key, long lastUsedFrame)> listedCacheKeys = new ();
+        private readonly Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>> cacheKeysDictionary = new (new Dictionary<URN, LinkedListNode<(URN key, long lastUsedFrame)>>(), URNIgnoreCaseEqualityComparer.Default);
+        private readonly Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>> ownedNftsRegistry = new (new Dictionary<URN, Dictionary<URN, NftBlockchainOperationEntry>>(), URNIgnoreCaseEqualityComparer.Default);
 
-        internal Dictionary<string, IWearable> wearablesCache { get; } = new ();
+        internal Dictionary<URN, IWearable> wearablesCache { get; } = new (new Dictionary<URN, IWearable>(), URNIgnoreCaseEqualityComparer.Default);
 
         public IWearable GetOrAddWearableByDTO(WearableDTO wearableDto, bool qualifiedForUnloading = true) =>
             TryGetWearable(wearableDto.metadata.id, out IWearable existingWearable)
                 ? existingWearable
                 : AddWearable(wearableDto.metadata.id, new Wearable(new StreamableLoadingResult<WearableDTO>(wearableDto)), qualifiedForUnloading);
 
-        public void AddEmptyWearable(string loadingIntentionPointer, bool qualifiedForUnloading = true)
+        public void AddEmptyWearable(URN urn, bool qualifiedForUnloading = true)
         {
-            AddWearable(loadingIntentionPointer, new Wearable(), qualifiedForUnloading);
+            AddWearable(urn, new Wearable(), qualifiedForUnloading);
         }
 
-        internal IWearable AddWearable(string loadingIntentionPointer, IWearable wearable, bool qualifiedForUnloading)
+        internal IWearable AddWearable(URN urn, IWearable wearable, bool qualifiedForUnloading)
         {
-            wearablesCache.Add(loadingIntentionPointer, wearable);
+            wearablesCache.Add(urn, wearable);
+
             if (qualifiedForUnloading)
-                cacheKeysDictionary[loadingIntentionPointer] =
-                    listedCacheKeys.AddLast((loadingIntentionPointer, MultithreadingUtility.FrameCount));
+                cacheKeysDictionary[urn] =
+                    listedCacheKeys.AddLast((urn, MultithreadingUtility.FrameCount));
+
             return wearable;
         }
 
@@ -42,21 +44,33 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                 return true;
             }
 
+            if (wearablesCache.TryGetValue(wearableURN, out wearable))
+            {
+                UpdateListedCachePriority(@for: wearableURN);
+                return true;
+            }
+
             return false;
         }
 
-        public IWearable GetDefaultWearable(  BodyShape bodyShape, string category)
+        public IWearable GetDefaultWearable(BodyShape bodyShape, string category)
         {
-            var wearableURN =
-                WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
+            string wearableURN = WearablesConstants.DefaultWearables.GetDefaultWearable(bodyShape, category);
 
-            UpdateListedCachePriority(@for: wearableURN);
-            return wearablesCache[wearableURN];
+            UpdateListedCachePriority(wearableURN);
+
+            if (wearablesCache.TryGetValue(wearableURN, out IWearable wearable))
+                return wearable;
+
+            if (wearablesCache.TryGetValue(wearableURN, out wearable))
+                return wearable;
+
+            return null;
         }
 
-        private void UpdateListedCachePriority(string @for)
+        private void UpdateListedCachePriority(URN @for)
         {
-            if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(string key, long lastUsedFrame)> node))
+            if (cacheKeysDictionary.TryGetValue(@for, out LinkedListNode<(URN key, long lastUsedFrame)> node))
             {
                 node.Value = (@for, MultithreadingUtility.FrameCount);
 
@@ -68,21 +82,27 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
         public void Unload(IPerformanceBudget frameTimeBudget)
         {
-            for (LinkedListNode<(string key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
-                if (wearablesCache.TryGetValue(node.Value.key, out IWearable wearable))
-                    if (TryUnloadAllWearableAssets(wearable))
-                    {
-                        wearablesCache.Remove(node.Value.key);
-                        cacheKeysDictionary.Remove(node.Value.key);
-                        listedCacheKeys.Remove(node);
-                    }
+            for (LinkedListNode<(URN key, long lastUsedFrame)> node = listedCacheKeys.First; frameTimeBudget.TrySpendBudget() && node != null; node = node.Next)
+            {
+                URN urn = node.Value.key;
+
+                if (!wearablesCache.TryGetValue(urn, out IWearable wearable))
+                    continue;
+
+                if (!TryUnloadAllWearableAssets(wearable)) continue;
+
+                wearablesCache.Remove(urn);
+                cacheKeysDictionary.Remove(urn);
+                listedCacheKeys.Remove(node);
+            }
         }
 
         public void SetOwnedNft(URN nftUrn, NftBlockchainOperationEntry entry)
         {
             if (!ownedNftsRegistry.TryGetValue(nftUrn, out Dictionary<URN, NftBlockchainOperationEntry> ownedWearableRegistry))
             {
-                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>();
+                ownedWearableRegistry = new Dictionary<URN, NftBlockchainOperationEntry>(new Dictionary<URN, NftBlockchainOperationEntry>(),
+                    URNIgnoreCaseEqualityComparer.Default);
                 ownedNftsRegistry[nftUrn] = ownedWearableRegistry;
             }
 
@@ -108,7 +128,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
                 for (var j = 0; j < assets.Results?.Length; j++)
                 {
-                    StreamableLoadingResult<WearableAssetBase>? result = assets.Results[i];
+                    StreamableLoadingResult<WearableAssetBase>? result = assets.Results[j];
 
                     if (result is not { Succeeded: true })
                     {
@@ -116,12 +136,12 @@ namespace DCL.AvatarRendering.Wearables.Helpers
                         continue;
                     }
 
-                    WearableAssetBase wearableAsset = result.Value.Asset!;
+                    WearableAssetBase? wearableAsset = result.Value.Asset;
 
-                    if (wearableAsset.ReferenceCount == 0)
+                    if (wearableAsset is { ReferenceCount: 0 })
                     {
-                        wearableAsset?.Dispose();
-                        assets.Results[i] = null;
+                        wearableAsset.Dispose();
+                        assets.Results[j] = null;
                     }
                 }
             }

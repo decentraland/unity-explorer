@@ -16,6 +16,11 @@ namespace ECS.Prioritization.Components
         };
 
         /// <summary>
+        ///     Indicates that the partition is out of buckets range
+        /// </summary>
+        public bool OutOfRange { get; set; }
+        
+        /// <summary>
         ///     Indicates that the partition value has changed and the processes assigned to it should be re-prioritized
         /// </summary>
         public bool IsDirty { get; set; }

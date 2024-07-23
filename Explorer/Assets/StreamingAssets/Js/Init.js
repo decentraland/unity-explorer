@@ -20,14 +20,16 @@ function require(moduleName) {
         moduleName.substring(0, 1)   // __dirname
     );
 	
-    const logger = {
+	// Validates breaks export of classes
+	 
+   /* const logger = {
         error: (m) => console.error(m),
         warning: (m) => console.warning(m),
         log: (m) => console.log(m),
     }
     
     Validates.registerBundle(module.exports, logger)
-    Validates.registerLogs(module.exports, logger)
+    Validates.registerLogs(module.exports, logger)*/
     //TODO implement later
     // Validates.registerIntegrationTests(module.exports, logger)
     
@@ -61,7 +63,16 @@ globalThis.require = require;
 globalThis.console = console;
 globalThis.WebSocket = require('~system/WebSocketApi').WebSocket;
 globalThis.fetch = async function executeFetch(url, init) {
-    return Promise.resolve(require('~system/FetchApi').fetch(url, init))
+    if (init != undefined && init.body != undefined) {
+        init.body = JSON.parse(init.body)
+    }
+    
+    let message = {
+        url: url,
+        init: init
+    }
+    
+    return Promise.resolve(require('~system/FetchApi').fetch(message))
 }
 
 

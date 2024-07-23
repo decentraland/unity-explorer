@@ -1,4 +1,5 @@
 using DCL.Audio;
+using DCL.Character.CharacterMotion.Components;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,9 +9,6 @@ namespace DCL.EmotesWheel
 {
     public class EmoteWheelSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        private static readonly int HOVER = Animator.StringToHash("Hover");
-        private static readonly int UNHOVER = Animator.StringToHash("Unhover");
-
         public event Action<int>? OnPlay;
         public event Action<int>? OnHover;
         public event Action<int>? OnFocusLeave;
@@ -68,14 +66,14 @@ namespace DCL.EmotesWheel
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             hoverBackground.SetActive(true);
-            SlotAnimator.SetTrigger(HOVER);
+            SlotAnimator.SetTrigger(AnimationHashes.HOVER);
             OnHover?.Invoke(Slot);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             hoverBackground.SetActive(false);
-            SlotAnimator.SetTrigger(UNHOVER);
+            SlotAnimator.SetTrigger(AnimationHashes.UNHOVER);
             OnFocusLeave?.Invoke(Slot);
         }
     }

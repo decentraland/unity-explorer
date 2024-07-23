@@ -12,13 +12,11 @@ reviewGroups:
     - lorux0
     - davidejensen
     - popuz
-    - Kinerius
     - pravusjif
     - dalkia
     - fcolarich
   qa:
     - Ludmilafantaniella
-    - LucasLioyQA
     - anicalbano
 
 filterLabels:

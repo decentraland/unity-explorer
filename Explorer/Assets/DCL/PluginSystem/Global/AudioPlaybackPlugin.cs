@@ -28,12 +28,17 @@ namespace DCL.PluginSystem.Global
             this.enableLandscape = enableLandscape;
         }
 
-        public void Dispose() { }
+        public void Dispose()
+        {
+            uiAudioPlaybackController.Dispose();
+            worldAudioPlaybackController.Dispose();
+            landscapeAudioSettings.Dispose();
+        }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             if (enableLandscape)
-                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettings.Value);
+                LandscapeAudioCullingSystem.InjectToWorld(ref builder, terrainGenerator, landscapeAudioSettings.Value, worldAudioPlaybackController.Value);
         }
 
         public async UniTask InitializeAsync(PluginSettings settings, CancellationToken ct)

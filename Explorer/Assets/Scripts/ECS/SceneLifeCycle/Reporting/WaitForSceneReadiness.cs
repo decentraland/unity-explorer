@@ -15,7 +15,7 @@ namespace ECS.SceneLifeCycle.Reporting
 
     public class WaitForSceneReadiness
     {
-        private static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(30);
+        public static readonly TimeSpan TIMEOUT = TimeSpan.FromSeconds(60);
 
         private readonly Vector2Int parcel;
         private readonly AsyncLoadProcessReport loadProcessReport;
@@ -48,10 +48,17 @@ namespace ECS.SceneLifeCycle.Reporting
             {
                 // add timeout in case of a trouble
                 await loadProcessReport.CompletionSource.Task
-                                       .Timeout(TIMEOUT)
-                                       .AttachExternalCancellation(ct);
+                    .Timeout(TIMEOUT)
+                    .AttachExternalCancellation(ct);
             }
-            catch (Exception e) { loadProcessReport.CompletionSource.TrySetException(e); }
+            catch (Exception e)
+            {
+                loadProcessReport.CompletionSource.TrySetException(e);
+                sceneReadinessReportQueue.TryDequeue(new []
+                {
+                    parcel
+                }, out _);
+            }
         }
     }
 }

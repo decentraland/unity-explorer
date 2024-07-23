@@ -21,6 +21,20 @@ namespace ECS.Unity.Transforms.Components
             public Vector3 LocalPosition;
             public Quaternion LocalRotation;
             public Vector3 LocalScale;
+
+            public CachedTransform(Transform transform) : this()
+            {
+                Update(transform);
+            }
+
+            public void Update(Transform transform)
+            {
+                WorldPosition = transform.position;
+                WorldRotation = transform.rotation;
+                LocalPosition = transform.localPosition;
+                LocalRotation = transform.localRotation;
+                LocalScale = transform.localScale;
+            }
         }
 
         public CachedTransform Cached;
@@ -37,14 +51,7 @@ namespace ECS.Unity.Transforms.Components
             Children = HashSetPool<EntityReference>.Get();
             Parent = EntityReference.Null;
 
-            Cached = new CachedTransform
-            {
-                WorldPosition = transform.position,
-                WorldRotation = transform.rotation,
-                LocalPosition = transform.localPosition,
-                LocalRotation = transform.localRotation,
-                LocalScale = transform.localScale,
-            };
+            Cached = new CachedTransform(transform);
         }
 
         public TransformComponent(Transform transform, string name, Vector3 startPosition) : this(transform)
@@ -61,6 +68,14 @@ namespace ECS.Unity.Transforms.Components
             UpdateCache();
         }
 
+        public void SetWorldTransform(Vector3 worldPosition, Quaternion worldRotation, Vector3 localScale)
+        {
+            Transform.SetPositionAndRotation(worldPosition, worldRotation);
+            Transform.localScale = localScale;
+
+            UpdateCache();
+        }
+
         public void SetTransform(Transform transform)
         {
             SetTransform(transform.localPosition, transform.localRotation, transform.localScale);
@@ -68,11 +83,7 @@ namespace ECS.Unity.Transforms.Components
 
         public void UpdateCache()
         {
-            Cached.LocalPosition = Transform.localPosition;
-            Cached.LocalRotation = Transform.localRotation;
-            Cached.LocalScale = Transform.localScale;
-            Cached.WorldPosition = Transform.position;
-            Cached.WorldRotation = Transform.rotation;
+            Cached.Update(Transform);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -82,7 +93,14 @@ namespace ECS.Unity.Transforms.Components
             Cached.LocalRotation = Transform.localRotation;
         }
 
-        Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Apply(Vector3 worldPosition)
+        {
+            Cached.WorldPosition = Transform.position = worldPosition;
+            Cached.LocalPosition = Transform.localPosition;
+        }
+
+        readonly Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
 
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);
 
@@ -90,5 +108,8 @@ namespace ECS.Unity.Transforms.Components
         {
             HashSetPool<EntityReference>.Release(Children);
         }
+
+        public override readonly string ToString() =>
+            $"({nameof(TransformComponent)} {nameof(Parent)}: {Parent}; {nameof(Transform.localPosition)}: {Transform.localPosition}; {nameof(Transform.localRotation)}: {Transform.localRotation}; {nameof(Transform.localScale)} {Transform.localScale})";
     }
 }

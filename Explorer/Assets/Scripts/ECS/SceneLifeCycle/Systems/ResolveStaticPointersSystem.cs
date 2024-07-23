@@ -9,7 +9,6 @@ using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.SceneLifeCycle.SceneFacade;
 using ECS.StreamableLoading.Common;
-using Ipfs;
 using SceneRunner.Scene;
 using System.Linq;
 using UnityEngine;

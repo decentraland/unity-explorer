@@ -157,8 +157,10 @@ namespace DCL.ResourcesUnloading.Tests
             texturesCache.Add(textureIntention, new Texture2D(1, 1));
 
             var audioClipIntention = new GetAudioClipIntention { CommonArguments = new CommonLoadingArguments { URL = URLAddress.FromString(hashID) } };
-            audioClipsCache.Add(audioClipIntention, AudioClip.Create(hashID, 1, 1, 2000, false));
-            audioClipsCache.Dereference(audioClipIntention, null);
+            var audioClip = AudioClip.Create(hashID, 1, 1, 2000, false);
+            audioClipsCache.Add(audioClipIntention, audioClip);
+            audioClipsCache.AddReference(in audioClipIntention, audioClip);
+            audioClipsCache.Dereference(audioClipIntention, audioClip);
 
             var assetBundleData = new AssetBundleData(null, null, new GameObject(), typeof(GameObject), Array.Empty<AssetBundleData>());
             assetBundleCache.Add(new GetAssetBundleIntention { Hash = hashID }, assetBundleData);

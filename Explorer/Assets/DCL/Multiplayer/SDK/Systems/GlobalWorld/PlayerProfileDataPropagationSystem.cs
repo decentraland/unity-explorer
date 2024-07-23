@@ -1,48 +1,56 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using DCL.Character.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Profiles;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
-using ECS.LifeCycle.Systems;
 using SceneRunner.Scene;
 
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
-    [UpdateBefore(typeof(ResetDirtyFlagSystem<Profile>))]
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_PROFILE_DATA)]
+    [UpdateAfter(typeof(PlayerCRDTEntitiesHandlerSystem))]
+    [UpdateBefore(typeof(CleanUpGroup))]
+    [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class PlayerProfileDataPropagationSystem : BaseUnityLoopSystem
     {
-        public PlayerProfileDataPropagationSystem(World world) : base(world) { }
+        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
+        private readonly Entity playerEntity;
+
+        public PlayerProfileDataPropagationSystem(World world, ICharacterDataPropagationUtility characterDataPropagationUtility, Entity playerEntity) : base(world)
+        {
+            this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.playerEntity = playerEntity;
+        }
 
         protected override void Update(float t)
         {
+            // Our player must be propagated to all scenes as their logic can rely on it
+            if (World.TryGet(playerEntity, out Profile? profile) && profile!.IsDirty)
+                PropagatePlayerProfileToAliveScenesQuery(World, profile);
+
             PropagateProfileToSceneQuery(World);
         }
 
         [Query]
-        [None(typeof(DeleteEntityIntention))]
-        private void PropagateProfileToScene(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        [None(typeof(DeleteEntityIntention), typeof(PlayerComponent))]
+        private void PropagateProfileToScene(Profile profile, PlayerCRDTEntity playerCRDTEntity)
         {
-            if (playerCRDTEntity.IsDirty)
-            {
-                SetSceneProfile(ref profile, ref playerCRDTEntity);
-                return;
-            }
-
-            if (!profile.IsDirty) return;
-
-            SetSceneProfile(ref profile, ref playerCRDTEntity);
+            if (playerCRDTEntity.IsDirty || profile.IsDirty)
+                characterDataPropagationUtility.CopyProfileToSceneEntity(profile, playerCRDTEntity.SceneFacade.EcsExecutor, playerCRDTEntity.SceneWorldEntity);
         }
 
-        private void SetSceneProfile(ref Profile profile, ref PlayerCRDTEntity playerCRDTEntity)
+        [Query]
+        [None(typeof(DeleteEntityIntention))]
+        private void PropagatePlayerProfileToAliveScenes([Data] Profile playerProfile, ISceneFacade sceneFacade)
         {
-            SceneEcsExecutor sceneEcsExecutor = playerCRDTEntity.SceneFacade.EcsExecutor;
-            sceneEcsExecutor.World.Add(playerCRDTEntity.SceneWorldEntity, new Profile(profile.UserId, profile.Name, profile.Avatar));
+            if (sceneFacade.IsEmpty) return;
+
+            characterDataPropagationUtility.CopyProfileToSceneEntity(playerProfile, sceneFacade.EcsExecutor, sceneFacade.PersistentEntities.Player);
         }
     }
 }

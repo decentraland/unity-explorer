@@ -55,10 +55,43 @@ namespace DCL.Profiles
                 profile.unclaimedName = jObject["unclaimedName"]?.Value<string>() ?? "";
                 profile.hasConnectedWeb3 = jObject["hasConnectedWeb3"]?.Value<bool>() ?? false;
                 profile.avatar = DeserializeAvatar(jObject["avatar"]!, profile.avatar);
+                profile.country = jObject["country"]?.Value<string>() ?? "";
+                profile.gender = jObject["gender"]?.Value<string>() ?? "";
+                profile.pronouns = jObject["pronouns"]?.Value<string>() ?? "";
+                profile.relationshipStatus = jObject["relationshipStatus"]?.Value<string>() ?? "";
+                profile.sexualOrientation = jObject["sexualOrientation"]?.Value<string>() ?? "";
+                profile.language = jObject["language"]?.Value<string>() ?? "";
+                profile.employmentStatus = jObject["employmentStatus"]?.Value<string>() ?? "";
+                profile.profession = jObject["profession"]?.Value<string>() ?? "";
+                profile.realName = jObject["realName"]?.Value<string>() ?? "";
+                profile.hobbies = jObject["hobbies"]?.Value<string>() ?? "";
+                profile.birthdate = jObject["birthdate"]?.Value<long>() ?? 0;
+                DeserializeLinks(jObject["links"]!, ref profile.links);
                 DeserializeArrayToList(jObject["blocked"], ref profile.blocked);
                 DeserializeArrayToList(jObject["interests"], ref profile.interests);
 
                 return profile;
+            }
+
+            private void DeserializeLinks(JToken? root, ref List<LinkJsonDto>? list)
+            {
+                if (root is { Type: JTokenType.Array })
+                {
+                    list ??= new List<LinkJsonDto>();
+                    list.Clear();
+
+                    foreach (JToken? item in root.Children())
+                        list.Add(DeserializeLink(item, new LinkJsonDto()));
+                }
+                else
+                    list?.Clear();
+            }
+
+            private LinkJsonDto DeserializeLink(JToken item, LinkJsonDto link)
+            {
+                link.title = item["title"]?.Value<string>() ?? "";
+                link.url = item["url"]?.Value<string>() ?? "";
+                return link;
             }
 
             private AvatarJsonDto DeserializeAvatar(JToken jObject, AvatarJsonDto avatar)

@@ -1,8 +1,8 @@
-﻿using DCL.ECSComponents;
+﻿#nullable enable
+
 using System;
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.Serialization;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.AudioClip, ECS.StreamableLoading.AudioClips.GetAudioClipIntention>;
 
 namespace DCL.SDKComponents.AudioSources
@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.AudioSources
         /// <summary>
         ///     The final audio source ready for consumption
         /// </summary>
-        public AudioSource AudioSource { get; private set; }
+        public AudioSource? AudioSource { get; private set; }
         public bool AudioSourceAssigned { get; private set; }
 
         public AudioSourceComponent(Promise promise, string audioClipUrl)

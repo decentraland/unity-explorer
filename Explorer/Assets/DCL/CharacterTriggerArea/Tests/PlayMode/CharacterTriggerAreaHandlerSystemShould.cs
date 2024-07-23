@@ -65,6 +65,8 @@ namespace DCL.CharacterTriggerArea.Tests
             characterTriggerAreaPool = poolsRegistry.GetReferenceTypePool<CharacterTriggerArea>();
 
             system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
+
+            Physics.simulationMode = SimulationMode.Script;
         }
 
         [TearDown]
@@ -181,8 +183,6 @@ namespace DCL.CharacterTriggerArea.Tests
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
 
-            Physics.simulationMode = SimulationMode.Script;
-
             var pbComponent = new PBCameraModeArea();
 
             var component = new CharacterTriggerAreaComponent(areaSize: Vector3.one * 4);
@@ -218,8 +218,6 @@ namespace DCL.CharacterTriggerArea.Tests
         {
             // Workaround for Unity bug not awaiting async Setup correctly
             await UniTask.WaitUntil(() => system != null);
-
-            Physics.simulationMode = SimulationMode.Script;
 
             var pbComponent = new PBCameraModeArea();
 

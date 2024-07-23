@@ -1,20 +1,20 @@
 {
-  "name": "DebugUtilities",
-  "rootNamespace": "",
-  "references": [
-    "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-    "GUID:f51ebe6a0ceec4240a699833d6309b23",
-    "GUID:593a5b492d29ac6448b1ebf7f035ef33",
-    "GUID:9e24947de15b9834991c9d8411ea37cf",
-    "GUID:3640f3c0b42946b0b8794a1ed8e06ca5"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "DebugUtilities",
+    "rootNamespace": "",
+    "references": [
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:593a5b492d29ac6448b1ebf7f035ef33",
+        "GUID:9e24947de15b9834991c9d8411ea37cf",
+        "GUID:3640f3c0b42946b0b8794a1ed8e06ca5"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

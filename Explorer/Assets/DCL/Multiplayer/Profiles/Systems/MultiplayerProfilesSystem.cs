@@ -2,7 +2,6 @@ using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape;
-using DCL.AvatarRendering.AvatarShape.Systems;
 using DCL.Character;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
@@ -13,8 +12,6 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.UserInAppInitializationFlow;
 using ECS;
 using ECS.Abstract;
-using UnityEngine;
-using Utility;
 
 namespace DCL.Multiplayer.Profiles.Systems
 {
@@ -65,7 +62,7 @@ namespace DCL.Multiplayer.Profiles.Systems
 
         protected override void Update(float t)
         {
-            if (realFlowLoadingStatus.CurrentStage is not RealFlowLoadingStatus.Stage.Completed)
+            if (realFlowLoadingStatus.CurrentStage.Value is not RealFlowLoadingStatus.Stage.Completed)
                 return;
 
             // On realm switch it may be not configured yet

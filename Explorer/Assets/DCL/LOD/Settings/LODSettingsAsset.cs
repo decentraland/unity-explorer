@@ -14,6 +14,8 @@ namespace DCL.LOD
             5
         };
 
+        [field: SerializeField] public int SDK7LodThreshold { get; set; } = 2;
+
         [field: SerializeField] public TextureArrayResolutionDescriptor[] DefaultTextureArrayResolutionDescriptors { get; set; } =
         {
             new (256, 500, 100), new (512, 100, 10), new (1024, 100, 10), new (2048, 25, 10), new (4096, 25, 10)

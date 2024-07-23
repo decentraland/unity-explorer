@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
 using SceneRunner.Scene.ExceptionsHandling;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using System;
 using UnityEngine.Profiling;
 
@@ -12,7 +13,7 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         internal readonly IEngineApi api;
 
         private readonly IInstancePoolsProvider instancePoolsProvider;
-        private readonly ISceneExceptionsHandler exceptionsHandler;
+        protected readonly ISceneExceptionsHandler exceptionsHandler;
 
         private PoolableByteArray lastInput = PoolableByteArray.EMPTY;
 
@@ -27,10 +28,6 @@ namespace SceneRuntime.Apis.Modules.EngineApi
         {
             // Dispose the last input buffer
             lastInput.ReleaseAndDispose();
-
-            // Dispose the engine API Implementation
-            // It will dispose its buffers
-            api.Dispose();
         }
 
         [UsedImplicitly]
@@ -71,6 +68,9 @@ namespace SceneRuntime.Apis.Modules.EngineApi
                 return ScriptableByteArray.EMPTY;
             }
         }
+
+        [UsedImplicitly]
+        public virtual ScriptableSDKObservableEventArray SendBatch() => null;
 
         public void SetIsDisposing()
         {

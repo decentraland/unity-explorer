@@ -5,9 +5,14 @@ using DCL.Profiles;
 using DCL.Web3;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using ECS;
+using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
+using SceneRuntime.Apis.Modules.CommunicationsControllerApi.SDKMessageBus;
+using SceneRuntime.Apis.Modules.EngineApi;
+using SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents;
 using SceneRuntime.Apis.Modules.Ethereums;
 using SceneRuntime.Apis.Modules.FetchApi;
 using SceneRuntime.Apis.Modules.Players;
@@ -34,11 +39,14 @@ namespace SceneRuntime
         void SetIsDisposing();
 
         void OnSceneIsCurrentChanged(bool isCurrent);
+
+        void RegisterEngineAPIWrapper(EngineApiWrapper newWrapper);
     }
 
     public static class SceneRuntimeExtensions
     {
         public static void RegisterAll(this ISceneRuntime sceneRuntime,
+            IEngineApi engineApi,
             ISceneExceptionsHandler exceptionsHandler,
             IRoomHub roomHub,
             IProfileRepository profileRepository,
@@ -51,12 +59,15 @@ namespace SceneRuntime
             IWeb3IdentityCache web3IdentityCache,
             ICommunicationsControllerAPI communicationsControllerAPI,
             IInstancePoolsProvider instancePoolsProvider,
-            ISimpleFetchApi simpleFetchApi
+            ISimpleFetchApi simpleFetchApi,
+            ISceneData sceneData,
+            IRealmData realmData
         )
         {
+            sceneRuntime.RegisterEngineAPI(engineApi, instancePoolsProvider, exceptionsHandler);
             sceneRuntime.RegisterPlayers(roomHub, profileRepository);
             sceneRuntime.RegisterSceneApi(sceneApi);
-            sceneRuntime.RegisterSignedFetch(webRequestController);
+            sceneRuntime.RegisterSignedFetch(webRequestController, sceneData, realmData);
             sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
             sceneRuntime.RegisterUserActions(restrictedActionsAPI);
             sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
@@ -65,6 +76,54 @@ namespace SceneRuntime
             sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
             sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
             sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
+        }
+
+        public static void RegisterAll(this ISceneRuntime sceneRuntime,
+            ISDKObservableEventsEngineApi engineApi,
+            ISDKMessageBusCommsControllerAPI commsApiImplementation,
+            ISceneExceptionsHandler exceptionsHandler,
+            IRoomHub roomHub,
+            IProfileRepository profileRepository,
+            ISceneApi sceneApi,
+            IWebRequestController webRequestController,
+            IRestrictedActionsAPI restrictedActionsAPI,
+            IRuntime runtime,
+            IEthereumApi ethereumApi,
+            IWebSocketApi webSocketApi,
+            IWeb3IdentityCache web3IdentityCache,
+            ICommunicationsControllerAPI communicationsControllerAPI,
+            IInstancePoolsProvider instancePoolsProvider,
+            ISimpleFetchApi simpleFetchApi,
+            ISceneData sceneData,
+            IRealmData realmData
+        )
+        {
+            sceneRuntime.RegisterEngineAPI(engineApi, commsApiImplementation, instancePoolsProvider, exceptionsHandler);
+            sceneRuntime.RegisterPlayers(roomHub, profileRepository);
+            sceneRuntime.RegisterSceneApi(sceneApi);
+            sceneRuntime.RegisterSignedFetch(webRequestController, sceneData, realmData);
+            sceneRuntime.RegisterRestrictedActionsApi(restrictedActionsAPI);
+            sceneRuntime.RegisterUserActions(restrictedActionsAPI);
+            sceneRuntime.RegisterRuntime(runtime, exceptionsHandler);
+            sceneRuntime.RegisterEthereumApi(ethereumApi, web3IdentityCache, exceptionsHandler);
+            sceneRuntime.RegisterUserIdentityApi(profileRepository, web3IdentityCache, exceptionsHandler);
+            sceneRuntime.RegisterWebSocketApi(webSocketApi, exceptionsHandler);
+            sceneRuntime.RegisterSimpleFetchApi(simpleFetchApi, webRequestController);
+            sceneRuntime.RegisterCommunicationsControllerApi(communicationsControllerAPI, instancePoolsProvider);
+        }
+
+        internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, IEngineApi engineApi, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
+        {
+            var newWrapper = new EngineApiWrapper(engineApi, instancePoolsProvider, sceneExceptionsHandler);
+            sceneRuntime.Register("UnityEngineApi", newWrapper);
+            sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
+        }
+
+        internal static void RegisterEngineAPI(this ISceneRuntime sceneRuntime, ISDKObservableEventsEngineApi engineApi, ISDKMessageBusCommsControllerAPI commsApiImplementation, IInstancePoolsProvider instancePoolsProvider, ISceneExceptionsHandler sceneExceptionsHandler)
+        {
+            var newWrapper = new SDKObservableEventsEngineApiWrapper(engineApi, commsApiImplementation, instancePoolsProvider, sceneExceptionsHandler);
+            sceneRuntime.Register("UnityEngineApi", newWrapper);
+            sceneRuntime.RegisterEngineAPIWrapper(newWrapper);
         }
 
         private static void RegisterPlayers(this ISceneRuntime sceneRuntime, IRoomHub roomHub, IProfileRepository profileRepository)
@@ -77,9 +136,10 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySceneApi", new SceneApiWrapper(api));
         }
 
-        private static void RegisterSignedFetch(this ISceneRuntime sceneRuntime, IWebRequestController webRequestController)
+        private static void RegisterSignedFetch(this ISceneRuntime sceneRuntime, IWebRequestController webRequestController,
+            ISceneData sceneData, IRealmData realmData)
         {
-            sceneRuntime.Register("UnitySignedFetch", new SignedFetchWrap(webRequestController));
+            sceneRuntime.Register("UnitySignedFetch", new SignedFetchWrap(webRequestController, sceneData, realmData));
         }
 
         private static void RegisterRestrictedActionsApi(this ISceneRuntime sceneRuntime, IRestrictedActionsAPI api)
@@ -89,7 +149,7 @@ namespace SceneRuntime
 
         private static void RegisterUserActions(this ISceneRuntime sceneRuntime, IRestrictedActionsAPI api)
         {
-            sceneRuntime.Register("UnityUserActions", new UserActionsWrap(api));
+            sceneRuntime.Register("UnityUserActions", new UserActionsWrapper(api));
         }
 
         private static void RegisterRuntime(this ISceneRuntime sceneRuntime, IRuntime api, ISceneExceptionsHandler sceneExceptionsHandler)
@@ -109,7 +169,7 @@ namespace SceneRuntime
 
         private static void RegisterWebSocketApi(this ISceneRuntime sceneRuntime, IWebSocketApi webSocketApi, ISceneExceptionsHandler sceneExceptionsHandler)
         {
-            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi));
+            sceneRuntime.Register("UnityWebSocketApi", new WebSocketApiWrapper(webSocketApi, sceneExceptionsHandler));
         }
 
         private static void RegisterCommunicationsControllerApi(this ISceneRuntime sceneRuntime, ICommunicationsControllerAPI api, IInstancePoolsProvider instancePoolsProvider)
@@ -122,5 +182,9 @@ namespace SceneRuntime
             sceneRuntime.Register("UnitySimpleFetchApi", new SimpleFetchApiWrapper(simpleFetchApi, webRequestController));
         }
 
+        public static void RegisterSDKMessageBusCommsApi(this ISceneRuntime sceneRuntime, ISDKMessageBusCommsControllerAPI api)
+        {
+            sceneRuntime.Register("UnitySDKMessageBusCommsControllerApi", new SDKMessageBusCommsControllerAPIWrapper(api));
+        }
     }
 }

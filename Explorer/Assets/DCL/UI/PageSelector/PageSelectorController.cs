@@ -63,6 +63,11 @@ namespace DCL.UI
             OnSetPage?.Invoke(currentPage);
         }
 
+        public void SetActive(bool isActive)
+        {
+            view.gameObject.SetActive(isActive);
+        }
+
         public void Configure(int maxElements, int pageSize)
         {
             totalPages = (maxElements + pageSize - 1) / pageSize;

@@ -22,6 +22,18 @@ namespace DCL.Backpack
         public AssetReferenceT<NFTColorsSO> RarityColorMappings { get; private set; }
 
         [field: SerializeField]
+        public AssetReferenceT<ColorPresetsSO> HairColors { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceT<ColorPresetsSO> EyesColors { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceT<ColorPresetsSO> BodyshapeColors { get; private set; }
+
+        [field: SerializeField]
         public AssetReferenceGameObject PageButtonView { get; private set; }
+
+        [field: SerializeField]
+        public AssetReferenceGameObject ColorToggle { get; private set; }
     }
 }

@@ -11,6 +11,6 @@ namespace DCL.SDKComponents.AudioSources
     /// </summary>
     [UpdateInGroup(typeof(SyncedPresentationSystemGroup))]
     [UpdateBefore(typeof(StreamableLoadingGroup))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     public partial class SDKAudioSourceGroup { }
 }

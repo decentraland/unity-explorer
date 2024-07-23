@@ -656,3 +656,5 @@ ShaderVariantCollection:
         passType: 13
       - keywords: _IS_OUTLINE_CLIPPING_NO _OUTLINE_NML
         passType: 13
+      - keywords: _IS_OUTLINE_CLIPPING_YES _OUTLINE_NML
+        passType: 13

@@ -1,6 +1,7 @@
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Optimization.Pools;
+using DCL.Utilities.Extensions;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -19,7 +20,7 @@ namespace DCL.AvatarRendering.Emotes
 
         public EmotePlayer(AudioSource audioSourcePrefab)
         {
-            poolRoot = GameObject.Find("ROOT_POOL_CONTAINER").transform;
+            poolRoot = GameObject.Find("ROOT_POOL_CONTAINER")!.transform;
 
             audioSourcePool = new GameObjectPool<AudioSource>(poolRoot, () => Object.Instantiate(audioSourcePrefab));
 
@@ -41,13 +42,13 @@ namespace DCL.AvatarRendering.Emotes
                 Stop(emoteInUse);
 
             if (!pools.ContainsKey(mainAsset))
-                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset, isLooping), onRelease: releaseEmoteReferences));
+                pools.Add(mainAsset, new GameObjectPool<EmoteReferences>(poolRoot, () => CreateNewEmoteReference(mainAsset), onRelease: releaseEmoteReferences));
 
-            EmoteReferences? emoteReferences = pools[mainAsset].Get();
+            EmoteReferences? emoteReferences = pools[mainAsset]!.Get();
             if (!emoteReferences) return false;
 
             Transform avatarTransform = view.GetTransform();
-            Transform emoteTransform = emoteReferences.transform;
+            Transform emoteTransform = emoteReferences!.transform;
             emoteTransform.SetParent(avatarTransform, false);
             emoteTransform.localPosition = Vector3.zero;
             emoteTransform.localRotation = Quaternion.identity;
@@ -79,11 +80,12 @@ namespace DCL.AvatarRendering.Emotes
 
             if (audioAsset != null)
             {
-                AudioSource? audioSource = audioSourcePool.Get();
+                AudioSource audioSource = audioSourcePool.Get()!;
                 audioSource.clip = audioAsset;
                 audioSource.spatialize = isSpatial;
                 audioSource.spatialBlend = isSpatial ? 1 : 0;
                 audioSource.transform.position = avatarTransform.position;
+                audioSource.loop = isLooping;
                 audioSource.Play();
                 emoteReferences.audioSource = audioSource;
             }
@@ -93,13 +95,13 @@ namespace DCL.AvatarRendering.Emotes
             return true;
         }
 
-        private EmoteReferences CreateNewEmoteReference(GameObject mainAsset, bool isLooping)
+        private static EmoteReferences CreateNewEmoteReference(GameObject mainAsset)
         {
-            GameObject? mainGameObject = Object.Instantiate(mainAsset);
+            GameObject mainGameObject = Object.Instantiate(mainAsset)!;
 
-            Animator? animator = mainGameObject.GetComponent<Animator>();
-            EmoteReferences? references = mainGameObject.AddComponent<EmoteReferences>();
-            Renderer[] renderers = mainGameObject.GetComponentsInChildren<Renderer>();
+            Animator animator = mainGameObject.GetComponent<Animator>().EnsureNotNull();
+            EmoteReferences references = mainGameObject.AddComponent<EmoteReferences>()!;
+            IReadOnlyList<Renderer> renderers = mainGameObject.GetComponentsInChildren<Renderer>()!;
 
             foreach (Renderer renderer in renderers)
             {
@@ -115,12 +117,12 @@ namespace DCL.AvatarRendering.Emotes
 
             AnimationClip? avatarClip = null;
             AnimationClip? propClip = null;
-            int propClipHash = 0;
+            var propClipHash = 0;
 
-            RuntimeAnimatorController? rac = animator.runtimeAnimatorController;
-            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get();
+            RuntimeAnimatorController rac = animator.runtimeAnimatorController!;
+            List<AnimationClip> uniqueClips = ListPool<AnimationClip>.Get()!;
 
-            foreach (AnimationClip clip in rac.animationClips)
+            foreach (AnimationClip clip in rac.animationClips!)
                 if (!uniqueClips.Contains(clip))
                     uniqueClips.Add(clip);
 
@@ -155,7 +157,7 @@ namespace DCL.AvatarRendering.Emotes
             if (!emotesInUse.Remove(emoteReference, out GameObjectPool<EmoteReferences>? pool))
                 return;
 
-            pool.Release(emoteReference);
+            pool!.Release(emoteReference);
         }
     }
 }

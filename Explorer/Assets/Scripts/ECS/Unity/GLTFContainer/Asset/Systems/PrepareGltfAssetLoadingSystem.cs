@@ -7,7 +7,10 @@ using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
+using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -19,9 +22,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
-        private readonly IStreamableCache<GltfContainerAsset, string> cache;
+        private readonly IGltfContainerAssetsCache cache;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IStreamableCache<GltfContainerAsset, string> cache) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache) : base(world)
         {
             this.cache = cache;
         }
@@ -36,7 +39,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
             // Try load from cache
-            if (cache.TryGet(intention.Name, out GltfContainerAsset asset))
+            if (cache.TryGet(intention.Hash, out GltfContainerAsset asset))
             {
                 // construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
@@ -44,7 +47,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             }
 
             // If not in cache, try load from asset bundle
-            World.Add(entity, GetAssetBundleIntention.FromName(intention.Name));
+            World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetPlatform()}", intention.Name));
         }
     }
 }

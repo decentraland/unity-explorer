@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.Diagnostics;
 using DCL.Input;
 using DCL.ParcelsService;
 using DCL.PlacesAPIService;
@@ -100,7 +101,13 @@ namespace DCL.TeleportPrompt
                 else
                     SetPlaceInfo(placeInfo);
             }
-            catch (Exception e) when (e is not OperationCanceledException) { SetEmptyPlaceInfo(parcel); }
+            catch (Exception e)
+            {
+                SetEmptyPlaceInfo(parcel);
+
+                if (e is not OperationCanceledException)
+                    ReportHub.LogException(e, ReportCategory.UI);
+            }
         }
 
         private void SetPlaceInfo(PlacesData.PlaceInfo placeInfo)

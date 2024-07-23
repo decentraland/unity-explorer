@@ -1,5 +1,4 @@
 ﻿using DCL.DebugUtilities.UIBindings;
-using JetBrains.Annotations;
 
 namespace DCL.DebugUtilities
 {
@@ -45,11 +44,8 @@ namespace DCL.DebugUtilities
             Error,
         }
 
-        [CanBeNull]
-        public readonly string Text;
-
-        [CanBeNull]
-        public readonly ElementBinding<string> Binding;
+        public readonly string? Text;
+        public readonly ElementBinding<string>? Binding;
 
         public readonly Position HintPosition;
         public readonly Kind HintKind;

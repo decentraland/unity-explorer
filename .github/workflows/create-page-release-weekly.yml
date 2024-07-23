@@ -1,0 +1,63 @@
+name: Create Page Weekly Release
+
+on:
+  workflow_run:
+    workflows: ["Build Weekly Release"]
+    types:
+      - completed
+
+jobs:  
+  get-info:
+    name: Get Info
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      latest_version: ${{ steps.get_version.outputs.latest_version }}
+      full_version: ${{ steps.get_version.outputs.next_full_version }}
+      tag_version: ${{ steps.get_version.outputs.next_tag_version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        uses: ./.github/actions/version
+        
+  generate-release-info:
+    name: Generate release info
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: get-info
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Apply tag to branch
+        run: |
+          TAG=${{ needs.get-info.outputs.tag_version }}
+          git tag $TAG
+          git push origin $TAG
+
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          name: Decentraland_.*
+          name_is_regexp: true
+          skip_unpack: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          draft: true # Swap to auto-release!
+          tag_name: ${{ needs.get-info.outputs.tag_version }}
+          target_commitish: ${{ github.sha }}
+          files: |
+            ./Decentraland_windows64.zip
+            ./Decentraland_macos.zip
+          fail_on_unmatched_files: true

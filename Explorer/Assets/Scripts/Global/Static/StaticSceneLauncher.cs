@@ -1,5 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
+using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.DebugUtilities;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -14,6 +17,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
+using DCL.PluginSystem.Global;
+using DCL.Utilities.Extensions;
+using Global.Dynamic;
 using UnityEngine;
 
 namespace Global.Static
@@ -56,11 +62,8 @@ namespace Global.Static
                 // Initialize .NET logging ASAP since it might be used by another systems
                 // Otherwise we might get exceptions in different platforms
                 DotNetLoggingPlugin.Initialize();
-                
-                if (useStoredCredentials
 
-                    // avoid storing invalid credentials
-                    && useRealAuthentication)
+                if (useStoredCredentials && useRealAuthentication) // avoid storing invalid credentials
                     identityCache = new ProxyIdentityCache(new MemoryWeb3IdentityCache(),
                         new PlayerPrefsIdentityProvider(new PlayerPrefsIdentityProvider.DecentralandIdentityWithNethereumAccountJsonSerializer()));
                 else
@@ -95,13 +98,27 @@ namespace Global.Static
 
                 if (!string.IsNullOrEmpty(ownProfileJson))
                 {
-                    var ownProfile = new Profile();
+                    var ownProfile = Profile.Create();
                     JsonUtility.FromJson<ProfileJsonDto>(ownProfileJson).CopyTo(ownProfile);
                     await memoryProfileRepository.SetAsync(ownProfile, ct);
                 }
 
-                (staticContainer, sceneSharedContainer) = await InstallAsync(globalPluginSettingsContainer, scenePluginSettingsContainer,
-                    identityCache, dappWeb3Authenticator, identityCache, memoryProfileRepository, webRequests, ct);
+                var assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
+
+                var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettingsAsync(assetProvisioner,
+                    globalPluginSettingsContainer.GetSettings<BootstrapSettings>(), ct);
+
+                (staticContainer, sceneSharedContainer) = await InstallAsync(
+                    assetProvisioner,
+                    reportHandlingSettings.Value,
+                    new DebugViewsCatalog(),
+                    globalPluginSettingsContainer,
+                    scenePluginSettingsContainer,
+                    identityCache,
+                    dappWeb3Authenticator,
+                    identityCache,
+                    memoryProfileRepository,
+                    webRequests, ct);
 
                 sceneLauncher.Initialize(sceneSharedContainer, destroyCancellationToken);
             }
@@ -115,6 +132,9 @@ namespace Global.Static
         }
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
+            IAssetsProvisioner assetsProvisioner,
+            IReportsHandlingSettings reportHandlingSettings,
+            DebugViewsCatalog debugViewsCatalog,
             IPluginSettingsContainer globalSettingsContainer,
             IPluginSettingsContainer sceneSettingsContainer,
             IWeb3IdentityCache web3IdentityProvider,
@@ -125,12 +145,21 @@ namespace Global.Static
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(globalSettingsContainer, web3IdentityProvider, ethereumApi, ct);
+            (StaticContainer? staticContainer, bool isLoaded)
+                = await StaticContainer.CreateAsync(
+                assetsProvisioner,
+                reportHandlingSettings,
+                debugViewsCatalog,
+                globalSettingsContainer,
+                web3IdentityProvider,
+                ethereumApi,
+                ct
+            )!;
 
             if (!isLoaded)
                 GameReports.PrintIsDead();
 
-            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
+            await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)).EnsureNotNull());
 
             var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
                 new MVCManager(

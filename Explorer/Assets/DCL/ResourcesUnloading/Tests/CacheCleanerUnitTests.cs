@@ -7,6 +7,7 @@ using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Textures;
+using ECS.Unity.GLTFContainer.Asset.Cache;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using NSubstitute;
 using NUnit.Framework;
@@ -24,7 +25,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IWearableAssetsCache wearableAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
-        private IStreamableCache<GltfContainerAsset, string> gltfContainerAssetsCache;
+        private IGltfContainerAssetsCache gltfContainerAssetsCache;
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
         private IProfileCache profileCache;
@@ -46,7 +47,7 @@ namespace DCL.ResourcesUnloading.Tests
             texturesCache = Substitute.For<IStreamableCache<Texture2D, GetTextureIntention>>();
             audioClipsCache = Substitute.For<IStreamableCache<AudioClip, GetAudioClipIntention>>();
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
-            gltfContainerAssetsCache = Substitute.For<IStreamableCache<GltfContainerAsset, string>>();
+            gltfContainerAssetsCache = Substitute.For<IGltfContainerAssetsCache>();
             profileCache = Substitute.For<IProfileCache>();
             lodAssetsPool = Substitute.For<ILODAssetsPool>();
             roadAssetPool = Substitute.For<IRoadAssetPool>();

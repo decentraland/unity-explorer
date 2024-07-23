@@ -90,6 +90,10 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (!UnityObjectUtils.IsQuitting)
             {
                 cachedWearable.Instance.SetActive(false);
+
+                foreach (Renderer renderer in cachedWearable.Renderers)
+                    renderer.enabled = true;
+
                 cachedWearable.Instance.transform.SetParent(parentContainer);
             }
         }

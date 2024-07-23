@@ -963,12 +963,11 @@
             <param name="newCapacity">The amount of <see cref="T:Arch.Core.Chunk"/>'s required, in total.</param>
         </member>
         <member name="M:Arch.Core.Archetype.EnsureEntityCapacity(System.Int32)">
-            TODO : Currently this only ensures additional entity capacity, instead it should take the whole capacity in count.
             <summary>
-                Ensures the capacity of the <see cref="P:Arch.Core.Archetype.Chunks"/> array.
-                Increases the <see cref="P:Arch.Core.Archetype.ChunkCapacity"/>.
+                Ensures the capacity of the <see cref="P:Arch.Core.Archetype.Chunks"/> array for a certain amount of <see cref="M:Arch.Core.Archetype.Entity(Arch.Core.Slot@)"/>s.
+                Increases the <see cref="P:Arch.Core.Archetype.ChunkCapacity"/> to fit all entities within it.
             </summary>
-            <param name="newCapacity">The amount of <see cref="T:Arch.Core.Chunk"/>'s required, in total.</param>
+            <param name="newCapacity">The amount of <see cref="M:Arch.Core.Archetype.Entity(Arch.Core.Slot@)"/>'s required, in total.</param>
         </member>
         <member name="M:Arch.Core.Archetype.TrimExcess">
             <summary>
@@ -2440,7 +2439,6 @@
             <param name="slot">Its new <see cref="T:Arch.Core.Slot"/>.</param>
         </member>
         <member name="M:Arch.Core.EntityInfoStorage.Shift(Arch.Core.Archetype,Arch.Core.Slot,Arch.Core.Archetype,Arch.Core.Slot)">
-            TODO : Find a cleaner way to break? One that does NOT require a branching?
             <summary>
                 Updates the <see cref="T:Arch.Core.EntityInfo"/> and all entities that moved/shifted between the archetypes.
                 <remarks>Use and modify with caution, one small logical issue and the whole framework stops working.</remarks>
@@ -3104,12 +3102,13 @@
                 contains several methods for math operations.
             </summary>
         </member>
-        <member name="M:Arch.Core.Extensions.Internal.MathExtensions.RoundToPowerOfTwo(System.Int32)">
+        <member name="M:Arch.Core.Extensions.Internal.MathExtensions.Max(System.Int32,System.Int32)">
             <summary>
-            This method will round down to the nearest power of 2 number. If the supplied number is a power of 2 it will return it.
+                Returns the max of two ints by bit operation without branching.
             </summary>
-            <param name="num"></param>
-            <returns></returns>
+            <param name="a">The first int.</param>
+            <param name="b">The second int.</param>
+            <returns>The highest of both ints.</returns>
         </member>
         <member name="T:Arch.Core.Extensions.WorldExtensions">
             <summary>

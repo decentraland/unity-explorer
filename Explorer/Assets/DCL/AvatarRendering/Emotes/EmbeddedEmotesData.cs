@@ -69,8 +69,8 @@ namespace DCL.AvatarRendering.Emotes
                 WearableRegularAsset asset = CreateWearableAsset(embeddedEmote.prefab);
                 asset.AddReference();
                 var assetLoadResult = new StreamableLoadingResult<WearableRegularAsset>(asset);
-                emote.WearableAssetResults[BodyShape.MALE] = assetLoadResult;
-                emote.WearableAssetResults[BodyShape.FEMALE] = assetLoadResult;
+                emote.AssetResults[BodyShape.MALE] = assetLoadResult;
+                emote.AssetResults[BodyShape.FEMALE] = assetLoadResult;
 
                 if (embeddedEmote.audioClip != null)
                 {

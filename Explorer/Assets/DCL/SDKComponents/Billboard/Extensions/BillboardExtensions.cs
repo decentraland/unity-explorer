@@ -31,6 +31,11 @@ namespace DCL.Billboard.Extensions
 
             billboard.BillboardMode = mode;
         }
+        
+        public static BillboardMode GetBillboardMode(this PBBillboard self)
+        {
+            return self.HasBillboardMode ? self.BillboardMode : BillboardMode.BmAll;
+        }
 
         public static string AsString(this PBBillboard billboard) =>
             $"Billboard: {{x: {billboard.UseX()}; y: {billboard.UseY()}; z: {billboard.UseZ()}}}";

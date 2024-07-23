@@ -17,7 +17,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
     ///     Individual pool for each GltfContainer source. LRU cache
     ///     <para>Gltf Containers can't be reused</para>
     /// </summary>
-    public class GltfContainerAssetsCache : IDereferencableCache<GltfContainerAsset, string>
+    public class GltfContainerAssetsCache : IGltfContainerAssetsCache, IEqualityComparer<string>
     {
         internal readonly Dictionary<string, List<GltfContainerAsset>> cache;
         private readonly Transform parentContainer;
@@ -47,7 +47,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             isDisposed = true;
         }
 
-        public bool TryGet(in string key, out GltfContainerAsset asset)
+        public bool TryGet(in string key, out GltfContainerAsset? asset)
         {
             if (cache.TryGetValue(key, out List<GltfContainerAsset> assets) && assets.Count > 0)
             {
@@ -62,11 +62,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
 
             asset = default(GltfContainerAsset);
             return false;
-        }
-
-        public void Add(in string key, GltfContainerAsset asset)
-        {
-            // Nothing to do, we don't reuse the existing instantiated game objects
         }
 
         /// <summary>
@@ -90,7 +85,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Cache
             if (UnityObjectUtils.IsQuitting) return;
 
             asset.Root.SetActive(false);
-            asset.Root.transform.SetParent(parentContainer);
+            asset.Root.transform.SetParent(parentContainer, false);
         }
 
         public void Unload(IPerformanceBudget frameTimeBudget, int maxUnloadAmount)

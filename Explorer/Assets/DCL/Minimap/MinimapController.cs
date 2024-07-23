@@ -3,8 +3,9 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
+using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
-using DCL.Chat;
+using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
 using DCL.ExplorePanel;
 using DCL.MapRenderer;
@@ -21,6 +22,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using UnityEngine;
 using Utility;
@@ -29,7 +31,7 @@ namespace DCL.Minimap
 {
     public partial class MinimapController : ControllerBase<MinimapView>, IMapActivityOwner
     {
-        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers;
+        private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
         private const float ANIMATION_TIME = 0.2f;
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
@@ -43,12 +45,9 @@ namespace DCL.Minimap
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
-        private SideMenuController sideMenuController;
         private readonly IRealmNavigator realmNavigator;
-        
-        private static readonly int EXPAND = Animator.StringToHash("Expand");
-        private static readonly int COLLAPSE = Animator.StringToHash("Collapse");
-        
+        private readonly IScenesCache scenesCache;
+
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
 
@@ -62,7 +61,8 @@ namespace DCL.Minimap
             TrackPlayerPositionSystem system,
             IRealmData realmData,
             IChatMessagesBus chatMessagesBus,
-            IRealmNavigator realmNavigator
+            IRealmNavigator realmNavigator,
+            IScenesCache scenesCache
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -72,6 +72,7 @@ namespace DCL.Minimap
             this.realmData = realmData;
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
+            this.scenesCache = scenesCache;
         }
 
         private void OnRealmChanged(bool isGenesis)
@@ -89,9 +90,9 @@ namespace DCL.Minimap
             viewInstance.goToGenesisCityButton.onClick.AddListener(() => chatMessagesBus.Send("/goto 0,0"));
             viewInstance.SideMenuCanvasGroup.alpha = 0;
             viewInstance.SideMenuCanvasGroup.gameObject.SetActive(false);
-            sideMenuController = new SideMenuController(viewInstance.sideMenuView);
+            new SideMenuController(viewInstance.sideMenuView);
             SetWorldMode(realmData.ScenesAreFixed);
-            realmNavigator.OnRealmChanged += OnRealmChanged;
+            realmNavigator.RealmChanged += OnRealmChanged;
         }
 
         private void ExpandMinimap()
@@ -99,7 +100,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
-            viewInstance.minimapAnimator.SetTrigger(EXPAND);
+            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.EXPAND);
         }
 
         private void CollapseMinimap()
@@ -107,15 +108,12 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
-            viewInstance.minimapAnimator.SetTrigger(COLLAPSE);
+            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.COLLAPSE);
         }
 
         private void OpenSideMenu()
         {
-            if (viewInstance.SideMenuCanvasGroup.gameObject.activeInHierarchy)
-            {
-                viewInstance.SideMenuCanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(false));
-            }
+            if (viewInstance.SideMenuCanvasGroup.gameObject.activeInHierarchy) { viewInstance.SideMenuCanvasGroup.DOFade(0, ANIMATION_TIME).SetEase(Ease.InOutQuad).OnComplete(() => viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(false)); }
             else
             {
                 viewInstance.SideMenuCanvasGroup.gameObject.gameObject.SetActive(true);
@@ -176,6 +174,11 @@ namespace DCL.Minimap
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
             RetrieveParcelInfoAsync(playerParcelPosition).Forget();
+
+            bool isNotEmptyParcel = scenesCache.Contains(playerParcelPosition);
+            bool isSdk7Scene = scenesCache.TryGetByParcel(playerParcelPosition, out _);
+            viewInstance.sdk6Label.gameObject.SetActive(isNotEmptyParcel && !isSdk7Scene);
+
             return;
 
             async UniTaskVoid RetrieveParcelInfoAsync(Vector2Int playerParcelPosition)
@@ -198,12 +201,7 @@ namespace DCL.Minimap
                     ReportHub.LogWarning(ReportCategory.UNSPECIFIED, $"Not a place requested: {notAPlaceException.Message}");
                 }
                 catch (Exception) { viewInstance.placeNameText.text = "Unknown place"; }
-                finally
-                {
-                    viewInstance.placeCoordinatesText.text = realmData.ScenesAreFixed ?
-                        realmData.RealmName :
-                        playerParcelPosition.ToString().Replace("(", "").Replace(")", "");
-                }
+                finally { viewInstance.placeCoordinatesText.text = playerParcelPosition.ToString().Replace("(", "").Replace(")", ""); }
             }
         }
 
@@ -221,7 +219,7 @@ namespace DCL.Minimap
         public override void Dispose()
         {
             cts.SafeCancelAndDispose();
-            realmNavigator.OnRealmChanged -= OnRealmChanged;
+            realmNavigator.RealmChanged -= OnRealmChanged;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

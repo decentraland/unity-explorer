@@ -81,18 +81,29 @@ namespace DCL.Profiles.Self
 
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
-            profile = profileBuilder.From(profile)
-                                    .WithBodyShape(bodyShape)
-                                    .WithWearables(uniqueWearables)
-                                    .WithEmotes(uniqueEmotes)
-                                    .WithForceRender(forceRender)
-                                    .WithVersion(profile!.Version + 1)
-                                    .Build();
+            var newProfile = profileBuilder.From(profile)
+                                           .WithBodyShape(bodyShape)
+                                           .WithWearables(uniqueWearables)
+                                           .WithColors(equippedWearables.GetColors())
+                                           .WithEmotes(uniqueEmotes)
+                                           .WithForceRender(forceRender)
+                                           .WithVersion(profile!.Version + 1)
+                                           .Build();
 
-            profile.UserId = web3IdentityCache.Identity.Address;
+            newProfile.UserId = web3IdentityCache.Identity.Address;
 
-            await profileRepository.SetAsync(profile, ct);
-            return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
+            // Skip publishing the same profile
+            if (newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
+                && newProfile.Avatar.wearables.SetEquals(profile.Avatar.wearables)
+                && newProfile.Avatar.emotes.EqualsContentInOrder(profile.Avatar.emotes)
+                && newProfile.Avatar.forceRender.SetEquals(profile.Avatar.forceRender)
+                && newProfile.Avatar.HairColor.Equals(profile.Avatar.HairColor)
+                && newProfile.Avatar.EyesColor.Equals(profile.Avatar.EyesColor)
+                && newProfile.Avatar.SkinColor.Equals(profile.Avatar.SkinColor))
+                return profile;
+
+            await profileRepository.SetAsync(newProfile, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
         }
 
         private void ConvertEquippedWearablesIntoUniqueUrns(Profile? profile, ISet<URN> uniqueWearables)

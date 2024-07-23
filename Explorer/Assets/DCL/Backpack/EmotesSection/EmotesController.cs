@@ -1,4 +1,5 @@
 using DCL.Backpack.EmotesSection;
+using DCL.Character.CharacterMotion.Components;
 using UnityEngine;
 using DCL.UI;
 using System;
@@ -7,8 +8,6 @@ namespace DCL.Backpack
 {
     public class EmotesController : ISection, IDisposable
     {
-        private static readonly int IN = Animator.StringToHash("In");
-
         private readonly RectTransform rectTransform;
         private readonly EmotesView view;
         private readonly BackpackEmoteSlotsController slotsController;
@@ -44,7 +43,7 @@ namespace DCL.Backpack
 
         public void Animate(int triggerId)
         {
-            view.gameObject.SetActive(triggerId == IN);
+            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
         }
 
         public void ResetAnimator() { }

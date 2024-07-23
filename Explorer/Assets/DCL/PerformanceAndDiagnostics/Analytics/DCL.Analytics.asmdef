@@ -1,0 +1,31 @@
+{
+    "name": "DCL.Analytics",
+    "rootNamespace": "",
+    "references": [
+        "GUID:101b8b6ebaf64668909b49c4b7a1420d",
+        "GUID:e0eedfa2deb9406daf86fd8368728e39",
+        "GUID:8322ea9340a544c59ddc56d4793eac74",
+        "GUID:c80c82a8f4e04453b85fbab973d6774a",
+        "GUID:166b65e6dfc848bb9fb075f53c293a38",
+        "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
+        "GUID:766b242fb43af451aaa331f39872177d",
+        "GUID:3b1872af2b2224d8ab49d79a7efd4cf9",
+        "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
+        "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:9ca29a7d75ab84bab806a20bbd350fd8"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Segment.Analytics.CSharp.dll",
+        "Serialization.NET.dll",
+        "Coroutine.NET.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

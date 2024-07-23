@@ -12,7 +12,7 @@ using Utility.PriorityQueue;
 
 namespace ECS.StreamableLoading.NFTShapes
 {
-    public class NftShapeCache : IStreamableCache<Texture2D, GetNFTShapeIntention>
+    public class NftShapeCache : StreamableCacheBase<Texture2D, GetNFTShapeIntention>, IStreamableCache<Texture2D, GetNFTShapeIntention>
     {
         internal readonly Dictionary<GetNFTShapeIntention, Texture2D> cache;
         private readonly SimplePriorityQueue<GetNFTShapeIntention, long> unloadQueue = new ();
@@ -38,10 +38,7 @@ namespace ECS.StreamableLoading.NFTShapes
 
         public void Add(in GetNFTShapeIntention key, Texture2D asset)
         {
-            if (cache.TryAdd(key, asset))
-                unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
-
-            ProfilingCounters.TexturesInCache.Value = cache.Count;
+            Add(cache, unloadQueue, ProfilingCounters.TexturesInCache, in key, asset);
         }
 
         public bool TryGet(in GetNFTShapeIntention key, out Texture2D texture)

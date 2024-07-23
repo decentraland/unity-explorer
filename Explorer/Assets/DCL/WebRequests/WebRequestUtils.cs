@@ -1,11 +1,21 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
+using DCL.Utilities.Extensions;
 using System;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
+        public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
+            new (coreOp, fallbackValue, behaviour, reportContext);
+
+        public static SuppressExceptionWithFallback<GetTextureWebRequest.CreateTextureOp, GetTextureWebRequest, Texture2D> SuppressExceptionsWithFallback
+            (this GetTextureWebRequest.CreateTextureOp coreOp, Texture2D fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) =>
+            new (coreOp, fallbackValue, behaviour, reportContext);
+
         public static async UniTask<T> WithCustomExceptionAsync<T>(this UniTask<T> webRequestFlow, Func<UnityWebRequestException, Exception> newExceptionFactoryMethod)
         {
             try { return await webRequestFlow; }

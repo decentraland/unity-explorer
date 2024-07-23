@@ -28,8 +28,8 @@ namespace DCL.Interaction.PlayerOriginated.Utility
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsQualifiedByDistance(in PlayerOriginRaycastResult raycastResult, PBPointerEvents.Types.Info info) =>
-            !(raycastResult.GetDistance() > info.MaxDistance);
+        public static bool IsQualifiedByDistance(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, PBPointerEvents.Types.Info info) =>
+            !(raycastResultForSceneEntities.GetDistance() > info.MaxDistance);
 
         /// <summary>
         ///     Adds hover input if the entry is qualified for listening to it
@@ -89,6 +89,26 @@ namespace DCL.Interaction.PlayerOriginated.Utility
 
             resultsIntent.ValidIndices.Add((byte)entryIndex);
         }
+
+        /// <summary>
+        ///     Handler Pointer Up and Pointer Down, check the corresponding input action if it was upped or downed this frame
+        /// </summary>
+        public static void TryAppendButtonAction(InputAction inputAction, DCL.ECSComponents.InputAction ecsInputAction,
+            ref AppendPointerEventResultsIntent resultsIntent)
+        {
+            if (inputAction.WasPressedThisFrame())
+            {
+                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetDown);
+                return;
+            }
+
+            if (inputAction.WasReleasedThisFrame())
+            {
+                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetUp);
+                return;
+            }
+        }
+
 
         public static void PrepareDefaultValues(this PBPointerEvents.Types.Info info)
         {

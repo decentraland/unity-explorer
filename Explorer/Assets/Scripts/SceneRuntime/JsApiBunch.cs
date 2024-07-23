@@ -31,5 +31,11 @@ namespace SceneRuntime
             foreach (IJsApiWrapper wrap in wraps)
                 wrap.Dispose();
         }
+
+        public void SetIsDisposing()
+        {
+            foreach (IJsApiWrapper wrap in wraps)
+                wrap.SetIsDisposing();
+        }
     }
 }

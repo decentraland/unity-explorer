@@ -11,11 +11,13 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Systems;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Profiles;
 using ECS.Abstract;
+using ECS.Groups;
 using ECS.LifeCycle.Components;
 using ECS.StreamableLoading.Common.Components;
 using System;
@@ -28,13 +30,14 @@ namespace DCL.AvatarRendering.Emotes
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(AvatarGroup))]
     [UpdateAfter(typeof(RemoteEmotesSystem))]
+    [UpdateBefore(typeof(InterpolateCharacterSystem))]
+    [UpdateBefore(typeof(CleanUpGroup))]
     public partial class CharacterEmoteSystem : BaseUnityLoopSystem
     {
         // todo: use this to add nice Debug UI to trigger any emote?
         private readonly IDebugContainerBuilder debugContainerBuilder;
 
         private readonly IEmoteCache emoteCache;
-        private readonly string reportCategory;
         private readonly EmotePlayer emotePlayer;
         private readonly IEmotesMessageBus messageBus;
 
@@ -43,7 +46,6 @@ namespace DCL.AvatarRendering.Emotes
             this.messageBus = messageBus;
             this.emoteCache = emoteCache;
             this.debugContainerBuilder = debugContainerBuilder;
-            reportCategory = GetReportCategory();
             emotePlayer = new EmotePlayer(audioSource);
         }
 
@@ -51,10 +53,26 @@ namespace DCL.AvatarRendering.Emotes
         {
             ConsumeEmoteIntentQuery(World);
             ReplicateLoopingEmotesQuery(World);
+            CancelEmotesByDeletionQuery(World);
+            CancelEmotesByTeleportIntentionQuery(World);
             CancelEmotesByMovementQuery(World);
             CancelEmotesQuery(World);
             UpdateEmoteTagsQuery(World);
             CleanUpQuery(World);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void CancelEmotesByDeletion(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            StopEmote(ref emoteComponent, avatarView);
+        }
+
+        [Query]
+        [All(typeof(PlayerTeleportIntent))]
+        private void CancelEmotesByTeleportIntention(ref CharacterEmoteComponent emoteComponent, in IAvatarView avatarView)
+        {
+            StopEmote(ref emoteComponent, avatarView);
         }
 
         // looping emotes and cancelling emotes by tag depend on tag change, this query alone is the one that updates that value at the ond of the update
@@ -87,8 +105,7 @@ namespace DCL.AvatarRendering.Emotes
 
             if (wantsToCancelEmote)
             {
-                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-                StopEmote(ref emoteComponent, emoteReference);
+                StopEmote(ref emoteComponent, avatarView);
                 return;
             }
 
@@ -96,37 +113,36 @@ namespace DCL.AvatarRendering.Emotes
             bool isOnAnotherTag = animatorCurrentStateTag != AnimationHashes.EMOTE && animatorCurrentStateTag != AnimationHashes.EMOTE_LOOP;
 
             if (isOnAnotherTag)
-            {
-                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
-                StopEmote(ref emoteComponent, emoteReference);
-            }
+                StopEmote(ref emoteComponent, avatarView);
         }
 
         // when moving or jumping we detect the emote cancellation and we take care of getting rid of the emote props and sounds
         [Query]
         [None(typeof(CharacterEmoteIntent))]
-        private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform)
+        private void CancelEmotesByMovement(ref CharacterEmoteComponent emoteComponent, in CharacterRigidTransform rigidTransform, in IAvatarView avatarView)
         {
+            const float CUTOFF_LIMIT = 0.2f;
+
             float velocity = rigidTransform.MoveVelocity.Velocity.sqrMagnitude;
             float verticalVelocity = Mathf.Abs(rigidTransform.GravityVelocity.sqrMagnitude);
 
-            bool canEmoteBeCancelled = velocity > 0.2f || verticalVelocity > 0.2f;
+            bool canEmoteBeCancelled = velocity > CUTOFF_LIMIT || verticalVelocity > CUTOFF_LIMIT;
 
             if (!canEmoteBeCancelled) return;
 
-            EmoteReferences? emoteReference = emoteComponent.CurrentEmoteReference;
-            if (emoteReference == null) return;
-
-            StopEmote(ref emoteComponent, emoteReference);
+            StopEmote(ref emoteComponent, avatarView);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void StopEmote(ref CharacterEmoteComponent emoteComponent, EmoteReferences emoteReference)
+        private void StopEmote(ref CharacterEmoteComponent emoteComponent, IAvatarView avatarView)
         {
-            emoteComponent.EmoteClip = null;
-            emoteComponent.EmoteLoop = false;
-            emoteComponent.CurrentEmoteReference = null;
-            emotePlayer.Stop(emoteReference);
+            if (emoteComponent.CurrentEmoteReference != null)
+            {
+                emotePlayer.Stop(emoteComponent.CurrentEmoteReference);
+                avatarView.SetAnimatorTrigger(AnimationHashes.EMOTE_STOP);
+            }
+
+            emoteComponent.Reset();
         }
 
         // if you want to trigger an emote, this query takes care of consuming the CharacterEmoteIntent to trigger an emote
@@ -149,22 +165,19 @@ namespace DCL.AvatarRendering.Emotes
                     // emote failed to load? remove intent
                     if (emote.ManifestResult is { IsInitialized: true, Succeeded: false })
                     {
-                        ReportHub.LogError(reportCategory, $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
+                        ReportHub.LogError(GetReportCategory(), $"Cant play emote {emoteId} since it failed loading \n {emote.ManifestResult}");
                         World.Remove<CharacterEmoteIntent>(entity);
                         return;
                     }
 
                     BodyShape bodyShape = avatarShapeComponent.BodyShape;
-                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.WearableAssetResults[bodyShape];
+                    StreamableLoadingResult<WearableRegularAsset>? streamableAsset = emote.AssetResults[bodyShape];
 
                     // the emote is still loading? dont remove the intent yet, wait for it
                     if (streamableAsset == null)
-                    {
-                        World.Remove<CharacterEmoteIntent>(entity);
                         return;
-                    }
 
-                    var streamableAssetValue = streamableAsset.Value;
+                    StreamableLoadingResult<WearableRegularAsset> streamableAssetValue = streamableAsset.Value;
                     GameObject? mainAsset;
 
                     if (streamableAssetValue is { Succeeded: false } || (mainAsset = streamableAssetValue.Asset?.MainAsset) == null)
@@ -178,17 +191,13 @@ namespace DCL.AvatarRendering.Emotes
                     AudioClip? audioClip = audioAssetResult?.Asset;
 
                     if (!emotePlayer.Play(mainAsset, audioClip, emote.IsLooping(), emoteIntent.Spatial, in avatarView, ref emoteComponent))
-                        ReportHub.LogWarning(reportCategory, $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
+                        ReportHub.LogWarning(GetReportCategory(), $"Emote {emote.Model.Asset.metadata.name} cant be played, AB version: {emote.ManifestResult?.Asset?.GetVersion()} should be >= 16");
 
                     emoteComponent.EmoteUrn = emoteId;
+                    World.Remove<CharacterEmoteIntent>(entity);
                 }
             }
-            catch (Exception e)
-            {
-                ReportHub.LogException(e, reportCategory);
-            }
-
-            World.Remove<CharacterEmoteIntent>(entity);
+            catch (Exception e) { ReportHub.LogException(e, GetReportCategory()); }
         }
 
         // Every time the emote is looped we send a new message that should refresh the looping emotes on clients that didn't receive the initial message yet

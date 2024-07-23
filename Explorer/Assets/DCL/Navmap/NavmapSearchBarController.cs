@@ -94,7 +94,8 @@ namespace DCL.Navmap
             }
             historyRecordPanelView.gameObject.SetActive(false);
 
-            SearchAndShowAsync(searchText).Forget();
+            // Suppress cancellation but let other exceptions be printed
+            SearchAndShowAsync(searchText).SuppressCancellationThrow().Forget();
         }
 
         public void ResetSearch()
@@ -121,7 +122,7 @@ namespace DCL.Navmap
             }
         }
 
-        private async UniTaskVoid SearchAndShowAsync(string searchText)
+        private async UniTask SearchAndShowAsync(string searchText)
         {
             searchResultPanelController.SetLoadingState();
             await UniTask.Delay(1000, cancellationToken: cts.Token);

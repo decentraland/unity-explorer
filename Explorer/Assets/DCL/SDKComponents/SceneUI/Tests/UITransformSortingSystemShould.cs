@@ -15,7 +15,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
 {
     public class UITransformSortingSystemShould : UnitySystemTestBase<UITransformSortingSystem>
     {
-        private static readonly int[] ORDER = Enumerable.Range(0, 10).ToArray();
+        private static readonly int[] ORDER = Enumerable.Range(10, 10).ToArray();
 
         private Dictionary<CRDTEntity, Entity> entitiesMap;
         private Entity sceneRoot;
@@ -23,7 +23,8 @@ namespace DCL.SDKComponents.SceneUI.Tests
         [SetUp]
         public void SetUp()
         {
-            system = new UITransformSortingSystem(world);
+            entitiesMap = new Dictionary<CRDTEntity, Entity>();
+            system = new UITransformSortingSystem(world, entitiesMap);
         }
 
         [Test]
@@ -43,14 +44,13 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
         private void CreateEntities(int seed)
         {
-            entitiesMap = new Dictionary<CRDTEntity, Entity>();
-
             var root = new UITransformComponent { Transform = new VisualElement() };
             entitiesMap[SpecialEntitiesID.SCENE_ROOT_ENTITY] = sceneRoot = world.Create(root);
 
             // shuffle randomly
             var rng = new Random(seed);
 
+            int firstElement = ORDER.Min();
             int[] copy = ORDER.ToArray();
             int n = ORDER.Length;
 
@@ -65,7 +65,7 @@ namespace DCL.SDKComponents.SceneUI.Tests
             {
                 var crdtEntity = new CRDTEntity(i);
 
-                int rightOf = i - 1;
+                int rightOf = i == firstElement ? 0 : i - 1;
 
                 var sdkModel = new PBUiTransform { IsDirty = true, RightOf = rightOf };
 
@@ -74,14 +74,14 @@ namespace DCL.SDKComponents.SceneUI.Tests
 
                 var component = new UITransformComponent
                 {
-                    RelationData = new UITransformRelationData { rightOf = rightOf },
+                    RelationData = new UITransformRelationLinkedData { rightOf = rightOf },
                     Transform = vs,
                 };
 
                 Entity e = world.Create(crdtEntity, sdkModel, component);
 
                 entitiesMap[crdtEntity] = e;
-                root.RelationData.AddChild(world.Reference(sceneRoot), world.Reference(e), ref component.RelationData);
+                root.RelationData.AddChild(world.Reference(sceneRoot), crdtEntity, ref component.RelationData);
             }
         }
     }

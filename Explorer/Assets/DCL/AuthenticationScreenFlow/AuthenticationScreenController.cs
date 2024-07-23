@@ -1,18 +1,24 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
+using UnityEngine.UI;
 using Utility;
 
 namespace DCL.AuthenticationScreenFlow
@@ -20,11 +26,6 @@ namespace DCL.AuthenticationScreenFlow
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
         private const int ANIMATION_DELAY = 300;
-
-        private static readonly int IN = Animator.StringToHash("In");
-        private static readonly int OUT = Animator.StringToHash("Out");
-        private static readonly int JUMP_IN = Animator.StringToHash("Jump");
-        private static readonly int TO_OTHER = Animator.StringToHash("Different");
 
         private enum ViewState
         {
@@ -35,6 +36,8 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private const string DISCORD_LINK = "https://decentraland.org/discord/";
+        private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
+        private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -42,6 +45,9 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly FeatureFlagsCache featureFlagsCache;
+        private readonly AudioMixer generalAudioMixer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -49,6 +55,7 @@ namespace DCL.AuthenticationScreenFlow
         private UniTaskCompletionSource? lifeCycleTask;
         private StringVariable? profileNameLabel;
         private World? world;
+        private float originalWorldAudioVolume;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
 
@@ -59,7 +66,10 @@ namespace DCL.AuthenticationScreenFlow
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            Animator splashScreenAnimator)
+            Animator splashScreenAnimator,
+            CharacterPreviewEventBus characterPreviewEventBus,
+            FeatureFlagsCache featureFlagsCache,
+            AudioMixer generalAudioMixer)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -68,6 +78,9 @@ namespace DCL.AuthenticationScreenFlow
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
+            this.characterPreviewEventBus = characterPreviewEventBus;
+            this.featureFlagsCache = featureFlagsCache;
+            this.generalAudioMixer = generalAudioMixer;
         }
 
         public override void Dispose()
@@ -89,16 +102,20 @@ namespace DCL.AuthenticationScreenFlow
             viewInstance.LoginButton.onClick.AddListener(StartLoginFlowUntilEnd);
             viewInstance.CancelAuthenticationProcess.onClick.AddListener(CancelLoginProcess);
             viewInstance.JumpIntoWorldButton.onClick.AddListener(JumpIntoWorld);
-            viewInstance.UseAnotherAccountButton.onClick.AddListener(ChangeAccount);
+
+            foreach (Button button in viewInstance.UseAnotherAccountButton)
+                button.onClick.AddListener(ChangeAccount);
+
             viewInstance.VerificationCodeHintButton.onClick.AddListener(OpenOrCloseVerificationCodeHint);
             viewInstance.DiscordButton.onClick.AddListener(OpenDiscord);
+            viewInstance.RequestAlphaAccessButton.onClick.AddListener(RequestAlphaAccess);
             viewInstance.VersionText.text = Application.version;
 #if UNITY_EDITOR
             viewInstance.VersionText.text = "editor-version";
 #endif
 
             Assert.IsNotNull(world);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!, characterPreviewEventBus);
         }
 
         protected override void OnBeforeViewShow()
@@ -106,6 +123,9 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
+
+            generalAudioMixer.GetFloat(WORLD_VOLUME_EXPOSED_PARAM, out originalWorldAudioVolume);
+            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, -80);
         }
 
         protected override void OnViewClose()
@@ -116,6 +136,7 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             viewInstance.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
+            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, originalWorldAudioVolume);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
@@ -129,8 +150,16 @@ namespace DCL.AuthenticationScreenFlow
 
                 try
                 {
-                    await FetchProfileAsync(loginCancellationToken.Token);
-                    SwitchState(ViewState.Finalize);
+                    if (IsUserAllowedToAccessToBeta(storedIdentity))
+                    {
+                        await FetchProfileAsync(loginCancellationToken.Token);
+                        SwitchState(ViewState.Finalize);
+                    }
+                    else
+                    {
+                        SwitchState(ViewState.Login);
+                        ShowRestrictedUserPopup();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -141,7 +170,28 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.SetTrigger(OUT);
+            splashScreenAnimator.SetTrigger(AnimationHashes.OUT);
+        }
+
+        private void ShowRestrictedUserPopup()
+        {
+            viewInstance.RestrictedUserContainer.SetActive(true);
+        }
+
+        private bool IsUserAllowedToAccessToBeta(IWeb3Identity storedIdentity)
+        {
+#if UNITY_EDITOR
+            return true;
+#else
+            if (!featureFlagsCache.Configuration.IsEnabled("user-allow-list", "wallets")) return true;
+            if (!featureFlagsCache.Configuration.TryGetCsvPayload("user-allow-list", "wallets", out List<List<string>>? allowedUsersCsv))
+                return true;
+
+            bool isUserAllowed = allowedUsersCsv![0]
+               .Exists(s => new Web3Address(s).Equals(storedIdentity.Address));
+
+            return isUserAllowed;
+#endif
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -158,20 +208,25 @@ namespace DCL.AuthenticationScreenFlow
 
                     web3Authenticator.SetVerificationListener(ShowVerification);
 
-                    await web3Authenticator.LoginAsync(ct);
+                    IWeb3Identity identity = await web3Authenticator.LoginAsync(ct);
 
                     web3Authenticator.SetVerificationListener(null);
 
-                    SwitchState(ViewState.Loading);
+                    if (IsUserAllowedToAccessToBeta(identity))
+                    {
+                        SwitchState(ViewState.Loading);
 
-                    await FetchProfileAsync(ct);
+                        await FetchProfileAsync(ct);
 
-                    SwitchState(ViewState.Finalize);
+                        SwitchState(ViewState.Finalize);
+                    }
+                    else
+                    {
+                        SwitchState(ViewState.Login);
+                        ShowRestrictedUserPopup();
+                    }
                 }
-                catch (OperationCanceledException)
-                {
-                    SwitchState(ViewState.Login);
-                }
+                catch (OperationCanceledException) { SwitchState(ViewState.Login); }
                 catch (Exception e)
                 {
                     SwitchState(ViewState.Login);
@@ -201,6 +256,9 @@ namespace DCL.AuthenticationScreenFlow
         private async UniTask FetchProfileAsync(CancellationToken ct)
         {
             Profile profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+
+            // When the profile was already in cache, for example your previous account after logout, we need to ensure that all systems related to the profile will update
+            profile.IsDirty = true;
             profileNameLabel!.Value = profile.Name;
             characterPreviewController?.Initialize(profile.Avatar);
         }
@@ -209,7 +267,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance.FinalizeAnimator.SetTrigger(TO_OTHER);
+                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 SwitchState(ViewState.Login);
@@ -225,12 +283,13 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                viewInstance.FinalizeAnimator.SetTrigger(JUMP_IN);
+                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
                 lifeCycleTask = null;
             }
+
             AnimateAndAwaitAsync().Forget();
         }
 
@@ -243,23 +302,25 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(IN);
+                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = true;
+                    viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.LoginInProgress:
                     ResetAnimator(viewInstance.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.Slides.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(OUT);
-                    viewInstance.VerificationAnimator.SetTrigger(IN);
+                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.OUT);
+                    viewInstance.VerificationAnimator.SetTrigger(AnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Loading:
                     viewInstance.PendingAuthentication.SetActive(false);
@@ -270,6 +331,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
                 case ViewState.Finalize:
                     ResetAnimator(viewInstance.FinalizeAnimator);
@@ -278,11 +340,14 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(true);
-                    viewInstance.FinalizeAnimator.SetTrigger(IN);
+                    viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.IN);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
+                    viewInstance.RestrictedUserContainer.SetActive(false);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state), state, null);
             }
         }
 
@@ -311,6 +376,11 @@ namespace DCL.AuthenticationScreenFlow
         {
             verificationCountdownCancellationToken?.SafeCancelAndDispose();
             verificationCountdownCancellationToken = null;
+        }
+
+        private void RequestAlphaAccess()
+        {
+            webBrowser.OpenUrl(REQUEST_BETA_ACCESS_LINK);
         }
 
         public void SetWorld(World world)

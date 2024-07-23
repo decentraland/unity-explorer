@@ -1,7 +1,8 @@
-﻿using Arch.Core;
+﻿#nullable enable
+
+using Arch.Core;
 using CommunicationData.URLHelpers;
 using DCL.Diagnostics;
-using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
@@ -15,7 +16,7 @@ namespace DCL.SDKComponents.AudioSources
 {
     public static class AudioUtils
     {
-        public static void CleanUp(this ref AudioSourceComponent component, World world, IDereferencableCache<AudioClip, GetAudioClipIntention> cache, IComponentPool componentPool)
+        public static void CleanUp(this ref AudioSourceComponent component, World world, IStreamableCache<AudioClip, GetAudioClipIntention> cache)
         {
             component.ClipPromise.ForgetLoading(world);
 
@@ -24,7 +25,7 @@ namespace DCL.SDKComponents.AudioSources
             if (component.AudioSource.isPlaying)
                 component.AudioSource.Stop();
 
-            cache.Dereference(component.ClipPromise.LoadingIntention, component.AudioSource.clip);
+            cache.Dereference(component.ClipPromise.LoadingIntention, component.AudioSource.clip!);
         }
 
         public static bool TryCreateAudioClipPromise(World world, ISceneData sceneData, string pbAudioClipUrl, PartitionComponent partitionComponent, out Promise? assetPromise)
@@ -55,7 +56,7 @@ namespace DCL.SDKComponents.AudioSources
         {
             if (string.IsNullOrEmpty(url))
             {
-                ReportHub.LogError(ReportCategory.AUDIO_SOURCES, $"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
+                ReportHub.LogError(ReportCategory.SDK_AUDIO_SOURCES, $"Cannot detect AudioType. UrlName doesn't contain file extension!. Setting to {AudioType.UNKNOWN.ToString()}");
                 return AudioType.UNKNOWN;
             }
 

@@ -47,6 +47,8 @@ namespace DCL.Backpack.BackpackBus
             this.backpackCommandBus.FilterCategoryMessageReceived += HandleFilterCategoryCommand;
             this.backpackCommandBus.SearchMessageReceived += HandleSearchCommand;
             this.backpackCommandBus.PublishProfileReceived += HandlePublishProfile;
+            this.backpackCommandBus.ChangeColorMessageReceived += HandleChangeColor;
+            this.backpackCommandBus.UnEquipAllMessageReceived += HandleUnequipAll;
             this.backpackCommandBus.EmoteSlotSelectMessageReceived += HandleEmoteSlotSelectCommand;
         }
 
@@ -62,12 +64,24 @@ namespace DCL.Backpack.BackpackBus
             backpackCommandBus.FilterCategoryMessageReceived -= HandleFilterCategoryCommand;
             backpackCommandBus.SearchMessageReceived -= HandleSearchCommand;
             backpackCommandBus.PublishProfileReceived -= HandlePublishProfile;
+            this.backpackCommandBus.ChangeColorMessageReceived -= HandleChangeColor;
+            this.backpackCommandBus.UnEquipAllMessageReceived -= HandleUnequipAll;
             backpackCommandBus.EmoteSlotSelectMessageReceived -= HandleEmoteSlotSelectCommand;
         }
 
         private void HandlePublishProfile(BackpackPublishProfileCommand command)
         {
             backpackEventBus.SendPublishProfile();
+        }
+
+        private void HandleUnequipAll(BackpackUnEquipAllCommand obj)
+        {
+            backpackEventBus.SendUnEquipAll();
+        }
+
+        private void HandleChangeColor(BackpackChangeColorCommand command)
+        {
+            backpackEventBus.SendChangeColor(command.NewColor, command.Category);
         }
 
         private void HandleSearchCommand(BackpackSearchCommand command)
@@ -98,7 +112,16 @@ namespace DCL.Backpack.BackpackBus
                 return;
             }
 
-            string? category = wearable.GetCategory();
+            string? category = null;
+
+            try
+            {
+                category = wearable.GetCategory();
+            }
+            catch (Exception)
+            {
+                // Sometimes the wearable has no available category thus asking for it provokes NRE
+            }
 
             if (category == null)
             {

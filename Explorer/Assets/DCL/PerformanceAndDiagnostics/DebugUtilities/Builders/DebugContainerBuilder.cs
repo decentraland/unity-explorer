@@ -8,13 +8,19 @@ namespace DCL.DebugUtilities
     public class DebugContainerBuilder : IDebugContainerBuilder, IComparer<DebugWidgetBuilder>
     {
         private readonly List<DebugWidgetBuilder> widgetBuilders = new (100);
-        public readonly Dictionary<string, DebugWidget> Widgets = new (100);
+        private readonly HashSet<string> names = new (100);
+        private readonly Dictionary<string, DebugWidget> widgets = new (100);
 
         private readonly Func<DebugWidget> widgetFactoryMethod;
         private readonly Func<DebugControl> controlFactoryMethod;
         private readonly Dictionary<Type, IDebugElementFactory> factories;
 
-        public DebugContainer Container { get; private set; }
+        private bool isBuilt;
+        private DebugContainer? container;
+
+        public DebugContainer Container => container ?? throw new InvalidOperationException("Container has not been built yet");
+
+        public IReadOnlyDictionary<string, DebugWidget> Widgets => widgets;
 
         public bool IsVisible
         {
@@ -24,7 +30,7 @@ namespace DCL.DebugUtilities
             {
                 Container.visible = value;
 
-                foreach (DebugWidget widget in Widgets.Values)
+                foreach (DebugWidget widget in widgets.Values)
                     widget.visible = value;
             }
         }
@@ -32,7 +38,8 @@ namespace DCL.DebugUtilities
         public DebugContainerBuilder(
             Func<DebugWidget> widgetFactoryMethod,
             Func<DebugControl> controlFactoryMethod,
-            Dictionary<Type, IDebugElementFactory> factories)
+            Dictionary<Type, IDebugElementFactory> factories
+        )
         {
             this.widgetFactoryMethod = widgetFactoryMethod;
             this.controlFactoryMethod = controlFactoryMethod;
@@ -41,20 +48,36 @@ namespace DCL.DebugUtilities
 
         public DebugWidgetBuilder AddWidget(string name)
         {
-            var w = new DebugWidgetBuilder(name.ToUpper());
+            if (isBuilt)
+                throw new InvalidOperationException("Container has already been built");
+
+            name = name.ToUpper();
+
+            if (names.Contains(name))
+                throw new InvalidOperationException($"Name is already added: {name}");
+
+            var w = new DebugWidgetBuilder(name);
+            names.Add(name);
             widgetBuilders.Add(w);
             return w;
         }
 
-        public DebugContainer Build(UIDocument debugRootCanvas)
+        public void BuildWithFlex(UIDocument debugRootCanvas)
         {
+            if (isBuilt)
+                throw new InvalidOperationException("Container has already been built");
+
+            isBuilt = true;
+
+            debugRootCanvas.rootVisualElement!.style!.display = DisplayStyle.Flex;
+
             // Sort by name
             widgetBuilders.Sort(this);
 
-            Container = debugRootCanvas.rootVisualElement.Q<DebugContainer>();
+            container = debugRootCanvas.rootVisualElement!.Q<DebugContainer>();
             Container.Initialize();
 
-            debugRootCanvas.rootVisualElement.Add(Container);
+            debugRootCanvas.rootVisualElement!.Add(Container);
 
             // Instantiate widgets
             foreach (DebugWidgetBuilder widgetBuilder in widgetBuilders)
@@ -63,12 +86,11 @@ namespace DCL.DebugUtilities
                 widget.name = widgetBuilder.name;
                 widget.visible = false;
 
-                Widgets.Add(widget.name, widget);
+                widgets.Add(widget.name, widget);
                 Container.containerRoot.Add(widget);
             }
 
             Container.visible = false;
-            return Container;
         }
 
         public int Compare(DebugWidgetBuilder x, DebugWidgetBuilder y)

@@ -8,12 +8,12 @@ namespace ECS.Unity.Transforms
 {
     public static class ExposedTransformUtils
     {
-        public static void Put(IECSToCRDTWriter ecsToCrdtWriter, IExposedTransform exposedTransform, CRDTEntity entity, Vector3 scenePosition, bool checkIsDirty)
+        public static SDKTransform? Put(IECSToCRDTWriter ecsToCrdtWriter, IExposedTransform exposedTransform, CRDTEntity entity, Vector3 scenePosition, bool checkIsDirty)
         {
             if (checkIsDirty && !exposedTransform.Position.IsDirty && !exposedTransform.Rotation.IsDirty)
-                return;
+                return null;
 
-            ecsToCrdtWriter.PutMessage<SDKTransform, (IExposedTransform, Vector3)>(static (c, data) =>
+            return ecsToCrdtWriter.PutMessage<SDKTransform, (IExposedTransform, Vector3)>(static (c, data) =>
             {
                 c.Position = ParcelMathHelper.GetSceneRelativePosition(data.Item1.Position.Value, data.Item2);
                 c.Rotation = data.Item1.Rotation.Value;

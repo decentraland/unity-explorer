@@ -16,7 +16,7 @@ namespace DCL.SDKComponents.AudioSources
     ///     Places a loading intention for audio clip that can be consumed by other systems in the pipeline.
     /// </summary>
     [UpdateInGroup(typeof(SDKAudioSourceGroup))]
-    [LogCategory(ReportCategory.AUDIO_SOURCES)]
+    [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
     [ThrottlingEnabled]
     public partial class StartAudioSourceLoadingSystem : BaseUnityLoopSystem
     {

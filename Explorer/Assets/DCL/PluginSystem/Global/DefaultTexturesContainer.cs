@@ -11,7 +11,7 @@ using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
-    public class DefaultTexturesContainer : DCLContainer<DefaultTexturesContainer.Settings>
+    public class DefaultTexturesContainer : DCLWorldContainer<DefaultTexturesContainer.Settings>
     {
         public TextureArrayContainerFactory TextureArrayContainerFactory { get; private set; }
 

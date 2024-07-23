@@ -12,6 +12,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Cliffs_mat
+    second: {fileID: 2100000, guid: 55160c8c3bdd1f749a2bb43e8a994918, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: No Name
     second: {fileID: 2100000, guid: 5ac32bc3fcf691548bcc279cfa044d34, type: 2}
   - first:

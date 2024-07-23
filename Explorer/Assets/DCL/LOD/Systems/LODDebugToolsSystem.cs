@@ -6,7 +6,6 @@ using DCL.LOD.Components;
 using ECS.Abstract;
 using ECS.SceneLifeCycle;
 using Arch.System;
-using DCL.DebugUtilities.UIBindings;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
@@ -17,7 +16,6 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class LODDebugToolsSystem : BaseUnityLoopSystem
     {
-        private IDebugContainerBuilder debugBuilder;
         private readonly ILODSettingsAsset lodSettingsAsset;
 
         private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
@@ -27,7 +25,6 @@ namespace DCL.LOD.Systems
 
         public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset, Transform missingSceneParent) : base(world)
         {
-            this.debugBuilder = debugBuilder;
             this.lodSettingsAsset = lodSettingsAsset;
             this.missingSceneParent = missingSceneParent;
             lodSettingsAsset.IsColorDebuging = false;
@@ -43,6 +40,11 @@ namespace DCL.LOD.Systems
                 debugWidgetBuilder
                     .AddIntFieldWithConfirmation(lodSettingsAsset.LodPartitionBucketThresholds[i], $"LOD {i + 1} Threshold",  newValue => SetLOD(newValue, index));
             }
+
+            debugWidgetBuilder.AddIntFieldWithConfirmation(lodSettingsAsset.SDK7LodThreshold, "SDK 7 Threshold",  newValue =>
+            {
+                lodSettingsAsset.SDK7LodThreshold = newValue;
+            });
         }
 
         private void SetLOD(int newValue, int i)

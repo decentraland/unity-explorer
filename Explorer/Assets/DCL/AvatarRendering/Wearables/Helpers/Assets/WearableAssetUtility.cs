@@ -23,7 +23,11 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             if (wearableAssetsCache.TryGet(originalAsset, out CachedWearable cachedWearable))
                 cachedWearable.Instance.transform.SetParent(parent);
             else
-                cachedWearable = new CachedWearable(originalAsset, Object.Instantiate(originalAsset.MainAsset, parent));
+            {
+                var instantiatedWearable = Object.Instantiate(originalAsset.MainAsset, parent);
+                instantiatedWearable.name = originalAsset.GetInstanceName();
+                cachedWearable = new CachedWearable(originalAsset, instantiatedWearable);
+            }
 
             cachedWearable.Instance.transform.ResetLocalTRS();
             cachedWearable.Instance.gameObject.layer = parent.gameObject.layer;

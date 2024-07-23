@@ -1,5 +1,6 @@
 ﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.WebRequests;
 using DG.Tweening;
@@ -64,10 +65,9 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
             var url = $"{CHUNKS_API}{chunkId.x}%2C{chunkId.y}.jpg";
 
             Texture2D texture = (await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(url)),
-                new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear),
+                new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp, FilterMode.Trilinear)
+                                                                    .SuppressExceptionsWithFallback(Texture2D.whiteTexture, reportContext: ReportCategory.UI),
                 linkedCts.Token))!;
-
-            texture.name = chunkId.ToString();
 
             textureContainer.AddChunk(chunkId, texture);
 
@@ -79,6 +79,8 @@ namespace DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas
 
             atlasChunk.MainSpriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, pixelsPerUnit,
                 0, SpriteMeshType.FullRect, Vector4.one, false);
+
+            atlasChunk.MainSpriteRenderer.sprite.name = chunkId.ToString();
         }
     }
 }

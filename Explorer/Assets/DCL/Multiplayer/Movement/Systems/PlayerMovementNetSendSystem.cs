@@ -30,9 +30,15 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         [Query]
-        private void SendPlayerNetMovement([Data] float t, ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view, ref CharacterAnimationComponent anim, ref StunComponent stun,
+        private void SendPlayerNetMovement(
+            [Data] float t,
+            ref PlayerMovementNetworkComponent playerMovement,
+            in IAvatarView view,
+            ref CharacterAnimationComponent anim,
+            ref StunComponent stun,
             ref MovementInputComponent move,
-            ref JumpInputComponent jump)
+            ref JumpInputComponent jump
+        )
         {
             UpdateMessagePerSecondTimer(t, ref playerMovement);
 

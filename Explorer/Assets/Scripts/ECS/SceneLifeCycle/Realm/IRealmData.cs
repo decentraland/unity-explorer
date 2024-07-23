@@ -1,6 +1,4 @@
-﻿#nullable enable
-
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 
@@ -24,6 +22,7 @@ namespace ECS
         string RealmName { get; }
         int NetworkId { get; }
         string CommsAdapter { get; }
+        string Protocol { get; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -38,17 +37,18 @@ namespace ECS
             public string RealmName { get; }
             public int NetworkId { get; }
             public string CommsAdapter { get; }
+            public string Protocol { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
 
-            public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr") : this(
+            public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr", string protocol = "v3") : this(
                 new LocalIpfsRealm(new URLDomain()),
                 true,
                 realmName,
-                true, networkId, commsAdapter) { }
+                true, networkId, commsAdapter, protocol) { }
 
             public Fake(IIpfsRealm ipfs, bool scenesAreFixed, string realmName, bool configured, int networkId,
-                string commsAdapter)
+                string commsAdapter, string protocol)
             {
                 Ipfs = ipfs;
                 ScenesAreFixed = scenesAreFixed;
@@ -56,6 +56,7 @@ namespace ECS
                 Configured = configured;
                 NetworkId = networkId;
                 CommsAdapter = commsAdapter;
+                Protocol = protocol;
             }
         }
     }

@@ -7,15 +7,13 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
-using DCL.SDKComponents.SceneUI.Groups;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
 
 namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
 {
-    [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
-    [UpdateBefore(typeof(SceneUIComponentInstantiationGroup))]
+    [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.SCENE_UI)]
     [ThrottlingEnabled]
     public partial class UIBackgroundReleaseSystem : BaseUnityLoopSystem
@@ -31,6 +29,7 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
         {
             HandleEntityDestructionQuery(World);
             HandleUIBackgroundRemovalQuery(World);
+
             World.Remove<UIBackgroundComponent>(in HandleUIBackgroundRemoval_QueryDescription);
         }
 
@@ -52,8 +51,11 @@ namespace DCL.SDKComponents.SceneUI.Systems.UIBackground
                 uiBackgroundComponent.TexturePromise = null;
             }
 
-            if (componentPool != null)
-                componentPool.Release(uiBackgroundComponent.Image);
+            if (!uiBackgroundComponent.IsDisposed)
+            {
+                componentPool?.Release(uiBackgroundComponent.Image);
+                uiBackgroundComponent.Dispose();
+            }
         }
     }
 }

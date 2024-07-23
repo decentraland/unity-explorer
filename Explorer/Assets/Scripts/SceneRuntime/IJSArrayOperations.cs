@@ -10,5 +10,7 @@ namespace SceneRuntime
         ITypedArray<byte> CreateUint8Array(int bytes);
 
         object ConvertToScriptTypedArrays(IReadOnlyList<IMemoryOwner<byte>> byteArrays);
+
+        ITypedArray<byte> CreateUint8Array(ReadOnlyMemory<byte> memory);
     }
 }

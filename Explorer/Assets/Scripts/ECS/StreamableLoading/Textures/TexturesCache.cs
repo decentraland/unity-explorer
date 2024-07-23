@@ -11,7 +11,7 @@ using Utility.PriorityQueue;
 
 namespace ECS.StreamableLoading.Textures
 {
-    public class TexturesCache : IStreamableCache<Texture2D, GetTextureIntention>
+    public class TexturesCache : StreamableCacheBase<Texture2D, GetTextureIntention>, IStreamableCache<Texture2D, GetTextureIntention>
     {
         internal readonly Dictionary<GetTextureIntention, Texture2D> cache;
         private readonly SimplePriorityQueue<GetTextureIntention, long> unloadQueue = new ();
@@ -37,10 +37,7 @@ namespace ECS.StreamableLoading.Textures
 
         public void Add(in GetTextureIntention key, Texture2D asset)
         {
-            if (cache.TryAdd(key, asset))
-                unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
-
-            ProfilingCounters.TexturesInCache.Value = cache.Count;
+            Add(cache, unloadQueue, ProfilingCounters.TexturesInCache, in key, asset);
         }
 
         public bool TryGet(in GetTextureIntention key, out Texture2D texture)
