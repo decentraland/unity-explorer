@@ -37,6 +37,7 @@ namespace Global.Dynamic
         public bool EnableLOD { get; init; }
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
+        public string LocalSceneDevelopmentRealm { get; init; }
 
     }
 

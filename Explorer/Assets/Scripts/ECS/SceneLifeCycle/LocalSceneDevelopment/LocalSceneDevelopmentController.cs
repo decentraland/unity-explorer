@@ -12,20 +12,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
     public class LocalSceneDevelopmentController
     {
         private readonly ReloadSceneController reloadController;
-
-        private bool initialized = false;
         private ClientWebSocket? webSocket;
 
-        public LocalSceneDevelopmentController(ReloadSceneController reloadController)
+        public LocalSceneDevelopmentController(ReloadSceneController reloadController, string localSceneServer)
         {
             this.reloadController = reloadController;
-        }
-
-        public void Initialize(string localSceneServer)
-        {
-            if (initialized) return;
-
-            initialized = true;
 
             ConnectToServerAsync(
                     localSceneServer.Contains("https") ? localSceneServer.Replace("https", "wss") : localSceneServer.Replace("http", "ws"),

@@ -93,7 +93,7 @@ namespace Global.Dynamic
                 WorldInfoTool = worldInfoTool,
             };
 
-            (var dynamicWorldContainer, bool loaded) =  await DynamicWorldContainer.CreateAsync(
+            return await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,
                 dynamicWorldDependencies,
                 new DynamicWorldParams
@@ -103,15 +103,11 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = enableLandscape,
                     EnableLOD = enableLOD,
-                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel)
+                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
+                    LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
                 },
                 backgroundMusic,
                 ct);
-
-            if (loaded && localSceneDevelopment)
-                dynamicWorldContainer!.LocalSceneDevelopmentController.Initialize(launchSettings.GetStartingRealm());
-
-            return (dynamicWorldContainer, loaded);
         }
 
         public async UniTask<bool> InitializePluginsAsync(StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
@@ -187,7 +183,7 @@ namespace Global.Dynamic
         {
             // When started in local scene development mode (AKA preview mode) command line arguments are used
             // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
-            string[] cmdArgs = System.Environment.GetCommandLineArgs();
+            string[] cmdArgs = Environment.GetCommandLineArgs();
             if (cmdArgs.Length > 1)
             {
                 // Regex to detect different parameters in Uri based on first param after '//' and then separated by '&'

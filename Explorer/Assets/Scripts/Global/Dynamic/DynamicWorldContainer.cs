@@ -109,7 +109,7 @@ namespace Global.Dynamic
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
-        public LocalSceneDevelopmentController LocalSceneDevelopmentController { get; private set; } = null!;
+        private LocalSceneDevelopmentController? localSceneDevelopmentController;
 
         public override void Dispose()
         {
@@ -117,7 +117,7 @@ namespace Global.Dynamic
             ChatMessagesBus.Dispose();
             ProfileBroadcast.Dispose();
             MessagePipesHub.Dispose();
-            LocalSceneDevelopmentController.Dispose();
+            localSceneDevelopmentController?.Dispose();
         }
 
         private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
@@ -320,7 +320,8 @@ namespace Global.Dynamic
 
             reloadSceneController.InitializeChatMessageBus(container.ChatMessagesBus);
 
-            container.LocalSceneDevelopmentController = new LocalSceneDevelopmentController(reloadSceneController);
+            if (!string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm))
+                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
