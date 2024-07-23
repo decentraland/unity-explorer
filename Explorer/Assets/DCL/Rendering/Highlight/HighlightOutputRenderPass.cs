@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+// ReSharper disable InconsistentNaming
 
 namespace DCL.Rendering.Highlight
 {
@@ -21,7 +22,7 @@ namespace DCL.Rendering.Highlight
             private const string HIGHLIGHT_TEXTURE_NAME = "_HighlightTexture";
             private static readonly int s_HighlightTextureID = Shader.PropertyToID(HIGHLIGHT_TEXTURE_NAME);
 
-            private readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
+            private readonly IReadOnlyDictionary<Renderer, HighlightSettings> m_HighLightRenderers;
 
             // Debug
             private ReportData m_ReportData = new ("DCL_RenderFeature_Highlight_OutputPass", ReportHint.SessionStatic);
@@ -32,7 +33,7 @@ namespace DCL.Rendering.Highlight
             private RTHandle highlightRTHandle;
             private RenderTextureDescriptor highlightRTDescriptor;
 
-            public HighlightOutputRenderPass(Dictionary<Renderer, HighlightSettings> _HighLightRenderers)
+            public HighlightOutputRenderPass(IReadOnlyDictionary<Renderer, HighlightSettings> _HighLightRenderers)
             {
                 m_HighLightRenderers = _HighLightRenderers;
             }

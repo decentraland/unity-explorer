@@ -28,7 +28,7 @@ namespace DCL.Interaction.HoverCanvas.UI
             initialized = true;
         }
 
-        public void SetData([CanBeNull] string hintText, [CanBeNull] string actionKeyText, [CanBeNull] Sprite icon)
+        public void SetData(string? hintText, string? actionKeyText, Sprite? icon)
         {
             Initialize();
 

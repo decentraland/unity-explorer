@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using DCL.Rendering.Highlight.HighlightedObject;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,13 +7,14 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
+// ReSharper disable InconsistentNaming
+
 namespace DCL.Rendering.Highlight
 {
     public struct HighlightSettings
     {
         public Color Color;
         public float Width;
-        public Vector3 Offset;
     }
 
     [Serializable]
@@ -31,13 +33,18 @@ namespace DCL.Rendering.Highlight
         private const string k_ShaderName_HighlightInput = "DCL/HighlightInput_Override";
         private const string k_ShaderName_HighlightInputBlur = "DCL/HighlightInput_Blur";
         private const string k_ShaderName_HighlightOutput = "DCL/HighlightOutput";
-        private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
+        private static readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private HighlightRendererFeature_Settings m_Settings;
-        public static Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
+        private static readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers = new ();
 
-        // Input Pass Data
-        private HighlightInputRenderPass highlightInputRenderPass;
+        public static readonly IHighlightedObjects HighlightedObjects = new LogHighlightedObjects(
+            new HighlightedObjects(m_HighLightRenderers),
+            ReportHub.WithReport(ReportCategory.HIGHLIGHTS).Log
+        );
+
+        // Input P;ass Data
+        private HighlightInputRenderPass highlightInputRenderPass = null!;
         private Material highlightInputMaterial;
         private Material highlightInputBlurMaterial;
         private Shader m_ShaderHighlightInput;
@@ -52,22 +59,25 @@ namespace DCL.Rendering.Highlight
 
         // Output Pass Data
         private HighlightOutputRenderPass highlightOutputRenderPass;
-        private Material highlightOutputMaterial;
-        private Shader m_ShaderHighlightOutput;
+        private Material? highlightOutputMaterial;
+        private Shader? m_ShaderHighlightOutput;
 
         public HighlightRendererFeature()
         {
             m_Settings = new HighlightRendererFeature_Settings();
-            m_HighLightRenderers = new Dictionary<Renderer, HighlightSettings>();
         }
 
         public override void Create()
         {
-            highlightInputRenderPass = new HighlightInputRenderPass(m_HighLightRenderers);
-            highlightInputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;
+            highlightInputRenderPass = new HighlightInputRenderPass(m_HighLightRenderers)
+            {
+                renderPassEvent = RenderPassEvent.AfterRenderingPrePasses,
+            };
 
-            highlightOutputRenderPass = new HighlightOutputRenderPass(m_HighLightRenderers);
-            highlightOutputRenderPass.renderPassEvent = RenderPassEvent.AfterRenderingTransparents;
+            highlightOutputRenderPass = new HighlightOutputRenderPass(m_HighLightRenderers)
+            {
+                renderPassEvent = RenderPassEvent.AfterRenderingTransparents,
+            };
         }
 
         public override void SetupRenderPasses(ScriptableRenderer _renderer, in RenderingData _renderingData)
@@ -194,10 +204,17 @@ namespace DCL.Rendering.Highlight
                     RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Pong");
                 }
 
-                highlightInputRenderPass.Setup(highlightInputMaterial, highlightInputBlurMaterial,
-                                            highlightRTHandle_Colour, highlightRTDescriptor_Colour,
-                                            highlightRTHandle_Depth, highlightRTDescriptor_Depth,
-                                            highlightRTHandle_Colour_Blur_Ping, highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur);
+                highlightInputRenderPass.Setup(
+                    highlightInputMaterial,
+                    highlightInputBlurMaterial,
+                    highlightRTHandle_Colour,
+                    highlightRTDescriptor_Colour,
+                    highlightRTHandle_Depth,
+                    highlightRTDescriptor_Depth,
+                    highlightRTHandle_Colour_Blur_Ping,
+                    highlightRTHandle_Colour_Blur_Pong,
+                    highlightRTDescriptor_Colour_Blur
+                );
             }
 
             // Highlight Output Material, Shader, RenderTarget and pass setups
@@ -246,6 +263,7 @@ namespace DCL.Rendering.Highlight
             // HighLight Output cleanup
             {
                 highlightOutputRenderPass?.Dispose();
+
                 //outlineRTHandle?.Release();
             }
         }
