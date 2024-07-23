@@ -1,8 +1,9 @@
 ﻿using Google.Protobuf;
+using System;
 
 namespace CrdtEcsBridge.UpdateGate
 {
-    public interface ISystemsUpdateGate
+    public interface ISystemsUpdateGate : IDisposable
     {
         public void Open<T>() where T: IMessage;
 
