@@ -47,6 +47,7 @@ namespace DCL.Rendering.Highlight
             private RTHandle highLightRTHandle_Colour_Blooming_3_Up;
             private RTHandle highLightRTHandle_Colour_Blooming_4_Down;
             private RTHandle highLightRTHandle_Colour_Blooming_4_Up;
+            private RTHandle highLightRTHandle_Colour_Bloom;
             private RenderTextureDescriptor highLightRTDescriptor_Colour;
             private RenderTextureDescriptor highLightRTDescriptor_Depth;
             private RenderTextureDescriptor highLightRTDescriptor_Colour_Blur;
@@ -80,7 +81,8 @@ namespace DCL.Rendering.Highlight
                 RTHandle _highLightRTHandle_Colour_Blooming_1_Up,
                 RTHandle _highLightRTHandle_Colour_Blooming_2_Up,
                 RTHandle _highLightRTHandle_Colour_Blooming_3_Up,
-                RTHandle _highLightRTHandle_Colour_Blooming_4_Up)
+                RTHandle _highLightRTHandle_Colour_Blooming_4_Up,
+                RTHandle _highLightRTHandle_Colour_Bloom)
             {
                 highLightInputMaterial = _highLightInputMaterial;
                 highlightInputBlurMaterial = _highlightInputBlurMaterial;
@@ -102,6 +104,7 @@ namespace DCL.Rendering.Highlight
                 highLightRTHandle_Colour_Blooming_2_Up = _highLightRTHandle_Colour_Blooming_2_Up;
                 highLightRTHandle_Colour_Blooming_3_Up = _highLightRTHandle_Colour_Blooming_3_Up;
                 highLightRTHandle_Colour_Blooming_4_Up = _highLightRTHandle_Colour_Blooming_4_Up;
+                highLightRTHandle_Colour_Bloom = _highLightRTHandle_Colour_Bloom;
             }
 
             // Configure the pass by creating a temporary render texture and
@@ -241,41 +244,46 @@ namespace DCL.Rendering.Highlight
                     CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
 
                     // UPSAMPLE
-                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_4_Down);
-                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_3_Up);
-                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
-
-                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_3_Down);
-                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_3_Up);
-                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
+                    // cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_4_Down);
+                    // cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_3_Up);
+                    // CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
 
                     cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_3_Up);
-                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_2_Up);
-                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
-
-                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_2_Down);
                     cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_2_Up);
                     CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
 
                     cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_2_Up);
                     cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_1_Up);
-                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
-
-                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_1_Down);
-                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_1_Up);
                     CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
 
                     cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_1_Up);
                     cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_0_Up);
-                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 0);
-
-                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_0_Down);
-                    cmd.SetRenderTarget(highLightRTHandle_Colour_Blooming_0_Up);
                     CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
 
                     cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_0_Up);
-                    cmd.SetRenderTarget(highLightRTHandle_Colour);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Bloom);
                     CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 1);
+
+                    // COMBINE
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_0_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Bloom);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 2);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_1_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Bloom);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 2);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_2_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Bloom);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 2);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Blooming_3_Up);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour_Bloom);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 2);
+
+                    cmd.SetGlobalTexture("_HighlightTexture", highLightRTHandle_Colour_Bloom);
+                    cmd.SetRenderTarget(highLightRTHandle_Colour);
+                    CoreUtils.DrawFullScreen(cmd, highlightInputBloomingMaterial, properties: null, 3);
 
                     context.ExecuteCommandBuffer(cmd);
                     CommandBufferPool.Release(cmd);

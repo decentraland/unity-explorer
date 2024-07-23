@@ -7,13 +7,14 @@
     
     SubShader
     {
-        Blend One Zero
+        
 
         // Highlight Blooming - Downscale
         Pass
         {
             Name "Highlight Blooming - Downscale"
 
+			//Blend Zero One
             ZWrite Off
             ZTest Always
             
@@ -50,6 +51,7 @@
         {
             Name "Highlight Blooming - Upscale"
 
+			//Blend Zero One
             ZWrite Off
             ZTest Always
             
@@ -86,7 +88,7 @@
         {
             Name "Highlight Blooming - Combine"
 
-			Blend One One
+			Blend One OneMinusSrcAlpha
             ZWrite Off
             ZTest Always
             
@@ -104,7 +106,36 @@
                 {
                     float2 uv = IN.localTexcoord;
 					float4 colourOutput = UNITY_SAMPLE_TEX2D(_HighlightTexture, uv);
-					colourOutput.a *= 1.0f;
+					//colourOutput.a *= (1.0f-colourOutput.a) * 0.5f;
+					return colourOutput;
+                }
+            ENDHLSL
+        }
+
+		// Highlight Blooming - Composite
+        Pass
+        {
+            Name "Highlight Blooming - Composite"
+
+			Blend One OneMinusSrcAlpha
+            ZWrite Off
+            ZTest Always
+            
+            HLSLPROGRAM
+				#include "UnityCG.cginc"
+				#include "HighlightBlooming.hlsl"
+                #pragma target 4.5
+                #pragma vertex hl_blur_vert
+                #pragma fragment hl_blur_frag
+                #pragma enable_d3d11_debug_symbols
+
+                UNITY_DECLARE_TEX2D(_HighlightTexture);
+                
+                float4 hl_blur_frag(sk_v2f IN) : SV_Target
+                {
+                    float2 uv = IN.localTexcoord;
+					float4 colourOutput = UNITY_SAMPLE_TEX2D(_HighlightTexture, uv);
+					//colourOutput.a *= (1.0f-colourOutput.a) * 0.5f;
 					return colourOutput;
                 }
             ENDHLSL

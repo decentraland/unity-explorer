@@ -59,6 +59,7 @@ namespace DCL.Rendering.Highlight
         private RTHandle highlightRTHandle_Colour_Blooming_3_Up;
         private RTHandle highlightRTHandle_Colour_Blooming_4_Down;
         private RTHandle highlightRTHandle_Colour_Blooming_4_Up;
+        private RTHandle highlightRTHandle_Colour_Bloom;
         private RenderTextureDescriptor highlightRTDescriptor_Colour;
         private RenderTextureDescriptor highlightRTDescriptor_Depth;
         private RenderTextureDescriptor highlightRTDescriptor_Colour_Blur;
@@ -168,7 +169,8 @@ namespace DCL.Rendering.Highlight
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Colour = desc;
-                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour, highlightRTDescriptor_Colour, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour, highlightRTDescriptor_Colour, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Bloom, highlightRTDescriptor_Colour, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Bloom");
                 }
 
                 // Highlight - Depth Texture
@@ -222,8 +224,8 @@ namespace DCL.Rendering.Highlight
                     desc.vrUsage = VRTextureUsage.None;
                     desc.width = _renderingData.cameraData.cameraTargetDescriptor.width;
                     highlightRTDescriptor_Colour_Blur = desc;
-                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Ping, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Ping");
-                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur, FilterMode.Point, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Pong");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Ping, highlightRTDescriptor_Colour_Blur, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Ping");
+                    RenderingUtils.ReAllocateIfNeeded(ref highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur, FilterMode.Bilinear, TextureWrapMode.Clamp, isShadowMap: false, anisoLevel: 1, mipMapBias: 0F, name: "_Highlight_ColourTexture_Blur_Pong");
                 }
 
                 // Highlight - Blooming Texture
@@ -274,7 +276,8 @@ namespace DCL.Rendering.Highlight
                                             highlightRTHandle_Depth, highlightRTDescriptor_Depth,
                                             highlightRTHandle_Colour_Blur_Ping, highlightRTHandle_Colour_Blur_Pong, highlightRTDescriptor_Colour_Blur,
                                             highlightRTHandle_Colour_Blooming_0_Down, highlightRTHandle_Colour_Blooming_1_Down, highlightRTHandle_Colour_Blooming_2_Down, highlightRTHandle_Colour_Blooming_3_Down, highlightRTHandle_Colour_Blooming_4_Down,
-                                            highlightRTHandle_Colour_Blooming_0_Up, highlightRTHandle_Colour_Blooming_1_Up, highlightRTHandle_Colour_Blooming_2_Up, highlightRTHandle_Colour_Blooming_3_Up, highlightRTHandle_Colour_Blooming_4_Up);
+                                            highlightRTHandle_Colour_Blooming_0_Up, highlightRTHandle_Colour_Blooming_1_Up, highlightRTHandle_Colour_Blooming_2_Up, highlightRTHandle_Colour_Blooming_3_Up, highlightRTHandle_Colour_Blooming_4_Up,
+                                            highlightRTHandle_Colour_Bloom);
             }
 
             // Highlight Output Material, Shader, RenderTarget and pass setups
