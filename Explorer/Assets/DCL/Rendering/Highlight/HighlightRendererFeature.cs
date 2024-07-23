@@ -1,4 +1,5 @@
 ﻿using DCL.Diagnostics;
+using DCL.Rendering.Highlight.HighlightedObject;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -36,9 +37,10 @@ namespace DCL.Rendering.Highlight
         private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private HighlightRendererFeature_Settings m_Settings;
-        public static readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers = new ();
+        private static readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers = new ();
+        public static readonly IHighlightedObjects HighlightedObjects = new HighlightedObjects(m_HighLightRenderers);
 
-        // Input Pass Data
+        // Input P;ass Data
         private HighlightInputRenderPass highlightInputRenderPass = null!;
         private Material highlightInputMaterial;
         private Material highlightInputBlurMaterial;

@@ -83,7 +83,7 @@ namespace DCL.Interaction.Systems
 
         private void AddOrUpdateHighlight(in EntityReference entity, bool isAtDistance)
         {
-            List<Renderer> renderers = ListPool<Renderer>.Get();
+            List<Renderer> renderers = ListPool<Renderer>.Get()!;
             AddRenderersFromEntity(entity, renderers);
 
             ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
@@ -98,24 +98,7 @@ namespace DCL.Interaction.Systems
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
-            {
-                if (!HighlightRendererFeature.m_HighLightRenderers.ContainsKey(renderer))
-                {
-                    HighlightRendererFeature.m_HighLightRenderers.Add(renderer, new HighlightSettings
-                    {
-                        Color = GetColor(isAtDistance),
-                        Width = settingsData.Thickness,
-                    });
-                }
-                else
-                {
-                    HighlightSettings highlightSettings = HighlightRendererFeature.m_HighLightRenderers[renderer];
-                    highlightSettings.Color = GetColor(isAtDistance);
-                    highlightSettings.Width = settingsData.Thickness;
-                    HighlightRendererFeature.m_HighLightRenderers[renderer] = highlightSettings;
-                }
-
-            }
+                HighlightRendererFeature.HighlightedObjects.Highlight(renderer, GetColor(isAtDistance), settingsData.Thickness);
 
             ListPool<Renderer>.Release(renderers);
         }
@@ -125,7 +108,7 @@ namespace DCL.Interaction.Systems
 
         private void RemoveHighlight(in EntityReference entity)
         {
-            List<Renderer> renderers = ListPool<Renderer>.Get();
+            List<Renderer> renderers = ListPool<Renderer>.Get()!;
             AddRenderersFromEntity(entity, renderers);
 
             ref TransformComponent entityTransform = ref World.TryGetRef<TransformComponent>(entity, out bool containsTransform);
@@ -140,8 +123,7 @@ namespace DCL.Interaction.Systems
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
             foreach (Renderer renderer in renderers)
-                if (HighlightRendererFeature.m_HighLightRenderers.ContainsKey(renderer))
-                    HighlightRendererFeature.m_HighLightRenderers.Remove(renderer);
+                HighlightRendererFeature.HighlightedObjects.Disparage(renderer);
 
             ListPool<Renderer>.Release(renderers);
         }
