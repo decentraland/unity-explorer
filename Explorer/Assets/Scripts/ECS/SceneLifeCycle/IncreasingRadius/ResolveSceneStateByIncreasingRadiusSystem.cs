@@ -2,6 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Ipfs;
+using DCL.LOD.Components;
+using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -14,13 +16,8 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using DCL.LOD.Components;
-using System;
-using DCL.LOD;
-using DCL.Roads.Components;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
@@ -112,8 +109,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
                 StartScenesLoading(ref realmComponent, maxLoadingSqrDistance);
         }
 
-        private Entity[] Bleh = new Entity[100];
-
         private void StartScenesLoading(ref RealmComponent realmComponent, float maxLoadingSqrDistance)
         {
             if (sortingJobHandle is { IsCompleted: true })
@@ -128,8 +123,6 @@ namespace ECS.SceneLifeCycle.IncreasingRadius
             // Order the scenes definitions by the CURRENT partition and serve first N of them
 
             orderedData.Clear();
-
-            int candidates = World.CountEntities(in new QueryDescription().WithAll<SceneDefinitionComponent, PartitionComponent, VisualSceneState>());
 
             foreach (ref Chunk chunk in World.Query(in START_SCENES_LOADING))
             {
