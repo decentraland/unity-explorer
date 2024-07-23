@@ -34,11 +34,15 @@ namespace DCL.Rendering.Highlight
         private const string k_ShaderName_HighlightInput = "DCL/HighlightInput_Override";
         private const string k_ShaderName_HighlightInputBlur = "DCL/HighlightInput_Blur";
         private const string k_ShaderName_HighlightOutput = "DCL/HighlightOutput";
-        private readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
+        private static readonly ReportData m_ReportData = new ("DCL_RenderFeature_Outline", ReportHint.SessionStatic);
 
         [SerializeField] private HighlightRendererFeature_Settings m_Settings;
         private static readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers = new ();
-        public static readonly IHighlightedObjects HighlightedObjects = new HighlightedObjects(m_HighLightRenderers);
+
+        public static readonly IHighlightedObjects HighlightedObjects = new LogHighlightedObjects(
+            new HighlightedObjects(m_HighLightRenderers),
+            ReportHub.WithReport(ReportCategory.HIGHLIGHTS).Log
+        );
 
         // Input P;ass Data
         private HighlightInputRenderPass highlightInputRenderPass = null!;

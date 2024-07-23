@@ -5,18 +5,18 @@ namespace DCL.Rendering.Highlight.HighlightedObject
 {
     public class HighlightedObjects : IHighlightedObjects
     {
-        private readonly Dictionary<Renderer, HighlightSettings> m_HighLightRenderers;
+        private readonly Dictionary<Renderer, HighlightSettings> highLightRenderers;
 
         public HighlightedObjects(Dictionary<Renderer, HighlightSettings> highLightRenderers)
         {
-            m_HighLightRenderers = highLightRenderers;
+            this.highLightRenderers = highLightRenderers;
         }
 
         public void Highlight(Renderer renderer, Color color, float thickness)
         {
-            if (!m_HighLightRenderers.ContainsKey(renderer))
+            if (!highLightRenderers.ContainsKey(renderer))
             {
-                m_HighLightRenderers.Add(renderer, new HighlightSettings
+                highLightRenderers.Add(renderer, new HighlightSettings
                 {
                     Color = color,
                     Width = thickness,
@@ -24,17 +24,17 @@ namespace DCL.Rendering.Highlight.HighlightedObject
             }
             else
             {
-                HighlightSettings highlightSettings = m_HighLightRenderers[renderer];
+                HighlightSettings highlightSettings = highLightRenderers[renderer];
                 highlightSettings.Color = color;
                 highlightSettings.Width = thickness;
-                m_HighLightRenderers[renderer] = highlightSettings;
+                highLightRenderers[renderer] = highlightSettings;
             }
         }
 
         public void Disparage(Renderer renderer)
         {
-            if (m_HighLightRenderers.ContainsKey(renderer))
-                m_HighLightRenderers.Remove(renderer);
+            if (highLightRenderers.ContainsKey(renderer))
+                highLightRenderers.Remove(renderer);
         }
     }
 }
