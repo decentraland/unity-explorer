@@ -194,14 +194,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 }
                 else
                 {
-                    var unresolvedDTO = WearableComponentsUtils.POINTERS_POOL.Get();
-                    unresolvedDTO.AddRange(promise.LoadingIntention.Pointers);
+                    var failedDTOList = WearableComponentsUtils.POINTERS_POOL.Get();
+                    failedDTOList.AddRange(promise.LoadingIntention.Pointers);
                     
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        if (!wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component))
+                        bool isWearableInCatalog = wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component);
+
+                        try
                         {
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot finalize wearable DTO: {assetEntity.metadata.id}. This situation should not be possible, there is something wrong in the logic");
+                            Assert.IsTrue(isWearableInCatalog); //A wearable that has a DTO request should already have an empty representation in the catalog at this point
+                        }
+                        catch (AssertionException e)
+                        {
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Requested wearable {assetEntity.metadata.id} is not in the catalog");
                             continue;
                         }
 
@@ -209,20 +215,20 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         {
                             component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity));
                         }
-                        catch (AssertionException e) { ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}"); }
+                        catch (AssertionException e)
+                        {
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}");
+                        }
 
-                        unresolvedDTO.Remove(assetEntity.metadata.id);
+                        failedDTOList.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
-                        
                     }
 
                     //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
-                    foreach (var urn in unresolvedDTO)
-                    {
+                    foreach (var urn in failedDTOList)
                         ReportAndFinalizeWithError(urn);
-                    }
 
-                    WearableComponentsUtils.POINTERS_POOL.Release(unresolvedDTO);
+                    WearableComponentsUtils.POINTERS_POOL.Release(failedDTOList);
                 }
 
                 WearableComponentsUtils.POINTERS_POOL.Release(promise.LoadingIntention.Pointers);
