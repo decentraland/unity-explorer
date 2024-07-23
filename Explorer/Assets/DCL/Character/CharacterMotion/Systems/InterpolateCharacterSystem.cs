@@ -74,7 +74,6 @@ namespace DCL.CharacterMotion.Systems
 
             Transform characterTransform = characterController.transform;
 
-            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
@@ -88,7 +87,6 @@ namespace DCL.CharacterMotion.Systems
             CollisionFlags collisionFlags = characterController.Move(
                 movementDelta
                 + gravityDelta
-                // + slopeModifier
                 + rigidTransform.PlatformDelta);
 
             // Debug.Log($"VVV [CHAR] newPos = {characterTransform.position}");
@@ -99,6 +97,18 @@ namespace DCL.CharacterMotion.Systems
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
+
+            // if (!rigidTransform.IsGrounded)
+            {
+                Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
+                 collisionFlags = characterController.Move(slopeModifier);
+
+                  deltaMovement = characterTransform.position - prevPos;
+                  hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
+
+                 if (!Mathf.Approximately(gravityDelta.y, 0f))
+                     rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
+            }
 
             rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Sides);
 

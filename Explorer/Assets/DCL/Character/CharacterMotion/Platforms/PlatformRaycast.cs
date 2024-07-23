@@ -25,24 +25,24 @@ namespace DCL.CharacterMotion.Platforms
             bool hasHit = Physics.SphereCast(ray, radius, out RaycastHit hitInfo, rayDistance + radius, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
 
             // Debug visualization
-#if UNITY_EDITOR
-
-            // Draw the ray
-            Debug.DrawRay(rayOrigin, Vector3.down * (rayDistance + radius), Color.yellow);
-
-            // Draw the sphere at the start and end of the raycast
-            DebugDrawSphere(rayOrigin, radius, Color.green);
-            DebugDrawSphere(rayOrigin + (Vector3.down * (rayDistance + radius)), radius, Color.red);
-
-            if (hasHit)
-            {
-                // Draw a line to the hit point
-                Debug.DrawLine(rayOrigin, hitInfo.point, Color.blue);
-
-                // Draw the sphere at the hit point
-                DebugDrawSphere(hitInfo.point, radius / 10, Color.magenta);
-            }
-#endif
+// #if UNITY_EDITOR
+//
+//             // Draw the ray
+//             Debug.DrawRay(rayOrigin, Vector3.down * (rayDistance + radius), Color.yellow);
+//
+//             // Draw the sphere at the start and end of the raycast
+//             DebugDrawSphere(rayOrigin, radius, Color.green);
+//             DebugDrawSphere(rayOrigin + (Vector3.down * (rayDistance + radius)), radius, Color.red);
+//
+//             if (hasHit)
+//             {
+//                 // Draw a line to the hit point
+//                 Debug.DrawLine(rayOrigin, hitInfo.point, Color.blue);
+//
+//                 // Draw the sphere at the hit point
+//                 DebugDrawSphere(hitInfo.point, radius / 10, Color.magenta);
+//             }
+// #endif
 
             if (hasHit)
             {
