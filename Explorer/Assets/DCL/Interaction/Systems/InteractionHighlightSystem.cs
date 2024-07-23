@@ -61,9 +61,6 @@ namespace DCL.Interaction.Systems
         }
 
         [Query]
-        private void DisparageHighlightsOnDeletion() { }
-
-        [Query]
         [None(typeof(DeleteEntityIntention))]
         private void UpdateHighlights(ref HighlightComponent highlightComponent)
         {
@@ -118,16 +115,16 @@ namespace DCL.Interaction.Systems
             }
         }
 
-        private void GetRenderersFromChildrenRecursive(ref TransformComponent entityTransform, List<Renderer> list)
+        private void GetRenderersFromChildrenRecursive(ref TransformComponent entityTransform, List<Renderer> outputList)
         {
             foreach (EntityReference child in entityTransform.Children)
             {
-                AddRenderersFromEntity(child, list);
+                AddRenderersFromEntity(child, outputList);
 
                 ref TransformComponent childTransform = ref World!.TryGetRef<TransformComponent>(child, out bool containsTransform);
                 if (!containsTransform) continue;
 
-                GetRenderersFromChildrenRecursive(ref childTransform, list);
+                GetRenderersFromChildrenRecursive(ref childTransform, outputList);
             }
         }
 
