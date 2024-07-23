@@ -54,7 +54,7 @@ namespace DCL.SDKComponents.NFTShape.Tests
 
             bool urnChanged = newURN != INITIAL_URN;
 
-            renderer.Received(1).Apply(shape);
+            renderer.Received(1).Apply(shape, urnChanged);
 
             if (urnChanged)
             {
