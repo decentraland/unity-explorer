@@ -1,8 +1,6 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
-using Arch.SystemGroups.Throttling;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
@@ -23,6 +21,11 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
     [LogCategory(ReportCategory.AVATAR_ATTACH)]
     public partial class AvatarAttachHandlerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
+        /// <summary>
+        ///     Integrated from the previous implementation
+        /// </summary>
+        private static readonly Vector3 MORDOR = Vector3.one * 8000;
+
         public const float OLD_CLIENT_PIVOT_CORRECTION = -0.75f;
 
         private static readonly QueryDescription ENTITY_DESTRUCTION_QUERY = new QueryDescription().WithAll<DeleteEntityIntention, AvatarAttachComponent>();
@@ -42,6 +45,7 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
 
             SetupAvatarAttachQuery(World);
             UpdateAvatarAttachTransformQuery(World);
+            HideDetachedQuery(World);
 
             World.Remove<AvatarAttachComponent>(COMPONENT_REMOVAL_QUERY);
             World.Remove<AvatarAttachComponent, PBAvatarAttach>(ENTITY_DESTRUCTION_QUERY);
@@ -59,6 +63,15 @@ namespace DCL.SDKComponents.AvatarAttach.Systems
             transformComponent.UpdateCache();
 
             World.Add(entity, component);
+        }
+
+        [Query]
+        [All(typeof(AvatarAttachComponent))]
+        [None(typeof(PBAvatarAttach))]
+        private void HideDetached(ref TransformComponent transformComponent)
+        {
+            if (!sceneStateProvider.IsCurrent) return;
+            transformComponent.Apply(MORDOR);
         }
 
         [Query]

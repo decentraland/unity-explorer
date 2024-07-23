@@ -93,6 +93,13 @@ namespace ECS.Unity.Transforms.Components
             Cached.LocalRotation = Transform.localRotation;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Apply(Vector3 worldPosition)
+        {
+            Cached.WorldPosition = Transform.position = worldPosition;
+            Cached.LocalPosition = Transform.localPosition;
+        }
+
         readonly Transform IPoolableComponentProvider<Transform>.PoolableComponent => Transform;
 
         Type IPoolableComponentProvider<Transform>.PoolableComponentType => typeof(Transform);
