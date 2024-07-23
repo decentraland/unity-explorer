@@ -73,7 +73,11 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
         public void Dispose()
         {
-            try { webSocket?.Dispose(); }
+            try
+            {
+                webSocket?.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+                webSocket?.Dispose();
+            }
             catch (ObjectDisposedException) { }
         }
     }
