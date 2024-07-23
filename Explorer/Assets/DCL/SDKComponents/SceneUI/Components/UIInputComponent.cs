@@ -14,6 +14,8 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
         internal EventCallback<KeyDownEvent> currentOnSubmit;
+        internal EventCallback<FocusInEvent> currentOnFocusIn;
+        internal EventCallback<FocusOutEvent> currentOnFocusOut;
 
         public void Initialize(IInputBlock inputBlock, string textFieldName, string styleClass)
         {
