@@ -21,6 +21,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public bool IsVisible => poolableBehavior.isVisible;
         public string Title { get; private set; }
+        public Texture2D Icon { get; private set; }
         public string Description { get; private set; }
         public Vector2Int ParcelPosition { get; private set; }
 
@@ -71,12 +72,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetTexture(Texture2D texture)
         {
+            Icon = texture;
             poolableBehavior.instance?.SetTexture(texture);
         }
 
         public void OnBecameVisible()
         {
             poolableBehavior.OnBecameVisible();
+            poolableBehavior.instance?.SetTexture(Icon);
 
             if(currentBaseScale != 0)
                 poolableBehavior.instance?.SetScale(currentBaseScale, currentNewScale);
