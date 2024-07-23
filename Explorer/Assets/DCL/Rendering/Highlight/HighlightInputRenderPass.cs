@@ -128,7 +128,7 @@ namespace DCL.Rendering.Highlight
                             var materialToUse = new Material(renderer.sharedMaterial);
                             materialToUse.SetColor(highlightColour, !clear ? settings.Color : Color.clear);
                             materialToUse.SetFloat(outlineWidth, !clear ? settings.Width : 0);
-                            materialToUse.SetVector(highlightObjectOffset, !clear ? settings.Offset : Vector3.zero);
+                            materialToUse.SetVector(highlightObjectOffset, Vector3.zero);
                             commandBuffer.DrawRenderer(renderer, materialToUse, 0, originalMaterialOutlinerPass);
                         }
                         else
@@ -136,7 +136,7 @@ namespace DCL.Rendering.Highlight
                             var materialToUse = new Material(highLightInputMaterial);
                             materialToUse.SetColor(highlightColour, !clear ? settings.Color : Color.clear);
                             materialToUse.SetFloat(outlineWidth, !clear ? settings.Width : 0);
-                            materialToUse.SetVector(highlightObjectOffset, !clear ? settings.Offset : Vector3.zero);
+                            materialToUse.SetVector(highlightObjectOffset, Vector3.zero);
                             commandBuffer.DrawRenderer(renderer, materialToUse, 0, 0);
                         }
                     }
