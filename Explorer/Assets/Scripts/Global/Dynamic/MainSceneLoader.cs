@@ -68,7 +68,6 @@ namespace Global.Dynamic
         private StaticContainer? staticContainer;
         private DynamicWorldContainer? dynamicWorldContainer;
         private GlobalWorld? globalWorld;
-        private bool localSceneDevelopment = false;
 
         private void Awake()
         {
