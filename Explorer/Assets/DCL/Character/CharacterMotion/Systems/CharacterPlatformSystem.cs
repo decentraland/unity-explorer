@@ -55,12 +55,12 @@ namespace DCL.CharacterMotion.Systems
 
             platformComponent.FramesUngrounded = 0;
 
-            Transform transform = characterController.transform;
+            Transform characterTransform = characterController.transform;
 
-            Physics.simulationMode = SimulationMode.Script;
-            Physics.Simulate(t);
-            PlatformRaycast.Execute(platformComponent, characterController.radius, transform, settings);
-            Physics.simulationMode = SimulationMode.FixedUpdate;
+            // Physics.simulationMode = SimulationMode.Script;
+            // Physics.Simulate(t);
+            PlatformRaycast.Execute(platformComponent, characterController.radius, characterTransform, settings);
+            // Physics.simulationMode = SimulationMode.FixedUpdate;
 
             if (platformComponent.CurrentPlatform == null)
             {
@@ -71,13 +71,20 @@ namespace DCL.CharacterMotion.Systems
             Transform platformTransform = platformComponent.CurrentPlatform.transform;
 
             Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastAvatarRelativePosition);
-            Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastAvatarRelativeRotation);
+            rigidTransform.PlatformDelta = newGroundWorldPos - characterTransform.position;
 
-            rigidTransform.PlatformDelta = newGroundWorldPos - transform.position;
+            Debug.Log($"VVV [PLATFORM] platform delta1: { rigidTransform.PlatformDelta } = { newGroundWorldPos } - { characterTransform.position }");
 
-            Vector3 rotationDelta = newCharacterForward - transform.forward;
-            rigidTransform.LookDirection += rotationDelta;
-            transform.forward = newCharacterForward;
+            if(platformComponent.LastPlatformPosition != null)
+            {
+                rigidTransform.PlatformDelta = platformTransform.position - platformComponent.LastPlatformPosition.Value;
+                Debug.Log($"VVV [PLATFORM] platform delta2: { rigidTransform.PlatformDelta } = { platformTransform.position } - { platformComponent.LastPlatformPosition.Value }");
+            }
+
+            // Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastAvatarRelativeRotation);
+            // Vector3 rotationDelta = newCharacterForward - transform.forward;
+            // rigidTransform.LookDirection += rotationDelta;
+            // transform.forward = newCharacterForward;
         }
     }
 }

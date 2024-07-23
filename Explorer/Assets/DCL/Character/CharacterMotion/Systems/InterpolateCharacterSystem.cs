@@ -79,19 +79,19 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
 
-            Vector3 finalGravity = rigidTransform is { IsOnASteepSlope: true, IsStuck: false } ? rigidTransform.SlopeGravity : rigidTransform.GravityVelocity;
-            Vector3 gravityDelta = finalGravity * dt;
-
-            if (rigidTransform.PlatformDelta.y >= 0 && rigidTransform.IsGrounded && platformComponent.IsMovingPlatform)
-                gravityDelta.y = 0;
+            Vector3 gravityDelta = GravityDelta(dt, rigidTransform, platformComponent);
 
             // In order for some systems to work correctly we move the character horizontally and then vertically
             Vector3 prevPos = characterTransform.position;
 
-            CollisionFlags collisionFlags = characterController.Move(movementDelta
-                                                                     + gravityDelta
-                                                                     // + slopeModifier
-                                                                     + rigidTransform.PlatformDelta);
+            // Debug.Log($"VVV [CHAR] prevPos = {prevPos} | platformDelta = {rigidTransform.PlatformDelta} | movementDelta = {movementDelta} | gravityDelta = {gravityDelta}  ");
+            CollisionFlags collisionFlags = characterController.Move(
+                movementDelta
+                + gravityDelta
+                // + slopeModifier
+                + rigidTransform.PlatformDelta);
+
+            // Debug.Log($"VVV [CHAR] newPos = {characterTransform.position}");
 
             Vector3 deltaMovement = characterTransform.position - prevPos;
 
@@ -110,6 +110,19 @@ namespace DCL.CharacterMotion.Systems
                 rigidTransform.IsStuck = true;
             else
                 rigidTransform.IsStuck = false;
+        }
+
+        private static Vector3 GravityDelta(float dt, CharacterRigidTransform rigidTransform, CharacterPlatformComponent platformComponent)
+        {
+            if (rigidTransform is { IsOnASteepSlope: true, IsStuck: false })
+                return rigidTransform.SlopeGravity * dt;
+
+            Vector3 finalGravity = rigidTransform.GravityVelocity * dt;
+
+            if (platformComponent.IsMovingPlatform && rigidTransform.IsGrounded) // && rigidTransform.PlatformDelta.y >= 0)
+                finalGravity.y = 0f;
+
+            return finalGravity;
         }
     }
 }

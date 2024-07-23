@@ -7,80 +7,88 @@ using UnityEngine;
 namespace DCL.CharacterMotion.Platforms
 {
     public static class PlatformRaycast
-{
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Execute(CharacterPlatformComponent platformComponent, float radius, Transform transform, ICharacterControllerSettings settings)
     {
-        float rayDistance = settings.PlatformRaycastLength;
-        float halfDistance = (rayDistance * 0.5f) + radius;
-
-        var rayOrigin = transform.position + (Vector3.up * halfDistance);
-        var ray = new Ray
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Execute(CharacterPlatformComponent platformComponent, float radius, Transform characterTransform, ICharacterControllerSettings settings)
         {
-            origin = rayOrigin,
-            direction = Vector3.down,
-        };
+            float rayDistance = settings.PlatformRaycastLength;
+            float halfDistance = (rayDistance * 0.5f) + radius;
 
-        bool hasHit = Physics.SphereCast(ray, radius, out RaycastHit hitInfo, rayDistance + radius, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+            Vector3 rayOrigin = characterTransform.position + (Vector3.up * halfDistance);
 
-        // Debug visualization
-        #if UNITY_EDITOR
-        // Draw the ray
-        Debug.DrawRay(rayOrigin, Vector3.down * (rayDistance + radius), Color.yellow);
-
-        // Draw the sphere at the start and end of the raycast
-        DebugDrawSphere(rayOrigin, radius, Color.green);
-        DebugDrawSphere(rayOrigin + (Vector3.down * (rayDistance + radius)), radius, Color.red);
-
-        if (hasHit)
-        {
-            // Draw a line to the hit point
-            Debug.DrawLine(rayOrigin, hitInfo.point, Color.blue);
-            // Draw the sphere at the hit point
-            DebugDrawSphere(hitInfo.point, radius/10, Color.magenta);
-        }
-        #endif
-
-        if (hasHit)
-        {
-            if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
+            var ray = new Ray
             {
-                platformComponent.CurrentPlatform = hitInfo.collider.transform;
-                platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.InverseTransformPoint(transform.position);
-                platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.InverseTransformDirection(transform.forward);
+                origin = rayOrigin,
+                direction = Vector3.down,
+            };
+
+            bool hasHit = Physics.SphereCast(ray, radius, out RaycastHit hitInfo, rayDistance + radius, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
+
+            // Debug visualization
+#if UNITY_EDITOR
+
+            // Draw the ray
+            Debug.DrawRay(rayOrigin, Vector3.down * (rayDistance + radius), Color.yellow);
+
+            // Draw the sphere at the start and end of the raycast
+            DebugDrawSphere(rayOrigin, radius, Color.green);
+            DebugDrawSphere(rayOrigin + (Vector3.down * (rayDistance + radius)), radius, Color.red);
+
+            if (hasHit)
+            {
+                // Draw a line to the hit point
+                Debug.DrawLine(rayOrigin, hitInfo.point, Color.blue);
+
+                // Draw the sphere at the hit point
+                DebugDrawSphere(hitInfo.point, radius / 10, Color.magenta);
+            }
+#endif
+
+            if (hasHit)
+            {
+                if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
+                {
+                    Debug.Log("VVV PLATFORM CHANGE!!!");
+                    platformComponent.CurrentPlatform = hitInfo.collider.transform;
+                    platformComponent.LastPlatformPosition = null;
+                    platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.InverseTransformPoint(characterTransform.position);
+                    platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.InverseTransformDirection(characterTransform.forward);
+                }
+            }
+            else
+                platformComponent.CurrentPlatform = null;
+        }
+
+#if UNITY_EDITOR
+        private static void DebugDrawSphere(Vector3 center, float radius, Color color)
+        {
+            // Draw three circles to represent the sphere
+            DebugDrawCircle(center, radius, color, Vector3.forward);
+            DebugDrawCircle(center, radius, color, Vector3.right);
+            DebugDrawCircle(center, radius, color, Vector3.up);
+        }
+
+        private static void DebugDrawCircle(Vector3 center, float radius, Color color, Vector3 normal, int segments = 16)
+        {
+            Vector3 from = Vector3.zero;
+            Vector3 to = Vector3.zero;
+
+            for (var i = 0; i <= segments; i++)
+            {
+                float angle = (float)i / segments * 360 * Mathf.Deg2Rad;
+                to.x = Mathf.Cos(angle);
+                to.y = Mathf.Sin(angle);
+
+                if (i > 0)
+                {
+                    Vector3 fromWorld = center + (Quaternion.LookRotation(normal) * from * radius);
+                    Vector3 toWorld = center + (Quaternion.LookRotation(normal) * to * radius);
+                    Debug.DrawLine(fromWorld, toWorld, color);
+                }
+
+                from = to;
             }
         }
-        else
-            platformComponent.CurrentPlatform = null;
+#endif
     }
-
-    #if UNITY_EDITOR
-    private static void DebugDrawSphere(Vector3 center, float radius, Color color)
-    {
-        // Draw three circles to represent the sphere
-        DebugDrawCircle(center, radius, color, Vector3.forward);
-        DebugDrawCircle(center, radius, color, Vector3.right);
-        DebugDrawCircle(center, radius, color, Vector3.up);
-    }
-
-    private static void DebugDrawCircle(Vector3 center, float radius, Color color, Vector3 normal, int segments = 16)
-    {
-        Vector3 from = Vector3.zero;
-        Vector3 to = Vector3.zero;
-        for (int i = 0; i <= segments; i++)
-        {
-            float angle = (float)i / segments * 360 * Mathf.Deg2Rad;
-            to.x = Mathf.Cos(angle);
-            to.y = Mathf.Sin(angle);
-            if (i > 0)
-            {
-                Vector3 fromWorld = center + Quaternion.LookRotation(normal) * from * radius;
-                Vector3 toWorld = center + Quaternion.LookRotation(normal) * to * radius;
-                Debug.DrawLine(fromWorld, toWorld, color);
-            }
-            from = to;
-        }
-    }
-    #endif
-}
 }
