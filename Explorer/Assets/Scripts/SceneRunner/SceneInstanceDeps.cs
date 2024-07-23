@@ -137,7 +137,6 @@ namespace SceneRunner
                 ExceptionsHandler, EntityCollidersCache, SceneStateProvider, entityEventsBuilder, ecsMutexSync, worldTimeProvider);
 
             ECSWorldFacade = ecsWorldFactory.CreateWorld(new ECSWorldFactoryArgs(ecsWorldSharedDependencies, systemGroupThrottler, sceneData));
-            ECSWorldFacade.Initialize();
             CRDTWorldSynchronizer = new CRDTWorldSynchronizer(ECSWorldFacade.EcsWorld, sdkComponentsRegistry, entityFactory, entitiesMap);
 
             EcsExecutor = new SceneEcsExecutor(ECSWorldFacade.EcsWorld);

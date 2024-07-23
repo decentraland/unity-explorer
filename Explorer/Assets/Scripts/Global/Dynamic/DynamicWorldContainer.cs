@@ -34,9 +34,11 @@ using DCL.Multiplayer.Profiles.BroadcastProfiles;
 using DCL.Multiplayer.Profiles.Entities;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
 using DCL.Notification.NotificationsBus;
+using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PlacesAPIService;
@@ -95,6 +97,8 @@ namespace Global.Dynamic
         public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
 
         // TODO move multiplayer related dependencies to a separate container
+        public ICharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
+
         public IChatMessagesBus ChatMessagesBus { get; private set; } = null!;
 
         public IMessagePipesHub MessagePipesHub { get; private set; } = null!;
@@ -289,6 +293,8 @@ namespace Global.Dynamic
 
             dynamicWorldDependencies.WorldInfoTool.Initialize(worldInfoHub);
 
+            container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
+
             var chatHistory = new ChatHistory();
             var reloadSceneController = new ReloadSceneController();
 
@@ -352,7 +358,8 @@ namespace Global.Dynamic
                     staticContainer.RealmData,
                     remoteEntities,
                     staticContainer.ScenesCache,
-                    emotesCache
+                    emotesCache,
+                    container.CharacterDataPropagationUtility
                 ),
                 new WorldInfoPlugin(worldInfoHub, debugBuilder, chatHistory),
                 new CharacterMotionPlugin(assetsProvisioner, staticContainer.CharacterContainer.CharacterObject, debugBuilder, staticContainer.ComponentsContainer.ComponentPoolsRegistry),
@@ -464,7 +471,8 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                reloadSceneController);
+                reloadSceneController,
+                container.CharacterDataPropagationUtility);
 
             container.GlobalPlugins = globalPlugins;
 

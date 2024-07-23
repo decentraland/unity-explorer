@@ -8,6 +8,7 @@ using DCL.Character.Plugin;
 using DCL.DebugUtilities;
 using DCL.GlobalPartitioning;
 using DCL.Ipfs;
+using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -60,12 +61,14 @@ namespace Global.Dynamic
 
         private readonly HybridSceneParams hybridSceneParams;
         private readonly ReloadSceneController reloadSceneController;
+        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
 
         public GlobalWorldFactory( in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, HybridSceneParams hybridSceneParams, ReloadSceneController reloadSceneController)
+            IScenesCache scenesCache, HybridSceneParams hybridSceneParams, ReloadSceneController reloadSceneController,
+            ICharacterDataPropagationUtility characterDataPropagationUtility)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -85,6 +88,7 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.hybridSceneParams = hybridSceneParams;
             this.reloadSceneController = reloadSceneController;
+            this.characterDataPropagationUtility = characterDataPropagationUtility;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -109,12 +113,12 @@ namespace Global.Dynamic
             LoadSceneDefinitionListSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneDefinitions, GetSceneDefinitionList>.INSTANCE);
             LoadSceneDefinitionSystem.InjectToWorld(ref builder, webRequestController, NoCache<SceneEntityDefinition, GetSceneDefinition>.INSTANCE);
 
-            LoadSceneSystemLogicBase loadSceneSystemLogic = null;
+            LoadSceneSystemLogicBase loadSceneSystemLogic;
 
             if (hybridSceneParams.EnableHybridScene)
-                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams);
+                loadSceneSystemLogic = new LoadHybridSceneSystemLogic(webRequestController, assetBundlesURL, hybridSceneParams, characterDataPropagationUtility, world, playerEntity);
             else
-                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL);
+                loadSceneSystemLogic = new LoadSceneSystemLogic(webRequestController, assetBundlesURL, characterDataPropagationUtility, world, playerEntity);
 
 
             LoadSceneSystem.InjectToWorld(ref builder,
