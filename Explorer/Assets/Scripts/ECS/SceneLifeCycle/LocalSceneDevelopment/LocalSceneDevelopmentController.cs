@@ -63,9 +63,12 @@ namespace ECS.SceneLifeCycle.LocalSceneDevelopment
 
                     await reloadController.TryReloadSceneAsync();
                 }
+                else if (receiveResult.MessageType == WebSocketMessageType.Close)
+                {
+                    await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
+                    ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection closed.");
+                }
             }
-
-            ReportHub.Log(ReportCategory.SDK_LOCAL_SCENE_DEVELOPMENT, $"Websocket connection closed.");
         }
 
         public void Dispose()
