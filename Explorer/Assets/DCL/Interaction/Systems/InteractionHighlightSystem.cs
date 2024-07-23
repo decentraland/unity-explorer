@@ -5,6 +5,7 @@ using DCL.Diagnostics;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Settings;
 using DCL.Rendering.Highlight;
+using DCL.Rendering.Highlight.HighlightedObject;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.LifeCycle.Components;
@@ -76,9 +77,7 @@ namespace DCL.Interaction.Systems
                 AddOrUpdateHighlight(highlightComponent.CurrentEntityOrNull(), highlightComponent.IsAtDistance());
             }
             else
-            {
                 ResetHighlight(ref highlightComponent);
-            }
         }
 
         private void AddOrUpdateHighlight(in EntityReference entity, bool isAtDistance)
@@ -97,8 +96,7 @@ namespace DCL.Interaction.Systems
 
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
-            foreach (Renderer renderer in renderers)
-                HighlightRendererFeature.HighlightedObjects.Highlight(renderer, GetColor(isAtDistance), settingsData.Thickness);
+            HighlightRendererFeature.HighlightedObjects.Highlight(renderers, GetColor(isAtDistance), settingsData.Thickness);
 
             ListPool<Renderer>.Release(renderers);
         }
@@ -122,8 +120,7 @@ namespace DCL.Interaction.Systems
 
             GetRenderersFromChildrenRecursive(ref entityTransform, renderers);
 
-            foreach (Renderer renderer in renderers)
-                HighlightRendererFeature.HighlightedObjects.Disparage(renderer);
+            HighlightRendererFeature.HighlightedObjects.Disparage(renderers);
 
             ListPool<Renderer>.Release(renderers);
         }
@@ -159,9 +156,7 @@ namespace DCL.Interaction.Systems
         public void OnSceneIsCurrentChanged(bool value)
         {
             if (!value)
-            {
                 ResetHighlightComponentQuery(World);
-            }
         }
     }
 }
