@@ -329,7 +329,7 @@ namespace Global.Dynamic
             container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics ? new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
 
             if (!string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm))
-                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
+                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
