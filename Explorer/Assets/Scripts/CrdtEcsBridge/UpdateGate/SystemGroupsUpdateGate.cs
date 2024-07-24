@@ -33,14 +33,18 @@ namespace CrdtEcsBridge.UpdateGate
         }
 
         // Close the group so it won't be updated unless the gate is opened again
-        public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info _ = default)
+        public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info _)
         {
             // Let systems run in the remaining of the current frame
             if (Time.frameCount < keepOpenFrame)
                 return false;
 
-            // Otherwise, close the group but let it run one (current) frame
-            return !openGroups.Remove(systemGroupType);
+            // Sync is required as ShouldThrottle is called from the main thread
+            lock (openGroups)
+            {
+                // Otherwise, close the group but let it run one (current) frame
+                return !openGroups.Remove(systemGroupType);
+            }
         }
 
         public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled) { }
