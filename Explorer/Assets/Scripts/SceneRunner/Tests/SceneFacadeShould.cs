@@ -354,6 +354,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
+                    Substitute.For<ISystemsUpdateGate>(),
                     Substitute.For<IWorldTimeProvider>(),
                     new ECSWorldInstanceSharedDependencies()),
                 Substitute.For<ISceneRuntime>()) { }
