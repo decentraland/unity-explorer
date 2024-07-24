@@ -52,28 +52,26 @@ namespace SceneRunner.Scene
             public UniTask DisposeAsync() =>
                 throw new NotImplementedException();
 
-            public void Dispose()
-            {
+            public void Dispose() =>
                 throw new NotImplementedException();
-            }
 
             public SceneShortInfo Info { get; }
             public ISceneStateProvider SceneStateProvider { get; }
             public SceneEcsExecutor EcsExecutor { get; }
+            public PersistentEntities PersistentEntities { get; }
             public bool IsEmpty { get; }
+
+            public void Initialize() =>
+                throw new NotImplementedException();
 
             public UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct) =>
                 throw new NotImplementedException();
 
-            public void SetTargetFPS(int fps)
-            {
+            public void SetTargetFPS(int fps) =>
                 throw new NotImplementedException();
-            }
 
-            public void SetIsCurrent(bool isCurrent)
-            {
+            public void SetIsCurrent(bool isCurrent) =>
                 throw new NotImplementedException();
-            }
 
             UniTask ISceneFacade.StartScene() =>
                 throw new NotImplementedException();

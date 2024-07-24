@@ -13,7 +13,7 @@ using ECS.LifeCycle.Components;
 namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
 {
     [UpdateInGroup(typeof(SyncedPreRenderingSystemGroup))]
-    [LogCategory(ReportCategory.MULTIPLAYER_SDK_PLAYER_TRANSFORM_DATA)]
+    [LogCategory(ReportCategory.PLAYER_SDK_DATA)]
     public partial class PlayerTransformPropagationSystem : BaseUnityLoopSystem
     {
         public PlayerTransformPropagationSystem(World world) : base(world) { }
