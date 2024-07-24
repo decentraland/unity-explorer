@@ -384,6 +384,11 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:

@@ -39,7 +39,8 @@ namespace DCL.PluginSystem.Global
                 new RewardPanelParameter(
                     notification.GetThumbnail(),
                     incomingRewardNotification.Metadata.Name,
-                    incomingRewardNotification.Metadata.Rarity))
+                    incomingRewardNotification.Metadata.Rarity,
+                    incomingRewardNotification.Metadata.Category))
             ).Forget();
         }
 
@@ -47,8 +48,9 @@ namespace DCL.PluginSystem.Global
         {
             NFTColorsSO nftRarityColors = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
             NftTypeIconSO rarityBackgroundsMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityBackgroundsMapping, ct);
+            NftTypeIconSO categoryIconsMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.CategoryIconsMapping, ct);
             RewardPanelView rewardPanelView = (await assetsProvisioner.ProvideMainAssetAsync(settings.RewardPanelView, ct: ct)).Value.GetComponent<RewardPanelView>();
-            RewardPanelController rewardPanelController = new RewardPanelController(RewardPanelController.CreateLazily(rewardPanelView, null), webRequestController, nftRarityColors, rarityBackgroundsMapping);
+            RewardPanelController rewardPanelController = new RewardPanelController(RewardPanelController.CreateLazily(rewardPanelView, null), webRequestController, nftRarityColors, rarityBackgroundsMapping, categoryIconsMapping);
             mvcManager.RegisterController(rewardPanelController);
         }
 
@@ -71,6 +73,9 @@ namespace DCL.PluginSystem.Global
 
             [field: SerializeField]
             public AssetReferenceT<NftTypeIconSO> RarityBackgroundsMapping { get; private set; }
+
+            [field: SerializeField]
+            public AssetReferenceT<NftTypeIconSO> CategoryIconsMapping { get; private set; }
 
             [Serializable]
             public class RewardPanelViewRef : ComponentReference<RewardPanelView>

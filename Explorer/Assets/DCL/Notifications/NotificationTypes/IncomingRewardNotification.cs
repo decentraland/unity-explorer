@@ -21,14 +21,17 @@ namespace DCL.Notification
     [Serializable]
     public struct IncomingRewardNotificationMetadata
     {
-        [JsonProperty("tokenName")]
+        [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonProperty("tokenImage")]
+        [JsonProperty("image")]
         public string Image { get; set; }
 
-        [JsonProperty("tokenRarity")]
+        [JsonProperty("rarity")]
         public string Rarity { get; set; }
+
+        [JsonProperty("category")]
+        public string Category { get; set; }
 
         [JsonProperty("title")]
         public string Title { get; set; }

@@ -37,9 +37,12 @@ namespace DCL.RewardPanel
         public Image RarityBackground { get; private set; }
 
         [field: SerializeField]
+        public Image CategoryImage { get; private set; }
+
+        [field: SerializeField]
         public TMP_Text ItemName { get; private set; }
 
-        private readonly Vector3 finalRotation = new (0,0,120);
+        private readonly Vector3 finalRotation = new (0,0,360);
         private CancellationTokenSource cts;
 
         protected override async UniTask PlayShowAnimation(CancellationToken ct)
@@ -50,7 +53,7 @@ namespace DCL.RewardPanel
             PanelContent.transform.localScale = Vector3.zero;
             await PanelCanvasGroup.DOFade(1, FADE_ANIMATION_DURATION).ToUniTask(cancellationToken: ct);
             await PanelContent.transform.DOScale(Vector3.one, SCALE_ANIMATION_DURATION).SetEase(Ease.OutBounce).ToUniTask(cancellationToken: ct);
-            RaysGameObject.transform.DORotate(finalRotation, 2f).SetLoops(-1, LoopType.Yoyo).ToUniTask(cancellationToken: cts.Token);
+            RaysGameObject.transform.DORotate(finalRotation, 2f, RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).ToUniTask(cancellationToken: cts.Token);
         }
 
         protected override async UniTask PlayHideAnimation(CancellationToken ct)
