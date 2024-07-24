@@ -19,10 +19,11 @@ namespace DCL.Interaction.PlayerOriginated.Components
             HasCollider = hasCollider;
         }
 
-        public void AssignCollider(Collider collider)
+        public void AssignCollider(Collider collider, bool isAtDistance)
         {
             LastHitCollider = collider;
             HasCollider = true;
+            IsAtDistance = isAtDistance;
         }
 
         public void Clear()

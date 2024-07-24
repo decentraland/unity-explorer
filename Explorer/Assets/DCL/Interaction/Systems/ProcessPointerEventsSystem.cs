@@ -64,11 +64,10 @@ namespace DCL.Interaction.Systems
             hoverStateComponent.Clear();
 
             // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
-            if (IsPointingOnEntity(in raycastResultForSceneEntities, out var entityInfo) && TryGetPointerEvents(entityInfo, out PBPointerEvents? pbPointerEvents))
+            if (IsPointingOnEntity(in raycastResultForSceneEntities, out var entityInfo) && entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
             {
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
-                hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider);
                 bool newEntityWasHovered = NewEntityWasHovered(candidateForHoverLeaveIsValid, previousEntityInfo, entityInfo);
 
                 // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
@@ -77,7 +76,7 @@ namespace DCL.Interaction.Systems
 
                 pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
                 bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
-                hoverStateComponent.IsAtDistance = isAtDistance;
+                hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider, isAtDistance);
                 HighlightNewEntity(entityInfo, isAtDistance);
             }
 
@@ -90,15 +89,6 @@ namespace DCL.Interaction.Systems
             bool canHover = eventSystem.IsPointerOverGameObject() == false;
             entityInfo = raycastResultForSceneEntities.EntityInfo ?? default(GlobalColliderSceneEntityInfo);
             return raycastResultForSceneEntities.IsValidHit && canHover && raycastResultForSceneEntities.EntityInfo != null;
-        }
-
-        [Pure]
-        private static bool TryGetPointerEvents(GlobalColliderSceneEntityInfo entityInfo, out PBPointerEvents? pbPointerEvents)
-        {
-            World world = entityInfo.EcsExecutor.World;
-            EntityReference entityRef = entityInfo.ColliderSceneEntityInfo.EntityReference;
-            pbPointerEvents = null;
-            return entityRef.IsAlive(world) && world.TryGet(entityRef, out pbPointerEvents);
         }
 
         private void ResetPreviousEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, in GlobalColliderSceneEntityInfo previousEntityInfo)
@@ -119,6 +109,7 @@ namespace DCL.Interaction.Systems
                 world.Create(HighlightComponent.NewEntityHighlightComponent(isAtDistance, entityRef));
         }
 
+        [Pure]
         private static bool NewEntityWasHovered(
             bool candidateForHoverLeaveIsValid,
             GlobalColliderSceneEntityInfo previousEntityInfo,
@@ -143,9 +134,13 @@ namespace DCL.Interaction.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool SetupPointerEvents(PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
-            ref HoverFeedbackComponent hoverFeedbackComponent, PBPointerEvents pbPointerEvents, InteractionInputUtils.AnyInputInfo anyInputInfo,
-            bool newEntityWasHovered)
+        private bool SetupPointerEvents(
+            in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
+            ref HoverFeedbackComponent hoverFeedbackComponent,
+            PBPointerEvents pbPointerEvents,
+            InteractionInputUtils.AnyInputInfo anyInputInfo,
+            bool newEntityWasHovered
+        )
         {
             var isAtDistance = false;
 
@@ -171,10 +166,9 @@ namespace DCL.Interaction.Systems
             if (!isAtDistance) return false;
 
             foreach (var input in sdkInputActionsMap)
-            {
+
                 // Add all inputs that were pressed/unpressed this frame
                 InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, ref pbPointerEvents.AppendPointerEventResultsIntent);
-            }
 
             return isAtDistance;
         }

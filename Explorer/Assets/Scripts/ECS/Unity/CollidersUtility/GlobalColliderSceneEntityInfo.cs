@@ -1,4 +1,7 @@
+using Arch.Core;
+using DCL.ECSComponents;
 using SceneRunner.Scene;
+using System.Diagnostics.Contracts;
 
 namespace DCL.Interaction.Utility
 {
@@ -14,6 +17,15 @@ namespace DCL.Interaction.Utility
         {
             EcsExecutor = ecsExecutor;
             ColliderSceneEntityInfo = colliderSceneEntityInfo;
+        }
+
+        [Pure]
+        public bool TryGetPointerEvents(out PBPointerEvents? pbPointerEvents)
+        {
+            World world = EcsExecutor.World;
+            EntityReference entityRef = ColliderSceneEntityInfo.EntityReference;
+            pbPointerEvents = null;
+            return entityRef.IsAlive(world) && world.TryGet(entityRef, out pbPointerEvents);
         }
     }
 }
