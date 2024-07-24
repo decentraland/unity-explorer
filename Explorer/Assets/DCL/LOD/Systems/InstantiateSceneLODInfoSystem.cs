@@ -25,24 +25,18 @@ namespace DCL.LOD.Systems
     public partial class InstantiateSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly IPerformanceBudget memoryBudget;
-        private readonly ILODAssetsPool lodCache;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly TextureArrayContainer lodTextureArrayContainer;
-        private readonly Transform lodsTransformParent;
         internal IPerformanceBudget frameCapBudget;
-        private GameObjectPool<LODGroup> lodGroupPool;
 
-        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, GameObjectPool<LODGroup> lodGroupPool, ILODAssetsPool lodCache, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, Transform lodsTransformParent) : base(world)
+        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
-            this.lodCache = lodCache;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
-            this.lodsTransformParent = lodsTransformParent;
-            this.lodGroupPool = lodGroupPool;
         }
 
 
@@ -68,14 +62,13 @@ namespace DCL.LOD.Systems
                     var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise),
-                        lodCache, result.Asset);
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise), result.Asset);
                     FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise), lodCache);
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise));
                 }
 
                 sceneLODInfo.ReEvaluateLODGroup(newLod);
