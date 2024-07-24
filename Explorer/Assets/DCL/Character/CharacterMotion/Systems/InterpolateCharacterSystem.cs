@@ -96,10 +96,19 @@ namespace DCL.CharacterMotion.Systems
 
             // if (!rigidTransform.IsGrounded)
             {
-                Physics.simulationMode = SimulationMode.Script;
-                Physics.Simulate(dt);
+                // Physics.simulationMode = SimulationMode.Script;
+                // Physics.Simulate(dt);
+
+                if (platformComponent.IsMovingPlatform && platformComponent.CurrentPlatform != null)
+                {
+                    var col = platformComponent.CurrentPlatform.GetComponent<Collider>();
+                    col.enabled = false;
+                    col.enabled = true;
+                }
+                // Physics.SyncTransforms();
+
                 Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
-                Physics.simulationMode = SimulationMode.FixedUpdate;
+                // Physics.simulationMode = SimulationMode.FixedUpdate;
 
                  collisionFlags = characterController.Move(slopeModifier);
 
