@@ -19,7 +19,6 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.Multiplayer.Profiles.Systems;
 using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Components;
-using DCL.Multiplayer.SDK.Systems;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
@@ -127,6 +126,7 @@ namespace DCL.PluginSystem.Global
             PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility, globalPluginArguments.PlayerEntity);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
+            PlayerTransformPropagationSystem.InjectToWorld(ref builder);
 #endif
         }
 

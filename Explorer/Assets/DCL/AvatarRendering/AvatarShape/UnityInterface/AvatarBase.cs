@@ -101,6 +101,9 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
             overrideController.ApplyOverrides(animationOverrides);
         }
 
+        public Vector3 Position => transform.position;
+        public Quaternion Rotation => transform.rotation;
+
         public Transform GetTransform() =>
             transform;
 
@@ -152,6 +155,10 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
 
     public interface IAvatarView
     {
+        Vector3 Position { get; }
+
+        Quaternion Rotation { get; }
+
         Transform GetTransform();
 
         void SetAnimatorFloat(int hash, float value);
@@ -173,5 +180,62 @@ namespace DCL.AvatarRendering.AvatarShape.UnityInterface
         int GetAnimatorCurrentStateTag();
 
         void ResetTrigger(int hash);
+
+        class Fake : IAvatarView
+        {
+            public Vector3 Position { get; }
+            public Quaternion Rotation { get; }
+
+            public Fake(Vector3 position, Quaternion rotation)
+            {
+                Position = position;
+                Rotation = rotation;
+            }
+
+            public Transform GetTransform() =>
+                throw new NotImplementedException();
+
+            public void SetAnimatorFloat(int hash, float value)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SetAnimatorInt(int hash, int value)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SetAnimatorTrigger(int hash)
+            {
+                throw new NotImplementedException();
+            }
+
+            public void SetAnimatorBool(int hash, bool value)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool GetAnimatorBool(int hash) =>
+                throw new NotImplementedException();
+
+            public void ReplaceEmoteAnimation(AnimationClip animationClip)
+            {
+                throw new NotImplementedException();
+            }
+
+            public float GetAnimatorFloat(int hash) =>
+                throw new NotImplementedException();
+
+            public bool IsAnimatorInTag(int hashTag) =>
+                throw new NotImplementedException();
+
+            public int GetAnimatorCurrentStateTag() =>
+                throw new NotImplementedException();
+
+            public void ResetTrigger(int hash)
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }
