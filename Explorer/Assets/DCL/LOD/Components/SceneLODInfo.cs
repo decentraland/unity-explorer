@@ -10,7 +10,8 @@ namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {
-        public List<byte> LoadedLODs;
+        //We can represent 8 LODS loaded state with a byte
+        public byte LoadedLODs;
         public LODGroup LodGroup;
         private GameObjectPool<LODGroup> lodGroupPool;
         public float fScreenRelativeTransitionHeight;
@@ -42,9 +43,7 @@ namespace DCL.LOD.Components
             return new SceneLODInfo
             {
                 LodGroup = lodGroup,
-                lodGroupPool = null,
-                fScreenRelativeTransitionHeight = 0.02f, LoadedLODs = new List<byte>(), CurrentLODLevelPromise = byte.MaxValue
-
+                lodGroupPool = null, fScreenRelativeTransitionHeight = 0.02f, CurrentLODLevelPromise = byte.MaxValue
             };
         }
 
@@ -78,7 +77,7 @@ namespace DCL.LOD.Components
         public void ReEvaluateLODGroup(LODAsset lodAsset)
         {
             CurrentLODLevelPromise = byte.MaxValue;
-            LoadedLODs.Add(lodAsset.LodKey.Level);
+            SetLODLoaded(lodAsset.LodKey.Level);
             
             if (lodAsset.State != LODAsset.LOD_STATE.SUCCESS)
                 return;
@@ -109,10 +108,10 @@ namespace DCL.LOD.Components
                 }
             }
 
-
-            if (LoadedLODs.Count == 1)
+            int loadedLODs = CountLoadedLODs();
+            if (loadedLODs == 1)
             {
-                if (lodAsset.LodKey.Level == 0)
+                if (HasLODLoaded(0))
                 {
                     lods[0].screenRelativeTransitionHeight = 0.01f;
                     lods[1].screenRelativeTransitionHeight = 0.001f;
@@ -122,15 +121,18 @@ namespace DCL.LOD.Components
                     lods[0].screenRelativeTransitionHeight = 0.99f;
                     lods[1].screenRelativeTransitionHeight = 0.01f;
                 }
+
+                //We need to recalculate the bounds only when the first LOD was loaded (hopefully they both have the same bounds)
+                //Ideally we would set it from the ABConverter
+                LodGroup.RecalculateBounds();
             }
-            else if (LoadedLODs.Count == 2)
+            else if (loadedLODs == 2)
             {
                 lods[0].screenRelativeTransitionHeight = 0.5f;
                 lods[1].screenRelativeTransitionHeight = 0.01f;
             }
 
             LodGroup.SetLODs(lods);
-            LodGroup.RecalculateBounds();
         }
 
         public float CalculateScreenRelativeTransitionHeight(float distance, Bounds rendererBounds)
@@ -146,7 +148,30 @@ namespace DCL.LOD.Components
 
         public bool HasLODLoaded(byte lodForAcquisition)
         {
-            return LoadedLODs.Contains(lodForAcquisition) || CurrentLODLevelPromise == lodForAcquisition;
+            return IsLODLoaded(lodForAcquisition) || CurrentLODLevelPromise == lodForAcquisition;
+        }
+
+        private void SetLODLoaded(int lodLevel)
+        {
+            LoadedLODs |= (byte)(1 << lodLevel);
+        }
+
+        private bool IsLODLoaded(int lodLevel)
+        {
+            return (LoadedLODs & (1 << lodLevel)) != 0;
+        }
+
+        private int CountLoadedLODs()
+        {
+            int count = 0;
+            byte temp = LoadedLODs;
+            while (temp != 0)
+            {
+                count += temp & 1;
+                temp >>= 1;
+            }
+
+            return count;
         }
     }
 }
