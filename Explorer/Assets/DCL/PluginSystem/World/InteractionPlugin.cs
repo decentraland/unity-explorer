@@ -56,7 +56,7 @@ namespace DCL.PluginSystem.World
         {
             IComponentPool<PBRaycastResult>? raycastResultPool = sharedDependencies.ComponentPoolsRegistry.GetReferenceTypePool<PBRaycastResult>();
 
-            InitializeRaycastSystem.InjectToWorld(ref builder, raycastResultPool);
+            InitializeRaycastSystem.InjectToWorld(ref builder);
 
             sceneIsCurrentListeners.Add(
             ExecuteRaycastSystem.InjectToWorld(ref builder, sceneDeps.SceneData, raycastBudget, settings.RaycastBucketThreshold,
