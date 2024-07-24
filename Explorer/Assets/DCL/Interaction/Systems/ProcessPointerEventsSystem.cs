@@ -79,11 +79,7 @@ namespace DCL.Interaction.Systems
                 {
                     hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider);
 
-                    bool newEntityWasHovered = candidateForHoverLeaveIsValid == false
-                                               || (
-                                                   previousEntityInfo.EcsExecutor.World != world
-                                                   && previousEntityInfo.ColliderSceneEntityInfo.EntityReference != entityRef
-                                               );
+                    bool newEntityWasHovered = NewEntityWasHovered(candidateForHoverLeaveIsValid, previousEntityInfo, entityInfo.Value);
 
                     // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
                     if (candidateForHoverLeaveIsValid && newEntityWasHovered == false)
@@ -101,25 +97,31 @@ namespace DCL.Interaction.Systems
                         SetupHighlightComponentQuery(world, isAtDistance, entityRef);
                     else
                         world.Create(
-                            new HighlightComponent(
-                                true,
-                                isAtDistance,
-                                entityRef,
-                                entityRef
-                            )
+                            HighlightComponent.NewEntityHighlightComponent(isAtDistance, entityRef)
                         );
                 }
             }
 
             if (candidateForHoverLeaveIsValid)
-            {
-                World world = previousEntityInfo.EcsExecutor.World;
-
-                ResetHighlightComponentQuery(world);
-
-                HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
-            }
+                ResetPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
         }
+
+        private void ResetPreviousEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, in GlobalColliderSceneEntityInfo previousEntityInfo)
+        {
+            ResetHighlightComponentQuery(previousEntityInfo.EcsExecutor.World);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
+        }
+
+        private bool NewEntityWasHovered(
+            bool candidateForHoverLeaveIsValid,
+            GlobalColliderSceneEntityInfo previousEntityInfo,
+            GlobalColliderSceneEntityInfo entityInfo
+        ) =>
+            candidateForHoverLeaveIsValid == false
+            || (
+                previousEntityInfo.EcsExecutor.World != entityInfo.EcsExecutor.World
+                && previousEntityInfo.ColliderSceneEntityInfo.EntityReference != entityInfo.ColliderSceneEntityInfo.EntityReference
+            );
 
         [Query]
         private void SetupHighlightComponent([Data] bool isAtDistance, [Data] EntityReference nextEntity, ref HighlightComponent highlightComponent)
