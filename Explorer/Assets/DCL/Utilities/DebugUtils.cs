@@ -9,6 +9,7 @@ namespace DCL.Utilities
         [Conditional("UNITY_EDITOR")]
         public static void DrawRaycast(float radius, Vector3 rayOrigin, float rayDistance, bool hasHit, RaycastHit hitInfo)
         {
+#if UNITY_EDITOR
             // Draw the ray
             Debug.DrawRay(rayOrigin, Vector3.down * (rayDistance + radius), Color.yellow);
 
@@ -24,6 +25,7 @@ namespace DCL.Utilities
                 // Draw the sphere at the hit point
                 DrawSphere(hitInfo.point, radius, Color.magenta);
             }
+#endif
         }
 
 #if UNITY_EDITOR
