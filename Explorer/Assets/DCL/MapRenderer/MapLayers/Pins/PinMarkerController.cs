@@ -29,7 +29,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public readonly Dictionary<Entity, IPinMarker> markers = new ();
 
         private MapPinBridgeSystem system;
-        private World world;
 
         private bool isEnabled;
 
@@ -47,7 +46,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
-            world = builder.World;
             system = MapPinBridgeSystem.InjectToWorld(ref builder);
 
             system.SetQueryMethod((ControllerECSBridgeSystem.QueryMethod)SetMapPinPlacementQuery + HandleEntityDestructionQuery);
