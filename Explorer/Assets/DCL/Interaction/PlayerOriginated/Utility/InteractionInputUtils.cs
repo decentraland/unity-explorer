@@ -75,6 +75,14 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             resultsIntent.ValidIndices.Add((byte)entryIndex);
         }
 
+        public static void TryAppendButtonAction(IReadOnlyDictionary<DCL.ECSComponents.InputAction, InputAction> sdkInputActionsMap, ref AppendPointerEventResultsIntent resultsIntent)
+        {
+            foreach (var input in sdkInputActionsMap)
+
+                // Add all inputs that were pressed/unpressed this frame
+                TryAppendButtonAction(input.Value!, input.Key, ref resultsIntent);
+        }
+
         /// <summary>
         ///     Handler Pointer Up and Pointer Down, check the corresponding input action if it was upped or downed this frame
         /// </summary>

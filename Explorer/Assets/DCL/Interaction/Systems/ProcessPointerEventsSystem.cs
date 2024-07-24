@@ -163,10 +163,8 @@ namespace DCL.Interaction.Systems
 
             if (!isAtDistance) return false;
 
-            foreach (var input in sdkInputActionsMap)
-
-                // Add all inputs that were pressed/unpressed this frame
-                InteractionInputUtils.TryAppendButtonAction(input.Value!, input.Key, ref pbPointerEvents.AppendPointerEventResultsIntent);
+            // Add all inputs that were pressed/unpressed this frame
+            InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
 
             return isAtDistance;
         }
