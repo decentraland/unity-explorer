@@ -7,9 +7,29 @@ namespace DCL.Interaction.PlayerOriginated.Components
         /// <summary>
         ///     Collider that was hit last frame
         /// </summary>
-        public Collider? LastHitCollider;
+        public Collider? LastHitCollider { get; private set; }
+        public bool HasCollider { get; private set; }
+
         public bool IsAtDistance;
-        public bool IsHoverOver;
-        public bool HasCollider;
+
+        public HoverStateComponent(bool isAtDistance, Collider? lastHitCollider, bool hasCollider)
+        {
+            IsAtDistance = isAtDistance;
+            LastHitCollider = lastHitCollider;
+            HasCollider = hasCollider;
+        }
+
+        public void AssignCollider(Collider collider)
+        {
+            LastHitCollider = collider;
+            HasCollider = true;
+        }
+
+        public void Clear()
+        {
+            LastHitCollider = null;
+            IsAtDistance = false;
+            HasCollider = false;
+        }
     }
 }

@@ -72,8 +72,7 @@ namespace DCL.Interaction.Systems
 
             currentProfileHovered = profile;
 
-            hoverStateComponent.LastHitCollider = raycastResultForGlobalEntities.GetCollider();
-            hoverStateComponent.HasCollider = true;
+            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider);
             hoverStateComponent.IsAtDistance = true;
 
             hoverFeedbackComponent.Add(viewProfileTooltip);

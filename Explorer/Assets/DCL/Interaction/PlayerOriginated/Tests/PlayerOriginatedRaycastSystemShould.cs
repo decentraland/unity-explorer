@@ -74,7 +74,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.True);
-            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.EqualTo(collider));
+            Assert.That(raycastResultForSceneEntities.Collider, Is.EqualTo(collider));
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.True);
-            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.EqualTo(collider));
+            Assert.That(raycastResultForSceneEntities.Collider, Is.EqualTo(collider));
         }
 
         [Test]
@@ -149,7 +149,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
-            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.Null);
+            Assert.That(raycastResultForSceneEntities.Collider, Is.Null);
         }
 
         [Test]
@@ -193,7 +193,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
-            Assert.That(raycastResultForSceneEntities.GetCollider(), Is.Null);
+            Assert.That(raycastResultForSceneEntities.Collider, Is.Null);
         }
     }
 }

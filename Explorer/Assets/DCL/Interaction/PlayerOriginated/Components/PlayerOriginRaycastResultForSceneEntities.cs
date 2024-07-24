@@ -16,6 +16,8 @@ namespace DCL.Interaction.PlayerOriginated.Components
         private RaycastHit unityRaycastHit;
         private Ray originRay;
 
+        public Collider Collider => unityRaycastHit.collider;
+
         public PlayerOriginRaycastResultForSceneEntities(RaycastHit unityRaycastHit) : this()
         {
             this.unityRaycastHit = unityRaycastHit;
@@ -45,10 +47,6 @@ namespace DCL.Interaction.PlayerOriginated.Components
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public GlobalColliderSceneEntityInfo? GetEntityInfo() =>
             entityInfo;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Collider GetCollider() =>
-            unityRaycastHit.collider;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RaycastHit GetRaycastHit() =>
