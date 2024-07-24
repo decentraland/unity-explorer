@@ -76,7 +76,7 @@ namespace DCL.CharacterMotion.Systems
 
             Transform characterTransform = characterController.transform;
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
-            Vector3 gravityDelta = GravityDelta(dt, rigidTransform, platformComponent);
+            Vector3 gravityDelta = CalculateGravityDelta(dt, rigidTransform, platformComponent);
             Vector3 prevPos = characterTransform.position;
 
             // Force the platform collider to update its position, so slope modifier raycast can work properly
@@ -112,7 +112,7 @@ namespace DCL.CharacterMotion.Systems
                 rigidTransform.IsStuck = false;
         }
 
-        private static Vector3 GravityDelta(float dt, CharacterRigidTransform rigidTransform, CharacterPlatformComponent platformComponent)
+        private static Vector3 CalculateGravityDelta(float dt, CharacterRigidTransform rigidTransform, CharacterPlatformComponent platformComponent)
         {
             if (rigidTransform is { IsOnASteepSlope: true, IsStuck: false })
                 return rigidTransform.SlopeGravity * dt;

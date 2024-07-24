@@ -24,13 +24,16 @@ namespace DCL.CharacterMotion.Platforms
             };
 
             if (!DCLPhysics.SphereCast(ray, radius, out RaycastHit hitInfo, rayDistance + radius, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
+            {
+                platformComponent.PlatformCollider = null;
                 platformComponent.CurrentPlatform = null;
+                platformComponent.LastPlatformPosition = null;
+            }
             else if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
             {
                 platformComponent.PlatformCollider = hitInfo.collider;
                 platformComponent.CurrentPlatform = hitInfo.collider.transform;
 
-                platformComponent.LastPlatformPosition = hitInfo.collider.transform.position;
                 platformComponent.LastPlatformPosition = null;
                 platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.InverseTransformPoint(characterTransform.position);
                 platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.InverseTransformDirection(characterTransform.forward);

@@ -7,7 +7,7 @@ namespace DCL.Utilities
     public class DebugUtils
     {
         [Conditional("UNITY_EDITOR")]
-        public static void DrawRaycast(float radius, Vector3 rayOrigin, float rayDistance, bool hasHit, RaycastHit hitInfo)
+        public static void DrawRaycast(Vector3 rayOrigin, float rayDistance, bool hasHit, RaycastHit hitInfo, float radius)
         {
 #if UNITY_EDITOR
             // Draw the ray
