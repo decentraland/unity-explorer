@@ -1,24 +1,38 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Throttling;
+using Arch.SystemGroups.UnityBridge;
 using CrdtEcsBridge.Components.Transform;
+using CrdtEcsBridge.UpdateGate;
 using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
+using System;
 
 namespace ECS.Unity.Transforms.Systems
 {
     [UpdateInGroup(typeof(SyncedSimulationSystemGroup))]
     [UpdateAfter(typeof(ParentingTransformSystem))]
-    [ThrottlingEnabled]
     public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
-        public UpdateTransformSystem(World world) : base(world) { }
+        private readonly ISystemGroupsUpdateGate ecsGroupThrottler;
+        private readonly ISystemsUpdateGate systemsPriorityComponentsGate;
+
+        private static readonly Type PARENT_GROUP_TYPE = ((UpdateInGroupAttribute)Attribute
+           .GetCustomAttribute(typeof(UpdateTransformSystem), typeof(UpdateInGroupAttribute)))?.GroupType!;
+
+        public UpdateTransformSystem(World world, ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate systemsPriorityComponentsGate) : base(world)
+        {
+            this.ecsGroupThrottler = ecsGroupThrottler;
+            this.systemsPriorityComponentsGate = systemsPriorityComponentsGate;
+        }
 
         protected override void Update(float _)
         {
-            UpdateTransformQuery(World);
+            if (systemsPriorityComponentsGate.IsOpen<SDKTransform>())
+                UpdateTransformQuery(World);
+            else if (!ecsGroupThrottler.ShouldThrottle(PARENT_GROUP_TYPE, new TimeProvider.Info()))
+                UpdateTransformQuery(World);
         }
 
         [Query]
