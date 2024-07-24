@@ -15,9 +15,18 @@ namespace CrdtEcsBridge.UpdateGate
     public class SystemGroupsUpdateGate : ISystemGroupsUpdateGate
     {
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, PoolConstants.SCENES_COUNT);
+        private static readonly Type[] ALL_THROTTLED_GROUPS =
+        {
+            typeof(InitializationSystemGroup),
+            typeof(SimulationSystemGroup),
+            typeof(PresentationSystemGroup),
+            typeof(PhysicsSystemGroup),
+            typeof(PostPhysicsSystemGroup),
+            typeof(PreRenderingSystemGroup)
+        };
 
         private HashSet<Type> openGroups = POOL.Get();
-        private HashSet<Type> throttledThisFrameGroups = POOL.Get();
+        private HashSet<Type> groupsToClose = POOL.Get();
 
         // Ensure that the gate will be opened from the beginning of the next frame,
         // If we open it in the middle of the current frame the update order will be broken
@@ -30,9 +39,9 @@ namespace CrdtEcsBridge.UpdateGate
             if (openGroups == null) return;
 
             POOL.Release(openGroups);
-            POOL.Release(throttledThisFrameGroups);
+            POOL.Release(groupsToClose);
 
-            throttledThisFrameGroups = null;
+            groupsToClose = null;
             openGroups = null;
         }
 
@@ -43,24 +52,14 @@ namespace CrdtEcsBridge.UpdateGate
             if (Time.frameCount < keepOpenFrame)
                 return false;
 
+            // Gate is closed
+            if (!openGroups.Contains(systemGroupType)) return true;
+
             // Otherwise, close the group but let it run one (current) frame
-            return !TryCloseThisFrame(systemGroupType);
-        }
-
-        private bool TryCloseThisFrame(Type systemGroupType)
-        {
-            if (throttledThisFrameGroups.Contains(systemGroupType)) return true;
-            if (!openGroups.Contains(systemGroupType)) return false;
-
-            // Sync is required as TryCloseThisFrame is called from the main thread
-            lock (openGroups)
-            lock (throttledThisFrameGroups)
+            // Sync is required as it is called from the main thread
+            lock (groupsToClose)
             {
-                if (openGroups.Remove(systemGroupType))
-                {
-                    throttledThisFrameGroups.Add(systemGroupType);
-                    return true;
-                }
+                groupsToClose.Add(systemGroupType);
             }
 
             return false;
@@ -68,7 +67,12 @@ namespace CrdtEcsBridge.UpdateGate
 
         public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled)
         {
-            throttledThisFrameGroups.Clear();
+            lock (openGroups)
+            lock (groupsToClose)
+            {
+                openGroups.ExceptWith(groupsToClose);
+                groupsToClose.Clear();
+            }
         }
 
         public void Open()
@@ -81,13 +85,7 @@ namespace CrdtEcsBridge.UpdateGate
             lock (openGroups)
             {
                 // Open all system groups to execution
-                openGroups.Add(typeof(InitializationSystemGroup));
-                openGroups.Add(typeof(SimulationSystemGroup));
-                openGroups.Add(typeof(PresentationSystemGroup));
-                openGroups.Add(typeof(PhysicsSystemGroup));
-                openGroups.Add(typeof(PostPhysicsSystemGroup));
-                openGroups.Add(typeof(PreRenderingSystemGroup));
-
+                openGroups.UnionWith(ALL_THROTTLED_GROUPS);
                 keepOpenFrame = MultithreadingUtility.FrameCount + 1;
             }
         }
