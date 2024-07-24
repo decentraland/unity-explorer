@@ -31,9 +31,8 @@ namespace DCL.WebRequests
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {
-                var exception = new Exception($"Error during request: {envelope}", e);
-                log($"WebRequestController send error: {exception}");
-                throw exception;
+                log($"WebRequestController send error: {e}");
+                throw; // don't re-throw it as a new exception as we loose the original type in that case
             }
         }
     }
