@@ -16,6 +16,7 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
+        public event Action<Vector2Int, bool> OnSetAsDestination;
         public event Action<Vector2Int> OnJumpIn;
 
         private readonly FloatingPanelView view;
@@ -122,6 +123,10 @@ namespace DCL.Navmap
         {
             try
             {
+                view.setAsDestinationButton.onClick.RemoveAllListeners();
+                view.setAsDestinationButton.onClick.AddListener(() => SetAsDestination(parcel, false));
+                view.setAsDestinationMapPinButton.onClick.RemoveAllListeners();
+                view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel, true));
                 view.jumpInButton.onClick.RemoveAllListeners();
                 view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
                 PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
@@ -138,6 +143,11 @@ namespace DCL.Navmap
                 if (animationTrigger != -1)
                     view.panelAnimator.SetTrigger(animationTrigger);
             }
+        }
+
+        private void SetAsDestination(Vector2Int parcel, bool toMapPin)
+        {
+            OnSetAsDestination?.Invoke(parcel, toMapPin);
         }
 
         private void JumpIn(Vector2Int parcel)

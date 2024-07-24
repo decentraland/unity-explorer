@@ -20,6 +20,7 @@ using DCL.Input;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Landscape;
 using DCL.LOD.Systems;
+using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
@@ -154,6 +155,7 @@ namespace Global.Dynamic
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
+            var mapPathEventBus = new MapPathEventBus();
 
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
@@ -177,7 +179,7 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, ct);
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, mapPathEventBus, ct);
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
@@ -415,7 +417,8 @@ namespace Global.Dynamic
                     profileCache,
                     ASSET_BUNDLES_URL,
                     notificationsBusController,
-                    characterPreviewEventBus
+                    characterPreviewEventBus,
+                    mapPathEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

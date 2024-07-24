@@ -25,6 +25,14 @@ using Utility;
 
 namespace DCL.Navmap
 {
+    public class SetDestinationController : IDisposable
+    {
+
+
+        public void Dispose()
+        { }
+    }
+
     public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
@@ -45,6 +53,7 @@ namespace DCL.Navmap
         private readonly SatelliteController satelliteController;
         private readonly StreetViewController streetViewController;
         private readonly IRealmData realmData;
+        private readonly IMapPathEventBus mapPathEventBus;
 
         private NavmapLocationController navmapLocationController;
         public FloatingPanelController FloatingPanelController { get; }
@@ -64,11 +73,13 @@ namespace DCL.Navmap
             IWebBrowser webBrowser,
             DCLInput dclInput,
             IRealmNavigator realmNavigator,
-            IRealmData realmData)
+            IRealmData realmData,
+            IMapPathEventBus mapPathEventBus)
         {
             this.navmapView = navmapView;
             this.mapRenderer = mapRenderer;
             this.realmData = realmData;
+            this.mapPathEventBus = mapPathEventBus;
 
             rectTransform = this.navmapView.transform.parent.GetComponent<RectTransform>();
 
@@ -77,6 +88,7 @@ namespace DCL.Navmap
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, dclInput);
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
+            FloatingPanelController.OnSetAsDestination += OnSetDestination;
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
@@ -116,6 +128,11 @@ namespace DCL.Navmap
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
+        }
+
+        private void OnSetDestination(Vector2Int destination, bool toMapPin)
+        {
+            mapPathEventBus.SetDestination(destination, toMapPin);
         }
 
         private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)

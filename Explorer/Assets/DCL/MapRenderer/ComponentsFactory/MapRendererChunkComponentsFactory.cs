@@ -24,31 +24,33 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
-        private PlayerMarkerInstaller playerMarkerInstaller { get; }
-        private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
-        private PinMarkerInstaller pinMarkerInstaller { get; }
-        private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
-        private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
-
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly MapRendererSettings mapSettings;
+        private readonly IMapPathEventBus mapPathEventBus;
+        private PlayerMarkerInstaller playerMarkerInstaller { get; }
+        private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
+        private PinMarkerInstaller pinMarkerInstaller { get; }
+        private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
+        private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
 
         public MapRendererChunkComponentsFactory(
             IAssetsProvisioner assetsProvisioner,
             MapRendererSettings settings,
             IWebRequestController webRequestController,
             MapRendererTextureContainer textureContainer,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IMapPathEventBus mapPathEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.mapSettings = settings;
+            mapSettings = settings;
             this.webRequestController = webRequestController;
             this.textureContainer = textureContainer;
             this.placesAPIService = placesAPIService;
+            this.mapPathEventBus = mapPathEventBus;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -79,11 +81,10 @@ namespace DCL.MapRenderer.ComponentsFactory
                 x => x.Dispose()
             );
 
-
             await UniTask.WhenAll(
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
+                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken)

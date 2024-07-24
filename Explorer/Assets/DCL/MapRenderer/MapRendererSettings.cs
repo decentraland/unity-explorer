@@ -40,10 +40,20 @@ namespace DCL.MapRenderer
         [field: SerializeField]
         public AssetReferenceGameObject UserMarker { get; private set; }
 
+        [field: SerializeField]
+        public DottedLineRef DestinationPathLine { get; private set; }
+
         [Serializable]
         public class SpriteRendererRef : ComponentReference<SpriteRenderer>
         {
             public SpriteRendererRef(string guid) : base(guid) { }
         }
+
+        [Serializable]
+        public class DottedLineRef : ComponentReference<PathRenderer>
+        {
+            public DottedLineRef(string guid) : base(guid) { }
+        }
+
     }
 }

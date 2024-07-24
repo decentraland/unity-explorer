@@ -23,23 +23,29 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             MapRendererSettings settings,
             IAssetsProvisioner assetProv,
+            IMapPathEventBus mapPathEventBus,
             CancellationToken cancellationToken)
         {
             this.mapSettings = settings;
             this.assetsProvisioner = assetProv;
             PlayerMarkerObject prefab = await GetPrefabAsync(cancellationToken);
 
-            var controller = new PlayerMarkerController(
+            var playerMarkerController = new PlayerMarkerController(
                 CreateMarker,
                 configuration.PlayerMarkerRoot,
                 coordsUtils,
                 cullingController
             );
 
-            controller.Initialize();
+            playerMarkerController.Initialize();
 
-            writer.Add(MapLayer.PlayerMarker, controller);
-            zoomScalingWriter.Add(controller);
+            var pathInstance = await assetsProvisioner.ProvideInstanceAsync(mapSettings.DestinationPathLine, configuration.PlayerMarkerRoot, ct: CancellationToken.None);
+
+            var pathRendererController = new PathRendererController(mapPathEventBus, pathInstance.Value, coordsUtils);
+            pathRendererController.Initialize(playerMarkerController.PlayerMarkerTransform);
+
+            writer.Add(MapLayer.PlayerMarker, playerMarkerController);
+            zoomScalingWriter.Add(playerMarkerController);
             return;
 
             IPlayerMarker CreateMarker(Transform parent)

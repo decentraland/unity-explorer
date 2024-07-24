@@ -17,10 +17,11 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner,
             MapRendererSettings settings,
             IPlacesAPIService placesAPIService,
+            IMapPathEventBus mapPathEventBus,
             CancellationToken ct)
         {
             var textureContainer = new MapRendererTextureContainer();
-            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(assetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController, textureContainer, placesAPIService));
+            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(assetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController, textureContainer, placesAPIService, mapPathEventBus));
             await mapRenderer.InitializeAsync(ct);
             return new MapRendererContainer { MapRenderer = mapRenderer, TextureContainer = textureContainer };
         }
