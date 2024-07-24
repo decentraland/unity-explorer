@@ -52,6 +52,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRemotePoses remotePoses;
         private readonly IRoomHub roomHub;
         private readonly IScenesCache scenesCache;
+        private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
 
         public MultiplayerPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -69,8 +70,8 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IRemoteEntities remoteEntities,
             IScenesCache scenesCache,
-            IEmoteCache emoteCache
-        )
+            IEmoteCache emoteCache,
+            ICharacterDataPropagationUtility characterDataPropagationUtility)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.archipelagoIslandRoom = archipelagoIslandRoom;
@@ -88,6 +89,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.scenesCache = scenesCache;
             this.emoteCache = emoteCache;
+            this.characterDataPropagationUtility = characterDataPropagationUtility;
         }
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
@@ -98,7 +100,7 @@ namespace DCL.PluginSystem.Global
 
         public void Dispose() { }
 
-        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments _)
+        public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments globalPluginArguments)
         {
 #if !NO_LIVEKIT_MODE
             IFFIClient.Default.EnsureInitialize();
@@ -121,8 +123,8 @@ namespace DCL.PluginSystem.Global
             );
 
             ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
-            PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache, characterObject);
-            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder);
+            PlayerCRDTEntitiesHandlerSystem.InjectToWorld(ref builder, scenesCache);
+            PlayerProfileDataPropagationSystem.InjectToWorld(ref builder, characterDataPropagationUtility, globalPluginArguments.PlayerEntity);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
             AvatarEmoteCommandPropagationSystem.InjectToWorld(ref builder, emoteCache);
 #endif

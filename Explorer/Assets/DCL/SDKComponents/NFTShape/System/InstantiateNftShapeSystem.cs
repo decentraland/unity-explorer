@@ -6,6 +6,7 @@ using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.SDKComponents.NFTShape.Component;
 using DCL.SDKComponents.NFTShape.Frames.FramePrefabs;
+using DCL.SDKComponents.NFTShape.Renderer;
 using DCL.SDKComponents.NFTShape.Renderer.Factory;
 using ECS.Abstract;
 using ECS.Unity.Groups;
@@ -39,6 +40,7 @@ namespace DCL.SDKComponents.NFTShape.System
 
         protected override void Update(float t)
         {
+            ReconfigureNftShapeQuery(World);
             InstantiateRemainingQuery(World!);
         }
 
@@ -49,16 +51,34 @@ namespace DCL.SDKComponents.NFTShape.System
             if (prefabs.IsInitialized == false || instantiationFrameTimeBudgetProvider.TrySpendBudget() == false)
                 return;
 
-            var component = NewNftShapeRendererComponent(transform, nftShape);
+            NftShapeRendererComponent component = NewNftShapeRendererComponent(transform, nftShape);
 
             World!.Add(entity, component);
             changedNftShapes.Add(entity, component);
         }
 
+        [Query]
+        private void ReconfigureNftShape(Entity entity, PBNftShape pbNftShape, ref NftShapeRendererComponent nftShapeRendererComponent,
+            ref NFTLoadingComponent loadingComponent)
+        {
+            if (!pbNftShape.IsDirty) return;
+
+            bool sourceChanged = pbNftShape.Urn != loadingComponent.Promise.LoadingIntention.URN;
+
+            nftShapeRendererComponent.PoolableComponent.Apply(pbNftShape, sourceChanged);
+
+            // If URN has changed forget and delete the current loading promise so it will be started again in `LoadCycleNftShapeSystem`
+            if (!sourceChanged) return;
+
+            changedNftShapes.Add(entity, nftShapeRendererComponent);
+            loadingComponent.Promise.ForgetLoading(World);
+            World.Remove<NFTLoadingComponent>(entity);
+        }
+
         private NftShapeRendererComponent NewNftShapeRendererComponent(in TransformComponent transform, in PBNftShape nftShape)
         {
-            var renderer = nftShapeRendererFactory.New(transform.Transform);
-            renderer.Apply(nftShape);
+            INftShapeRenderer renderer = nftShapeRendererFactory.New(transform.Transform);
+            renderer.Apply(nftShape, true);
 
             return new NftShapeRendererComponent(renderer);
         }
