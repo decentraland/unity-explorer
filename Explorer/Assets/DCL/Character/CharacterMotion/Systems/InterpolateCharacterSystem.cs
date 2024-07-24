@@ -80,7 +80,7 @@ namespace DCL.CharacterMotion.Systems
             Vector3 prevPos = characterTransform.position;
 
             // Force the platform collider to update its position, so slope modifier raycast can work properly
-            if (platformComponent.IsMovingPlatform && platformComponent.CurrentPlatform != null)
+            if (platformComponent.IsMovingPlatform && platformComponent.PlatformCollider != null)
             {
                 platformComponent.PlatformCollider.enabled = false;
                 platformComponent.PlatformCollider.enabled = true;
