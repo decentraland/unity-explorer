@@ -79,45 +79,26 @@ namespace DCL.CharacterMotion.Systems
             Vector3 gravityDelta = GravityDelta(dt, rigidTransform, platformComponent);
             Vector3 prevPos = characterTransform.position;
 
-            // Debug.Log($"VVV [CHAR] prevPos = {prevPos} | platformDelta = {rigidTransform.PlatformDelta} | movementDelta = {movementDelta} | gravityDelta = {gravityDelta}  ");
+            // Force the platform collider to update its position, so slope modifier raycast can work properly
+            if (platformComponent.IsMovingPlatform && platformComponent.CurrentPlatform != null)
+            {
+                platformComponent.PlatformCollider.enabled = false;
+                platformComponent.PlatformCollider.enabled = true;
+            }
+
+            Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
+
             CollisionFlags collisionFlags = characterController.Move(
                 movementDelta
                 + gravityDelta
+                + slopeModifier
                 + rigidTransform.PlatformDelta);
 
-            // Debug.Log($"VVV [CHAR] newPos = {characterTransform.position}");
-
             Vector3 deltaMovement = characterTransform.position - prevPos;
-
             bool hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
 
             if (!Mathf.Approximately(gravityDelta.y, 0f))
                 rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
-
-            // if (!rigidTransform.IsGrounded)
-            {
-                // Physics.simulationMode = SimulationMode.Script;
-                // Physics.Simulate(dt);
-
-                if (platformComponent.IsMovingPlatform && platformComponent.CurrentPlatform != null)
-                {
-                    var col = platformComponent.CurrentPlatform.GetComponent<Collider>();
-                    col.enabled = false;
-                    col.enabled = true;
-                }
-                // Physics.SyncTransforms();
-
-                Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
-                // Physics.simulationMode = SimulationMode.FixedUpdate;
-
-                 collisionFlags = characterController.Move(slopeModifier);
-
-                  deltaMovement = characterTransform.position - prevPos;
-                  hasGroundedFlag = deltaMovement.y <= 0 && EnumUtils.HasFlag(collisionFlags, CollisionFlags.Below);
-
-                 if (!Mathf.Approximately(gravityDelta.y, 0f))
-                     rigidTransform.IsGrounded = hasGroundedFlag || characterController.isGrounded;
-            }
 
             rigidTransform.IsCollidingWithWall = EnumUtils.HasFlag(collisionFlags, CollisionFlags.Sides);
 

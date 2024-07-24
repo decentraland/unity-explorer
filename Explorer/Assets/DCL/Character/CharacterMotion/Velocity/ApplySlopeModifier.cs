@@ -2,9 +2,9 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.Utilities;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using Physics = DCL.Utilities.Physics;
 
 namespace DCL.CharacterMotion
 {
@@ -39,7 +39,7 @@ namespace DCL.CharacterMotion
 
             float downwardsSlopeDistance = input.Kind == MovementKind.Run ? settings.DownwardsSlopeRunRaycastDistance : settings.DownwardsSlopeJogRaycastDistance;
 
-            if (!Physics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
+            if (!DCLPhysics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
                 return Vector3.zero;
 
             float diff = feet - hit.point.y;

@@ -38,6 +38,7 @@ namespace DCL.CharacterMotion.Systems
             if (rigidTransform.JustJumped)
             {
                 platformComponent.CurrentPlatform = null;
+                platformComponent.PlatformCollider = null;
                 return;
             }
 
@@ -46,7 +47,10 @@ namespace DCL.CharacterMotion.Systems
                 platformComponent.FramesUngrounded++;
 
                 if (platformComponent.FramesUngrounded > UNGROUNDED_FRAMES)
+                {
                     platformComponent.CurrentPlatform = null;
+                    platformComponent.PlatformCollider = null;
+                }
 
                 Debug.Log("VVV [Null Platform] - Not Grounded");
                 return;

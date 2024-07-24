@@ -5,6 +5,8 @@ namespace DCL.CharacterMotion.Components
     public class CharacterPlatformComponent
     {
         public Transform? CurrentPlatform;
+        public Collider? PlatformCollider;
+
         public Vector3? LastPlatformDelta;
         public Vector3? LastPlatformPosition;
         public bool IsMovingPlatform;
