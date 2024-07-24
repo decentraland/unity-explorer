@@ -26,7 +26,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
             TryAdjustFrameTransform();
         }
 
-        public void Apply(PBNftShape nftShape)
+        public void Apply(PBNftShape nftShape, bool sourceChanged)
         {
             if (frame != null)
             {
@@ -36,8 +36,10 @@ namespace DCL.SDKComponents.NFTShape.Renderer
 
             frame = framesPool.NewFrame(nftShape.Style, transform);
             frame.Paint(nftShape.Color.ToUnityColor());
-            frame.UpdateStatus(AbstractFrame.Status.Loading);
             TryAdjustFrameTransform();
+
+            if (sourceChanged)
+                frame.UpdateStatus(AbstractFrame.Status.Loading);
         }
 
         public void Apply(Texture2D material)
