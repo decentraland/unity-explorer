@@ -6,7 +6,6 @@ using CrdtEcsBridge.Components;
 using CrdtEcsBridge.ECSToCRDTWriter;
 using DCL.Diagnostics;
 using DCL.ECSComponents;
-using DCL.Interaction.Systems;
 using DCL.Interaction.Utility;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
@@ -37,9 +36,14 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         private readonly IComponentPool<RaycastHit> raycastHitPool;
 
-
-        internal WritePointerEventResultsSystem(World world, ISceneData sceneData, IECSToCRDTWriter ecsToCRDTWriter,
-            ISceneStateProvider sceneStateProvider, IGlobalInputEvents globalInputEvents, IComponentPool<RaycastHit> raycastHitPool) : base(world)
+        internal WritePointerEventResultsSystem(
+            World world,
+            ISceneData sceneData,
+            IECSToCRDTWriter ecsToCRDTWriter,
+            ISceneStateProvider sceneStateProvider,
+            IGlobalInputEvents globalInputEvents,
+            IComponentPool<RaycastHit> raycastHitPool
+        ) : base(world)
         {
             this.sceneData = sceneData;
             this.ecsToCRDTWriter = ecsToCRDTWriter;
@@ -72,43 +76,52 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void WriteResults([Data] Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
+        private void WriteResults([Data] in Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
 
             foreach (byte validIndex in intent.ValidIndices)
             {
-                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents[validIndex];
-                PBPointerEvents.Types.Info info = entry.EventInfo;
+                PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents![validIndex]!;
+                PBPointerEvents.Types.Info info = entry.EventInfo!;
 
-                RaycastHit raycastHit = raycastHitPool.Get();
+                RaycastHit raycastHit = raycastHitPool.Get()!;
 
                 raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
                     sdkEntity, intent.Ray.origin, intent.Ray.direction);
 
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
             }
-            pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Clear();
+
+            intent.ValidIndices.Clear();
 
             if (intent.ValidInputActions != null)
             {
                 foreach (var inputAction in intent.ValidInputActions)
                 {
-                    RaycastHit raycastHit = raycastHitPool.Get();
+                    RaycastHit raycastHit = raycastHitPool.Get()!;
 
-                    raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
-                        sdkEntity, intent.Ray.origin, intent.Ray.direction);
+                    raycastHit.FillSDKRaycastHit(
+                        scenePosition,
+                        intent.RaycastHit,
+                        string.Empty,
+                        sdkEntity,
+                        intent.Ray.origin,
+                        intent.Ray.direction
+                    );
 
                     AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
 
                     //We dont consider hover events to disable global input messages
-                    if (inputAction.Value != PointerEventType.PetHoverEnter && inputAction.Value != PointerEventType.PetHoverLeave) { messageSent = true; }
+                    if (inputAction.Value != PointerEventType.PetHoverEnter && inputAction.Value != PointerEventType.PetHoverLeave)
+                        messageSent = true;
                 }
-                pbPointerEvents.AppendPointerEventResultsIntent.ValidInputActions.Clear();
+
+                intent.ValidInputActions.Clear();
             }
         }
 
-        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit sdkHit, InputAction button, PointerEventType eventType)
+        private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
         {
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
