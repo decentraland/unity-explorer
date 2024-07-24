@@ -56,7 +56,7 @@ namespace Global.Dynamic
             splashRoot.SetActive(showSplash);
             cursorRoot.EnsureNotNull();
 
-            localSceneDevelopment = DetectAndConfigureLocalSceneDevelopment(launchSettings);
+            ProcessDeepLinkParameters(launchSettings);
 
             startingRealm = launchSettings.GetStartingRealm();
             startingParcel = launchSettings.TargetScene;
@@ -179,7 +179,7 @@ namespace Global.Dynamic
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
         }
 
-        private bool DetectAndConfigureLocalSceneDevelopment(RealmLaunchSettings launchSettings)
+        private void ProcessDeepLinkParameters(RealmLaunchSettings launchSettings)
         {
             string deepLinkString = string.Empty;
 
@@ -194,40 +194,35 @@ namespace Global.Dynamic
             deepLinkString = Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2");
 #endif
 
-            if (string.IsNullOrEmpty(deepLinkString)) return false;
+            if (string.IsNullOrEmpty(deepLinkString)) return;
 
-            // Regex to detect different parameters in Uri based on first param after '//' and then separated by '&'
-            var pattern = @"(?<=://|&)[^?&]+=[^&]+";
+            // Regex for detecting different parameters in the deep link string If we want to
+            // add more we just add for example (?=.*newParam=(?<newParamGroupName>[^&?!*]+))?
+            var pattern = @"^(?=.*realm=(?<realm>[^&?!*]+))?(?=.*position=(?<position>[^&?!*]+))?";
             var regex = new Regex(pattern);
-            var matches = regex.Matches(deepLinkString);
+            var regexMatch = regex.Match(deepLinkString);
 
-            if (matches.Count == 0
-                || (!matches[0].Value.Contains("realm=http://")
-                    && !matches[0].Value.Contains("realm=https://")))
-                return false;
+            if (!regexMatch.Success) return;
 
-            string localRealm = matches[0].Value.Replace("realm=", "");
-            launchSettings.SetLocalSceneDevelopmentRealm(localRealm);
+            string realmParam = "realm";
+            if (!regexMatch.Groups[realmParam].Success) return;
 
-            var positionParam = "position=";
-            if (matches.Count > 1)
+            string realmParamValue = regexMatch.Groups[realmParam].Value;
+            localSceneDevelopment = realmParamValue.Contains("127.0.0.1:");
+            if (localSceneDevelopment)
+                launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);
+            else
+                launchSettings.SetWorldRealm(realmParamValue);
+
+            string positionParam = "position";
+            launchSettings.SetTargetScene(Vector2Int.zero);
+            if (regexMatch.Groups[positionParam].Success)
             {
-                for (var i = 1; i < matches.Count; i++)
-                {
-                    string param = matches[i].Value;
-
-                    if (param.Contains(positionParam))
-                    {
-                        param = param.Replace(positionParam, "");
-
-                        launchSettings.SetTargetScene(new Vector2Int(
-                            int.Parse(param.Substring(0, param.IndexOf(','))),
-                            int.Parse(param.Substring(param.IndexOf(',') + 1))));
-                    }
-                }
+                string positionParamValue = regexMatch.Groups[positionParam].Value;
+                launchSettings.SetTargetScene(new Vector2Int(
+                    int.Parse(positionParamValue.Substring(0, positionParamValue.IndexOf(','))),
+                    int.Parse(positionParamValue.Substring(positionParamValue.IndexOf(',') + 1))));
             }
-
-            return true;
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
