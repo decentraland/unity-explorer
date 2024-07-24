@@ -92,7 +92,7 @@ namespace DCL.LOD.Systems
                     sceneLODCandidate = (byte)(i + 1);
             }
 
-            if (sceneLODInfo.fScreenRelativeTransitionHeight >= 0.3f && sceneLODCandidate == 1)
+            if (sceneLODInfo.CullRelativeHeight >= 0.3f && sceneLODCandidate == 1)
                 sceneLODCandidate = 0;
 
             return sceneLODCandidate;

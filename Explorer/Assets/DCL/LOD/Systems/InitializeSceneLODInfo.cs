@@ -24,13 +24,13 @@ namespace DCL.LOD.Systems
         private readonly Transform lodParentTransform;
 
         //We cache the LODGroup and the byte of LODGroups loaded
-        private readonly Dictionary<string, (LODGroup, byte)> lodGroupsCache;
+        private readonly Dictionary<string, (LODGroup, byte, float)> lodGroupsCache;
 
         public InitializeSceneLODInfo(World world, GameObjectPool<LODGroup> lodGroupPool, Transform lodParentTransform) : base(world)
         {
             this.lodGroupPool = lodGroupPool;
             this.lodParentTransform = lodParentTransform;
-            lodGroupsCache = new Dictionary<string, (LODGroup, byte)>();
+            lodGroupsCache = new Dictionary<string, (LODGroup, byte, float)>();
         }
 
         protected override void Update(float t)
@@ -44,13 +44,14 @@ namespace DCL.LOD.Systems
         {
             if (sceneLODInfo.State == SCENE_LOD_INFO_STATE.UNINITIALIZED)
             {
-                //TODO (JUANI) : How to cache failed lods?
+                //TODO (JUANI) : How to cache failed lods? Should the hold SceneLODInfo be cached?
                 if (lodGroupsCache.TryGetValue(sceneDefinitionComponent.Definition.id, out var lodCache))
                 {
                     var lodGroup = lodCache.Item1;
                     lodGroup.gameObject.SetActive(true);
                     sceneLODInfo.LodGroup = lodGroup;
                     sceneLODInfo.LoadedLODs = lodCache.Item2;
+                    sceneLODInfo.CullRelativeHeight = lodCache.Item3;
                     sceneLODInfo.State = SCENE_LOD_INFO_STATE.SUCCESS;
                 }
                 else

@@ -77,8 +77,8 @@ namespace DCL.Landscape.Systems
             float tempDensity = detailDensity.Value / 100f;
             int tempDistance = detailDistance.Value;
 
-            if (Math.Abs(QualitySettings.lodBias - tempLodBias) > 0.005f)
-                QualitySettings.lodBias = tempLodBias;
+            //if (Math.Abs(QualitySettings.lodBias - tempLodBias) > 0.005f)
+            //    QualitySettings.lodBias = tempLodBias;
 
             if (Math.Abs(QualitySettings.terrainDetailDensityScale - tempDensity) > 0.005f)
                 QualitySettings.terrainDetailDensityScale = tempDensity;

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DCL.LOD.Components
 {
@@ -18,11 +19,9 @@ namespace DCL.LOD.Components
     
     public struct SceneLODInfo
     {
-        //TODO (JUANI) : How to avoid? I need to initialize the first LODGroup before the first LOD is ready. 
-        //If I initialize the LOD with the LODGroup, it will pop
         public SCENE_LOD_INFO_STATE State;
         public GameObjectPool<LODGroup> lodGroupPool;
-        public Dictionary<string, (LODGroup, byte)> lodGroupCache;
+        public Dictionary<string, (LODGroup, byte, float)> lodGroupCache;
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
@@ -31,14 +30,14 @@ namespace DCL.LOD.Components
         public string id;
         public byte LoadedLODs;
         public LODGroup LodGroup;
-        public float fScreenRelativeTransitionHeight;
+        public float CullRelativeHeight;
 
         public void Dispose(World world)
         {
             if (State is SCENE_LOD_INFO_STATE.SUCCESS)
             {
                 LodGroup.gameObject.SetActive(false);
-                lodGroupCache[id] = (LodGroup, LoadedLODs);
+                lodGroupCache[id] = (LodGroup, LoadedLODs, CullRelativeHeight);
             }
 
             if (State is SCENE_LOD_INFO_STATE.WAITING_LOD)
@@ -51,7 +50,7 @@ namespace DCL.LOD.Components
         {
             return new SceneLODInfo
             {
-                fScreenRelativeTransitionHeight = 0.02f, CurrentLODLevelPromise = byte.MaxValue
+                CurrentLODLevelPromise = byte.MaxValue
             };
         }
 
@@ -75,40 +74,26 @@ namespace DCL.LOD.Components
             {
                 //MISHA: Is it possible to avoid the array conversion
                 //TODO (Juani) : If it is size 0 it doesnt make sense to go beyond this point
-                lods[lodAsset.LodKey.Level].renderers = pooledList.Value.ToArray();
+                var renderers = pooledList.Value.ToArray();
+                lods[lodAsset.LodKey.Level].renderers = renderers;
+                if (loadedLODs == 1)
+                    CalculateCullRelativeHeight(renderers);
             }
 
             lodAsset.Root.transform.SetParent(LodGroup.transform);
             
-            const float distance = 20 * 16;
-            if (fScreenRelativeTransitionHeight == 0.02f)
-            {
-                var lodRenderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
-                if (lodRenderers != null)
-                {
-                    if (lodRenderers.Length > 0)
-                    {
-                        Bounds mergedBounds = lodRenderers[0].bounds;
-
-                        // Encapsulate the bounds of the remaining renderers
-                        for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
-
-                        fScreenRelativeTransitionHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(distance, mergedBounds)));
-                    }
-                }
-            }
 
             if (loadedLODs == 1)
             {
-                if (HasLODLoaded(0))
+                if (lodAsset.LodKey.Level == 0)
                 {
-                    lods[0].screenRelativeTransitionHeight = 0.01f;
-                    lods[1].screenRelativeTransitionHeight = 0.001f;
+                    lods[0].screenRelativeTransitionHeight = CullRelativeHeight;
+                    lods[1].screenRelativeTransitionHeight = CullRelativeHeight - 0.001f;
                 }
                 else
                 {
-                    lods[0].screenRelativeTransitionHeight = 0.99f;
-                    lods[1].screenRelativeTransitionHeight = 0.01f;
+                    lods[0].screenRelativeTransitionHeight = 1;
+                    lods[1].screenRelativeTransitionHeight = CullRelativeHeight;
                 }
                 //We need to recalculate the bounds only when the first LOD was loaded (hopefully they both have the same bounds)
                 //Ideally we would set it from the ABConverter
@@ -116,22 +101,37 @@ namespace DCL.LOD.Components
             }
             else if (loadedLODs == 2)
             {
-                lods[0].screenRelativeTransitionHeight = 0.5f;
-                lods[1].screenRelativeTransitionHeight = 0.01f;
+                lods[0].screenRelativeTransitionHeight = (1 - CullRelativeHeight) / 2 + CullRelativeHeight;
+                lods[1].screenRelativeTransitionHeight = CullRelativeHeight;
             }
 
             LodGroup.SetLODs(lods);
             State = SCENE_LOD_INFO_STATE.SUCCESS;
         }
 
+        private void CalculateCullRelativeHeight(Renderer[] lodRenderers)
+        {
+            const float distance = 20 * 16;
+            if (lodRenderers.Length > 0)
+            {
+                var mergedBounds = lodRenderers[0].bounds;
+
+                // Encapsulate the bounds of the remaining renderers
+                for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
+
+                CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(distance, mergedBounds)));
+            }
+        }
+
         public float CalculateScreenRelativeTransitionHeight(float distance, Bounds rendererBounds)
         {
-            float lodBias = QualitySettings.lodBias / 0.8f;
-            float objectSize = rendererBounds.extents.y * lodBias;
+            float lodBias = 1;
+
+            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * lodBias;
             float defaultFOV = 60.0f;
             float fov = (Camera.main ? Camera.main.fieldOfView : defaultFOV) * Mathf.Deg2Rad;
             float halfFov = fov / 2.0f;
-            float ScreenRelativeTransitionHeight = (objectSize * 0.5f) / (distance * Mathf.Tan(halfFov));
+            float ScreenRelativeTransitionHeight = objectSize / (distance * Mathf.Tan(halfFov));
             return ScreenRelativeTransitionHeight;
         }
 
