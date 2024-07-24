@@ -26,7 +26,6 @@ namespace CrdtEcsBridge.UpdateGate
         };
 
         private HashSet<Type> openGroups = POOL.Get();
-        private HashSet<Type> groupsToClose = POOL.Get();
 
         // Ensure that the gate will be opened from the beginning of the next frame,
         // If we open it in the middle of the current frame the update order will be broken
@@ -39,9 +38,7 @@ namespace CrdtEcsBridge.UpdateGate
             if (openGroups == null) return;
 
             POOL.Release(openGroups);
-            POOL.Release(groupsToClose);
 
-            groupsToClose = null;
             openGroups = null;
         }
 
@@ -52,27 +49,16 @@ namespace CrdtEcsBridge.UpdateGate
             if (Time.frameCount < keepOpenFrame)
                 return false;
 
-            // Gate is closed
-            if (!openGroups.Contains(systemGroupType)) return true;
-
-            // Otherwise, close the group but let it run one (current) frame
-            // Sync is required as it is called from the main thread
-            lock (groupsToClose)
-            {
-                groupsToClose.Add(systemGroupType);
-            }
-
-            return false;
+            return !openGroups.Contains(systemGroupType);
         }
 
         public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled)
         {
-            lock (openGroups)
-            lock (groupsToClose)
-            {
-                openGroups.ExceptWith(groupsToClose);
-                groupsToClose.Clear();
-            }
+            // Let systems run in the remaining of the current frame and fully close only at the end of next frame
+            if (Time.frameCount < keepOpenFrame)
+                return;
+
+            lock (openGroups) { openGroups.Remove(systemGroupType); }
         }
 
         public void Open()
