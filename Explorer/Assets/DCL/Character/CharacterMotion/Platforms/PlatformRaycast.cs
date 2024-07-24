@@ -27,7 +27,6 @@ namespace DCL.CharacterMotion.Platforms
                 platformComponent.CurrentPlatform = null;
             else if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
             {
-                Debug.Log("VVV PLATFORM CHANGE!!!");
                 platformComponent.PlatformCollider = hitInfo.collider;
                 platformComponent.CurrentPlatform = hitInfo.collider.transform;
 

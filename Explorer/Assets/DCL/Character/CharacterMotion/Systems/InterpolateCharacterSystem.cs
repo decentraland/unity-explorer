@@ -119,7 +119,7 @@ namespace DCL.CharacterMotion.Systems
 
             Vector3 finalGravity = rigidTransform.GravityVelocity * dt;
 
-            if (platformComponent.IsMovingPlatform && rigidTransform.IsGrounded) // && rigidTransform.PlatformDelta.y >= 0)
+            if (platformComponent.IsMovingPlatform && rigidTransform.IsGrounded)
                 finalGravity.y = 0f;
 
             return finalGravity;
