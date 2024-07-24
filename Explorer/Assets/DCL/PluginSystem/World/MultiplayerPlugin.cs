@@ -33,8 +33,8 @@ namespace DCL.PluginSystem.World
             WriteAvatarEmoteCommandSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneStateProvider);
             WritePlayerTransformSystem.InjectToWorld(ref builder, sharedDependencies.EcsToCRDTWriter, sharedDependencies.SceneData);
 
-            ResetDirtyFlagSystem<Profile>.InjectToWorld(ref builder);
-            ResetDirtyFlagSystem<PlayerCRDTEntity>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<SDKProfile>.InjectToWorld(ref builder);
+            ResetDirtyFlagSystem<PlayerSceneCRDTEntity>.InjectToWorld(ref builder);
             ResetDirtyFlagSystem<AvatarEmoteCommandComponent>.InjectToWorld(ref builder);
         }
     }
