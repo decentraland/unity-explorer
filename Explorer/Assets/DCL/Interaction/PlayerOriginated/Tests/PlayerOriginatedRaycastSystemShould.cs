@@ -125,7 +125,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
-            Assert.That(raycastResultForSceneEntities.GetEntityInfo(), Is.Null);
+            Assert.That(raycastResultForSceneEntities.EntityInfo, Is.Null);
         }
 
         [Test]
@@ -166,7 +166,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
             Assert.That(raycastResultForSceneEntities.IsValidHit, Is.False);
-            Assert.That(raycastResultForSceneEntities.GetEntityInfo(), Is.Null);
+            Assert.That(raycastResultForSceneEntities.EntityInfo, Is.Null);
         }
 
         [Test]

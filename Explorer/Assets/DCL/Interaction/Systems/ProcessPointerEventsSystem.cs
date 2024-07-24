@@ -12,6 +12,7 @@ using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace DCL.Interaction.Systems
@@ -62,34 +63,36 @@ namespace DCL.Interaction.Systems
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
             hoverStateComponent.Clear();
 
-            bool canHover = !eventSystem.IsPointerOverGameObject();
-            GlobalColliderSceneEntityInfo? entityInfo = raycastResultForSceneEntities.GetEntityInfo();
-
-            if (raycastResultForSceneEntities.IsValidHit && canHover && entityInfo != null)
+            // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
+            if (IsPointingOnEntity(in raycastResultForSceneEntities, out var entityInfo) && TryGetPointerEvents(entityInfo, out PBPointerEvents? pbPointerEvents))
             {
                 InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
 
-                // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
-                if (TryGetPointerEvents(entityInfo.Value, out PBPointerEvents? pbPointerEvents))
-                {
-                    hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider);
-                    bool newEntityWasHovered = NewEntityWasHovered(candidateForHoverLeaveIsValid, previousEntityInfo, entityInfo.Value);
+                hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider);
+                bool newEntityWasHovered = NewEntityWasHovered(candidateForHoverLeaveIsValid, previousEntityInfo, entityInfo);
 
-                    // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
-                    if (candidateForHoverLeaveIsValid && newEntityWasHovered == false)
-                        candidateForHoverLeaveIsValid = false;
+                // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
+                if (candidateForHoverLeaveIsValid && newEntityWasHovered == false)
+                    candidateForHoverLeaveIsValid = false;
 
-                    pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.GetRaycastHit(), raycastResultForSceneEntities.GetOriginRay());
-                    bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
-                    hoverStateComponent.IsAtDistance = isAtDistance;
-                    HighlightNewEntity(entityInfo.Value, isAtDistance);
-                }
+                pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
+                bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
+                hoverStateComponent.IsAtDistance = isAtDistance;
+                HighlightNewEntity(entityInfo, isAtDistance);
             }
 
             if (candidateForHoverLeaveIsValid)
                 ResetPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
         }
 
+        private bool IsPointingOnEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, out GlobalColliderSceneEntityInfo entityInfo)
+        {
+            bool canHover = eventSystem.IsPointerOverGameObject() == false;
+            entityInfo = raycastResultForSceneEntities.EntityInfo ?? default(GlobalColliderSceneEntityInfo);
+            return raycastResultForSceneEntities.IsValidHit && canHover && raycastResultForSceneEntities.EntityInfo != null;
+        }
+
+        [Pure]
         private static bool TryGetPointerEvents(GlobalColliderSceneEntityInfo entityInfo, out PBPointerEvents? pbPointerEvents)
         {
             World world = entityInfo.EcsExecutor.World;
