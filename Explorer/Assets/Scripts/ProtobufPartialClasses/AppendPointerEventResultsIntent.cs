@@ -33,8 +33,25 @@ namespace DCL.ECSComponents
             RaycastHit = raycastHit;
             Ray = ray;
             ValidIndices.Clear();
+
             if (ValidInputActions == null) ValidInputActions = new ();
             else ValidInputActions.Clear();
+        }
+
+        /// <summary>
+        ///     Adds hover input if the entry is qualified for listening to it
+        ///     <para>
+        ///         Entry is qualified if the expected Button is "Pointer" or "Any", and event type is corresponding "HoverEnter"/"HoverExit"
+        ///     </para>
+        /// </summary>
+        public void TryAppendHoverInput(PointerEventType? hoverEventType, in PBPointerEvents.Types.Entry entry, int entryIndex)
+        {
+            if (!hoverEventType.HasValue) return;
+
+            if (entry.EventType == hoverEventType.Value
+                && entry.EventInfo.Button is InputAction.IaPointer or InputAction.IaAny
+               )
+                ValidIndices.Add((byte)entryIndex);
         }
     }
 

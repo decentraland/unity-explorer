@@ -66,8 +66,6 @@ namespace DCL.Interaction.Systems
             // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
             if (IsPointingOnEntity(in raycastResultForSceneEntities, out var entityInfo) && entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
             {
-                InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
-
                 bool newEntityWasHovered = NewEntityWasHovered(candidateForHoverLeaveIsValid, previousEntityInfo, entityInfo);
 
                 // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
@@ -75,6 +73,7 @@ namespace DCL.Interaction.Systems
                     candidateForHoverLeaveIsValid = false;
 
                 pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
+                var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
                 bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
                 hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider, isAtDistance);
                 HighlightNewEntity(entityInfo, isAtDistance);
@@ -144,10 +143,10 @@ namespace DCL.Interaction.Systems
         {
             var isAtDistance = false;
 
-            for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
+            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
             {
-                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
-                PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
+                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i]!;
+                PBPointerEvents.Types.Info info = pointerEvent.EventInfo!;
 
                 info.PrepareDefaultValues();
 
@@ -156,7 +155,7 @@ namespace DCL.Interaction.Systems
 
                 // Try Append Hover Input
                 if (newEntityWasHovered)
-                    InteractionInputUtils.TryAppendHoverInput(ref pbPointerEvents.AppendPointerEventResultsIntent, PointerEventType.PetHoverEnter, pointerEvent, i);
+                    pbPointerEvents.AppendPointerEventResultsIntent.TryAppendHoverInput(PointerEventType.PetHoverEnter, pointerEvent, i);
 
                 // Try Append Hover Feedback
                 HoverFeedbackUtils.TryAppendHoverFeedback(sdkInputActionsMap, pointerEvent,
@@ -168,7 +167,7 @@ namespace DCL.Interaction.Systems
             foreach (var input in sdkInputActionsMap)
 
                 // Add all inputs that were pressed/unpressed this frame
-                InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, ref pbPointerEvents.AppendPointerEventResultsIntent);
+                InteractionInputUtils.TryAppendButtonAction(input.Value!, input.Key, ref pbPointerEvents.AppendPointerEventResultsIntent);
 
             return isAtDistance;
         }
