@@ -44,7 +44,6 @@ namespace DCL.CharacterMotion
 
             float diff = feet - hit.point.y;
 
-            Debug.Log($"VVV Slope Modifier: {diff}");
             return Vector3.down * diff;
         }
     }

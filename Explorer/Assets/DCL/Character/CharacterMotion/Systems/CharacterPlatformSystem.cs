@@ -51,8 +51,6 @@ namespace DCL.CharacterMotion.Systems
                     platformComponent.CurrentPlatform = null;
                     platformComponent.PlatformCollider = null;
                 }
-
-                Debug.Log("VVV [Null Platform] - Not Grounded");
                 return;
             }
 
