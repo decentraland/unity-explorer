@@ -17,7 +17,6 @@ namespace CrdtEcsBridge.UpdateGate
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, PoolConstants.SCENES_COUNT);
 
         private HashSet<Type> openGroups = POOL.Get();
-        private HashSet<Type> throttledThisFrameGroups = POOL.Get();
 
         // Ensure that the gate will be opened from the beginning of the next frame,
         // If we open it in the middle of the current frame the update order will be broken
@@ -30,10 +29,7 @@ namespace CrdtEcsBridge.UpdateGate
             if (openGroups == null) return;
 
             POOL.Release(openGroups);
-            POOL.Release(throttledThisFrameGroups);
-
             openGroups = null;
-            throttledThisFrameGroups = null;
         }
 
         // Close the group so it won't be updated unless the gate is opened again
@@ -43,32 +39,11 @@ namespace CrdtEcsBridge.UpdateGate
             if (Time.frameCount < keepOpenFrame)
                 return false;
 
-            // Otherwise, close group but let it run one frame (current)
-            return !TryCloseThisFrame(systemGroupType);
+            // Otherwise, close the group but let it run one (current) frame
+            return !openGroups.Remove(systemGroupType);
         }
 
-        private bool TryCloseThisFrame(Type systemGroupType)
-        {
-            if (throttledThisFrameGroups.Contains(systemGroupType)) return true;
-            if (!openGroups.Contains(systemGroupType)) return false;
-
-            // Sync is required as TryCloseThisFrame is called from the main thread
-            lock (openGroups)
-            {
-                if (openGroups.Remove(systemGroupType))
-                {
-                    throttledThisFrameGroups.Add(systemGroupType);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled)
-        {
-            throttledThisFrameGroups.Clear();
-        }
+        public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled) { }
 
         public void Open()
         {
