@@ -24,13 +24,13 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class InstantiateSceneLODInfoSystem : BaseUnityLoopSystem
     {
-        internal IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
         private readonly ILODAssetsPool lodCache;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly TextureArrayContainer lodTextureArrayContainer;
         private readonly Transform lodsTransformParent;
+        internal IPerformanceBudget frameCapBudget;
         private GameObjectPool<LODGroup> lodGroupPool;
 
         public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, GameObjectPool<LODGroup> lodGroupPool, ILODAssetsPool lodCache, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, Transform lodsTransformParent) : base(world)
@@ -55,52 +55,44 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void ResolveCurrentLODPromise(ref SceneLODInfo sceneLODInfo, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.ArePromisesConsumed()) // Only continue if promises need to be processed
-                return;
+            if (sceneLODInfo.CurrentLODPromise.IsConsumed) return;
 
             if (!(frameCapBudget.TrySpendBudget() && memoryBudget.TrySpendBudget())) // Don't process promises if budget is maxxed out
                 return;
 
-            bool bNewAssetAdded = false; // Used to know whether the LODGroup need re-evaluating
-
-            foreach (var lodAsset in sceneLODInfo.LODAssets)
+            if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                if (lodAsset.LODPromise.IsConsumed)
-                    continue;
-
-                if (lodAsset.LODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
+                LODAsset newLod = default;
+                if (result.Succeeded)
                 {
-                    if (result.Succeeded)
-                    {
-                        Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
-
-                        GameObject instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
-                                                                            sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
-                                                                            Quaternion.identity,
-                                                                            lodGroupTransform);
-
-                        var slots = Array.Empty<TextureArraySlot?>();
-                        if (!lodAsset.LodKey.Level.Equals(0))
-                        {
-                            slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.Definition.id,
-                                                                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase,
-                                                                    instantiatedLOD,
-                                                                    lodTextureArrayContainer);
-                        }
-
-                        lodAsset.SetAssetBundleReference(result.Asset);
-                        lodAsset.FinalizeInstantiation(instantiatedLOD, slots);
-                        sceneLODInfo.ReEvaluateLODGroup(lodAsset);
-                    }
-                    else
-                    {
-                        ReportHub.LogWarning(GetReportCategory(),$"LOD request for {lodAsset.LODPromise.LoadingIntention.Hash} failed");
-                        lodAsset.State = LODAsset.LOD_STATE.FAILED;
-                    }
-
-                    CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
+                    var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
+                        sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
+                        Quaternion.identity);
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise),
+                        lodCache, result.Asset);
+                    FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
                 }
+                else
+                {
+                    ReportHub.LogWarning(GetReportCategory(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
+                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise), lodCache);
+                }
+
+                sceneLODInfo.ReEvaluateLODGroup(newLod);
+                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
+        }
+
+        private void FinalizeInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD)
+        {
+            var slots = Array.Empty<TextureArraySlot?>();
+            if (!currentLOD.LodKey.Level.Equals(0))
+            {
+                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.Definition.id,
+                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
+            }
+
+            currentLOD.FinalizeInstantiation(instantiatedLOD, slots);
         }
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)

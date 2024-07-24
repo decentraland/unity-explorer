@@ -55,7 +55,7 @@ namespace DCL.LOD
         {
             if (!LodSettingsAsset.IsColorDebugging)
                 return;
-
+/*
             foreach (var lodAsset in sceneLODInfo.LODAssets)
             {
                 if (!SceneLODInfoDebugContents.TryGetValue(lodAsset.LodKey.Level, out var sceneLODInfoDebugContents))
@@ -67,6 +67,7 @@ namespace DCL.LOD
                 ClearPreviousContent();
                 UpdateContent(sceneLODInfoDebugContents, lodAsset);
             }
+            */
         }
 
         private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents()

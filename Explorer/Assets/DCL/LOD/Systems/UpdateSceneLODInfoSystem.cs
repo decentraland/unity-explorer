@@ -56,64 +56,31 @@ namespace DCL.LOD.Systems
                 // LOD distances are currently using the old system so will only load in the LOD when the gameobject
                 // is in the correct bucket. Once the lods are in it will change LODs based on screenspace size in relation
                 // to height and dither the transition.
-                byte lodForAcquisition = CheckLODLevel(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
-                LODKey newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, lodForAcquisition);
-                if (sceneLODInfo.LODAssets.Count == 0) // If no lods have been loaded, assume required
-                {
-                    AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
-                }
-                else // otherwise check the requested LODkey doesn't already exist and add to list
-                {
-                    if (!sceneLODInfo.HasLODKey(newLODKey)) //If the current LOD is the candidate, no need to make a new promise or set anything new
-                    {
-                        AddLODAsset(ref sceneLODInfo, ref partitionComponent, newLODKey, lodForAcquisition);
-                    }
-                }
+                byte lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
+                if (!sceneLODInfo.HasLODLoaded(lodForAcquisition))
+                    StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
         }
 
-        private void AddLODAsset(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, LODKey newLODKey, byte lodForAcquisition)
+        private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
         {
-            LODAsset tempLODAsset = null;
-            Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
-            if (lodCache.TryGet(newLODKey, out var cachedAsset)) // Try to get from the cache of previously loaded/unloaded LODAssets
-            {
-                // If its cached, no need to make a new promise
-                tempLODAsset = cachedAsset;
-                sceneLODInfo.LODAssets.Add(cachedAsset);
+            sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+            var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, level);
 
-                if (cachedAsset.lodGO != null) // Previous promise might not have been completed before removal, or promise failed and need retrying
-                {
-                    // ...otherwise re-parent to the LODGroup entity and re-evaluate the LODGroup
-                    //Transform lodGroupTransform = sceneLODInfo.CreateLODGroup(lodGroupPool, lodsTransformParent);
-                    cachedAsset.lodGO.transform.SetParent(lodGroupTransform);
-                    sceneLODInfo.ReEvaluateLODGroup(cachedAsset);
-                }
-            }
-            else
-            {
-                LODAsset lodAsset = new LODAsset(newLODKey, lodCache);
-                lodAsset.currentLODLevel = lodForAcquisition; // All LODAssets are marked to their LOD level for order sorting
-                tempLODAsset = lodAsset;
-                sceneLODInfo.LODAssets.Add(lodAsset);
-            }
+            string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
+            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
 
-            if (tempLODAsset.State != LODAsset.LOD_STATE.SUCCESS) // Create promise if not already loaded.
-            {
-                string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-                var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
+            var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
+                platformLODKey,
+                permittedSources: AssetSource.ALL,
+                customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
+                manifest: manifest);
 
-                var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
-                    platformLODKey,
-                    permittedSources: AssetSource.ALL,
-                    customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
-                    manifest: manifest);
-
-                tempLODAsset.LODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
-            }
+            sceneLODInfo.CurrentLODLevelPromise = level;
+            sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
         }
 
-        private byte CheckLODLevel(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
+        private byte GetLODLevelForPartition(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
             //If we are in an SDK6 scene, this value will be kept.
             //Therefore, lod0 will be shown

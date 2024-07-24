@@ -11,7 +11,7 @@ namespace DCL.LOD
 {
     public class LODAsset : IDisposable
     {
-        public byte currentLODLevel; // Only used for sorting during ReEvaluateLODGroup() in SceneLODInfo
+        public GameObject Root;
         public LOD_STATE State;
         public readonly LODKey LodKey; // Hashmap would probably be better
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> LODPromise;
@@ -42,9 +42,19 @@ namespace DCL.LOD
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }
 
-        public void SetAssetBundleReference(AssetBundleData assetBundleData)
+        public LODAsset(LODKey lodKey, ILODAssetsPool pool, AssetBundleData assetBundleData)
         {
+            LodKey = lodKey;
+            Pool = pool;
+            Slots = Array.Empty<TextureArraySlot?>();
             AssetBundleReference = assetBundleData;
+
+            Root = null;
+
+            State = LOD_STATE.WAITING_INSTANTIATION;
+
+            ProfilingCounters.LODAssetAmount.Value++;
+            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }
 
         public void Dispose()

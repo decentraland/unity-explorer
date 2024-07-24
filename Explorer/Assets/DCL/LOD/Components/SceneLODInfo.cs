@@ -2,29 +2,23 @@
 using DCL.Optimization.Pools;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ECS.StreamableLoading.AssetBundles;
+using ECS.StreamableLoading.Common;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {
+        public List<byte> LoadedLODs;
         public LODGroup LodGroup;
-        public List<LODAsset> LODAssets;
         private GameObjectPool<LODGroup> lodGroupPool;
-        private UnityEngine.LOD lod0, lod1;
         public float fScreenRelativeTransitionHeight;
 
+        public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
+        public byte CurrentLODLevelPromise;
         public void Dispose(World world)
         {
-            foreach (var lodVar in LODAssets)
-            {
-                if(LodGroup != null)
-                    lodVar.lodGO?.transform.SetParent(LodGroup.transform.parent);
-                lodVar.Release(world);
-            }
-            LODAssets.Clear();
             lodGroupPool?.Release(LodGroup);
             lodGroupPool = null;
             LodGroup = null;
@@ -32,64 +26,72 @@ namespace DCL.LOD.Components
 
         public static SceneLODInfo Create()
         {
+            var lodGroup = new GameObject().AddComponent<LODGroup>();
+            lodGroup.fadeMode = LODFadeMode.CrossFade;
+            lodGroup.animateCrossFading = true;
+
+            var lod0 = new UnityEngine.LOD();
+            lod0.screenRelativeTransitionHeight = 1;
+            var lod1 = new UnityEngine.LOD();
+            lod1.screenRelativeTransitionHeight = 0.9999f;
+            lodGroup.SetLODs(new []
+            {
+                lod0, lod1
+            });
+            
             return new SceneLODInfo
             {
-                LODAssets = new List<LODAsset>(),
-                LodGroup = null,
+                LodGroup = lodGroup,
                 lodGroupPool = null,
-                fScreenRelativeTransitionHeight = 0.02f,
+                fScreenRelativeTransitionHeight = 0.02f, LoadedLODs = new List<byte>(), CurrentLODLevelPromise = byte.MaxValue
+
             };
         }
 
-        public bool ArePromisesConsumed()
-        {
-            foreach (var lodAsset in LODAssets)
-            {
-                if (!lodAsset.LODPromise.IsConsumed)
-                    return false;
-            }
 
-            return true;
-        }
-
-        public Transform CreateLODGroup(GameObjectPool<LODGroup> lodGroupPool, Transform lodTransformParent)
+        //public Transform CreateLODGroup(GameObjectPool<LODGroup> lodGroupPool, Transform lodTransformParent)
+        public LODGroup CreateLODGroup()
         {
             // Create LODGroup
             if (LodGroup == null)
             {
-                this.lodGroupPool = lodGroupPool;
-                LodGroup = lodGroupPool.Get();
+                LodGroup = new GameObject().AddComponent<LODGroup>();
                 LodGroup.fadeMode = LODFadeMode.CrossFade;
                 LodGroup.animateCrossFading = true;
-                LodGroup.transform.SetParent(lodTransformParent); // The parent is the LODs pool parent
-                lod0 = new UnityEngine.LOD(1.0f, null);
-                lod1 = new UnityEngine.LOD(0.999f, null);
-                UnityEngine.LOD[] lods = {lod0, lod1};
-                LodGroup.SetLODs(lods.ToArray());
+
+                var lod0 = new UnityEngine.LOD();
+                lod0.screenRelativeTransitionHeight = 1;
+
+                var lod1 = new UnityEngine.LOD();
+                lod1.screenRelativeTransitionHeight = 0.9999f;
+                LodGroup.SetLODs(new []
+                {
+                    lod0, lod1
+                });
+
+                //LodGroup.transform.SetParent(lodTransformParent); // The parent is the LODs pool parent
             }
 
-            return LodGroup.transform;
+            return LodGroup;
         }
 
         public void ReEvaluateLODGroup(LODAsset lodAsset)
         {
-            if (LodGroup == null || LODAssets.Count == 0)
-                return;
-
+            CurrentLODLevelPromise = byte.MaxValue;
+            LoadedLODs.Add(lodAsset.LodKey.Level);
+            
             if (lodAsset.State != LODAsset.LOD_STATE.SUCCESS)
                 return;
 
-            // Ordered sort as the LOD Group expects the screen relative transition heights to be in order
-            // and we might not have necessarily loaded them in order.
-            LODAssets.Sort((a, b) => a.currentLODLevel.CompareTo(b.currentLODLevel));
+            //if(LodGroup == null)
+            //    LodGroup = CreateLODGroup();
 
+
+            var lods = LodGroup.GetLODs();
+            lods[lodAsset.LodKey.Level].renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+            lodAsset.lodGO.transform.SetParent(LodGroup.transform);
+            
             const float distance = 20 * 16;
-
-            if (lodAsset.currentLODLevel == 0)
-                lod0.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
-            else if (lodAsset.currentLODLevel == 1)
-                lod1.renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
-
             if (fScreenRelativeTransitionHeight == 0.02f)
             {
                 Renderer[] lodRenderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
@@ -107,38 +109,26 @@ namespace DCL.LOD.Components
                 }
             }
 
-            if (LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0)
-            {
-                lod0.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight;
-                lod1.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight - 0.01f;
-                Assert.IsTrue(lod0.screenRelativeTransitionHeight <= 1.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
-                Assert.IsTrue(lod1.screenRelativeTransitionHeight >= 0.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
 
-                Assert.IsTrue(lod0.screenRelativeTransitionHeight > lod1.screenRelativeTransitionHeight,
-                    $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 0 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+            if (LoadedLODs.Count == 1)
+            {
+                if (lodAsset.LodKey.Level == 0)
+                {
+                    lods[0].screenRelativeTransitionHeight = 0.01f;
+                    lods[1].screenRelativeTransitionHeight = 0.001f;
+                }
+                else
+                {
+                    lods[0].screenRelativeTransitionHeight = 0.99f;
+                    lods[1].screenRelativeTransitionHeight = 0.01f;
+                }
             }
-            else if (LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1)
+            else if (LoadedLODs.Count == 2)
             {
-                lod0.screenRelativeTransitionHeight = 1.0f;
-                lod1.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight;
-                Assert.IsTrue(lod0.screenRelativeTransitionHeight <= 1.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
-                Assert.IsTrue(lod1.screenRelativeTransitionHeight >= 0.0f, $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
-
-                Assert.IsTrue(lod0.screenRelativeTransitionHeight > lod1.screenRelativeTransitionHeight,
-                    $"LODAssets.Count == 1 && LODAssets[0].currentLODLevel == 1 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
-            }
-            else if (LODAssets.Count == 2)
-            {
-                lod0.screenRelativeTransitionHeight = ((1.0f - fScreenRelativeTransitionHeight) * 0.5f) + fScreenRelativeTransitionHeight;
-                lod1.screenRelativeTransitionHeight = fScreenRelativeTransitionHeight;
-                Assert.IsTrue(lod0.screenRelativeTransitionHeight <= 1.0f, $"LODAssets.Count == 2 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
-                Assert.IsTrue(lod1.screenRelativeTransitionHeight >= 0.0f, $"LODAssets.Count == 2 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
-
-                Assert.IsTrue(lod0.screenRelativeTransitionHeight > lod1.screenRelativeTransitionHeight,
-                    $"LODAssets.Count == 2 : {lod0.screenRelativeTransitionHeight}, {lod1.screenRelativeTransitionHeight}");
+                lods[0].screenRelativeTransitionHeight = 0.5f;
+                lods[1].screenRelativeTransitionHeight = 0.01f;
             }
 
-            UnityEngine.LOD[] lods = {lod0, lod1 };
             LodGroup.SetLODs(lods);
             LodGroup.RecalculateBounds();
         }
@@ -146,7 +136,7 @@ namespace DCL.LOD.Components
         public float CalculateScreenRelativeTransitionHeight(float distance, Bounds rendererBounds)
         {
             float lodBias = QualitySettings.lodBias / 0.8f;
-            float objectSize = rendererBounds.extents.magnitude * lodBias;
+            float objectSize = rendererBounds.extents.y * lodBias;
             float defaultFOV = 60.0f;
             float fov = (Camera.main ? Camera.main.fieldOfView : defaultFOV) * Mathf.Deg2Rad;
             float halfFov = fov / 2.0f;
@@ -154,16 +144,9 @@ namespace DCL.LOD.Components
             return ScreenRelativeTransitionHeight;
         }
 
-        // Quick function to check if LODAsset has already been loaded
-        public bool HasLODKey(LODKey lodKey)
+        public bool HasLODLoaded(byte lodForAcquisition)
         {
-            foreach (var lodAsset in LODAssets)
-            {
-                if (lodKey.Equals(lodAsset.LodKey))
-                    return true;
-            }
-
-            return false;
+            return LoadedLODs.Contains(lodForAcquisition) || CurrentLODLevelPromise == lodForAcquisition;
         }
     }
 }
