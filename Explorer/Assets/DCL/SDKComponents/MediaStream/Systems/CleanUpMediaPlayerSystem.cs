@@ -31,38 +31,39 @@ namespace DCL.SDKComponents.MediaStream
             HandleSdkAudioStreamComponentRemovalQuery(World);
             HandleSdkVideoPlayerComponentRemovalQuery(World);
 
-            HandleAudioEntityDestructionQuery(World);
+            HandleMediaPlayerDestructionQuery(World);
             HandleVideoEntityDestructionQuery(World);
         }
 
         [Query]
         [None(typeof(PBAudioStream), typeof(DeleteEntityIntention), typeof(VideoTextureComponent))]
-        private void HandleSdkAudioStreamComponentRemoval(ref MediaPlayerComponent mediaPlayer)
+        private void HandleSdkAudioStreamComponentRemoval(Entity entity, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpMediaPlayer(ref mediaPlayer);
+            World.Remove<MediaPlayerComponent>(entity);
         }
 
         [Query]
         [None(typeof(PBVideoPlayer), typeof(DeleteEntityIntention))]
-        private void HandleSdkVideoPlayerComponentRemoval(ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
+        private void HandleSdkVideoPlayerComponentRemoval(Entity entity, ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
         {
             CleanUpVideoTexture(ref textureComponent);
+            CleanUpMediaPlayer(ref mediaPlayer);
+            World.Remove<MediaPlayerComponent, VideoTextureComponent>(entity);
+        }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleMediaPlayerDestruction(ref MediaPlayerComponent mediaPlayer)
+        {
             CleanUpMediaPlayer(ref mediaPlayer);
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void HandleAudioEntityDestruction(ref MediaPlayerComponent mediaPlayer)
-        {
-            CleanUpMediaPlayer(ref mediaPlayer);
-        }
-
-        [Query]
-        [All(typeof(DeleteEntityIntention))]
-        private void HandleVideoEntityDestruction(ref VideoTextureComponent textureComponent, ref MediaPlayerComponent mediaPlayer)
+        private void HandleVideoEntityDestruction(ref VideoTextureComponent textureComponent)
         {
             CleanUpVideoTexture(ref textureComponent);
-            CleanUpMediaPlayer(ref mediaPlayer);
         }
 
         private void CleanUpVideoTexture(ref VideoTextureComponent videoTextureComponent)
