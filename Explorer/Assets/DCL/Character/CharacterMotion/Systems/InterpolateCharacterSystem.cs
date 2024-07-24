@@ -72,15 +72,11 @@ namespace DCL.CharacterMotion.Systems
                 return;
             }
 
-            Transform characterTransform = characterController.transform;
-
             ApplyVelocityStun.Execute(ref rigidTransform, in stunComponent);
 
+            Transform characterTransform = characterController.transform;
             Vector3 movementDelta = rigidTransform.MoveVelocity.Velocity * dt;
-
             Vector3 gravityDelta = GravityDelta(dt, rigidTransform, platformComponent);
-
-            // In order for some systems to work correctly we move the character horizontally and then vertically
             Vector3 prevPos = characterTransform.position;
 
             // Debug.Log($"VVV [CHAR] prevPos = {prevPos} | platformDelta = {rigidTransform.PlatformDelta} | movementDelta = {movementDelta} | gravityDelta = {gravityDelta}  ");
@@ -100,7 +96,11 @@ namespace DCL.CharacterMotion.Systems
 
             // if (!rigidTransform.IsGrounded)
             {
+                Physics.simulationMode = SimulationMode.Script;
+                Physics.Simulate(dt);
                 Vector3 slopeModifier = ApplySlopeModifier.Execute(in settings, in rigidTransform, in movementInput, in jump, characterController, dt);
+                Physics.simulationMode = SimulationMode.FixedUpdate;
+
                  collisionFlags = characterController.Move(slopeModifier);
 
                   deltaMovement = characterTransform.position - prevPos;

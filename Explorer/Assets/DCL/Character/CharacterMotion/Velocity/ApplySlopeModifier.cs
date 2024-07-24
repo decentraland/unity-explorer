@@ -4,6 +4,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Physics = DCL.Utilities.Physics;
 
 namespace DCL.CharacterMotion
 {
@@ -38,55 +39,13 @@ namespace DCL.CharacterMotion
 
             float downwardsSlopeDistance = input.Kind == MovementKind.Run ? settings.DownwardsSlopeRunRaycastDistance : settings.DownwardsSlopeJogRaycastDistance;
 
-            // Debug: Draw the ray
-            Debug.DrawRay(ray.origin, ray.direction * downwardsSlopeDistance, Color.yellow);
-
-            if (!Physics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
+            if (!Physics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
                 return Vector3.zero;
 
             float diff = feet - hit.point.y;
 
-            // Debug: Draw the hit point
-            Debug.DrawLine(ray.origin, hit.point, Color.green);
-            DebugDrawSphere(hit.point, 0.1f, Color.red);
-
-            // Debug: Draw the vertical difference
-            Debug.DrawLine(characterPosition, new Vector3(characterPosition.x, hit.point.y, characterPosition.z), Color.blue);
-
             Debug.Log($"VVV Slope Modifier: {diff}");
             return Vector3.down * diff;
         }
-
-#if UNITY_EDITOR
-        private static void DebugDrawSphere(Vector3 center, float radius, Color color)
-        {
-            // Draw three circles to represent the sphere
-            DebugDrawCircle(center, radius, color, Vector3.forward);
-            DebugDrawCircle(center, radius, color, Vector3.right);
-            DebugDrawCircle(center, radius, color, Vector3.up);
-        }
-
-        private static void DebugDrawCircle(Vector3 center, float radius, Color color, Vector3 normal, int segments = 16)
-        {
-            Vector3 from = Vector3.zero;
-            Vector3 to = Vector3.zero;
-
-            for (var i = 0; i <= segments; i++)
-            {
-                float angle = (float)i / segments * 360 * Mathf.Deg2Rad;
-                to.x = Mathf.Cos(angle);
-                to.y = Mathf.Sin(angle);
-
-                if (i > 0)
-                {
-                    Vector3 fromWorld = center + (Quaternion.LookRotation(normal) * from * radius);
-                    Vector3 toWorld = center + (Quaternion.LookRotation(normal) * to * radius);
-                    Debug.DrawLine(fromWorld, toWorld, color);
-                }
-
-                from = to;
-            }
-        }
-#endif
     }
 }

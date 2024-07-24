@@ -3,6 +3,7 @@ using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Physics = DCL.Utilities.Physics;
 
 namespace DCL.CharacterMotion.Platforms
 {
@@ -22,73 +23,17 @@ namespace DCL.CharacterMotion.Platforms
                 direction = Vector3.down,
             };
 
-            bool hasHit = Physics.SphereCast(ray, radius, out RaycastHit hitInfo, rayDistance + radius, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore);
-
-            // Debug visualization
-// #if UNITY_EDITOR
-//
-//             // Draw the ray
-//             Debug.DrawRay(rayOrigin, Vector3.down * (rayDistance + radius), Color.yellow);
-//
-//             // Draw the sphere at the start and end of the raycast
-//             DebugDrawSphere(rayOrigin, radius, Color.green);
-//             DebugDrawSphere(rayOrigin + (Vector3.down * (rayDistance + radius)), radius, Color.red);
-//
-//             if (hasHit)
-//             {
-//                 // Draw a line to the hit point
-//                 Debug.DrawLine(rayOrigin, hitInfo.point, Color.blue);
-//
-//                 // Draw the sphere at the hit point
-//                 DebugDrawSphere(hitInfo.point, radius / 10, Color.magenta);
-//             }
-// #endif
-
-            if (hasHit)
-            {
-                if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
-                {
-                    Debug.Log("VVV PLATFORM CHANGE!!!");
-                    platformComponent.CurrentPlatform = hitInfo.collider.transform;
-                    platformComponent.LastPlatformPosition = null;
-                    platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.InverseTransformPoint(characterTransform.position);
-                    platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.InverseTransformDirection(characterTransform.forward);
-                }
-            }
-            else
+            if (!Physics.SphereCast(ray, radius, out RaycastHit hitInfo, rayDistance + radius, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
                 platformComponent.CurrentPlatform = null;
-        }
-
-#if UNITY_EDITOR
-        private static void DebugDrawSphere(Vector3 center, float radius, Color color)
-        {
-            // Draw three circles to represent the sphere
-            DebugDrawCircle(center, radius, color, Vector3.forward);
-            DebugDrawCircle(center, radius, color, Vector3.right);
-            DebugDrawCircle(center, radius, color, Vector3.up);
-        }
-
-        private static void DebugDrawCircle(Vector3 center, float radius, Color color, Vector3 normal, int segments = 16)
-        {
-            Vector3 from = Vector3.zero;
-            Vector3 to = Vector3.zero;
-
-            for (var i = 0; i <= segments; i++)
+            else if (platformComponent.CurrentPlatform != hitInfo.collider.transform)
             {
-                float angle = (float)i / segments * 360 * Mathf.Deg2Rad;
-                to.x = Mathf.Cos(angle);
-                to.y = Mathf.Sin(angle);
-
-                if (i > 0)
-                {
-                    Vector3 fromWorld = center + (Quaternion.LookRotation(normal) * from * radius);
-                    Vector3 toWorld = center + (Quaternion.LookRotation(normal) * to * radius);
-                    Debug.DrawLine(fromWorld, toWorld, color);
-                }
-
-                from = to;
+                Debug.Log("VVV PLATFORM CHANGE!!!");
+                platformComponent.CurrentPlatform = hitInfo.collider.transform;
+                platformComponent.LastPlatformPosition = hitInfo.collider.transform.position;
+                platformComponent.LastPlatformPosition = null;
+                platformComponent.LastAvatarRelativePosition = platformComponent.CurrentPlatform.InverseTransformPoint(characterTransform.position);
+                platformComponent.LastAvatarRelativeRotation = platformComponent.CurrentPlatform.InverseTransformDirection(characterTransform.forward);
             }
         }
-#endif
     }
 }
