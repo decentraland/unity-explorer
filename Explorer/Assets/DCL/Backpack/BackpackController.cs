@@ -185,7 +185,7 @@ namespace DCL.Backpack
             {
                 URN avatarEmote = avatar.Emotes[i];
                 if (avatarEmote.IsNullOrEmpty()) continue;
-                backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i));
+                backpackCommandBus.SendCommand(new BackpackEquipEmoteCommand(avatarEmote.Shorten(), i, false));
             }
 
             isAvatarLoaded = true;

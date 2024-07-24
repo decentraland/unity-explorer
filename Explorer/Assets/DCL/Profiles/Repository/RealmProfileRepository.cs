@@ -120,7 +120,7 @@ namespace DCL.Profiles
             }
             catch (UnityWebRequestException e)
             {
-                if (e.ResponseCode == 404)
+                if (e.ResponseCode == WebRequestUtils.NOT_FOUND)
                     return null;
 
                 throw;

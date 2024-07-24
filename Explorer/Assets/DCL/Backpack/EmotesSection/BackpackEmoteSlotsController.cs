@@ -77,7 +77,7 @@ namespace DCL.Backpack.EmotesSection
             avatarSlotView.BackgroundRarity.enabled = false;
         }
 
-        private void EquipInSlot(int slot, IEmote emote)
+        private void EquipInSlot(int slot, IEmote emote, bool _)
         {
             EmoteSlotContainerView avatarSlotView = avatarSlots[slot].Item1;
             CancellationTokenSource cts = avatarSlots[slot].Item2;

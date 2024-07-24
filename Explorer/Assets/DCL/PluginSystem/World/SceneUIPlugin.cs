@@ -7,6 +7,7 @@ using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Systems;
 using DCL.SDKComponents.SceneUI.Systems.UIBackground;
 using DCL.SDKComponents.SceneUI.Systems.UICanvasInformation;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
@@ -83,6 +84,7 @@ namespace DCL.PluginSystem.World
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
             UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            UIFixPbPointerEventsSystem.InjectToWorld(ref builder);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
