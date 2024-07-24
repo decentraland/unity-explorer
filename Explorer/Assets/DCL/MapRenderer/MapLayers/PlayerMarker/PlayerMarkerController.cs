@@ -15,13 +15,13 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
 {
     public partial class PlayerMarkerController : MapLayerControllerBase, IMapLayerController<PlayerMarkerParameter>, IZoomScalingLayer
     {
-        public Transform PlayerMarkerTransform => playerMarker.GetTransform();
         internal delegate IPlayerMarker PlayerMarkerBuilder(Transform parent);
 
         private readonly PlayerMarkerBuilder builder;
 
         private IPlayerMarker playerMarker;
         private TrackPlayerPositionSystem system;
+        public Transform PlayerMarkerTransform => playerMarker.GetTransform();
 
         internal PlayerMarkerController(
             PlayerMarkerBuilder builder,

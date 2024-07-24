@@ -325,7 +325,7 @@ namespace Global.Dynamic
             );
 
             INotificationsBusController notificationsBusController = new NotificationsBusController();
-            NotificationsRequestController notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, identityCache);
+            var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, identityCache);
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
@@ -390,7 +390,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
-                    container.UserInAppInitializationFlow,profileCache),
+                    container.UserInAppInitializationFlow, profileCache),
                 new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIContainer),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIContainer, staticContainer.InputBlock),
                 new ExplorePanelPlugin(

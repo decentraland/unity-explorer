@@ -10,6 +10,7 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
+using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
 using DCL.Notification.NotificationsBus;
@@ -24,6 +25,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -61,18 +63,18 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IMapPathEventBus mapPathEventBus;
-
-        private NavmapController? navmapController;
-        private SettingsController? settingsController;
-        private BackpackSubPlugin? backpackSubPlugin;
         private readonly ICollection<string> forceRender;
-        private PersistentExploreOpenerView? exploreOpener;
-        private PersistentExplorePanelOpenerController? explorePanelOpener;
-        private ExplorePanelInputHandler? inputHandler;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
         private readonly INotificationsBusController notificationsBusController;
+
+        private NavmapController? navmapController;
+        private SettingsController? settingsController;
+        private BackpackSubPlugin? backpackSubPlugin;
+        private PersistentExploreOpenerView? exploreOpener;
+        private PersistentExplorePanelOpenerController? explorePanelOpener;
+        private ExplorePanelInputHandler? inputHandler;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -127,7 +129,6 @@ namespace DCL.PluginSystem.Global
             this.mapPathEventBus = mapPathEventBus;
         }
 
-
         public override void Dispose()
         {
             navmapController?.Dispose();
@@ -159,12 +160,12 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            var settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
-            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
-            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+            ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
+            ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
+            ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
 
-            var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-            var qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
+            ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
+            ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
             exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();

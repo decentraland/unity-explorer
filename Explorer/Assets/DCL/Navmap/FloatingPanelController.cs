@@ -16,21 +16,21 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
-        public event Action<Vector2Int, bool> OnSetAsDestination;
-        public event Action<Vector2Int> OnJumpIn;
-
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
+        private readonly ImageController placeImageController;
+        private readonly ImageController mapPinPlaceImageController;
+
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
-
-        private readonly ImageController placeImageController;
-        private readonly ImageController mapPinPlaceImageController;
+        public event Action<Vector2Int, bool> OnSetAsDestination;
+        public event Action<Vector2Int> OnJumpIn;
+        public event Action OnRemoveDestination;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -127,6 +127,10 @@ namespace DCL.Navmap
                 view.setAsDestinationButton.onClick.AddListener(() => SetAsDestination(parcel, false));
                 view.setAsDestinationMapPinButton.onClick.RemoveAllListeners();
                 view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel, true));
+                view.removeDestinationButton.onClick.RemoveAllListeners();
+                view.removeMapPinDestinationButton.onClick.RemoveAllListeners();
+                view.removeDestinationButton.onClick.AddListener(() => OnRemoveDestination.Invoke());
+                view.removeMapPinDestinationButton.onClick.AddListener(() => OnRemoveDestination.Invoke());
                 view.jumpInButton.onClick.RemoveAllListeners();
                 view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
                 PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);

@@ -78,7 +78,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             poolableBehavior.OnBecameVisible();
 
-            if(currentBaseScale != 0)
+            if (currentBaseScale != 0)
                 poolableBehavior.instance?.SetScale(currentBaseScale, currentNewScale);
         }
 

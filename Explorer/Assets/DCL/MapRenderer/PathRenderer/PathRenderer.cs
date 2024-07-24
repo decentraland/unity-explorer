@@ -11,14 +11,19 @@ namespace DCL.MapRenderer
         public float spaceBetweenDots = 0.2f;
         public float updateMagnitude = 1;
         public float arrivalTolerance = 100;
+        private Vector2 cachedPosition;
 
         private LineRenderer lineRenderer;
-        private Vector2 cachedPosition;
 
         private void Awake()
         {
             lineRenderer = GetComponent<LineRenderer>();
             SetupLineRenderer();
+        }
+
+        private void Update()
+        {
+            UpdateLine();
         }
 
         private void SetupLineRenderer()
@@ -45,9 +50,9 @@ namespace DCL.MapRenderer
             UpdateLine(true);
         }
 
-        public void UpdateLine(bool force = false)
+        private void UpdateLine(bool force = false)
         {
-            if (endPoint == Vector3.zero || startPoint == null) return;
+            if (startPoint == null) return;
 
             if (!force && !(Mathf.Abs(cachedPosition.sqrMagnitude - startPoint.position.sqrMagnitude) > updateMagnitude)) return;
 
@@ -61,23 +66,17 @@ namespace DCL.MapRenderer
 
             lineRenderer.positionCount = numberOfDots * 2;
 
-            for (int i = 0; i < numberOfDots; i++)
+            for (var i = 0; i < numberOfDots; i++)
             {
                 float startT = i * totalUnitLength / distance;
-                float endT = startT + dotSize / distance;
+                float endT = startT + (dotSize / distance);
 
-                Vector3 dotStart = Vector3.Lerp(startPoint.position, endPoint, startT);
-                Vector3 dotEnd = Vector3.Lerp(startPoint.position, endPoint, endT);
+                var dotStart = Vector3.Lerp(startPoint.position, endPoint, startT);
+                var dotEnd = Vector3.Lerp(startPoint.position, endPoint, endT);
 
                 lineRenderer.SetPosition(i * 2, dotStart);
-                lineRenderer.SetPosition(i * 2 + 1, dotEnd);
+                lineRenderer.SetPosition((i * 2) + 1, dotEnd);
             }
-        }
-
-        // Optional: Update in real-time
-        private void Update()
-        {
-            UpdateLine();
         }
     }
 }

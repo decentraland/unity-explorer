@@ -55,6 +55,10 @@ namespace DCL.Navmap
 
         [field: SerializeField]
         public Button setAsDestinationMapPinButton { get; private set; }
+        [field: SerializeField]
+        public Button removeDestinationButton { get; private set; }
+        [field: SerializeField]
+        public Button removeMapPinDestinationButton { get; private set; }
 
         [field: SerializeField]
         public TMP_Text visits;

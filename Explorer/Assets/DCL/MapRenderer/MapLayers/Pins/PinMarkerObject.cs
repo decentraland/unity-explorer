@@ -1,10 +1,9 @@
-using TMPro;
 using UnityEngine;
 using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
-    internal class PinMarkerObject : MapRendererMarkerBase
+    public class PinMarkerObject : MapRendererMarkerBase
     {
         private const int SPRITE_SIZE = 36;
         [field: SerializeField] internal SpriteRenderer mapPinIcon { get; private set; }

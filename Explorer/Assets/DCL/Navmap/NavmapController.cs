@@ -27,25 +27,17 @@ namespace DCL.Navmap
 {
     public class SetDestinationController : IDisposable
     {
-
-
-        public void Dispose()
-        { }
+        public void Dispose() { }
     }
 
     public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
-
-        public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters  { get; } = new Dictionary<MapLayer, IMapLayerParameter>
-            { { MapLayer.PlayerMarker, new PlayerMarkerParameter {BackgroundIsActive = true} } };
         private const MapLayer ACTIVE_MAP_LAYERS =
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
 
         private readonly NavmapView navmapView;
         private readonly IMapRenderer mapRenderer;
-        private CancellationTokenSource animationCts;
-        private IMapCameraController cameraController;
         private readonly NavmapZoomController zoomController;
         private readonly NavmapFilterController filterController;
         private readonly NavmapSearchBarController searchBarController;
@@ -54,16 +46,21 @@ namespace DCL.Navmap
         private readonly StreetViewController streetViewController;
         private readonly IRealmData realmData;
         private readonly IMapPathEventBus mapPathEventBus;
-
-        private NavmapLocationController navmapLocationController;
-        public FloatingPanelController FloatingPanelController { get; }
-
-        private Vector2 lastParcelHovered;
         private readonly SectionSelectorController<NavmapSections> sectionSelectorController;
         private readonly Dictionary<NavmapSections, TabSelectorView> tabsBySections;
         private readonly Dictionary<NavmapSections, ISection> mapSections;
-        private NavmapSections lastShownSection;
         private readonly Mouse mouse;
+        private CancellationTokenSource animationCts;
+        private IMapCameraController cameraController;
+
+        private NavmapLocationController navmapLocationController;
+
+        private Vector2 lastParcelHovered;
+        private NavmapSections lastShownSection;
+
+        public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
+            { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
+        public FloatingPanelController FloatingPanelController { get; }
 
         public NavmapController(
             NavmapView navmapView,
@@ -89,12 +86,13 @@ namespace DCL.Navmap
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += OnSetDestination;
+            FloatingPanelController.OnRemoveDestination += OnRemoveDestination;
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
 
-            mapSections = new ()
+            mapSections = new Dictionary<NavmapSections, ISection>
             {
                 { NavmapSections.Satellite, satelliteController },
                 { NavmapSections.StreetView, streetViewController },
@@ -106,11 +104,9 @@ namespace DCL.Navmap
             foreach ((NavmapSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
-                    isOn =>
-                    {
-                        ToggleSection(isOn, tabSelector, section, true);
-                    }
+                    isOn => { ToggleSection(isOn, tabSelector, section, true); }
                 );
             }
 
@@ -130,6 +126,25 @@ namespace DCL.Navmap
             mouse = InputSystem.GetDevice<Mouse>();
         }
 
+        public void Dispose()
+        {
+            navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
+            navmapView.StreetViewRenderImage.ParcelClicked -= OnParcelClicked;
+            navmapView.StreetViewRenderImage.HoveredParcel -= OnParcelHovered;
+            navmapView.StreetViewRenderImage.HoveredMapPin += OnMapPinHovered;
+            navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
+            navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
+            animationCts?.Dispose();
+            zoomController?.Dispose();
+            FloatingPanelController?.Dispose();
+            searchBarController?.Dispose();
+        }
+
+        private void OnRemoveDestination()
+        {
+            mapPathEventBus.RemoveDestination();
+        }
+
         private void OnSetDestination(Vector2Int destination, bool toMapPin)
         {
             mapPathEventBus.SetDestination(destination, toMapPin);
@@ -145,7 +160,7 @@ namespace DCL.Navmap
 
         private void ToggleSection(bool isOn, TabSelectorView tabSelectorView, NavmapSections shownSection, bool animate)
         {
-            if(isOn && animate && shownSection != lastShownSection)
+            if (isOn && animate && shownSection != lastShownSection)
                 sectionSelectorController.SetAnimationState(false, tabsBySections[lastShownSection]);
 
             animationCts.SafeCancelAndDispose();
@@ -183,31 +198,32 @@ namespace DCL.Navmap
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
-            FloatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker ,false);
+            FloatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker, false);
         }
 
         public void Activate()
         {
             cameraController?.Release(this);
+
             cameraController = mapRenderer.RentCamera(
                 new MapCameraInput(
                     this,
                     ACTIVE_MAP_LAYERS,
-                    ParcelMathHelper.WorldToGridPosition(new Vector3(0,0,0)),
+                    ParcelMathHelper.WorldToGridPosition(new Vector3(0, 0, 0)),
                     zoomController.ResetZoomToMidValue(),
-                    this.navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
+                    navmapView.SatellitePixelPerfectMapRendererTextureProvider.GetPixelPerfectTextureResolution(),
                     navmapView.zoomView.zoomVerticalRange
                 ));
+
             satelliteController.InjectCameraController(cameraController);
             streetViewController.InjectCameraController(cameraController);
             navmapLocationController.InjectCameraController(cameraController);
             mapSections[NavmapSections.Satellite].Activate();
             zoomController.Activate(cameraController);
             lastParcelHovered = Vector2.zero;
-            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections)
-            {
-                ToggleSection(section == NavmapSections.Satellite, tab, section, true);
-            }
+
+            foreach ((NavmapSections section, TabSelectorView? tab) in tabsBySections) { ToggleSection(section == NavmapSections.Satellite, tab, section, true); }
+
             sectionSelectorController.SetAnimationState(true, tabsBySections[NavmapSections.Satellite]);
 
             if (!navmapView.WorldsWarningNotificationView.WasEverClosed)
@@ -248,19 +264,5 @@ namespace DCL.Navmap
 
         public RectTransform GetRectTransform() =>
             rectTransform;
-
-        public void Dispose()
-        {
-            this.navmapView.SatelliteRenderImage.ParcelClicked -= OnParcelClicked;
-            this.navmapView.StreetViewRenderImage.ParcelClicked -= OnParcelClicked;
-            this.navmapView.StreetViewRenderImage.HoveredParcel -= OnParcelHovered;
-            this.navmapView.StreetViewRenderImage.HoveredMapPin += OnMapPinHovered;
-            this.navmapView.SatelliteRenderImage.HoveredParcel -= OnParcelHovered;
-            this.navmapView.SatelliteRenderImage.HoveredMapPin -= OnMapPinHovered;
-            animationCts?.Dispose();
-            zoomController?.Dispose();
-            FloatingPanelController?.Dispose();
-            searchBarController?.Dispose();
-        }
     }
 }
