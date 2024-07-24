@@ -81,7 +81,8 @@ namespace DCL.WebRequests
                 GenericPostArguments.Empty,
                 ct,
                 signInfo: WebRequestSignInfo.NewFromRaw(signatureMetadata, commonArguments.URL, unixTimestamp, "post"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp)
+                headersInfo: new WebRequestHeadersInfo().WithSign(signatureMetadata, unixTimestamp),
+                reportCategory: ReportCategory.SCENE_FETCH_REQUEST
             );
         }
 

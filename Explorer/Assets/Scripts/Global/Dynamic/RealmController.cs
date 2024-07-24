@@ -98,7 +98,7 @@ namespace Global.Dynamic
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
-                result.comms?.protocol ?? string.Empty
+                result.comms?.protocol ?? "v3"
             );
 
             // Add the realm component

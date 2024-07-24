@@ -203,7 +203,7 @@ namespace DCL.Web3.Authenticators
         }
 
         private string CreateEphemeralMessage(IWeb3Account ephemeralAccount, DateTime expiration) =>
-            $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:s}";
+            $"Decentraland Login\nEphemeral address: {ephemeralAccount.Address}\nExpiration: {expiration:yyyy-MM-ddTHH:mm:ss.fffZ}";
 
         private async UniTask ConnectToServerAsync()
         {
