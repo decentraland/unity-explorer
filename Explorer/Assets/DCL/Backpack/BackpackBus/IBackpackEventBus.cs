@@ -13,7 +13,7 @@ namespace DCL.Backpack.BackpackBus
         public event Action<IWearable> SelectWearableEvent;
         public event Action<IWearable> EquipWearableEvent;
         public event Action<IWearable> UnEquipWearableEvent;
-        public event Action<int, IEmote> EquipEmoteEvent;
+        public event Action<int, IEmote, bool> EquipEmoteEvent;
         public event Action<int, IEmote?> UnEquipEmoteEvent;
         public event Action<int> EmoteSlotSelectEvent;
         public event Action<IEmote> SelectEmoteEvent;
@@ -45,7 +45,7 @@ namespace DCL.Backpack.BackpackBus
 
         void SendUnEquipEmote(int slot, IEmote? emote);
 
-        void SendEquipEmote(int slot, IEmote emote);
+        void SendEquipEmote(int slot, IEmote emote, bool isManuallyEquipped);
 
         public void SendEmoteSelect(IEmote emote);
 

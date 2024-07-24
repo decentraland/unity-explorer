@@ -79,7 +79,7 @@ namespace DCL.Backpack
             forceRender.Clear();
         }
 
-        private void EquipEmote(int slot, IEmote emote)
+        private void EquipEmote(int slot, IEmote emote, bool _)
         {
             equippedEmotes.EquipEmote(slot, emote);
         }
