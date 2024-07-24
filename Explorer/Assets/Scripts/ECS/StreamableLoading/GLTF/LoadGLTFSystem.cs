@@ -53,9 +53,10 @@ namespace ECS.StreamableLoading.GLTF
 
             var gltFastSettings = new ImportSettings
             {
+                AnimationMethod = AnimationMethod.Mecanim, // Could be legacy in some cases according to ABConverter?
+                NodeNameMethod = NameImportMethod.OriginalUnique,
+                AnisotropicFilterLevel = 0,
                 GenerateMipMaps = false,
-                AnisotropicFilterLevel = 3,
-                NodeNameMethod = NameImportMethod.OriginalUnique
             };
 
             bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
@@ -77,8 +78,8 @@ namespace ECS.StreamableLoading.GLTF
                 return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, rootContainer));
             }
 
-            return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
             // Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - LOADING ERROR: {gltfImport.LoadingError}");
+            return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
         }
 
         public async UniTask InstantiateGltfAsync(GltfImport gltfImport, Transform rootContainerTransform)

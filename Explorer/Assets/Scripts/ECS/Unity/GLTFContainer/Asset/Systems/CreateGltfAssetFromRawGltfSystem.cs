@@ -12,6 +12,7 @@ using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
 using UnityEngine;
+using Utility;
 
 namespace ECS.Unity.GLTFContainer.Asset.Systems
 {
@@ -30,12 +31,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         protected override void Update(float t)
         {
-            PutStreamableLoadingResultQuery(World);
+            ConvertFromGLTFDataQuery(World);
         }
 
         [Query]
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>))]
-        private void PutStreamableLoadingResult(in Entity entity,
+        private void ConvertFromGLTFData(in Entity entity,
             ref GetGltfContainerAssetIntention assetIntention,
             ref StreamableLoadingResult<GLTFData> gltfDataResult)
         {
@@ -115,7 +116,46 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 }
             }*/
 
+            ProcessGameObjects(gltfData.containerGameObject);
+
             return result;
+        }
+
+        private static void ProcessGameObjects(GameObject root)
+        {
+            var meshFilters = root.GetComponentsInChildren<MeshFilter>();
+
+            foreach (MeshFilter filter in meshFilters)
+            {
+                if (filter.name.Contains("_collider", StringComparison.OrdinalIgnoreCase))
+                    ConfigureColliders(filter.transform, filter);
+            }
+
+            var renderers = root.GetComponentsInChildren<Renderer>();
+
+            foreach (Renderer r in renderers)
+            {
+                if (r.name.Contains("_collider", StringComparison.OrdinalIgnoreCase))
+                    UnityObjectUtils.SafeDestroy(r);
+                    //DestroyImmediate(r);
+            }
+        }
+
+        private static void ConfigureColliders(Transform transform, MeshFilter filter)
+        {
+            if (filter != null)
+            {
+                Physics.BakeMesh(filter.sharedMesh.GetInstanceID(), false);
+                filter.gameObject.AddComponent<MeshCollider>();
+                //DestroyImmediate(filter.GetComponent<MeshRenderer>());
+                UnityObjectUtils.SafeDestroy(filter.GetComponent<MeshRenderer>());
+            }
+
+            foreach (Transform child in transform)
+            {
+                var f = child.gameObject.GetComponent<MeshFilter>();
+                ConfigureColliders(child, f);
+            }
         }
     }
 }

@@ -68,7 +68,7 @@ namespace ECS.StreamableLoading.GLTF
                       + $"uri.PathAndQuery: {uri.PathAndQuery}");
 
             string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string textureOriginalPath = $"{targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/')+1)}{textureFileName}";
+            string textureOriginalPath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
 
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
             Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() - 2 - texture final url: {tryGetContentUrlResult}");
@@ -82,6 +82,7 @@ namespace ECS.StreamableLoading.GLTF
 
             // The textures fetching need to finish before the GLTF loading can continue its flow...
             StreamableLoadingResult<Texture2D> promiseResult;
+            //TODO: Could this get stuck in an infinite loop if the texturePromise fails?
             while (!texturePromise.TryGetResult(world, out promiseResult))
             {
                 await UniTask.Yield();
@@ -89,7 +90,7 @@ namespace ECS.StreamableLoading.GLTF
 
             // TODO: Check if we need to avoid this throwing here depending on how it affects the GLTF loading flow...
             if (!promiseResult.Succeeded)
-                throw new Exception($"Error on GLTF Texture download: {texturePromise.Result.Value.Exception?.Message}");
+                throw new Exception($"Error on GLTF Texture download: {texturePromise.Result?.Exception?.Message}");
 
             return new TextureDownloadResult(promiseResult.Asset)
             {

@@ -75,9 +75,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Components
         public void Dispose()
         {
             assetData.Dereference(); // TODO: Assetbundledata has a flow for dereference, gltfdata has an empty implementation, is it acceptable?
-            //assetData = null; // leaving commented out code for now after TODO questions are answered
+            //assetData = null; // TODO: leaving commented out code for now after questions are answered
 
-            //gltfDataReference?.Dispose(); // leaving commented out code for now after TODO questions are answered
+            //gltfDataReference?.Dispose(); // TODO: leaving commented out code for now after questions are answered
             assetData.Dispose(); // TODO: Does it make sense to call dispose on both assetbundledata and gltfdata?
             assetData = null;
 
