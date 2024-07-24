@@ -69,7 +69,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             }
 
             // Add the tooltip
-            hoverFeedbackComponent.Tooltips.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, pointerEventEntry.EventInfo.Button));
+            hoverFeedbackComponent.Add(new HoverFeedbackComponent.Tooltip(pointerEventEntry.EventInfo.HoverText, pointerEventEntry.EventInfo.Button));
             return true;
         }
     }

@@ -58,7 +58,7 @@ namespace DCL.Interaction.Systems
         private void ProcessRaycastResult(ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
         {
             // Process all PBPointerEvents components to see if any of them is qualified
-            hoverFeedbackComponent.Tooltips.Clear();
+            hoverFeedbackComponent.Clear();
 
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
             hoverStateComponent.LastHitCollider = null;
