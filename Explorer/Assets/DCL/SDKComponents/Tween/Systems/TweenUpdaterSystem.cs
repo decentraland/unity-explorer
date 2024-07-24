@@ -92,7 +92,8 @@ namespace DCL.SDKComponents.Tween.Systems
             World.Remove<SDKTweenComponent>(in HandleEntityDestruction_QueryDescription);
             World.Remove<SDKTweenComponent>(in HandleComponentRemoval_QueryDescription);
 
-            // if (openSDKTransformPriorityGate) systemsPriorityComponentsGate.Open<SDKTransform>();
+            if (openSDKTransformPriorityGate)
+                systemsPriorityComponentsGate.Open<SDKTransform>();
         }
 
         public void FinalizeComponents(in Query query)
