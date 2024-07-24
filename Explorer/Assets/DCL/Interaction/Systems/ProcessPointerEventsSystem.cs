@@ -72,8 +72,7 @@ namespace DCL.Interaction.Systems
                 if (candidateForHoverLeaveIsValid && newEntityWasHovered == false)
                     candidateForHoverLeaveIsValid = false;
 
-                pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
-                bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents, newEntityWasHovered);
+                bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents!, newEntityWasHovered);
                 hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider, isAtDistance);
                 HighlightNewEntity(entityInfo, isAtDistance);
             }
@@ -141,6 +140,7 @@ namespace DCL.Interaction.Systems
         {
             var isAtDistance = false;
             var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
+            pbPointerEvents.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
 
             for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
             {
