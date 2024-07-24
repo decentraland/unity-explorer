@@ -22,7 +22,7 @@ namespace CrdtEcsBridge.UpdateGate
             typeof(PresentationSystemGroup),
             typeof(PhysicsSystemGroup),
             typeof(PostPhysicsSystemGroup),
-            typeof(PreRenderingSystemGroup)
+            typeof(PreRenderingSystemGroup),
         };
 
         private HashSet<Type> openGroups = POOL.Get();
@@ -54,10 +54,14 @@ namespace CrdtEcsBridge.UpdateGate
 
         public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled)
         {
-            // Let systems run in the remaining of the current frame and fully close only at the end of next frame
+            if (wasThrottled)
+                return;
+
+            // Let systems run in the remaining of the current frame
             if (Time.frameCount < keepOpenFrame)
                 return;
 
+            // Close only at the end of the full frame pass
             lock (openGroups) { openGroups.Remove(systemGroupType); }
         }
 
