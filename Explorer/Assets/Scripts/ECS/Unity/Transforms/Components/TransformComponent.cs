@@ -48,7 +48,7 @@ namespace ECS.Unity.Transforms.Components
         public TransformComponent(Transform transform)
         {
             Transform = transform;
-            Children = HashSetPool<EntityReference>.Get();
+            Children = HashSetPool<EntityReference>.Get()!;
             Parent = EntityReference.Null;
 
             Cached = new CachedTransform(transform);
