@@ -12,8 +12,8 @@ namespace DCL.SDKComponents.SceneUI.Components
         public bool IsOnValueChangedTriggered;
         public bool IsOnSubmitTriggered;
 
-        internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
-        internal EventCallback<KeyDownEvent> currentOnSubmit;
+        internal EventCallback<ChangeEvent<string>> currentOnValueChanged = static _ => { };
+        internal EventCallback<KeyDownEvent> currentOnSubmit = static _ => { };
 
         public void Initialize(IInputBlock inputBlock, string textFieldName, string styleClass)
         {
