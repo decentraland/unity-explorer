@@ -25,11 +25,6 @@ using Utility;
 
 namespace DCL.Navmap
 {
-    public class SetDestinationController : IDisposable
-    {
-        public void Dispose() { }
-    }
-
     public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";

@@ -91,18 +91,22 @@ namespace DCL.MapRenderer
                 pathDestinationPin.SetPosition(mapPosition, parcel);
                 pathDestinationPin.AnimateIn();
 
-                // Activate beating Animation in Pin
-                // Mark as force view so its not hidden
+                // Mark as force view so its not hidden in Minimap and show on corner
             }
+            else { pathDestinationPin.AnimateOut(); }
         }
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
         {
+            var a = 1;
+
             //Remove from minimapBorder
         }
 
         public void OnMapObjectCulled(IPinMarker obj)
         {
+            var a = 1;
+
             //Add to minimapBorder
         }
 

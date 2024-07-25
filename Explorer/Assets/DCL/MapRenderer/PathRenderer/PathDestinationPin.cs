@@ -1,16 +1,12 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
-using DCL.MapRenderer.MapLayers.Pins;
 using DG.Tweening;
-using DG.Tweening.Core;
-using DG.Tweening.Plugins.Options;
-using NBitcoin;
 using System;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.MapRenderer
+namespace DCL.MapRenderer.MapLayers.Pins
 {
     public class PathDestinationPin : IPinMarker
     {
@@ -23,7 +19,8 @@ namespace DCL.MapRenderer
 
         public Vector3 CurrentPosition { get; private set; }
 
-        public bool IsVisible { get; private set; }
+        public bool IsVisible { get; }
+        public bool IsDestination { get; private set; }
 
         public string Title { get; private set; }
         public string Description { get; private set; }
@@ -52,48 +49,22 @@ namespace DCL.MapRenderer
 
         public void AnimateIn()
         {
-            cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            PulseScaleAsync(pinMarkerObject.gameObject.transform, ct: cancellationTokenSource.Token).Forget();
-        }
-
-        private static async UniTask PulseScaleAsync(Transform transform, float scaleFactor = 1.5f, float duration = 0.5f, CancellationToken ct = default)
-        {
-            Vector3 originalScale = transform.localScale;
-            Vector3 bigScale = originalScale * scaleFactor;
-
-            while (!ct.IsCancellationRequested)
-            {
-                await ScaleToAsync(transform, bigScale, duration, Ease.OutBack, ct);
-                if (ct.IsCancellationRequested) break;
-
-                await ScaleToAsync(transform, originalScale, duration, Ease.OutBack, ct);
-                if (ct.IsCancellationRequested) break;
-
-                await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: ct);
-            }
-
-            transform.DOKill();
-            transform.localScale = originalScale;
-        }
-
-        private static async UniTask ScaleToAsync(Transform transform, Vector3 targetScale, float duration, Ease ease, CancellationToken cancellationToken)
-        {
-            TweenerCore<Vector3, Vector3, VectorOptions> tween = transform.DOScale(targetScale, duration).SetEase(ease);
-
-            try { await tween.AsyncWaitForCompletion().WithCancellation(cancellationToken); }
-            catch (OperationCanceledException)
-            {
-                tween.Kill();
-                throw;
-            }
+            MarkedAsDestination();
         }
 
         public void AnimateOut()
         {
+            IsDestination = false;
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            pinMarkerObject.gameObject.transform.DOScaleX(currentNewScale, 0.5f).SetEase(Ease.OutBack);
-            pinMarkerObject.gameObject.transform.DOScaleY(currentNewScale, 0.5f).SetEase(Ease.OutBack);
-            SetIconOutline(false);
+            pinMarkerObject.gameObject.transform.DOScale(0, 0.5f).SetEase(Ease.OutBack);
+        }
+
+        public void MarkedAsDestination()
+        {
+            IsDestination = true;
+            pinMarkerObject.SetScale(currentBaseScale, currentNewScale);
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            PinMarkerHelper.PulseScaleAsync(pinMarkerObject.gameObject.transform, ct: cancellationTokenSource.Token).Forget();
         }
 
         public void SetIconOutline(bool isActive)
@@ -114,15 +85,13 @@ namespace DCL.MapRenderer
 
         public void OnBecameVisible()
         {
-            IsVisible = true;
-
             if (currentBaseScale != 0)
                 pinMarkerObject.SetScale(currentBaseScale, currentNewScale);
         }
 
         public void OnBecameInvisible()
         {
-            IsVisible = false;
+            pinMarkerObject.SetScale(0, 0);
         }
 
         public void SetZoom(float baseScale, float baseZoom, float zoom)
@@ -131,7 +100,7 @@ namespace DCL.MapRenderer
             currentBaseScale = baseScale;
             currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
             pinMarkerObject.SetScale(currentBaseScale, currentNewScale);
-            PulseScaleAsync(pinMarkerObject.gameObject.transform, ct: cancellationTokenSource.Token).Forget();
+            PinMarkerHelper.PulseScaleAsync(pinMarkerObject.gameObject.transform, ct: cancellationTokenSource.Token).Forget();
         }
 
         public void ResetScale(float scale)

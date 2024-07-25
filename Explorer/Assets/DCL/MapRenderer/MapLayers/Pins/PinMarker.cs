@@ -1,9 +1,12 @@
+using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.Culling;
 using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
@@ -16,10 +19,12 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private MapMarkerPoolableBehavior<PinMarkerObject> poolableBehavior;
         private float currentBaseScale;
         private float currentNewScale;
+        private CancellationTokenSource cancellationTokenSource;
 
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
 
         public bool IsVisible => poolableBehavior.isVisible;
+        public bool IsDestination { get; private set; }
         public string Title { get; private set; }
         public string Description { get; private set; }
         public Vector2Int ParcelPosition { get; private set; }
@@ -58,6 +63,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             SetIconOutline(false);
         }
 
+        public void MarkedAsDestination()
+        {
+            IsDestination = true;
+            poolableBehavior.instance?.SetScale(currentBaseScale, currentNewScale);
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
+            PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance?.gameObject.transform, ct: cancellationTokenSource.Token).Forget();
+        }
+
         public void SetIconOutline(bool isActive)
         {
             poolableBehavior.instance?.mapPinIconOutline.gameObject.SetActive(isActive);
@@ -84,6 +97,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void OnBecameInvisible()
         {
+            //Check if it is set as destination, in that case, dont hide it and show it in edge of minimap
             poolableBehavior.OnBecameInvisible();
         }
 

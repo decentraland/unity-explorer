@@ -16,6 +16,8 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
+        private static readonly Vector2Int DEFAULT_DESTINATION_PARCEL = new (-9999, 9999);
+
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
@@ -28,6 +30,8 @@ namespace DCL.Navmap
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
+        private Vector2Int destination = DEFAULT_DESTINATION_PARCEL;
+
         public event Action<Vector2Int, bool> OnSetAsDestination;
         public event Action<Vector2Int> OnJumpIn;
         public event Action OnRemoveDestination;
@@ -77,6 +81,9 @@ namespace DCL.Navmap
             view.backButton.gameObject.SetActive(showBackButton);
             view.PlaceSection.gameObject.SetActive(pinMarker == null);
             view.MapPinSection.gameObject.SetActive(pinMarker != null);
+
+            bool parcelIsDestination = destination == parcel;
+            SetupDestinationButtons(parcelIsDestination);
 
             if (pinMarker != null)
             {
@@ -129,8 +136,8 @@ namespace DCL.Navmap
                 view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel, true));
                 view.removeDestinationButton.onClick.RemoveAllListeners();
                 view.removeMapPinDestinationButton.onClick.RemoveAllListeners();
-                view.removeDestinationButton.onClick.AddListener(() => OnRemoveDestination.Invoke());
-                view.removeMapPinDestinationButton.onClick.AddListener(() => OnRemoveDestination.Invoke());
+                view.removeDestinationButton.onClick.AddListener(RemoveDestination);
+                view.removeMapPinDestinationButton.onClick.AddListener(RemoveDestination);
                 view.jumpInButton.onClick.RemoveAllListeners();
                 view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
                 PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
@@ -149,9 +156,26 @@ namespace DCL.Navmap
             }
         }
 
+        private void RemoveDestination()
+        {
+            destination = DEFAULT_DESTINATION_PARCEL;
+            SetupDestinationButtons(parcelIsDestination: false);
+            OnRemoveDestination?.Invoke();
+        }
+
         private void SetAsDestination(Vector2Int parcel, bool toMapPin)
         {
+            destination = parcel;
+            SetupDestinationButtons(parcelIsDestination: true);
             OnSetAsDestination?.Invoke(parcel, toMapPin);
+        }
+
+        private void SetupDestinationButtons(bool parcelIsDestination)
+        {
+            view.setAsDestinationButton.gameObject.SetActive(!parcelIsDestination);
+            view.setAsDestinationMapPinButton.gameObject.SetActive(!parcelIsDestination);
+            view.removeMapPinDestinationButton.gameObject.SetActive(parcelIsDestination);
+            view.removeDestinationButton.gameObject.SetActive(parcelIsDestination);
         }
 
         private void JumpIn(Vector2Int parcel)

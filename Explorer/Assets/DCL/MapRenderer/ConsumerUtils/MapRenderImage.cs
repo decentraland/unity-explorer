@@ -230,7 +230,6 @@ namespace DCL.MapRenderer.ConsumerUtils
             public Vector2Int Parcel;
             public Vector2 WorldPosition;
             public IPinMarker PinMarker;
-            public Vector3 WorldPositionInMap;
         }
     }
 }
