@@ -80,8 +80,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             resultsIntent.TryAppendHoverInput(PointerEventType.PetHoverEnter, entry, 3);
 
-            Assert.AreEqual(1, resultsIntent.ValidIndices.Length);
-            Assert.AreEqual(3, resultsIntent.ValidIndices[0]);
+            Assert.AreEqual(1, resultsIntent.ValidIndicesCount());
+            Assert.AreEqual(3, resultsIntent.ValidIndexAt(0));
         }
 
         [Test]
@@ -101,7 +101,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             resultsIntent.TryAppendHoverInput(PointerEventType.PetHoverEnter, entry, 3);
 
-            Assert.AreEqual(0, resultsIntent.ValidIndices.Length);
+            Assert.AreEqual(0, resultsIntent.ValidIndicesCount());
         }
 
         [Test]
@@ -123,8 +123,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             InteractionInputUtils.TryAppendButtonLikeInput(map, entry, 2, ref resultsIntent, new InteractionInputUtils.AnyInputInfo(true, false, false));
 
-            Assert.AreEqual(1, resultsIntent.ValidIndices.Length);
-            Assert.AreEqual(2, resultsIntent.ValidIndices[0]);
+            Assert.AreEqual(1, resultsIntent.ValidIndicesCount());
+            Assert.AreEqual(2, resultsIntent.ValidIndexAt(0));
 
             map.DidNotReceive().TryGetValue(Arg.Any<ECSComponents.InputAction>(), out Arg.Any<InputAction>());
         }
@@ -156,8 +156,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             var resultsIntent = new AppendPointerEventResultsIntent();
             InteractionInputUtils.TryAppendButtonLikeInput(map, entry, 0, ref resultsIntent, default(InteractionInputUtils.AnyInputInfo));
 
-            Assert.AreEqual(1, resultsIntent.ValidIndices.Length);
-            Assert.AreEqual(0, resultsIntent.ValidIndices[0]);
+            Assert.AreEqual(1, resultsIntent.ValidIndicesCount());
+            Assert.AreEqual(0, resultsIntent.ValidIndexAt(0));
 
             entry = new PBPointerEvents.Types.Entry
             {
@@ -172,8 +172,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             PressAndRelease(keyboard.bKey);
             InteractionInputUtils.TryAppendButtonLikeInput(map, entry, 1, ref resultsIntent, default(InteractionInputUtils.AnyInputInfo));
 
-            Assert.AreEqual(2, resultsIntent.ValidIndices.Length);
-            Assert.AreEqual(1, resultsIntent.ValidIndices[1]);
+            Assert.AreEqual(2, resultsIntent.ValidIndicesCount());
+            Assert.AreEqual(1, resultsIntent.ValidIndexAt(1));
         }
 
         private static (Keyboard, InputAction[]) CreateInput()

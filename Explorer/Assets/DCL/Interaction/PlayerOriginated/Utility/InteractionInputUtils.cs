@@ -72,7 +72,7 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                     return;
             }
 
-            resultsIntent.ValidIndices.Add((byte)entryIndex);
+            resultsIntent.AddValidIndex((byte)entryIndex);
         }
 
         public static void TryAppendButtonAction(IReadOnlyDictionary<DCL.ECSComponents.InputAction, InputAction> sdkInputActionsMap, ref AppendPointerEventResultsIntent resultsIntent)
@@ -91,15 +91,12 @@ namespace DCL.Interaction.PlayerOriginated.Utility
         {
             if (inputAction.WasPressedThisFrame())
             {
-                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetDown);
+                resultsIntent.AddInputAction(ecsInputAction, PointerEventType.PetDown);
                 return;
             }
 
             if (inputAction.WasReleasedThisFrame())
-            {
-                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetUp);
-                return;
-            }
+                resultsIntent.AddInputAction(ecsInputAction, PointerEventType.PetUp);
         }
 
         public static void PrepareDefaultValues(this PBPointerEvents.Types.Info info)

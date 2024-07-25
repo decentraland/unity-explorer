@@ -79,37 +79,24 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         private void WriteResults([Data] in Vector3 scenePosition, [Data] ref bool messageSent, ref PBPointerEvents pbPointerEvents, ref CRDTEntity sdkEntity)
         {
             AppendPointerEventResultsIntent intent = pbPointerEvents.AppendPointerEventResultsIntent;
+            int validIndicesCount = intent.ValidIndicesCount();
 
-            foreach (byte validIndex in intent.ValidIndices)
+            for (var i = 0; i < validIndicesCount; i++)
             {
+                byte validIndex = intent.ValidIndexAt(i);
                 PBPointerEvents.Types.Entry entry = pbPointerEvents.PointerEvents![validIndex]!;
                 PBPointerEvents.Types.Info info = entry.EventInfo!;
 
                 RaycastHit raycastHit = raycastHitPool.Get()!;
-
-                raycastHit.FillSDKRaycastHit(scenePosition, intent.RaycastHit, string.Empty,
-                    sdkEntity, intent.Ray.origin, intent.Ray.direction);
-
+                raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
                 AppendMessage(sdkEntity, raycastHit, info.Button, entry.EventType);
             }
 
-            intent.ValidIndices.Clear();
-
             if (intent.ValidInputActions != null)
-            {
                 foreach (var inputAction in intent.ValidInputActions)
                 {
                     RaycastHit raycastHit = raycastHitPool.Get()!;
-
-                    raycastHit.FillSDKRaycastHit(
-                        scenePosition,
-                        intent.RaycastHit,
-                        string.Empty,
-                        sdkEntity,
-                        intent.Ray.origin,
-                        intent.Ray.direction
-                    );
-
+                    raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
                     AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
 
                     //We dont consider hover events to disable global input messages
@@ -117,19 +104,21 @@ namespace DCL.Interaction.PlayerOriginated.Systems
                         messageSent = true;
                 }
 
-                intent.ValidInputActions.Clear();
-            }
+            intent.Clear();
         }
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
         {
+            var current = (sdkEntity.Id, eventType);
+            ReportHub.Log(ReportData.UNSPECIFIED, current);
+
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
                 {
                     result.Hit = data.sdkHit;
                     result.Button = data.button;
                     result.State = data.eventType;
-                    result.Timestamp = data.sceneStateProvider.TickNumber;
+                    result.Timestamp = data.sceneStateProvider!.TickNumber;
                     result.TickNumber = data.sceneStateProvider.TickNumber;
                 }, sdkEntity, (int)sceneStateProvider.TickNumber, (sdkHit, button, eventType, sceneStateProvider));
         }

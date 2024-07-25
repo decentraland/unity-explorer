@@ -17,6 +17,8 @@ namespace DCL.ECSComponents
         public Ray Ray { get; private set; }
         public UnityEngine.RaycastHit RaycastHit { get; private set; }
 
+        public readonly IReadOnlyDictionary<InputAction, PointerEventType> ValidInputActions => validInputActions;
+
         /// <summary>
         ///     Contains the indices of the <see cref="PBPointerEvents.Types.Entry" /> in this entity's <see cref="PBPointerEvents" />
         ///     that were validly hit and checked by the raycast logic.
@@ -24,18 +26,40 @@ namespace DCL.ECSComponents
         ///         The number of valid entries is limited to 64 elements (it's unlikely to be exceeded)
         ///     </para>
         /// </summary>
-        public FixedList64Bytes<byte> ValidIndices;
+        private FixedList64Bytes<byte> validIndices;
 
-        public Dictionary<InputAction, PointerEventType> ValidInputActions;
+        private Dictionary<InputAction, PointerEventType> validInputActions;
 
         public void Initialize(UnityEngine.RaycastHit raycastHit, Ray ray)
         {
             RaycastHit = raycastHit;
             Ray = ray;
-            ValidIndices.Clear();
+            validIndices.Clear();
 
-            if (ValidInputActions == null) ValidInputActions = new ();
-            else ValidInputActions.Clear();
+            if (validInputActions == null) validInputActions = new ();
+            else validInputActions.Clear();
+        }
+
+        public void AddValidIndex(byte index)
+        {
+            validIndices.Add(index);
+        }
+
+        public readonly byte ValidIndexAt(int at) =>
+            validIndices[at];
+
+        public readonly int ValidIndicesCount() =>
+            validIndices.Length;
+
+        public void AddInputAction(InputAction ecsInputAction, PointerEventType pointerEventType)
+        {
+            validInputActions.Add(ecsInputAction, pointerEventType);
+        }
+
+        public void Clear()
+        {
+            validIndices.Clear();
+            validInputActions?.Clear();
         }
 
         /// <summary>
@@ -51,12 +75,18 @@ namespace DCL.ECSComponents
             if (entry.EventType == hoverEventType.Value
                 && entry.EventInfo.Button is InputAction.IaPointer or InputAction.IaAny
                )
-                ValidIndices.Add((byte)entryIndex);
+                AddValidIndex((byte)entryIndex);
         }
     }
 
     public partial class PBPointerEvents
     {
         public AppendPointerEventResultsIntent AppendPointerEventResultsIntent;
+
+        public void Reset()
+        {
+            PointerEvents?.Clear();
+            AppendPointerEventResultsIntent.Clear();
+        }
     }
 }

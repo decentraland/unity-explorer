@@ -109,8 +109,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            sdkEvents.AppendPointerEventResultsIntent.ValidIndices.Add(1);
-            sdkEvents.AppendPointerEventResultsIntent.ValidIndices.Add(3);
+            sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(1);
+            sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(3);
 
             var sdkEntity = new CRDTEntity(100);
 

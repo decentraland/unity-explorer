@@ -62,8 +62,8 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(1));
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices[0], Is.EqualTo(0));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(1));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndexAt(0), Is.EqualTo(0));
         }
 
         [Test]
@@ -88,7 +88,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(0));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(0));
         }
 
         [Test]
@@ -129,7 +129,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(0));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(0));
         }
 
         private GlobalColliderSceneEntityInfo CreateColliderInfo() =>
