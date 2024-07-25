@@ -40,7 +40,7 @@ namespace DCL.Interaction.Systems
 
         protected override void Update(float t)
         {
-            ProcessRaycastResultQuery(World);
+            ProcessRaycastResultQuery(World!);
         }
 
         private bool TryGetPreviousEntityInfo(in HoverStateComponent stateComponent, out GlobalColliderSceneEntityInfo globalColliderSceneEntityInfo)
@@ -72,7 +72,7 @@ namespace DCL.Interaction.Systems
                 if (candidateForHoverLeaveIsValid && newEntityWasHovered == false)
                     candidateForHoverLeaveIsValid = false;
 
-                bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents!, newEntityWasHovered);
+                SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents!, newEntityWasHovered, out bool isAtDistance);
                 hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider, isAtDistance);
                 HighlightNewEntity(entityInfo, isAtDistance);
             }
@@ -109,14 +109,11 @@ namespace DCL.Interaction.Systems
         [Pure]
         private static bool NewEntityWasHovered(
             bool candidateForHoverLeaveIsValid,
-            GlobalColliderSceneEntityInfo previousEntityInfo,
-            GlobalColliderSceneEntityInfo entityInfo
+            in GlobalColliderSceneEntityInfo previousEntityInfo,
+            in GlobalColliderSceneEntityInfo entityInfo
         ) =>
             candidateForHoverLeaveIsValid == false
-            || (
-                previousEntityInfo.EcsExecutor.World != entityInfo.EcsExecutor.World
-                && previousEntityInfo.ColliderSceneEntityInfo.EntityReference != entityInfo.ColliderSceneEntityInfo.EntityReference
-            );
+            || previousEntityInfo.IsSameEntity(entityInfo) == false;
 
         [Query]
         private void SetupHighlightComponent([Data] bool isAtDistance, [Data] EntityReference nextEntity, ref HighlightComponent highlightComponent)
@@ -131,14 +128,15 @@ namespace DCL.Interaction.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool SetupPointerEvents(
+        private void SetupPointerEvents(
             in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
             ref HoverFeedbackComponent hoverFeedbackComponent,
             PBPointerEvents pbPointerEvents,
-            bool newEntityWasHovered
+            bool newEntityWasHovered,
+            out bool isAtDistance
         )
         {
-            var isAtDistance = false;
+            isAtDistance = false;
             var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
             pbPointerEvents.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
 
@@ -161,12 +159,10 @@ namespace DCL.Interaction.Systems
                     ref hoverFeedbackComponent, anyInputInfo.AnyButtonIsPressed);
             }
 
-            if (!isAtDistance) return false;
+            if (isAtDistance)
 
-            // Add all inputs that were pressed/unpressed this frame
-            InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
-
-            return isAtDistance;
+                // Add all inputs that were pressed/unpressed this frame
+                InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
         }
     }
 }

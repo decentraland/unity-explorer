@@ -27,5 +27,9 @@ namespace DCL.Interaction.Utility
             pbPointerEvents = null;
             return entityRef.IsAlive(world) && world.TryGet(entityRef, out pbPointerEvents);
         }
+
+        public bool IsSameEntity(in GlobalColliderSceneEntityInfo other) =>
+            EcsExecutor.World == other.EcsExecutor.World
+            && ColliderSceneEntityInfo.EntityReference == other.ColliderSceneEntityInfo.EntityReference;
     }
 }
