@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71ed1db8ba3d47b5bb84cf25f7a327d8, type: 3}
+  m_Name: ReportsHandlingSettingsLocalSceneDev
+  m_EditorClassIdentifier: 
+  debugLogMatrix:
+    entries:
+    - Category: REMOTE_MOVEMENT
+      Severity: 3
+    - Category: REMOTE_MOVEMENT
+      Severity: 2
+    - Category: REMOTE_MOVEMENT
+      Severity: 0
+    - Category: REMOTE_MOVEMENT
+      Severity: 4
+    - Category: REMOTE_MOVEMENT
+      Severity: 1
+    - Category: AUDIO_SOURCES
+      Severity: 0
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 0
+    - Category: AUDIO_SOURCES
+      Severity: 4
+    - Category: AVATAR_MODIFIER_AREA
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+      Severity: 0
+    - Category: PLAYER_AVATAR_BASE
+      Severity: 0
+    - Category: PLAYER_AVATAR_EMOTE_COMMAND
+      Severity: 0
+    - Category: PLAYER_AVATAR_EQUIPPED
+      Severity: 0
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 0
+    - Category: MULTIPLAYER_SDK_EMOTE_COMMAND_DATA
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY
+      Severity: 4
+    - Category: MULTIPLAYER_SDK_PLAYER_PROFILE_DATA
+      Severity: 4
+    - Category: PLAYER_AVATAR_BASE
+      Severity: 4
+    - Category: PLAYER_AVATAR_EMOTE_COMMAND
+      Severity: 4
+    - Category: PLAYER_AVATAR_EQUIPPED
+      Severity: 4
+    - Category: PLAYER_IDENTITY_DATA
+      Severity: 4
+    - Category: JAVASCRIPT
+      Severity: 3
+    - Category: JAVASCRIPT
+      Severity: 2
+    - Category: JAVASCRIPT
+      Severity: 1
+  sentryMatrix:
+    entries: []
+  debounceEnabled: 1
+  isSentryEnabled: 0
+  isDebugLogEnabled: 1
