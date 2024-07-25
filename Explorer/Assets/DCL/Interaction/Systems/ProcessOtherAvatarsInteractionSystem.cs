@@ -39,7 +39,7 @@ namespace DCL.Interaction.Systems
             this.dclInput = dclInput;
             this.mvcManager = mvcManager;
 
-            dclInput.Player.Pointer.performed += OpenPassport;
+            dclInput.Player.Pointer!.performed += OpenPassport;
         }
 
         protected override void Update(float t)
@@ -49,7 +49,7 @@ namespace DCL.Interaction.Systems
 
         public override void Dispose()
         {
-            dclInput.Player.Pointer.performed -= OpenPassport;
+            dclInput.Player.Pointer!.performed -= OpenPassport;
             base.Dispose();
         }
 
@@ -57,7 +57,7 @@ namespace DCL.Interaction.Systems
         private void ProcessRaycastResult(ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities, ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
         {
             currentProfileHovered = null;
-            hoverFeedbackComponent.Tooltips.Remove(viewProfileTooltip);
+            hoverFeedbackComponent.Remove(viewProfileTooltip);
 
             bool canHover = !eventSystem.IsPointerOverGameObject();
             GlobalColliderGlobalEntityInfo? entityInfo = raycastResultForGlobalEntities.GetEntityInfo();
@@ -67,21 +67,17 @@ namespace DCL.Interaction.Systems
 
             EntityReference entityRef = entityInfo.Value.EntityReference;
 
-            if (!entityRef.IsAlive(World) || !World.TryGet(entityRef, out Profile? profile))
+            if (!entityRef.IsAlive(World!) || !World!.TryGet(entityRef, out Profile? profile))
                 return;
 
             currentProfileHovered = profile;
-
-            hoverStateComponent.LastHitCollider = raycastResultForGlobalEntities.GetCollider();
-            hoverStateComponent.HasCollider = true;
-            hoverStateComponent.IsAtDistance = true;
-
-            hoverFeedbackComponent.Tooltips.Add(viewProfileTooltip);
+            hoverStateComponent.AssignCollider(raycastResultForGlobalEntities.Collider, isAtDistance: true);
+            hoverFeedbackComponent.Add(viewProfileTooltip);
         }
 
         private void OpenPassport(UnityEngine.InputSystem.InputAction.CallbackContext context)
         {
-            if (context.control.IsPressed() || currentProfileHovered == null)
+            if (context.control!.IsPressed() || currentProfileHovered == null)
                 return;
 
             string userId = currentProfileHovered.UserId;

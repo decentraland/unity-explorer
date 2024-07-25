@@ -68,6 +68,11 @@ namespace DCL.Interaction.Utility
             return true;
         }
 
+        public static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, AppendPointerEventResultsIntent intent, CRDTEntity crdtEntity)
+        {
+            target.FillSDKRaycastHit(sceneRootPosition, intent.RaycastHit, string.Empty, crdtEntity, intent.Ray.origin, intent.Ray.direction);
+        }
+
         public static void FillSDKRaycastHit(this RaycastHit target, Vector3 sceneRootPosition, in UnityEngine.RaycastHit unityHit, string colliderName, CRDTEntity crdtEntity,
             Vector3 globalOrigin,
             Vector3 direction)
