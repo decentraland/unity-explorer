@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.MessageBus;
+using DCL.MapRenderer;
 using DCL.Minimap;
 using DCL.PlacesAPIService;
 using DCL.UI.MainUI;
@@ -23,9 +24,11 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IScenesCache scenesCache;
         private readonly MainUIContainer mainUIContainer;
+        private readonly IMapPathEventBus mapPathEventBus;
 
         public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIContainer mainUIContainer)
+            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIContainer mainUIContainer,
+            IMapPathEventBus mapPathEventBus)
         {
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -35,6 +38,7 @@ namespace DCL.PluginSystem.Global
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
             this.mainUIContainer = mainUIContainer;
+            this.mapPathEventBus = mapPathEventBus;
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
@@ -44,19 +48,17 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(new MinimapController(
                     () =>
                     {
-                        var view = mainUIContainer.MinimapView;
+                        MinimapView? view = mainUIContainer.MinimapView;
                         view.gameObject.SetActive(true);
                         return view;
                     },
                     mapRendererContainer.MapRenderer, mvcManager, placesAPIService, TrackPlayerPositionSystem.InjectToWorld(ref world),
-                    realmData, chatMessagesBus, realmNavigator, scenesCache));
+                    realmData, chatMessagesBus, realmNavigator, scenesCache, mapPathEventBus));
             };
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public class MinimapSettings : IDCLPluginSettings
-        {
-        }
+        public class MinimapSettings : IDCLPluginSettings { }
     }
 }

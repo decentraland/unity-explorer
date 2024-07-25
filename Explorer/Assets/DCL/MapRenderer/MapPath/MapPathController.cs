@@ -1,120 +1,101 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
-using System;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.MapRenderer
 {
-    public interface IMapPathEventBus
+    public class MapPathController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
-        public event Action<Vector2Int, bool> OnSetDestination;
-        public event Action OnRemovedDestination;
-
-        void SetDestination(Vector2Int parcel, bool toMapPin);
-
-        void RemoveDestination();
-    }
-
-    public class MapPathEventBus : IMapPathEventBus
-    {
-        public event Action<Vector2Int, bool> OnSetDestination;
-        public event Action OnRemovedDestination;
-
-        public void SetDestination(Vector2Int parcel, bool toMapPin)
-        {
-            OnSetDestination?.Invoke(parcel, toMapPin);
-        }
-
-        public void RemoveDestination()
-        {
-            OnRemovedDestination?.Invoke();
-        }
-    }
-
-    public class PathRendererController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
-    {
-        internal delegate PinMarkerObject PinMarkerBuilder(Transform parent);
+        internal delegate IPinMarker PinMarkerBuilder(
+            IObjectPool<PinMarkerObject> objectsPool,
+            IMapCullingController cullingController);
 
         private readonly PinMarkerBuilder builder;
         private readonly IMapPathEventBus mapPathEventBus;
-        private readonly PathRenderer pathRenderer;
+        private readonly MapPathRenderer mapPathRenderer;
         private readonly IMapCullingController cullingController;
+        private readonly IObjectPool<PinMarkerObject> objectsPool;
 
-        private PathDestinationPin pathDestinationPin;
+        private IPinMarker pathDestinationPin;
         private bool destinationSet;
 
-        internal PathRendererController(
+        internal MapPathController(
+            IObjectPool<PinMarkerObject> objectsPool,
             PinMarkerBuilder builder,
             Transform instantiationParent,
             IMapPathEventBus mapPathEventBus,
-            PathRenderer pathRenderer,
+            MapPathRenderer mapPathRenderer,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController) : base(instantiationParent, coordsUtils, cullingController)
         {
             this.mapPathEventBus = mapPathEventBus;
-            this.pathRenderer = pathRenderer;
+            this.mapPathRenderer = mapPathRenderer;
+            this.objectsPool = objectsPool;
             this.builder = builder;
             this.cullingController = cullingController;
         }
 
-        public void Initialize(Transform originTransform)
+        public void Initialize()
         {
-            pathDestinationPin = new PathDestinationPin(cullingController, builder(instantiationParent));
-
+            pathDestinationPin = builder(objectsPool, mapCullingController);
+            cullingController.StartTracking(pathDestinationPin, this);
             mapPathEventBus.OnSetDestination += OnSetDestination;
             mapPathEventBus.OnRemovedDestination += OnRemovedDestination;
-            pathRenderer.SetOrigin(originTransform);
+            mapPathEventBus.OnUpdatedPlayerPosition += OnUpdatedPlayerPosition;
             pathDestinationPin.OnBecameInvisible();
+        }
+
+        private void OnUpdatedPlayerPosition(Vector2 newPosition)
+        {
+            if (destinationSet) { mapPathRenderer.UpdateOrigin(newPosition); }
         }
 
         private void OnRemovedDestination()
         {
             destinationSet = false;
             pathDestinationPin.AnimateOut();
-            pathRenderer.gameObject.SetActive(false);
+            mapPathRenderer.gameObject.SetActive(false);
         }
 
-        private void OnSetDestination(Vector2Int parcel, bool toMapPin)
+        private void OnSetDestination(Vector2Int parcel, IPinMarker pinMarker)
         {
             destinationSet = true;
             Vector3 mapPosition = coordsUtils.CoordsToPositionWithOffset(parcel);
-            pathRenderer.gameObject.SetActive(true);
-            pathRenderer.SetDestination(mapPosition);
+            mapPathRenderer.gameObject.SetActive(true);
+            mapPathRenderer.SetDestination(mapPosition);
 
-            if (!toMapPin)
+            if (pinMarker == null)
             {
                 pathDestinationPin.SetPosition(mapPosition, parcel);
-                pathDestinationPin.AnimateIn();
-
-                // Mark as force view so its not hidden in Minimap and show on corner
+                pathDestinationPin.SetAsDestination(true);
             }
-            else { pathDestinationPin.AnimateOut(); }
+            else
+            {
+                pinMarker.SetAsDestination(true);
+                pathDestinationPin.AnimateOut();
+            }
         }
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
         {
-            var a = 1;
-
-            //Remove from minimapBorder
+            if (pathDestinationPin.IsDestination) { mapPathEventBus.HidePinInMinimap(); }
         }
 
         public void OnMapObjectCulled(IPinMarker obj)
         {
-            var a = 1;
-
-            //Add to minimapBorder
+            if (pathDestinationPin.IsDestination) { mapPathEventBus.ShowPinInMinimap(null); }
         }
 
         public UniTask Enable(CancellationToken cancellationToken)
         {
             if (destinationSet)
             {
-                pathRenderer.gameObject.SetActive(true);
+                mapPathRenderer.gameObject.SetActive(true);
                 pathDestinationPin.AnimateIn();
             }
 

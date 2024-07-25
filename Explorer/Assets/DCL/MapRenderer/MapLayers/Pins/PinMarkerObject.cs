@@ -10,7 +10,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         [field: SerializeField] internal SpriteRenderer mapPinIconOutline { get; private set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
 
-        public void SetScale(float baseScale, float newScale)
+        public void SetScale(float newScale)
         {
             transform.localScale = new Vector3(newScale, newScale, 1f);
         }

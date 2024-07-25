@@ -36,6 +36,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private PinMarkerInstaller pinMarkerInstaller { get; }
         private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
         private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
+        private MapPathInstaller mapPathInstaller { get; }
 
         public MapRendererChunkComponentsFactory(
             IAssetsProvisioner assetsProvisioner,
@@ -72,7 +73,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>();
-            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken);
+            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken);
 
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
                 CameraControllerBuilder,
@@ -87,7 +88,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken)
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken),
+                mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);

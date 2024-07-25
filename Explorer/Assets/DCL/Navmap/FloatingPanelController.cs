@@ -32,9 +32,9 @@ namespace DCL.Navmap
         private CancellationTokenSource cts;
         private Vector2Int destination = DEFAULT_DESTINATION_PARCEL;
 
-        public event Action<Vector2Int, bool> OnSetAsDestination;
         public event Action<Vector2Int> OnJumpIn;
         public event Action OnRemoveDestination;
+        public event Action OnSetAsDestination;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -131,9 +131,9 @@ namespace DCL.Navmap
             try
             {
                 view.setAsDestinationButton.onClick.RemoveAllListeners();
-                view.setAsDestinationButton.onClick.AddListener(() => SetAsDestination(parcel, false));
+                view.setAsDestinationButton.onClick.AddListener(() => SetAsDestination(parcel));
                 view.setAsDestinationMapPinButton.onClick.RemoveAllListeners();
-                view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel, true));
+                view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel));
                 view.removeDestinationButton.onClick.RemoveAllListeners();
                 view.removeMapPinDestinationButton.onClick.RemoveAllListeners();
                 view.removeDestinationButton.onClick.AddListener(RemoveDestination);
@@ -163,11 +163,11 @@ namespace DCL.Navmap
             OnRemoveDestination?.Invoke();
         }
 
-        private void SetAsDestination(Vector2Int parcel, bool toMapPin)
+        private void SetAsDestination(Vector2Int parcel)
         {
             destination = parcel;
             SetupDestinationButtons(parcelIsDestination: true);
-            OnSetAsDestination?.Invoke(parcel, toMapPin);
+            OnSetAsDestination?.Invoke();
         }
 
         private void SetupDestinationButtons(bool parcelIsDestination)

@@ -52,10 +52,12 @@ namespace DCL.Navmap
 
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
+        private MapRenderImage.ParcelClickData lastParcelClicked;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
         public FloatingPanelController FloatingPanelController { get; }
+        public event Action OnSetDestination;
 
         public NavmapController(
             NavmapView navmapView,
@@ -80,8 +82,8 @@ namespace DCL.Navmap
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, dclInput);
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
-            FloatingPanelController.OnSetAsDestination += OnSetDestination;
-            FloatingPanelController.OnRemoveDestination += OnRemoveDestination;
+            FloatingPanelController.OnSetAsDestination += SetDestination;
+            FloatingPanelController.OnRemoveDestination += RemoveDestination;
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
@@ -135,14 +137,16 @@ namespace DCL.Navmap
             searchBarController?.Dispose();
         }
 
-        private void OnRemoveDestination()
+        private void RemoveDestination()
         {
             mapPathEventBus.RemoveDestination();
         }
 
-        private void OnSetDestination(Vector2Int destination, bool toMapPin)
+        private void SetDestination()
         {
-            mapPathEventBus.SetDestination(destination, toMapPin);
+            mapPathEventBus.SetDestination(lastParcelClicked.Parcel, lastParcelClicked.PinMarker);
+
+            //DISABLED FOR TESTING -> OnSetDestination?.Invoke();
         }
 
         private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
@@ -192,6 +196,7 @@ namespace DCL.Navmap
 
         private void OnParcelClicked(MapRenderImage.ParcelClickData clickedParcel)
         {
+            lastParcelClicked = clickedParcel;
             UIAudioEventsBus.Instance.SendPlayAudioEvent(navmapView.ClickAudio);
             FloatingPanelController.HandlePanelVisibility(clickedParcel.Parcel, clickedParcel.PinMarker, false);
         }

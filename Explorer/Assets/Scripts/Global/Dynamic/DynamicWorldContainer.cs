@@ -155,7 +155,6 @@ namespace Global.Dynamic
 
             var unityEventSystem = new UnityEventSystem(EventSystem.current.EnsureNotNull());
             var dclCursor = new DCLCursor(normalCursorAsset.Value, interactionCursorAsset.Value);
-            var mapPathEventBus = new MapPathEventBus();
 
             staticContainer.QualityContainer.AddDebugViews(debugBuilder);
 
@@ -179,6 +178,8 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController));
+            var mapPathEventBus = new MapPathEventBus();
+
             MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, mapPathEventBus, ct);
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController);
             var wearableCatalog = new WearableCatalog();
@@ -391,7 +392,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow, profileCache),
-                new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIContainer),
+                new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIContainer, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIContainer, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
                     assetsProvisioner,

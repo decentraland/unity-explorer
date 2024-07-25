@@ -3,27 +3,23 @@ using UnityEngine;
 namespace DCL.MapRenderer
 {
     [RequireComponent(typeof(LineRenderer))]
-    public class PathRenderer : MonoBehaviour
+    public class MapPathRenderer : MonoBehaviour
     {
-        public Transform startPoint;
-        public Vector3 endPoint;
         public float dotSize = 0.2f;
         public float spaceBetweenDots = 0.2f;
         public float updateMagnitude = 1;
         public float arrivalTolerance = 100;
         private Vector2 cachedPosition;
+        private bool destinationSet;
+        private Vector2 endPoint;
 
         private LineRenderer lineRenderer;
+        private Vector2 originPoint;
 
         private void Awake()
         {
             lineRenderer = GetComponent<LineRenderer>();
             SetupLineRenderer();
-        }
-
-        private void Update()
-        {
-            UpdateLine();
         }
 
         private void SetupLineRenderer()
@@ -39,26 +35,23 @@ namespace DCL.MapRenderer
             lineMaterial.mainTextureOffset = new Vector2(0f, 0f);
         }
 
-        public void SetOrigin(Transform transform)
+        public void SetDestination(Vector2 destination)
         {
-            startPoint = transform;
-        }
-
-        public void SetDestination(Vector3 destination)
-        {
+            destinationSet = true;
             endPoint = destination;
-            UpdateLine(true);
+            UpdateLine();
         }
 
-        private void UpdateLine(bool force = false)
+        public void UpdateOrigin(Vector2 origin)
         {
-            if (startPoint == null) return;
+            originPoint = origin;
 
-            if (!force && !(Mathf.Abs(cachedPosition.sqrMagnitude - startPoint.position.sqrMagnitude) > updateMagnitude)) return;
+            if (destinationSet) { UpdateLine(); }
+        }
 
-            cachedPosition = startPoint.position;
-            SetupLineRenderer();
-            Vector3 direction = endPoint - startPoint.position;
+        private void UpdateLine()
+        {
+            Vector3 direction = endPoint - originPoint;
             float distance = direction.magnitude;
 
             float totalUnitLength = dotSize + spaceBetweenDots;
@@ -71,8 +64,8 @@ namespace DCL.MapRenderer
                 float startT = i * totalUnitLength / distance;
                 float endT = startT + (dotSize / distance);
 
-                var dotStart = Vector3.Lerp(startPoint.position, endPoint, startT);
-                var dotEnd = Vector3.Lerp(startPoint.position, endPoint, endT);
+                var dotStart = Vector3.Lerp(originPoint, endPoint, startT);
+                var dotEnd = Vector3.Lerp(originPoint, endPoint, endT);
 
                 lineRenderer.SetPosition(i * 2, dotStart);
                 lineRenderer.SetPosition((i * 2) + 1, dotEnd);

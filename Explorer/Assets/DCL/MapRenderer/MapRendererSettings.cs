@@ -55,7 +55,7 @@ namespace DCL.MapRenderer
         }
 
         [Serializable]
-        public class DottedLineRef : ComponentReference<PathRenderer>
+        public class DottedLineRef : ComponentReference<MapPathRenderer>
         {
             public DottedLineRef(string guid) : base(guid) { }
         }

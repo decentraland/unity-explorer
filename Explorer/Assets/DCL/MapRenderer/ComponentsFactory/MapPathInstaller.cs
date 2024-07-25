@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
@@ -11,14 +11,12 @@ using UnityEngine.Pool;
 
 namespace DCL.MapRenderer.ComponentsFactory
 {
-    internal struct PinMarkerInstaller
+    internal struct MapPathInstaller
     {
-        private const int PREWARM_COUNT = 60;
-
         private IAssetsProvisioner assetsProvisioner;
         private MapRendererSettings mapSettings;
 
-        public async UniTask<PinMarkerController> InstallAsync(
+        public async UniTask InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
@@ -35,22 +33,25 @@ namespace DCL.MapRenderer.ComponentsFactory
 
             var objectsPool = new ObjectPool<PinMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
-                defaultCapacity: PREWARM_COUNT,
+                defaultCapacity: 1,
                 actionOnGet: obj => obj.gameObject.SetActive(true),
                 actionOnRelease: obj => obj.gameObject.SetActive(false));
 
-            var controller = new PinMarkerController(
+            ProvidedInstance<MapPathRenderer> pathInstance = await assetsProvisioner.ProvideInstanceAsync(mapSettings.DestinationPathLine, configuration.MapPathRoot, ct: cancellationToken);
+
+            var pathRendererController = new MapPathController(
                 objectsPool,
                 CreateMarker,
-                configuration.PinMarkerRoot,
+                configuration.MapPathRoot,
+                mapPathEventBus,
+                pathInstance.Value,
                 coordsUtils,
-                cullingController,
-                mapPathEventBus
-            );
+                cullingController);
 
-            writer.Add(MapLayer.Pins, controller);
-            zoomScalingWriter.Add(controller);
-            return controller;
+            pathRendererController.Initialize();
+
+            writer.Add(MapLayer.Path, pathRendererController);
+            zoomScalingWriter.Add(pathRendererController);
         }
 
         private static PinMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, PinMarkerObject prefab, ICoordsUtils coordsUtils)
@@ -71,6 +72,6 @@ namespace DCL.MapRenderer.ComponentsFactory
             new PinMarker(objectsPool, cullingController);
 
         internal async UniTask<PinMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PinMarker, ct: cancellationToken)).Value.GetComponent<PinMarkerObject>();
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PathDestinationPin, ct: cancellationToken)).Value;
     }
 }

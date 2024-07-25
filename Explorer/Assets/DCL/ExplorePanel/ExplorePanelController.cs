@@ -58,7 +58,7 @@ namespace DCL.ExplorePanel
             IMVCManager mvcManager)
             : base(viewFactory)
         {
-            this.NavmapController = navmapController;
+            NavmapController = navmapController;
             this.settingsController = settingsController;
             this.backpackController = backpackController;
             this.playerEntity = playerEntity;
@@ -75,7 +75,7 @@ namespace DCL.ExplorePanel
         {
             mvcManager.ShowAsync(IssueCommand(new ExplorePanelParameter(ExploreSections.Backpack))).Forget();
             lastShownSection = ExploreSections.Backpack;
-            OnBackpackHotkeyPressed(default);
+            OnBackpackHotkeyPressed(default(InputAction.CallbackContext));
         }
 
         public override void Dispose()
@@ -95,6 +95,8 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Backpack, backpackController },
             };
 
+            NavmapController.OnSetDestination += SetDestination;
+
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
             lastShownSection = ExploreSections.Navmap;
@@ -107,11 +109,9 @@ namespace DCL.ExplorePanel
             foreach ((ExploreSections section, TabSelectorView? tabSelector) in tabsBySections)
             {
                 tabSelector.TabSelectorToggle.onValueChanged.RemoveAllListeners();
+
                 tabSelector.TabSelectorToggle.onValueChanged.AddListener(
-                    isOn =>
-                    {
-                        ToggleSection(isOn, tabSelector, section, true);
-                    }
+                    isOn => { ToggleSection(isOn, tabSelector, section, true); }
                 );
             }
 
@@ -122,6 +122,7 @@ namespace DCL.ExplorePanel
         {
             isControlClosing = false;
             sectionSelectorController.ResetAnimators();
+
             foreach ((ExploreSections section, TabSelectorView? tab) in tabsBySections)
             {
                 ToggleSection(section == inputData.Section, tab, section, true);
@@ -132,6 +133,7 @@ namespace DCL.ExplorePanel
                 backpackController.Toggle(inputData.BackpackSection.Value);
 
             profileWidgetCts = profileWidgetCts.SafeRestart();
+
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0),
                                         new ControllerNoData(), profileWidgetCts.Token)
                                    .Forget();
@@ -156,6 +158,7 @@ namespace DCL.ExplorePanel
             {
                 if (shownSection == lastShownSection)
                     exploreSections[lastShownSection].Activate();
+
                 lastShownSection = shownSection;
             }
         }
@@ -247,9 +250,16 @@ namespace DCL.ExplorePanel
             dclInput.Camera.Enable();
         }
 
+        private void SetDestination()
+        {
+            viewInstance.CloseButton.onClick.Invoke();
+        }
+
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
         {
-            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct), UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct), viewInstance.SystemMenu.LogoutButton.OnClickAsync(ct));
+            return UniTask.WhenAny(viewInstance.CloseButton.OnClickAsync(ct),
+                UniTask.WaitUntil(() => isControlClosing, PlayerLoopTiming.Update, ct),
+                viewInstance.SystemMenu.LogoutButton.OnClickAsync(ct));
         }
 
         private void ShowSystemMenu()
