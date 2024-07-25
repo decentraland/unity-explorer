@@ -58,8 +58,9 @@ namespace Global.Dynamic
             splashRoot.SetActive(showSplash);
             cursorRoot.EnsureNotNull();
 
+#if !UNITY_EDITOR
             ProcessDeepLinkParameters(launchSettings);
-
+#endif
             startingRealm = launchSettings.GetStartingRealm();
             startingParcel = launchSettings.TargetScene;
 
@@ -201,6 +202,8 @@ namespace Global.Dynamic
             // Update deep link so that Uri class allows the host name
             deepLinkString = deepLinkString.Replace("decentraland://", "https://decentraland.com/?");
 
+            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out var res)) return;
+
             var uri = new Uri(deepLinkString);
             var uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
@@ -247,7 +250,7 @@ namespace Global.Dynamic
             var positionParam = uriQuery.Get("position");
             if (!string.IsNullOrEmpty(positionParam))
             {
-                var matches = new Regex(@"\d+").Matches(positionParam);
+                var matches = new Regex(@"-*\d+").Matches(positionParam);
                 if (matches.Count > 1)
                 {
                     returnValue.x = int.Parse(matches[0].Value);
