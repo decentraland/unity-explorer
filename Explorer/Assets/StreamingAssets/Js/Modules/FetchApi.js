@@ -64,10 +64,11 @@ async function fetch(url, init) {
     let response = await UnitySimpleFetchApi.Fetch(
         reqMethod, url, reqHeaders, hasBody, JSON.stringify(body) ?? '', reqRedirect, reqTimeout
     )
-    
-    response = { ...response };
 
-    response.headers = new Headers(response.headers);
+    response = {
+        ...response,
+        headers: new Headers(response.headers)
+    };
 
     let alreadyConsumed = false
     function notifyConsume() {
