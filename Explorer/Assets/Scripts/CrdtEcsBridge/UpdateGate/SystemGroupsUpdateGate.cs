@@ -15,6 +15,15 @@ namespace CrdtEcsBridge.UpdateGate
     public class SystemGroupsUpdateGate : ISystemGroupsUpdateGate
     {
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, PoolConstants.SCENES_COUNT);
+        private static readonly Type[] ALL_THROTTLED_GROUPS =
+        {
+            typeof(InitializationSystemGroup),
+            typeof(SimulationSystemGroup),
+            typeof(PresentationSystemGroup),
+            typeof(PhysicsSystemGroup),
+            typeof(PostPhysicsSystemGroup),
+            typeof(PreRenderingSystemGroup),
+        };
 
         private HashSet<Type> openGroups = POOL.Get();
 
@@ -29,6 +38,7 @@ namespace CrdtEcsBridge.UpdateGate
             if (openGroups == null) return;
 
             POOL.Release(openGroups);
+
             openGroups = null;
         }
 
@@ -39,15 +49,21 @@ namespace CrdtEcsBridge.UpdateGate
             if (Time.frameCount < keepOpenFrame)
                 return false;
 
-            // Sync is required as ShouldThrottle is called from the main thread
-            lock (openGroups)
-            {
-                // Otherwise, close the group but let it run one (current) frame
-                return !openGroups.Remove(systemGroupType);
-            }
+            return !openGroups.Contains(systemGroupType);
         }
 
-        public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled) { }
+        public void OnSystemGroupUpdateFinished(Type systemGroupType, bool wasThrottled)
+        {
+            if (wasThrottled)
+                return;
+
+            // Let systems run in the remaining of the current frame
+            if (Time.frameCount < keepOpenFrame)
+                return;
+
+            // Close only at the end of the full frame pass
+            lock (openGroups) { openGroups.Remove(systemGroupType); }
+        }
 
         public void Open()
         {
@@ -59,13 +75,7 @@ namespace CrdtEcsBridge.UpdateGate
             lock (openGroups)
             {
                 // Open all system groups to execution
-                openGroups.Add(typeof(InitializationSystemGroup));
-                openGroups.Add(typeof(SimulationSystemGroup));
-                openGroups.Add(typeof(PresentationSystemGroup));
-                openGroups.Add(typeof(PhysicsSystemGroup));
-                openGroups.Add(typeof(PostPhysicsSystemGroup));
-                openGroups.Add(typeof(PreRenderingSystemGroup));
-
+                openGroups.UnionWith(ALL_THROTTLED_GROUPS);
                 keepOpenFrame = MultithreadingUtility.FrameCount + 1;
             }
         }
