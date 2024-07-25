@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -9,6 +10,9 @@ namespace DCL.WebRequests
 {
     public static class WebRequestUtils
     {
+        public const int BAD_REQUEST = 400;
+        public const int NOT_FOUND = 404;
+
         public static SuppressExceptionWithFallback<TCoreOp, TWebRequest, TResult> SuppressExceptionsWithFallback<TCoreOp, TWebRequest, TResult>(this TCoreOp coreOp, TResult fallbackValue, SuppressExceptionWithFallback.Behaviour behaviour = SuppressExceptionWithFallback.Behaviour.Default, ReportData? reportContext = null) where TWebRequest: struct, ITypedWebRequest where TCoreOp: IWebRequestOp<TWebRequest, TResult> =>
             new (coreOp, fallbackValue, behaviour, reportContext);
 
@@ -49,7 +53,7 @@ namespace DCL.WebRequests
         /// </summary>
         public readonly struct NoOp<TWebRequest> : IWebRequestOp<TWebRequest, NoResult> where TWebRequest : struct, ITypedWebRequest
         {
-            public UniTask<NoResult> ExecuteAsync(TWebRequest webRequest, System.Threading.CancellationToken ct) =>
+            public UniTask<NoResult> ExecuteAsync(TWebRequest webRequest, CancellationToken ct) =>
                 UniTask.FromResult(new NoResult());
         }
 
