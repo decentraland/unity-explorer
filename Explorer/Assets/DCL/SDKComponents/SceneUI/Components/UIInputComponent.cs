@@ -12,10 +12,10 @@ namespace DCL.SDKComponents.SceneUI.Components
         public bool IsOnValueChangedTriggered;
         public bool IsOnSubmitTriggered;
 
-        internal EventCallback<ChangeEvent<string>> currentOnValueChanged;
-        internal EventCallback<KeyDownEvent> currentOnSubmit;
-        internal EventCallback<FocusInEvent> currentOnFocusIn;
-        internal EventCallback<FocusOutEvent> currentOnFocusOut;
+        internal EventCallback<ChangeEvent<string>> currentOnValueChanged = static _ => { };
+        internal EventCallback<KeyDownEvent> currentOnSubmit = static _ => { };
+        internal EventCallback<FocusInEvent> currentOnFocusIn = static _ => { };
+        internal EventCallback<FocusOutEvent> currentOnFocusOut = static _ => { };
 
         public void Initialize(IInputBlock inputBlock, string textFieldName, string styleClass)
         {
