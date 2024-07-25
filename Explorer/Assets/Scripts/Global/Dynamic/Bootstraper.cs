@@ -38,7 +38,7 @@ namespace Global.Dynamic
 
         public bool EnableAnalytics { private get; init; }
 
-        private string startingRealm = IRealmNavigator.GENESIS_URL;
+        private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
@@ -61,7 +61,8 @@ namespace Global.Dynamic
 #if !UNITY_EDITOR
             ProcessDeepLinkParameters(launchSettings);
 #endif
-            startingRealm = launchSettings.GetStartingRealm();
+
+            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
@@ -106,8 +107,7 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = enableLandscape,
                     EnableLOD = enableLOD,
-                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
-                    LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
+                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel)
                 },
                 backgroundMusic,
                 ct);
@@ -131,9 +131,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity identity, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity.Address, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -150,7 +150,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.ProfileRepository,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RoomHub,
-                dynamicWorldContainer.RealmController.GetRealm(),
+                dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.MessagePipesHub
             );
 
@@ -164,7 +164,7 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
-            await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm, ct);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
@@ -175,7 +175,7 @@ namespace Global.Dynamic
 
             splashScreenAnimation.transform.SetSiblingIndex(1);
 
-            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
+            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading, false,
                 globalWorld!.EcsWorld, playerEntity, ct);
 
             splashRoot.SetActive(false);

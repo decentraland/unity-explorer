@@ -1,9 +1,9 @@
-﻿using DCL.WebRequests;
+﻿using Cysharp.Threading.Tasks;
+using DCL.WebRequests;
 using JetBrains.Annotations;
-using Microsoft.ClearScript.JavaScript;
+using Microsoft.ClearScript;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using Utility;
 
 namespace SceneRuntime.Apis.Modules.FetchApi
@@ -28,11 +28,41 @@ namespace SceneRuntime.Apis.Modules.FetchApi
         public object Fetch(string requestMethod, string url, object headers, bool hasBody, string body,
             string redirect, int timeout)
         {
-            try
+            return FetchAsync(cancellationTokenSource.Token).ToDisconnectedPromise();
+
+            async UniTask<ResponseToJs> FetchAsync(CancellationToken ct)
             {
-                return api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, cancellationTokenSource.Token).ToDisconnectedPromise();
+                ISimpleFetchApi.Response response = await api.FetchAsync(requestMethod, url, headers, hasBody, body, redirect, timeout, webController, ct);
+
+                var headersToJs = new PropertyBag();
+                foreach (var header in response.Headers)
+                    headersToJs.Add(header.Key, header.Value);
+
+                return new ResponseToJs
+                {
+                    data = response.Data,
+                    headers = headersToJs,
+                    ok = response.Ok,
+                    redirected = response.Redirected,
+                    status = response.Status,
+                    statusText = response.StatusText,
+                    type = response.Type,
+                    url = response.URL,
+                };
             }
-            catch (Exception e) { return Task.FromException(e).ToPromise(); }
+        }
+
+        [Serializable]
+        public struct ResponseToJs
+        {
+            public PropertyBag headers;
+            public bool ok;
+            public bool redirected;
+            public int status;
+            public string statusText;
+            public string url;
+            public string data;
+            public string type;
         }
     }
 }
