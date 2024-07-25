@@ -19,10 +19,12 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using SceneRunner.Debugging;
 using System;
+using System.Collections.Specialized;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Text.RegularExpressions;
+using System.Web;
 
 namespace Global.Dynamic
 {
@@ -193,39 +195,66 @@ namespace Global.Dynamic
             // Patch for MacOS removing the ':' from the realm parameter protocol
             deepLinkString = Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2");
 #endif
-            
+
             if (string.IsNullOrEmpty(deepLinkString)) return;
 
-            // Regex for detecting different parameters in the deep link string If we want to
-            // add more we just add for example (?=.*newParam=(?<newParamGroupName>[^&?!*]+))?
-            var pattern = @"^(?=.*realm=(?<realm>[^&?!*]+))?(?=.*position=(?<position>[^&?!*]+))?(?=.*local-scene=(?<localScene>[^&?!*]+))?";
-            var regex = new Regex(pattern);
-            var regexMatch = regex.Match(deepLinkString);
+            // Update deep link so that Uri class allows the host name
+            deepLinkString = deepLinkString.Replace("decentraland://", "https://decentraland.com/?");
 
-            if (!regexMatch.Success) return;
+            var uri = new Uri(deepLinkString);
+            var uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            string realmGroupName = "realm";
-            if (regexMatch.Groups[realmGroupName].Success)
+            var realmParam = uriQuery.Get("realm");
+            if (!string.IsNullOrEmpty(realmParam))
             {
-                string localSceneGroupName = "localScene";
-                if (regexMatch.Groups[localSceneGroupName].Success)
-                    bool.TryParse(regexMatch.Groups[localSceneGroupName].Value, out localSceneDevelopment);
+                localSceneDevelopment = ParseLocalSceneParameter(uriQuery);
 
-                if (localSceneDevelopment)
-                    launchSettings.SetLocalSceneDevelopmentRealm(regexMatch.Groups[realmGroupName].Value);
-                else
-                    launchSettings.SetWorldRealm(regexMatch.Groups[realmGroupName].Value);
+                if (localSceneDevelopment && IsRealmALocalUrl(realmParam))
+                    launchSettings.SetLocalSceneDevelopmentRealm(realmParam);
+                else if (IsRealmAWorld(realmParam))
+                    launchSettings.SetWorldRealm(realmParam);
             }
 
-            string positionGroupName = "position";
-            launchSettings.SetTargetScene(Vector2Int.zero);
-            if (regexMatch.Groups[positionGroupName].Success)
+            Vector2Int targetPosition = ParsePositionParameter(uriQuery);
+
+            launchSettings.SetTargetScene(targetPosition);
+        }
+
+        private bool ParseLocalSceneParameter(NameValueCollection uriQuery)
+        {
+            bool returnValue = false;
+            var localSceneParam = uriQuery.Get("local-scene");
+            if (!string.IsNullOrEmpty(localSceneParam))
             {
-                string positionParamValue = regexMatch.Groups[positionGroupName].Value;
-                launchSettings.SetTargetScene(new Vector2Int(
-                    int.Parse(positionParamValue.Substring(0, positionParamValue.IndexOf(','))),
-                    int.Parse(positionParamValue.Substring(positionParamValue.IndexOf(',') + 1))));
+                var match = new Regex(@"true|false").Match(localSceneParam);
+                if (match.Success)
+                    bool.TryParse(match.Value, out returnValue);
             }
+
+            return returnValue;
+        }
+
+        private bool IsRealmAWorld(string realmParam) =>
+            new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
+
+        private bool IsRealmALocalUrl(string realmParam) =>
+            Uri.TryCreate(realmParam, UriKind.Absolute, out var uriResult)
+            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+        private Vector2Int ParsePositionParameter(NameValueCollection uriQuery)
+        {
+            Vector2Int returnValue = Vector2Int.zero;
+            var positionParam = uriQuery.Get("position");
+            if (!string.IsNullOrEmpty(positionParam))
+            {
+                var matches = new Regex(@"\d+").Matches(positionParam);
+                if (matches.Count > 1)
+                {
+                    returnValue.x = int.Parse(matches[0].Value);
+                    returnValue.y = int.Parse(matches[1].Value);
+                }
+            }
+            return returnValue;
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
