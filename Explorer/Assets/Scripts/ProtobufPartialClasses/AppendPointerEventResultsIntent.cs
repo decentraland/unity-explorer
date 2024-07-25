@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using Unity.Collections;
 using UnityEngine;
 
 namespace DCL.ECSComponents
@@ -25,40 +24,49 @@ namespace DCL.ECSComponents
         ///     <para>
         ///         The number of valid entries is limited to 64 elements (it's unlikely to be exceeded)
         ///     </para>
+        ///     <para>
+        ///         replaced to list because there was a bug with the fixed buffer
+        ///     </para>
         /// </summary>
-        private FixedList64Bytes<byte> validIndices;
+        private List<byte> validIndices;
 
         private Dictionary<InputAction, PointerEventType> validInputActions;
 
-        public void Initialize(UnityEngine.RaycastHit raycastHit, Ray ray)
+        public void Initialize()
         {
-            RaycastHit = raycastHit;
-            Ray = ray;
-            validIndices.Clear();
+            if (validIndices == null) validIndices = new List<byte>(64);
+            else validIndices.Clear();
 
             if (validInputActions == null) validInputActions = new ();
             else validInputActions.Clear();
         }
 
+        public void Initialize(UnityEngine.RaycastHit raycastHit, Ray ray)
+        {
+            RaycastHit = raycastHit;
+            Ray = ray;
+            Initialize();
+        }
+
         public void AddValidIndex(byte index)
         {
-            validIndices.Add(index);
+            validIndices!.Add(index);
         }
 
         public readonly byte ValidIndexAt(int at) =>
-            validIndices[at];
+            validIndices![at];
 
         public readonly int ValidIndicesCount() =>
-            validIndices.Length;
+            validIndices?.Count ?? 0;
 
         public void AddInputAction(InputAction ecsInputAction, PointerEventType pointerEventType)
         {
-            validInputActions.Add(ecsInputAction, pointerEventType);
+            validInputActions!.Add(ecsInputAction, pointerEventType);
         }
 
         public void Clear()
         {
-            validIndices.Clear();
+            validIndices?.Clear();
             validInputActions?.Clear();
         }
 
