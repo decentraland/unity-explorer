@@ -108,7 +108,6 @@ namespace Global.Dynamic
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
 
-        private ECSUnloadAllScenes? unloadAllScenes;
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
 
@@ -232,7 +231,7 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController
             );
 
-            container.RealmController = new DynamicGlobalRealmController(
+            container.RealmController = new RealmController(
                 identityCache,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 parcelServiceContainer.TeleportController,
@@ -264,7 +263,7 @@ namespace Global.Dynamic
 
             ILoadingScreen loadingScreen = new LoadingScreen(container.MvcManager);
 
-            IRealmNavigator realmNavigator = new DynamicGlobalRealmNavigator(
+            IRealmNavigator realmNavigator = new RealmNavigator(
                 loadingScreen,
                 mapRendererContainer.MapRenderer,
                 container.RealmController,
@@ -306,7 +305,6 @@ namespace Global.Dynamic
 
             var chatHistory = new ChatHistory();
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
-            container.unloadAllScenes = new ECSUnloadAllScenes(staticContainer.ScenesCache);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -496,7 +494,6 @@ namespace Global.Dynamic
         public void InitializeWorldRelatedModules(World world, Entity playerEntity)
         {
             reloadSceneController!.Initialize(world, playerEntity);
-            unloadAllScenes!.Initialize(world);
         }
     }
 }

@@ -31,7 +31,7 @@ using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
 namespace Global.Dynamic
 {
-    public class DynamicGlobalRealmNavigator : IRealmNavigator
+    public class RealmNavigator : IRealmNavigator
     {
         private readonly URLDomain genesisDomain = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
 
@@ -51,11 +51,11 @@ namespace Global.Dynamic
         private readonly ObjectProxy<Entity> cameraEntity;
         private readonly CameraSamplingData cameraSamplingData;
 
-        public event Action<bool> RealmChanged;
+        public event Action<bool>? RealmChanged;
 
         public URLDomain? CurrentRealm { get; private set; }
 
-        public DynamicGlobalRealmNavigator(
+        public RealmNavigator(
             ILoadingScreen loadingScreen,
             IMapRenderer mapRenderer,
             IGlobalRealmController realmController,

@@ -23,7 +23,7 @@ using Unity.Mathematics;
 
 namespace Global.Dynamic
 {
-    public class DynamicGlobalRealmController : IGlobalRealmController
+    public class RealmController : IGlobalRealmController
     {
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
@@ -59,7 +59,7 @@ namespace Global.Dynamic
             }
         }
 
-        public DynamicGlobalRealmController(
+        public RealmController(
             IWeb3IdentityCache web3IdentityCache,
             IWebRequestController webRequestController,
             TeleportController teleportController,
