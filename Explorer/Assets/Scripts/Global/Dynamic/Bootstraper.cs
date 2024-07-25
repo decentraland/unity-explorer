@@ -193,32 +193,35 @@ namespace Global.Dynamic
             // Patch for MacOS removing the ':' from the realm parameter protocol
             deepLinkString = Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2");
 #endif
-
+            
             if (string.IsNullOrEmpty(deepLinkString)) return;
 
             // Regex for detecting different parameters in the deep link string If we want to
             // add more we just add for example (?=.*newParam=(?<newParamGroupName>[^&?!*]+))?
-            var pattern = @"^(?=.*realm=(?<realm>[^&?!*]+))?(?=.*position=(?<position>[^&?!*]+))?";
+            var pattern = @"^(?=.*realm=(?<realm>[^&?!*]+))?(?=.*position=(?<position>[^&?!*]+))?(?=.*local-scene=(?<localScene>[^&?!*]+))?";
             var regex = new Regex(pattern);
             var regexMatch = regex.Match(deepLinkString);
 
             if (!regexMatch.Success) return;
 
-            string realmParam = "realm";
-            if (!regexMatch.Groups[realmParam].Success) return;
-
-            string realmParamValue = regexMatch.Groups[realmParam].Value;
-            localSceneDevelopment = realmParamValue.Contains("127.0.0.1:");
-            if (localSceneDevelopment)
-                launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);
-            else
-                launchSettings.SetWorldRealm(realmParamValue);
-
-            string positionParam = "position";
-            launchSettings.SetTargetScene(Vector2Int.zero);
-            if (regexMatch.Groups[positionParam].Success)
+            string realmGroupName = "realm";
+            if (regexMatch.Groups[realmGroupName].Success)
             {
-                string positionParamValue = regexMatch.Groups[positionParam].Value;
+                string localSceneGroupName = "localScene";
+                if (regexMatch.Groups[localSceneGroupName].Success)
+                    bool.TryParse(regexMatch.Groups[localSceneGroupName].Value, out localSceneDevelopment);
+
+                if (localSceneDevelopment)
+                    launchSettings.SetLocalSceneDevelopmentRealm(regexMatch.Groups[realmGroupName].Value);
+                else
+                    launchSettings.SetWorldRealm(regexMatch.Groups[realmGroupName].Value);
+            }
+
+            string positionGroupName = "position";
+            launchSettings.SetTargetScene(Vector2Int.zero);
+            if (regexMatch.Groups[positionGroupName].Success)
+            {
+                string positionParamValue = regexMatch.Groups[positionGroupName].Value;
                 launchSettings.SetTargetScene(new Vector2Int(
                     int.Parse(positionParamValue.Substring(0, positionParamValue.IndexOf(','))),
                     int.Parse(positionParamValue.Substring(positionParamValue.IndexOf(',') + 1))));
