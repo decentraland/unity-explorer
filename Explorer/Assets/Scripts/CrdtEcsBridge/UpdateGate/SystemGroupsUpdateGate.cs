@@ -16,18 +16,13 @@ namespace CrdtEcsBridge.UpdateGate
     {
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (SystemGroupsUtils.Count, PoolConstants.SCENES_COUNT);
 
-        private HashSet<Type> openGroups;
+        private HashSet<Type> openGroups = POOL.Get();
 
         // Ensure that the gate will be opened from the beginning of the next frame,
         // If we open it in the middle of the current frame the update order will be broken
         private long keepOpenFrame;
 
         internal IReadOnlyCollection<Type> OpenGroups => openGroups;
-
-        public SystemGroupsUpdateGate()
-        {
-            openGroups = POOL.Get();
-        }
 
         public void Dispose()
         {
@@ -37,17 +32,17 @@ namespace CrdtEcsBridge.UpdateGate
             openGroups = null;
         }
 
-        public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info timeInfo)
+        // Close the group so it won't be updated unless the gate is opened again
+        public bool ShouldThrottle(Type systemGroupType, in TimeProvider.Info _)
         {
-            // Close the group so it won't be updated unless the gate is opened again
+            // Let systems run in the remaining of the current frame
+            if (Time.frameCount < keepOpenFrame)
+                return false;
+
             // Sync is required as ShouldThrottle is called from the main thread
             lock (openGroups)
             {
-                // Let systems run in the remaining of the current frame
-                if (Time.frameCount < keepOpenFrame)
-                    return false;
-
-                // Otherwise, just let them run once
+                // Otherwise, close the group but let it run one (current) frame
                 return !openGroups.Remove(systemGroupType);
             }
         }

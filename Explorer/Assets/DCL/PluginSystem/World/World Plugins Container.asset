@@ -32,7 +32,11 @@ MonoBehaviour:
     - rid: 758312499805421571
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        AudioMixerGroup: {fileID: -6220823946282331284, guid: e38b0fb061d7ffa47b54d89ecd483bd2, type: 2}
+        GeneralAudioMixer:
+          m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 758312842344792066
       type: {class: InteractionsAudioPlugin/PluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -167,9 +171,6 @@ MonoBehaviour:
         <LoadingAttemptsCount>k__BackingField: 6
         <PoolInitialCapacity>k__BackingField: 256
         <PoolMaxSize>k__BackingField: 2048
-    - rid: 7387084847885844480
-      type: {class: DynamicWorldSettings, ns: Global.Dynamic, asm: DCL.Plugins}
-      data: 
     - rid: 7615904969758605314
       type: {class: NFTShapePluginSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
