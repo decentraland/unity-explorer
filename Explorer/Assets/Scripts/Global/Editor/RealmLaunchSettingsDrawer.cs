@@ -13,15 +13,6 @@ namespace Global.Editor
     [CustomPropertyDrawer(typeof(RealmLaunchSettings))]
     public class RealmLaunchSettingsDrawer : PropertyDrawer
     {
-        private const string INITIAL_REALM_FIELD_NAME = "initialRealm";
-        private const string TARGET_SCENE_FIELD_NAME = "targetScene";
-        private const string TARGET_WORLD_FIELD_NAME = "targetWorld";
-        private const string CUSTOM_REALM_FIELD_NAME = "customRealm";
-        private const string REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME = "remoteHibridSceneContentServer";
-        private const string REMOTE_HIBRID_SCENE_ENABLED = "useRemoteAssetsBundles";
-        private const string REMOTE_HIBRID_WORLD_FIELD_NAME = "remoteHibridWorld";
-        private const string PREDEFINED_SCENES_FIELD_NAME = "predefinedScenes";
-
         private static readonly Dictionary<string, Vector2Int> SCENES = new ()
         {
             { "Cube Spawner", new Vector2Int(0, 0) },
@@ -58,7 +49,7 @@ namespace Global.Editor
         private static Rect DrawTargetScene(Rect propertyPosition, SerializedProperty parent, InitialRealm initialRealm)
         {
             Rect fieldPosition = propertyPosition;
-            SerializedProperty property = parent.FindPropertyRelative(TARGET_SCENE_FIELD_NAME);
+            SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.targetScene));
 
             const float BUTTON_WIDTH = 80f;
 
@@ -98,7 +89,7 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.World)
             {
-                SerializedProperty property = parent.FindPropertyRelative(TARGET_WORLD_FIELD_NAME);
+                SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.targetWorld));
 
                 EditorGUI.PropertyField(position, property);
                 position.y += singleLineHeight;
@@ -111,7 +102,7 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.Custom)
             {
-                SerializedProperty property = parent.FindPropertyRelative(CUSTOM_REALM_FIELD_NAME);
+                SerializedProperty property = parent.FindPropertyRelative(nameof(RealmLaunchSettings.customRealm));
 
                 EditorGUI.PropertyField(position, property);
                 position.y += singleLineHeight;
@@ -124,9 +115,9 @@ namespace Global.Editor
         {
             if (initialRealm == InitialRealm.Localhost)
             {
-                var remoteWorldContentServerProperty = parent.FindPropertyRelative(REMOTE_HIBRID_WORLD_FIELD_NAME);
-                var remoteSceneContentServerProperty = parent.FindPropertyRelative(REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME);
-                var useHibridAssets = parent.FindPropertyRelative(REMOTE_HIBRID_SCENE_ENABLED);
+                SerializedProperty remoteWorldContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHibridWorld));
+                SerializedProperty remoteSceneContentServerProperty = parent.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHybridSceneContentServer));
+                SerializedProperty useHibridAssets = parent.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles));
 
                 EditorGUI.PropertyField(position, useHibridAssets);
                 position.y += singleLineHeight;
@@ -155,7 +146,7 @@ namespace Global.Editor
 
         private static Rect DrawPredefinedScenes(Rect position, SerializedProperty parent)
         {
-            SerializedProperty predefinedList = parent.FindPropertyRelative(PREDEFINED_SCENES_FIELD_NAME);
+            SerializedProperty predefinedList = parent.FindPropertyRelative(nameof(RealmLaunchSettings.predefinedScenes));
             SerializedProperty enabled = predefinedList.FindPropertyRelative("enabled");
 
             EditorGUI.PropertyField(position, enabled, new GUIContent("Use Predefined Parcels"), true);
@@ -163,7 +154,7 @@ namespace Global.Editor
 
             if (predefinedList.FindPropertyRelative("enabled").boolValue)
             {
-                var parcels = predefinedList.FindPropertyRelative("parcels");
+                SerializedProperty parcels = predefinedList.FindPropertyRelative("parcels");
 
                 EditorGUI.PropertyField(position, parcels, true);
                 position.y += EditorGUI.GetPropertyHeight(parcels, true);
@@ -174,7 +165,7 @@ namespace Global.Editor
 
         private static Rect DrawOverridenScenes(Rect position)
         {
-            var overridenScenes = GetOverridenScenes();
+            IReadOnlyList<(string coordinate, string assetDatabasePath)> overridenScenes = GetOverridenScenes();
 
             if (overridenScenes.Count > 0)
             {
@@ -183,13 +174,15 @@ namespace Global.Editor
                 position.y += singleLineHeight;
 
                 EditorGUI.BeginDisabledGroup(true);
-                foreach (var scene in overridenScenes)
+
+                foreach ((string coordinate, string assetDatabasePath) scene in overridenScenes)
                 {
-                    var asset = AssetDatabase.LoadAssetAtPath(scene.assetDatabasePath, typeof(DefaultAsset));
+                    Object asset = AssetDatabase.LoadAssetAtPath(scene.assetDatabasePath, typeof(DefaultAsset));
 
                     EditorGUI.ObjectField(position, new GUIContent(scene.coordinate), asset, typeof(DefaultAsset), false);
                     position.y += singleLineHeight;
                 }
+
                 EditorGUI.EndDisabledGroup();
             }
 
@@ -220,7 +213,7 @@ namespace Global.Editor
         {
             EditorGUI.BeginProperty(position, label, property);
 
-            SerializedProperty initialRealmField = property.FindPropertyRelative(INITIAL_REALM_FIELD_NAME);
+            SerializedProperty initialRealmField = property.FindPropertyRelative(nameof(RealmLaunchSettings.initialRealm));
             InitialRealm initialRealmValue = EnumUtils.Values<InitialRealm>()[initialRealmField.enumValueIndex];
 
             position.height = singleLineHeight;
@@ -240,17 +233,18 @@ namespace Global.Editor
         {
             var fieldsCount = 3;
 
-            SerializedProperty initialRealmField = property.FindPropertyRelative(INITIAL_REALM_FIELD_NAME);
+            SerializedProperty initialRealmField = property.FindPropertyRelative(nameof(RealmLaunchSettings.initialRealm));
             InitialRealm initialRealmValue = EnumUtils.Values<InitialRealm>()[initialRealmField.enumValueIndex];
 
             switch (initialRealmValue)
             {
                 case InitialRealm.Localhost:
-                    int fieldToAdd = 1;
-                    if (property.FindPropertyRelative(REMOTE_HIBRID_SCENE_ENABLED).boolValue)
+                    var fieldToAdd = 1;
+
+                    if (property.FindPropertyRelative(nameof(RealmLaunchSettings.useRemoteAssetsBundles)).boolValue)
                     {
                         fieldToAdd += 2;
-                        var remoteSceneContentServerProperty = property.FindPropertyRelative(REMOTE_HIBRID_SCENE_CONTENT_SERVER_FIELD_NAME);
+                        SerializedProperty remoteSceneContentServerProperty = property.FindPropertyRelative(nameof(RealmLaunchSettings.remoteHybridSceneContentServer));
 
                         if (remoteSceneContentServerProperty.enumValueIndex == (int)HybridSceneContentServer.World)
                             fieldToAdd += 2;
@@ -266,11 +260,11 @@ namespace Global.Editor
 
             float height = fieldsCount * singleLineHeight;
 
-            SerializedProperty predefinedList = property.FindPropertyRelative(PREDEFINED_SCENES_FIELD_NAME);
+            SerializedProperty predefinedList = property.FindPropertyRelative(nameof(RealmLaunchSettings.predefinedScenes));
 
             if (predefinedList.FindPropertyRelative("enabled").boolValue) { height += EditorGUI.GetPropertyHeight(predefinedList.FindPropertyRelative("parcels"), true); }
 
-            var overridenScenes = GetOverridenScenes();
+            IReadOnlyList<(string coordinate, string assetDatabasePath)> overridenScenes = GetOverridenScenes();
 
             if (overridenScenes.Count > 0)
                 height += singleLineHeight * (overridenScenes.Count + 1);
