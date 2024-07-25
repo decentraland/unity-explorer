@@ -55,7 +55,7 @@ namespace DCL.LOD
         {
             if (!LodSettingsAsset.IsColorDebugging)
                 return;
-
+/*
             foreach (var lodAsset in sceneLODInfo.LODAssets)
             {
                 if (!SceneLODInfoDebugContents.TryGetValue(lodAsset.LodKey.Level, out var sceneLODInfoDebugContents))
@@ -67,6 +67,7 @@ namespace DCL.LOD
                 ClearPreviousContent();
                 UpdateContent(sceneLODInfoDebugContents, lodAsset);
             }
+            */
         }
 
         private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents()
@@ -128,7 +129,7 @@ namespace DCL.LOD
         {
             if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
             {
-                var renderers = lodAsset.lodGO.GetComponentsInChildren<Renderer>();
+                var renderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
                 var originalColorsList = new List<Color>();
                 for (int i = 0; i < renderers.Length; i++)
                 {

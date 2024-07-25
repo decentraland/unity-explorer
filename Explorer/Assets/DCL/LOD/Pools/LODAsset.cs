@@ -5,19 +5,17 @@ using System;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using ECS.StreamableLoading.Common;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.LOD
 {
     public class LODAsset : IDisposable
     {
-        public byte currentLODLevel; // Only used for sorting during ReEvaluateLODGroup() in SceneLODInfo
+        public GameObject Root;
         public LOD_STATE State;
         public readonly LODKey LodKey; // Hashmap would probably be better
-        public AssetPromise<AssetBundleData, GetAssetBundleIntention> LODPromise;
-        public GameObject lodGO;
         public  TextureArraySlot?[] Slots;
-        private readonly ILODAssetsPool Pool;
         internal AssetBundleData AssetBundleReference;
 
         public enum LOD_STATE
@@ -28,13 +26,12 @@ namespace DCL.LOD
             WAITING_INSTANTIATION,
         }
 
-        public LODAsset(LODKey lodKey, ILODAssetsPool pool)
+        public LODAsset(LODKey lodKey)
         {
             LodKey = lodKey;
-            Pool = pool;
             Slots = Array.Empty<TextureArraySlot?>();
             AssetBundleReference = null;
-            lodGO = null;
+            Root = null;
 
             State = LOD_STATE.WAITING_INSTANTIATION;
 
@@ -42,9 +39,18 @@ namespace DCL.LOD
             ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }
 
-        public void SetAssetBundleReference(AssetBundleData assetBundleData)
+        public LODAsset(LODKey lodKey, AssetBundleData assetBundleData)
         {
+            LodKey = lodKey;
+            Slots = Array.Empty<TextureArraySlot?>();
             AssetBundleReference = assetBundleData;
+
+            Root = null;
+
+            State = LOD_STATE.WAITING_INSTANTIATION;
+
+            ProfilingCounters.LODAssetAmount.Value++;
+            ProfilingCounters.LOD_Per_Level_Values[LodKey.Level].Value++;
         }
 
         public void Dispose()
@@ -66,8 +72,8 @@ namespace DCL.LOD
             if (State == LOD_STATE.FAILED)
                 return;
 
-            if (lodGO != null)
-                lodGO.SetActive(true);
+            if (Root != null)
+                Root.SetActive(true);
 
             if (State == LOD_STATE.SUCCESS)
             {
@@ -81,8 +87,8 @@ namespace DCL.LOD
             if (State == LOD_STATE.FAILED)
                 return;
 
-            if (lodGO != null)
-                lodGO.SetActive(false);
+            if (Root != null)
+                Root.SetActive(false);
 
             // This logic should not be executed if the application is quitting
             if (UnityObjectUtils.IsQuitting)
@@ -95,16 +101,10 @@ namespace DCL.LOD
             }
         }
 
-        public void Release(World world)
-        {
-            LODPromise.ForgetLoading(world);
-            Pool.Release(LodKey, this);
-        }
-
         public void FinalizeInstantiation(GameObject newRoot, TextureArraySlot?[] slots)
         {
             newRoot.SetActive(true);
-            lodGO = newRoot;
+            Root = newRoot;
             Slots = slots;
             State = LOD_STATE.SUCCESS;
         }

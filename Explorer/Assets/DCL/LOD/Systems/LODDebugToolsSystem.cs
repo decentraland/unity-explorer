@@ -104,11 +104,12 @@ namespace DCL.LOD.Systems
         [Query]
         private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
         {
+            /*
             if (sceneLODInfo.LODAssets.Count == 0)
                 return;
 
             sceneLODInfoDebug.Update(sceneLODInfo);
-
+*/
             // foreach (var lodAsset in sceneLODInfo.LODAssets)
             // {
             //     if (lodAsset.LodKey.Level != sceneLODInfoDebug.CurrentLODLevel || lodAsset.State != sceneLODInfoDebug.CurrentLODState)

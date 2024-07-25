@@ -62,13 +62,17 @@ namespace DCL.PluginSystem.Global
         {
             return UniTask.CompletedTask;
         }
+        
+
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var lodContainer = new GameObject("POOL_CONTAINER_LODS");
             var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
             lodDebugContainer.transform.SetParent(lodContainer.transform);
-            lodGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform);
+
+            lodGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, CreateLODGroup);
+            PrewarmLODGroupPool();
 
             AsyncInstantiateOperation.SetIntegrationTimeMS(lodSettingsAsset.AsyncIntegrationTimeMS);
 
@@ -80,9 +84,10 @@ namespace DCL.PluginSystem.Global
 
             if (lodEnabled)
             {
+                InitializeSceneLODInfo.InjectToWorld(ref builder, lodGroupPool, lodContainer.transform);
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodGroupPool, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
-                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, lodGroupPool, lodAssetsPool, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, lodContainer.transform);
+                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
             }
             else
@@ -90,6 +95,38 @@ namespace DCL.PluginSystem.Global
                 UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);
             }
 
+        }
+
+        private void PrewarmLODGroupPool()
+        {
+            int preWarmValue = 500;
+
+            var lodGroupArray = new LODGroup[preWarmValue];
+
+            for (int i = 0; i < preWarmValue; i++)
+                lodGroupArray[i] = lodGroupPool.Get();
+
+            for (int i = 0; i < preWarmValue; i++)
+                lodGroupPool.Release(lodGroupArray[i]);
+        }
+
+        private static LODGroup CreateLODGroup()
+        {
+            var lodGroupGO = new GameObject();
+            var lodGroup = lodGroupGO.AddComponent<LODGroup>();
+
+            lodGroup.fadeMode = LODFadeMode.CrossFade;
+            lodGroup.animateCrossFading = true;
+
+            var lod0 = new UnityEngine.LOD();
+            lod0.screenRelativeTransitionHeight = 1;
+            var lod1 = new UnityEngine.LOD();
+            lod1.screenRelativeTransitionHeight = 0.9999f;
+            lodGroup.SetLODs(new []
+            {
+                lod0, lod1
+            });
+            return lodGroup;
         }
 
         public void Dispose()

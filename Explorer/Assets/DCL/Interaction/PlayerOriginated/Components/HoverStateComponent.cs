@@ -7,7 +7,7 @@ namespace DCL.Interaction.PlayerOriginated.Components
         /// <summary>
         ///     Collider that was hit last frame
         /// </summary>
-        public Collider LastHitCollider;
+        public Collider? LastHitCollider;
         public bool IsAtDistance;
         public bool IsHoverOver;
         public bool HasCollider;

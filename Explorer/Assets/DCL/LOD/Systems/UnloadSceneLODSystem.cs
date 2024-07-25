@@ -47,13 +47,10 @@ namespace ECS.SceneLifeCycle.Systems
         [Query]
         private void AbortSucceededLODPromises(ref SceneLODInfo sceneLODInfo)
         {
-            foreach (var lodAsset in sceneLODInfo.LODAssets)
-            {
-                if (!lodAsset.LODPromise.IsConsumed && lodAsset.LODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result) && result.Succeeded)
-                    result.Asset!.Dispose();
-                else
-                    lodAsset.LODPromise.ForgetLoading(World);
-            }
+            if (!sceneLODInfo.CurrentLODPromise.IsConsumed && sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result) && result.Succeeded)
+                result.Asset!.Dispose();
+            else
+                sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
         }
     }
 }

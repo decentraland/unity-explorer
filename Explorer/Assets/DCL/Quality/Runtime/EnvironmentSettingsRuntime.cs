@@ -106,7 +106,7 @@ namespace DCL.Quality.Runtime
             if (!(Math.Abs(QualitySettings.lodBias - tempLodBias) > 0.005f))
                 return;
 
-            QualitySettings.lodBias = tempLodBias;
+            //QualitySettings.lodBias = tempLodBias;
         }
 
         private void SetDetailDensity(float density)

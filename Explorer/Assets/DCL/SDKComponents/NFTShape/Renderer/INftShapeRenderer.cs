@@ -8,7 +8,7 @@ namespace DCL.SDKComponents.NFTShape.Renderer
     {
         void ApplyParent(Transform parent);
 
-        void Apply(PBNftShape nftShape);
+        void Apply(PBNftShape nftShape, bool sourceChanged);
 
         void Apply(Texture2D texture);
 
