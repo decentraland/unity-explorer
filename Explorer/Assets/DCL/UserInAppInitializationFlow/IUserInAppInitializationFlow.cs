@@ -9,6 +9,7 @@ namespace DCL.UserInAppInitializationFlow
         UniTask ExecuteAsync(
             bool showAuthentication,
             bool showLoading,
+            bool reloadRealm,
             World world,
             Entity playerEntity,
             CancellationToken ct);
