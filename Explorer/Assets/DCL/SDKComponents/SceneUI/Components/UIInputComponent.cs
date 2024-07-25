@@ -14,6 +14,8 @@ namespace DCL.SDKComponents.SceneUI.Components
 
         internal EventCallback<ChangeEvent<string>> currentOnValueChanged = static _ => { };
         internal EventCallback<KeyDownEvent> currentOnSubmit = static _ => { };
+        internal EventCallback<FocusInEvent> currentOnFocusIn = static _ => { };
+        internal EventCallback<FocusOutEvent> currentOnFocusOut = static _ => { };
 
         public void Initialize(IInputBlock inputBlock, string textFieldName, string styleClass)
         {
