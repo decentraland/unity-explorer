@@ -38,10 +38,9 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(StylizedSkyboxSettings settings, CancellationToken ct)
         {
             skyboxController = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(settings.StylizedSkyboxPrefab, ct: ct)).Value.GetComponent<SkyboxController>());
-            Material skyboxMaterial = (await assetsProvisioner.ProvideMainAssetAsync(settings.SkyboxMaterial, ct: ct)).Value;
             AnimationClip skyboxAnimation = (await assetsProvisioner.ProvideMainAssetAsync(settings.SkyboxAnimationCycle, ct: ct)).Value;
 
-            skyboxController.Initialize(skyboxMaterial, directionalLight, skyboxAnimation);
+            skyboxController.Initialize(settings.SkyboxMaterial, directionalLight, skyboxAnimation);
 
             debugContainerBuilder.AddWidget("Skybox")
                                  .AddSingleButton("Play", () => skyboxController.Play())
@@ -50,17 +49,13 @@ namespace DCL.PluginSystem.Global
                                  .AddSingleButton("SetTime", () => skyboxController.SetTime(timeOfDay.Value)); //TODO: replace this by a system to update the value
         }
 
+        [Serializable]
         public class StylizedSkyboxSettings : IDCLPluginSettings
         {
-            [field: Header(nameof(StylizedSkyboxPlugin) + "." + nameof(StylizedSkyboxSettings))]
-            [field: Space]
-            [field: SerializeField]
             public StylizedSkyboxControllerRef StylizedSkyboxPrefab;
 
-            [field: SerializeField]
-            public AssetReferenceMaterial SkyboxMaterial;
+            public Material SkyboxMaterial;
 
-            [field: SerializeField]
             public AssetReferenceT<AnimationClip> SkyboxAnimationCycle;
 
             [Serializable]

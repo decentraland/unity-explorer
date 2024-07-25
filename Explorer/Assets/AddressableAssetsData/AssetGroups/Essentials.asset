@@ -197,11 +197,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: caf6cf56d95066b45bc1ca92d6516b48
-    m_Address: GenesisSkyboxController
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e8f593404f0a19749bc68df2b5064215
     m_Address: StylizedSkyboxAnimation
     m_ReadOnly: 0
