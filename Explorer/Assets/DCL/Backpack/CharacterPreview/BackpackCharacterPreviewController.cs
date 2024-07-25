@@ -152,7 +152,7 @@ namespace DCL.Backpack.CharacterPreview
             OnModelUpdated();
         }
 
-        private void OnEmoteEquipped(int slot, IEmote emote)
+        private void OnEmoteEquipped(int slot, IEmote emote, bool isManuallyEquipped)
         {
             previewAvatarModel.Emotes ??= new HashSet<URN>();
 
@@ -161,6 +161,9 @@ namespace DCL.Backpack.CharacterPreview
             previewAvatarModel.Emotes.Add(urn);
 
             OnModelUpdated();
+
+            if (isManuallyEquipped)
+                PlayEmote(urn);
         }
 
         private void OnEmoteSlotSelected(int slot)

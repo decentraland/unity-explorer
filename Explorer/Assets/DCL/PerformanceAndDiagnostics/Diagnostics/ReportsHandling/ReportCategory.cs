@@ -224,6 +224,11 @@
         public const string SDK_OBSERVABLES = nameof(SDK_OBSERVABLES);
 
         /// <summary>
+        ///     Local scene development connection with locally running scene (AKA "Preview Mode")
+        /// </summary>
+        public const string SDK_LOCAL_SCENE_DEVELOPMENT = nameof(SDK_LOCAL_SCENE_DEVELOPMENT);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);

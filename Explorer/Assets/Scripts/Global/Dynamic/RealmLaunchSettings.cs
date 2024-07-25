@@ -49,16 +49,6 @@ namespace Global.Dynamic
 
         public string GetStartingRealm()
         {
-            // when started in preview mode (local scene development) a command line argument is used
-            string[] cmdArgs = Environment.GetCommandLineArgs();
-            for (var i = 0; i < cmdArgs.Length; i++)
-            {
-                if (cmdArgs[i].StartsWith("-realm"))
-                {
-                    return cmdArgs[i+1];
-                }
-            }
-
             return initialRealm switch
                    {
                        InitialRealm.GenesisCity => IRealmNavigator.GENESIS_URL,
@@ -71,6 +61,15 @@ namespace Global.Dynamic
                        InitialRealm.Custom => customRealm,
                        _ => IRealmNavigator.GENESIS_URL,
                    };
+        }
+
+        public void SetTargetScene(Vector2Int newTargetScene) => targetScene = newTargetScene;
+
+        public void SetLocalSceneDevelopmentRealm(string targetRealm)
+        {
+            customRealm = targetRealm;
+            initialRealm = InitialRealm.Custom;
+            useRemoteAssetsBundles = false;
         }
     }
 }
