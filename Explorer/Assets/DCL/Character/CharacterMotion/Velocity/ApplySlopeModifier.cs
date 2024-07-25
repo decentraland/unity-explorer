@@ -2,6 +2,7 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
+using DCL.Utilities;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -26,19 +27,19 @@ namespace DCL.CharacterMotion
             if (!rigidTransform.IsGrounded || jump.IsPressed || rigidTransform.IsOnASteepSlope)
                 return Vector3.zero;
 
-            Vector3 position = characterController.transform.position;
-            float feet = position.y;
-            position.y = feet;
+            Vector3 characterPosition = characterController.transform.position;
+            float feet = characterPosition.y;
 
+            Vector3 rayOrigin = characterPosition + (rigidTransform.MoveVelocity.Velocity * dt);
             var ray = new Ray
             {
-                origin = position + (rigidTransform.MoveVelocity.Velocity * dt),
+                origin = rayOrigin,
                 direction = Vector3.down,
             };
 
             float downwardsSlopeDistance = input.Kind == MovementKind.Run ? settings.DownwardsSlopeRunRaycastDistance : settings.DownwardsSlopeJogRaycastDistance;
 
-            if (!Physics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK))
+            if (!DCLPhysics.Raycast(ray, out RaycastHit hit, downwardsSlopeDistance, PhysicsLayers.CHARACTER_ONLY_MASK, QueryTriggerInteraction.Ignore))
                 return Vector3.zero;
 
             float diff = feet - hit.point.y;
