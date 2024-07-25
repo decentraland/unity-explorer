@@ -19,14 +19,14 @@ namespace Global.Dynamic
             [SerializeField] public Vector2Int[] parcels;
         }
 
-        [SerializeField] private InitialRealm initialRealm;
-        [SerializeField] private Vector2Int targetScene;
-        [SerializeField] private PredefinedScenes predefinedScenes;
-        [SerializeField] private string targetWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] private string customRealm = IRealmNavigator.GOERLI_URL;
-        [SerializeField] private string remoteHibridWorld = "MetadyneLabs.dcl.eth";
-        [SerializeField] private HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
-        [SerializeField] private bool useRemoteAssetsBundles = true;
+        [SerializeField] internal InitialRealm initialRealm;
+        [SerializeField] internal Vector2Int targetScene;
+        [SerializeField] internal PredefinedScenes predefinedScenes;
+        [SerializeField] internal string targetWorld = "MetadyneLabs.dcl.eth";
+        [SerializeField] internal string customRealm = IRealmNavigator.GOERLI_URL;
+        [SerializeField] internal string remoteHibridWorld = "MetadyneLabs.dcl.eth";
+        [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
+        [SerializeField] internal bool useRemoteAssetsBundles = true;
 
         public Vector2Int TargetScene => targetScene;
 
