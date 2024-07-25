@@ -7,7 +7,6 @@ using DCL.UserInAppInitializationFlow;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using ECS.SceneLifeCycle;
 using MVC;
 using System.Threading;
 using UnityEngine;
@@ -28,7 +27,6 @@ namespace DCL.ExplorePanel
         private readonly Entity playerEntity;
         private readonly World world;
         private readonly IMVCManager mvcManager;
-        private readonly IUnloadAllScenes unloadAllScenes;
 
         private CancellationTokenSource? logoutCts;
 
@@ -42,8 +40,7 @@ namespace DCL.ExplorePanel
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
-            IMVCManager mvcManager,
-            IUnloadAllScenes unloadAllScenes)
+            IMVCManager mvcManager)
             : base(viewFactory)
         {
             this.webBrowser = webBrowser;
@@ -54,7 +51,6 @@ namespace DCL.ExplorePanel
             this.playerEntity = playerEntity;
             this.world = world;
             this.mvcManager = mvcManager;
-            this.unloadAllScenes = unloadAllScenes;
         }
 
         public override void Dispose()
@@ -120,7 +116,6 @@ namespace DCL.ExplorePanel
 
                 profileCache.Remove(address);
 
-                await unloadAllScenes.ExecuteAsync(ct);
                 await userInAppInitializationFlow.ExecuteAsync(true, true,
                     // We have to reload the realm so the scenes are recreated when coming back to the world
                     // The realm fetches the scene entity definitions again and creates the components in ecs

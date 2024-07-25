@@ -420,8 +420,7 @@ namespace Global.Dynamic
                     profileCache,
                     ASSET_BUNDLES_URL,
                     notificationsBusController,
-                    characterPreviewEventBus,
-                    container.unloadAllScenes
+                    characterPreviewEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
