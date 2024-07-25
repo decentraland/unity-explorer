@@ -5,7 +5,6 @@ using DCL.Utilities.Extensions;
 using DCL.WebRequests;
 using Microsoft.ClearScript;
 using SceneRuntime.Apis.Modules.FetchApi;
-using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -87,12 +86,14 @@ namespace CrdtEcsBridge.JsModulesImplementation
             }
             catch (UnityWebRequestException e)
             {
-                return new FlatFetchResponse(
-                    false,
-                    e.ResponseCode,
-                    e.ResponseCode.ToString(),
-                    e.Text,
-                    e.ResponseHeaders);
+                return new ISimpleFetchApi.Response
+                {
+                    Ok = false,
+                    Status = (int)e.ResponseCode,
+                    StatusText = e.ResponseCode.ToString(),
+                    Data = e.Text,
+                    Headers = e.ResponseHeaders,
+                };
             }
         }
 
