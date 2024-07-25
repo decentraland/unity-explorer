@@ -28,7 +28,7 @@ namespace DCL.PluginSystem.Global
             this.notificationsBusController = notificationsBusController;
             this.webRequestController = webRequestController;
 
-            this.notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.GOVERNANCE_ANNOUNCEMENT, OnNewRewardReceived);
+            this.notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_INCOMING, OnNewRewardReceived);
         }
 
         private void OnNewRewardReceived(INotification notification)

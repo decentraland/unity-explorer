@@ -26,30 +26,16 @@ namespace DCL.Notification.NotificationsBus
 
         public void SubscribeToNotificationTypeClick(NotificationType desiredType, NotificationClickedDelegate listener)
         {
-            if (notificationClickedSubscribers.TryGetValue(desiredType, out NotificationClickedDelegate thisEvent))
-            {
-                thisEvent += listener;
-                notificationClickedSubscribers[desiredType] = thisEvent;
-            }
-            else
-            {
-                thisEvent += listener;
-                notificationClickedSubscribers.Add(desiredType, thisEvent);
-            }
+            notificationClickedSubscribers.TryGetValue(desiredType, out NotificationClickedDelegate thisEvent);
+            thisEvent += listener;
+            notificationClickedSubscribers[desiredType] = thisEvent;
         }
 
         public void SubscribeToNotificationTypeReceived(NotificationType desiredType, NotificationReceivedDelegate listener)
         {
-            if (notificationReceivedSubscribers.TryGetValue(desiredType, out NotificationReceivedDelegate thisEvent))
-            {
-                thisEvent += listener;
-                notificationReceivedSubscribers[desiredType] = thisEvent;
-            }
-            else
-            {
-                thisEvent += listener;
-                notificationReceivedSubscribers.Add(desiredType, thisEvent);
-            }
+            notificationReceivedSubscribers.TryGetValue(desiredType, out NotificationReceivedDelegate thisEvent);
+            thisEvent += listener;
+            notificationReceivedSubscribers[desiredType] = thisEvent;
         }
     }
 }

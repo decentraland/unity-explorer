@@ -45,7 +45,7 @@ namespace DCL.RewardPanel
         private readonly Vector3 finalRotation = new (0,0,360);
         private CancellationTokenSource cts;
 
-        protected override async UniTask PlayShowAnimation(CancellationToken ct)
+        protected override async UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             cts = new CancellationTokenSource();
             SetCanvasGroupInteractable(true);
@@ -56,7 +56,7 @@ namespace DCL.RewardPanel
             RaysGameObject.transform.DORotate(finalRotation, 2f, RotateMode.FastBeyond360).SetEase(Ease.Linear).SetLoops(-1, LoopType.Restart).ToUniTask(cancellationToken: cts.Token);
         }
 
-        protected override async UniTask PlayHideAnimation(CancellationToken ct)
+        protected override async UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
             cts.SafeCancelAndDispose();
             PanelContent.transform.DOScale(Vector3.zero, SCALE_ANIMATION_DURATION / 2);
