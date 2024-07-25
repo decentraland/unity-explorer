@@ -7,7 +7,7 @@ namespace DCL.CharacterMotion.Platforms
     public static class PlatformSaveLocalPosition
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 position)
+        public static void Execute(ref CharacterPlatformComponent platformComponent, Vector3 characterPosition)
         {
             if (platformComponent.CurrentPlatform != null)
             {
@@ -23,7 +23,7 @@ namespace DCL.CharacterMotion.Platforms
                 }
 
                 platformComponent.LastPlatformPosition = currentPlatformPosition;
-                platformComponent.LastAvatarRelativePosition = transform.InverseTransformPoint(position);
+                platformComponent.LastAvatarRelativePosition = transform.InverseTransformPoint(characterPosition);
             }
             else
             {

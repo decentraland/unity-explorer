@@ -29,9 +29,9 @@ namespace ECS.Unity.Transforms.Systems
 
         protected override void Update(float _)
         {
-            if (systemsPriorityComponentsGate.IsOpen<SDKTransform>())
-                UpdateTransformQuery(World);
-            else if (!ecsGroupThrottler.ShouldThrottle(PARENT_GROUP_TYPE, new TimeProvider.Info()))
+            // if (systemsPriorityComponentsGate.IsOpen<SDKTransform>())
+                // UpdateTransformQuery(World);
+            // else if (!ecsGroupThrottler.ShouldThrottle(PARENT_GROUP_TYPE, new TimeProvider.Info()))
                 UpdateTransformQuery(World);
         }
 
