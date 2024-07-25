@@ -6,35 +6,36 @@ namespace DCL.Notification.NotificationsBus
 {
     public class NotificationsBusController : INotificationsBusController
     {
-        public delegate void EventDelegate(params object[] parameters);
-        public event Action<INotification> OnNotificationAdded;
-        private Dictionary<NotificationType, EventDelegate> notificationSubscribers = new();
+        public delegate void NotificationClickedDelegate(params object[] parameters);
+        public delegate void NotificationReceivedDelegate(INotification notification);
+
+        private readonly Dictionary<NotificationType, NotificationClickedDelegate> notificationClickedSubscribers = new();
+        private readonly Dictionary<NotificationType, NotificationReceivedDelegate> notificationReceivedSubscribers = new();
 
         public void AddNotification(INotification notification)
         {
-            OnNotificationAdded?.Invoke(notification);
+            if (notificationReceivedSubscribers.TryGetValue(notification.Type, out NotificationReceivedDelegate thisEvent))
+                thisEvent.Invoke(notification);
         }
 
         public void ClickNotification(NotificationType notificationType, params object[] parameters)
         {
-            if (notificationSubscribers.TryGetValue(notificationType, out EventDelegate thisEvent))
-            {
+            if (notificationClickedSubscribers.TryGetValue(notificationType, out NotificationClickedDelegate thisEvent))
                 thisEvent.Invoke(parameters);
-            }
         }
 
-        public void SubscribeToNotificationType(NotificationType desiredType, EventDelegate listener)
+        public void SubscribeToNotificationTypeClick(NotificationType desiredType, NotificationClickedDelegate listener)
         {
-            if (notificationSubscribers.TryGetValue(desiredType, out EventDelegate thisEvent))
-            {
-                thisEvent += listener;
-                notificationSubscribers[desiredType] = thisEvent;
-            }
-            else
-            {
-                thisEvent += listener;
-                notificationSubscribers.Add(desiredType, thisEvent);
-            }
+            notificationClickedSubscribers.TryGetValue(desiredType, out NotificationClickedDelegate thisEvent);
+            thisEvent += listener;
+            notificationClickedSubscribers[desiredType] = thisEvent;
+        }
+
+        public void SubscribeToNotificationTypeReceived(NotificationType desiredType, NotificationReceivedDelegate listener)
+        {
+            notificationReceivedSubscribers.TryGetValue(desiredType, out NotificationReceivedDelegate thisEvent);
+            thisEvent += listener;
+            notificationReceivedSubscribers[desiredType] = thisEvent;
         }
     }
 }
