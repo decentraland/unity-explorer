@@ -48,13 +48,14 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             // Add PBPointerEvents component
             var pbPointerEvents = new PBPointerEvents
             {
-                AppendPointerEventResultsIntent = new AppendPointerEventResultsIntent(),
                 PointerEvents =
                 {
                     CreateEntry(PointerEventType.PetHoverLeave, InputAction.IaPointer),
                     CreateEntry(PointerEventType.PetHoverEnter, InputAction.IaAny),
                 },
             };
+
+            pbPointerEvents.AppendPointerEventResultsIntent.Initialize();
 
             previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 

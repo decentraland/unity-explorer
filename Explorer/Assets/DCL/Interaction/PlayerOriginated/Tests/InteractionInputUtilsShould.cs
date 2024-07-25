@@ -67,6 +67,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         public void AppendHoverInput()
         {
             var resultsIntent = new AppendPointerEventResultsIntent();
+            resultsIntent.Initialize();
 
             var entry = new PBPointerEvents.Types.Entry
             {
@@ -88,6 +89,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
         public void NotAppendHoverInput()
         {
             var resultsIntent = new AppendPointerEventResultsIntent();
+            resultsIntent.Initialize();
 
             var entry = new PBPointerEvents.Types.Entry
             {
@@ -121,6 +123,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             var resultsIntent = new AppendPointerEventResultsIntent();
 
+            resultsIntent.Initialize();
             InteractionInputUtils.TryAppendButtonLikeInput(map, entry, 2, ref resultsIntent, new InteractionInputUtils.AnyInputInfo(true, false, false));
 
             Assert.AreEqual(1, resultsIntent.ValidIndicesCount());
@@ -154,6 +157,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             Press(keyboard.aKey);
 
             var resultsIntent = new AppendPointerEventResultsIntent();
+            resultsIntent.Initialize();
             InteractionInputUtils.TryAppendButtonLikeInput(map, entry, 0, ref resultsIntent, default(InteractionInputUtils.AnyInputInfo));
 
             Assert.AreEqual(1, resultsIntent.ValidIndicesCount());

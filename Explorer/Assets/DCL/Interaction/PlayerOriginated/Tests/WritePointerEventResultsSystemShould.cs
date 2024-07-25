@@ -109,6 +109,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
+            sdkEvents.AppendPointerEventResultsIntent.Initialize();
             sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(1);
             sdkEvents.AppendPointerEventResultsIntent.AddValidIndex(3);
 
