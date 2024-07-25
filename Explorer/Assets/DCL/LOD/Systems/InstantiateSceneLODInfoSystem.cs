@@ -68,6 +68,7 @@ namespace DCL.LOD.Systems
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
+                    //TODO (JUANI): We need to keep track to unload the asset bundle 
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise));
                 }
 

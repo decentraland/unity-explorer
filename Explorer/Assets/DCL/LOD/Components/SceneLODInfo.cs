@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace DCL.LOD.Components
 {
@@ -21,14 +20,16 @@ namespace DCL.LOD.Components
     {
         public SCENE_LOD_INFO_STATE State;
         public GameObjectPool<LODGroup> lodGroupPool;
+
+        //INclude reference to AssetBundles for unloading
         public Dictionary<string, (LODGroup, byte, float)> lodGroupCache;
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
         
         //We can represent 8 LODS loaded state with a byte
-        public string id;
         public byte LoadedLODs;
+        public string id;
         public LODGroup LodGroup;
         public float CullRelativeHeight;
 
@@ -119,15 +120,19 @@ namespace DCL.LOD.Components
                 // Encapsulate the bounds of the remaining renderers
                 for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
 
+                //Change to Mathf and Clamp
                 CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(distance, mergedBounds)));
             }
         }
 
         public float CalculateScreenRelativeTransitionHeight(float distance, Bounds rendererBounds)
         {
-            float lodBias = 1;
+            //Discuss with Geoff if we should delete it
+            //Recalculate distance for every LOD in a menu transition
+            float lodBias = QualitySettings.lodBias;
 
-            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * lodBias;
+            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z)
+                               * lodBias;
             float defaultFOV = 60.0f;
             float fov = (Camera.main ? Camera.main.fieldOfView : defaultFOV) * Mathf.Deg2Rad;
             float halfFov = fov / 2.0f;
