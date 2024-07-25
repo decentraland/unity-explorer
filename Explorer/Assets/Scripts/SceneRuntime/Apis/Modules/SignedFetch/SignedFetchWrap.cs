@@ -80,11 +80,11 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 method ?? string.Empty
             );
 
-            async Task<UniTask<FlatFetchResponse>> CreatePromiseAsync()
+            async UniTask<FlatFetchResponse> CreatePromiseAsync()
             {
                 await UniTask.SwitchToMainThread();
 
-                return method switch
+                var resultAsync = method switch
                        {
                            null => webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
                                request.url,
@@ -117,9 +117,24 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                            ),
                            _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
                        };
+
+                try
+                {
+                    var result = await resultAsync;
+                    return result;
+                }
+                catch (UnityWebRequestException e)
+                {
+                    return new FlatFetchResponse(
+                        false,
+                        e.ResponseCode,
+                        e.ResponseCode.ToString(),
+                        e.Text,
+                        e.ResponseHeaders);
+                }
             }
 
-            return CreatePromiseAsync().Result.ToDisconnectedPromise();
+            return CreatePromiseAsync().ToDisconnectedPromise();
         }
 
         public void Dispose()
