@@ -23,7 +23,7 @@ namespace MVC
         {
             gameObject.SetActive(true);
             if (raycaster) raycaster.enabled = false; // Enable raycasts while the animation is playing
-            await PlayShowAnimation(ct);
+            await PlayShowAnimationAsync(ct);
             if (raycaster) raycaster.enabled = true;
         }
 
@@ -32,15 +32,15 @@ namespace MVC
             if (raycaster) raycaster.enabled = false;
 
             if (!isInstant)
-                await PlayHideAnimation(ct);
+                await PlayHideAnimationAsync(ct);
 
             gameObject.SetActive(false);
         }
 
-        protected virtual UniTask PlayShowAnimation(CancellationToken ct) =>
+        protected virtual UniTask PlayShowAnimationAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        protected virtual UniTask PlayHideAnimation(CancellationToken ct) =>
+        protected virtual UniTask PlayHideAnimationAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
 
         public virtual void SetCanvasActive(bool isActive) =>

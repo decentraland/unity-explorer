@@ -7,6 +7,7 @@ using Microsoft.ClearScript;
 using Microsoft.ClearScript.V8;
 using Newtonsoft.Json;
 using SceneRuntime.Apis.Modules.FetchApi;
+using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -61,27 +62,39 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 }
             }
 
-            await UniTask.SwitchToMainThread();
-
-            switch (parsedRequestMethod)
+            try
             {
-                case RequestMethod.GET:
-                    return await webController.GetAsync<GenerateResponseOp<GenericGetRequest>, object>(commonArguments, new GenerateResponseOp<GenericGetRequest>(), ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
-                case RequestMethod.POST:
-                    string postContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
-                    var postArguments = GenericPostArguments.Create(body, postContentType);
-                    return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, object>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
-                case RequestMethod.PUT:
-                    string putContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
-                    var putArguments = GenericPutArguments.Create(body, putContentType);
-                    return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, object>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
-                case RequestMethod.PATCH:
-                    string patchContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
-                    var patchArguments = GenericPatchArguments.Create(body, patchContentType);
-                    return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, object>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
-                case RequestMethod.HEAD: throw new NotImplementedException();
-                case RequestMethod.INVALID:
-                default: throw new ArgumentOutOfRangeException();
+                await UniTask.SwitchToMainThread();
+
+                switch (parsedRequestMethod)
+                {
+                    case RequestMethod.GET:
+                        return await webController.GetAsync<GenerateResponseOp<GenericGetRequest>, object>(commonArguments, new GenerateResponseOp<GenericGetRequest>(), ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                    case RequestMethod.POST:
+                        string postContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
+                        var postArguments = GenericPostArguments.Create(body, postContentType);
+                        return await webController.PostAsync<GenerateResponseOp<GenericPostRequest>, object>(commonArguments, new GenerateResponseOp<GenericPostRequest>(), postArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                    case RequestMethod.PUT:
+                        string putContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
+                        var putArguments = GenericPutArguments.Create(body, putContentType);
+                        return await webController.PutAsync<GenerateResponseOp<GenericPutRequest>, object>(commonArguments, new GenerateResponseOp<GenericPutRequest>(), putArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                    case RequestMethod.PATCH:
+                        string patchContentType = webRequestHeaders.HeaderOrNull("content-type", true) ?? string.Empty;
+                        var patchArguments = GenericPatchArguments.Create(body, patchContentType);
+                        return await webController.PatchAsync<GenerateResponseOp<GenericPatchRequest>, object>(commonArguments, new GenerateResponseOp<GenericPatchRequest>(), patchArguments, ct, ReportCategory.SCENE_FETCH_REQUEST, webRequestHeaders);
+                    case RequestMethod.HEAD: throw new NotImplementedException();
+                    case RequestMethod.INVALID:
+                    default: throw new ArgumentOutOfRangeException();
+                }
+            }
+            catch (UnityWebRequestException e)
+            {
+                return new FlatFetchResponse(
+                    false,
+                    e.ResponseCode,
+                    e.ResponseCode.ToString(),
+                    e.Text,
+                    e.ResponseHeaders);
             }
         }
 
