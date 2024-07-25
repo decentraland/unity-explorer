@@ -58,7 +58,7 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             if (!sceneStateProvider.IsCurrent) return;
 
             var messageSent = false;
-            WriteResultsQuery(World, sceneData.Geometry.BaseParcelPosition, ref messageSent);
+            WriteResultsQuery(World!, sceneData.Geometry.BaseParcelPosition, ref messageSent);
 
             if (!messageSent)
                 WriteGlobalEvents();
@@ -109,9 +109,6 @@ namespace DCL.Interaction.PlayerOriginated.Systems
 
         private void AppendMessage(CRDTEntity sdkEntity, RaycastHit? sdkHit, InputAction button, PointerEventType eventType)
         {
-            var current = (sdkEntity.Id, eventType);
-            ReportHub.Log(ReportData.UNSPECIFIED, current);
-
             ecsToCRDTWriter.AppendMessage<PBPointerEventsResult, (RaycastHit? sdkHit, InputAction button, PointerEventType eventType, ISceneStateProvider sceneStateProvider)>(
                 static (result, data) =>
                 {
