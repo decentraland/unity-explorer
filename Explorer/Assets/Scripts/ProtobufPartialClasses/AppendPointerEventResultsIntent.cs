@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using JetBrains.Annotations;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 
 namespace DCL.ECSComponents
 {
@@ -32,20 +34,34 @@ namespace DCL.ECSComponents
 
         private Dictionary<InputAction, PointerEventType> validInputActions;
 
-        public void Initialize()
-        {
-            if (validIndices == null) validIndices = new List<byte>(64);
-            else validIndices.Clear();
-
-            if (validInputActions == null) validInputActions = new ();
-            else validInputActions.Clear();
-        }
-
         public void Initialize(UnityEngine.RaycastHit raycastHit, Ray ray)
         {
             RaycastHit = raycastHit;
             Ray = ray;
-            Initialize();
+            Clear();
+        }
+
+        public void InitializeWithAlloc()
+        {
+            Initialize(new List<byte>(), new Dictionary<InputAction, PointerEventType>());
+        }
+
+        public void Initialize(List<byte> list, Dictionary<InputAction, PointerEventType> dictionary)
+        {
+            validIndices = list;
+            validInputActions = dictionary;
+            Clear();
+        }
+
+        public void Release(
+            [NotNull] IObjectPool<List<byte>> listPool,
+            [NotNull] IObjectPool<Dictionary<InputAction, PointerEventType>> dictionaryPool
+        )
+        {
+            listPool.Release(validIndices);
+            dictionaryPool.Release(validInputActions);
+            validIndices = null;
+            validInputActions = null;
         }
 
         public void AddValidIndex(byte index)

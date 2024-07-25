@@ -1,7 +1,6 @@
 using CrdtEcsBridge.Components;
 using CrdtEcsBridge.Components.ResetExtensions;
 using CrdtEcsBridge.Components.Transform;
-using DCL.Diagnostics;
 using DCL.ECS7;
 using DCL.ECSComponents;
 using DCL.Optimization.Pools;
@@ -10,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Pool;
 using RaycastHit = DCL.ECSComponents.RaycastHit;
 
 namespace Global
@@ -29,6 +29,13 @@ namespace Global
 
             // SDK RaycastHit (used only as an element in the list)
             var raycastHitPool = new ComponentPool.WithDefaultCtor<RaycastHit>(defaultCapacity: 100, onGet: c => c.Reset());
+
+            var byteListPool = new ListObjectPool<byte>();
+
+            var inputEventsDictionaryPool = new ObjectPool<Dictionary<InputAction, PointerEventType>>(
+                () => new Dictionary<InputAction, PointerEventType>(),
+                actionOnRelease: e => e.Clear()
+            );
 
             // Add all SDK components here
             sdkComponentsRegistry
@@ -83,8 +90,24 @@ namespace Global
                .Add(SDKComponentBuilder<PBPointerEvents>.Create(ComponentID.POINTER_EVENTS)
                                                         .WithProtobufSerializer()
                                                         .WithPool(
-                                                             onGet: SDKComponentBuilderExtensions.SetAsDirty,
-                                                             onRelease: pbe => pbe.Reset())
+                                                             onGet: pbe =>
+                                                             {
+                                                                 SDKComponentBuilderExtensions.SetAsDirty(pbe);
+
+                                                                 pbe.AppendPointerEventResultsIntent.Initialize(
+                                                                     byteListPool.Get()!,
+                                                                     inputEventsDictionaryPool.Get()!
+                                                                 );
+                                                             },
+                                                             onRelease: pbe =>
+                                                             {
+                                                                 pbe.Reset();
+
+                                                                 pbe.AppendPointerEventResultsIntent.Release(
+                                                                     byteListPool,
+                                                                     inputEventsDictionaryPool
+                                                                 );
+                                                             })
                                                         .Build())
                .Add(SDKComponentBuilder<PBVideoEvent>.Create(ComponentID.VIDEO_EVENT).AsProtobufResult())
                .Add(SDKComponentBuilder<PBCameraMode>.Create(ComponentID.CAMERA_MODE).AsProtobufResult())

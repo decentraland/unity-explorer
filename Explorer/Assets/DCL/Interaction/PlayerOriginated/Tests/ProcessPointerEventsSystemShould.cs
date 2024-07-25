@@ -55,7 +55,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
-            pbPointerEvents.AppendPointerEventResultsIntent.Initialize();
+            pbPointerEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
 
             previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
