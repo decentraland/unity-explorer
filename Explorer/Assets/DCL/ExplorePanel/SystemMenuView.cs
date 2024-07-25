@@ -32,13 +32,13 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public CanvasGroup CanvasGroup { get; private set; } = null!;
 
-        protected override UniTask PlayShowAnimation(CancellationToken ct)
+        protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             CanvasGroup.alpha = 0;
             return CanvasGroup.DOFade(1, PANEL_FADE_TIME).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
-        protected override UniTask PlayHideAnimation(CancellationToken ct) =>
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct) =>
             CanvasGroup.DOFade(0, PANEL_FADE_TIME).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
     }
 }

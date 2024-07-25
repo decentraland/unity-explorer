@@ -41,6 +41,7 @@ MonoBehaviour:
   - rid: 2306906494740202818
   - rid: 2872862648882692098
   - rid: 2872862648882692099
+  - rid: 3601422141625466883
   references:
     version: 2
     RefIds:
@@ -362,6 +363,29 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <RarityColorMappings>k__BackingField:
           m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 3601422141625466883
+      type: {class: RewardPanelPlugin/RewardPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <RewardPanelView>k__BackingField:
+          m_AssetGUID: 70c6f2eab01fc462a9a2cac0d661417e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
