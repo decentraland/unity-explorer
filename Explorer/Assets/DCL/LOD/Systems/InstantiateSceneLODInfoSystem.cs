@@ -29,14 +29,16 @@ namespace DCL.LOD.Systems
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly TextureArrayContainer lodTextureArrayContainer;
         internal IPerformanceBudget frameCapBudget;
+        private readonly float defaultFOV;
 
-        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer) : base(world)
+        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, float defaultFOV) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
+            this.defaultFOV = defaultFOV;
         }
 
 
@@ -71,7 +73,7 @@ namespace DCL.LOD.Systems
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise));
                 }
 
-                sceneLODInfo.ReEvaluateLODGroup(newLod);
+                sceneLODInfo.ReEvaluateLODGroup(newLod, defaultFOV);
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }

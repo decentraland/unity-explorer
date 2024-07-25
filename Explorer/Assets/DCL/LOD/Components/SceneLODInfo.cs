@@ -55,7 +55,7 @@ namespace DCL.LOD.Components
         }
 
 
-        public void ReEvaluateLODGroup(LODAsset lodAsset)
+        public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV)
         {
             CurrentLODLevelPromise = byte.MaxValue;
             SetLODLoaded(lodAsset.LodKey.Level);
@@ -77,11 +77,11 @@ namespace DCL.LOD.Components
                 var renderers = pooledList.Value.ToArray();
                 lods[lodAsset.LodKey.Level].renderers = renderers;
                 if (loadedLODs == 1)
-                    CalculateCullRelativeHeight(renderers);
+                    CalculateCullRelativeHeight(renderers, defaultFOV);
             }
 
             lodAsset.Root.transform.SetParent(LodGroup.transform);
-            
+
 
             if (loadedLODs == 1)
             {
@@ -109,7 +109,7 @@ namespace DCL.LOD.Components
             State = SCENE_LOD_INFO_STATE.SUCCESS;
         }
 
-        private void CalculateCullRelativeHeight(Renderer[] lodRenderers)
+        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV)
         {
             const float distance = 20 * 16;
             if (lodRenderers.Length > 0)
@@ -119,18 +119,15 @@ namespace DCL.LOD.Components
                 // Encapsulate the bounds of the remaining renderers
                 for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
 
-                CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(distance, mergedBounds)));
+                CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(defaultFOV, distance, mergedBounds)));
             }
         }
 
-        public float CalculateScreenRelativeTransitionHeight(float distance, Bounds rendererBounds)
+        public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float distance, Bounds rendererBounds)
         {
             float lodBias = 1;
-
             float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * lodBias;
-            float defaultFOV = 60.0f;
-            float fov = (Camera.main ? Camera.main.fieldOfView : defaultFOV) * Mathf.Deg2Rad;
-            float halfFov = fov / 2.0f;
+            float halfFov = (defaultFOV / 2.0f) * Mathf.Deg2Rad;
             float ScreenRelativeTransitionHeight = objectSize / (distance * Mathf.Tan(halfFov));
             return ScreenRelativeTransitionHeight;
         }

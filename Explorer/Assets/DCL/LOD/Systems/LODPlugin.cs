@@ -30,6 +30,7 @@ namespace DCL.PluginSystem.Global
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
         private GameObjectPool<LODGroup> lodGroupPool;
         private readonly bool lodEnabled;
+        private readonly float defaultFOV;
 
         private IExtendedObjectPool<Material> lodMaterialPool;
         private ILODSettingsAsset lodSettingsAsset;
@@ -44,6 +45,7 @@ namespace DCL.PluginSystem.Global
         {
             lodAssetsPool = new LODAssetsPool();
             cacheCleaner.Register(lodAssetsPool);
+            defaultFOV = Camera.main ? Camera.main.fieldOfView : 60.0f;
 
             this.realmData = realmData;
             this.memoryBudget = memoryBudget;
@@ -87,7 +89,7 @@ namespace DCL.PluginSystem.Global
                 InitializeSceneLODInfo.InjectToWorld(ref builder, lodGroupPool, lodContainer.transform);
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodGroupPool, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
-                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer);
+                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, defaultFOV);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
             }
             else
