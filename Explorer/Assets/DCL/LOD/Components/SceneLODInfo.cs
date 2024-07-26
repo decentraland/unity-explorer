@@ -23,7 +23,8 @@ namespace DCL.LOD.Components
         public string id;
         public LODGroup LodGroup;
         public float CullRelativeHeight;
-
+        public AssetBundleData[] LODAssetBundleData;
+        
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
@@ -33,7 +34,8 @@ namespace DCL.LOD.Components
                 LodGroup.gameObject.SetActive(false);
                 lodGroupCache[id] = new LODCacheInfo
                 {
-                    FailedLODs = FailedLODs, LoadedLODs = LoadedLODs, LodGroup = LodGroup, CullRelativeHeight = CullRelativeHeight
+                    FailedLODs = FailedLODs, LoadedLODs = LoadedLODs, LodGroup = LodGroup, CullRelativeHeight = CullRelativeHeight,
+                    AssetBundleData = LODAssetBundleData
                 };
             }
             else
@@ -51,7 +53,7 @@ namespace DCL.LOD.Components
         }
 
 
-        public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV, float defaultLodBias)
+        public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV, float defaultLodBias, AssetBundleData assetBundleData)
         {
             CurrentLODLevelPromise = byte.MaxValue;
             if (lodAsset.State != LODAsset.LOD_STATE.SUCCESS)
@@ -73,8 +75,11 @@ namespace DCL.LOD.Components
                 if (loadedLODAmount == 1)
                     CalculateCullRelativeHeight(renderers, defaultFOV, defaultLodBias);
             }
-
             lodAsset.Root.transform.SetParent(LodGroup.transform);
+
+            if (LODAssetBundleData == null )
+                LODAssetBundleData = new AssetBundleData[2];
+            LODAssetBundleData[lodAsset.LodKey.Level] = assetBundleData;
 
             if (loadedLODAmount == 1)
             {

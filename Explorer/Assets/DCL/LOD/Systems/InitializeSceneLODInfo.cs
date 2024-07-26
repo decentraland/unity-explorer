@@ -54,6 +54,7 @@ namespace DCL.LOD.Systems
                 sceneLODInfo.LodGroup = lodGroup;
                 sceneLODInfo.LoadedLODs = lodCacheInfo.LoadedLODs;
                 sceneLODInfo.CullRelativeHeight = lodCacheInfo.CullRelativeHeight;
+                sceneLODInfo.LODAssetBundleData = lodCacheInfo.AssetBundleData;
             }
             else
             {
