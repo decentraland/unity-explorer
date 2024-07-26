@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
+using Arch.SystemGroups.DefaultSystemGroups;
 using Arch.SystemGroups.UnityBridge;
 using CrdtEcsBridge.Components.Transform;
 using CrdtEcsBridge.UpdateGate;
@@ -15,11 +16,10 @@ namespace ECS.Unity.Transforms.Systems
     [UpdateAfter(typeof(ParentingTransformSystem))]
     public partial class UpdateTransformSystem : BaseUnityLoopSystem
     {
+        internal static readonly Type THROTTLING_GROUP_TYPE = typeof(SimulationSystemGroup);
+
         private readonly ISystemGroupsUpdateGate ecsGroupThrottler;
         private readonly ISystemsUpdateGate systemsPriorityComponentsGate;
-
-        private static readonly Type PARENT_GROUP_TYPE = ((UpdateInGroupAttribute)Attribute
-           .GetCustomAttribute(typeof(UpdateTransformSystem), typeof(UpdateInGroupAttribute)))?.GroupType!;
 
         public UpdateTransformSystem(World world, ISystemGroupsUpdateGate ecsGroupThrottler, ISystemsUpdateGate systemsPriorityComponentsGate) : base(world)
         {
@@ -29,9 +29,9 @@ namespace ECS.Unity.Transforms.Systems
 
         protected override void Update(float _)
         {
-            // if (systemsPriorityComponentsGate.IsOpen<SDKTransform>())
-                // UpdateTransformQuery(World);
-            // else if (!ecsGroupThrottler.ShouldThrottle(PARENT_GROUP_TYPE, new TimeProvider.Info()))
+            if (systemsPriorityComponentsGate.IsOpen<SDKTransform>())
+                UpdateTransformQuery(World);
+            else if (!ecsGroupThrottler.ShouldThrottle(THROTTLING_GROUP_TYPE, new TimeProvider.Info()))
                 UpdateTransformQuery(World);
         }
 

@@ -23,6 +23,7 @@ namespace DCL.Input.UnityInputSystem.Blocks
             globalWorld.StrictObject.AddOrGet(playerEntity.StrictObject, new MovementBlockerComponent());
             dclInput.StrictObject.Shortcuts.Disable();
             dclInput.StrictObject.Camera.Disable();
+            dclInput.StrictObject.Player.Disable();
         }
 
         public void UnblockMovement()
@@ -30,6 +31,7 @@ namespace DCL.Input.UnityInputSystem.Blocks
             globalWorld.StrictObject.Remove<MovementBlockerComponent>(playerEntity.StrictObject);
             dclInput.StrictObject.Shortcuts.Enable();
             dclInput.StrictObject.Camera.Enable();
+            dclInput.StrictObject.Player.Enable();
         }
     }
 }

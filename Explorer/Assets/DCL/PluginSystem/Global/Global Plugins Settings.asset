@@ -41,7 +41,7 @@ MonoBehaviour:
   - rid: 2306906494740202818
   - rid: 2872862648882692098
   - rid: 2872862648882692099
-  - rid: 4816187900846407682
+  - rid: 3601422141625466883
   references:
     version: 2
     RefIds:
@@ -251,7 +251,12 @@ MonoBehaviour:
         <sceneBucketPropagationLimit>k__BackingField: 3
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data: 
+      data:
+        MinimapPrefab:
+          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
@@ -361,6 +366,29 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 3601422141625466883
+      type: {class: RewardPanelPlugin/RewardPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <RewardPanelView>k__BackingField:
+          m_AssetGUID: 70c6f2eab01fc462a9a2cac0d661417e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -463,14 +491,6 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         SkyboxAnimationCycle:
           m_AssetGUID: 3b17a8a5ab9ee104899eb22c70935c38
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-    - rid: 4816187900846407682
-      type: {class: SidebarPlugin/SidebarSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        <NotificationIconTypesSO>k__BackingField:
-          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0

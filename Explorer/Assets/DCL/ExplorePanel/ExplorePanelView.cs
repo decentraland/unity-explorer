@@ -40,7 +40,7 @@ namespace DCL.ExplorePanel
         [field: SerializeField]
         public AudioClipConfig? CloseMenu { get; private set; }
 
-        protected override UniTask PlayShowAnimation(CancellationToken ct)
+        protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             CanvasGroup.alpha = 0;
             UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(BackgroundMusic);
@@ -48,7 +48,7 @@ namespace DCL.ExplorePanel
             return CanvasGroup.DOFade(1, ANIMATION_SPEED).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
         }
 
-        protected override UniTask PlayHideAnimation(CancellationToken ct)
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
             UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(BackgroundMusic);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseMenu);

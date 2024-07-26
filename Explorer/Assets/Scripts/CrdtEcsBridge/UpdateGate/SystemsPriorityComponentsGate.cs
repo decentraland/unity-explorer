@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace CrdtEcsBridge.UpdateGate
 {
-    public class SystemsPriorityComponentsGate : ISystemsUpdateGate, IDisposable
+    public class SystemsPriorityComponentsGate : ISystemsUpdateGate
     {
         private const int PRIORITY_COMPONENTS_COUNT = 1; // As for now it is only SDKTransform
         private static readonly ThreadSafeHashSetPool<Type> POOL = new (PRIORITY_COMPONENTS_COUNT, PoolConstants.SCENES_COUNT);
