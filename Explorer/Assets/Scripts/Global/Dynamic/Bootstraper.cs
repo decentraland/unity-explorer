@@ -200,7 +200,7 @@ namespace Global.Dynamic
             if (string.IsNullOrEmpty(deepLinkString)) return;
 
             // Update deep link so that Uri class allows the host name
-            deepLinkString = deepLinkString.Replace("decentraland://", "https://decentraland.com/?");
+            deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.com/?");
 
             if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out var res)) return;
 
