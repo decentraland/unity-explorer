@@ -37,7 +37,7 @@ namespace DCL.Notification.NotificationsMenu
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
-
+            view.CloseButton.onClick.AddListener(ToggleNotificationsPanel);
             InitialNotificationRequest().Forget();
         }
 
