@@ -145,8 +145,7 @@ namespace DCL.Navmap
         private void SetDestination()
         {
             mapPathEventBus.SetDestination(lastParcelClicked.Parcel, lastParcelClicked.PinMarker);
-
-            //DISABLED FOR TESTING -> OnSetDestination?.Invoke();
+            OnSetDestination?.Invoke();
         }
 
         private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
