@@ -84,6 +84,7 @@ namespace DCL.Navmap
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
             FloatingPanelController.OnRemoveDestination += RemoveDestination;
+            this.navmapView.DestinationSetView.QuitButton.onClick.AddListener(RemoveDestination);
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
@@ -140,11 +141,18 @@ namespace DCL.Navmap
         private void RemoveDestination()
         {
             mapPathEventBus.RemoveDestination();
+            navmapView.gameObject.SetActive(false);
         }
 
         private void SetDestination()
         {
             mapPathEventBus.SetDestination(lastParcelClicked.Parcel, lastParcelClicked.PinMarker);
+            navmapView.gameObject.SetActive(true);
+            if (lastParcelClicked.PinMarker != null) { navmapView.DestinationSetView.Setup(lastParcelClicked.PinMarker.Description, true, lastParcelClicked.PinMarker.CurrentSprite); }
+            else
+            {
+                navmapView.DestinationSetView.Setup("Generic Parcel" + lastParcelClicked.Parcel, false, null);
+            }
 
             //DISABLED FOR TESTING -> OnSetDestination?.Invoke();
         }
