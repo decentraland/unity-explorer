@@ -12,7 +12,6 @@
         "GUID:4307f53044263cf4b835bd812fc161a4",
         "GUID:a3c61f15599a43ae9de508c9c4dd5530",
         "GUID:fa7b3fdbb04d67549916da7bd2af58ab",
-        "GUID:fc4fd35fb877e904d8cedee73b2256f6",
         "GUID:286980af24684da6acc1caa413039811",
         "GUID:d8b63aba1907145bea998dd612889d6b",
         "GUID:e0cd26848372d4e5c891c569017e11f1",
@@ -63,7 +62,8 @@
         "GUID:2b89ae91f091424498ec65cf1ba6c557",
         "GUID:ace653ac543d483ba8abee112a3ba2a6",
         "GUID:f1eaef1b40a68e74cb90cbedebf57bbf",
-        "GUID:c54a193e9535e43d8a25007ab5ee28b1"
+        "GUID:c54a193e9535e43d8a25007ab5ee28b1",
+        "DCL.Plugins"
     ],
     "includePlatforms": [
         "Editor"

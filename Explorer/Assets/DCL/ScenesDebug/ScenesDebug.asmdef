@@ -2,7 +2,6 @@
     "name": "ScenesDebug",
     "rootNamespace": "",
     "references": [
-        "GUID:fc4fd35fb877e904d8cedee73b2256f6",
         "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
         "GUID:8322ea9340a544c59ddc56d4793eac74",
         "GUID:d414ef88f3b15f746a4b97636b50dfb4",
@@ -22,7 +21,8 @@
         "GUID:e25ef972de004615a22937e739de2def",
         "GUID:766b242fb43af451aaa331f39872177d",
         "GUID:166b65e6dfc848bb9fb075f53c293a38",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "DCL.Plugins"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
