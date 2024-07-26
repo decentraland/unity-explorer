@@ -23,6 +23,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
+using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -120,7 +121,6 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
         }
-
 
         public override void Dispose()
         {

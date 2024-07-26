@@ -111,9 +111,17 @@ namespace DCL.ExplorePanel
             async UniTaskVoid LogoutAsync(CancellationToken ct)
             {
                 Web3Address address = web3IdentityCache.Identity!.Address;
+
                 await web3Authenticator.LogoutAsync(ct);
+
                 profileCache.Remove(address);
-                await userInAppInitializationFlow.ExecuteAsync(true, true, world, playerEntity, ct);
+
+                await userInAppInitializationFlow.ExecuteAsync(true, true,
+                    // We have to reload the realm so the scenes are recreated when coming back to the world
+                    // The realm fetches the scene entity definitions again and creates the components in ecs
+                    // so the SceneFacade can be later attached into the entity
+                    true,
+                    world, playerEntity, ct);
             }
 
             logoutCts = logoutCts.SafeRestart();
