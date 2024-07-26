@@ -17,6 +17,7 @@ using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Profiles;
 using DCL.Time;
@@ -78,7 +79,7 @@ namespace SceneRunner.Tests
 
                                 InitializationTestSystem1.InjectToWorld(ref builder);
                                 SimulationTestSystem1.InjectToWorld(ref builder);
-                                return new ECSWorldFacade(builder.Finish(), world, Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>());
+                                return new ECSWorldFacade(builder.Finish(), world, new PersistentEntities(), Array.Empty<IFinalizeWorldSystem>(), Array.Empty<ISceneIsCurrentListener>());
                             });
 
             sharedPoolsProvider = Substitute.For<ISharedPoolsProvider>().EnsureNotNull();
@@ -357,6 +358,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ICRDTDeserializer>(),
                     Substitute.For<IECSToCRDTWriter>(),
                     Substitute.For<ISystemGroupsUpdateGate>(),
+                    Substitute.For<ISystemsUpdateGate>(),
                     Substitute.For<IWorldTimeProvider>(),
                     new ECSWorldInstanceSharedDependencies()),
                 Substitute.For<ISceneRuntime>(),

@@ -22,6 +22,7 @@ using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Text.RegularExpressions;
 
 namespace Global.Dynamic
 {
@@ -32,11 +33,12 @@ namespace Global.Dynamic
         private readonly bool showLoading;
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
+
         public bool EnableAnalytics { private get; init; }
 
-        private string startingRealm = IRealmNavigator.GENESIS_URL;
+        private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
-
+        private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
 
         public Bootstrap(DebugSettings debugSettings)
@@ -54,7 +56,9 @@ namespace Global.Dynamic
             splashRoot.SetActive(showSplash);
             cursorRoot.EnsureNotNull();
 
-            startingRealm = launchSettings.GetStartingRealm();
+            localSceneDevelopment = DetectAndConfigureLocalSceneDevelopment(launchSettings);
+
+            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
@@ -123,9 +127,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity identity, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity.Address, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -142,7 +146,7 @@ namespace Global.Dynamic
                 dynamicWorldContainer.ProfileRepository,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RoomHub,
-                dynamicWorldContainer.RealmController.GetRealm(),
+                dynamicWorldContainer.RealmController.RealmData,
                 dynamicWorldContainer.MessagePipesHub
             );
 
@@ -156,7 +160,7 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
-            await dynamicWorldContainer.RealmController.SetRealmAsync(URLDomain.FromString(startingRealm), ct);
+            await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm, ct);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
@@ -167,11 +171,62 @@ namespace Global.Dynamic
 
             splashScreenAnimation.transform.SetSiblingIndex(1);
 
-            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading,
+            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading, false,
                 globalWorld!.EcsWorld, playerEntity, ct);
 
             splashRoot.SetActive(false);
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+        }
+
+        private bool DetectAndConfigureLocalSceneDevelopment(RealmLaunchSettings launchSettings)
+        {
+            string deepLinkString = string.Empty;
+
+#if UNITY_STANDALONE_WIN
+            // When started in local scene development mode (AKA preview mode) command line arguments are used
+            // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
+            string[] cmdArgs = Environment.GetCommandLineArgs();
+            if (cmdArgs.Length > 1)
+                deepLinkString = cmdArgs[1];
+#else
+            // Patch for MacOS removing the ':' from the realm parameter protocol
+            deepLinkString = Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2");
+#endif
+
+            if (string.IsNullOrEmpty(deepLinkString)) return false;
+
+            // Regex to detect different parameters in Uri based on first param after '//' and then separated by '&'
+            var pattern = @"(?<=://|&)[^?&]+=[^&]+";
+            var regex = new Regex(pattern);
+            var matches = regex.Matches(deepLinkString);
+
+            if (matches.Count == 0
+                || (!matches[0].Value.Contains("realm=http://")
+                    && !matches[0].Value.Contains("realm=https://")))
+                return false;
+
+            string localRealm = matches[0].Value.Replace("realm=", "");
+            launchSettings.SetLocalSceneDevelopmentRealm(localRealm);
+
+            var positionParam = "position=";
+            if (matches.Count > 1)
+            {
+                for (var i = 1; i < matches.Count; i++)
+                {
+                    string param = matches[i].Value;
+
+                    if (param.Contains(positionParam))
+                    {
+                        param = param.Replace(positionParam, "");
+
+                        launchSettings.SetTargetScene(new Vector2Int(
+                            int.Parse(param.Substring(0, param.IndexOf(','))),
+                            int.Parse(param.Substring(param.IndexOf(',') + 1))));
+                    }
+                }
+            }
+
+            return true;
         }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)

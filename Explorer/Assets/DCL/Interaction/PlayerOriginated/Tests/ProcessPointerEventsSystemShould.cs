@@ -48,7 +48,6 @@ namespace DCL.Interaction.PlayerOriginated.Tests
             // Add PBPointerEvents component
             var pbPointerEvents = new PBPointerEvents
             {
-                AppendPointerEventResultsIntent = new AppendPointerEventResultsIntent(),
                 PointerEvents =
                 {
                     CreateEntry(PointerEventType.PetHoverLeave, InputAction.IaPointer),
@@ -56,14 +55,16 @@ namespace DCL.Interaction.PlayerOriginated.Tests
                 },
             };
 
+            pbPointerEvents.AppendPointerEventResultsIntent.InitializeWithAlloc();
+
             previousColliderSceneInfo.EcsExecutor.World.Add(previousColliderSceneInfo.ColliderSceneEntityInfo.EntityReference, pbPointerEvents);
 
             PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = GetRaycastAt(99);
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(1));
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices[0], Is.EqualTo(0));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(1));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndexAt(0), Is.EqualTo(0));
         }
 
         [Test]
@@ -88,7 +89,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(0));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(0));
         }
 
         [Test]
@@ -129,7 +130,7 @@ namespace DCL.Interaction.PlayerOriginated.Tests
 
             HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousColliderSceneInfo);
 
-            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndices.Length, Is.EqualTo(0));
+            Assert.That(pbPointerEvents.AppendPointerEventResultsIntent.ValidIndicesCount(), Is.EqualTo(0));
         }
 
         private GlobalColliderSceneEntityInfo CreateColliderInfo() =>

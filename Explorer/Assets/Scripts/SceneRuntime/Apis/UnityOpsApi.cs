@@ -22,21 +22,21 @@ namespace SceneRuntime.Apis
         }
 
         [UsedImplicitly]
-        public void Log(object message)
+        public void Log(string message)
         {
             ReportHub.Log(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
         }
 
         [UsedImplicitly]
-        public void Warning(object message)
+        public void Warning(string message)
         {
             ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
         }
 
         [UsedImplicitly]
-        public void Error(object message)
+        public void Error(string message)
         {
-            if (message is string str && str.StartsWith("SceneError: warning", StringComparison.InvariantCultureIgnoreCase))
+            if (message.StartsWith("SceneError: warning", StringComparison.InvariantCultureIgnoreCase))
             {
                 ReportHub.LogWarning(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
                 return;

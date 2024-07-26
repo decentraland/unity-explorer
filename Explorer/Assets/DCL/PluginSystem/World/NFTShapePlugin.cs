@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.Global;
@@ -17,6 +18,7 @@ using DCL.WebRequests.WebContentSizes;
 using DCL.WebRequests.WebContentSizes.Sizes.Lazy;
 using ECS.Abstract;
 using ECS.LifeCycle;
+using ECS.LifeCycle.Systems;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.NFTShapes;
 using ECS.StreamableLoading.NFTShapes.URNs;
@@ -125,6 +127,8 @@ namespace DCL.PluginSystem.World
             LoadCycleNftShapeSystem.InjectToWorld(ref builder, new BasedURNSource());
             InstantiateNftShapeSystem.InjectToWorld(ref builder, nftShapeRendererFactory, instantiationFrameTimeBudgetProvider, framePrefabs, buffer);
             VisibilityNftShapeSystem.InjectToWorld(ref builder, buffer);
+
+            ResetDirtyFlagSystem<PBNftShape>.InjectToWorld(ref builder);
 
             finalizeWorldSystems.RegisterReleasePoolableComponentSystem<INftShapeRenderer, NftShapeRendererComponent>(ref builder, componentPoolsRegistry);
         }
