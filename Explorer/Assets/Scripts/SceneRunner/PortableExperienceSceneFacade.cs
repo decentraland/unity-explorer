@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.PluginSystem.World;
 using Microsoft.ClearScript;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -21,6 +22,7 @@ namespace SceneRunner
 
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
+        public PersistentEntities PersistentEntities => deps.SyncDeps.ECSWorldFacade.PersistentEntities;
 
         public ISceneData SceneData { get; }
 
@@ -67,6 +69,11 @@ namespace SceneRunner
 
         public bool IsSceneReady() =>
             SceneData.SceneLoadingConcluded;
+
+        public void Initialize()
+        {
+            deps.SyncDeps.ECSWorldFacade.Initialize();
+        }
 
         public async UniTask StartUpdateLoopAsync(int targetFPS, CancellationToken ct)
         {
