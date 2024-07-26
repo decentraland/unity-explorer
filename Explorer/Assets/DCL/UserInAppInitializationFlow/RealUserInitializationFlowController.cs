@@ -1,6 +1,5 @@
 using System;
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Audio;
@@ -16,6 +15,7 @@ using DCL.FeatureFlags;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
+using System.Collections.Generic;
 using UnityEngine;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
@@ -34,6 +34,7 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IFeatureFlagsProvider featureFlagsProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRealmController realmController;
+        private readonly Dictionary<string, string> appParameters;
 
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
@@ -45,7 +46,8 @@ namespace DCL.UserInAppInitializationFlow
             ILoadingScreen loadingScreen,
             IFeatureFlagsProvider featureFlagsProvider,
             IWeb3IdentityCache web3IdentityCache,
-            IRealmController realmController)
+            IRealmController realmController,
+            Dictionary<string, string> appParameters)
         {
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
@@ -58,6 +60,7 @@ namespace DCL.UserInAppInitializationFlow
             this.featureFlagsProvider = featureFlagsProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.realmController = realmController;
+            this.appParameters = appParameters;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -131,7 +134,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
-            try { await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, ct); }
+            try { await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
     }
