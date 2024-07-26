@@ -128,14 +128,20 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             marker.OnBecameVisible();
 
-            if (marker.IsDestination) { mapPathEventBus.HidePinInMinimap(); }
+            if (marker.IsDestination)
+            {
+                //mapPathEventBus.HidePinInMinimap();
+            }
         }
 
         public void OnMapObjectCulled(IPinMarker marker)
         {
             marker.OnBecameInvisible();
 
-            if (marker.IsDestination) { mapPathEventBus.ShowPinInMinimap(marker); }
+            if (marker.IsDestination)
+            {
+                //mapPathEventBus.ShowPinInMinimap(marker);
+            }
         }
 
         public void ApplyCameraZoom(float baseZoom, float zoom)

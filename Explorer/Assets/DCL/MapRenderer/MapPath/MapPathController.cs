@@ -60,6 +60,7 @@ namespace DCL.MapRenderer
             destinationSet = false;
             pathDestinationPin.AnimateOut();
             mapPathRenderer.gameObject.SetActive(false);
+            mapPathEventBus.HidePinInMinimap();
         }
 
         private void OnSetDestination(Vector2Int parcel, IPinMarker pinMarker)
@@ -68,27 +69,38 @@ namespace DCL.MapRenderer
             Vector3 mapPosition = coordsUtils.CoordsToPositionWithOffset(parcel);
             mapPathRenderer.gameObject.SetActive(true);
             mapPathRenderer.SetDestination(mapPosition);
+            pathDestinationPin.OnBecameInvisible();
 
             if (pinMarker == null)
             {
+                pathDestinationPin.OnBecameVisible();
                 pathDestinationPin.SetPosition(mapPosition, parcel);
                 pathDestinationPin.SetAsDestination(true);
+                mapPathEventBus.ShowPinInMinimap(pathDestinationPin);
             }
             else
             {
+                pathDestinationPin.SetAsDestination(false);
                 pinMarker.SetAsDestination(true);
-                pathDestinationPin.AnimateOut();
+                mapPathEventBus.ShowPinInMinimap(pinMarker);
             }
         }
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
         {
-            if (pathDestinationPin.IsDestination) { mapPathEventBus.HidePinInMinimap(); }
+            if (pathDestinationPin.IsDestination)
+            {
+                pathDestinationPin.OnBecameVisible();
+            }
         }
 
         public void OnMapObjectCulled(IPinMarker obj)
         {
-            if (pathDestinationPin.IsDestination) { mapPathEventBus.ShowPinInMinimap(null); }
+            //if (pathDestinationPin.IsDestination)
+            {
+                //mapPathEventBus.ShowPinInMinimap(pathDestinationPin);
+              //  pathDestinationPin.OnBecameInvisible();
+            }
         }
 
         public UniTask Enable(CancellationToken cancellationToken)
@@ -96,7 +108,7 @@ namespace DCL.MapRenderer
             if (destinationSet)
             {
                 mapPathRenderer.gameObject.SetActive(true);
-                pathDestinationPin.AnimateIn();
+                pathDestinationPin.OnBecameVisible();
             }
 
             return UniTask.CompletedTask;

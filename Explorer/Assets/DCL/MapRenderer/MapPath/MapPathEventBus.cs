@@ -51,7 +51,7 @@ namespace DCL.MapRenderer
 
         void RemoveDestination();
 
-        void ShowPinInMinimap([CanBeNull] IPinMarker pinMarker);
+        void ShowPinInMinimap(IPinMarker pinMarker);
 
         void PathUpdated(Vector2 newPosition);
 

@@ -7,7 +7,6 @@ namespace DCL.MapRenderer
     {
         public float dotSize = 0.2f;
         public float spaceBetweenDots = 0.2f;
-        public float updateMagnitude = 1;
         public float arrivalTolerance = 100;
         private Vector2 cachedPosition;
         private bool destinationSet;

@@ -49,6 +49,8 @@ namespace DCL.Minimap
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
+        private Vector2 currentDestinationPosition;
+        private bool destinationSet;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -97,12 +99,10 @@ namespace DCL.Minimap
             new SideMenuController(viewInstance.sideMenuView);
             SetWorldMode(realmData.ScenesAreFixed);
             realmNavigator.RealmChanged += OnRealmChanged;
-            mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdgeEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdgeEdge;
+            mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
+            mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
+            mapPathEventBus.OnUpdatedPlayerPosition += UpdatePinPositionOnMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();
-
-            // listen to mapPathEventBus and react when pin is hidden from view by enabling/configuring the pin integrated
-            // into the minimap it must also receive updates when the path changes so its location can change as well
         }
 
         private void ExpandMinimap()
@@ -131,16 +131,57 @@ namespace DCL.Minimap
             }
         }
 
-        private void ShowPinInMinimapEdgeEdge(IPinMarker pinMarker)
+        private void ShowPinInMinimapEdge(IPinMarker pinMarker)
         {
-            if (pinMarker == null) { viewInstance.destinationPinMarker.SetupAsScenePin(); }
+            destinationSet = true;
+            currentDestinationPosition = pinMarker.CurrentPosition;
+            if (string.IsNullOrEmpty(pinMarker.Description)) { viewInstance.destinationPinMarker.SetupAsScenePin(); }
             else { viewInstance.destinationPinMarker.SetupAsMapPin(pinMarker.CurrentSprite); }
         }
 
-        private void HidePinInMinimapEdgeEdge()
+        private void HidePinInMinimapEdge()
         {
+            destinationSet = false;
             viewInstance.destinationPinMarker.HidePin();
         }
+
+        private void UpdatePinPositionOnMinimapEdge(Vector2 playerPosition)
+        {
+            if (!destinationSet) return;
+
+            var newPos = CalculateIntersectionPoint(playerPosition, currentDestinationPosition, 130);
+
+            if (newPos.Intersects)
+            {
+                viewInstance.destinationPinMarker.RestorePin();
+                viewInstance.destinationPinMarker.SetPosition(newPos.Point);
+            }
+            else { viewInstance.destinationPinMarker.HidePin(); }
+
+        }
+
+        public struct IntersectionResult
+        {
+            public bool Intersects;
+            public Vector2 Point;
+        }
+
+        public static IntersectionResult CalculateIntersectionPoint(Vector2 origin, Vector2 destination, float minimapRadius)
+        {
+            Vector2 direction = destination - origin;
+            float distanceAB = direction.sqrMagnitude;
+
+            if (distanceAB <= minimapRadius*minimapRadius)
+            {
+                return new IntersectionResult { Intersects = false, Point = destination };
+            }
+
+            direction.Normalize();
+            Vector2 intersectionPoint = (direction * minimapRadius);
+
+            return new IntersectionResult { Intersects = true, Point = intersectionPoint };
+        }
+
 
         [All(typeof(PlayerComponent))]
         [Query]
@@ -241,8 +282,8 @@ namespace DCL.Minimap
         {
             cts.SafeCancelAndDispose();
             realmNavigator.RealmChanged -= OnRealmChanged;
-            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdgeEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdgeEdge;
+            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
+            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

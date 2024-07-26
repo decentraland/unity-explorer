@@ -8,7 +8,7 @@ using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
-    public class PathDestinationPin : IPinMarker
+    public class OBSOLETE_DELETE_PathDestinationPin : IPinMarker
     {
         private readonly IMapCullingController cullingController;
 
@@ -31,7 +31,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public Vector2 Pivot => new (0.5f, 0.5f);
 
-        internal PathDestinationPin(IMapCullingController cullingController, PinMarkerObject pinMarkerObject)
+        internal OBSOLETE_DELETE_PathDestinationPin(IMapCullingController cullingController, PinMarkerObject pinMarkerObject)
         {
             this.pinMarkerObject = pinMarkerObject;
             this.cullingController = cullingController;

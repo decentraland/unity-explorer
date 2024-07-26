@@ -3922,13 +3922,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3702948684537814344, guid: 35952767f681174489f6fba74d3a31c2, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5074742757351858343, guid: 35952767f681174489f6fba74d3a31c2, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 9136160517878866728, guid: 35952767f681174489f6fba74d3a31c2, type: 3}
       propertyPath: m_Name
       value: Destination Pin
       objectReference: {fileID: 0}
     - target: {fileID: 9136160517878866728, guid: 35952767f681174489f6fba74d3a31c2, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
