@@ -11,6 +11,8 @@ namespace DCL.MapRenderer
 {
     public class MapPathController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
+        private const float ARRIVAL_TOLERANCE_SQRD = 25;
+
         internal delegate IPinMarker PinMarkerBuilder(
             IObjectPool<PinMarkerObject> objectsPool,
             IMapCullingController cullingController);
@@ -52,7 +54,23 @@ namespace DCL.MapRenderer
 
         private void OnUpdatedPlayerPosition(Vector2 newPosition)
         {
-            if (destinationSet) { mapPathRenderer.UpdateOrigin(newPosition); }
+            if (destinationSet)
+            {
+                if (CalculateIfArrivedToDestination(newPosition, mapPathRenderer.DestinationPoint))
+                {
+                    mapPathEventBus.ArrivedToDestination();
+                }
+                else
+                {
+                    mapPathRenderer.UpdateOrigin(newPosition);
+                }
+            }
+        }
+
+        private bool CalculateIfArrivedToDestination(Vector2 newPosition, Vector2 destinationPosition)
+        {
+            var difference = newPosition - destinationPosition;
+            return difference.sqrMagnitude <= ARRIVAL_TOLERANCE_SQRD;
         }
 
         private void OnRemovedDestination()
@@ -60,7 +78,6 @@ namespace DCL.MapRenderer
             destinationSet = false;
             pathDestinationPin.AnimateOut();
             mapPathRenderer.gameObject.SetActive(false);
-            mapPathEventBus.HidePinInMinimap();
         }
 
         private void OnSetDestination(Vector2Int parcel, IPinMarker pinMarker)

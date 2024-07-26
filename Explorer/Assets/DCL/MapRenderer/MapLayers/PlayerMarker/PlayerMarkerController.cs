@@ -84,7 +84,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
             Vector2 gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);
             Vector3 newMarkerPosition = coordsUtils.PivotPosition(playerMarker, coordsUtils.CoordsToPositionWithOffset(gridPosition));
 
-            if (Mathf.Abs(newMarkerPosition.sqrMagnitude - lastUpdatePositionSqrMagnitude) > MIN_SQR_POSITION_DIFFERENCE_FOR_EVENT_TRIGGER)
+            if (lastUpdatePositionSqrMagnitude == 0 || Mathf.Abs(newMarkerPosition.sqrMagnitude - lastUpdatePositionSqrMagnitude) > MIN_SQR_POSITION_DIFFERENCE_FOR_EVENT_TRIGGER)
             {
                 mapPathEventBus.PathUpdated(newMarkerPosition);
                 lastUpdatePositionSqrMagnitude = newMarkerPosition.sqrMagnitude;

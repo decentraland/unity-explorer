@@ -102,7 +102,7 @@ namespace DCL.Minimap
             SetWorldMode(realmData.ScenesAreFixed);
             realmNavigator.RealmChanged += OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
+            mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
             mapPathEventBus.OnUpdatedPlayerPosition += UpdatePinPositionOnMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();
         }
@@ -286,7 +286,7 @@ namespace DCL.Minimap
             cts.SafeCancelAndDispose();
             realmNavigator.RealmChanged -= OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
+            mapPathEventBus.OnRemovedDestination -= HidePinInMinimapEdge;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
