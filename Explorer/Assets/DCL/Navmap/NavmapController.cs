@@ -141,6 +141,7 @@ namespace DCL.Navmap
         {
             mapPathEventBus.RemoveDestination();
             navmapView.DestinationSetView.gameObject.SetActive(false);
+            FloatingPanelController.RemoveDestination();
         }
 
         private void SetDestination()

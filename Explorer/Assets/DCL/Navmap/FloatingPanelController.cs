@@ -136,8 +136,8 @@ namespace DCL.Navmap
                 view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel));
                 view.removeDestinationButton.onClick.RemoveAllListeners();
                 view.removeMapPinDestinationButton.onClick.RemoveAllListeners();
-                view.removeDestinationButton.onClick.AddListener(RemoveDestination);
-                view.removeMapPinDestinationButton.onClick.AddListener(RemoveDestination);
+                view.removeDestinationButton.onClick.AddListener(() => OnRemoveDestination?.Invoke()); //I DONT LIKE THIS
+                view.removeMapPinDestinationButton.onClick.AddListener(() => OnRemoveDestination?.Invoke()); //I DONT LIKE THIS
                 view.jumpInButton.onClick.RemoveAllListeners();
                 view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
                 PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
@@ -156,11 +156,10 @@ namespace DCL.Navmap
             }
         }
 
-        private void RemoveDestination()
+        public void RemoveDestination()
         {
             destination = DEFAULT_DESTINATION_PARCEL;
             SetupDestinationButtons(parcelIsDestination: false);
-            OnRemoveDestination?.Invoke();
         }
 
         private void SetAsDestination(Vector2Int parcel)
