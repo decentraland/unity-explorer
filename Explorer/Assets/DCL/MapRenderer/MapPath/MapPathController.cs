@@ -59,6 +59,7 @@ namespace DCL.MapRenderer
         private void OnUpdatedPlayerPosition(Vector2 newPosition)
         {
             cachedPlayerMarkerPosition = newPosition;
+            mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
             if (destinationSet)
             {
                 if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
@@ -67,7 +68,6 @@ namespace DCL.MapRenderer
                 }
                 else
                 {
-                    mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
                     UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint);
                 }
             }

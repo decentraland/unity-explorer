@@ -50,6 +50,8 @@ namespace DCL.MapRenderer
 
         private void UpdateLine()
         {
+            if (!this.gameObject.activeSelf) return;
+
             Vector3 direction = destinationPoint - originPoint;
             float distance = direction.magnitude;
 
