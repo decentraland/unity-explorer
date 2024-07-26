@@ -57,7 +57,6 @@ namespace DCL.Navmap
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
         public FloatingPanelController FloatingPanelController { get; }
-        public event Action OnSetDestination;
 
         public NavmapController(
             NavmapView navmapView,
@@ -153,8 +152,6 @@ namespace DCL.Navmap
             {
                 navmapView.DestinationSetView.Setup("Generic Parcel" + lastParcelClicked.Parcel, false, null);
             }
-
-            OnSetDestination?.Invoke();
         }
 
         private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
