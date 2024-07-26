@@ -51,7 +51,7 @@ namespace DCL.LOD.Components
         }
 
 
-        public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV)
+        public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV, float defaultLodBias)
         {
             CurrentLODLevelPromise = byte.MaxValue;
             if (lodAsset.State != LODAsset.LOD_STATE.SUCCESS)
@@ -71,7 +71,7 @@ namespace DCL.LOD.Components
                 var renderers = pooledList.Value.ToArray();
                 lods[lodAsset.LodKey.Level].renderers = renderers;
                 if (loadedLODAmount == 1)
-                    CalculateCullRelativeHeight(renderers, defaultFOV);
+                    CalculateCullRelativeHeight(renderers, defaultFOV, defaultLodBias);
             }
 
             lodAsset.Root.transform.SetParent(LodGroup.transform);
@@ -103,7 +103,7 @@ namespace DCL.LOD.Components
 
 
 
-        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV)
+        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV, float defaultLodBias)
         {
             const float distance = (20 - 1) * 16;
             if (lodRenderers.Length > 0)
@@ -113,15 +113,14 @@ namespace DCL.LOD.Components
                 // Encapsulate the bounds of the remaining renderers
                 for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
                 //Change to Mathf and Clamp
-                CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(defaultFOV, distance, mergedBounds)));
+                CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(defaultFOV, defaultLodBias, distance, mergedBounds)));
             }
         }
 
-        public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float distance, Bounds rendererBounds)
+        public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float defaultLodBias, float distance, Bounds rendererBounds)
         {
             //Recalculate distance for every LOD in a menu transition
-            //float lodBias = QualitySettings.lodBias;
-            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * QualitySettings.lodBias;
+            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * defaultLodBias;
             float halfFov = (defaultFOV / 2.0f) * Mathf.Deg2Rad;
             float ScreenRelativeTransitionHeight = objectSize / ((distance + objectSize) * Mathf.Tan(halfFov));
             return ScreenRelativeTransitionHeight;

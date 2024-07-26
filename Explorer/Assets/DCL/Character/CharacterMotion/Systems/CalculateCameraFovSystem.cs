@@ -51,11 +51,6 @@ namespace DCL.CharacterMotion.Systems
             {
                 fieldOfViewComponent.AdditiveFov = Mathf.MoveTowards(fieldOfViewComponent.AdditiveFov, 0, characterControllerSettings.FOVDecreaseSpeed * dt);
             }
-
-            float fFOVTargetStart = 60.0f;
-            float defaultHeight = Mathf.Tan((fFOVTargetStart * 0.5f) * Mathf.Deg2Rad);
-            float newHeight = Mathf.Tan(((fFOVTargetStart - fieldOfViewComponent.AdditiveFov) * 0.5f) * Mathf.Deg2Rad);
-            QualitySettings.lodBias = fOriginalLODBias * (defaultHeight / newHeight);
         }
     }
 }

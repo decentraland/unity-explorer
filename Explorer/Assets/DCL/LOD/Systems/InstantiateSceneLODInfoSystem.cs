@@ -4,10 +4,10 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
+using DCL.CharacterCamera;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
-using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
@@ -29,8 +29,10 @@ namespace DCL.LOD.Systems
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
         private readonly TextureArrayContainer lodTextureArrayContainer;
         internal IPerformanceBudget frameCapBudget;
-        private readonly float defaultFOV;
+        private float defaultFOV;
+        private float defaultLodBias;
 
+        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer) : base(world)
 
         public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, float defaultFOV) : base(world)
         {
@@ -39,9 +41,13 @@ namespace DCL.LOD.Systems
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
-            this.defaultFOV = defaultFOV;
         }
 
+        public override void Initialize()
+        {
+            defaultFOV = World.CacheCamera().GetCameraComponent(World).Camera.fieldOfView;
+            defaultLodBias = QualitySettings.lodBias;
+        }
 
         protected override void Update(float t)
         {
@@ -75,7 +81,7 @@ namespace DCL.LOD.Systems
                     newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise));
                 }
 
-                sceneLODInfo.ReEvaluateLODGroup(newLod, defaultFOV);
+                sceneLODInfo.ReEvaluateLODGroup(newLod, defaultFOV, defaultLodBias);
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
