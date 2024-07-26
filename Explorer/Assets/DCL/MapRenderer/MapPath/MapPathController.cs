@@ -11,7 +11,7 @@ namespace DCL.MapRenderer
 {
     public class MapPathController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
-        private const float ARRIVAL_TOLERANCE_SQRD = 25;
+        private const float ARRIVAL_TOLERANCE_SQRD = 50;
         private const float MINIMAP_RADIUS = 130;
         private const float MINIMAP_SQR_DISTANCE_TO_HIDE_PIN = 26000;
 
