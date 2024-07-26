@@ -1,11 +1,10 @@
-﻿using CommunicationData.URLHelpers;
-using System;
+﻿using System;
 
 namespace DCL.Utilities
 {
     public class NftUtils
     {
-        public static bool TryParseUrn(URN urn, out string chain, out string contractAddress, out string tokenId)
+        public static bool TryParseUrn(string urn, out string chain, out string contractAddress, out string tokenId)
         {
             const char SEPARATOR = ':';
             const string DCL_URN_ID = "urn:decentraland";
@@ -17,7 +16,7 @@ namespace DCL.Utilities
 
             try
             {
-                var urnSpan = urn.ToString().AsSpan();
+                var urnSpan = urn.AsSpan();
 
                 // 1: "urn:decentraland"
                 if (!urnSpan.Slice(0, DCL_URN_ID.Length).Equals(DCL_URN_ID, StringComparison.Ordinal))
@@ -33,7 +32,7 @@ namespace DCL.Utilities
                 urnSpan = urnSpan.Slice(contractStandardSpan.Length + 1);
 
                 // check if wearables is third-party
-                if (contractStandardSpan.ToString().Equals(COLLECTIONS_THIRDPARTY, StringComparison.Ordinal))
+                if (contractStandardSpan.SequenceEqual(COLLECTIONS_THIRDPARTY.AsSpan()))
                 {
                     // 4: contract address
                     var contractAddressSpan = urnSpan;
