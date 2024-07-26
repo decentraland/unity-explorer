@@ -32,21 +32,6 @@ namespace DCL.Interaction.PlayerOriginated.Utility
             !(raycastResultForSceneEntities.GetDistance() > info.MaxDistance);
 
         /// <summary>
-        ///     Adds hover input if the entry is qualified for listening to it
-        ///     <para>
-        ///         Entry is qualified if the expected Button is "Pointer" or "Any", and event type is corresponding "HoverEnter"/"HoverExit"
-        ///     </para>
-        /// </summary>
-        public static void TryAppendHoverInput(ref AppendPointerEventResultsIntent resultsIntent, PointerEventType? hoverEventType, in PBPointerEvents.Types.Entry entry, int entryIndex)
-        {
-            if (!hoverEventType.HasValue) return;
-
-            if (entry.EventType == hoverEventType.Value
-                && (entry.EventInfo.Button == ECSComponents.InputAction.IaPointer || entry.EventInfo.Button == ECSComponents.InputAction.IaAny))
-                resultsIntent.ValidIndices.Add((byte)entryIndex);
-        }
-
-        /// <summary>
         ///     Handler Pointer Up and Pointer Down, check the corresponding input action if it was upped or downed this frame
         /// </summary>
         public static void TryAppendButtonLikeInput(IReadOnlyDictionary<ECSComponents.InputAction, InputAction> sdkInputActionsMap,
@@ -87,7 +72,15 @@ namespace DCL.Interaction.PlayerOriginated.Utility
                     return;
             }
 
-            resultsIntent.ValidIndices.Add((byte)entryIndex);
+            resultsIntent.AddValidIndex((byte)entryIndex);
+        }
+
+        public static void TryAppendButtonAction(IReadOnlyDictionary<DCL.ECSComponents.InputAction, InputAction> sdkInputActionsMap, ref AppendPointerEventResultsIntent resultsIntent)
+        {
+            foreach (var input in sdkInputActionsMap)
+
+                // Add all inputs that were pressed/unpressed this frame
+                TryAppendButtonAction(input.Value!, input.Key, ref resultsIntent);
         }
 
         /// <summary>
@@ -98,17 +91,13 @@ namespace DCL.Interaction.PlayerOriginated.Utility
         {
             if (inputAction.WasPressedThisFrame())
             {
-                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetDown);
+                resultsIntent.AddInputAction(ecsInputAction, PointerEventType.PetDown);
                 return;
             }
 
             if (inputAction.WasReleasedThisFrame())
-            {
-                resultsIntent.ValidInputActions.Add(ecsInputAction, PointerEventType.PetUp);
-                return;
-            }
+                resultsIntent.AddInputAction(ecsInputAction, PointerEventType.PetUp);
         }
-
 
         public static void PrepareDefaultValues(this PBPointerEvents.Types.Info info)
         {

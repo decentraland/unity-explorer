@@ -66,7 +66,7 @@ namespace DCL.CharacterTriggerArea.Tests
 
             system = new CharacterTriggerAreaHandlerSystem(world, characterTriggerAreaPool, mainPlayerAvatarBaseProxy, sceneStateProvider, characterObject);
 
-            Physics.simulationMode = SimulationMode.Script;
+            UnityEngine.Physics.simulationMode = SimulationMode.Script;
         }
 
         [TearDown]
@@ -361,14 +361,14 @@ namespace DCL.CharacterTriggerArea.Tests
             Object.DestroyImmediate(fakeOtherPlayerGO);
         }
 
-        private async Task WaitForPhysics()
+        private static async Task WaitForPhysics()
         {
             // Wait several frames to allow CI detect physics on its non-deterministic hardware.
             var framesToWait = 10;
 
             for (var i = 0; i < framesToWait; i++)
             {
-                Physics.Simulate(0.01f);
+                UnityEngine.Physics.Simulate(0.01f);
                 await UniTask.Yield();
             }
         }

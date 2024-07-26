@@ -266,7 +266,7 @@ namespace DCL.Backpack.EmotesSection
             commandBus.SendCommand(new BackpackUnEquipEmoteCommand(itemId));
 
         private void EquipItem(string itemId) =>
-            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId));
+            commandBus.SendCommand(new BackpackEquipEmoteCommand(itemId, null, true));
 
         private void OnFilterCategory(string category)
         {
@@ -336,7 +336,7 @@ namespace DCL.Backpack.EmotesSection
             backpackItemView.EquippedSlotLabel.gameObject.SetActive(false);
         }
 
-        private void OnEquip(int slot, IEmote emote)
+        private void OnEquip(int slot, IEmote emote, bool _)
         {
             if (!usedPoolItems.TryGetValue(emote.GetUrn(), out BackpackEmoteGridItemView backpackItemView)) return;
             backpackItemView.IsEquipped = true;

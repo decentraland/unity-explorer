@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using UnityEngine;
 using Utility;
 using Utility.Times;
 
@@ -108,13 +109,17 @@ namespace DCL.Notification
                        .Append("\"]}");
 
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+            SetAsReadAsync().Forget();
+        }
 
-            webRequestController.PutAsync(
+        private async UniTaskVoid SetAsReadAsync()
+        {
+            await webRequestController.PutAsync(
                 commonArgumentsForSetRead,
                 WebRequests.GenericPutArguments.CreateJson(bodyBuilder.ToString()),
                 new CancellationToken(),
                 signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArgumentsForSetRead.URL, unixTimestamp, "put"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp));
+                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp)).WithNoOpAsync();
         }
 
         public void Dispose()

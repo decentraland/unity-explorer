@@ -41,7 +41,8 @@ MonoBehaviour:
   - rid: 2306906494740202818
   - rid: 2872862648882692098
   - rid: 2872862648882692099
-  - rid: 4816187900846407682
+  - rid: 3601422141625466883
+  - rid: 4816188081820663808
   references:
     version: 2
     RefIds:
@@ -239,11 +240,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <DottedLineRenderer>k__BackingField:
-          m_AssetGUID: e052984ad30813240bd28c945f4cab60
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 1841402216112979969
       type: {class: CharacterContainer/Settings, ns: DCL.Character.Plugin, asm: DCL.Plugins}
       data:
@@ -366,6 +362,29 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 3601422141625466883
+      type: {class: RewardPanelPlugin/RewardPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <RewardPanelView>k__BackingField:
+          m_AssetGUID: 70c6f2eab01fc462a9a2cac0d661417e
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityColorMappings>k__BackingField:
+          m_AssetGUID: 7491e2fb7fd484d2b8aed984dfc7c6ab
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <RarityBackgroundsMapping>k__BackingField:
+          m_AssetGUID: 04a7ffcd277754f7c91237894604f522
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+        <CategoryIconsMapping>k__BackingField:
+          m_AssetGUID: 4a2a7b610414b45c1b576946ce094877
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -471,7 +490,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-    - rid: 4816187900846407682
+    - rid: 4816188081820663808
       type: {class: SidebarPlugin/SidebarSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
         <NotificationIconTypesSO>k__BackingField:

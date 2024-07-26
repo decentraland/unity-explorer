@@ -177,7 +177,7 @@ namespace DCL.Backpack.BackpackBus
             }
 
             backpackEventBus.SendUnEquipEmote(slot, equippedEmotes.EmoteInSlot(slot));
-            backpackEventBus.SendEquipEmote(slot, emote);
+            backpackEventBus.SendEquipEmote(slot, emote, command.IsManuallyEquipped);
         }
 
         private void HandleUnEquipWearableCommand(BackpackUnEquipWearableCommand command)

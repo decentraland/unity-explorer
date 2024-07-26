@@ -8,7 +8,7 @@ using Utility;
 
 namespace DCL.UI.MainUI
 {
-    public class HideShowView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class HideShowView : MonoBehaviour
     {
         [field: SerializeField]
         internal LayoutElement layoutElement { get; private set; }
@@ -23,6 +23,9 @@ namespace DCL.UI.MainUI
         [field: SerializeField]
         internal float animationTime { get; private set; }
 
+        [field: SerializeField]
+        internal OpenSidebarView openSidebarView { get; private set; }
+
         private bool waitingToShow;
         private bool waitingToHide;
         private bool showing;
@@ -33,9 +36,11 @@ namespace DCL.UI.MainUI
         private void Start()
         {
             showing = true;
+            openSidebarView.EnterOpenArea += OnPointerEnter;
+            openSidebarView.ExitOpenArea += OnPointerExit;
         }
 
-        public void OnPointerEnter(PointerEventData eventData)
+        public void OnPointerEnter()
         {
             if (showing)
             {
@@ -60,7 +65,7 @@ namespace DCL.UI.MainUI
             }
         }
 
-        public void OnPointerExit(PointerEventData eventData)
+        public void OnPointerExit()
         {
             if (waitingToShow || showing)
             {

@@ -41,11 +41,6 @@ namespace DCL.UI.Sidebar
             this.notificationsMenuController = notificationsMenuController;
         }
 
-        public override void Dispose()
-        {
-            base.Dispose();
-        }
-
         protected override void OnViewInstantiated()
         {
             viewInstance.backpackButton.onClick.AddListener(() =>
@@ -58,10 +53,17 @@ namespace DCL.UI.Sidebar
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePopup);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
             viewInstance.backpackNotificationIndicator.SetActive(false);
-            notificationsBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationClicked);
+
         }
 
-        private void OnRewardNotificationReceived(object[] parameters)
+        private void OnRewardNotificationClicked(object[] parameters)
+        {
+            viewInstance.backpackNotificationIndicator.SetActive(false);
+        }
+
+        private void OnRewardNotificationReceived(INotification newNotification)
         {
             viewInstance.backpackNotificationIndicator.SetActive(true);
         }

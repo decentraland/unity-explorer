@@ -1,8 +1,8 @@
-﻿using System;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using System.Threading;
 using DCL.AsyncLoadReporting;
+using System;
+using System.Threading;
 using UnityEngine;
 
 namespace ECS.SceneLifeCycle.Realm
@@ -20,9 +20,7 @@ namespace ECS.SceneLifeCycle.Realm
         public const string SDK_TEST_SCENES_URL = "https://sdk-team-cdn.decentraland.org/ipfs/sdk7-test-scenes-main-latest";
         public const string TEST_SCENES_URL = "https://sdk-test-scenes.decentraland.zone";
 
-
-
-        URLDomain CurrentRealm { get; }
+        URLDomain? CurrentRealm { get; }
 
         UniTask<bool> TryChangeRealmAsync(URLDomain realm, CancellationToken ct, Vector2Int parcelToTeleport = default);
 

@@ -85,7 +85,6 @@ namespace DCL.SDKComponents.SceneUI.Utils
             {
                 evt.StopPropagation();
                 uiInputComponent.IsOnValueChangedTriggered = true;
-                inputBlock.BlockMovement();
             };
 
             EventCallback<KeyDownEvent> newOnSubmitCallback = evt =>
@@ -95,6 +94,17 @@ namespace DCL.SDKComponents.SceneUI.Utils
 
                 evt.StopPropagation();
                 uiInputComponent.IsOnSubmitTriggered = true;
+            };
+
+            EventCallback<FocusInEvent> newOnFocusInCallback = evt =>
+            {
+                evt.StopPropagation();
+                inputBlock.BlockMovement();
+            };
+
+            EventCallback<FocusOutEvent> newOnFocusOutCallback = evt =>
+            {
+                evt.StopPropagation();
                 inputBlock.UnblockMovement();
             };
 
@@ -103,12 +113,18 @@ namespace DCL.SDKComponents.SceneUI.Utils
             uiInputComponent.currentOnValueChanged = newOnChangeCallback;
             uiInputComponent.TextField.RegisterCallback(newOnSubmitCallback);
             uiInputComponent.currentOnSubmit = newOnSubmitCallback;
+            uiInputComponent.TextField.RegisterCallback(newOnFocusInCallback);
+            uiInputComponent.currentOnFocusIn = newOnFocusInCallback;
+            uiInputComponent.TextField.RegisterCallback(newOnFocusOutCallback);
+            uiInputComponent.currentOnFocusOut = newOnFocusOutCallback;
         }
 
         public static void UnregisterInputCallbacks(this UIInputComponent uiInputComponent)
         {
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnValueChanged);
             uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnSubmit);
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusIn);
+            uiInputComponent.TextField.UnregisterCallback(uiInputComponent.currentOnFocusOut);
         }
 
         public static void RegisterDropdownCallbacks(this UIDropdownComponent uiDropdownComponent)
