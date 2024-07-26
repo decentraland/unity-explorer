@@ -190,8 +190,17 @@ namespace Global.Dynamic
             // When started in local scene development mode (AKA preview mode) command line arguments are used
             // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
             string[] cmdArgs = Environment.GetCommandLineArgs();
-            if (cmdArgs.Length > 1)
-                deepLinkString = cmdArgs[1];
+
+            if (cmdArgs.Length <= 1) return; // first cmd arg is always the application path
+
+            foreach (string cmdArg in cmdArgs)
+            {
+                if (cmdArg.StartsWith("decentraland://"))
+                {
+                    deepLinkString = cmdArg;
+                    break;
+                }
+            }
 #else
             // Patch for MacOS removing the ':' from the realm parameter protocol
             deepLinkString = Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2");
