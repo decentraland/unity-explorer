@@ -16,7 +16,7 @@ namespace DCL.LOD.Components
         SUCCESS,
         FAILED
     }
-    
+
     public struct SceneLODInfo
     {
         public SCENE_LOD_INFO_STATE State;
@@ -25,7 +25,7 @@ namespace DCL.LOD.Components
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
-        
+
         //We can represent 8 LODS loaded state with a byte
         public string id;
         public byte LoadedLODs;
@@ -55,7 +55,7 @@ namespace DCL.LOD.Components
         }
 
 
-        public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV)
+        public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV, float defaultLodBias)
         {
             CurrentLODLevelPromise = byte.MaxValue;
             SetLODLoaded(lodAsset.LodKey.Level);
@@ -77,7 +77,7 @@ namespace DCL.LOD.Components
                 var renderers = pooledList.Value.ToArray();
                 lods[lodAsset.LodKey.Level].renderers = renderers;
                 if (loadedLODs == 1)
-                    CalculateCullRelativeHeight(renderers, defaultFOV);
+                    CalculateCullRelativeHeight(renderers, defaultFOV, defaultLodBias);
             }
 
             lodAsset.Root.transform.SetParent(LodGroup.transform);
@@ -109,7 +109,7 @@ namespace DCL.LOD.Components
             State = SCENE_LOD_INFO_STATE.SUCCESS;
         }
 
-        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV)
+        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV, float defaultLodBias)
         {
             const float distance = 20 * 16;
             if (lodRenderers.Length > 0)
@@ -119,14 +119,13 @@ namespace DCL.LOD.Components
                 // Encapsulate the bounds of the remaining renderers
                 for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
 
-                CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(defaultFOV, distance, mergedBounds)));
+                CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(defaultFOV, defaultLodBias, distance, mergedBounds)));
             }
         }
 
-        public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float distance, Bounds rendererBounds)
+        public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float defaultLodBias, float distance, Bounds rendererBounds)
         {
-            float lodBias = 1;
-            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * lodBias;
+            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * defaultLodBias;
             float halfFov = (defaultFOV / 2.0f) * Mathf.Deg2Rad;
             float ScreenRelativeTransitionHeight = objectSize / (distance * Mathf.Tan(halfFov));
             return ScreenRelativeTransitionHeight;
@@ -136,17 +135,17 @@ namespace DCL.LOD.Components
         {
             return IsLODLoaded(lodForAcquisition) || CurrentLODLevelPromise == lodForAcquisition;
         }
-        
+
         private void SetLODLoaded(int lodLevel)
         {
             LoadedLODs |= (byte)(1 << lodLevel);
         }
-        
+
         private bool IsLODLoaded(int lodLevel)
         {
             return (LoadedLODs & (1 << lodLevel)) != 0;
         }
-        
+
         private int CountLoadedLODs()
         {
             int count = 0;
