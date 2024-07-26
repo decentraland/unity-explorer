@@ -98,6 +98,7 @@ namespace DCL.Minimap
             SetWorldMode(realmData.ScenesAreFixed);
             realmNavigator.RealmChanged += OnRealmChanged;
             mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
+            mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
             mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
             mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
             viewInstance.destinationPinMarker.HidePin();

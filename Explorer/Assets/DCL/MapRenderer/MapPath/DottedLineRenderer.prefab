@@ -130,7 +130,7 @@ LineRenderer:
     numCapVertices: 0
     alignment: 0
     textureMode: 3
-    textureScale: {x: 1, y: 1}
+    textureScale: {x: 0.5, y: 1}
     shadowBias: 0.5
     generateLightingData: 0
   m_MaskInteraction: 0
@@ -149,8 +149,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d19a905ffee281e419bd8b8a6eef7c99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startPoint: {fileID: 0}
-  endPoint: {x: 25, y: 48, z: 0}
   dotSize: 10
   spaceBetweenDots: 10
-  updateMagnitude: 2500

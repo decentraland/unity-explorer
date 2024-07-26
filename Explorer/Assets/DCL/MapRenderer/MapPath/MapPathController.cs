@@ -68,7 +68,7 @@ namespace DCL.MapRenderer
                 else
                 {
                     mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
-                    UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, internalPinMarker.CurrentPosition);
+                    UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint);
                 }
             }
         }
@@ -126,7 +126,7 @@ namespace DCL.MapRenderer
             }
 
             mapPathEventBus.ShowPinInMinimap(currentDestinationPin);
-            UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, currentDestinationPin.CurrentPosition);
+            UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint);
         }
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
