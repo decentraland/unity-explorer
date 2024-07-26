@@ -468,7 +468,7 @@ MonoBehaviour:
       enabled: 0
       parcels:
       - {x: 145, y: 60}
-    targetWorld: MetadyneLabs.dcl.eth
+    targetWorld: globalpx.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHibridSceneContentServer: 1
@@ -552,6 +552,16 @@ MonoBehaviour:
         m_EditorAssetChanged: 0
       <UserMarker>k__BackingField:
         m_AssetGUID: 53b70d09c4a814878a30c68582ad4523
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <DestinationPathLine>k__BackingField:
+        m_AssetGUID: e052984ad30813240bd28c945f4cab60
+        m_SubObjectName: 
+        m_SubObjectType: 
+        m_EditorAssetChanged: 0
+      <PathDestinationPin>k__BackingField:
+        m_AssetGUID: 55f1de672716d164bab43b54e576c9fb
         m_SubObjectName: 
         m_SubObjectType: 
         m_EditorAssetChanged: 0
