@@ -141,13 +141,13 @@ namespace DCL.Navmap
         private void RemoveDestination()
         {
             mapPathEventBus.RemoveDestination();
-            navmapView.gameObject.SetActive(false);
+            navmapView.DestinationSetView.gameObject.SetActive(false);
         }
 
         private void SetDestination()
         {
             mapPathEventBus.SetDestination(lastParcelClicked.Parcel, lastParcelClicked.PinMarker);
-            navmapView.gameObject.SetActive(true);
+            navmapView.DestinationSetView.gameObject.SetActive(true);
             if (lastParcelClicked.PinMarker != null) { navmapView.DestinationSetView.Setup(lastParcelClicked.PinMarker.Description, true, lastParcelClicked.PinMarker.CurrentSprite); }
             else
             {
