@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using CrdtEcsBridge.Physics;
+using DCL.ECSComponents;
+using UnityEngine;
 
 namespace ECS.Unity.SceneBoundsChecker
 {
@@ -42,6 +44,19 @@ namespace ECS.Unity.SceneBoundsChecker
 
         public static SDKCollider NewInvalidSDKCollider() =>
             new (null);
+
+        public void SetColliderLayer(ColliderLayer colliderLayer, out bool enabled)
+        {
+            GameObject colliderGameObject = Collider!.gameObject;
+
+            enabled = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);
+
+            if (enabled)
+                colliderGameObject.layer = unityLayer;
+
+            IsActiveByEntity = enabled;
+            Collider.enabled = enabled;
+        }
 
         public void ForceActiveBySceneBounds(bool value)
         {

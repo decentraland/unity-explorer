@@ -81,34 +81,23 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             else
 
                 // Just a change of parameters
-                SetupCollider(entity, crdtEntity, setupCollider, primitiveColliderComponent.SDKCollider, sdkComponent);
+                SetupCollider(entity, crdtEntity, setupCollider, ref primitiveColliderComponent.SDKCollider, sdkComponent);
 
             sdkComponent.IsDirty = false;
         }
 
-        private void SetupCollider(in Entity entity, CRDTEntity sdkEntity, ISetupCollider setupCollider, SDKCollider collider, in PBMeshCollider sdkComponent)
+        private void SetupCollider(in Entity entity, CRDTEntity sdkEntity, ISetupCollider setupCollider, ref SDKCollider collider, in PBMeshCollider sdkComponent)
         {
             // Setup collider only if it's gonna be enabled, otherwise there is no reason to [re]generate a shape
-            if (SetColliderLayer(entity, sdkEntity, collider, sdkComponent))
+            if (SetColliderLayer(entity, sdkEntity, ref collider, sdkComponent))
                 setupCollider.Execute(collider.Collider, sdkComponent);
         }
 
-        private bool SetColliderLayer(in Entity entity, CRDTEntity sdkEntity, SDKCollider sdkCollider, in PBMeshCollider sdkComponent)
+        private bool SetColliderLayer(in Entity entity, CRDTEntity sdkEntity, ref SDKCollider sdkCollider, in PBMeshCollider sdkComponent)
         {
             ColliderLayer colliderLayer = sdkComponent.GetColliderLayer();
-
-            GameObject colliderGameObject = sdkCollider.Collider.gameObject;
-
-            bool enabled = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);
-
-            if (enabled)
-                colliderGameObject.layer = unityLayer;
-
-            sdkCollider.IsActiveByEntity = enabled;
-            sdkCollider.Collider.enabled = enabled;
-
-            entityCollidersCache.Associate(sdkCollider.Collider, new ColliderSceneEntityInfo(World.Reference(entity), sdkEntity, colliderLayer));
-
+            sdkCollider.SetColliderLayer(colliderLayer, out bool enabled);
+            entityCollidersCache.Associate(sdkCollider.Collider, new ColliderSceneEntityInfo(World!.Reference(entity), sdkEntity, colliderLayer));
             return enabled;
         }
 
@@ -127,7 +116,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType)!.Rent()!;
             component.AssignCollider(new SDKCollider(collider), setupCollider.ColliderType, sdkComponent.MeshCase);
 
-            SetupCollider(entity, sdkEntity, setupCollider, component.SDKCollider, in sdkComponent);
+            SetupCollider(entity, sdkEntity, setupCollider, ref component.SDKCollider, in sdkComponent);
 
             // Parent collider to the entity's transform
             Transform colliderTransform = collider.transform;
