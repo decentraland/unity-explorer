@@ -57,7 +57,7 @@ namespace ECS.SceneLifeCycle.Systems
 
             partitionDataContainer.Initialize(DEPLOYED_SCENES_LIMIT, partitionSettings.SqrDistanceBuckets, partitionSettings);
             emptyScenePartition = (byte)(partitionSettings.SqrDistanceBuckets.Count - 1);
-            
+
 
         }
 
@@ -112,6 +112,18 @@ namespace ECS.SceneLifeCycle.Systems
                 return;
             }
 
+            if (definition.IsPortableExperience)
+            {
+                PartitionComponent partitionComponent = partitionComponentPool.Get();
+                partitionComponent.OutOfRange = false;
+                partitionComponent.Bucket = 0;
+                partitionComponent.IsBehind = false;
+                partitionComponent.RawSqrDistance = 1;
+                partitionComponent.IsDirty = true;
+                World.Add(entity, partitionComponent);
+                return;
+            }
+
             if (definition.InternalJobIndex < 0)
             {
                 ScheduleSceneDefinition(ref definition);
@@ -147,6 +159,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
+        [None(typeof(PortableExperienceComponent))]
         private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.InternalJobIndex < 0) return;

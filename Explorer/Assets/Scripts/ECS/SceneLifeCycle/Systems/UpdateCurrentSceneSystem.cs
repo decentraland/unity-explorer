@@ -53,6 +53,7 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void UpdateSceneReadiness(Vector2Int parcel)
         {
+
             if (!scenesCache.TryGetByParcel(parcel, out var currentScene))
                 return;
 

@@ -32,7 +32,7 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData = Substitute.For<IReadOnlyCameraSamplingData>();
             componentPool = Substitute.For<IComponentPool<PartitionComponent>>();
             componentPool.Get().Returns(_ => new PartitionComponent());
-            var realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
+            IRealmPartitionSettings realmPartitionSettings = Substitute.For<IRealmPartitionSettings>();
 
             system = new PartitionSceneEntitiesSystem(world, componentPool, partitionSettings, samplingData, new PartitionDataContainer(), realmPartitionSettings);
             system.partitionDataContainer.Restart();
@@ -46,7 +46,7 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData.Position.Returns(new Vector3(0, 0, 46)); // Partition #1
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(new Vector3(0, 0, 46)));
 
-            Entity e = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
+            Entity e = world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
             {
                 metadata = new SceneMetadata
                 {
@@ -79,7 +79,7 @@ namespace ECS.SceneLifeCycle.Tests
             samplingData.Parcel.Returns(ParcelMathHelper.FloorToParcel(coords));
 
             // new entity without partition
-            Entity e = world.Create(new SceneDefinitionComponent(new SceneEntityDefinition
+            Entity e = world.Create(SceneDefinitionComponentFactory.CreateFromDefinition(new SceneEntityDefinition
             {
                 metadata = new SceneMetadata
                 {
@@ -87,7 +87,6 @@ namespace ECS.SceneLifeCycle.Tests
                         { DecodedParcels = new[] { ParcelMathHelper.FloorToParcel(Vector3.zero) } },
                 },
             }, new IpfsPath()));
-
 
             // Run for the first time so the internals of the system change
             system.Update(0);

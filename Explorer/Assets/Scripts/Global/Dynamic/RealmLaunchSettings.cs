@@ -28,6 +28,8 @@ namespace Global.Dynamic
         [SerializeField] internal HybridSceneContentServer remoteHybridSceneContentServer = HybridSceneContentServer.Goerli;
         [SerializeField] internal bool useRemoteAssetsBundles = true;
 
+        [SerializeField] private string[] portableExperiencesEnsToLoadAtGameStart;
+
         public Vector2Int TargetScene => targetScene;
 
         public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled

@@ -52,6 +52,7 @@ namespace Global.Dynamic
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
             set
             {
                 globalWorld = value;
@@ -94,7 +95,7 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             realmData.Reconfigure(
@@ -210,13 +211,14 @@ namespace Global.Dynamic
             return false;
         }
 
-        private void FindLoadedScenes()
+        private void FindLoadedScenes(bool findPortableExperiences = false)
         {
             allScenes.Clear();
             allScenes.AddRange(scenesCache.Scenes);
+            if (findPortableExperiences) allScenes.AddRange(scenesCache.PortableExperiencesScenes);
 
             // Dispose all scenes
-            scenesCache.Clear();
+            scenesCache.ClearScenes(findPortableExperiences);
         }
     }
 }

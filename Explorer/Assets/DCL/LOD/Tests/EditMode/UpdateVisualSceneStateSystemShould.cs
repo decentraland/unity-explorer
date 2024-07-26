@@ -1,3 +1,4 @@
+using Arch.Core;
 using System.Collections.Generic;
 using DCL.Ipfs;
 using DCL.LOD;
@@ -24,17 +25,19 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
     [SetUp]
     public void Setup()
     {
-        var lodSettings = Substitute.For<ILODSettingsAsset>();
+        ILODSettingsAsset lodSettings = Substitute.For<ILODSettingsAsset>();
+
         int[] bucketThresholds =
         {
-            4, 8
+            4, 8,
         };
+
         lodSettings.SDK7LodThreshold.Returns(2);
         lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
-        var scenesCahce = Substitute.For<IScenesCache>();
-        var lodAssetsPool = Substitute.For<ILODAssetsPool>();
-        var realmData = Substitute.For<IRealmData>();
+        IScenesCache scenesCahce = Substitute.For<IScenesCache>();
+        ILODAssetsPool lodAssetsPool = Substitute.For<ILODAssetsPool>();
+        IRealmData realmData = Substitute.For<IRealmData>();
 
         partitionComponent = new PartitionComponent();
         partitionComponent.IsDirty = true;
@@ -47,14 +50,14 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
                 {
                     DecodedParcels = new Vector2Int[]
                     {
-                        new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1)
-                    }
+                        new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1),
+                    },
                 },
-                runtimeVersion = "7"
-            }
+                runtimeVersion = "7",
+            },
         };
 
-        sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
+        sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
         visualSceneState = new VisualSceneState();
 
         system = new UpdateVisualSceneStateSystem(world, realmData, scenesCahce, lodAssetsPool, lodSettings,
@@ -66,7 +69,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_LOD;
         partitionComponent.Bucket = 0;
-        var entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent, new SceneLODInfo());
+        Entity entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent, new SceneLODInfo());
 
         system.Update(0);
 
@@ -79,7 +82,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
         partitionComponent.Bucket = 5;
-        var entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent, Substitute.For<ISceneFacade>());
+        Entity entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent, Substitute.For<ISceneFacade>());
 
         system.Update(0);
 
@@ -92,7 +95,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
     {
         visualSceneState.CurrentVisualSceneState = VisualSceneStateEnum.SHOWING_SCENE;
         partitionComponent.Bucket = 5;
-        var entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent, new AssetPromise<ISceneFacade, GetSceneFacadeIntention>());
+        Entity entityReference = world.Create(visualSceneState, partitionComponent, sceneDefinitionComponent, new AssetPromise<ISceneFacade, GetSceneFacadeIntention>());
 
         system.Update(0);
 
@@ -114,20 +117,18 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
                 {
                     DecodedParcels = new Vector2Int[]
                     {
-                        new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1)
-                    }
+                        new (0, 0), new (0, 1), new (1, 0), new (2, 0), new (2, 1), new (3, 0), new (3, 1),
+                    },
                 },
-                runtimeVersion = "6"
-            }
+                runtimeVersion = "6",
+            },
         };
-        var entityReference = world.Create(visualSceneState, partitionComponent, sdk6SceneDefinitionComponent, new SceneLODInfo());
+
+        Entity entityReference = world.Create(visualSceneState, partitionComponent, sdk6SceneDefinitionComponent, new SceneLODInfo());
 
         system.Update(0);
 
         Assert.IsTrue(world.Has<SceneLODInfo>(entityReference));
         Assert.IsFalse(world.Has<ISceneFacade>(entityReference));
     }
-
-
-
 }
