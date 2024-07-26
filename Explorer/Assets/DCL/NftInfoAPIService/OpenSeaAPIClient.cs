@@ -9,7 +9,7 @@ namespace DCL.NftInfoAPIService
     {
         private const string MARKET_NAME = "OpenSea";
         private const string BASE_URL = "https://opensea.decentraland.org";
-        private const string CHAIN = "ethereum";
+        private const string DEFAULT_CHAIN = "ethereum";
 
         private readonly IWebRequestController webRequestController;
 
@@ -18,9 +18,9 @@ namespace DCL.NftInfoAPIService
             this.webRequestController = webRequestController;
         }
 
-        public async UniTask<NftInfo> FetchNftInfoAsync(string contractAddress, string tokenId, CancellationToken ct)
+        public async UniTask<NftInfo> FetchNftInfoAsync(string chain, string contractAddress, string tokenId, CancellationToken ct)
         {
-            var url = $"{BASE_URL}/api/v2/chain/{CHAIN}/contract/{contractAddress}/nfts/{tokenId}";
+            var url = $"{BASE_URL}/api/v2/chain/{(string.IsNullOrEmpty(chain) ? DEFAULT_CHAIN : chain)}/contract/{contractAddress}/nfts/{tokenId}";
 
             OpenSeaNftResponse nftResponse = await webRequestController.GetAsync(url, ct, reportCategory: ReportCategory.NFT_INFO_WEB_REQUEST)
                .CreateFromJson<OpenSeaNftResponse>(WRJsonParser.Unity, WRThreadFlags.SwitchToThreadPool);
