@@ -79,6 +79,7 @@ namespace ECS.Unity.PrimitiveColliders.Systems
             if (ReferenceEquals(primitiveColliderComponent.Collider, null))
                 Instantiate(entity, crdtEntity, setupCollider, ref primitiveColliderComponent, ref sdkComponent, ref transformComponent);
             else
+
                 // Just a change of parameters
                 SetupCollider(entity, crdtEntity, setupCollider, primitiveColliderComponent.SDKCollider, sdkComponent);
 
@@ -114,14 +115,17 @@ namespace ECS.Unity.PrimitiveColliders.Systems
         /// <summary>
         ///     It is either called when there is no collider or collider was invalidated before (set to null)
         /// </summary>
-        private void Instantiate(in Entity entity, CRDTEntity sdkEntity, ISetupCollider setupCollider, ref PrimitiveColliderComponent component, ref PBMeshCollider sdkComponent,
-            ref TransformComponent transformComponent)
+        private void Instantiate(
+            in Entity entity,
+            CRDTEntity sdkEntity,
+            ISetupCollider setupCollider,
+            ref PrimitiveColliderComponent component,
+            ref PBMeshCollider sdkComponent,
+            ref TransformComponent transformComponent
+        )
         {
-            component.ColliderType = setupCollider.ColliderType;
-            component.SDKType = sdkComponent.MeshCase;
-
-            var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType).Rent();
-            component.SDKCollider = new SDKCollider(collider);
+            var collider = (Collider)poolsRegistry.GetPool(setupCollider.ColliderType)!.Rent()!;
+            component.AssignCollider(new SDKCollider(collider), setupCollider.ColliderType, sdkComponent.MeshCase);
 
             SetupCollider(entity, sdkEntity, setupCollider, component.SDKCollider, in sdkComponent);
 
@@ -130,8 +134,6 @@ namespace ECS.Unity.PrimitiveColliders.Systems
 
             colliderTransform.SetParent(transformComponent.Transform, false);
             colliderTransform.ResetLocalTRS();
-
-            component.Collider = collider;
         }
     }
 }
