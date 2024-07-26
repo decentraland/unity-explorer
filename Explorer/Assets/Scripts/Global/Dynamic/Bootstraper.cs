@@ -19,7 +19,7 @@ using ECS.SceneLifeCycle.Realm;
 using MVC;
 using SceneRunner.Debugging;
 using System;
-using System.Collections.Specialized;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -30,6 +30,10 @@ namespace Global.Dynamic
 {
     public class Bootstrap : IBootstrap
     {
+        private const string APP_PARAMETER_REALM = "realm";
+        private const string APP_PARAMETER_LOCAL_SCENE = "local-scene";
+        private const string APP_PARAMETER_POSITION = "position";
+
         private readonly bool showSplash;
         private readonly bool showAuthentication;
         private readonly bool showLoading;
@@ -42,6 +46,7 @@ namespace Global.Dynamic
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
+        private Dictionary<string, string> appParameters = new Dictionary<string, string>();
 
         public Bootstrap(DebugSettings debugSettings)
         {
@@ -58,9 +63,13 @@ namespace Global.Dynamic
             splashRoot.SetActive(showSplash);
             cursorRoot.EnsureNotNull();
 
-#if !UNITY_EDITOR
-            ProcessDeepLinkParameters(launchSettings);
-#endif
+            appParameters = ParseApplicationParameters();
+
+            if (appParameters.ContainsKey(APP_PARAMETER_REALM))
+                ProcessRealmAppParameter(launchSettings);
+
+            if (appParameters.ContainsKey(APP_PARAMETER_POSITION))
+                ProcessPositionAppParameter(appParameters[APP_PARAMETER_POSITION], launchSettings);
 
             startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
             startingParcel = launchSettings.TargetScene;
@@ -107,7 +116,9 @@ namespace Global.Dynamic
                     StartParcel = startingParcel,
                     EnableLandscape = enableLandscape,
                     EnableLOD = enableLOD,
-                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel)
+                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
+                    LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
+                    AppParameters = appParameters
                 },
                 backgroundMusic,
                 ct);
@@ -133,7 +144,7 @@ namespace Global.Dynamic
 
         public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -182,32 +193,52 @@ namespace Global.Dynamic
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
         }
 
-        private void ProcessDeepLinkParameters(RealmLaunchSettings launchSettings)
+        private Dictionary<string, string> ParseApplicationParameters()
         {
-            string deepLinkString = string.Empty;
-
-#if UNITY_STANDALONE_WIN
-            // When started in local scene development mode (AKA preview mode) command line arguments are used
-            // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
             string[] cmdArgs = Environment.GetCommandLineArgs();
 
-            if (cmdArgs.Length <= 1) return; // first cmd arg is always the application path
-
-            foreach (string cmdArg in cmdArgs)
+            bool deepLinkFound = false;
+            string lastKeyStored = string.Empty;
+            for (int i = 1; i < cmdArgs.Length; i++)
             {
-                if (cmdArg.StartsWith("decentraland://"))
+                var arg = cmdArgs[i];
+
+                if (arg.StartsWith("--"))
                 {
-                    deepLinkString = cmdArg;
-                    break;
+                    lastKeyStored = arg.Substring(2);
+                    appParameters[lastKeyStored] = string.Empty;
+                }
+#if !UNITY_EDITOR && UNITY_STANDALONE_WIN
+                else if (!deepLinkFound && arg.StartsWith("decentraland://"))
+                {
+                    deepLinkFound = true;
+                    lastKeyStored = string.Empty;
+
+                    // When started in local scene development mode (AKA preview mode) command line arguments are used
+                    // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
+                    ProcessDeepLinkParameters(arg);
+                }
+#endif
+                else if (!string.IsNullOrEmpty(lastKeyStored))
+                {
+                    appParameters[lastKeyStored] = arg;
                 }
             }
-#else
-            // Patch for MacOS removing the ':' from the realm parameter protocol
-            deepLinkString = Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2");
+
+            // in MacOS the deep link string doesn't come in the cmd args...
+#if !UNITY_EDITOR && UNITY_STANDALONE_OSX
+            if (!string.IsNullOrEmpty(Application.absoluteURL) && Application.absoluteURL.StartsWith("decentraland"))
+            {
+                // Regex patch for MacOS removing the ':' from the realm parameter protocol
+                ProcessDeepLinkParameters(Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2"));
+            }
 #endif
 
-            if (string.IsNullOrEmpty(deepLinkString)) return;
+            return appParameters;
+        }
 
+        private void ProcessDeepLinkParameters(string deepLinkString)
+        {
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.com/?");
 
@@ -216,32 +247,50 @@ namespace Global.Dynamic
             var uri = new Uri(deepLinkString);
             var uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            var realmParam = uriQuery.Get("realm");
-            if (!string.IsNullOrEmpty(realmParam))
+            foreach (string uriQueryKey in uriQuery.AllKeys)
             {
-                localSceneDevelopment = ParseLocalSceneParameter(uriQuery);
-
-                if (localSceneDevelopment && IsRealmALocalUrl(realmParam))
-                    launchSettings.SetLocalSceneDevelopmentRealm(realmParam);
-                else if (IsRealmAWorld(realmParam))
-                    launchSettings.SetWorldRealm(realmParam);
+                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
             }
+        }
 
-            Vector2Int targetPosition = ParsePositionParameter(uriQuery);
+        private void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)
+        {
+            string realmParamValue = appParameters[APP_PARAMETER_REALM];
+
+            if (string.IsNullOrEmpty(realmParamValue)) return;
+
+            localSceneDevelopment = appParameters.ContainsKey(APP_PARAMETER_LOCAL_SCENE) && ParseLocalSceneParameter(appParameters[APP_PARAMETER_LOCAL_SCENE]);
+
+            if (localSceneDevelopment && IsRealmALocalUrl(realmParamValue))
+                launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);
+            else if (IsRealmAWorld(realmParamValue))
+                launchSettings.SetWorldRealm(realmParamValue);
+        }
+
+        private void ProcessPositionAppParameter(string positionParameterValue, RealmLaunchSettings launchSettings)
+        {
+            if (string.IsNullOrEmpty(positionParameterValue)) return;
+
+            Vector2Int targetPosition = Vector2Int.zero;
+
+            var matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+            if (matches.Count > 1)
+            {
+                targetPosition.x = int.Parse(matches[0].Value);
+                targetPosition.y = int.Parse(matches[1].Value);
+            }
 
             launchSettings.SetTargetScene(targetPosition);
         }
 
-        private bool ParseLocalSceneParameter(NameValueCollection uriQuery)
+        private bool ParseLocalSceneParameter(string localSceneParameter)
         {
+            if (string.IsNullOrEmpty(localSceneParameter)) return false;
+
             bool returnValue = false;
-            var localSceneParam = uriQuery.Get("local-scene");
-            if (!string.IsNullOrEmpty(localSceneParam))
-            {
-                var match = new Regex(@"true|false").Match(localSceneParam);
-                if (match.Success)
-                    bool.TryParse(match.Value, out returnValue);
-            }
+            var match = new Regex(@"true|false").Match(localSceneParameter);
+            if (match.Success)
+                bool.TryParse(match.Value, out returnValue);
 
             return returnValue;
         }
@@ -252,22 +301,6 @@ namespace Global.Dynamic
         private bool IsRealmALocalUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out var uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
-
-        private Vector2Int ParsePositionParameter(NameValueCollection uriQuery)
-        {
-            Vector2Int returnValue = Vector2Int.zero;
-            var positionParam = uriQuery.Get("position");
-            if (!string.IsNullOrEmpty(positionParam))
-            {
-                var matches = new Regex(@"-*\d+").Matches(positionParam);
-                if (matches.Count > 1)
-                {
-                    returnValue.x = int.Parse(matches[0].Value);
-                    returnValue.y = int.Parse(matches[1].Value);
-                }
-            }
-            return returnValue;
-        }
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
