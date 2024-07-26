@@ -42,6 +42,7 @@ MonoBehaviour:
   - rid: 2872862648882692098
   - rid: 2872862648882692099
   - rid: 3601422141625466883
+  - rid: 4816188081820663808
   references:
     version: 2
     RefIds:
@@ -251,12 +252,7 @@ MonoBehaviour:
         <sceneBucketPropagationLimit>k__BackingField: 3
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        MinimapPrefab:
-          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+      data: 
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
@@ -491,6 +487,14 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         SkyboxAnimationCycle:
           m_AssetGUID: 3b17a8a5ab9ee104899eb22c70935c38
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 4816188081820663808
+      type: {class: SidebarPlugin/SidebarSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <NotificationIconTypesSO>k__BackingField:
+          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
