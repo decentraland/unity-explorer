@@ -45,6 +45,7 @@ namespace DCL.PluginSystem.Global
         {
             lodAssetsPool = new LODAssetsPool();
             cacheCleaner.Register(lodAssetsPool);
+            //TODO (JUANI) : See if we can get it directly from Camera.main. ATM, Camera.main is null
             defaultFOV = Camera.main ? Camera.main.fieldOfView : 60.0f;
 
             this.realmData = realmData;
@@ -86,7 +87,7 @@ namespace DCL.PluginSystem.Global
 
             if (lodEnabled)
             {
-                InitializeSceneLODInfo.InjectToWorld(ref builder, lodGroupPool, lodContainer.transform);
+                InitializeSceneLODInfo.InjectToWorld(ref builder, lodContainer.transform, lodGroupPool);
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodGroupPool, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, defaultFOV);

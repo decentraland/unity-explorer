@@ -8,43 +8,38 @@ using UnityEngine;
 
 namespace DCL.LOD.Components
 {
-    public enum SCENE_LOD_INFO_STATE
-    {
-        UNINITIALIZED,
-        WAITING_LOD,
-        SUCCESS,
-        FAILED
-    }
-    
+  
     public struct SceneLODInfo
     {
-        public SCENE_LOD_INFO_STATE State;
+        public Dictionary<string, LODCacheInfo> lodGroupCache;
         public GameObjectPool<LODGroup> lodGroupPool;
-
-        //INclude reference to AssetBundles for unloading
-        public Dictionary<string, (LODGroup, byte, float)> lodGroupCache;
-
+        
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
         
         //We can represent 8 LODS loaded state with a byte
         public byte LoadedLODs;
+        public byte FailedLODs;
         public string id;
         public LODGroup LodGroup;
         public float CullRelativeHeight;
 
         public void Dispose(World world)
         {
-            if (State is SCENE_LOD_INFO_STATE.SUCCESS)
+            CurrentLODPromise.ForgetLoading(world);
+            if (SceneLODInfoUtils.CountLOD(LoadedLODs) > 1
+                || SceneLODInfoUtils.CountLOD(FailedLODs) > 1)
             {
                 LodGroup.gameObject.SetActive(false);
-                lodGroupCache[id] = (LodGroup, LoadedLODs, CullRelativeHeight);
+                lodGroupCache[id] = new LODCacheInfo
+                {
+                    FailedLODs = FailedLODs, LoadedLODs = LoadedLODs, LodGroup = LodGroup, CullRelativeHeight = CullRelativeHeight
+                };
             }
-
-            if (State is SCENE_LOD_INFO_STATE.WAITING_LOD)
+            else
+            {
                 lodGroupPool.Release(LodGroup);
-
-            CurrentLODPromise.ForgetLoading(world);
+            }
         }
 
         public static SceneLODInfo Create()
@@ -59,32 +54,29 @@ namespace DCL.LOD.Components
         public void ReEvaluateLODGroup(LODAsset lodAsset, float defaultFOV)
         {
             CurrentLODLevelPromise = byte.MaxValue;
-            SetLODLoaded(lodAsset.LodKey.Level);
-
-            //TODO (JUANI) : Maybe only one of the LODs is missing. This considers that for any given missing LOD the whole thing is a failure
             if (lodAsset.State != LODAsset.LOD_STATE.SUCCESS)
             {
-                State = SCENE_LOD_INFO_STATE.FAILED;
-                lodGroupPool.Release(LodGroup);
+                FailedLODs = SceneLODInfoUtils.SetLODResult(FailedLODs, lodAsset.LodKey.Level);
                 return;
             }
 
-            int loadedLODs = CountLoadedLODs();
+            LoadedLODs = SceneLODInfoUtils.SetLODResult(LoadedLODs, lodAsset.LodKey.Level);
+            int loadedLODAmount = SceneLODInfoUtils.CountLOD(LoadedLODs);
             var lods = LodGroup.GetLODs();
+            
             using (var pooledList = lodAsset.Root.GetComponentsInChildrenIntoPooledList<Renderer>(true))
             {
                 //MISHA: Is it possible to avoid the array conversion
                 //TODO (Juani) : If it is size 0 it doesnt make sense to go beyond this point
                 var renderers = pooledList.Value.ToArray();
                 lods[lodAsset.LodKey.Level].renderers = renderers;
-                if (loadedLODs == 1)
+                if (loadedLODAmount == 1)
                     CalculateCullRelativeHeight(renderers, defaultFOV);
             }
 
             lodAsset.Root.transform.SetParent(LodGroup.transform);
 
-
-            if (loadedLODs == 1)
+            if (loadedLODAmount == 1)
             {
                 if (lodAsset.LodKey.Level == 0)
                 {
@@ -100,19 +92,20 @@ namespace DCL.LOD.Components
                 //Ideally we would set it from the ABConverter
                 LodGroup.RecalculateBounds();
             }
-            else if (loadedLODs == 2)
+            else if (loadedLODAmount == 2)
             {
                 lods[0].screenRelativeTransitionHeight = (1 - CullRelativeHeight) / 2 + CullRelativeHeight;
                 lods[1].screenRelativeTransitionHeight = CullRelativeHeight;
             }
 
             LodGroup.SetLODs(lods);
-            State = SCENE_LOD_INFO_STATE.SUCCESS;
         }
+
+
 
         private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV)
         {
-            const float distance = 20 * 16;
+            const float distance = (20 - 1) * 16;
             if (lodRenderers.Length > 0)
             {
                 var mergedBounds = lodRenderers[0].bounds;
@@ -126,42 +119,25 @@ namespace DCL.LOD.Components
 
         public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float distance, Bounds rendererBounds)
         {
-            //Discuss with Geoff if we should delete it
             //Recalculate distance for every LOD in a menu transition
             //float lodBias = QualitySettings.lodBias;
-
-            float lodBias = 1;
-            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * lodBias;
+            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * QualitySettings.lodBias;
             float halfFov = (defaultFOV / 2.0f) * Mathf.Deg2Rad;
-            float ScreenRelativeTransitionHeight = objectSize / (distance * Mathf.Tan(halfFov));
+            float ScreenRelativeTransitionHeight = objectSize / ((distance + objectSize) * Mathf.Tan(halfFov));
             return ScreenRelativeTransitionHeight;
         }
 
         public bool HasLODLoaded(byte lodForAcquisition)
         {
-            return IsLODLoaded(lodForAcquisition) || CurrentLODLevelPromise == lodForAcquisition;
+            return SceneLODInfoUtils.IsLODLoaded(LoadedLODs, lodForAcquisition) ||
+                   SceneLODInfoUtils.IsLODLoaded(FailedLODs, lodForAcquisition) ||
+                   CurrentLODLevelPromise == lodForAcquisition;
         }
         
-        private void SetLODLoaded(int lodLevel)
-        {
-            LoadedLODs |= (byte)(1 << lodLevel);
-        }
+
         
-        private bool IsLODLoaded(int lodLevel)
-        {
-            return (LoadedLODs & (1 << lodLevel)) != 0;
-        }
+ 
         
-        private int CountLoadedLODs()
-        {
-            int count = 0;
-            byte temp = LoadedLODs;
-            while (temp != 0)
-            {
-                count += temp & 1;
-                temp >>= 1;
-            }
-            return count;
-        }
+
     }
 }

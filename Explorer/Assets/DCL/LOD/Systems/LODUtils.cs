@@ -9,8 +9,6 @@ using System.Linq;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 using Utility;
 
 namespace DCL.LOD
@@ -74,6 +72,8 @@ namespace DCL.LOD
                 }
             }
         }
+        
+        
         
     }
 }

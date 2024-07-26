@@ -28,8 +28,6 @@ namespace DCL.LOD.Systems
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-        private readonly Transform lodsTransformParent;
-        private GameObjectPool<LODGroup> lodGroupPool;
 
         public UpdateSceneLODInfoSystem(World world, GameObjectPool<LODGroup> lodGroupPool, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
             IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
@@ -38,8 +36,6 @@ namespace DCL.LOD.Systems
             this.lodSettingsAsset = lodSettingsAsset;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
-            this.lodsTransformParent = lodsTransformParent;
-            this.lodGroupPool = lodGroupPool;
         }
 
         protected override void Update(float t)

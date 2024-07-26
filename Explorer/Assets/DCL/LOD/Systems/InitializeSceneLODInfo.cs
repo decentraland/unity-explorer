@@ -20,17 +20,17 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class InitializeSceneLODInfo : BaseUnityLoopSystem
     {
-        private readonly GameObjectPool<LODGroup> lodGroupPool;
         private readonly Transform lodParentTransform;
 
         //We cache the LODGroup and the byte of LODGroups loaded
-        private readonly Dictionary<string, (LODGroup, byte, float)> lodGroupsCache;
+        private readonly Dictionary<string, LODCacheInfo> lodGroupsCache;
+        private readonly GameObjectPool<LODGroup> lodsGroupPool;
 
-        public InitializeSceneLODInfo(World world, GameObjectPool<LODGroup> lodGroupPool, Transform lodParentTransform) : base(world)
+        public InitializeSceneLODInfo(World world, Transform lodParentTransform, GameObjectPool<LODGroup> lodsGroupPool) : base(world)
         {
-            this.lodGroupPool = lodGroupPool;
             this.lodParentTransform = lodParentTransform;
-            lodGroupsCache = new Dictionary<string, (LODGroup, byte, float)>();
+            this.lodsGroupPool = lodsGroupPool;
+            lodGroupsCache = new Dictionary<string, LODCacheInfo>();
         }
 
         protected override void Update(float t)
@@ -42,31 +42,37 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void InitializeSceneLOD(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.State == SCENE_LOD_INFO_STATE.UNINITIALIZED)
-            {
-                //TODO (JUANI) : How to cache failed lods? Should the hold SceneLODInfo be cached?
-                if (lodGroupsCache.TryGetValue(sceneDefinitionComponent.Definition.id, out var lodCache))
-                {
-                    var lodGroup = lodCache.Item1;
-                    lodGroup.gameObject.SetActive(true);
-                    sceneLODInfo.LodGroup = lodGroup;
-                    sceneLODInfo.LoadedLODs = lodCache.Item2;
-                    sceneLODInfo.CullRelativeHeight = lodCache.Item3;
-                    sceneLODInfo.State = SCENE_LOD_INFO_STATE.SUCCESS;
-                }
-                else
-                {
-                    var newLODGroup = lodGroupPool.Get();
-                    newLODGroup.transform.SetParent(lodParentTransform);
-                    newLODGroup.name = $"LODGroup_{sceneDefinitionComponent.Definition.id}";
-                    sceneLODInfo.LodGroup = newLODGroup;
-                    sceneLODInfo.State = SCENE_LOD_INFO_STATE.WAITING_LOD;
-                }
+            //TODO (MISHA): Cache and initialization. Whats the best way?
+            if (!string.IsNullOrEmpty(sceneLODInfo.id))
+                return;
 
-                sceneLODInfo.id = sceneDefinitionComponent.Definition.id;
-                sceneLODInfo.lodGroupCache = lodGroupsCache;
-                sceneLODInfo.lodGroupPool = lodGroupPool;
+            string sceneID = sceneDefinitionComponent.Definition.id;
+            if (lodGroupsCache.TryGetValue(sceneID, out var lodCacheInfo))
+            {
+                var lodGroup = lodCacheInfo.LodGroup;
+                lodGroup.gameObject.SetActive(true);
+                sceneLODInfo.LodGroup = lodGroup;
+                sceneLODInfo.LoadedLODs = lodCacheInfo.LoadedLODs;
+                sceneLODInfo.CullRelativeHeight = lodCacheInfo.CullRelativeHeight;
             }
+            else
+            {
+                //NOTE (Juani) : We need to initialize it every time. For the change of height trick to work,
+                // the lod group should be active when modified
+                sceneLODInfo.LodGroup = InitializeLODGroup(sceneID, lodParentTransform);
+            }
+
+            sceneLODInfo.id = sceneID;
+            sceneLODInfo.lodGroupCache = lodGroupsCache;
+            sceneLODInfo.lodGroupPool = lodsGroupPool;
+        }
+
+        private LODGroup InitializeLODGroup(string sceneID, Transform lodCacheParent)
+        {
+            var newLODGroup = lodsGroupPool.Get();
+            newLODGroup.name = $"LODGroup_{sceneID}";
+            newLODGroup.transform.SetParent(lodCacheParent);
+            return newLODGroup;
         }
     }
 }

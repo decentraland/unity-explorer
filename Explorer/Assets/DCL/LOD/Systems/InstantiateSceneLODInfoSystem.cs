@@ -31,6 +31,7 @@ namespace DCL.LOD.Systems
         internal IPerformanceBudget frameCapBudget;
         private readonly float defaultFOV;
 
+
         public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, float defaultFOV) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
