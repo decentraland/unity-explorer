@@ -59,7 +59,6 @@ namespace DCL.MapRenderer
         private void OnUpdatedPlayerPosition(Vector2 newPosition)
         {
             cachedPlayerMarkerPosition = newPosition;
-            mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
             if (destinationSet)
             {
                 if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
@@ -68,6 +67,7 @@ namespace DCL.MapRenderer
                 }
                 else
                 {
+                    mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition, true);
                     UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint);
                 }
             }
@@ -108,6 +108,7 @@ namespace DCL.MapRenderer
             destinationSet = true;
             Vector3 mapPosition = coordsUtils.CoordsToPositionWithOffset(parcel);
             mapPathRenderer.gameObject.SetActive(true);
+            mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
             mapPathRenderer.SetDestination(mapPosition);
             internalPinMarker.OnBecameInvisible();
 
