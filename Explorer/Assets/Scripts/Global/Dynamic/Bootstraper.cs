@@ -205,8 +205,13 @@ namespace Global.Dynamic
 
                 if (arg.StartsWith("--"))
                 {
-                    lastKeyStored = arg.Substring(2);
-                    appParameters[lastKeyStored] = string.Empty;
+                    if (arg.Length > 2)
+                    {
+                        lastKeyStored = arg.Substring(2);
+                        appParameters[lastKeyStored] = string.Empty;
+                    }
+                    else
+                        lastKeyStored = string.Empty;
                 }
 #if !UNITY_EDITOR && UNITY_STANDALONE_WIN
                 else if (!deepLinkFound && arg.StartsWith("decentraland://"))
@@ -220,9 +225,7 @@ namespace Global.Dynamic
                 }
 #endif
                 else if (!string.IsNullOrEmpty(lastKeyStored))
-                {
                     appParameters[lastKeyStored] = arg;
-                }
             }
 
             // in MacOS the deep link string doesn't come in the cmd args...
