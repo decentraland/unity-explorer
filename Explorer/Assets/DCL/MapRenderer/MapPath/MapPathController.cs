@@ -96,11 +96,7 @@ namespace DCL.MapRenderer
 
         public void OnMapObjectCulled(IPinMarker obj)
         {
-            //if (pathDestinationPin.IsDestination)
-            {
-                //mapPathEventBus.ShowPinInMinimap(pathDestinationPin);
-              //  pathDestinationPin.OnBecameInvisible();
-            }
+            pathDestinationPin.OnBecameInvisible();
         }
 
         public UniTask Enable(CancellationToken cancellationToken)

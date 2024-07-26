@@ -34,6 +34,8 @@ namespace DCL.Minimap
     {
         private const MapLayer RENDER_LAYERS = MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
         private const float ANIMATION_TIME = 0.2f;
+        private const float MINIMAP_RADIUS = 130;
+        private const float MINIMAP_SQR_DISTANCE_TO_HIDE_PIN = 26000;
 
         public readonly BridgeSystemBinding<TrackPlayerPositionSystem> SystemBinding;
         private readonly IMapRenderer mapRenderer;
@@ -149,7 +151,7 @@ namespace DCL.Minimap
         {
             if (!destinationSet) return;
 
-            var newPos = CalculateIntersectionPoint(playerPosition, currentDestinationPosition, 130);
+            var newPos = CalculateIntersectionPointWithMinimap(playerPosition, currentDestinationPosition);
 
             if (newPos.Intersects)
             {
@@ -160,18 +162,19 @@ namespace DCL.Minimap
 
         }
 
-        public struct IntersectionResult
+        private struct IntersectionResult
         {
             public bool Intersects;
             public Vector2 Point;
         }
 
-        public static IntersectionResult CalculateIntersectionPoint(Vector2 origin, Vector2 destination, float minimapRadius)
+        private static IntersectionResult CalculateIntersectionPointWithMinimap(Vector2 origin, Vector2 destination)
         {
+            var minimapRadius = MINIMAP_RADIUS;
             Vector2 direction = destination - origin;
             float distanceAB = direction.sqrMagnitude;
 
-            if (distanceAB <= minimapRadius*minimapRadius)
+            if (distanceAB <= MINIMAP_SQR_DISTANCE_TO_HIDE_PIN)
             {
                 return new IntersectionResult { Intersects = false, Point = destination };
             }
