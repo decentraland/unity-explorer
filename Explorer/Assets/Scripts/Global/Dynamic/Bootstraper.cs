@@ -262,7 +262,7 @@ namespace Global.Dynamic
 
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            localSceneDevelopment = appParameters.ContainsKey(APP_PARAMETER_LOCAL_SCENE) && ParseLocalSceneParameter(appParameters[APP_PARAMETER_LOCAL_SCENE]);
+            localSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue) && ParseLocalSceneParameter(localSceneParamValue);
 
             if (localSceneDevelopment && IsRealmALocalUrl(realmParamValue))
                 launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);

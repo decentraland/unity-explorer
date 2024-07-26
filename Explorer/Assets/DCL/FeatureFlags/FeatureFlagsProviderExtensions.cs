@@ -23,11 +23,11 @@ namespace DCL.FeatureFlags
             // #!/bin/bash
             // ./Decentraland.app --feature-flags-url https://feature-flags.decentraland.zone --feature-flags-hostname localhost
 
-            if(appParameters.ContainsKey(ARG_URL))
-                options.URL = URLDomain.FromString(appParameters[ARG_URL]);
+            if(appParameters.TryGetValue(ARG_URL, out string featureFlagsUrl))
+                options.URL = URLDomain.FromString(featureFlagsUrl);
 
-            if(appParameters.ContainsKey(ARG_HOSTNAME))
-                options.Hostname = appParameters[ARG_HOSTNAME];
+            if(appParameters.TryGetValue(ARG_HOSTNAME, out string hostName))
+                options.Hostname = hostName;
 
             options.UserId = userAddress;
 
