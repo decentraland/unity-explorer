@@ -26,5 +26,6 @@ namespace DCL.Notification
         WORLDS_PERMISSION_GRANTED,
         WORLDS_PERMISSION_REVOKED,
         BADGE_GRANTED,
+        ARRIVED_TO_DESTINATION
     }
 }

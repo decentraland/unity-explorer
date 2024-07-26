@@ -10,8 +10,11 @@ namespace DCL.MapRenderer
         public event Action<IPinMarker> OnShowPinInMinimapEdge;
         public event Action<Vector2Int, IPinMarker> OnSetDestination;
         public event Action OnRemovedDestination;
+        public event Action OnHidePinInMinimapEdge;
         public event Action<Vector2> OnUpdatedPlayerPosition;
         public event Action OnArrivedToDestination;
+        public event Action<Vector2> OnUpdatePinPositionInMinimapEdge;
+
         public void SetDestination(Vector2Int parcel, IPinMarker pinMarker)
         {
             OnSetDestination?.Invoke(parcel, pinMarker);
@@ -32,10 +35,20 @@ namespace DCL.MapRenderer
             OnUpdatedPlayerPosition?.Invoke(newPosition);
         }
 
+        public void HidePinInMinimap()
+        {
+            OnHidePinInMinimapEdge?.Invoke();
+        }
+
         public void ArrivedToDestination()
         {
             OnRemovedDestination?.Invoke();
             OnArrivedToDestination?.Invoke();
+        }
+
+        public void UpdatePinPositionInMinimapEdge(Vector2 newPosition)
+        {
+            OnUpdatePinPositionInMinimapEdge?.Invoke(newPosition);
         }
 
     }
@@ -43,8 +56,10 @@ namespace DCL.MapRenderer
     public interface IMapPathEventBus
     {
         public event Action<IPinMarker> OnShowPinInMinimapEdge;
+        public event Action<Vector2> OnUpdatePinPositionInMinimapEdge;
         public event Action<Vector2Int, IPinMarker> OnSetDestination;
         public event Action OnRemovedDestination;
+        public event Action OnHidePinInMinimapEdge;
         public event Action OnArrivedToDestination;
         public event Action<Vector2> OnUpdatedPlayerPosition;
 
@@ -56,6 +71,11 @@ namespace DCL.MapRenderer
 
         void PathUpdated(Vector2 newPosition);
 
+        void HidePinInMinimap();
+
         void ArrivedToDestination();
+
+        void UpdatePinPositionInMinimapEdge(Vector2 newPosition);
+
     }
 }

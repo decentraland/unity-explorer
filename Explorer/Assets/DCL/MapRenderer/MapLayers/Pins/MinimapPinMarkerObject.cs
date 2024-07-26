@@ -9,12 +9,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
         [field: SerializeField] internal GameObject scenePinBackground { get; private set; }
         [field: SerializeField] internal Image mapPinIcon { get; private set; }
 
-        public bool IsHidden { get; private set; }
         private bool isMapPin;
 
         public void SetupAsScenePin()
         {
-            IsHidden = false;
             isMapPin = false;
             mapPinBackground.SetActive(false);
             scenePinBackground.SetActive(true);
@@ -22,7 +20,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetupAsMapPin(Sprite sprite)
         {
-            IsHidden = false;
             isMapPin = true;
             mapPinBackground.SetActive(true);
             scenePinBackground.SetActive(false);
@@ -33,7 +30,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             mapPinBackground.SetActive(false);
             scenePinBackground.SetActive(false);
-            IsHidden = true;
         }
 
         public void RestorePin()

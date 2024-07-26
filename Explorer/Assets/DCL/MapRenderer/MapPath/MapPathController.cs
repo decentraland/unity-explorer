@@ -12,6 +12,8 @@ namespace DCL.MapRenderer
     public class MapPathController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
         private const float ARRIVAL_TOLERANCE_SQRD = 25;
+        private const float MINIMAP_RADIUS = 130;
+        private const float MINIMAP_SQR_DISTANCE_TO_HIDE_PIN = 26000;
 
         internal delegate IPinMarker PinMarkerBuilder(
             IObjectPool<PinMarkerObject> objectsPool,
@@ -23,8 +25,10 @@ namespace DCL.MapRenderer
         private readonly IMapCullingController cullingController;
         private readonly IObjectPool<PinMarkerObject> objectsPool;
 
-        private IPinMarker pathDestinationPin;
+        private IPinMarker internalPinMarker;
+        private IPinMarker currentDestinationPin;
         private bool destinationSet;
+        private Vector2 cachedPlayerMarkerPosition;
 
         internal MapPathController(
             IObjectPool<PinMarkerObject> objectsPool,
@@ -44,39 +48,58 @@ namespace DCL.MapRenderer
 
         public void Initialize()
         {
-            pathDestinationPin = builder(objectsPool, mapCullingController);
-            cullingController.StartTracking(pathDestinationPin, this);
+            internalPinMarker = builder(objectsPool, mapCullingController);
+            cullingController.StartTracking(internalPinMarker, this);
             mapPathEventBus.OnSetDestination += OnSetDestination;
             mapPathEventBus.OnRemovedDestination += OnRemovedDestination;
             mapPathEventBus.OnUpdatedPlayerPosition += OnUpdatedPlayerPosition;
-            pathDestinationPin.OnBecameInvisible();
+            internalPinMarker.OnBecameInvisible();
         }
 
         private void OnUpdatedPlayerPosition(Vector2 newPosition)
         {
+            cachedPlayerMarkerPosition = newPosition;
             if (destinationSet)
             {
-                if (CalculateIfArrivedToDestination(newPosition, mapPathRenderer.DestinationPoint))
+                if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
                 {
                     mapPathEventBus.ArrivedToDestination();
                 }
                 else
                 {
-                    mapPathRenderer.UpdateOrigin(newPosition);
+                    mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
+                    UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, internalPinMarker.CurrentPosition);
                 }
             }
         }
 
-        private bool CalculateIfArrivedToDestination(Vector2 newPosition, Vector2 destinationPosition)
+        private static bool CheckIfArrivedToDestination(Vector2 newPosition, Vector2 destinationPosition)
         {
             var difference = newPosition - destinationPosition;
             return difference.sqrMagnitude <= ARRIVAL_TOLERANCE_SQRD;
         }
 
+        private void UpdatePositionInMinimapEdge(Vector2 origin, Vector2 destination)
+        {
+            var minimapRadius = MINIMAP_RADIUS;
+            Vector2 direction = destination - origin;
+            float distanceAB = direction.sqrMagnitude;
+
+            if (distanceAB <= MINIMAP_SQR_DISTANCE_TO_HIDE_PIN)
+            {
+                mapPathEventBus.HidePinInMinimap();
+                return;
+            }
+
+            direction.Normalize();
+            Vector2 intersectionPoint = (direction * minimapRadius);
+            mapPathEventBus.UpdatePinPositionInMinimapEdge(intersectionPoint);
+        }
+
         private void OnRemovedDestination()
         {
             destinationSet = false;
-            pathDestinationPin.AnimateOut();
+            internalPinMarker.OnBecameInvisible();
             mapPathRenderer.gameObject.SetActive(false);
         }
 
@@ -86,34 +109,37 @@ namespace DCL.MapRenderer
             Vector3 mapPosition = coordsUtils.CoordsToPositionWithOffset(parcel);
             mapPathRenderer.gameObject.SetActive(true);
             mapPathRenderer.SetDestination(mapPosition);
-            pathDestinationPin.OnBecameInvisible();
+            internalPinMarker.OnBecameInvisible();
 
             if (pinMarker == null)
             {
-                pathDestinationPin.OnBecameVisible();
-                pathDestinationPin.SetPosition(mapPosition, parcel);
-                pathDestinationPin.SetAsDestination(true);
-                mapPathEventBus.ShowPinInMinimap(pathDestinationPin);
+                currentDestinationPin = internalPinMarker;
+                internalPinMarker.OnBecameVisible();
+                internalPinMarker.SetPosition(mapPosition, parcel);
+                internalPinMarker.SetAsDestination(true);
             }
             else
             {
-                pathDestinationPin.SetAsDestination(false);
+                currentDestinationPin = pinMarker;
+                internalPinMarker.SetAsDestination(false);
                 pinMarker.SetAsDestination(true);
-                mapPathEventBus.ShowPinInMinimap(pinMarker);
             }
+
+            mapPathEventBus.ShowPinInMinimap(currentDestinationPin);
+            UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, currentDestinationPin.CurrentPosition);
         }
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
         {
-            if (pathDestinationPin.IsDestination)
+            if (internalPinMarker.IsDestination)
             {
-                pathDestinationPin.OnBecameVisible();
+                internalPinMarker.OnBecameVisible();
             }
         }
 
         public void OnMapObjectCulled(IPinMarker obj)
         {
-            pathDestinationPin.OnBecameInvisible();
+            internalPinMarker.OnBecameInvisible();
         }
 
         public UniTask Enable(CancellationToken cancellationToken)
@@ -121,7 +147,7 @@ namespace DCL.MapRenderer
             if (destinationSet)
             {
                 mapPathRenderer.gameObject.SetActive(true);
-                pathDestinationPin.OnBecameVisible();
+                internalPinMarker.OnBecameVisible();
             }
 
             return UniTask.CompletedTask;
@@ -135,12 +161,12 @@ namespace DCL.MapRenderer
 
         public void ApplyCameraZoom(float baseZoom, float newZoom)
         {
-            pathDestinationPin.SetZoom(coordsUtils.ParcelSize, baseZoom, newZoom);
+            internalPinMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, newZoom);
         }
 
         public void ResetToBaseScale()
         {
-            pathDestinationPin.ResetScale(coordsUtils.ParcelSize);
+            internalPinMarker.ResetScale(coordsUtils.ParcelSize);
         }
     }
 }
