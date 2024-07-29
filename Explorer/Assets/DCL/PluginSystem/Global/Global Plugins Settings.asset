@@ -460,11 +460,7 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        SkyboxMaterial:
-          m_AssetGUID: caf6cf56d95066b45bc1ca92d6516b48
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        SkyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
         SkyboxAnimationCycle:
           m_AssetGUID: 3b17a8a5ab9ee104899eb22c70935c38
           m_SubObjectName: 

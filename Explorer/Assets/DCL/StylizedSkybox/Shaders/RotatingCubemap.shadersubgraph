@@ -376,7 +376,7 @@
     "m_Type": "UnityEditor.ShaderGraph.Vector3MaterialSlot",
     "m_ObjectId": "461c35a47107468e9f3b3e3cef9fc5f9",
     "m_Id": 0,
-    "m_DisplayName": "WorldPos",
+    "m_DisplayName": "CubemapDirection",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -744,10 +744,10 @@
     "m_Guid": {
         "m_GuidSerialized": "66276ced-5c80-4616-ade1-762721c2f0e8"
     },
-    "m_Name": "WorldPos",
+    "m_Name": "CubemapDirection",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "WorldPos",
-    "m_DefaultReferenceName": "_WorldPos",
+    "m_RefNameGeneratedByDisplayName": "CubemapDirection",
+    "m_DefaultReferenceName": "_CubemapDirection",
     "m_OverrideReferenceName": "",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
