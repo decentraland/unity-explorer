@@ -21,7 +21,6 @@
             values[tailIndex] = valueInSeconds;
             tailIndex = CircularIncrement(tailIndex);
         }
-
         private long CalculateMinValue()
         {
             long minValue = values[0];

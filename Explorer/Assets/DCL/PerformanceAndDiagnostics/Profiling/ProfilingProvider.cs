@@ -1,3 +1,4 @@
+using System;
 using Unity.Profiling;
 
 namespace DCL.Profiling
@@ -22,14 +23,27 @@ namespace DCL.Profiling
         public long LastFrameTimeValueInNS => mainThreadTimeRecorder.LastValue;
         public long LastGPUFrameTimeValueInNS => gpuRecorder.LastValue;
 
-        public double AverageFrameTimeValueInNS => GetRecorderAverage(mainThreadTimeRecorder);
+        public double AverageFrameTimeInNS => GetRecorderAverage(mainThreadTimeRecorder);
+
+        public float MedianFrameTimeInNS { get; }
+
         public int AverageFameTimeSamples => mainThreadTimeRecorder.Capacity;
 
-        public long MinFrameTimeValueInNS => hiccupBufferCounter.MinFrameTimeInNS;
-        public long MaxFrameTimeValueInNS => hiccupBufferCounter.MaxFrameTimeInNS;
+        public long MinFrameTimeInNS => hiccupBufferCounter.MinFrameTimeInNS;
+        public long MaxFrameTimeInNS => hiccupBufferCounter.MaxFrameTimeInNS;
 
         public ulong HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
         public int HiccupCountBufferSize => hiccupBufferCounter.BufferSize;
+
+        public void Dispose()
+        {
+            totalUsedMemoryRecorder.Dispose();
+            mainThreadTimeRecorder.Dispose();
+            gpuRecorder.Dispose();
+        }
+
+        public float GetPercentileFrameTime(float percentile) =>
+            throw new NotImplementedException();
 
         public void CheckHiccup() =>
             hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
@@ -55,6 +69,40 @@ namespace DCL.Profiling
             }
 
             return r;
+        }
+
+        public double[] GetFrameTimePercentiles(int[] percentile) =>
+            GetPercentiles(mainThreadTimeRecorder, percentile);
+
+        private static double[] GetPercentiles(ProfilerRecorder recorder, int[] percentile)
+        {
+            int samplesCount = recorder.Capacity;
+
+            if (samplesCount == 0 || percentile.Length == 0)
+                return default(double[]);
+
+            var samplesArray = new long[samplesCount];
+
+            unsafe
+            {
+                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[samplesCount];
+                recorder.CopyTo(samples, samplesCount);
+
+                for (var i = 0; i < samplesCount; ++i)
+                    samplesArray[i] = samples[i].Value;
+            }
+
+            Array.Sort(samplesArray);
+
+            var result = new double[percentile.Length];
+
+            for (var i = 0; i < percentile.Length; i++)
+            {
+                var k = (int)Math.Ceiling(percentile[i] / 100.0 * samplesCount);
+                result[i] = samplesArray[k - 1];
+            }
+
+            return result;
         }
     }
 }

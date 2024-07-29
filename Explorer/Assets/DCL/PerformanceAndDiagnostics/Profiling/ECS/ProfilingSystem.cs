@@ -86,9 +86,9 @@ namespace DCL.Profiling.ECS
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
 
-            SetFPS(fps, (long)profilingProvider.AverageFrameTimeValueInNS);
-            SetFPS(minfps, profilingProvider.MinFrameTimeValueInNS);
-            SetFPS(maxfps, profilingProvider.MaxFrameTimeValueInNS);
+            SetFPS(fps, (long)profilingProvider.AverageFrameTimeInNS);
+            SetFPS(minfps, profilingProvider.MinFrameTimeInNS);
+            SetFPS(maxfps, profilingProvider.MaxFrameTimeInNS);
             return;
 
             void SetFPS(ElementBinding<string> elementBinding, long value)

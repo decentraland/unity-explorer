@@ -24,6 +24,11 @@ namespace DCL.PluginSystem.Global
             this.memoryBudget = memoryBudget;
         }
 
+        public void Dispose()
+        {
+            profilingProvider.Dispose();
+        }
+
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             ProfilingSystem.InjectToWorld(ref builder, profilingProvider, frameTimeCapBudget, memoryBudget, debugContainerBuilder);
