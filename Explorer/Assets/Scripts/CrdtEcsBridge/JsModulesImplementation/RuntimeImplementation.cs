@@ -91,7 +91,7 @@ namespace CrdtEcsBridge.JsModulesImplementation
                 baseUrl: sceneData.SceneContent.ContentBaseUrl.Value,
                 urn: sceneData.SceneEntityDefinition.id,
                 content: sceneData.SceneEntityDefinition.content,
-                metadataJson: JsonConvert.SerializeObject(sceneData.SceneEntityDefinition.metadata)
+                metadataJson: sceneData.SceneEntityDefinition.metadata.OriginalJson
             );
     }
 }

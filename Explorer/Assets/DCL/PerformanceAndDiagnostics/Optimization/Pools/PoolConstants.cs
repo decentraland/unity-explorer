@@ -15,6 +15,11 @@ false;
         public const int SCENES_COUNT = 50;
 
         /// <summary>
+        ///     Initial capacity of pools that should exist for global context
+        /// </summary>
+        public const int GLOBAL_WORLD_COUNT = 50;
+
+        /// <summary>
         ///     Initial capacity of pools that should exist per empty scene context
         /// </summary>
         public const int EMPTY_SCENES_COUNT = 400;

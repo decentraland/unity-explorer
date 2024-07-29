@@ -55,11 +55,13 @@ namespace DCL.Interaction.PlayerOriginated.Systems
         [Query]
         private void RaycastFromCamera(ref CameraComponent camera, in CursorComponent cursorComponent)
         {
-            ref PlayerOriginRaycastResult raycastResult = ref playerInteractionEntity.PlayerOriginRaycastResult;
+            ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForSceneEntities;
+            ref PlayerOriginRaycastResultForGlobalEntities raycastResultForGlobalEntities = ref playerInteractionEntity.PlayerOriginRaycastResultForGlobalEntities;
 
             if (cursorComponent.CursorState == CursorState.Panning)
             {
-                raycastResult.Reset();
+                raycastResultForSceneEntities.Reset();
+                raycastResultForGlobalEntities.Reset();
                 return;
             }
 
@@ -68,16 +70,27 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             // we are interested in one hit only
             bool hasHit = Physics.Raycast(ray, out RaycastHit hitInfo, maxRaycastDistance, PhysicsLayers.PLAYER_ORIGIN_RAYCAST_MASK);
 
-            raycastResult.SetRay(ray);
+            raycastResultForSceneEntities.SetRay(ray);
+            raycastResultForGlobalEntities.SetRay(ray);
 
-            if (hasHit && collidersGlobalCache.TryGetEntity(hitInfo.collider, out GlobalColliderEntityInfo entityInfo))
+            if (hasHit)
             {
                 float distance = camera.Mode == CameraMode.FirstPerson ? hitInfo.distance : Vector3.Distance(hitInfo.point, camera.PlayerFocus.position);
-                raycastResult.SetupHit(hitInfo, entityInfo, distance);
+
+                if (collidersGlobalCache.TryGetSceneEntity(hitInfo.collider, out GlobalColliderSceneEntityInfo sceneEntityInfo))
+                    raycastResultForSceneEntities.SetupHit(hitInfo, sceneEntityInfo, distance);
+                else
+                    raycastResultForSceneEntities.Reset();
+
+                if (collidersGlobalCache.TryGetGlobalEntity(hitInfo.collider, out GlobalColliderGlobalEntityInfo globalEntityInfo))
+                    raycastResultForGlobalEntities.SetupHit(hitInfo, globalEntityInfo, distance);
+                else
+                    raycastResultForGlobalEntities.Reset();
             }
             else
             {
-                raycastResult.Reset();
+                raycastResultForSceneEntities.Reset();
+                raycastResultForGlobalEntities.Reset();
             }
         }
 

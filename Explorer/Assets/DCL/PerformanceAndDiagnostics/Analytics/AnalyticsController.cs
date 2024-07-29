@@ -38,10 +38,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             analytics.AddPlugin(new DynamicCommonTraitsPlugin(realmData, identityCache, playerTransform));
 
-            analytics.Identify(identityCache.Identity.Address, new JsonObject
+            if(identityCache?.Identity?.Address == null || identityCache?.Identity?.AuthChain == null)
+                return;
+
+            analytics.Identify(identityCache?.Identity?.Address, new JsonObject
                 {
-                    ["dcl_eth_address"] = identityCache.Identity.Address.ToString(),
-                    ["auth_chain"] = identityCache.Identity.AuthChain.ToString(),
+                    ["dcl_eth_address"] = identityCache?.Identity?.Address.ToString(),
+                    ["auth_chain"] = identityCache?.Identity?.AuthChain.ToString(),
                 }
             );
         }

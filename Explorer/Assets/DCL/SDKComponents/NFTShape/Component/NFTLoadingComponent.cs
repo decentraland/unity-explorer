@@ -1,28 +1,17 @@
-using Arch.Core;
-using ECS.StreamableLoading.Common.Components;
-using UnityEngine;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.NFTShapes.GetNFTShapeIntention>;
 
 namespace DCL.SDKComponents.NFTShape.Component
 {
     public struct NFTLoadingComponent
     {
-        private Promise promise;
+        public Promise Promise;
 
         public NFTLoadingComponent(Promise promise)
         {
-            this.promise = promise;
+            Promise = promise;
         }
 
-        public bool TryGetResult(World world, out StreamableLoadingResult<Texture2D> result)
-        {
-            if (promise.IsConsumed)
-            {
-                result = default(StreamableLoadingResult<Texture2D>);
-                return false;
-            }
-
-            return promise.TryConsume(world, out result);
-        }
+        public readonly override string ToString() =>
+            $"NFTLoadingComponent {{ promise: {Promise.Entity.Entity} {Promise.LoadingIntention.CommonArguments.URL} }}";
     }
 }

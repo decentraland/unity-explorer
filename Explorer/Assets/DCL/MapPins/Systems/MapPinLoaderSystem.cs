@@ -43,6 +43,7 @@ namespace DCL.SDKComponents.MapPins.Systems
             UpdateMapPinQuery(World);
             HandleComponentRemovalQuery(World);
             HandleEntityDestructionQuery(World);
+            ResolvePromiseQuery(World);
         }
 
         [Query]
@@ -59,6 +60,26 @@ namespace DCL.SDKComponents.MapPins.Systems
             TryCreateGetTexturePromise(in mapPinTexture, ref mapPinComponent.TexturePromise);
 
             World.Add(entity, new MapPinHolderComponent(globalWorldProxy.Object!.Create(pbMapPin, mapPinComponent)));
+        }
+
+
+        //This query is required because in the global world otherwise we cannot resolve easily
+        //the promise of the texture, as it is bound to the entity in the scene world
+        [Query]
+        private void ResolvePromise(ref MapPinHolderComponent mapPinHolderComponent)
+        {
+            MapPinComponent mapPinComponent = (MapPinComponent) globalWorldProxy.Object!.Get(mapPinHolderComponent.GlobalWorldEntity, typeof(MapPinComponent))!;
+
+            if (mapPinComponent.TexturePromise is not null && !mapPinComponent.TexturePromise.Value.IsConsumed)
+            {
+                if (mapPinComponent.TexturePromise.Value.TryConsume(World, out StreamableLoadingResult<Texture2D> texture))
+                {
+                    mapPinComponent.ThumbnailIsDirty = true;
+                    mapPinComponent.Thumbnail = texture.Asset;
+                    mapPinComponent.TexturePromise = null;
+                    globalWorldProxy.Object!.Set(mapPinHolderComponent.GlobalWorldEntity, mapPinComponent);
+                }
+            }
         }
 
         [Query]
@@ -103,9 +124,7 @@ namespace DCL.SDKComponents.MapPins.Systems
         private void TryCreateGetTexturePromise(in TextureComponent? textureComponent, ref Promise? promise)
         {
             if (textureComponent == null)
-            {
                 return;
-            }
 
             TextureComponent textureComponentValue = textureComponent.Value;
 

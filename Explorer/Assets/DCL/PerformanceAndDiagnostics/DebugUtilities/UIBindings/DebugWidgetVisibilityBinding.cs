@@ -19,6 +19,8 @@ namespace DCL.DebugUtilities.UIBindings
         public bool IsExpanded => debugWidget?.isExpanded
                                   ?? throw new InvalidOperationException("DebugWidgetVisibilityBinding is not connected to a widget");
 
+        public bool IsConnectedAndExpanded => debugWidget is { isExpanded: true };
+
         public DebugWidgetVisibilityBinding(bool initialValue)
         {
             this.initialValue = initialValue;

@@ -1,5 +1,6 @@
 using Arch.Core;
 using DCL.Diagnostics;
+using System.Collections.Generic;
 using System.Text;
 
 namespace SceneRunner.Debugging
@@ -39,6 +40,7 @@ namespace SceneRunner.Debugging
                 string text = component == null
                     ? "NULL_COMPONENT"
                     : $"{component.GetType().Name} {component}";
+
                 sb.AppendLine($"{itemIndex}) {text}");
                 itemIndex++;
             }
@@ -46,6 +48,18 @@ namespace SceneRunner.Debugging
             var result = sb.ToString();
             ReportHub.Log(ReportCategory.DEBUG, result);
             return result;
+        }
+
+        public IReadOnlyList<int> EntityIds()
+        {
+            var list = new List<int>();
+
+            world.Query(
+                new QueryDescription().WithNone<FindMarker>(),
+                entity => list.Add(entity.Id)
+            );
+
+            return list;
         }
 
         private struct FindMarker { }

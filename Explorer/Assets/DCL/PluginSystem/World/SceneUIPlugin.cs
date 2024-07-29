@@ -1,11 +1,13 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.SDKComponents.SceneUI.Classes;
 using DCL.SDKComponents.SceneUI.Components;
+using DCL.SDKComponents.SceneUI.Systems;
 using DCL.SDKComponents.SceneUI.Systems.UIBackground;
 using DCL.SDKComponents.SceneUI.Systems.UICanvasInformation;
 using DCL.SDKComponents.SceneUI.Systems.UIDropdown;
@@ -33,10 +35,12 @@ namespace DCL.PluginSystem.World
         private readonly FrameTimeCapBudget frameTimeBudgetProvider;
         private readonly MemoryBudget memoryBudgetProvider;
         private readonly IComponentPool<UITransformComponent> transformsPool;
+        private readonly IInputBlock inputBlock;
 
-        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner)
+        public SceneUIPlugin(ECSWorldSingletonSharedDependencies singletonSharedDependencies, IAssetsProvisioner assetsProvisioner, IInputBlock inputBlock)
         {
             this.assetsProvisioner = assetsProvisioner;
+            this.inputBlock = inputBlock;
             componentPoolsRegistry = singletonSharedDependencies.ComponentPoolsRegistry;
             transformsPool = componentPoolsRegistry.AddComponentPool<UITransformComponent>(onRelease: UiElementUtils.ReleaseUITransformComponent, maxSize: 200);
             componentPoolsRegistry.AddComponentPool<Label>(onRelease: UiElementUtils.ReleaseUIElement, maxSize: 100);
@@ -74,12 +78,13 @@ namespace DCL.PluginSystem.World
             UITextReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIBackgroundInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.SceneData, frameTimeBudgetProvider, memoryBudgetProvider);
             UIBackgroundReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
-            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
+            UIInputInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter, inputBlock);
             UIInputReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIDropdownInstantiationSystem.InjectToWorld(ref builder, componentPoolsRegistry, sharedDependencies.EcsToCRDTWriter);
             UIDropdownReleaseSystem.InjectToWorld(ref builder, componentPoolsRegistry);
             UIPointerEventsSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
             UICanvasInformationSystem.InjectToWorld(ref builder, sharedDependencies.SceneStateProvider, sharedDependencies.EcsToCRDTWriter);
+            UIFixPbPointerEventsSystem.InjectToWorld(ref builder);
 
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<Label, UITextComponent>.InjectToWorld(ref builder, componentPoolsRegistry));
             finalizeWorldSystems.Add(ReleasePoolableComponentSystem<DCLImage, UIBackgroundComponent>.InjectToWorld(ref builder, componentPoolsRegistry));

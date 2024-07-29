@@ -53,6 +53,11 @@
         public const string SCENE_UI = nameof(SCENE_UI);
 
         /// <summary>
+        ///     Messages related to highlighting objects in the scene on hover
+        /// </summary>
+        public const string HIGHLIGHTS = nameof(HIGHLIGHTS);
+
+        /// <summary>
         ///     Errors reported from JavaScript
         /// </summary>
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
@@ -204,39 +209,9 @@
         public const string CAMERA_MODE_AREA = nameof(CAMERA_MODE_AREA);
 
         /// <summary>
-        ///     Multiplayer SDK Profile component propagator
+        ///     Player-related data propagated to SDK
         /// </summary>
-        public const string MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY = nameof(MULTIPLAYER_SDK_PLAYER_CRDT_ENTITY);
-
-        /// <summary>
-        ///     Multiplayer SDK Profile component propagator
-        /// </summary>
-        public const string MULTIPLAYER_SDK_PLAYER_PROFILE_DATA = nameof(MULTIPLAYER_SDK_PLAYER_PROFILE_DATA);
-
-        /// <summary>
-        ///     Multiplayer SDK Emote Command component propagator
-        /// </summary>
-        public const string MULTIPLAYER_SDK_EMOTE_COMMAND_DATA = nameof(MULTIPLAYER_SDK_EMOTE_COMMAND_DATA);
-
-        /// <summary>
-        ///     PBPlayerIdentityData component writer
-        /// </summary>
-        public const string PLAYER_IDENTITY_DATA = nameof(PLAYER_IDENTITY_DATA);
-
-        /// <summary>
-        ///     PBAvatarBase component writer
-        /// </summary>
-        public const string PLAYER_AVATAR_BASE = nameof(PLAYER_AVATAR_BASE);
-
-        /// <summary>
-        ///     PBAvatarEquipped component writer
-        /// </summary>
-        public const string PLAYER_AVATAR_EQUIPPED = nameof(PLAYER_AVATAR_EQUIPPED);
-
-        /// <summary>
-        ///     PBAvatarEmoteCommand component writer
-        /// </summary>
-        public const string PLAYER_AVATAR_EMOTE_COMMAND = nameof(PLAYER_AVATAR_EMOTE_COMMAND);
+        public const string PLAYER_SDK_DATA = nameof(PLAYER_SDK_DATA);
 
         /// <summary>
         ///     RealmData 'IsDirty' flag reset system
@@ -247,6 +222,11 @@
         ///     SDK Observables layer
         /// </summary>
         public const string SDK_OBSERVABLES = nameof(SDK_OBSERVABLES);
+
+        /// <summary>
+        ///     Local scene development connection with locally running scene (AKA "Preview Mode")
+        /// </summary>
+        public const string SDK_LOCAL_SCENE_DEVELOPMENT = nameof(SDK_LOCAL_SCENE_DEVELOPMENT);
 
         /// <summary>
         ///     Roads related systems

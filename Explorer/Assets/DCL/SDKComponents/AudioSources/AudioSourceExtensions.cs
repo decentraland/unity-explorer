@@ -1,4 +1,6 @@
-﻿using DCL.ECSComponents;
+﻿#nullable enable
+
+using DCL.ECSComponents;
 using UnityEngine;
 
 namespace DCL.SDKComponents.AudioSources
@@ -23,17 +25,12 @@ namespace DCL.SDKComponents.AudioSources
             audioSource.pitch = pbAudioSource.HasPitch ? pbAudioSource.Pitch : Default.PITCH;
             audioSource.volume = pbAudioSource.HasVolume ? pbAudioSource.Volume : Default.VOLUME;
 
-            if (!PlayingChanged()) return;
+            if (audioSource.clip == null) return;
+
+            audioSource.Stop();
 
             if (pbAudioSource.Playing)
-                audioSource.Play();
-            else
-                audioSource.Stop();
-
-            return;
-
-            bool PlayingChanged() =>
-                pbAudioSource.HasPlaying && pbAudioSource.Playing != audioSource.isPlaying && audioSource.clip != null;
+                audioSource.PlayOneShot(audioSource.clip!);
         }
 
         public static float GetVolume(this PBAudioSource pbAudioSource) =>

@@ -129,7 +129,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache.Identity!, staticContainer!, ct);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, staticContainer!, ct);
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
@@ -139,6 +139,10 @@ namespace Global.Dynamic
 
                 Entity playerEntity;
                 (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
+
+                dynamicWorldContainer!.InitializeWorldRelatedModules(globalWorld.EcsWorld, playerEntity);
+                staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
+
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
             }

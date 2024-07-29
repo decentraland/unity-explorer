@@ -45,6 +45,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
+        private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixer generalAudioMixer;
 
@@ -66,6 +67,7 @@ namespace DCL.AuthenticationScreenFlow
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
+            CharacterPreviewEventBus characterPreviewEventBus,
             FeatureFlagsCache featureFlagsCache,
             AudioMixer generalAudioMixer)
             : base(viewFactory)
@@ -76,6 +78,7 @@ namespace DCL.AuthenticationScreenFlow
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
+            this.characterPreviewEventBus = characterPreviewEventBus;
             this.featureFlagsCache = featureFlagsCache;
             this.generalAudioMixer = generalAudioMixer;
         }
@@ -112,7 +115,7 @@ namespace DCL.AuthenticationScreenFlow
 #endif
 
             Assert.IsNotNull(world);
-            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!);
+            characterPreviewController = new AuthenticationScreenCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world!, characterPreviewEventBus);
         }
 
         protected override void OnBeforeViewShow()
