@@ -113,7 +113,7 @@ namespace CrdtEcsBridge.RestrictedActions.Tests
             bool result = restrictedActionsAPIImplementation.TryOpenNftDialog(TEST_URN);
 
             // Assert
-            mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
+            mvcManager.Received(1).ShowAsync(NftPromptController.IssueCommand(new NftPromptController.Params("ethereum", "0x06012c8cf97bead5deae237070f9587f8e7a266d", "1540722")));
         }
     }
 }

@@ -28,19 +28,19 @@ namespace DCL.PluginSystem.Global
             this.notificationsBusController = notificationsBusController;
             this.webRequestController = webRequestController;
 
-            this.notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_INCOMING, OnNewRewardReceived);
+            this.notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_IN_PROGRESS, OnNewRewardReceived);
         }
 
         private void OnNewRewardReceived(INotification notification)
         {
-            IncomingRewardNotification incomingRewardNotification = (IncomingRewardNotification)notification;
+            RewardInProgressNotification rewardInProgressNotification = (RewardInProgressNotification)notification;
 
             mvcManager.ShowAsync(RewardPanelController.IssueCommand(
                 new RewardPanelParameter(
                     notification.GetThumbnail(),
-                    incomingRewardNotification.Metadata.Name,
-                    incomingRewardNotification.Metadata.Rarity,
-                    incomingRewardNotification.Metadata.Category))
+                    rewardInProgressNotification.Metadata.Name,
+                    rewardInProgressNotification.Metadata.Rarity,
+                    rewardInProgressNotification.Metadata.Category))
             ).Forget();
         }
 

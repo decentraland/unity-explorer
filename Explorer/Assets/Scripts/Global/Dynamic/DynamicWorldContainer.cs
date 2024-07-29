@@ -295,7 +295,8 @@ namespace Global.Dynamic
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
                 identityCache,
-                container.RealmController
+                container.RealmController,
+                dynamicWorldParams.AppParameters
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(
