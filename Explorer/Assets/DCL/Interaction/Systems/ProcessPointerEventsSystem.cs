@@ -11,8 +11,8 @@ using DCL.Interaction.PlayerOriginated.Utility;
 using DCL.Interaction.Raycast.Components;
 using DCL.Interaction.Utility;
 using ECS.Abstract;
-using SceneRunner.Scene;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 
 namespace DCL.Interaction.Systems
@@ -40,7 +40,7 @@ namespace DCL.Interaction.Systems
 
         protected override void Update(float t)
         {
-            ProcessRaycastResultQuery(World);
+            ProcessRaycastResultQuery(World!);
         }
 
         private bool TryGetPreviousEntityInfo(in HoverStateComponent stateComponent, out GlobalColliderSceneEntityInfo globalColliderSceneEntityInfo)
@@ -51,81 +51,69 @@ namespace DCL.Interaction.Systems
                 return false;
             }
 
-            return entityCollidersGlobalCache.TryGetSceneEntity(stateComponent.LastHitCollider, out globalColliderSceneEntityInfo); // scene was destroyed, collider was returned to the pool, nothing to do
+            return entityCollidersGlobalCache.TryGetSceneEntity(stateComponent.LastHitCollider!, out globalColliderSceneEntityInfo); // scene was destroyed, collider was returned to the pool, nothing to do
         }
 
         [Query]
         private void ProcessRaycastResult(ref PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, ref HoverFeedbackComponent hoverFeedbackComponent, ref HoverStateComponent hoverStateComponent)
         {
             // Process all PBPointerEvents components to see if any of them is qualified
-            hoverFeedbackComponent.Tooltips.Clear();
+            hoverFeedbackComponent.Clear();
 
             bool candidateForHoverLeaveIsValid = TryGetPreviousEntityInfo(in hoverStateComponent, out GlobalColliderSceneEntityInfo previousEntityInfo);
-            hoverStateComponent.LastHitCollider = null;
-            hoverStateComponent.HasCollider = false;
-            hoverStateComponent.IsHoverOver = false;
-            hoverStateComponent.IsAtDistance = false;
+            hoverStateComponent.Clear();
 
-            bool canHover = !eventSystem.IsPointerOverGameObject();
-            GlobalColliderSceneEntityInfo? entityInfo = raycastResultForSceneEntities.GetEntityInfo();
-
-            if (raycastResultForSceneEntities.IsValidHit && canHover && entityInfo != null)
+            // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
+            if (IsPointingOnEntity(in raycastResultForSceneEntities, out var entityInfo) && entityInfo.TryGetPointerEvents(out PBPointerEvents? pbPointerEvents))
             {
-                SceneEcsExecutor ecsExecutor = entityInfo.Value.EcsExecutor;
-                ColliderSceneEntityInfo colliderSceneInfo = entityInfo.Value.ColliderSceneEntityInfo;
+                bool newEntityWasHovered = NewEntityWasHovered(candidateForHoverLeaveIsValid, previousEntityInfo, entityInfo);
 
-                InteractionInputUtils.AnyInputInfo anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
+                // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
+                if (candidateForHoverLeaveIsValid && newEntityWasHovered == false)
+                    candidateForHoverLeaveIsValid = false;
 
-                World world = ecsExecutor.World;
-                EntityReference entityRef = colliderSceneInfo.EntityReference;
-
-                // Entity should be alive and contain PBPointerEvents component to be qualified for highlighting
-                if (entityRef.IsAlive(world) && world.TryGet(entityRef, out PBPointerEvents pbPointerEvents))
-                {
-                    hoverStateComponent.LastHitCollider = raycastResultForSceneEntities.GetCollider();
-                    hoverStateComponent.HasCollider = true;
-
-                    bool newEntityWasHovered = !candidateForHoverLeaveIsValid
-                                               || (previousEntityInfo.EcsExecutor.World != world && previousEntityInfo.ColliderSceneEntityInfo.EntityReference != entityRef);
-
-                    // Signal to stop issuing hover leave event for the previous entity as it's equal to the current one
-                    if (candidateForHoverLeaveIsValid && !newEntityWasHovered)
-                        candidateForHoverLeaveIsValid = false;
-
-                    pbPointerEvents!.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.GetRaycastHit(), raycastResultForSceneEntities.GetOriginRay());
-
-                    bool isAtDistance = SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents, anyInputInfo, newEntityWasHovered);
-
-                    hoverStateComponent.IsAtDistance = isAtDistance;
-
-                    int count = world.CountEntities(highlightQuery);
-
-                    if (count > 0) { SetupHighlightComponentQuery(world, isAtDistance, entityRef); }
-                    else
-                    {
-                        world.Create(
-                            new HighlightComponent(
-                                true,
-                                isAtDistance,
-                                entityRef,
-                                entityRef
-                            )
-                        );
-                    }
-                }
+                SetupPointerEvents(raycastResultForSceneEntities, ref hoverFeedbackComponent, pbPointerEvents!, newEntityWasHovered, out bool isAtDistance);
+                hoverStateComponent.AssignCollider(raycastResultForSceneEntities.Collider, isAtDistance);
+                HighlightNewEntity(entityInfo, isAtDistance);
             }
 
             if (candidateForHoverLeaveIsValid)
-            {
-                hoverStateComponent.IsHoverOver = true;
-
-                World world = previousEntityInfo.EcsExecutor.World;
-
-                ResetHighlightComponentQuery(world);
-
-                HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
-            }
+                ResetPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
         }
+
+        private bool IsPointingOnEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, out GlobalColliderSceneEntityInfo entityInfo)
+        {
+            bool canHover = eventSystem.IsPointerOverGameObject() == false;
+            entityInfo = raycastResultForSceneEntities.EntityInfo ?? default(GlobalColliderSceneEntityInfo);
+            return raycastResultForSceneEntities.IsValidHit && canHover && raycastResultForSceneEntities.EntityInfo != null;
+        }
+
+        private void ResetPreviousEntity(in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities, in GlobalColliderSceneEntityInfo previousEntityInfo)
+        {
+            ResetHighlightComponentQuery(previousEntityInfo.EcsExecutor.World);
+            HoverFeedbackUtils.TryIssueLeaveHoverEventForPreviousEntity(in raycastResultForSceneEntities, in previousEntityInfo);
+        }
+
+        private void HighlightNewEntity(GlobalColliderSceneEntityInfo entityInfo, bool isAtDistance)
+        {
+            World world = entityInfo.EcsExecutor.World;
+            EntityReference entityRef = entityInfo.ColliderSceneEntityInfo.EntityReference;
+            int count = world.CountEntities(highlightQuery);
+
+            if (count > 0)
+                SetupHighlightComponentQuery(world, isAtDistance, entityRef);
+            else
+                world.Create(HighlightComponent.NewEntityHighlightComponent(isAtDistance, entityRef));
+        }
+
+        [Pure]
+        private static bool NewEntityWasHovered(
+            bool candidateForHoverLeaveIsValid,
+            in GlobalColliderSceneEntityInfo previousEntityInfo,
+            in GlobalColliderSceneEntityInfo entityInfo
+        ) =>
+            candidateForHoverLeaveIsValid == false
+            || previousEntityInfo.IsSameEntity(entityInfo) == false;
 
         [Query]
         private void SetupHighlightComponent([Data] bool isAtDistance, [Data] EntityReference nextEntity, ref HighlightComponent highlightComponent)
@@ -140,16 +128,22 @@ namespace DCL.Interaction.Systems
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool SetupPointerEvents(PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
-            ref HoverFeedbackComponent hoverFeedbackComponent, PBPointerEvents pbPointerEvents, InteractionInputUtils.AnyInputInfo anyInputInfo,
-            bool newEntityWasHovered)
+        private void SetupPointerEvents(
+            in PlayerOriginRaycastResultForSceneEntities raycastResultForSceneEntities,
+            ref HoverFeedbackComponent hoverFeedbackComponent,
+            PBPointerEvents pbPointerEvents,
+            bool newEntityWasHovered,
+            out bool isAtDistance
+        )
         {
-            var isAtDistance = false;
+            isAtDistance = false;
+            var anyInputInfo = sdkInputActionsMap.Values.GatherAnyInputInfo();
+            pbPointerEvents.AppendPointerEventResultsIntent.Initialize(raycastResultForSceneEntities.RaycastHit, raycastResultForSceneEntities.OriginRay);
 
-            for (var i = 0; i < pbPointerEvents.PointerEvents.Count; i++)
+            for (var i = 0; i < pbPointerEvents.PointerEvents!.Count; i++)
             {
-                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i];
-                PBPointerEvents.Types.Info info = pointerEvent.EventInfo;
+                PBPointerEvents.Types.Entry pointerEvent = pbPointerEvents.PointerEvents[i]!;
+                PBPointerEvents.Types.Info info = pointerEvent.EventInfo!;
 
                 info.PrepareDefaultValues();
 
@@ -158,23 +152,17 @@ namespace DCL.Interaction.Systems
 
                 // Try Append Hover Input
                 if (newEntityWasHovered)
-                    InteractionInputUtils.TryAppendHoverInput(ref pbPointerEvents.AppendPointerEventResultsIntent, PointerEventType.PetHoverEnter, pointerEvent, i);
+                    pbPointerEvents.AppendPointerEventResultsIntent.TryAppendHoverInput(PointerEventType.PetHoverEnter, pointerEvent, i);
 
                 // Try Append Hover Feedback
                 HoverFeedbackUtils.TryAppendHoverFeedback(sdkInputActionsMap, pointerEvent,
                     ref hoverFeedbackComponent, anyInputInfo.AnyButtonIsPressed);
-
             }
 
-            if (!isAtDistance) return false;
+            if (isAtDistance)
 
-            foreach (var input in sdkInputActionsMap)
-            {
                 // Add all inputs that were pressed/unpressed this frame
-                InteractionInputUtils.TryAppendButtonAction(input.Value, input.Key, ref pbPointerEvents.AppendPointerEventResultsIntent);
-            }
-
-            return isAtDistance;
+                InteractionInputUtils.TryAppendButtonAction(sdkInputActionsMap, ref pbPointerEvents.AppendPointerEventResultsIntent);
         }
     }
 }

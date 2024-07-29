@@ -1,7 +1,6 @@
 ﻿using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using CRDT.Protocol;
 using DCL.Diagnostics;
 using NSubstitute;
 using NUnit.Framework;
@@ -34,7 +33,7 @@ namespace SceneRunner.Scene.Tests
         [Test]
         public void TolerateEngineException()
         {
-            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
+            for (var i = 0; i < SceneExceptionsHandler.ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
             {
                 var e = new Exception("TEST");
                 sceneExceptionsHandler.OnEngineException(e, "TEST");
@@ -46,14 +45,14 @@ namespace SceneRunner.Scene.Tests
         [Test]
         public void SuspendIfToleranceExceededWhenEngineException()
         {
-            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
+            for (var i = 0; i < SceneExceptionsHandler.ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
                 sceneExceptionsHandler.OnEngineException(new Exception("TEST"), "TEST");
 
             sceneStateProvider.Received().State = SceneState.EcsError;
 
             reportHandler.Mock.Received(1)
                          .LogException(
-                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
+                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
 
             sceneStateProvider.Received().State = SceneState.EngineError;
         }
@@ -61,7 +60,7 @@ namespace SceneRunner.Scene.Tests
         [Test]
         public void TolerateJavascriptException()
         {
-            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
+            for (var i = 0; i < SceneExceptionsHandler.JAVASCRIPT_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
             {
                 var e = new Exception("TEST");
                 sceneExceptionsHandler.OnJavaScriptException(e);
@@ -73,14 +72,14 @@ namespace SceneRunner.Scene.Tests
         [Test]
         public void SuspendIfToleranceExceededWhenJavascriptException()
         {
-            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
+            for (var i = 0; i < SceneExceptionsHandler.JAVASCRIPT_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
                 sceneExceptionsHandler.OnJavaScriptException(new Exception("TEST"));
 
             sceneStateProvider.Received().State = SceneState.EcsError;
 
             reportHandler.Mock.Received(1)
                          .LogException(
-                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
+                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.JAVASCRIPT_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
 
             sceneStateProvider.Received().State = SceneState.JavaScriptError;
         }
@@ -90,7 +89,7 @@ namespace SceneRunner.Scene.Tests
         {
             Type systemGroup = typeof(SimulationSystemGroup);
 
-            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
+            for (var i = 0; i < SceneExceptionsHandler.ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE; i++)
             {
                 ISystemGroupExceptionHandler.Action action = sceneExceptionsHandler.Handle(new EcsSystemException(Substitute.For<ISystem<float>>(), new ArgumentException("TEST"), new ReportData("TEST")), systemGroup);
                 Assert.That(action, Is.EqualTo(ISystemGroupExceptionHandler.Action.Continue));
@@ -106,7 +105,7 @@ namespace SceneRunner.Scene.Tests
 
             ISystemGroupExceptionHandler.Action action = ISystemGroupExceptionHandler.Action.Continue;
 
-            for (var i = 0; i < SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
+            for (var i = 0; i < SceneExceptionsHandler.ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1; i++)
                 action = sceneExceptionsHandler.Handle(new EcsSystemException(Substitute.For<ISystem<float>>(), new ArgumentException(i.ToString()), new ReportData("TEST")), systemGroup);
 
             Assert.That(action, Is.EqualTo(ISystemGroupExceptionHandler.Action.Suspend));
@@ -114,7 +113,7 @@ namespace SceneRunner.Scene.Tests
 
             reportHandler.Mock.Received(1)
                          .LogException(
-                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ECS_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
+                              Arg.Is<SceneExecutionException>(e => e.InnerExceptions.Count == SceneExceptionsHandler.ENGINE_EXCEPTIONS_PER_MINUTE_TOLERANCE + 1));
         }
     }
 }
