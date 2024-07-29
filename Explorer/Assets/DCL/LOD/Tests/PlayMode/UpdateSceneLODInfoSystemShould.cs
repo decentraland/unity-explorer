@@ -16,8 +16,6 @@ namespace DCL.LOD.Tests
     public class UpdateSceneLODInfoSystemShould : UnitySystemTestBase<UpdateSceneLODInfoSystem>
     {
         private SceneLODInfo sceneLODInfo;
-        private LODCache lodAssetsPool;
-        private GameObjectPool<LODGroup> lodGroupPool;
         private PartitionComponent partitionComponent;
         private SceneDefinitionComponent sceneDefinitionComponent;
 
@@ -55,9 +53,7 @@ namespace DCL.LOD.Tests
             sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
-            lodAssetsPool = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
-
-            system = new UpdateSceneLODInfoSystem(world, lodGroupPool, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue, new GameObject("LODS").transform);
+            system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue);
         }
 
 

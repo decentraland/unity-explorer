@@ -2,6 +2,7 @@
 using ECS.StreamableLoading.AssetBundles;
 using Segment.Concurrent;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Utility;
 
 namespace DCL.LOD.Components
@@ -11,7 +12,8 @@ namespace DCL.LOD.Components
         public LODGroup LodGroup;
 
         //We can represent 8 LODS loaded state with a byte
-        public byte LoadedLODs;
+        [FormerlySerializedAs("LoadedLODs")]
+        public byte SuccessfullLODs;
         public byte FailedLODs;
         public float CullRelativeHeight;
         public LODAsset[] LODAssets;

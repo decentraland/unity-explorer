@@ -2,155 +2,87 @@ using DCL.LOD.Components;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Utility;
 using Object = UnityEngine.Object;
 
 namespace DCL.LOD
 {
-    public class SceneLODInfoDebugContent
-    {
-        public Color[] OriginalColors;
-        public Renderer[] Renderers;
-    }
-    /*
-       public struct SceneLODInfoDebug : IDisposable
+    public struct SceneLODInfoDebug
        {
-
-           private Dictionary<byte, SceneLODInfoDebugContent> SceneLODInfoDebugContents;
+        private Dictionary<int, Color[]> OriginalColors;
            private ILODSettingsAsset LodSettingsAsset;
-           public byte CurrentLODLevel;
-           public DebugCube[] DebugCubes;
 
            //This is a sync method, so we can use a shared list
            private static readonly List<Material> TEMP_MATERIALS = new (3);
 
-           public static SceneLODInfoDebug Create(Transform missingSceneParent, ILODSettingsAsset lodSettingsAsset, IReadOnlyList<Vector2Int> parcels)
+           private int currentLODCount;
+
+           public static SceneLODInfoDebug Create(ILODSettingsAsset lodSettingsAsset, IReadOnlyList<Vector2Int> parcels)
            {
                var debugCubes =  new DebugCube[parcels.Count];
                for (int i = 0; i < parcels.Count; i++)
                {
-                   debugCubes[i] = Object.Instantiate(lodSettingsAsset.DebugCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity, missingSceneParent);
+                   debugCubes[i] = Object.Instantiate(lodSettingsAsset.DebugCube, ParcelMathHelper.GetPositionByParcelPosition(parcels[i]), Quaternion.identity);
                    debugCubes[i].gameObject.SetActive(false);
                }
-
                return new SceneLODInfoDebug
                {
-                   SceneLODInfoDebugContents = new Dictionary<byte, SceneLODInfoDebugContent>(), CurrentLODLevel = byte.MaxValue, DebugCubes = debugCubes, LodSettingsAsset = lodSettingsAsset
+                   OriginalColors = new Dictionary<int, Color[]>(), LodSettingsAsset = lodSettingsAsset
                };
            }
 
-           public void Dispose()
+           public void Dispose(SceneLODInfo sceneLODInfo)
            {
-               foreach (var keyValuePair in SceneLODInfoDebugContents)
+               //Not initialized
+               if (string.IsNullOrEmpty(sceneLODInfo.id))
+                   return;
+
+               var lods = sceneLODInfo.metadata.LodGroup.GetLODs();
+               for (int lodLevel = 0; lodLevel < lods.Length; lodLevel++)
                {
-                   ClearContent(keyValuePair.Value);
-                   foreach (var debugCubes in DebugCubes)
-                       UnityObjectUtils.SafeDestroy(debugCubes);
+                   var lodAsset = lods[lodLevel];
+                   for (int j = 0; j < lodAsset.renderers.Length; j++)
+                   {
+                       var lodAssetRenderer = lodAsset.renderers[j];
+                       lodAssetRenderer.SafeGetMaterials(TEMP_MATERIALS);
+                       foreach (var t in TEMP_MATERIALS)
+                       {
+                           if (OriginalColors[lodLevel] != null)
+                               t.color = OriginalColors[lodLevel][j];
+                       }
+                   }
                }
            }
 
            public void Update(SceneLODInfo sceneLODInfo)
            {
-               if (!LodSettingsAsset.IsColorDebugging)
+               //Not initialized
+               if (string.IsNullOrEmpty(sceneLODInfo.id))
                    return;
-               foreach (var lodAsset in sceneLODInfo.LODAssets)
+
+               //Still no LODs available
+               if (currentLODCount == sceneLODInfo.LODLoadedCount())
+                   return;
+
+               var lods = sceneLODInfo.metadata.LodGroup.GetLODs();
+               for (int lodLevel = 0; lodLevel < lods.Length; lodLevel++)
                {
-                   if (!SceneLODInfoDebugContents.TryGetValue(lodAsset.LodKey.Level, out var sceneLODInfoDebugContents))
+                   var lodAsset = lods[lodLevel];
+                   OriginalColors[lodLevel] = new Color[lodAsset.renderers.Length];
+                   for (int j = 0; j < lodAsset.renderers.Length; j++)
                    {
-                       sceneLODInfoDebugContents = CreateSceneLODInfoDebugContents();
-                       SceneLODInfoDebugContents.Add(lodAsset.LodKey.Level, sceneLODInfoDebugContents);
-                   }
-
-                   ClearPreviousContent();
-                   UpdateContent(sceneLODInfoDebugContents, lodAsset);
-               }
-           }
-
-           private SceneLODInfoDebugContent CreateSceneLODInfoDebugContents()
-           {
-               var sceneLODInfoDebugContents = new SceneLODInfoDebugContent
-               {
-                   OriginalColors = Array.Empty<Color>(), Renderers = Array.Empty<Renderer>(), LodState = LODAsset.LOD_STATE.UNINTIALIZED
-               };
-               return sceneLODInfoDebugContents;
-           }
-
-           private void ClearPreviousContent()
-           {
-               if (CurrentLODLevel != byte.MaxValue)
-                   ClearContent(SceneLODInfoDebugContents[CurrentLODLevel]);
-           }
-
-           private void ClearContent(SceneLODInfoDebugContent debugContent)
-           {
-               foreach (var debugCubes in DebugCubes)
-                   debugCubes.gameObject.SetActive(false);
-               for (int i = 0; i < debugContent.Renderers.Length; i++)
-               {
-                   debugContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
-                   for (int j = 0; j < TEMP_MATERIALS.Count; j++)
-                       TEMP_MATERIALS[j].color = debugContent.OriginalColors[i + j];
-               }
-           }
-
-           private void UpdateContent(SceneLODInfoDebugContent debugContent, LODAsset lodAsset)
-           {
-               if (debugContent.LodState != lodAsset.State)
-                   UpdateState(ref debugContent, lodAsset);
-
-               CurrentLODState = debugContent.LodState;
-               CurrentLODLevel = lodAsset.LodKey.Level;
-
-               if (debugContent.LodState == LODAsset.LOD_STATE.SUCCESS)
-               {
-                   for (int i = 0; i < debugContent.Renderers.Length; i++)
-                   {
-                       debugContent.Renderers[i].SafeGetMaterials(TEMP_MATERIALS);
+                       var lodAssetRenderer = lodAsset.renderers[j];
+                       lodAssetRenderer.SafeGetMaterials(TEMP_MATERIALS);
                        foreach (var t in TEMP_MATERIALS)
-                           t.color = LodSettingsAsset.LODDebugColors[CurrentLODLevel];
+                       {
+                           OriginalColors[lodLevel][j] = t.color;
+                           t.color = LodSettingsAsset.LODDebugColors[lodLevel];
+                       }
                    }
                }
-               else
-               {
-                   var debugColor = GetDebugColor(debugContent);
-                   foreach (var debugCube in DebugCubes)
-                   {
-                       debugCube.failingLODCubeMeshRenderer.material.color = debugColor;
-                       debugCube.gameObject.SetActive(true);
-                   }
-               }
+
+               currentLODCount = sceneLODInfo.LODLoadedCount();
            }
-
-           private void UpdateState(ref SceneLODInfoDebugContent debugContent, LODAsset lodAsset)
-           {
-               if (lodAsset.State == LODAsset.LOD_STATE.SUCCESS)
-               {
-                   var renderers = lodAsset.Root.GetComponentsInChildren<Renderer>();
-                   var originalColorsList = new List<Color>();
-                   for (int i = 0; i < renderers.Length; i++)
-                   {
-                       renderers[i].SafeGetMaterials(TEMP_MATERIALS);
-                       foreach (var t in TEMP_MATERIALS)
-                           originalColorsList.Add(t.color);
-                   }
-
-                   debugContent.OriginalColors = originalColorsList.ToArray();
-                   debugContent.Renderers = renderers;
-               }
-
-               debugContent.LodState = lodAsset.State;
-           }
-
-           private Color GetDebugColor(SceneLODInfoDebugContent debugAsset)
-           {
-               if (debugAsset.LodState == LODAsset.LOD_STATE.FAILED)
-                   return LodSettingsAsset.LODDebugColors[CurrentLODLevel];
-
-               //Still in loading state
-               return Color.magenta;
-           }
-
        }
-       */
+       
 }

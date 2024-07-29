@@ -69,8 +69,6 @@ namespace DCL.PluginSystem.Global
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
             var lodContainer = new GameObject("POOL_CONTAINER_LODS");
-            var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
-            lodDebugContainer.transform.SetParent(lodContainer.transform);
 
             lodGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
             LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool);
@@ -91,7 +89,7 @@ namespace DCL.PluginSystem.Global
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer);
-                //LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
+                LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset);
             }
             else
             {

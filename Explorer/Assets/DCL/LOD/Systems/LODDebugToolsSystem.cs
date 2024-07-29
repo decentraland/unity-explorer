@@ -12,22 +12,18 @@ using UnityEngine;
 
 namespace DCL.LOD.Systems
 {
-    /*
+    
     [UpdateInGroup(typeof(RealmGroup))]
     [LogCategory(ReportCategory.LOD)]
     public partial class LODDebugToolsSystem : BaseUnityLoopSystem
     {
         private readonly ILODSettingsAsset lodSettingsAsset;
-
         private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
-            .WithAll<SceneLODInfoDebug>();
+            .WithAll<SceneLODInfoDebug, SceneLODInfo>();
 
-        private readonly Transform missingSceneParent;
-
-        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset, Transform missingSceneParent) : base(world)
+        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
-            this.missingSceneParent = missingSceneParent;
             lodSettingsAsset.IsColorDebugging = false;
 
             var debugWidgetBuilder = debugBuilder.AddWidget("LOD");
@@ -59,9 +55,12 @@ namespace DCL.LOD.Systems
 
             if (!lodSettingsAsset.IsColorDebugging)
                 World.Query(REMOVE_QUERY,
-                    (Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug) =>
+                    (Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug, ref SceneLODInfo sceneLODInfo) =>
                     {
-                        sceneLODInfoDebug.Dispose();
+                        if (string.IsNullOrEmpty(sceneLODInfo.id))
+                            return;
+
+                        sceneLODInfoDebug.Dispose(sceneLODInfo);
                         World.Remove<SceneLODInfoDebug>(entity);
                     });
         }
@@ -71,52 +70,33 @@ namespace DCL.LOD.Systems
             if (lodSettingsAsset.IsColorDebugging)
             {
                 AddSceneLODInfoDebugQuery(World);
-                RemoveSceneLODInfoQuery(World);
                 UpdateLODDebugInfoQuery(World);
                 UnloadSceneLODInfoDebugQuery(World);
             }
         }
-
-        [Query]
-        [All(typeof(SceneLODInfoDebug))]
-        [None(typeof(SceneLODInfo))]
-        private void RemoveSceneLODInfo(in Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug)
-        {
-            sceneLODInfoDebug.Dispose();
-            World.Remove<SceneLODInfoDebug>(entity);
-        }
+     
 
         [Query]
         [All(typeof(SceneLODInfo))]
         [None(typeof(SceneLODInfoDebug))]
         private void AddSceneLODInfoDebug(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            World.Add(entity, SceneLODInfoDebug.Create(missingSceneParent, lodSettingsAsset, sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels));
+            World.Add(entity, SceneLODInfoDebug.Create(lodSettingsAsset, sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels));
         }
 
         [Query]
         [All(typeof(DeleteEntityIntention))]
-        private void UnloadSceneLODInfoDebug(in Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug)
+        private void UnloadSceneLODInfoDebug(in Entity entity, ref SceneLODInfoDebug sceneLODInfoDebug, ref SceneLODInfo sceneLODInfo)
         {
-            sceneLODInfoDebug.Dispose();
+            sceneLODInfoDebug.Dispose(sceneLODInfo);
             World.Remove<SceneLODInfoDebug>(entity);
         }
 
         [Query]
         private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
         {
-            /*
-            if (sceneLODInfo.LODAssets.Count == 0)
-                return;
-
             sceneLODInfoDebug.Update(sceneLODInfo);
-
-            // foreach (var lodAsset in sceneLODInfo.LODAssets)
-            // {
-            //     if (lodAsset.LodKey.Level != sceneLODInfoDebug.CurrentLODLevel || lodAsset.State != sceneLODInfoDebug.CurrentLODState)
-            //         sceneLODInfoDebug.Update(lodAsset);
-            // }
         }
     }
-*/
+
 }

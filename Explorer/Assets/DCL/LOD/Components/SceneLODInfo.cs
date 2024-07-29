@@ -42,8 +42,8 @@ namespace DCL.LOD.Components
 
         public void AddSuccessLOD(GameObject instantiatedLOD, LODAsset lodAsset, float defaultFOV, float defaultLodBias)
         {
-            metadata.LoadedLODs = SceneLODInfoUtils.SetLODResult(metadata.LoadedLODs, CurrentLODLevelPromise);
-            int loadedLODAmount = SceneLODInfoUtils.CountLOD(metadata.LoadedLODs);
+            metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(metadata.SuccessfullLODs, CurrentLODLevelPromise);
+            int loadedLODAmount = SceneLODInfoUtils.CountLOD(metadata.SuccessfullLODs);
             var lods = metadata.LodGroup.GetLODs();
 
             using (var pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
@@ -111,9 +111,14 @@ namespace DCL.LOD.Components
 
         public bool HasLODLoaded(byte lodForAcquisition)
         {
-            return SceneLODInfoUtils.IsLODLoaded(metadata.LoadedLODs, lodForAcquisition) ||
+            return SceneLODInfoUtils.IsLODLoaded(metadata.SuccessfullLODs, lodForAcquisition) ||
                    SceneLODInfoUtils.IsLODLoaded(metadata.FailedLODs, lodForAcquisition) ||
                    CurrentLODLevelPromise == lodForAcquisition;
+        }
+
+        public int LODLoadedCount()
+        {
+            return SceneLODInfoUtils.CountLOD(metadata.SuccessfullLODs) + SceneLODInfoUtils.CountLOD(metadata.FailedLODs);
         }
 
     }

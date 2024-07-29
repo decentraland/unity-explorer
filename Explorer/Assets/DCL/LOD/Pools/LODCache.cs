@@ -38,7 +38,7 @@ namespace DCL.LOD
             Assert.IsFalse(lodCache.ContainsKey(key)); // 1 to 1 - relation, if it is true then we have a problem in our logic
 
             //We add to cache only if some LODs are loaded
-            if (SceneLODInfoUtils.CountLOD(asset.LoadedLODs) > 1
+            if (SceneLODInfoUtils.CountLOD(asset.SuccessfullLODs) > 1
                 || SceneLODInfoUtils.CountLOD(asset.FailedLODs) > 1)
             {
                 asset.LodGroup.enabled = false;
