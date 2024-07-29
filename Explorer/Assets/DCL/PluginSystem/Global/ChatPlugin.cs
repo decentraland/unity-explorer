@@ -67,7 +67,6 @@ namespace DCL.PluginSystem.Global
             EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
             EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
             EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
-            //ChatView chatView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>();
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
@@ -103,8 +102,6 @@ namespace DCL.PluginSystem.Global
         {
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
-            [field: SerializeField]
-            public ChatViewRef ChatPanelPrefab { get; private set; }
 
             [field: SerializeField]
             public EmojiButtonRef EmojiButtonPrefab { get; private set; }
@@ -153,12 +150,6 @@ namespace DCL.PluginSystem.Global
             public class EmojiPanelRef : ComponentReference<EmojiPanelView>
             {
                 public EmojiPanelRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class ChatViewRef : ComponentReference<ChatView>
-            {
-                public ChatViewRef(string guid) : base(guid) { }
             }
 
             [Serializable]

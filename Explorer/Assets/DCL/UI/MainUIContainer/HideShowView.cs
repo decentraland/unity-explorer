@@ -40,7 +40,7 @@ namespace DCL.UI.MainUI
             openSidebarView.ExitOpenArea += OnPointerExit;
         }
 
-        public void OnPointerEnter()
+        private void OnPointerEnter()
         {
             if (showing)
             {
@@ -65,7 +65,7 @@ namespace DCL.UI.MainUI
             }
         }
 
-        public void OnPointerExit()
+        private void OnPointerExit()
         {
             if (waitingToShow || showing)
             {
