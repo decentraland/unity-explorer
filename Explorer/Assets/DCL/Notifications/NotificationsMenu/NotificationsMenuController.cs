@@ -8,6 +8,7 @@ using SuperScrollView;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Utility;
 
 namespace DCL.Notification.NotificationsMenu
@@ -37,8 +38,14 @@ namespace DCL.Notification.NotificationsMenu
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
+            this.view.CloseButton.onClick.AddListener(ClosePanel);
 
             InitialNotificationRequest().Forget();
+        }
+
+        private void ClosePanel()
+        {
+            view.gameObject.SetActive(false);
         }
 
         public void ToggleNotificationsPanel()

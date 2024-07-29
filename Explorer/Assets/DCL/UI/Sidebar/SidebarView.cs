@@ -44,6 +44,5 @@ namespace DCL.UI.Sidebar
 
         [field: SerializeField]
         internal GameObject backpackNotificationIndicator { get; private set; }
-
     }
 }
