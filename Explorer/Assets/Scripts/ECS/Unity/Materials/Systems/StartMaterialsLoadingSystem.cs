@@ -184,12 +184,18 @@ namespace ECS.Unity.Materials.Systems
             if (textureComponent.Value.IsVideoTexture)
                 promise = Promise.CreateFinalized(intention, GetOrAddVideoTextureResult(textureComponentValue));
             else
-                promise = Equals(ref textureComponentValue, ref promise)
-
-                    // If data inside promise has not changed just reuse the same promise
-                    // as creating and waiting for a new one can be expensive
-                    ? Promise.CreateFinalized(intention, promise!.Value.Result)
-                    : Promise.Create(World!, intention, partitionComponent);
+            {
+                if (Equals(ref textureComponentValue, ref promise))
+                {
+                    promise = promise!.Value.TryGetResult(World!, out var texture)
+                        // If data inside promise has not changed just reuse the same promise
+                        // as creating and waiting for a new one can be expensive
+                        ? Promise.CreateFinalized(intention, texture)
+                        : Promise.Create(World!, intention, partitionComponent);
+                }
+                else
+                    promise = Promise.Create(World!, intention, partitionComponent);
+            }
 
             return true;
         }
