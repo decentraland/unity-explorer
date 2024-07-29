@@ -50,6 +50,7 @@ namespace DCL.Profiling
             new (MEMORY, "GetWearables Intentions", ProfilerMarkerDataUnit.Count);
 
         //LODS
+        //TODO (Juani): Rework this numbers
 
         public static ProfilerCounterValue<int> LODAssetAmount =
             new(MEMORY, "LOD Assets", ProfilerMarkerDataUnit.Count);
@@ -71,11 +72,6 @@ namespace DCL.Profiling
 
         public static ProfilerCounterValue<int> Failling_LOD_Amount =
             new(MEMORY, "LOD Failed Amount", ProfilerMarkerDataUnit.Count);
-
-        public static ProfilerCounterValue<int>[] LOD_Per_Level_Values =
-        {
-            LOD_0_Amount, LOD_1_Amount, LOD_2_Amount, LOD_3_Amount
-        };
 
 
         // Textures cache

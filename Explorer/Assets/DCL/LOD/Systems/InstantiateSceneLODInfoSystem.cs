@@ -6,6 +6,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.CharacterCamera;
 using DCL.Diagnostics;
+using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
@@ -64,38 +65,32 @@ namespace DCL.LOD.Systems
 
             if (sceneLODInfo.CurrentLODPromise.TryConsume(World, out StreamableLoadingResult<AssetBundleData> result))
             {
-                LODAsset newLod = default;
                 if (result.Succeeded)
                 {
                     var instantiatedLOD = Object.Instantiate(result.Asset!.GetMainAsset<GameObject>(),
                         sceneDefinitionComponent.SceneGeometry.BaseParcelPosition,
                         Quaternion.identity);
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise), result.Asset);
-                    FinalizeInstantiation(newLod, sceneDefinitionComponent, instantiatedLOD);
+                    var newLod = new LODAsset(instantiatedLOD, result.Asset,
+                        GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
+                    sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
-                    //TODO (JUANI): We need to keep track to unload the asset bundle 
-                    newLod = new LODAsset(new LODKey(sceneDefinitionComponent.Definition.id, sceneLODInfo.CurrentLODLevelPromise));
+                    sceneLODInfo.AddFailedLOD();
                 }
-
-                sceneLODInfo.ReEvaluateLODGroup(newLod, defaultFOV, defaultLodBias, result.Asset);
                 CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
 
-        private void FinalizeInstantiation(LODAsset currentLOD, SceneDefinitionComponent sceneDefinitionComponent, GameObject instantiatedLOD)
+        private TextureArraySlot?[] GetTextureSlot(byte lodLevel, SceneEntityDefinition sceneDefinitionComponent, GameObject instantiatedLOD)
         {
             var slots = Array.Empty<TextureArraySlot?>();
-            if (!currentLOD.LodKey.Level.Equals(0))
-            {
-                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.Definition.id,
-                    sceneDefinitionComponent.Definition.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
-            }
-
-            currentLOD.FinalizeInstantiation(instantiatedLOD, slots);
+            if (!lodLevel.Equals(0))
+                slots = LODUtils.ApplyTextureArrayToLOD(sceneDefinitionComponent.id, sceneDefinitionComponent.metadata.scene.DecodedBase, instantiatedLOD, lodTextureArrayContainer);
+            return slots;
         }
+
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {

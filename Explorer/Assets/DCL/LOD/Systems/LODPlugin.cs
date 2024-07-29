@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -19,7 +20,6 @@ namespace DCL.PluginSystem.Global
 {
     public class LODPlugin : IDCLGlobalPlugin
     {
-        private readonly LODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
         private readonly IPerformanceBudget frameCapBudget;
@@ -29,22 +29,23 @@ namespace DCL.PluginSystem.Global
         private readonly VisualSceneStateResolver visualSceneStateResolver;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
         private GameObjectPool<LODGroup> lodGroupPool;
+        private ILODCache lodCache;
         private readonly bool lodEnabled;
 
         private IExtendedObjectPool<Material> lodMaterialPool;
         private ILODSettingsAsset lodSettingsAsset;
         private readonly SceneAssetLock sceneAssetLock;
         private TextureArrayContainer lodTextureArrayContainer;
+        private readonly CacheCleaner cacheCleaner;
 
+        private const int LOD_LEVELS = 2;
 
         public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
             ILODSettingsAsset lodSettingsAsset, SceneAssetLock sceneAssetLock, bool lodEnabled)
         {
-            lodAssetsPool = new LODAssetsPool();
-            cacheCleaner.Register(lodAssetsPool);
-
+            this.cacheCleaner = cacheCleaner;
             this.realmData = realmData;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
@@ -71,68 +72,37 @@ namespace DCL.PluginSystem.Global
             var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
             lodDebugContainer.transform.SetParent(lodContainer.transform);
 
-            lodGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, CreateLODGroup);
-            PrewarmLODGroupPool();
+            lodGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
+            LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool);
 
-            AsyncInstantiateOperation.SetIntegrationTimeMS(lodSettingsAsset.AsyncIntegrationTimeMS);
+            lodCache = new LODCache(lodGroupPool);
+            cacheCleaner.Register(lodCache);
 
             lodTextureArrayContainer = textureArrayContainerFactory.CreateSceneLOD(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
 
             CalculateLODBiasSystem.InjectToWorld(ref builder);
             ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver, sceneAssetLock);
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodCache, lodSettingsAsset, visualSceneStateResolver, sceneAssetLock);
 
             if (lodEnabled)
             {
-                InitializeSceneLODInfo.InjectToWorld(ref builder, lodContainer.transform, lodGroupPool);
-                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodGroupPool, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
+                InitializeSceneLODInfo.InjectToWorld(ref builder, lodContainer.transform, lodGroupPool, lodCache, LOD_LEVELS);
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodGroupPool, lodCache, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, lodContainer.transform);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer);
-                LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
+                //LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
             }
             else
             {
                 UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);
             }
-
         }
-
-        private void PrewarmLODGroupPool()
-        {
-            int preWarmValue = 500;
-
-            var lodGroupArray = new LODGroup[preWarmValue];
-
-            for (int i = 0; i < preWarmValue; i++)
-                lodGroupArray[i] = lodGroupPool.Get();
-
-            for (int i = 0; i < preWarmValue; i++)
-                lodGroupPool.Release(lodGroupArray[i]);
-        }
-
-        private static LODGroup CreateLODGroup()
-        {
-            var lodGroupGO = new GameObject();
-            var lodGroup = lodGroupGO.AddComponent<LODGroup>();
-
-            lodGroup.fadeMode = LODFadeMode.CrossFade;
-            lodGroup.animateCrossFading = true;
-
-            var lod0 = new UnityEngine.LOD();
-            lod0.screenRelativeTransitionHeight = 1;
-            var lod1 = new UnityEngine.LOD();
-            lod1.screenRelativeTransitionHeight = 0.9999f;
-            lodGroup.SetLODs(new []
-            {
-                lod0, lod1
-            });
-            return lodGroup;
-        }
+        
 
         public void Dispose()
         {
-            lodAssetsPool.Unload(frameCapBudget, 3);
+            lodCache.Unload(frameCapBudget, 3);
             lodGroupPool?.Dispose();
         }
     }

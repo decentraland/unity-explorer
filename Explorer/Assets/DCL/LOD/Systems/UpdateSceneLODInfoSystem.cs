@@ -24,12 +24,12 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
-        private readonly ILODAssetsPool lodCache;
+        private readonly ILODCache lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
-        public UpdateSceneLODInfoSystem(World world, GameObjectPool<LODGroup> lodGroupPool, ILODAssetsPool lodCache, ILODSettingsAsset lodSettingsAsset,
+        public UpdateSceneLODInfoSystem(World world, GameObjectPool<LODGroup> lodGroupPool, ILODCache lodCache, ILODSettingsAsset lodSettingsAsset,
             IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
         {
             this.lodCache = lodCache;
@@ -61,10 +61,9 @@ namespace DCL.LOD.Systems
         private void StartLODPromise(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent, byte level)
         {
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
-            var newLODKey = new LODKey(sceneDefinitionComponent.Definition.id, level);
 
-            string platformLODKey = newLODKey + PlatformUtils.GetPlatform();
-            var manifest = LODUtils.LOD_MANIFESTS[newLODKey.Level];
+            string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetPlatform()}";
+            var manifest = LODUtils.LOD_MANIFESTS[level];
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
@@ -88,7 +87,7 @@ namespace DCL.LOD.Systems
                     sceneLODCandidate = (byte)(i + 1);
             }
 
-            if (sceneLODInfo.CullRelativeHeight >= 0.3f && sceneLODCandidate == 1)
+            if (sceneLODInfo.metadata.CullRelativeHeight >= 0.3f && sceneLODCandidate == 1)
                 sceneLODCandidate = 0;
 
             return sceneLODCandidate;

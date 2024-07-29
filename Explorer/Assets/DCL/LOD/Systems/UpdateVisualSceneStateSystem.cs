@@ -22,7 +22,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
-        private readonly ILODAssetsPool lodAssetsPool;
+        private readonly ILODCache lodAssetsPool;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneAssetLock sceneAssetLock;
 
@@ -41,7 +41,7 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool,
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODCache lodAssetsPool,
             ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.realmData = realmData;

@@ -12,6 +12,7 @@ using UnityEngine;
 
 namespace DCL.LOD.Systems
 {
+    /*
     [UpdateInGroup(typeof(RealmGroup))]
     [LogCategory(ReportCategory.LOD)]
     public partial class LODDebugToolsSystem : BaseUnityLoopSystem
@@ -109,7 +110,7 @@ namespace DCL.LOD.Systems
                 return;
 
             sceneLODInfoDebug.Update(sceneLODInfo);
-*/
+
             // foreach (var lodAsset in sceneLODInfo.LODAssets)
             // {
             //     if (lodAsset.LodKey.Level != sceneLODInfoDebug.CurrentLODLevel || lodAsset.State != sceneLODInfoDebug.CurrentLODState)
@@ -117,5 +118,5 @@ namespace DCL.LOD.Systems
             // }
         }
     }
-
+*/
 }
