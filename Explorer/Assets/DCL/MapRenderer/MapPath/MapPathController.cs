@@ -67,7 +67,7 @@ namespace DCL.MapRenderer
                 }
                 else
                 {
-                    mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
+                    mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition, true);
                     UpdatePositionInMinimapEdge(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint);
                 }
             }
@@ -108,6 +108,7 @@ namespace DCL.MapRenderer
             destinationSet = true;
             Vector3 mapPosition = coordsUtils.CoordsToPositionWithOffset(parcel);
             mapPathRenderer.gameObject.SetActive(true);
+            mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
             mapPathRenderer.SetDestination(mapPosition);
             internalPinMarker.OnBecameInvisible();
 

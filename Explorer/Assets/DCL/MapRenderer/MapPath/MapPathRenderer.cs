@@ -41,11 +41,11 @@ namespace DCL.MapRenderer
             UpdateLine();
         }
 
-        public void UpdateOrigin(Vector2 origin)
+        public void UpdateOrigin(Vector2 origin, bool updateLine = false)
         {
             originPoint = origin;
 
-            if (destinationSet) { UpdateLine(); }
+            if (updateLine && destinationSet) { UpdateLine(); }
         }
 
         private void UpdateLine()

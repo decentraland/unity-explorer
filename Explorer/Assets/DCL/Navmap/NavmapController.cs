@@ -142,6 +142,7 @@ namespace DCL.Navmap
         {
             mapPathEventBus.RemoveDestination();
             navmapView.DestinationSetView.gameObject.SetActive(false);
+            FloatingPanelController.RemoveDestination();
         }
 
         private void SetDestination()
@@ -153,8 +154,6 @@ namespace DCL.Navmap
             {
                 navmapView.DestinationSetView.Setup("Generic Parcel" + lastParcelClicked.Parcel, false, null);
             }
-
-            //DISABLED FOR TESTING -> OnSetDestination?.Invoke();
         }
 
         private void OnMapPinHovered(Vector2Int parcel, IPinMarker pinMarker)
