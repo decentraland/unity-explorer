@@ -72,7 +72,7 @@ namespace DCL.Notification
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(5), DelayType.Realtime, cancellationToken: cancellationToken.Token);
 
-                if(web3IdentityCache.Identity == null)
+                if(web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
                     continue;
 
                 urlBuilder.Clear();
