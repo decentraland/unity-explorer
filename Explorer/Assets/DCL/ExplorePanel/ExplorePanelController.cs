@@ -68,7 +68,7 @@ namespace DCL.ExplorePanel
             this.dclInput = dclInput;
             this.notificationBusController = notificationBusController;
             this.mvcManager = mvcManager;
-            this.notificationBusController.SubscribeToNotificationType(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
+            this.notificationBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardAssigned);
         }
 
         private void OnRewardAssigned(object[] parameters)

@@ -53,6 +53,11 @@
         public const string SCENE_UI = nameof(SCENE_UI);
 
         /// <summary>
+        ///     Messages related to highlighting objects in the scene on hover
+        /// </summary>
+        public const string HIGHLIGHTS = nameof(HIGHLIGHTS);
+
+        /// <summary>
         ///     Errors reported from JavaScript
         /// </summary>
         public const string JAVASCRIPT = nameof(JAVASCRIPT);
@@ -217,6 +222,11 @@
         ///     SDK Observables layer
         /// </summary>
         public const string SDK_OBSERVABLES = nameof(SDK_OBSERVABLES);
+
+        /// <summary>
+        ///     Local scene development connection with locally running scene (AKA "Preview Mode")
+        /// </summary>
+        public const string SDK_LOCAL_SCENE_DEVELOPMENT = nameof(SDK_LOCAL_SCENE_DEVELOPMENT);
 
         /// <summary>
         ///     Roads related systems

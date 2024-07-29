@@ -20,7 +20,7 @@ namespace DCL.CharacterMotion.Systems
         private const int UNGROUNDED_FRAMES = 2;
         public CharacterPlatformSystem(World world) : base(world) { }
 
-        protected override void Update(float t)
+        protected override void Update(float _)
         {
             ResolvePlatformMovementQuery(World);
         }
@@ -38,6 +38,7 @@ namespace DCL.CharacterMotion.Systems
             if (rigidTransform.JustJumped)
             {
                 platformComponent.CurrentPlatform = null;
+                platformComponent.PlatformCollider = null;
                 return;
             }
 
@@ -46,28 +47,31 @@ namespace DCL.CharacterMotion.Systems
                 platformComponent.FramesUngrounded++;
 
                 if (platformComponent.FramesUngrounded > UNGROUNDED_FRAMES)
+                {
                     platformComponent.CurrentPlatform = null;
+                    platformComponent.PlatformCollider = null;
+                }
                 return;
             }
 
             platformComponent.FramesUngrounded = 0;
 
-            Transform transform = characterController.transform;
+            Transform characterTransform = characterController.transform;
 
-            PlatformRaycast.Execute(platformComponent, characterController.radius, transform, settings);
+            PlatformRaycast.Execute(platformComponent, characterController.radius, characterTransform, settings);
 
-            if (platformComponent.CurrentPlatform == null) return;
+            if (platformComponent.CurrentPlatform == null)
+                return;
 
             Transform platformTransform = platformComponent.CurrentPlatform.transform;
 
             Vector3 newGroundWorldPos = platformTransform.TransformPoint(platformComponent.LastAvatarRelativePosition);
+            rigidTransform.PlatformDelta = newGroundWorldPos - characterTransform.position;
+
             Vector3 newCharacterForward = platformTransform.TransformDirection(platformComponent.LastAvatarRelativeRotation);
-
-            rigidTransform.PlatformDelta = newGroundWorldPos - transform.position;
-
-            Vector3 rotationDelta = newCharacterForward - transform.forward;
+            Vector3 rotationDelta = newCharacterForward - characterTransform.forward;
             rigidTransform.LookDirection += rotationDelta;
-            transform.forward = newCharacterForward;
+            characterTransform.forward = newCharacterForward;
         }
     }
 }

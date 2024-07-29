@@ -55,13 +55,13 @@ namespace DCL.EmotesWheel
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
         }
 
-        protected override UniTask PlayShowAnimation(CancellationToken ct)
+        protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
                 cancellationToken: ct);
         }
 
-        protected override UniTask PlayHideAnimation(CancellationToken ct)
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
             EmotesWheelAnimator.SetTrigger(AnimationHashes.OUT);
             return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,

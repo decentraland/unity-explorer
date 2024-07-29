@@ -18,11 +18,9 @@ module.exports.movePlayerTo = async function(message) {
 }
 
 module.exports.teleportTo = async function(message) {
-    UnityRestrictedActionsApi.TeleportTo(
-        message.worldCoordinates.x,
-        message.worldCoordinates.y
-    )
-    
+    const x = Number(message.worldCoordinates.x);
+    const y = Number(message.worldCoordinates.y);
+    UnityRestrictedActionsApi.TeleportTo(x, y);
     return {};
 }
 

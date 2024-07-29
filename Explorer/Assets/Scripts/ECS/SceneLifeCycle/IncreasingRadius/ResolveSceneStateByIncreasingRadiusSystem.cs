@@ -2,6 +2,8 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Ipfs;
+using DCL.LOD.Components;
+using DCL.Roads.Components;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization;
@@ -14,13 +16,8 @@ using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using DCL.LOD.Components;
-using System;
-using DCL.LOD;
-using DCL.Roads.Components;
 using Unity.Collections;
 using Unity.Jobs;
-using UnityEngine;
 using Utility;
 
 namespace ECS.SceneLifeCycle.IncreasingRadius
