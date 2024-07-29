@@ -24,15 +24,13 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateSceneLODInfoSystem : BaseUnityLoopSystem
     {
-        private readonly ILODCache lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
 
-        public UpdateSceneLODInfoSystem(World world, GameObjectPool<LODGroup> lodGroupPool, ILODCache lodCache, ILODSettingsAsset lodSettingsAsset,
-            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, Transform lodsTransformParent) : base(world)
+        public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset,
+            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
         {
-            this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
