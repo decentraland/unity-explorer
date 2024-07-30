@@ -171,6 +171,16 @@ class Headers {
         });
         return values[Symbol.iterator]();
     }
+    
+    //Unsure if these are used? They are non-standard
+    getSetCookie() {
+        const setCookieHeaders = this.getAll('Set-Cookie');
+        return setCookieHeaders.map(header => header.split(';')[0]);
+    }
+
+    getAll(key) {
+        return this.headers[key] || [];
+    }
 }
 
 module.exports.fetch = restrictedFetch
