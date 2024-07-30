@@ -36,7 +36,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { "message", message },
                 { "channel_mame", "nearby"}, // temporally hardcoded
-                { "receiver_id", ""} // temporal mock
+                { "receiver_id", string.Empty} // temporal mock
             });
         }
     }

@@ -51,8 +51,6 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            // V8RuntimeHeapInfo heapInfo = new V8RuntimeHeapInfo();
-
             var mainThreadReport = profiler.GetMainThreadFramesNs(percentiles);
             var gpuFrameTimeReport = profiler.GetGpuThreadFramesNs(percentiles);
 
