@@ -114,8 +114,7 @@ namespace DCL.CharacterCamera.Tests
         [TestCase(CursorStyle.Normal, false)]
         public void ChangeCursorStyleWhenHoveringOverSDKInteractable(CursorStyle cursorStyle, bool isAtDistance)
         {
-            world.Set(hoverEntity, new HoverStateComponent
-                { IsAtDistance = isAtDistance, IsHoverOver = false, HasCollider = true });
+            world.Set(hoverEntity, new HoverStateComponent(isAtDistance, null, true));
 
             world.Set(entity, new CursorComponent { CursorState = CursorState.Free });
             cursor.IsLocked().Returns(false);
