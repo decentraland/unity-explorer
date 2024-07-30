@@ -221,7 +221,7 @@ namespace Global.Dynamic
             var metaDataSource = new LogMetaDataSource(new MetaDataSource(staticContainer.RealmData, staticContainer.CharacterContainer.CharacterObject, placesAPIService));
             var gateKeeperSceneRoom = new GateKeeperSceneRoom(staticContainer.WebRequestsContainer.WebRequestController, metaDataSource);
 
-            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.WebRequestsContainer.WebRequestController, staticContainer.RealmData);
+            var currentAdapterAddress = ICurrentAdapterAddress.NewDefault(staticContainer.RealmData);
 
             var archipelagoIslandRoom = IArchipelagoIslandRoom.NewDefault(
                 identityCache,
@@ -292,7 +292,8 @@ namespace Global.Dynamic
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
                 identityCache,
-                container.RealmController
+                container.RealmController,
+                dynamicWorldParams.AppParameters
             );
 
             var worldInfoHub = new LocationBasedWorldInfoHub(

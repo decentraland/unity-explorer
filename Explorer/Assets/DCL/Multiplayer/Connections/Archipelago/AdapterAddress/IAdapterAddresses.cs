@@ -7,14 +7,14 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
 {
     public interface IAdapterAddresses
     {
-        UniTask<string> AdapterUrlAsync(string aboutUrl, CancellationToken token);
+        string AdapterUrlAsync(string commsAdapter);
 
-        public static IAdapterAddresses NewDefault(IWebRequestController webRequestController) =>
-            new LogAdapterAddresses(
-                new RefinedAdapterAddresses(
-                    new WebRequestsAdapterAddresses(webRequestController)
-                ),
+        public static IAdapterAddresses NewDefault()
+        {
+            return new LogAdapterAddresses(
+                new RefinedAdapterAddresses(),
                 ReportHub.WithReport(ReportCategory.ARCHIPELAGO_REQUEST).Log
             );
+        }
     }
 }
