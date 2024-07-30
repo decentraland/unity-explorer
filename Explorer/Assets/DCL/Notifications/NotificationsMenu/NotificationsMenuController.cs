@@ -85,6 +85,7 @@ namespace DCL.Notification.NotificationsMenu
 
         private void SetItemData(NotificationView notificationView, INotification notificationData)
         {
+            notificationView.NotificationClicked -= ClickedNotification;
             notificationView.HeaderText.text = notificationData.GetHeader();
             notificationView.TitleText.text = notificationData.GetTitle();
             notificationView.NotificationType = notificationData.Type;
@@ -95,6 +96,12 @@ namespace DCL.Notification.NotificationsMenu
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             notificationsRequestController.SetNotificationAsRead(notificationData.Id);
             notificationData.Read = true;
+            notificationView.NotificationClicked += ClickedNotification;
+        }
+
+        private void ClickedNotification(NotificationType notificationType, string notificationId)
+        {
+            notificationsBusController.ClickNotification(notificationType);
         }
 
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData)
