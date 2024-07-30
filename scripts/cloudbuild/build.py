@@ -22,8 +22,36 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
 parser.add_argument('--cancel', help='Cancel a running build stored in build_info.json', action='store_true')
 
+
+def retry_decorator(max_retries=5, initial_delay=1, backoff_factor=2, exceptions=(requests.RequestException,)):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            retries = 0
+            delay = initial_delay
+            while retries < max_retries:
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as e:
+                    retries += 1
+                    if retries == max_retries:
+                        print(f"Failed after {max_retries} retries. Last error: {e}")
+                        raise
+                    print(f"Request failed: {e}. Retrying in {delay} seconds...")
+                    time.sleep(delay)
+                    delay *= backoff_factor
+        return wrapper
+    return decorator
+
+@retry_decorator()
+def make_request(method, url, **kwargs):
+    response = requests.request(method, url, **kwargs)
+    response.raise_for_status()
+    return response
+
+
 def get_target(target):
-    response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
+    response = make_request('GET', f'{URL}/buildtargets/{target}', headers=HEADERS)
 
     if response.status_code == 200:
         return response.json()
@@ -71,11 +99,11 @@ def clone_current_target():
     
     if 'error' in existing_target:
         # Create new target
-        response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
+        response = make_request('POST', f'{URL}/buildtargets', headers=HEADERS, json=body)
     else:
         # Target exists, update it
-        response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
-
+        response = make_request('PUT', f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+    
     if response.status_code == 200 or response.status_code == 201:
         # Override target ENV
         os.environ['TARGET'] = new_target_name
@@ -101,8 +129,8 @@ def set_parameters(params):
         'TEST_ENV_GIT': 'workflowDefault'
     }
     body = hardcoded_params | params
-    response = requests.put(f'{URL}/buildtargets/{os.getenv('TARGET')}/envvars', headers=HEADERS, json=body)
-
+    response = make_request('PUT', f'{URL}/buildtargets/{os.getenv('TARGET')}/envvars', headers=HEADERS, json=body)
+    
     if response.status_code == 200:
         print("Parameters set successfully. Response:", response.json())
     else:
@@ -111,71 +139,38 @@ def set_parameters(params):
         sys.exit(1)
 
 def get_latest_build(target):
-    response = requests.get(f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
-    
-    if response.status_code == 200:
-        builds = response.json()
-        if builds:
-            return builds[0]
-    
-    print('Failed to get the latest build.')
-    return None
+    response = make_request('GET', f'{URL}/buildtargets/{target}/builds', headers=HEADERS, params={'per_page': 1, 'page': 1})
+    builds = response.json()
+    return builds[0] if builds else None
     
 def run_build(branch):
-    max_retries = 10
-    retry_delay = 30  # seconds
-
-    for attempt in range(max_retries):
-        body = {
-            'branch': branch,
-        }
-        try:
-            response = requests.post(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
-
-            if response.status_code == 202:
-                response_json = response.json()
-                print(f'Build response (attempt {attempt + 1}):', response_json)
-                
-                if 'error' in response_json[0] and 'already a build pending' in response_json[0]['error']:
-                    print('A build is already pending. Attempting to cancel it...')
-                    latest_build = get_latest_build(os.getenv('TARGET'))
-                    if latest_build:
-                        cancel_build(latest_build['build'])
-                        print(f'Waiting {retry_delay} seconds before retrying...')
-                        time.sleep(retry_delay)
-                    else:
-                        print('Failed to get the latest build ID.')
-                        if attempt == max_retries - 1:
-                            print('Max retries reached. Exiting.')
-                            sys.exit(1)
-                elif 'build' in response_json[0]:
-                    print('Build started successfully.')
-                    return int(response_json[0]['build'])
-                else:
-                    print('Unexpected response format.')
-                    if attempt == max_retries - 1:
-                        print('Max retries reached. Exiting.')
-                        sys.exit(1)
-            else:
-                print(f'Build failed to start with status code: {response.status_code}')
-                print('Response body:', response.text)
-                if attempt == max_retries - 1:
-                    print('Max retries reached. Exiting.')
-                    sys.exit(1)
-        except requests.exceptions.RequestException as e:
-            print(f'An exception occurred while trying to start the build (potentially due to a forced socket closure): {e}')
-            if attempt == max_retries - 1:
-                print('Max retries reached. Exiting.')
-                sys.exit(1)
-        
-        print(f'Retrying... (attempt {attempt + 2} of {max_retries})')
-        time.sleep(retry_delay)
+    body = {
+        'branch': branch,
+    }
+    response = make_request('POST', f'{URL}/buildtargets/{os.getenv('TARGET')}/builds', headers=HEADERS, json=body)
+    response_json = response.json()
+    print('Build response:', response_json)
     
-    print('Failed to start build after maximum retries.')
-    sys.exit(1)
+    if 'error' in response_json[0] and 'already a build pending' in response_json[0]['error']:
+        print('A build is already pending. Attempting to cancel it...')
+        latest_build = get_latest_build(os.getenv('TARGET'))
+        if latest_build:
+            cancel_build(latest_build['build'])
+            print('Waiting 30 seconds before retrying...')
+            time.sleep(30)
+            return run_build(branch)  # Retry
+        else:
+            print('Failed to get the latest build ID.')
+            sys.exit(1)
+    elif 'build' in response_json[0]:
+        print('Build started successfully.')
+        return int(response_json[0]['build'])
+    else:
+        print('Unexpected response format.')
+        sys.exit(1)
     
 def cancel_build(id):
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response = make_request('DELETE', f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
 
     if response.status_code == 204:
         print('Build canceled successfully')
@@ -233,7 +228,8 @@ def poll_build(id):
             return False
 
 def download_artifact(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response = make_request('GET', f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+    response_json = response.json()
 
     if response.status_code != 200:
         print(f'Failed to get build artifacts with ID {id} with status code: {response.status_code}')
@@ -253,7 +249,7 @@ def download_artifact(id):
 
     print('Started downloading artifacts from Unity Cloud...')
 
-    response = requests.get(artifact_url)
+    response = make_request('GET', artifact_url)
     with open(filepath, 'wb') as f:
         f.write(response.content)
 
@@ -266,56 +262,37 @@ def download_artifact(id):
     print('Artifacts ready!')
 
 def download_log(id):
-    response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
-
-    if response.status_code != 200:
-        print(f'Failed to get build log with ID {id} with status code: {response.status_code}')
-        print("Response body:", response.text)
-        sys.exit(1)
-
+    response = make_request('GET', f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/log', headers=HEADERS)
+    
     with open('unity_cloud_log.log', 'w') as f:
         f.write(response.text)
-
+    
     print('Build log ready!')
 
 def delete_build(id):
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/artifacts', headers=HEADERS)
-
-    if response.status_code == 200:
-        print('Build (on cloud) deleted successfully')
-    else:
-        print('Build (on cloud) failed to be deleted with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
+    make_request('DELETE', f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}/artifacts', headers=HEADERS)
+    print('Build (on cloud) deleted successfully')
 
 def get_any_running_builds(target, trueOnError = True):
-    response = requests.get(f'{URL}/buildtargets/{target}/builds?buildStatus=created,queued,sentToBuilder,started,restarted', headers=HEADERS)
-
-    if response.status_code == 200:
+    try:
+        response = make_request('GET', f'{URL}/buildtargets/{target}/builds?buildStatus=created,queued,sentToBuilder,started,restarted', headers=HEADERS)
         response_json = response.json()
         if response_json == []:
             return False
         else:
             print('Found at least one running build on build target')
-            return True;
-    else:
-        print('Failed to check running builds on build target with status code:', response.status_code)
-        print('Response body:', response.text)
+            return True
+    except Exception as e:
+        print(f'Failed to check running builds on build target: {e}')
         if trueOnError:
             print('Failover - Assuming at least one running, returning True')
             return True
         else:
-            sys.exit(1)
+            raise
 
 def delete_current_target():
-    response = requests.delete(f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=HEADERS)
-
-    if response.status_code == 204:
-        print('Build target deleted successfully')
-    else:
-        print('Build target failed to be deleted with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
+    make_request('DELETE', f'{URL}/buildtargets/{os.getenv('TARGET')}', headers=HEADERS)
+    print('Build target deleted successfully')
 
 # Entrypoint here ->
 args = parser.parse_args()
