@@ -21,7 +21,7 @@
             return count;
         }
 
-        public static bool IsLODLoaded(byte currentLoadLOD, int lodLevel)
+        public static bool HasLODResult(byte currentLoadLOD, int lodLevel)
         {
             return (currentLoadLOD & (1 << lodLevel)) != 0;
         }

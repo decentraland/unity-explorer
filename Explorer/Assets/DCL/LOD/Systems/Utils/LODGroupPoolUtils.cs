@@ -13,6 +13,7 @@ namespace DCL.LOD.Systems
 
         public static void GenerateDefaultLODs(LODGroup lodGroup)
         {
+            lodGroup.name = "LODGroup";
             var lod0 = new UnityEngine.LOD();
             var lod1 = new UnityEngine.LOD();
             lod0.renderers = Array.Empty<Renderer>();

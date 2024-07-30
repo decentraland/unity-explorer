@@ -85,11 +85,11 @@ namespace DCL.PluginSystem.Global
 
             if (lodEnabled)
             {
-                InitializeSceneLODInfo.InjectToWorld(ref builder, lodContainer.transform, lodGroupPool, lodCache, LOD_LEVELS);
+                InitializeSceneLODInfo.InjectToWorld(ref builder, lodContainer.transform, lodCache, LOD_LEVELS);
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer);
-                LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset);
+                LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, LOD_LEVELS);
             }
             else
             {

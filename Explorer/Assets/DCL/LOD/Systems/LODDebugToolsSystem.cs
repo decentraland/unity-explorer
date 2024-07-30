@@ -21,7 +21,10 @@ namespace DCL.LOD.Systems
         private static readonly QueryDescription REMOVE_QUERY = new QueryDescription()
             .WithAll<SceneLODInfoDebug, SceneLODInfo>();
 
-        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset) : base(world)
+        private readonly Material[] failedMaterials;
+        private static readonly Shader failedMaterialShader = Shader.Find("Universal Render Pipeline/Lit");
+
+        public LODDebugToolsSystem(World world, IDebugContainerBuilder debugBuilder, ILODSettingsAsset lodSettingsAsset, int lodLevel) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
             lodSettingsAsset.IsColorDebugging = false;
@@ -42,6 +45,15 @@ namespace DCL.LOD.Systems
             {
                 lodSettingsAsset.SDK7LodThreshold = newValue;
             });
+
+            failedMaterials = new Material[lodLevel];
+            for (int i = 0 ; i < lodLevel; i++)
+            {
+                failedMaterials[i] = new Material(failedMaterialShader)
+                {
+                    color = lodSettingsAsset.LODDebugColors[i]
+                };
+            }
         }
 
         private void SetLOD(int newValue, int i)
@@ -79,9 +91,9 @@ namespace DCL.LOD.Systems
         [Query]
         [All(typeof(SceneLODInfo))]
         [None(typeof(SceneLODInfoDebug))]
-        private void AddSceneLODInfoDebug(in Entity entity, ref SceneDefinitionComponent sceneDefinitionComponent)
+        private void AddSceneLODInfoDebug(in Entity entity)
         {
-            World.Add(entity, SceneLODInfoDebug.Create(lodSettingsAsset, sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels));
+            World.Add(entity, SceneLODInfoDebug.Create(lodSettingsAsset));
         }
 
         [Query]
@@ -93,9 +105,9 @@ namespace DCL.LOD.Systems
         }
 
         [Query]
-        private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug)
+        private void UpdateLODDebugInfo(ref SceneLODInfo sceneLODInfo, ref SceneLODInfoDebug sceneLODInfoDebug, ref SceneDefinitionComponent sceneDefinitionComponent)
         {
-            sceneLODInfoDebug.Update(sceneLODInfo);
+            sceneLODInfoDebug.Update(sceneLODInfo, sceneDefinitionComponent.Definition.metadata.scene.DecodedParcels, failedMaterials);
         }
     }
 

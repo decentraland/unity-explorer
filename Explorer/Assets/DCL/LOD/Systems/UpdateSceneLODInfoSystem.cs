@@ -51,7 +51,7 @@ namespace DCL.LOD.Systems
                 // is in the correct bucket. Once the lods are in it will change LODs based on screenspace size in relation
                 // to height and dither the transition.
                 byte lodForAcquisition = GetLODLevelForPartition(ref partitionComponent, ref sceneLODInfo, sceneDefinitionComponent);
-                if (!sceneLODInfo.HasLODLoaded(lodForAcquisition))
+                if (!sceneLODInfo.HasLOD(lodForAcquisition))
                     StartLODPromise(ref sceneLODInfo, ref partitionComponent, sceneDefinitionComponent, lodForAcquisition);
             }
         }

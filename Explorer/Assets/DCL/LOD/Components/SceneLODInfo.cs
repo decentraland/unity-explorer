@@ -109,17 +109,14 @@ namespace DCL.LOD.Components
             return ScreenRelativeTransitionHeight;
         }
 
-        public bool HasLODLoaded(byte lodForAcquisition)
+        public bool HasLOD(byte lodForAcquisition)
         {
-            return SceneLODInfoUtils.IsLODLoaded(metadata.SuccessfullLODs, lodForAcquisition) ||
-                   SceneLODInfoUtils.IsLODLoaded(metadata.FailedLODs, lodForAcquisition) ||
+            return SceneLODInfoUtils.HasLODResult(metadata.SuccessfullLODs, lodForAcquisition) ||
+                   SceneLODInfoUtils.HasLODResult(metadata.FailedLODs, lodForAcquisition) ||
                    CurrentLODLevelPromise == lodForAcquisition;
         }
 
-        public int LODLoadedCount()
-        {
-            return SceneLODInfoUtils.CountLOD(metadata.SuccessfullLODs) + SceneLODInfoUtils.CountLOD(metadata.FailedLODs);
-        }
+
 
     }
 }

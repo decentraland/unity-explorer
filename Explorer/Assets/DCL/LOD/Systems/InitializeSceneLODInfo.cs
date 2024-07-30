@@ -22,15 +22,13 @@ namespace DCL.LOD.Systems
     {
         private readonly Transform lodParentTransform;
         private readonly ILODCache lodCache;
-        private readonly GameObjectPool<LODGroup> lodsGroupPool;
         private readonly int lodLevels;
 
 
-        public InitializeSceneLODInfo(World world, Transform lodParentTransform, GameObjectPool<LODGroup> lodsGroupPool, ILODCache lodCache, int lodLevels) : base(world)
+        public InitializeSceneLODInfo(World world, Transform lodParentTransform, ILODCache lodCache, int lodLevels) : base(world)
         {
             this.lodLevels = lodLevels;
             this.lodParentTransform = lodParentTransform;
-            this.lodsGroupPool = lodsGroupPool;
             this.lodCache = lodCache;
         }
 
@@ -48,29 +46,11 @@ namespace DCL.LOD.Systems
                 return;
 
             string sceneID = sceneDefinitionComponent.Definition.id;
-            if (lodCache.TryGet(sceneID, out var lodCacheInfo))
-                sceneLODInfo.metadata = lodCacheInfo;
-            else
-            {
-                //NOTE (Juani) : We need to initialize it every time. For the change of height trick to work,
-                // the lod group should be active when modified
-                var lodGroup = InitializeLODGroup(sceneID, lodParentTransform);
-                sceneLODInfo.metadata = new LODCacheInfo
-                {
-                    LodGroup = lodGroup, LODAssets = new LODAsset[lodLevels]
-                };
-            }
-
+            sceneLODInfo.metadata = lodCache.Get(sceneID, lodParentTransform, lodLevels);
             sceneLODInfo.id = sceneID;
             sceneLODInfo.lodCache = lodCache;
         }
 
-        private LODGroup InitializeLODGroup(string sceneID, Transform lodCacheParent)
-        {
-            var newLODGroup = lodsGroupPool.Get();
-            newLODGroup.name = $"LODGroup_{sceneID}";
-            newLODGroup.transform.SetParent(lodCacheParent);
-            return newLODGroup;
-        }
+
     }
 }

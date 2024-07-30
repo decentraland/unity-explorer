@@ -23,7 +23,6 @@ namespace DCL.LOD
         DebugCube DebugCube { get; }
 
         bool EnableLODStreaming { get; set; }
-        float AsyncIntegrationTimeMS { get;  }
 
     }
 }

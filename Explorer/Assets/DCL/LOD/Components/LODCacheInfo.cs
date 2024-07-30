@@ -12,7 +12,6 @@ namespace DCL.LOD.Components
         public LODGroup LodGroup;
 
         //We can represent 8 LODS loaded state with a byte
-        [FormerlySerializedAs("LoadedLODs")]
         public byte SuccessfullLODs;
         public byte FailedLODs;
         public float CullRelativeHeight;
@@ -22,6 +21,11 @@ namespace DCL.LOD.Components
         {
             foreach (var lodAsset in LODAssets)
                 lodAsset?.Dispose();
+        }
+
+        public int LODLoadedCount()
+        {
+            return SceneLODInfoUtils.CountLOD(SuccessfullLODs) + SceneLODInfoUtils.CountLOD(FailedLODs);
         }
     }
 }

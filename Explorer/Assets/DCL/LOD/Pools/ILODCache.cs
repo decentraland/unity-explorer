@@ -1,11 +1,12 @@
 ﻿using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using UnityEngine;
 
 namespace DCL.LOD
 {
     public interface ILODCache
     {
-        bool TryGet(in string key, out LODCacheInfo asset);
+        LODCacheInfo Get(in string key, Transform lodCacheParent, int lodLevels);
 
         void Release(in string key, LODCacheInfo asset);
 

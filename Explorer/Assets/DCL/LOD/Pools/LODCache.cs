@@ -21,16 +21,30 @@ namespace DCL.LOD
             lodCache = new Dictionary<string, LODCacheInfo>();
         }
 
-        public bool TryGet(in string key, out LODCacheInfo asset)
+        public LODCacheInfo Get(in string key, Transform lodCacheParent, int lodLevels)
         {
-            if (lodCache.Remove(key, out asset))
+            //If in cache, return
+            if (lodCache.Remove(key, out var asset))
             {
                 asset.LodGroup.enabled = true;
-                return true;
+                return asset;
             }
 
-            asset = default;
-            return false;
+            //If not in cache, create new
+            return new LODCacheInfo
+            {
+                LodGroup = InitializeLODGroup(key, lodCacheParent), LODAssets = new LODAsset[lodLevels]
+            };
+        }
+
+        private LODGroup InitializeLODGroup(string sceneID, Transform lodCacheParent)
+        {
+            var newLODGroup = lodsGroupPool.Get();
+            if (newLODGroup.transform.childCount > 0)
+                Debug.Log("FOR THE DEBUG");
+            newLODGroup.name = $"LODGroup_{sceneID}";
+            newLODGroup.transform.SetParent(lodCacheParent);
+            return newLODGroup;
         }
 
         public void Release(in string key, LODCacheInfo asset)
@@ -38,8 +52,7 @@ namespace DCL.LOD
             Assert.IsFalse(lodCache.ContainsKey(key)); // 1 to 1 - relation, if it is true then we have a problem in our logic
 
             //We add to cache only if some LODs are loaded
-            if (SceneLODInfoUtils.CountLOD(asset.SuccessfullLODs) > 1
-                || SceneLODInfoUtils.CountLOD(asset.FailedLODs) > 1)
+            if (asset.LODLoadedCount() > 0)
             {
                 asset.LodGroup.enabled = false;
                 lodCache[key] = asset;
