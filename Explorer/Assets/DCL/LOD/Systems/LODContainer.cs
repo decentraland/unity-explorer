@@ -79,7 +79,7 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                    lodEnabled, staticContainer.LODCache);
+                    lodEnabled, staticContainer.LODCache, staticContainer.RealmPartitionSettings);
 
                 return UniTask.CompletedTask;
             });

@@ -1,11 +1,9 @@
 ﻿using Arch.Core;
 using DCL.Optimization.Pools;
-using System;
-using System.Collections.Generic;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
 using UnityEngine;
-using UnityEngine.Serialization;
+using Utility;
 
 namespace DCL.LOD.Components
 {
@@ -37,7 +35,7 @@ namespace DCL.LOD.Components
         }
 
 
-        public void AddSuccessLOD(GameObject instantiatedLOD, LODAsset lodAsset, float defaultFOV, float defaultLodBias)
+        public void AddSuccessLOD(GameObject instantiatedLOD, LODAsset lodAsset, float defaultFOV, float defaultLodBias, int loadingDistance)
         {
             metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(metadata.SuccessfullLODs, CurrentLODLevelPromise);
             int loadedLODAmount = SceneLODInfoUtils.CountLOD(metadata.SuccessfullLODs);
@@ -48,7 +46,7 @@ namespace DCL.LOD.Components
                 var renderers = pooledList.Value.ToArray();
                 lods[CurrentLODLevelPromise].renderers = renderers;
                 if (loadedLODAmount == 1)
-                    CalculateCullRelativeHeight(renderers, defaultFOV, defaultLodBias);
+                    CalculateCullRelativeHeight(renderers, defaultFOV, defaultLodBias, loadingDistance);
             }
 
             instantiatedLOD.transform.SetParent(metadata.LodGroup.transform);
@@ -81,9 +79,9 @@ namespace DCL.LOD.Components
             CurrentLODLevelPromise = byte.MaxValue;
         }
 
-        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV, float defaultLodBias)
+        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV, float defaultLodBias, int loadingDistance)
         {
-            const float distance = (20 - 1) * 16;
+            float distance = (loadingDistance - 1) * ParcelMathHelper.PARCEL_SIZE;
             if (lodRenderers.Length > 0)
             {
                 var mergedBounds = lodRenderers[0].bounds;

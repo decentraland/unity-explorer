@@ -11,6 +11,7 @@ using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -33,14 +34,17 @@ namespace DCL.LOD.Systems
         private float defaultFOV;
         private float defaultLodBias;
 
+        private readonly IRealmPartitionSettings realmPartitionSettings;
 
-        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer) : base(world)
+
+        public InstantiateSceneLODInfoSystem(World world, IPerformanceBudget frameCapBudget, IPerformanceBudget memoryBudget, IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, TextureArrayContainer lodTextureArrayContainer, IRealmPartitionSettings realmPartitionSettings) : base(world)
         {
             this.frameCapBudget = frameCapBudget;
             this.memoryBudget = memoryBudget;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.lodTextureArrayContainer = lodTextureArrayContainer;
+            this.realmPartitionSettings = realmPartitionSettings;
         }
 
         public override void Initialize()
@@ -74,7 +78,7 @@ namespace DCL.LOD.Systems
                         GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
 
                     CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
-                    sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias);
+                    sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias, realmPartitionSettings.MaxLoadingDistanceInParcels);
                 }
                 else
                 {

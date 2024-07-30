@@ -7,6 +7,7 @@ using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using ECS.Prioritization;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -81,7 +82,7 @@ namespace DCL.LOD.Tests
                 textureArrayContainerFactory.CreateSceneLOD(TextureArrayConstants.SCENE_TEX_ARRAY_SHADER, new []
                 {
                     new TextureArrayResolutionDescriptor(256, 500, 1)
-                }, TextureFormat.BC7, 20, 1));
+                }, TextureFormat.BC7, 20, 1), Substitute.For<IRealmPartitionSettings>());
         }
 
         [Test]
