@@ -165,7 +165,8 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.RealmController.RealmData,
-                dynamicWorldContainer.MessagePipesHub
+                dynamicWorldContainer.MessagePipesHub,
+                !localSceneDevelopment
             );
 
             (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);

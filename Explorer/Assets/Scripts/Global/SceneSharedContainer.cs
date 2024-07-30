@@ -30,7 +30,8 @@ namespace Global
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
-            IMessagePipesHub messagePipesHub)
+            IMessagePipesHub messagePipesHub,
+            bool cacheJsSources = true)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -44,7 +45,7 @@ namespace Global
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake()),
+                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake(), cacheJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
