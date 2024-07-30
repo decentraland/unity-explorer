@@ -18,13 +18,13 @@ namespace DCL.LOD.Systems
     [UpdateInGroup(typeof(RealmGroup))]
     [UpdateBefore(typeof(UpdateSceneLODInfoSystem))]
     [LogCategory(ReportCategory.LOD)]
-    public partial class InitializeSceneLODInfo : BaseUnityLoopSystem
+    public partial class InitializeSceneLODInfoSystem : BaseUnityLoopSystem
     {
         private readonly ILODCache lodCache;
         private readonly int lodLevels;
 
 
-        public InitializeSceneLODInfo(World world, ILODCache lodCache, int lodLevels) : base(world)
+        public InitializeSceneLODInfoSystem(World world, ILODCache lodCache, int lodLevels) : base(world)
         {
             this.lodLevels = lodLevels;
             this.lodCache = lodCache;
@@ -37,9 +37,9 @@ namespace DCL.LOD.Systems
 
         [Query]
         [None(typeof(DeleteEntityIntention))]
-        private void InitializeSceneLOD(ref SceneLODInfo sceneLODInfo, ref PartitionComponent partitionComponent, SceneDefinitionComponent sceneDefinitionComponent)
+        private void InitializeSceneLOD(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            //TODO (MISHA): Initialization. Whats the best way?
+            // Means its already initialized
             if (!string.IsNullOrEmpty(sceneLODInfo.id))
                 return;
 

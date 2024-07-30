@@ -12,16 +12,18 @@ namespace DCL.LOD
 {
     public class LODCache : ILODCache
     {
+        internal const int POOL_PREWARM_VALUE = 500;
+        
         internal readonly Dictionary<string, LODCacheInfo> lodCache;
         private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
-        private readonly GameObjectPool<LODGroup> lodsGroupPool;
+        internal readonly GameObjectPool<LODGroup> lodsGroupPool;
         private readonly Transform lodContainer;
 
         public LODCache()
         {
             lodContainer = new GameObject("POOL_CONTAINER_LODS").transform;
             lodsGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
-            LODGroupPoolUtils.PrewarmLODGroupPool(lodsGroupPool);
+            LODGroupPoolUtils.PrewarmLODGroupPool(lodsGroupPool, POOL_PREWARM_VALUE);
             lodCache = new Dictionary<string, LODCacheInfo>();
         }
 

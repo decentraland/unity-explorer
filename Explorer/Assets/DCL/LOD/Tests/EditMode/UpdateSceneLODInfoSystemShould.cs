@@ -10,6 +10,7 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using Assert = UnityEngine.Assertions.Assert;
 
 namespace DCL.LOD.Tests
 {
@@ -74,6 +75,9 @@ namespace DCL.LOD.Tests
 
             //Act
             system.Update(0);
+
+            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
+            Assert.AreEqual(sceneLODInfoRetrieved.CurrentLODLevelPromise, expectedLODLevel);
         }
     }
 }

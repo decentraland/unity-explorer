@@ -26,9 +26,8 @@ namespace DCL.LOD.Systems
             });
         }
 
-        public static void PrewarmLODGroupPool(GameObjectPool<LODGroup> lodGroupPool)
+        public static void PrewarmLODGroupPool(GameObjectPool<LODGroup> lodGroupPool, int preWarmValue)
         {
-            int preWarmValue = 500;
             var lodGroupArray = new LODGroup[preWarmValue];
             for (int i = 0; i < preWarmValue; i++)
                 lodGroupArray[i] = lodGroupPool.Get();
