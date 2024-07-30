@@ -13,6 +13,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -227,19 +228,20 @@ namespace Global.Dynamic
             return allScenes;
         }
 
-        private string ResolveHostname(URLDomain realm, ServerAbout result)
+        private string ResolveHostname(URLDomain realm, ServerAbout about)
         {
             string hostname;
 
-            if (realm.Value.Contains("worlds-content-server.decentraland.org/world/"))
-                hostname = realm.Value.Replace("https://", "").Replace("http://", "").ToLower();
+            if (about.configurations.realmName.IsEns())
+                hostname = $"worlds-content-server.decentraland.org/world/{about.configurations.realmName.ToLower()}";
             else
-                hostname = result.comms == null
+                hostname = about.comms == null
 
                     // Consider it as the "main" realm which shares the comms with many catalysts
                     // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
                     ? "realm-provider.decentraland.org"
                     : new Uri(realm.Value).Host;
+
             return hostname;
         }
     }

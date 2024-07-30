@@ -132,7 +132,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");
                     }
-s
+
                     return response;
                 }
                 catch (UnityWebRequestException e) { return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error, e.ResponseHeaders); }
