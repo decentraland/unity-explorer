@@ -5,6 +5,7 @@ namespace DCL.SidebarBus
     public class SidebarBus : ISidebarBus
     {
         public event Action<bool> SidebarBlockStatusChange;
+        public event Action<bool> SidebarAutohideStatusChange;
 
         public void BlockSidebar()
         {
@@ -14,6 +15,11 @@ namespace DCL.SidebarBus
         public void UnblockSidebar()
         {
             SidebarBlockStatusChange?.Invoke(false);
+        }
+
+        public void SetAutoHideSidebarStatus(bool status)
+        {
+            SidebarAutohideStatusChange?.Invoke(status);
         }
     }
 }

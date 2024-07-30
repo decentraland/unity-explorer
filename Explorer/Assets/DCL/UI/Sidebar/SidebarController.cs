@@ -55,11 +55,33 @@ namespace DCL.UI.Sidebar
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
             viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePopup);
+            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationClicked);
+            viewInstance.sidebarSettingsWidget.OnWidgetClosed += OnSidebarSettingsClosed;
+        }
 
+        private void OnAutoHideToggleChanged(bool value)
+        {
+            sidebarBus.SetAutoHideSidebarStatus(value);
+        }
+
+        private void OpenSidebarSettings()
+        {
+            if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+            {
+                systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+            }
+            sidebarBus.BlockSidebar();
+            viewInstance.sidebarSettingsWidget.gameObject.SetActive(true);
+        }
+
+        private void OnSidebarSettingsClosed()
+        {
+            sidebarBus.UnblockSidebar();
         }
 
         private void OnRewardNotificationClicked(object[] parameters)
@@ -100,7 +122,6 @@ namespace DCL.UI.Sidebar
             if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
             {
                 systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
-                sidebarBus.UnblockSidebar();
             }
             sidebarBus.BlockSidebar();
             notificationsMenuController.ToggleNotificationsPanel();

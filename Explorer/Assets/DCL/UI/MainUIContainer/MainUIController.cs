@@ -27,6 +27,7 @@ namespace DCL.UI.MainUI
         private bool waitingToHideSidebar;
         private bool showingSidebar;
         private bool sidebarBlockStatus;
+        private bool autoHideSidebar;
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
@@ -44,12 +45,21 @@ namespace DCL.UI.MainUI
         protected override void OnViewInstantiated()
         {
             sidebarBus.SidebarBlockStatusChange += OnSidebarBlockStatusChanged;
+            sidebarBus.SidebarAutohideStatusChange += OnSidebarAutohideStatusChanged;
             viewInstance.pointerDetectionArea.OnEnterArea += OnPointerEnter;
             viewInstance.pointerDetectionArea.OnExitArea += OnPointerExit;
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
         }
+
+        private void OnSidebarAutohideStatusChanged(bool status)
+        {
+            autoHideSidebar = status;
+            hideSidebarCancellationTokenSource = hideSidebarCancellationTokenSource.SafeRestart();
+            showSidebarCancellationTokenSource = showSidebarCancellationTokenSource.SafeRestart();
+        }
+
 
         private void OnSidebarBlockStatusChanged(bool status)
         {
@@ -60,7 +70,7 @@ namespace DCL.UI.MainUI
 
         private void OnPointerEnter()
         {
-            if (sidebarBlockStatus) return;
+            if (autoHideSidebar || sidebarBlockStatus) return;
 
             if (showingSidebar) { waitingToShowSidebar = false; }
 
@@ -78,7 +88,7 @@ namespace DCL.UI.MainUI
 
         private void OnPointerExit()
         {
-            if (sidebarBlockStatus) return;
+            if (autoHideSidebar || sidebarBlockStatus) return;
 
             if (waitingToShowSidebar || showingSidebar) { showSidebarCancellationTokenSource.Cancel(); }
 

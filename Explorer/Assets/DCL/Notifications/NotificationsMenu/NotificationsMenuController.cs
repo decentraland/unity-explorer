@@ -6,10 +6,8 @@ using DCL.SidebarBus;
 using DCL.Utilities;
 using DCL.WebRequests;
 using SuperScrollView;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using Utility;
 
 namespace DCL.Notification.NotificationsMenu
@@ -47,7 +45,7 @@ namespace DCL.Notification.NotificationsMenu
             InitialNotificationRequest().Forget();
         }
 
-        public void ClosePanel()
+        private void ClosePanel()
         {
             sidebarBus.UnblockSidebar();
             view.gameObject.SetActive(false);

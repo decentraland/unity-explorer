@@ -396,7 +396,7 @@ namespace Global.Dynamic
                     container.DefaultTexturesContainer.TextureArrayContainerFactory,
                     wearableCatalog
                 ),
-                new MainUIPlugin(assetsProvisioner, container.MvcManager, sidebarBus, mainUIView),
+                new MainUIPlugin(container.MvcManager, sidebarBus, mainUIView),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
                 new MapRendererPlugin(mapRendererContainer.MapRenderer),
                 new SidebarPlugin(

@@ -12,18 +12,15 @@ namespace DCL.PluginSystem.Global
 {
     public class MainUIPlugin : DCLGlobalPluginBase<MainUIPlugin.Settings>
     {
-        private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
         private readonly ISidebarBus sidebarBus;
         private readonly MainUIView mainUIView;
 
         public MainUIPlugin(
-            IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             ISidebarBus sidebarBus,
             MainUIView mainUIView)
         {
-            this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.sidebarBus = sidebarBus;
             this.mainUIView = mainUIView;
@@ -50,16 +47,6 @@ namespace DCL.PluginSystem.Global
             };
         }
 
-        public class Settings : IDCLPluginSettings
-        {
-            [field: SerializeField]
-            public MainUIRef mainUIRef;
-
-            [Serializable]
-            public class MainUIRef : ComponentReference<MainUIView>
-            {
-                public MainUIRef(string guid) : base(guid) { }
-            }
-        }
+        public class Settings : IDCLPluginSettings { }
     }
 }

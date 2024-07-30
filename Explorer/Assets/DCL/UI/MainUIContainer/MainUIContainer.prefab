@@ -496,8 +496,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d9e597035d0e7c40a10417388ca31d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <canvas>k__BackingField: {fileID: 0}
-  <raycaster>k__BackingField: {fileID: 0}
+  <canvas>k__BackingField: {fileID: 1647044090541485172}
+  <raycaster>k__BackingField: {fileID: 8235211841819826033}
   <ChatView>k__BackingField: {fileID: 1832101647578548373}
   <MinimapView>k__BackingField: {fileID: 2530848671240461574}
   <SidebarView>k__BackingField: {fileID: 152339575270123223}
