@@ -40,7 +40,6 @@ namespace DCL.AvatarRendering.Wearables.Components
         public Wearable(StreamableLoadingResult<WearableDTO> dto)
         {
             ResolveDTO(dto);
-            ;
             IsLoading = false;
         }
 
