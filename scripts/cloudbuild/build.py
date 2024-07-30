@@ -41,25 +41,31 @@ def get_target(target):
 # by appending the commit's SHA
 def clone_current_target():
     def generate_body(template_target, name, branch, options, cache):
+        print(f"Generating body for new target. Template: {template_target}, Name: {name}, Branch: {branch}, Cache: {cache}")
         body = get_target(template_target)
+        
+        if 'error' in body:
+            print(f"Error getting template target: {body['error']}")
+            return None
 
         body['name'] = name
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
 
-        # Copy cache check
         if cache:
+            print(f"Using cache from target: {template_target}")
             body['settings']['buildTargetCopyCache'] = template_target
         else:
             if 'buildTargetCopyCache' in body['settings']:
+                print("Removing buildTargetCopyCache from settings")
                 del body['settings']['buildTargetCopyCache']
 
+        print(f"Generated body: {json.dumps(body, indent=2)}")
         return body
 
-    # Set target name based on branch, without commit SHA
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
+    print(f"Attempting to clone/update target: {new_target_name}")
 
-    # Generate request body
     body = generate_body(
         os.getenv('TARGET'),
         new_target_name,
@@ -67,27 +73,49 @@ def clone_current_target():
         os.getenv('BUILD_OPTIONS').split(','),
         (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
 
+    if body is None:
+        print("Failed to generate body for the new target")
+        sys.exit(1)
+
     existing_target = get_target(new_target_name)
     
     if 'error' in existing_target:
-        # Create new target
+        print(f"Target {new_target_name} does not exist. Creating new target.")
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
     else:
-        # Target exists, update it
+        print(f"Target {new_target_name} already exists. Updating target.")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
+    print(f"Response status code: {response.status_code}")
+    print(f"Response headers: {response.headers}")
+    print(f"Response body: {response.text}")
+
     if response.status_code == 200 or response.status_code == 201:
-        # Override target ENV
+        print(f"Successfully created/updated target: {new_target_name}")
         os.environ['TARGET'] = new_target_name
     elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
         print('Target update failed due to a possible race condition. Retrying...')
-        time.sleep(2)  # Add a small delay before retrying
-        clone_current_target()  # Retry the whole process
+        time.sleep(2)
+        clone_current_target()
     else:
-        print('Target failed to clone/update with status code:', response.status_code)
-        print('Response body:', response.text)
+        print(f'Target failed to clone/update with status code: {response.status_code}')
+        print(f'Response body: {response.text}')
+        
+        if 'error' in response.json():
+            error_message = response.json()['error']
+            print(f"Error message: {error_message}")
+            
+            if "Failed to copy cache" in error_message:
+                print("Cache copy failure detected. Checking template target details:")
+                template_target = get_target(os.getenv('TARGET'))
+                print(f"Template target details: {json.dumps(template_target, indent=2)}")
+                
+                print("Checking new target details:")
+                new_target = get_target(new_target_name)
+                print(f"New target details: {json.dumps(new_target, indent=2)}")
+        
         sys.exit(1)
-
+        
 def get_param_env_variables():
     param_variables = {}
     for key, value in os.environ.items():
