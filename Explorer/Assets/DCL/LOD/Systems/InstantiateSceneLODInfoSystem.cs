@@ -72,14 +72,16 @@ namespace DCL.LOD.Systems
                         Quaternion.identity);
                     var newLod = new LODAsset(instantiatedLOD, result.Asset,
                         GetTextureSlot(sceneLODInfo.CurrentLODLevelPromise, sceneDefinitionComponent.Definition, instantiatedLOD));
+
+                    CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                     sceneLODInfo.AddSuccessLOD(instantiatedLOD, newLod, defaultFOV, defaultLodBias);
                 }
                 else
                 {
                     ReportHub.LogWarning(GetReportCategory(), $"LOD request for {sceneLODInfo.CurrentLODPromise.LoadingIntention.Hash} failed");
+                    CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
                     sceneLODInfo.AddFailedLOD();
                 }
-                CheckSceneReadinessAndClean(ref sceneLODInfo, sceneDefinitionComponent);
             }
         }
 
@@ -94,8 +96,13 @@ namespace DCL.LOD.Systems
 
         private void CheckSceneReadinessAndClean(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
-            LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+            if (sceneLODInfo.CurrentLODLevelPromise == 0)
+            {
+                scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
+                LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
+            }
         }
+        
+
     }
 }
