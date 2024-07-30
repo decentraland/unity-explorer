@@ -71,7 +71,10 @@ namespace Global.Dynamic
             if (appParameters.ContainsKey(APP_PARAMETER_POSITION))
                 ProcessPositionAppParameter(appParameters[APP_PARAMETER_POSITION], launchSettings);
 
-            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
+            string settingsRealm = launchSettings.GetStartingRealm();
+            localSceneDevelopment |= settingsRealm == IRealmNavigator.LOCALHOST;
+
+            startingRealm = URLDomain.FromString(settingsRealm);
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
