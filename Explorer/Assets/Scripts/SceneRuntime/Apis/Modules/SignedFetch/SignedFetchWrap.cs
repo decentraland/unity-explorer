@@ -167,6 +167,8 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 // TODO: support guest if required in the future
                 isGuest = false,
                 signer = "decentraland-kernel-scene",
+                // It is used for external servers to verify that the user is currently valid for that realm
+                // For example the hostname can be used to form a request to: https://{hostname}/comms/peers to check the user is currently on that parcel
                 realm = new SignatureMetadata.Realm
                 {
                     hostname = realmData.Hostname,
