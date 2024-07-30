@@ -1,6 +1,5 @@
 using System;
 using Unity.Profiling;
-using UnityEngine;
 
 namespace DCL.Profiling
 {
@@ -8,7 +7,7 @@ namespace DCL.Profiling
     ///     Profiling provider to provide in game metrics. Profiler recorder returns values in NS, so to stay consistent with it,
     ///     our most used metric is going to be NS
     /// </summary>
-    public class Profiler : IProfiler
+    public class Profiler : IDebugViewProfiler, IAnalyticsReportProfiler
     {
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
         private const int FRAME_BUFFER_SIZE = 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
@@ -24,18 +23,18 @@ namespace DCL.Profiling
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
         public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
 
-        /// <summary>
-        /// In nanoseconds
-        /// </summary>
-        public FrameTimeStats? CalculateMainThreadFrameTimesNs() =>
-            CalculateFrameStatistics(mainThreadTimeRecorder);
-
         public void Dispose()
         {
             totalUsedMemoryRecorder.Dispose();
             mainThreadTimeRecorder.Dispose();
             gpuRecorder.Dispose();
         }
+
+        /// <summary>
+        ///     In nanoseconds
+        /// </summary>
+        public FrameTimeStats? CalculateMainThreadFrameTimesNs() =>
+            CalculateFrameStatistics(mainThreadTimeRecorder);
 
         private static FrameTimeStats? CalculateFrameStatistics(ProfilerRecorder recorder)
         {
@@ -76,8 +75,9 @@ namespace DCL.Profiling
             if (samplesCount == 0)
                 return null;
 
+            Array.Clear(samplesArray, 0, samplesArray.Length);
             long hiccupCount = 0;
-            long avgFrameTime = 0;
+            long sumTime = 0;
 
             unsafe
             {
@@ -89,59 +89,27 @@ namespace DCL.Profiling
                     long frameTime = samples[i].Value;
 
                     samplesArray[i] = frameTime;
-                    avgFrameTime += frameTime;
+                    sumTime += frameTime;
 
                     if (frameTime > HICCUP_THRESHOLD_IN_NS)
                         hiccupCount++;
                 }
-
-                avgFrameTime /= samplesCount;
             }
 
             Array.Sort(samplesArray);
 
             var result = new long[percentile.Length];
+
             for (var i = 0; i < percentile.Length; i++)
             {
                 var index = (int)Math.Ceiling(percentile[i] / 100f * samplesCount);
                 index = Math.Min(index, samplesCount - 1);
-                Debug.Log($"VVV {index}");
                 result[i] = samplesArray[index - 1];
             }
 
             return new AnalyticsFrameTimeReport(
                 new FrameTimeStats(samplesArray[0], samplesArray[samplesCount - 1], hiccupCount),
-                avgFrameTime, result, samplesCount);
-        }
-    }
-
-    public readonly struct AnalyticsFrameTimeReport
-    {
-        public readonly int Samples;
-        public readonly long Average;
-        public readonly long[] Percentiles;
-        public readonly FrameTimeStats Stats;
-
-        public AnalyticsFrameTimeReport(FrameTimeStats stats, long average, long[] percentiles, int samples)
-        {
-            Average = average;
-            Percentiles = percentiles;
-            Stats = stats;
-            Samples = samples;
-        }
-    }
-
-    public readonly struct FrameTimeStats
-    {
-        public readonly long MinFrameTime;
-        public readonly long MaxFrameTime;
-        public readonly long HiccupCount;
-
-        public FrameTimeStats(long minFrameTime, long maxFrameTime, long hiccupCount)
-        {
-            MinFrameTime = minFrameTime;
-            MaxFrameTime = maxFrameTime;
-            HiccupCount = hiccupCount;
+                result, sumTime, samplesCount);
         }
     }
 }

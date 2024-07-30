@@ -80,7 +80,7 @@ namespace Global
 
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
-        public IProfiler Profiler { get; private set; }
+        public Profiler Profiler { get; private set; }
 
         public PhysicsTickProvider PhysicsTickProvider { get; private set; }
 
