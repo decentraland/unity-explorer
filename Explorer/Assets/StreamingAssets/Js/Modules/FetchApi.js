@@ -106,7 +106,7 @@ class Headers {
         this.headers = {};
 
         if (init instanceof Headers) {
-            init.forEach((key, value) => {
+            init.forEach((value, key) => {
                 this.append(key, value);
             });
         } else if (Array.isArray(init)) {
@@ -131,25 +131,14 @@ class Headers {
         delete this.headers[key];
     }
 
-
     forEach(callback) {
         for (const key in this.headers) {
             if (this.headers.hasOwnProperty(key)) {
                 const values = this.headers[key];
-                key.split(',').forEach(callback.bind(null, values, key));
+                values.forEach(value => callback(value, key, this));
             }
         }
     }
-
-    keys() {
-        return Object.keys(this.headers);
-    }
-
-
-    set(key, value) {
-        this.headers[key] = [value];
-    }
-
 
     get(key) {
         return this.headers[key] ? this.headers[key][0] : null;
@@ -159,23 +148,29 @@ class Headers {
         return !!this.headers[key];
     }
 
-    getSetCookie() {
-        const setCookieHeaders = this.getAll('Set-Cookie');
-        return setCookieHeaders.map(header => header.split(';')[0]);
+    set(key, value) {
+        this.headers[key] = [value];
+    }
+
+    entries() {
+        const entries = [];
+        this.forEach((value, key) => {
+            entries.push([key, value]);
+        });
+        return entries[Symbol.iterator]();
+    }
+
+    keys() {
+        return Object.keys(this.headers)[Symbol.iterator]();
     }
 
     values() {
-        const result = [];
+        const values = [];
         this.forEach(value => {
-            result.push(value);
+            values.push(value);
         });
-        return result;
+        return values[Symbol.iterator]();
     }
-
-    getAll(key) {
-        return this.headers[key] || [];
-    }
-
 }
 
 module.exports.fetch = restrictedFetch
