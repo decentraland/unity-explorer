@@ -113,13 +113,13 @@ namespace DCL.Profiling.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateFrameStatisticsView(IDebugViewProfiler debugProfiler)
         {
-            var frameTimeStatistic = debugProfiler.FrameTimeStatisticNs;
+            var frameTimeStats = debugProfiler.FrameTimeStatsNs;
 
-            if (frameTimeStatistic.HasValue)
+            if (frameTimeStats.HasValue)
             {
-                SetColoredHiccup(hiccups, frameTimeStatistic.Value.HiccupCount);
-                SetFPS(maxfps, frameTimeStatistic.Value.MinFrameTime);
-                SetFPS(minfps, frameTimeStatistic.Value.MaxFrameTime);
+                SetColoredHiccup(hiccups, frameTimeStats.Value.HiccupCount);
+                SetFPS(maxfps, frameTimeStats.Value.MinFrameTime);
+                SetFPS(minfps, frameTimeStats.Value.MaxFrameTime);
             }
         }
 

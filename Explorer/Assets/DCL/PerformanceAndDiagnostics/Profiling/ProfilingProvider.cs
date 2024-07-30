@@ -3,20 +3,6 @@ using Unity.Profiling;
 
 namespace DCL.Profiling
 {
-    public readonly struct FrameTimeStatistic
-    {
-        public readonly long MinFrameTime;
-        public readonly long MaxFrameTime;
-        public readonly long HiccupCount;
-
-        public FrameTimeStatistic(long minFrameTime, long maxFrameTime, long hiccupCount)
-        {
-            MinFrameTime = minFrameTime;
-            MaxFrameTime = maxFrameTime;
-            HiccupCount = hiccupCount;
-        }
-    }
-
     /// <summary>
     ///     Profiling provider to provide in game metrics. Profiler recorder returns values in NS, so to stay consistent with it,
     ///     our most used metric is going to be NS
@@ -35,7 +21,7 @@ namespace DCL.Profiling
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
         public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
 
-        public FrameTimeStatistic? FrameTimeStatisticNs => CalculateFrameTimeData(mainThreadTimeRecorder); // in NS (nanoseconds)
+        public FrameTimeStats? FrameTimeStatsNs => CalculateFrameStatsData(mainThreadTimeRecorder); // in NS (nanoseconds)
 
         // public long LastFrameTimeValueInNS => mainThreadTimeRecorder.LastValue;
         // public long LastGPUFrameTimeValueInNS => gpuRecorder.LastValue;
@@ -50,7 +36,7 @@ namespace DCL.Profiling
             gpuRecorder.Dispose();
         }
 
-        private static FrameTimeStatistic? CalculateFrameTimeData(ProfilerRecorder recorder, int longSamplesAmount = FRAME_BUFFER_SIZE)
+        private static FrameTimeStats? CalculateFrameStatsData(ProfilerRecorder recorder, int longSamplesAmount = FRAME_BUFFER_SIZE)
         {
             int availableSamples = recorder.Capacity;
 
@@ -79,7 +65,7 @@ namespace DCL.Profiling
                 }
             }
 
-            return new FrameTimeStatistic(minFrameTime, maxFrameTime, hiccupCount);
+            return new FrameTimeStats(minFrameTime, maxFrameTime, hiccupCount);
         }
 
         public double[] GetFrameTimePercentiles(int[] percentile) =>
@@ -114,6 +100,20 @@ namespace DCL.Profiling
             }
 
             return result;
+        }
+    }
+
+    public readonly struct FrameTimeStats
+    {
+        public readonly long MinFrameTime;
+        public readonly long MaxFrameTime;
+        public readonly long HiccupCount;
+
+        public FrameTimeStats(long minFrameTime, long maxFrameTime, long hiccupCount)
+        {
+            MinFrameTime = minFrameTime;
+            MaxFrameTime = maxFrameTime;
+            HiccupCount = hiccupCount;
         }
     }
 }

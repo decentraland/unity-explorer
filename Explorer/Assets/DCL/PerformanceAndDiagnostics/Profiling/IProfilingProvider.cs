@@ -4,7 +4,7 @@ namespace DCL.Profiling
 {
     public interface IDebugViewProfiler : IBudgetProfiler
     {
-        FrameTimeStatistic? FrameTimeStatisticNs { get; }
+        FrameTimeStats? FrameTimeStatsNs { get; }
         public long LastFrameTimeValueNs { get; }
     }
 
