@@ -200,25 +200,19 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
                         bool isWearableInCatalog = wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component);
-
-                        try
+                        if (!isWearableInCatalog)
                         {
-                            Assert.IsTrue(isWearableInCatalog); //A wearable that has a DTO request should already have an empty representation in the catalog at this point
-                        }
-                        catch (AssertionException e)
-                        {
+                            //A wearable that has a DTO request should already have an empty representation in the catalog at this point
                             ReportHub.LogError(new ReportData(GetReportCategory()), $"Requested wearable {assetEntity.metadata.id} is not in the catalog");
                             continue;
                         }
 
-                        try
+                        if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
                         {
-                            component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity));
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"DTO is failed or tried to resolved twice: {assetEntity.metadata.id}");
                         }
-                        catch (AssertionException e)
-                        {
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}");
-                        }
+
+                        ;
 
                         failedDTOList.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
@@ -237,11 +231,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 void ReportAndFinalizeWithError(URN urn)
                 {
                     //We have some missing pointers that were not completed. We have to consider them as failure
-                    var e = new Exception($"Wearable DTO could not be retrieved for {urn}");
+                    var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
                     ReportHub.LogError(new ReportData(GetReportCategory()), e);
-                    wearableCatalog.TryGetWearable(urn, out var component);
-                    component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(e));
-                    component.IsLoading = false;
+                    if (wearableCatalog.TryGetWearable(urn, out var component))
+                    {
+                        //If its not in the catalog, we cannot determine which one has failed
+                        component.ResolvedFailedDTO(new StreamableLoadingResult<WearableDTO>(e));
+                        component.IsLoading = false;
+                    }
                 }
             }
         }

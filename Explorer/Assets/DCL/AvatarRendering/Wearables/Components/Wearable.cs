@@ -39,7 +39,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public Wearable(StreamableLoadingResult<WearableDTO> dto)
         {
-            ResolveDTO(dto);
+            TryResolveDTO(dto);
             IsLoading = false;
         }
 
@@ -49,13 +49,12 @@ namespace DCL.AvatarRendering.Wearables.Components
         public string GetCategory() =>
             WearableDTO.Asset!.metadata.data.category;
 
-        public void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
+        public bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
+            if (!WearableDTO.IsInitialized || !WearableDTO.Succeeded)
+                return false;
 
             WearableDTO = result;
-
-            if (!result.Succeeded) return;
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;
@@ -63,6 +62,13 @@ namespace DCL.AvatarRendering.Wearables.Components
                 Type = WearableType.BodyShape;
             else
                 Type = WearableType.Regular;
+
+            return true;
+        }
+
+        public void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result)
+        {
+            WearableDTO = result;
         }
 
         public bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash)
