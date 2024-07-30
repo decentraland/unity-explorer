@@ -9,7 +9,6 @@ using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 using Utility.Times;
@@ -133,7 +132,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                             break;
                         default: throw new Exception($"Method {method} is not supported for signed fetch");
                     }
-
+s
                     return response;
                 }
                 catch (UnityWebRequestException e) { return new FlatFetchResponse(false, e.ResponseCode, e.ResponseCode.ToString(), e.Error, e.ResponseHeaders); }
@@ -170,7 +169,7 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 signer = "decentraland-kernel-scene",
                 realm = new SignatureMetadata.Realm
                 {
-                    hostname = new Uri(realmData.Ipfs.CatalystBaseUrl.ToString()).Host,
+                    hostname = realmData.Hostname,
                     protocol = realmData.Protocol,
                     serverName = realmData.RealmName,
                 },
