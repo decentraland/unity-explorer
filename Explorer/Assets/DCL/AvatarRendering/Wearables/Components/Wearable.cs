@@ -39,7 +39,8 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public Wearable(StreamableLoadingResult<WearableDTO> dto)
         {
-            TryResolveDTO(dto);
+            ResolveDTO(dto);
+            ;
             IsLoading = false;
         }
 
@@ -51,9 +52,15 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            if (!WearableDTO.IsInitialized || !WearableDTO.Succeeded)
+            if (WearableDTO.IsInitialized)
                 return false;
 
+            ResolveDTO(result);
+            return true;
+        }
+
+        private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
+        {
             WearableDTO = result;
 
             if (IsFacialFeature())
@@ -62,8 +69,6 @@ namespace DCL.AvatarRendering.Wearables.Components
                 Type = WearableType.BodyShape;
             else
                 Type = WearableType.Regular;
-
-            return true;
         }
 
         public void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result)

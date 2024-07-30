@@ -208,11 +208,8 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         }
 
                         if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
-                        {
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"DTO is failed or tried to resolved twice: {assetEntity.metadata.id}");
-                        }
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO is has already been initialized: {assetEntity.metadata.id}");
 
-                        ;
 
                         failedDTOList.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
