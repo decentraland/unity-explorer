@@ -92,8 +92,8 @@ namespace DCL.LOD.Components
 
                 // Encapsulate the bounds of the remaining renderers
                 for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
-                //Change to Mathf and Clamp
-                metadata.CullRelativeHeight = Math.Min(0.999f, Math.Max(0.02f, CalculateScreenRelativeTransitionHeight(defaultFOV, defaultLodBias, distance, mergedBounds)));
+
+                metadata.CullRelativeHeight = Mathf.Clamp(CalculateScreenRelativeTransitionHeight(defaultFOV, defaultLodBias, distance, mergedBounds), 0.02f, 0.999f);
             }
         }
 
