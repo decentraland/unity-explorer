@@ -15,6 +15,8 @@ namespace Editor
         [PublicAPI]
         public static Dictionary<string, object> Parameters { get; private set; }
 
+        private static string SEGMENT_WRITE_KEY = "SEGMENT_WRITE_KEY";
+
         [UsedImplicitly]
         public static void PreExport()
         {
@@ -40,9 +42,16 @@ namespace Editor
             PlayerSettings.macOS.buildNumber = buildVersion;
             Debug.Log($"Build version set to: {buildVersion}");
 
-            var segmentKey = Parameters["SEGMENT_WRITE_KEY"] as string;
-            Debug.Log($"[SEGMENT]: write key found");
-            WriteSegmentKeyToAnalyticsConfig(segmentKey);
+            if(Parameters.TryGetValue(SEGMENT_WRITE_KEY, out object segmentKey))
+            {
+                Debug.Log($"[SEGMENT]: write key found");
+                WriteSegmentKeyToAnalyticsConfig(segmentKey as string);
+            }
+            else
+            {
+                Debug.Log($"[SEGMENT]: write key not found");
+            }
+
         }
 
         [UsedImplicitly]
@@ -71,7 +80,7 @@ namespace Editor
 
             if (config != null)
             {
-                Debug.Log($"[SEGMENT]: write key lenght {segmentWriteKey.Length}");
+                Debug.Log($"[SEGMENT]: write key length {segmentWriteKey.Length}");
 
                 config.SetWriteKey(segmentWriteKey);
                 EditorUtility.SetDirty(config);
