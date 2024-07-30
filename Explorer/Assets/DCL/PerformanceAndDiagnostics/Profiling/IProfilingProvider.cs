@@ -2,34 +2,19 @@ using System;
 
 namespace DCL.Profiling
 {
-    public interface IAnalyticsProfiling
+    public interface IDebugViewProfiler : IBudgetProfiler
     {
-        float MedianFrameTimeInNS { get; }
-        float GetPercentileFrameTime(float percentile);
+        FrameTimeStatistic? FrameTimeStatisticNs { get; }
+        public long LastFrameTimeValueNs { get; }
     }
 
-    public interface IProfilingProvider : IDisposable
+    public interface IBudgetProfiler
     {
-        double[] GetFrameTimePercentiles(int[] percentile);
+        public long TotalUsedMemoryInBytes { get; }
+        public ulong CurrentFrameTimeValueNs { get; }
+    }
 
-        ulong TotalUsedMemoryInBytes { get; }
-
-        // Hiccups
-        ulong HiccupCountInBuffer { get; }
-        int HiccupCountBufferSize { get; }
-        void CheckHiccup();
-
-        // GPU
-        long LastGPUFrameTimeValueInNS { get; }
-
-        // Total Frame Time ("Main Thread")
-        int AverageFameTimeSamples { get; }
-
-        ulong CurrentFrameTimeValueInNS { get; }
-        long LastFrameTimeValueInNS { get; }
-        long MinFrameTimeInNS { get; }
-        long MaxFrameTimeInNS { get; }
-        double AverageFrameTimeInNS { get; }
-
+    public interface IProfiler : IDebugViewProfiler, IDisposable
+    {
     }
 }

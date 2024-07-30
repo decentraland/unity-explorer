@@ -3,37 +3,45 @@ using Unity.Profiling;
 
 namespace DCL.Profiling
 {
+    public readonly struct FrameTimeStatistic
+    {
+        public readonly long MinFrameTime;
+        public readonly long MaxFrameTime;
+        public readonly long HiccupCount;
+
+        public FrameTimeStatistic(long minFrameTime, long maxFrameTime, long hiccupCount)
+        {
+            MinFrameTime = minFrameTime;
+            MaxFrameTime = maxFrameTime;
+            HiccupCount = hiccupCount;
+        }
+    }
+
     /// <summary>
     ///     Profiling provider to provide in game metrics. Profiler recorder returns values in NS, so to stay consistent with it,
     ///     our most used metric is going to be NS
     /// </summary>
-    public class ProfilingProvider : IProfilingProvider
+    public class Profiler : IProfiler
     {
-        private const int HICCUP_THRESHOLD_IN_NS = 50_000_000;
-        private const int HICCUP_BUFFER_SIZE = 1_000;
+        private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
+        private const int FRAME_BUFFER_SIZE = 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
 
-        private readonly LinearBufferHiccupCounter hiccupBufferCounter = new (HICCUP_BUFFER_SIZE, HICCUP_THRESHOLD_IN_NS);
+        private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
+        private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
 
-        private readonly ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
-        private readonly ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", 15);
-        private readonly ProfilerRecorder gpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", 15);
+        private ProfilerRecorder gpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
 
-        public ulong TotalUsedMemoryInBytes => (ulong)totalUsedMemoryRecorder.CurrentValue;
-        public ulong CurrentFrameTimeValueInNS => (ulong)mainThreadTimeRecorder.CurrentValue;
-        public long LastFrameTimeValueInNS => mainThreadTimeRecorder.LastValue;
-        public long LastGPUFrameTimeValueInNS => gpuRecorder.LastValue;
+        public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
+        public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
+        public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
 
-        public double AverageFrameTimeInNS => GetRecorderAverage(mainThreadTimeRecorder);
+        public FrameTimeStatistic? FrameTimeStatisticNs => CalculateFrameTimeData(mainThreadTimeRecorder); // in NS (nanoseconds)
 
-        public float MedianFrameTimeInNS { get; }
-
-        public int AverageFameTimeSamples => mainThreadTimeRecorder.Capacity;
-
-        public long MinFrameTimeInNS => hiccupBufferCounter.MinFrameTimeInNS;
-        public long MaxFrameTimeInNS => hiccupBufferCounter.MaxFrameTimeInNS;
-
-        public ulong HiccupCountInBuffer => hiccupBufferCounter.HiccupsCountInBuffer;
-        public int HiccupCountBufferSize => hiccupBufferCounter.BufferSize;
+        // public long LastFrameTimeValueInNS => mainThreadTimeRecorder.LastValue;
+        // public long LastGPUFrameTimeValueInNS => gpuRecorder.LastValue;
+        // public float MedianFrameTimeInNS { get; }
+        // public int AverageFameTimeSamples => mainThreadTimeRecorder.Capacity;
+        // public int HiccupCountBufferSize => hiccupBufferCounter.BufferSize;
 
         public void Dispose()
         {
@@ -42,33 +50,36 @@ namespace DCL.Profiling
             gpuRecorder.Dispose();
         }
 
-        public float GetPercentileFrameTime(float percentile) =>
-            throw new NotImplementedException();
-
-        public void CheckHiccup() =>
-            hiccupBufferCounter.AddDeltaTime(mainThreadTimeRecorder.LastValue);
-
-        private static double GetRecorderAverage(ProfilerRecorder recorder)
+        private static FrameTimeStatistic? CalculateFrameTimeData(ProfilerRecorder recorder, int longSamplesAmount = FRAME_BUFFER_SIZE)
         {
-            int samplesCount = recorder.Capacity;
+            int availableSamples = recorder.Capacity;
 
-            if (samplesCount == 0)
-                return 0;
+            if (availableSamples == 0 || longSamplesAmount == 0)
+                return null;
 
-            double r = 0;
+            // Ensure we do not exceed recorder capacity
+            longSamplesAmount = Math.Min(longSamplesAmount, availableSamples);
+
+            long minFrameTime = long.MaxValue;
+            long maxFrameTime = long.MinValue;
+            long hiccupCount = 0;
 
             unsafe
             {
-                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[samplesCount];
-                recorder.CopyTo(samples, samplesCount);
+                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[longSamplesAmount];
+                recorder.CopyTo(samples, longSamplesAmount);
 
-                for (var i = 0; i < samplesCount; ++i)
-                    r += samples[i].Value;
+                for (var i = 0; i < longSamplesAmount; ++i)
+                {
+                    long frameTime = samples[i].Value;
 
-                r /= samplesCount;
+                    if (frameTime > HICCUP_THRESHOLD_IN_NS) hiccupCount++;
+                    if (frameTime < minFrameTime) minFrameTime = frameTime;
+                    if (frameTime > maxFrameTime) maxFrameTime = frameTime;
+                }
             }
 
-            return r;
+            return new FrameTimeStatistic(minFrameTime, maxFrameTime, hiccupCount);
         }
 
         public double[] GetFrameTimePercentiles(int[] percentile) =>

@@ -4,6 +4,7 @@ using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Optimization.PerformanceBudgeting;
+using ECS;
 using ECS.Abstract;
 using System;
 using System.Runtime.CompilerServices;
@@ -14,28 +15,30 @@ namespace DCL.Profiling.ECS
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class ProfilingSystem : BaseUnityLoopSystem
     {
-        private const float NANO_SECONDS_TO_SECONDS =  1e-9f;
+        private const float NS_TO_SEC = 1e-9f; // nanoseconds to seconds
+        private const float NS_TO_MS = 1e-6f; // nanoseconds to milliseconds
+        private const float FRAME_STATS_COOLDOWN = 30; // update each <FRAME_STATS_COOLDOWN> frames (statistic buffer == 1000)
 
-        private readonly IProfilingProvider profilingProvider;
-        private readonly FrameTimeCapBudget frameTimeBudget;
+        private readonly IRealmData realmData;
+        private readonly IDebugViewProfiler profiler;
         private readonly MemoryBudget memoryBudget;
 
         private DebugWidgetVisibilityBinding visibilityBinding;
         private DebugWidgetVisibilityBinding memoryVisibilityBinding;
 
-        private ElementBinding<ulong> hiccups;
+        private ElementBinding<string> hiccups;
         private ElementBinding<string> fps;
         private ElementBinding<string> minfps;
         private ElementBinding<string> maxfps;
         private ElementBinding<string> usedMemory;
         private ElementBinding<string> memoryCheckpoints;
 
-        private float lastTimeSinceMetricsUpdate;
+        private int framesSinceMetricsUpdate;
 
-        private ProfilingSystem(World world, IProfilingProvider profilingProvider, FrameTimeCapBudget frameTimeCapBudget, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder) : base(world)
+        private ProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder) : base(world)
         {
-            this.profilingProvider = profilingProvider;
-            frameTimeBudget = frameTimeCapBudget;
+            this.realmData = realmData;
+            this.profiler = profiler;
             this.memoryBudget = memoryBudget;
 
             CreateView();
@@ -51,7 +54,7 @@ namespace DCL.Profiling.ECS
                             .AddCustomMarker("Frame rate:", fps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Min FPS last 1k frames:", minfps = new ElementBinding<string>(string.Empty))
                             .AddCustomMarker("Max FPS last 1k frames:", maxfps = new ElementBinding<string>(string.Empty))
-                            .AddMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<ulong>(0), DebugLongMarkerDef.Unit.NoFormat);
+                            .AddCustomMarker("Hiccups last 1k frames:", hiccups = new ElementBinding<string>(string.Empty));
 
                 debugBuilder.AddWidget("Memory")
                             .SetVisibilityBinding(memoryVisibilityBinding = new DebugWidgetVisibilityBinding(true))
@@ -67,40 +70,33 @@ namespace DCL.Profiling.ECS
 
         protected override void Update(float t)
         {
-            if ((visibilityBinding.IsExpanded || memoryVisibilityBinding.IsExpanded) && lastTimeSinceMetricsUpdate > 0.5f)
-            {
-                lastTimeSinceMetricsUpdate = 0;
-                UpdateView();
-            }
+            if (!realmData.Configured) return;
 
-            lastTimeSinceMetricsUpdate += t;
-            profilingProvider.CheckHiccup();
+            if (memoryVisibilityBinding.IsExpanded)
+                UpdateMemoryView(profiler);
+
+            if (visibilityBinding.IsExpanded)
+            {
+                SetFPS(fps, profiler.LastFrameTimeValueNs);
+
+                if (framesSinceMetricsUpdate > FRAME_STATS_COOLDOWN)
+                {
+                    framesSinceMetricsUpdate = 0;
+                    UpdateFrameStatisticsView(profiler);
+                }
+
+                framesSinceMetricsUpdate++;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void UpdateView()
+        private void UpdateMemoryView(IBudgetProfiler memoryProfiler)
         {
-            hiccups.Value = profilingProvider.HiccupCountInBuffer;
-            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert(profilingProvider.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
-
+            usedMemory.Value = $"<color={GetMemoryUsageColor()}>{(ulong)BytesFormatter.Convert((ulong)memoryProfiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte)}</color>";
             (float warning, float full) memoryRanges = memoryBudget.GetMemoryRanges();
             memoryCheckpoints.Value = $"<color=green>{memoryRanges.warning}</color> | <color=red>{memoryRanges.full}</color>";
 
-            SetFPS(fps, (long)profilingProvider.AverageFrameTimeInNS);
-            SetFPS(minfps, profilingProvider.MinFrameTimeInNS);
-            SetFPS(maxfps, profilingProvider.MaxFrameTimeInNS);
             return;
-
-            void SetFPS(ElementBinding<string> elementBinding, long value)
-            {
-                float averageFrameTimeInSeconds = value * NANO_SECONDS_TO_SECONDS;
-
-                float frameTimeInMS = averageFrameTimeInSeconds * 1e3f;
-                float frameRate = 1 / averageFrameTimeInSeconds;
-
-                string fpsColor = frameTimeBudget.TrySpendBudget() ? "green" : "red";
-                elementBinding.Value = $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
-            }
 
             string GetMemoryUsageColor()
             {
@@ -112,6 +108,48 @@ namespace DCL.Profiling.ECS
                            _ => throw new ArgumentOutOfRangeException(),
                        };
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void UpdateFrameStatisticsView(IDebugViewProfiler debugProfiler)
+        {
+            var frameTimeStatistic = debugProfiler.FrameTimeStatisticNs;
+
+            if (frameTimeStatistic.HasValue)
+            {
+                SetColoredHiccup(hiccups, frameTimeStatistic.Value.HiccupCount);
+                SetFPS(maxfps, frameTimeStatistic.Value.MinFrameTime);
+                SetFPS(minfps, frameTimeStatistic.Value.MaxFrameTime);
+            }
+        }
+
+        private static void SetColoredHiccup(ElementBinding<string> elementBinding, long value)
+        {
+            string color = value switch
+                           {
+                               < 10 => "green",
+                               < 30 => "yellow",
+                               < 100 => "orange",
+                               _ => "red",
+                           };
+
+            elementBinding.Value = $"<color={color}>{value})</color>";
+        }
+
+        private static void SetFPS(ElementBinding<string> elementBinding, long value)
+        {
+            float frameTimeInMS = value * NS_TO_MS;
+            float frameRate = 1 / (value * NS_TO_SEC);
+
+            string fpsColor = frameRate switch
+                              {
+                                  < 20 => "red",
+                                  < 30 => "orange",
+                                  < 40 => "yellow",
+                                  _ => "green",
+                              };
+
+            elementBinding.Value = $"<color={fpsColor}>{frameRate:F1} fps ({frameTimeInMS:F1} ms)</color>";
         }
     }
 }
