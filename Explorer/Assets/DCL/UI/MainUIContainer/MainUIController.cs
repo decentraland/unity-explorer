@@ -51,6 +51,7 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
+            showingSidebar = true;
         }
 
         private void OnSidebarAutohideStatusChanged(bool status)

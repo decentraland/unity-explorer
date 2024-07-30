@@ -77,11 +77,13 @@ namespace DCL.UI.Sidebar
             }
             sidebarBus.BlockSidebar();
             viewInstance.sidebarSettingsWidget.gameObject.SetActive(true);
+            viewInstance.sidebarSettingsButton.Select();
         }
 
         private void OnSidebarSettingsClosed()
         {
             sidebarBus.UnblockSidebar();
+            viewInstance.sidebarSettingsButton.OnDeselect(null);
         }
 
         private void OnRewardNotificationClicked(object[] parameters)
