@@ -45,8 +45,6 @@ namespace DCL.LOD.Components
 
             using (var pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
             {
-                //MISHA: Is it possible to avoid the array conversion
-                //TODO (Juani) : If it is size 0 it doesnt make sense to go beyond this point
                 var renderers = pooledList.Value.ToArray();
                 lods[CurrentLODLevelPromise].renderers = renderers;
                 if (loadedLODAmount == 1)
@@ -99,7 +97,6 @@ namespace DCL.LOD.Components
 
         public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float defaultLodBias, float distance, Bounds rendererBounds)
         {
-            //Recalculate distance for every LOD in a menu transition
             float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * defaultLodBias;
             float halfFov = (defaultFOV / 2.0f) * Mathf.Deg2Rad;
             float ScreenRelativeTransitionHeight = objectSize / ((distance + objectSize) * Mathf.Tan(halfFov));
