@@ -29,7 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly IEventSystem eventSystem;
-        private readonly MainUIContainer mainUIContainer;
+        private readonly MainUIView mainUIView;
 
         private ChatController chatController;
 
@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             DCLInput dclInput,
             IEventSystem eventSystem,
-            MainUIContainer mainUIContainer,
+            MainUIView mainUIView,
             IInputBlock inputBlock
         )
         {
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
-            this.mainUIContainer = mainUIContainer;
+            this.mainUIView = mainUIView;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -73,7 +73,7 @@ namespace DCL.PluginSystem.Global
                 chatController = new ChatController(
                     () =>
                     {
-                        var view = mainUIContainer.ChatView;
+                        var view = mainUIView.ChatView;
                         view.gameObject.SetActive(true);
                         return view;
                     },
@@ -153,7 +153,7 @@ namespace DCL.PluginSystem.Global
             }
 
             [Serializable]
-            public class MainUIRef : ComponentReference<MainUIContainer>
+            public class MainUIRef : ComponentReference<MainUIView>
             {
                 public MainUIRef(string guid) : base(guid) { }
             }

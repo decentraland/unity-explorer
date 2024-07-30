@@ -13,6 +13,7 @@ using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.UI.MainUI;
 using DCL.UI.Sidebar;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -21,6 +22,7 @@ using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -41,13 +43,13 @@ namespace Global.Dynamic
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
 
-        public bool EnableAnalytics { private get; init; }
-
         private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
-        private Dictionary<string, string> appParameters = new Dictionary<string, string>();
+        private Dictionary<string, string> appParameters = new ();
+
+        public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(DebugSettings debugSettings)
         {
@@ -119,7 +121,7 @@ namespace Global.Dynamic
                     EnableLOD = enableLOD,
                     EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
                     LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
-                    AppParameters = appParameters
+                    AppParameters = appParameters,
                 },
                 backgroundMusic,
                 ct);
@@ -198,11 +200,12 @@ namespace Global.Dynamic
         {
             string[] cmdArgs = Environment.GetCommandLineArgs();
 
-            bool deepLinkFound = false;
+            var deepLinkFound = false;
             string lastKeyStored = string.Empty;
-            for (int i = 1; i < cmdArgs.Length; i++)
+
+            for (var i = 1; i < cmdArgs.Length; i++)
             {
-                var arg = cmdArgs[i];
+                string arg = cmdArgs[i];
 
                 if (arg.StartsWith("--"))
                 {
@@ -246,15 +249,12 @@ namespace Global.Dynamic
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.com/?");
 
-            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out var res)) return;
+            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? res)) return;
 
             var uri = new Uri(deepLinkString);
-            var uriQuery = HttpUtility.ParseQueryString(uri.Query);
+            NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            foreach (string uriQueryKey in uriQuery.AllKeys)
-            {
-                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
-            }
+            foreach (string uriQueryKey in uriQuery.AllKeys) { appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey); }
         }
 
         private void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)
@@ -277,7 +277,8 @@ namespace Global.Dynamic
 
             Vector2Int targetPosition = Vector2Int.zero;
 
-            var matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+            MatchCollection matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+
             if (matches.Count > 1)
             {
                 targetPosition.x = int.Parse(matches[0].Value);
@@ -291,8 +292,9 @@ namespace Global.Dynamic
         {
             if (string.IsNullOrEmpty(localSceneParameter)) return false;
 
-            bool returnValue = false;
-            var match = new Regex(@"true|false").Match(localSceneParameter);
+            var returnValue = false;
+            Match match = new Regex(@"true|false").Match(localSceneParameter);
+
             if (match.Success)
                 bool.TryParse(match.Value, out returnValue);
 
@@ -303,15 +305,13 @@ namespace Global.Dynamic
             new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
 
         private bool IsRealmALocalUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out var uriResult)
+            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
-            mvcManager.ShowAsync(SidebarController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }

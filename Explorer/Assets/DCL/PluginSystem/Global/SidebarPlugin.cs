@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
-        private readonly MainUIContainer mainUIContainer;
+        private readonly MainUIView mainUIView;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsRequestController notificationsRequestController;
         private readonly IWeb3IdentityCache web3IdentityCache;
@@ -35,11 +35,12 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
+        private readonly ISidebarBus sidebarBus;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
-            MainUIContainer mainUIContainer,
+            MainUIView mainUIView,
             INotificationsBusController notificationsBusController,
             NotificationsRequestController notificationsRequestController,
             IWeb3IdentityCache web3IdentityCache,
@@ -48,11 +49,12 @@ namespace DCL.PluginSystem.Global
             IWebBrowser webBrowser,
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
-            IProfileCache profileCache)
+            IProfileCache profileCache,
+            ISidebarBus sidebarBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
-            this.mainUIContainer = mainUIContainer;
+            this.mainUIView = mainUIView;
             this.notificationsBusController = notificationsBusController;
             this.notificationsRequestController = notificationsRequestController;
             this.web3IdentityCache = web3IdentityCache;
@@ -62,28 +64,28 @@ namespace DCL.PluginSystem.Global
             this.web3Authenticator = web3Authenticator;
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
+            this.sidebarBus = sidebarBus;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(SidebarSettings settings, CancellationToken ct)
         {
-            ISidebarBus sidebarBus = new SidebarBus.SidebarBus();
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
                 mvcManager.RegisterController(new SidebarController(() =>
                     {
-                        SidebarView view = mainUIContainer.SidebarView;
+                        SidebarView view = mainUIView.SidebarView;
                         view.gameObject.SetActive(true);
                         return view;
                     },
                     mvcManager,
                     notificationsBusController,
-                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus),
-                    new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => mainUIContainer.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
+                    new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus),
+                    new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
+                    new ProfileWidgetController(() => mainUIView.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
+                    new SystemMenuController(() => mainUIView.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
                     sidebarBus
                 ));
             };
@@ -92,7 +94,7 @@ namespace DCL.PluginSystem.Global
         public class SidebarSettings : IDCLPluginSettings
         {
             [field: SerializeField]
-            public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set; }
+            public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set;}
         }
     }
 }

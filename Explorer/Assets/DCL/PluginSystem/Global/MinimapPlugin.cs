@@ -22,10 +22,10 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IScenesCache scenesCache;
-        private readonly MainUIContainer mainUIContainer;
+        private readonly MainUIView mainUIView;
 
         public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIContainer mainUIContainer)
+            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView)
         {
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -34,7 +34,7 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
-            this.mainUIContainer = mainUIContainer;
+            this.mainUIView = mainUIView;
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
@@ -44,7 +44,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(new MinimapController(
                     () =>
                     {
-                        var view = mainUIContainer.MinimapView;
+                        MinimapView? view = mainUIView.MinimapView;
                         view.gameObject.SetActive(true);
                         return view;
                     },
@@ -55,8 +55,6 @@ namespace DCL.PluginSystem.Global
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
 
-        public class MinimapSettings : IDCLPluginSettings
-        {
-        }
+        public class MinimapSettings : IDCLPluginSettings { }
     }
 }

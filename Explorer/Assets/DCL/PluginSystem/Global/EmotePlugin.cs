@@ -41,11 +41,12 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private AudioSource? audioSourceReference;
-        private EmotesWheelController? emotesWheelController;
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
-        private readonly MainUIContainer mainUIContainer;
+        private readonly MainUIView mainUIView;
+        private AudioSource? audioSourceReference;
+        private EmotesWheelController? emotesWheelController;
+
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteCache emoteCache,
             IRealmData realmData,
@@ -59,7 +60,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache web3IdentityCache,
             IReadOnlyEntityParticipantTable entityParticipantTable,
             URLDomain assetBundleURL,
-            MainUIContainer mainUIContainer)
+            MainUIView mainUIView)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -73,7 +74,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
-            this.mainUIContainer = mainUIContainer;
+            this.mainUIView = mainUIView;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -122,7 +123,7 @@ namespace DCL.PluginSystem.Global
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
-            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIContainer.SidebarView.PersistentEmoteWheelOpener, mvcManager);
+            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIView.SidebarView.PersistentEmoteWheelOpener, mvcManager);
 
             mvcManager.RegisterController(persistentEmoteWheelOpenerController);
 
