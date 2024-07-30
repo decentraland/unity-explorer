@@ -7,6 +7,7 @@ using DCL.Notification;
 using DCL.Notification.NotificationsBus;
 using DCL.Notification.NotificationsMenu;
 using DCL.Profiles;
+using DCL.SidebarBus;
 using DCL.UI.MainUI;
 using DCL.UI.Sidebar;
 using DCL.UserInAppInitializationFlow;
@@ -67,6 +68,7 @@ namespace DCL.PluginSystem.Global
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(SidebarSettings settings, CancellationToken ct)
         {
+            ISidebarBus sidebarBus = new SidebarBus.SidebarBus();
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
@@ -78,10 +80,11 @@ namespace DCL.PluginSystem.Global
                     },
                     mvcManager,
                     notificationsBusController,
-                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController),
+                    new NotificationsMenuController(mainUIContainer.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new ProfileWidgetController(() => mainUIContainer.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => mainUIContainer.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager)
+                    new SystemMenuController(() => mainUIContainer.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
+                    sidebarBus
                 ));
             };
         }

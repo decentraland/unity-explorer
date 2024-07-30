@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Notification.NotificationEntry;
 using DCL.Notification.NotificationsBus;
+using DCL.SidebarBus;
 using DCL.Utilities;
 using DCL.WebRequests;
 using SuperScrollView;
@@ -22,6 +23,7 @@ namespace DCL.Notification.NotificationsMenu
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
+        private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
 
@@ -30,21 +32,24 @@ namespace DCL.Notification.NotificationsMenu
             NotificationsRequestController notificationsRequestController,
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
-            IWebRequestController webRequestController)
+            IWebRequestController webRequestController,
+            ISidebarBus sidebarBus)
         {
             this.view = view;
             this.notificationsRequestController = notificationsRequestController;
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
+            this.sidebarBus = sidebarBus;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
 
             InitialNotificationRequest().Forget();
         }
 
-        private void ClosePanel()
+        public void ClosePanel()
         {
+            sidebarBus.UnblockSidebar();
             view.gameObject.SetActive(false);
         }
 

@@ -3,6 +3,7 @@ using DCL.ExplorePanel;
 using DCL.Notification;
 using DCL.Notification.NotificationsBus;
 using DCL.Notification.NotificationsMenu;
+using DCL.SidebarBus;
 using MVC;
 using System.Threading;
 using Utility;
@@ -17,6 +18,7 @@ namespace DCL.UI.Sidebar
         private readonly ProfileWidgetController profileIconWidgetController;
         private readonly ProfileWidgetController profileMenuWidgetController;
         private readonly SystemMenuController systemMenuController;
+        private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
 
@@ -30,13 +32,15 @@ namespace DCL.UI.Sidebar
             NotificationsMenuController notificationsMenuController,
             ProfileWidgetController profileIconWidgetController,
             ProfileWidgetController profileMenuWidgetController,
-            SystemMenuController systemMenuController)
+            SystemMenuController systemMenuController,
+            ISidebarBus sidebarBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
             this.profileMenuWidgetController = profileMenuWidgetController;
             this.systemMenuController = systemMenuController;
+            this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
         }
@@ -86,16 +90,23 @@ namespace DCL.UI.Sidebar
 
         private void OpenProfilePopup()
         {
+            sidebarBus.BlockSidebar();
             viewInstance.profileMenu.gameObject.SetActive(true);
-            ShowSystemMenu();
+            ToggleSystemMenu();
         }
 
         private void OpenNotificationsPanel()
         {
+            if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+            {
+                systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+                sidebarBus.UnblockSidebar();
+            }
+            sidebarBus.BlockSidebar();
             notificationsMenuController.ToggleNotificationsPanel();
         }
 
-        private void ShowSystemMenu()
+        private void ToggleSystemMenu()
         {
             systemMenuCts = systemMenuCts.SafeRestart();
 
@@ -104,10 +115,14 @@ namespace DCL.UI.Sidebar
                 await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
                     new ControllerNoData(), ct);
                 await systemMenuController.HideViewAsync(ct);
+                sidebarBus.UnblockSidebar();
             }
 
             if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+            {
                 systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+                sidebarBus.UnblockSidebar();
+            }
             else
             {
                 profileMenuWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
