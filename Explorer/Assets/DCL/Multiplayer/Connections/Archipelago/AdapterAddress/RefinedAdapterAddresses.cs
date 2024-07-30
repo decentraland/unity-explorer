@@ -6,24 +6,19 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress
 {
     public class RefinedAdapterAddresses : IAdapterAddresses
     {
-        private readonly IAdapterAddresses origin;
         private readonly string replaceRefined;
 
-        public RefinedAdapterAddresses(IAdapterAddresses origin, string replaceRefined = "archipelago:archipelago:")
+        public RefinedAdapterAddresses(string replaceRefined = "archipelago:archipelago:")
         {
-            this.origin = origin;
             this.replaceRefined = replaceRefined;
         }
 
-        public async UniTask<string> AdapterUrlAsync(string aboutUrl, CancellationToken token)
+        public string AdapterUrlAsync(string unrefinedAdapter)
         {
-            string result = await origin.AdapterUrlAsync(aboutUrl, token);
-            result = result.Replace(replaceRefined, string.Empty);
-
-            result = RemoveHttpsPreInfo(result);
-            result = RemoveWssPreInfo(result);
-
-            return result;
+            unrefinedAdapter = unrefinedAdapter.Replace(replaceRefined, string.Empty);
+            unrefinedAdapter = RemoveHttpsPreInfo(unrefinedAdapter);
+            unrefinedAdapter = RemoveWssPreInfo(unrefinedAdapter);
+            return unrefinedAdapter;
         }
 
         private string RemoveHttpsPreInfo(string url)

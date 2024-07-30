@@ -3,7 +3,7 @@ using System;
 
 namespace DCL.Notification
 {
-    public class IncomingRewardNotification : NotificationBase
+    public class RewardInProgressNotification : NotificationBase
     {
         [JsonProperty("metadata")]
         public IncomingRewardNotificationMetadata Metadata { get; set; }
@@ -21,16 +21,16 @@ namespace DCL.Notification
     [Serializable]
     public struct IncomingRewardNotificationMetadata
     {
-        [JsonProperty("name")]
+        [JsonProperty("tokenName")]
         public string Name { get; set; }
 
-        [JsonProperty("image")]
+        [JsonProperty("tokenImage")]
         public string Image { get; set; }
 
-        [JsonProperty("rarity")]
+        [JsonProperty("tokenRarity")]
         public string Rarity { get; set; }
 
-        [JsonProperty("category")]
+        [JsonProperty("tokenCategory")]
         public string Category { get; set; }
 
         [JsonProperty("title")]
