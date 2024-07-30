@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Diagnostics;
 using DCL.Utilities.Extensions;
 using DG.Tweening;
@@ -15,13 +16,9 @@ namespace DCL.SceneLoadingScreens
 {
     public partial class SceneLoadingScreenController : ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>
     {
-        private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
-        private const string AVATAR_VOLUME_EXPOSED_PARAM = "Avatar_Volume";
-        private const float AUDIO_GROUP_MUTE_VALUE = -80;
-
         private readonly ISceneTipsProvider sceneTipsProvider;
         private readonly TimeSpan minimumDisplayDuration;
-        private readonly AudioMixer generalAudioMixer;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
 
         private readonly AudioMixerGroup audioMixerGroupController;
 
@@ -37,11 +34,11 @@ namespace DCL.SceneLoadingScreens
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,
             TimeSpan minimumDisplayDuration,
-            AudioMixer generalAudioMixer) : base(viewFactory)
+            AudioMixerVolumesController audioMixerVolumesController) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
             this.minimumDisplayDuration = minimumDisplayDuration;
-            this.generalAudioMixer = generalAudioMixer;
+            this.audioMixerVolumesController = audioMixerVolumesController;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -93,10 +90,9 @@ namespace DCL.SceneLoadingScreens
             viewInstance.RootCanvasGroup.alpha = 1f;
             viewInstance.ContentCanvasGroup.alpha = 1f;
 
-            generalAudioMixer.GetFloat(WORLD_VOLUME_EXPOSED_PARAM, out originalWorldAudioVolume);
-            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, AUDIO_GROUP_MUTE_VALUE);
-            generalAudioMixer.GetFloat(AVATAR_VOLUME_EXPOSED_PARAM, out originalAvatarAudioVolume);
-            generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM, AUDIO_GROUP_MUTE_VALUE);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         protected override void OnViewClose()
@@ -105,8 +101,9 @@ namespace DCL.SceneLoadingScreens
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
 
-            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, originalWorldAudioVolume);
-            generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM, originalAvatarAudioVolume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

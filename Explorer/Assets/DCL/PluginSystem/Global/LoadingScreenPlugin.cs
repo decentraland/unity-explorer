@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.SceneLoadingScreens;
 using MVC;
 using System;
@@ -13,13 +14,16 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IMVCManager mvcManager;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
 
         public LoadingScreenPlugin(
             IAssetsProvisioner assetsProvisioner,
-            IMVCManager mvcManager)
+            IMVCManager mvcManager,
+            AudioMixerVolumesController audioMixerVolumesController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
+            this.audioMixerVolumesController = audioMixerVolumesController;
         }
 
         public void Dispose() { }
@@ -30,7 +34,6 @@ namespace DCL.PluginSystem.Global
         {
             SceneLoadingScreenView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LoadingScreenPrefab, ct: ct)).Value;
             SceneTipsConfigurationSO fallbackTipsConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.FallbackTipsConfiguration, ct: ct)).Value;
-            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
 
             ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>.ViewFactoryMethod? authScreenFactory =
                 SceneLoadingScreenController.CreateLazily(prefab, null);
@@ -42,7 +45,7 @@ namespace DCL.PluginSystem.Global
             await tipsProvider.InitializeAsync(ct);
 
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
-                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), generalAudioMixer.Value));
+                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), audioMixerVolumesController));
         }
     }
 }
