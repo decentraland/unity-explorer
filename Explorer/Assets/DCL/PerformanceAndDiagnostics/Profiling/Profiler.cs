@@ -14,29 +14,35 @@ namespace DCL.Profiling
 
         private readonly long[] samplesArray = new long[FRAME_BUFFER_SIZE];
 
+        // Memory footprint of your application as seen by the operating system.
+        private ProfilerRecorder systemUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "System Used Memory");
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
+        private ProfilerRecorder gcUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Used Memory"); // Mono/IL2CPP heap size
+
         private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
+        private ProfilerRecorder gpuFrameTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
 
-        private ProfilerRecorder gpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
-
+        public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
         public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
+        public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
+
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
         public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
 
         public void Dispose()
         {
-            totalUsedMemoryRecorder.Dispose();
+            systemUsedMemoryRecorder.Dispose();
             mainThreadTimeRecorder.Dispose();
-            gpuRecorder.Dispose();
+            gpuFrameTimeRecorder.Dispose();
         }
 
         /// <summary>
         ///     In nanoseconds
         /// </summary>
         public FrameTimeStats? CalculateMainThreadFrameTimesNs() =>
-            CalculateFrameStatistics(mainThreadTimeRecorder);
+            CalculateFrameTimeStats(mainThreadTimeRecorder);
 
-        private static FrameTimeStats? CalculateFrameStatistics(ProfilerRecorder recorder)
+        private static FrameTimeStats? CalculateFrameTimeStats(ProfilerRecorder recorder)
         {
             int availableSamples = recorder.Capacity;
 
@@ -67,6 +73,9 @@ namespace DCL.Profiling
 
         public AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile) =>
             GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
+
+        public AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile) =>
+            GetFrameStatsWithPercentiles(gpuFrameTimeRecorder, percentile);
 
         private AnalyticsFrameTimeReport? GetFrameStatsWithPercentiles(ProfilerRecorder recorder, int[] percentile)
         {
@@ -107,9 +116,10 @@ namespace DCL.Profiling
                 result[i] = samplesArray[index - 1];
             }
 
-            return new AnalyticsFrameTimeReport(
-                new FrameTimeStats(samplesArray[0], samplesArray[samplesCount - 1], hiccupCount),
-                result, sumTime, samplesCount);
+            return
+                new AnalyticsFrameTimeReport(
+                    new FrameTimeStats(samplesArray[0], samplesArray[samplesCount - 1], hiccupCount),
+                    result, sumTime, samplesCount);
         }
     }
 }

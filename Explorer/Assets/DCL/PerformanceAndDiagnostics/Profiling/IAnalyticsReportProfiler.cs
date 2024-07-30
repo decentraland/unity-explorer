@@ -2,7 +2,13 @@
 {
     public interface IAnalyticsReportProfiler : IBudgetProfiler
     {
+        long TotalUsedMemoryInBytes { get; }
+
+        long GcUsedMemoryInBytes { get; }
+
         AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile);
+
+        AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile);
     }
 
     public readonly struct AnalyticsFrameTimeReport

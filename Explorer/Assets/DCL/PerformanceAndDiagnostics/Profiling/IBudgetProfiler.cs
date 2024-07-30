@@ -4,7 +4,7 @@ namespace DCL.Profiling
 {
     public interface IBudgetProfiler : IDisposable
     {
-        long TotalUsedMemoryInBytes { get; }
+        long SystemUsedMemoryInBytes { get; }
         ulong CurrentFrameTimeValueNs { get; }
     }
 
