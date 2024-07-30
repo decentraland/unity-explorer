@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using Utility;
 
@@ -14,8 +15,15 @@ namespace DCL.SceneLoadingScreens
 {
     public partial class SceneLoadingScreenController : ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>
     {
+        private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
+        private const string AVATAR_VOLUME_EXPOSED_PARAM = "Avatar_Volume";
+        private const float AUDIO_GROUP_MUTE_VALUE = -80;
+
         private readonly ISceneTipsProvider sceneTipsProvider;
         private readonly TimeSpan minimumDisplayDuration;
+        private readonly AudioMixer generalAudioMixer;
+
+        private readonly AudioMixerGroup audioMixerGroupController;
 
         private int currentTip;
         private SceneTips tips;
@@ -23,13 +31,17 @@ namespace DCL.SceneLoadingScreens
         private CancellationTokenSource? tipsFadeCancellationToken;
         private IntVariable? progressLabel;
         private readonly List<UniTask> fadingTasks = new ();
+        private float originalWorldAudioVolume;
+        private float originalAvatarAudioVolume;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,
-            TimeSpan minimumDisplayDuration) : base(viewFactory)
+            TimeSpan minimumDisplayDuration,
+            AudioMixer generalAudioMixer) : base(viewFactory)
         {
             this.sceneTipsProvider = sceneTipsProvider;
             this.minimumDisplayDuration = minimumDisplayDuration;
+            this.generalAudioMixer = generalAudioMixer;
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Overlay;
@@ -80,6 +92,11 @@ namespace DCL.SceneLoadingScreens
             base.OnViewShow();
             viewInstance.RootCanvasGroup.alpha = 1f;
             viewInstance.ContentCanvasGroup.alpha = 1f;
+
+            generalAudioMixer.GetFloat(WORLD_VOLUME_EXPOSED_PARAM, out originalWorldAudioVolume);
+            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, AUDIO_GROUP_MUTE_VALUE);
+            generalAudioMixer.GetFloat(AVATAR_VOLUME_EXPOSED_PARAM, out originalAvatarAudioVolume);
+            generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM, AUDIO_GROUP_MUTE_VALUE);
         }
 
         protected override void OnViewClose()
@@ -87,6 +104,9 @@ namespace DCL.SceneLoadingScreens
             base.OnViewClose();
             tipsRotationCancellationToken?.SafeCancelAndDispose();
             tipsFadeCancellationToken?.SafeCancelAndDispose();
+
+            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, originalWorldAudioVolume);
+            generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM, originalAvatarAudioVolume);
         }
 
         protected override async UniTask WaitForCloseIntentAsync(CancellationToken ct)

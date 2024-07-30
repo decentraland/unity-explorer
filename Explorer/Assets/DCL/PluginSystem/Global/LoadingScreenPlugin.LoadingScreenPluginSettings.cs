@@ -3,6 +3,7 @@ using DCL.SceneLoadingScreens;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Audio;
 
 namespace DCL.PluginSystem.Global
 {
@@ -35,6 +36,9 @@ namespace DCL.PluginSystem.Global
             {
                 public LoadingScreenObjectRef(string guid) : base(guid) { }
             }
+
+            [field: SerializeField]
+            public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
         }
     }
 }

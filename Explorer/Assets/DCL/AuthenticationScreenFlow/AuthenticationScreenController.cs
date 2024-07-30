@@ -38,6 +38,8 @@ namespace DCL.AuthenticationScreenFlow
         private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
         private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
+        private const string AVATAR_VOLUME_EXPOSED_PARAM = "Avatar_Volume";
+        private const float AUDIO_GROUP_MUTE_VALUE = -80;
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -48,6 +50,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixer generalAudioMixer;
+        private float originalAvatarAudioVolume;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -123,9 +126,16 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
+        }
+
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
 
             generalAudioMixer.GetFloat(WORLD_VOLUME_EXPOSED_PARAM, out originalWorldAudioVolume);
-            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, -80);
+            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, AUDIO_GROUP_MUTE_VALUE);
+            generalAudioMixer.GetFloat(AVATAR_VOLUME_EXPOSED_PARAM, out originalAvatarAudioVolume);
+            generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM, AUDIO_GROUP_MUTE_VALUE);
         }
 
         protected override void OnViewClose()
@@ -136,7 +146,9 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             viewInstance.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
+
             generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, originalWorldAudioVolume);
+            generalAudioMixer.SetFloat(AVATAR_VOLUME_EXPOSED_PARAM, originalAvatarAudioVolume);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()

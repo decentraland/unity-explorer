@@ -30,6 +30,7 @@ namespace DCL.PluginSystem.Global
         {
             SceneLoadingScreenView prefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.LoadingScreenPrefab, ct: ct)).Value;
             SceneTipsConfigurationSO fallbackTipsConfig = (await assetsProvisioner.ProvideMainAssetAsync(settings.FallbackTipsConfiguration, ct: ct)).Value;
+            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
 
             ControllerBase<SceneLoadingScreenView, SceneLoadingScreenController.Params>.ViewFactoryMethod? authScreenFactory =
                 SceneLoadingScreenController.CreateLazily(prefab, null);
@@ -41,7 +42,7 @@ namespace DCL.PluginSystem.Global
             await tipsProvider.InitializeAsync(ct);
 
             mvcManager.RegisterController(new SceneLoadingScreenController(authScreenFactory, tipsProvider,
-                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration)));
+                TimeSpan.FromSeconds(settings.MinimumScreenDisplayDuration), generalAudioMixer.Value));
         }
     }
 }
