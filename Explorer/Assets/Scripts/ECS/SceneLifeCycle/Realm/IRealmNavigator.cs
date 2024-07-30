@@ -9,7 +9,7 @@ namespace ECS.SceneLifeCycle.Realm
 {
     public interface IRealmNavigator
     {
-        public const string GENESIS_URL = "https://peer.decentraland.org";
+        public const string GENESIS_URL = "https://realm-provider.decentraland.org/main";
         public const string WORLDS_DOMAIN = "https://worlds-content-server.decentraland.org/world";
         public const string LOCALHOST = "http://127.0.0.1:8000";
 
