@@ -22,7 +22,7 @@ namespace ECS.SceneLifeCycle.Systems
     {
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
-        private readonly ILODCache lodAssetsPool;
+        private readonly ILODCache lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneAssetLock sceneAssetLock;
 
@@ -41,12 +41,12 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODCache lodAssetsPool,
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODCache lodCache,
             ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
-            this.lodAssetsPool = lodAssetsPool;
+            this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.sceneAssetLock = sceneAssetLock;
@@ -136,7 +136,7 @@ namespace ECS.SceneLifeCycle.Systems
         {
             if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
             {
-                switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
+                switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
                 visualSceneState.IsDirty = false;
 
                 //Show Scene

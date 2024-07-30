@@ -1,6 +1,7 @@
 using DCL.Optimization.PerformanceBudgeting;
 using System.Collections.Generic;
 using DCL.LOD.Components;
+using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -14,34 +15,35 @@ namespace DCL.LOD
         internal readonly Dictionary<string, LODCacheInfo> lodCache;
         private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
         private readonly GameObjectPool<LODGroup> lodsGroupPool;
+        private readonly Transform lodContainer;
 
-        public LODCache(GameObjectPool<LODGroup> lodsGroupPool)
+        public LODCache()
         {
-            this.lodsGroupPool = lodsGroupPool;
+            lodContainer = new GameObject("POOL_CONTAINER_LODS").transform;
+            lodsGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
+            LODGroupPoolUtils.PrewarmLODGroupPool(lodsGroupPool);
             lodCache = new Dictionary<string, LODCacheInfo>();
         }
 
-        public LODCacheInfo Get(in string key, Transform lodCacheParent, int lodLevels)
+        public LODCacheInfo Get(in string key, int lodLevels)
         {
             //If in cache, return
             if (lodCache.Remove(key, out var asset))
             {
-                asset.LodGroup.enabled = true;
+                asset.LodGroup.gameObject.SetActive(true);
                 return asset;
             }
 
             //If not in cache, create new
             return new LODCacheInfo
             {
-                LodGroup = InitializeLODGroup(key, lodCacheParent), LODAssets = new LODAsset[lodLevels]
+                LodGroup = InitializeLODGroup(key, lodContainer), LODAssets = new LODAsset[lodLevels]
             };
         }
 
         private LODGroup InitializeLODGroup(string sceneID, Transform lodCacheParent)
         {
             var newLODGroup = lodsGroupPool.Get();
-            if (newLODGroup.transform.childCount > 0)
-                Debug.Log("FOR THE DEBUG");
             newLODGroup.name = $"LODGroup_{sceneID}";
             newLODGroup.transform.SetParent(lodCacheParent);
             return newLODGroup;
@@ -54,7 +56,7 @@ namespace DCL.LOD
             //We add to cache only if some LODs are loaded
             if (asset.LODLoadedCount() > 0)
             {
-                asset.LodGroup.enabled = false;
+                asset.LodGroup.gameObject.SetActive(false);
                 lodCache[key] = asset;
                 unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
             }

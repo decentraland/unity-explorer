@@ -51,7 +51,7 @@ namespace DCL.ResourcesUnloading.Tests
             gltfContainerAssetsCache = new GltfContainerAssetsCache();
             wearableAssetsCache = new WearableAssetsCache(100);
             wearableCatalog = new WearableCatalog();
-            lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
+            lodAssets = new LODCache();
             roadAssets = new RoadAssetsPool(new List<GameObject>());
 
 

@@ -6,7 +6,7 @@ namespace DCL.LOD
 {
     public interface ILODCache
     {
-        LODCacheInfo Get(in string key, Transform lodCacheParent, int lodLevels);
+        LODCacheInfo Get(in string key, int lodLevels);
 
         void Release(in string key, LODCacheInfo asset);
 

@@ -20,15 +20,13 @@ namespace DCL.LOD.Systems
     [LogCategory(ReportCategory.LOD)]
     public partial class InitializeSceneLODInfo : BaseUnityLoopSystem
     {
-        private readonly Transform lodParentTransform;
         private readonly ILODCache lodCache;
         private readonly int lodLevels;
 
 
-        public InitializeSceneLODInfo(World world, Transform lodParentTransform, ILODCache lodCache, int lodLevels) : base(world)
+        public InitializeSceneLODInfo(World world, ILODCache lodCache, int lodLevels) : base(world)
         {
             this.lodLevels = lodLevels;
-            this.lodParentTransform = lodParentTransform;
             this.lodCache = lodCache;
         }
 
@@ -46,9 +44,8 @@ namespace DCL.LOD.Systems
                 return;
 
             string sceneID = sceneDefinitionComponent.Definition.id;
-            sceneLODInfo.metadata = lodCache.Get(sceneID, lodParentTransform, lodLevels);
+            sceneLODInfo.metadata = lodCache.Get(sceneID, lodLevels);
             sceneLODInfo.id = sceneID;
-            sceneLODInfo.lodCache = lodCache;
         }
 
 

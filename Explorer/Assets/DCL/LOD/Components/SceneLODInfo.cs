@@ -11,8 +11,6 @@ namespace DCL.LOD.Components
 {
     public struct SceneLODInfo
     {
-        public ILODCache lodCache;
-        
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise;
 
@@ -22,7 +20,6 @@ namespace DCL.LOD.Components
         public void Dispose(World world)
         {
             CurrentLODPromise.ForgetLoading(world);
-            lodCache.Release(id, metadata);
         }
 
         public static SceneLODInfo Create()

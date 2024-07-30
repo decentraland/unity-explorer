@@ -34,6 +34,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
 using SceneRunner.Mapping;
 using UnityEngine;
@@ -102,6 +103,9 @@ namespace Global
 
         private IAssetsProvisioner assetsProvisioner;
 
+        public ILODCache LODCache { get; private set; }
+
+
         public void Dispose()
         {
             realmPartitionSettings.Dispose();
@@ -151,7 +155,8 @@ namespace Global
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
-
+            container.LODCache = new LODCache();
+            
             container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
 
             container.assetsProvisioner = assetsProvisioner;
@@ -179,6 +184,7 @@ namespace Global
 
             container.QualityContainer = await QualityContainer.CreateAsync(settingsContainer, container.assetsProvisioner);
             container.CacheCleaner = new CacheCleaner(sharedDependencies.FrameTimeBudget);
+            container.CacheCleaner.Register(container.LODCache);
 
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;

@@ -18,6 +18,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -41,6 +42,7 @@ namespace Global.Dynamic
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
+        private readonly ILODCache lodCache;
 
         private GlobalWorld? globalWorld;
         public Entity RealmEntity { get; private set; }
@@ -65,7 +67,8 @@ namespace Global.Dynamic
             RealmData realmData,
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
-            SceneAssetLock sceneAssetLock)
+            SceneAssetLock sceneAssetLock,
+            ILODCache lodCache)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -77,6 +80,7 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
+            this.lodCache = lodCache;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -151,7 +155,12 @@ namespace Global.Dynamic
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
                 globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
 
-            world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+            world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
+                (ref SceneLODInfo lod) =>
+                {
+                    lodCache.Release(lod.id, lod.metadata);
+                    lod.Dispose(world);
+                });
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
@@ -174,7 +183,12 @@ namespace Global.Dynamic
             {
                 World world = globalWorld.EcsWorld;
                 FindLoadedScenes();
-                world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
+                world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
+                    (ref SceneLODInfo lod) =>
+                    {
+                        lodCache.Release(lod.id, lod.metadata);
+                        lod.Dispose(world);
+                    });
 
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);

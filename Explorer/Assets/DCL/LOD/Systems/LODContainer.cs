@@ -74,12 +74,12 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadAssetsPrefabList, roadDataDictionary,
                     staticContainer.ScenesCache, staticContainer.SceneReadinessReportQueue);
 
-                c.LODPlugin = new LODPlugin(staticContainer.CacheCleaner, realmData,
+                c.LODPlugin = new LODPlugin(realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                    lodEnabled);
+                    lodEnabled, staticContainer.LODCache);
 
                 return UniTask.CompletedTask;
             });
