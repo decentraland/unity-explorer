@@ -1,5 +1,6 @@
 using System;
 using Unity.Profiling;
+using UnityEngine;
 
 namespace DCL.Profiling
 {
@@ -12,6 +13,8 @@ namespace DCL.Profiling
         private const int HICCUP_THRESHOLD_IN_NS = 50_000_000; // 50 ms ~ 20 FPS
         private const int FRAME_BUFFER_SIZE = 1_000; // 1000 samples: for 30 FPS it's 33 seconds gameplay, for 60 FPS it's 16.6 seconds
 
+        private readonly long[] samplesArray = new long[FRAME_BUFFER_SIZE];
+
         private ProfilerRecorder totalUsedMemoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
 
@@ -21,13 +24,11 @@ namespace DCL.Profiling
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
         public long LastFrameTimeValueNs => mainThreadTimeRecorder.LastValue;
 
-        public FrameTimeStats? FrameTimeStatsNs => CalculateFrameStatsData(mainThreadTimeRecorder); // in NS (nanoseconds)
-
-        // public long LastFrameTimeValueInNS => mainThreadTimeRecorder.LastValue;
-        // public long LastGPUFrameTimeValueInNS => gpuRecorder.LastValue;
-        // public float MedianFrameTimeInNS { get; }
-        // public int AverageFameTimeSamples => mainThreadTimeRecorder.Capacity;
-        // public int HiccupCountBufferSize => hiccupBufferCounter.BufferSize;
+        /// <summary>
+        /// In nanoseconds
+        /// </summary>
+        public FrameTimeStats? CalculateMainThreadFrameTimesNs() =>
+            CalculateFrameStatistics(mainThreadTimeRecorder);
 
         public void Dispose()
         {
@@ -36,15 +37,12 @@ namespace DCL.Profiling
             gpuRecorder.Dispose();
         }
 
-        private static FrameTimeStats? CalculateFrameStatsData(ProfilerRecorder recorder, int longSamplesAmount = FRAME_BUFFER_SIZE)
+        private static FrameTimeStats? CalculateFrameStatistics(ProfilerRecorder recorder)
         {
             int availableSamples = recorder.Capacity;
 
-            if (availableSamples == 0 || longSamplesAmount == 0)
+            if (availableSamples == 0)
                 return null;
-
-            // Ensure we do not exceed recorder capacity
-            longSamplesAmount = Math.Min(longSamplesAmount, availableSamples);
 
             long minFrameTime = long.MaxValue;
             long maxFrameTime = long.MinValue;
@@ -52,10 +50,10 @@ namespace DCL.Profiling
 
             unsafe
             {
-                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[longSamplesAmount];
-                recorder.CopyTo(samples, longSamplesAmount);
+                ProfilerRecorderSample* samples = stackalloc ProfilerRecorderSample[availableSamples];
+                recorder.CopyTo(samples, availableSamples);
 
-                for (var i = 0; i < longSamplesAmount; ++i)
+                for (var i = 0; i < availableSamples; ++i)
                 {
                     long frameTime = samples[i].Value;
 
@@ -68,17 +66,18 @@ namespace DCL.Profiling
             return new FrameTimeStats(minFrameTime, maxFrameTime, hiccupCount);
         }
 
-        public double[] GetFrameTimePercentiles(int[] percentile) =>
-            GetPercentiles(mainThreadTimeRecorder, percentile);
+        public AnalyticsFrameTimeReport? GetMainThreadFramesNs(int[] percentile) =>
+            GetFrameStatsWithPercentiles(mainThreadTimeRecorder, percentile);
 
-        private static double[] GetPercentiles(ProfilerRecorder recorder, int[] percentile)
+        private AnalyticsFrameTimeReport? GetFrameStatsWithPercentiles(ProfilerRecorder recorder, int[] percentile)
         {
             int samplesCount = recorder.Capacity;
 
-            if (samplesCount == 0 || percentile.Length == 0)
-                return default(double[]);
+            if (samplesCount == 0)
+                return null;
 
-            var samplesArray = new long[samplesCount];
+            long hiccupCount = 0;
+            long avgFrameTime = 0;
 
             unsafe
             {
@@ -86,20 +85,49 @@ namespace DCL.Profiling
                 recorder.CopyTo(samples, samplesCount);
 
                 for (var i = 0; i < samplesCount; ++i)
-                    samplesArray[i] = samples[i].Value;
+                {
+                    long frameTime = samples[i].Value;
+
+                    samplesArray[i] = frameTime;
+                    avgFrameTime += frameTime;
+
+                    if (frameTime > HICCUP_THRESHOLD_IN_NS)
+                        hiccupCount++;
+                }
+
+                avgFrameTime /= samplesCount;
             }
 
             Array.Sort(samplesArray);
 
-            var result = new double[percentile.Length];
-
+            var result = new long[percentile.Length];
             for (var i = 0; i < percentile.Length; i++)
             {
-                var k = (int)Math.Ceiling(percentile[i] / 100.0 * samplesCount);
-                result[i] = samplesArray[k - 1];
+                var index = (int)Math.Ceiling(percentile[i] / 100f * samplesCount);
+                index = Math.Min(index, samplesCount - 1);
+                Debug.Log($"VVV {index}");
+                result[i] = samplesArray[index - 1];
             }
 
-            return result;
+            return new AnalyticsFrameTimeReport(
+                new FrameTimeStats(samplesArray[0], samplesArray[samplesCount - 1], hiccupCount),
+                avgFrameTime, result, samplesCount);
+        }
+    }
+
+    public readonly struct AnalyticsFrameTimeReport
+    {
+        public readonly int Samples;
+        public readonly long Average;
+        public readonly long[] Percentiles;
+        public readonly FrameTimeStats Stats;
+
+        public AnalyticsFrameTimeReport(FrameTimeStats stats, long average, long[] percentiles, int samples)
+        {
+            Average = average;
+            Percentiles = percentiles;
+            Stats = stats;
+            Samples = samples;
         }
     }
 

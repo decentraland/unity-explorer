@@ -9,14 +9,13 @@ using ECS.Abstract;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using static DCL.Utilities.ConversionUtils;
 
 namespace DCL.Profiling.ECS
 {
     [UpdateInGroup(typeof(InitializationSystemGroup))]
-    public partial class ProfilingSystem : BaseUnityLoopSystem
+    public partial class DebugViewProfilingSystem : BaseUnityLoopSystem
     {
-        private const float NS_TO_SEC = 1e-9f; // nanoseconds to seconds
-        private const float NS_TO_MS = 1e-6f; // nanoseconds to milliseconds
         private const float FRAME_STATS_COOLDOWN = 30; // update each <FRAME_STATS_COOLDOWN> frames (statistic buffer == 1000)
 
         private readonly IRealmData realmData;
@@ -35,7 +34,7 @@ namespace DCL.Profiling.ECS
 
         private int framesSinceMetricsUpdate;
 
-        private ProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder) : base(world)
+        private DebugViewProfilingSystem(World world, IRealmData realmData, IDebugViewProfiler profiler, MemoryBudget memoryBudget, IDebugContainerBuilder debugBuilder) : base(world)
         {
             this.realmData = realmData;
             this.profiler = profiler;
@@ -113,7 +112,7 @@ namespace DCL.Profiling.ECS
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateFrameStatisticsView(IDebugViewProfiler debugProfiler)
         {
-            var frameTimeStats = debugProfiler.FrameTimeStatsNs;
+            var frameTimeStats = debugProfiler.CalculateMainThreadFrameTimesNs();
 
             if (frameTimeStats.HasValue)
             {
