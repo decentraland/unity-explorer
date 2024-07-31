@@ -482,23 +482,20 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <EmojiMappingJson>k__BackingField: {fileID: 4900000, guid: 7355ae17e96e64b9592813524510dc45, type: 3}
     - rid: 4340256782807990272
-      type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      type: {class: StylizedSkyboxPlugin/StylizedSkyboxSettings, ns: DCL.StylizedSkybox.Scripts.Plugin, asm: DCL.Plugins}
       data:
         StylizedSkyboxPrefab:
           m_AssetGUID: 5c36aa92efab46341b9b02fd6a38a4e7
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        SkyboxMaterial:
-          m_AssetGUID: caf6cf56d95066b45bc1ca92d6516b48
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        SkyboxMaterial: {fileID: 2100000, guid: caf6cf56d95066b45bc1ca92d6516b48, type: 2}
         SkyboxAnimationCycle:
           m_AssetGUID: 3b17a8a5ab9ee104899eb22c70935c38
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+        <SkyboxCommunicationBridge>k__BackingField: {fileID: 11400000, guid: 46d55a52eb73c45459ac73a523fa7a8b, type: 2}
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
