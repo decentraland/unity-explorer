@@ -12,6 +12,8 @@ namespace DCL.Browser.DecentralandUrls
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly string environmentDomainLowerCase;
 
+        public string DecentralandDomain => environmentDomainLowerCase;
+
         public DecentralandUrlsSource(DecentralandEnvironment environment)
         {
             environmentDomainLowerCase = environment.ToString()!.ToLower();

@@ -90,38 +90,38 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
                 await UniTask.SwitchToMainThread();
 
                 var resultAsync = method switch
-                       {
-                           null => webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
-                               request.url,
-                               new FlatFetchResponse<GenericPostRequest>(),
-                               signatureMetadata,
-                               cancellationTokenSource.Token
-                           ),
-                           "post" => webController.PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
-                               request.url,
-                               new FlatFetchResponse<GenericPostRequest>(),
-                               GenericPostArguments.CreateJsonOrDefault(request.init?.body),
-                               cancellationTokenSource.Token,
-                               headersInfo: headers,
-                               signInfo: signInfo
-                           ),
-                           "get" => webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
-                               request.url,
-                               new FlatFetchResponse<GenericGetRequest>(),
-                               cancellationTokenSource.Token,
-                               headersInfo: headers,
-                               signInfo: signInfo
-                           ),
-                           "put" => webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
-                               request.url,
-                               new FlatFetchResponse<GenericPutRequest>(),
-                               GenericPutArguments.CreateJsonOrDefault(request.init?.body),
-                               cancellationTokenSource.Token,
-                               headersInfo: headers,
-                               signInfo: signInfo
-                           ),
-                           _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
-                       };
+                                  {
+                                      null => webController.SignedFetchPostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
+                                          request.url,
+                                          new FlatFetchResponse<GenericPostRequest>(),
+                                          signatureMetadata,
+                                          cancellationTokenSource.Token
+                                      ),
+                                      "post" => webController.PostAsync<FlatFetchResponse<GenericPostRequest>, FlatFetchResponse>(
+                                          request.url,
+                                          new FlatFetchResponse<GenericPostRequest>(),
+                                          GenericPostArguments.CreateJsonOrDefault(request.init?.body),
+                                          cancellationTokenSource.Token,
+                                          headersInfo: headers,
+                                          signInfo: signInfo
+                                      ),
+                                      "get" => webController.GetAsync<FlatFetchResponse<GenericGetRequest>, FlatFetchResponse>(
+                                          request.url,
+                                          new FlatFetchResponse<GenericGetRequest>(),
+                                          cancellationTokenSource.Token,
+                                          headersInfo: headers,
+                                          signInfo: signInfo
+                                      ),
+                                      "put" => webController.PutAsync<FlatFetchResponse<GenericPutRequest>, FlatFetchResponse>(
+                                          request.url,
+                                          new FlatFetchResponse<GenericPutRequest>(),
+                                          GenericPutArguments.CreateJsonOrDefault(request.init?.body),
+                                          cancellationTokenSource.Token,
+                                          headersInfo: headers,
+                                          signInfo: signInfo
+                                      ),
+                                      _ => throw new Exception($"Method {method} is not suppoerted for signed fetch"),
+                                  };
 
                 try
                 {
@@ -151,14 +151,14 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
         {
             Vector2Int parcel = sceneData.SceneEntityDefinition.metadata.scene.DecodedBase;
 
-            // TODO: convert hardcoded info into program args?
             var metadata = new SignatureMetadata
             {
-                origin = "https://decentraland.org",
+                origin = decentralandUrlsSource.Url(DecentralandUrl.Host),
                 sceneId = $"urn:decentraland:entity:{sceneData.SceneEntityDefinition.id!}",
                 parcel = $"{parcel.x},{parcel.y}",
-                tld = "org",
+                tld = decentralandUrlsSource.DecentralandDomain,
                 network = "mainnet",
+
                 // TODO: support guest if required in the future
                 isGuest = false,
                 signer = "decentraland-kernel-scene",
