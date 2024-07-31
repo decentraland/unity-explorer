@@ -32,6 +32,11 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ZONE}/discord/",
                 DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ZONE}/privacy",
                 DecentralandUrl.TermsOfUse => $"https://decentraland.{ZONE}/terms",
+                DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ZONE}/api/places",
+                DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ZONE}",
+                DecentralandUrl.AuthSignature => $"https://decentraland.{ZONE}/auth/requests",
+                DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ZONE}/pois",
+                DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ZONE}/api/report",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }
