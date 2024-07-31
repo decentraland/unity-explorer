@@ -32,5 +32,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         FeatureFlags,
 
         Market,
+
+        AssetBundlesCDN,
     }
 }
