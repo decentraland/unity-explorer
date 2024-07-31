@@ -1,6 +1,8 @@
+using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -55,7 +57,7 @@ namespace DCL.LOD.Tests
             sceneLODInfo = SceneLODInfo.Create();
             lodAssetsPool = new LODAssetsPool();
 
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue);
+            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org) );
         }
 
 
@@ -76,15 +78,15 @@ namespace DCL.LOD.Tests
 
             //Act
             system.Update(0);
-            
+
             //Assert
             Assert.AreEqual(expectedLODLevel, world.Get<SceneLODInfo>(entity).CurrentLODLevel);
         }
 
 
-  
-         
-       
+
+
+
 
         /*
    TODO: Uncomment when LOD Async Instantiation is back up
@@ -115,7 +117,7 @@ namespace DCL.LOD.Tests
       Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
   }
   */
-        
+
 
 
     }
