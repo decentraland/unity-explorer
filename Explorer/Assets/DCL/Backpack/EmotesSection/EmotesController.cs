@@ -43,7 +43,7 @@ namespace DCL.Backpack
 
         public void Animate(int triggerId)
         {
-            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
+            view.gameObject.SetActive(triggerId == UIAnimationHashes.IN);
         }
 
         public void ResetAnimator() { }

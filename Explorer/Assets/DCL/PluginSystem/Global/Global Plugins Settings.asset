@@ -39,9 +39,11 @@ MonoBehaviour:
   - rid: 758312859982102531
   - rid: 3601421940623147010
   - rid: 2306906494740202818
+  - rid: 3601422469352914946
   - rid: 2872862648882692098
   - rid: 2872862648882692099
   - rid: 3601422141625466883
+  - rid: 3601422469352914947
   references:
     version: 2
     RefIds:
@@ -68,11 +70,6 @@ MonoBehaviour:
       data:
         <AuthScreenPrefab>k__BackingField:
           m_AssetGUID: 08d42937d0bc54b48baaa23c8c520175
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        <GeneralAudioMixer>k__BackingField:
-          m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -133,16 +130,6 @@ MonoBehaviour:
       data:
         ExplorePanelPrefab:
           m_AssetGUID: 7dc631660587a41589ba55c08ff7fa73
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        PersistentExploreOpenerPrefab:
-          m_AssetGUID: b55e2970d2dc94295ad8af70cb9d09f4
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        MinimapPrefab:
-          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
@@ -251,12 +238,7 @@ MonoBehaviour:
         <sceneBucketPropagationLimit>k__BackingField: 3
     - rid: 2152807656697888768
       type: {class: MinimapPlugin/MinimapSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
-      data:
-        MinimapPrefab:
-          m_AssetGUID: f2ef3a867ab2840cb9bc73b4762922fd
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+      data: 
     - rid: 2174542042650378245
       type: {class: QualityContainer/Settings, ns: DCL.Quality, asm: DCL.Plugins}
       data:
@@ -389,6 +371,17 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 3601422469352914946
+      type: {class: MainUIPlugin/Settings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data: 
+    - rid: 3601422469352914947
+      type: {class: SidebarPlugin/SidebarSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <NotificationIconTypesSO>k__BackingField:
+          m_AssetGUID: 4b896bc1397444f00a2b45725af2b263
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 3836309668583964676
       type: {class: NftPromptPlugin/NftPromptSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -414,11 +407,6 @@ MonoBehaviour:
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
         <MinimumScreenDisplayDuration>k__BackingField: 3
-        <GeneralAudioMixer>k__BackingField:
-          m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
     - rid: 4132209997426458630
       type: {class: InputSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
@@ -450,11 +438,6 @@ MonoBehaviour:
     - rid: 4340256301410942981
       type: {class: ChatPlugin/ChatSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
-        <ChatPanelPrefab>k__BackingField:
-          m_AssetGUID: f3b1d401bc50845629a6b982f9793f16
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
         <EmojiButtonPrefab>k__BackingField:
           m_AssetGUID: 7d0a647adf3334ee1a142e7bf69f128d
           m_SubObjectName: 
@@ -495,7 +478,6 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
-        <SkyboxCommunicationBridge>k__BackingField: {fileID: 11400000, guid: 46d55a52eb73c45459ac73a523fa7a8b, type: 2}
     - rid: 5215741520409264128
       type: {class: AvatarPlugin/AvatarShapeSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
