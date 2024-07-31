@@ -6,7 +6,6 @@ using DCL.Profiling;
 using DCL.Profiling.ECS;
 using ECS;
 using ECS.Abstract;
-using Microsoft.ClearScript.V8;
 using Segment.Serialization;
 using UnityEngine;
 using World = Arch.Core.World;
@@ -65,11 +64,12 @@ namespace DCL.Analytics.Systems
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
                 ["used_jsheap_size"] = 0, // TODO (Vit): use V8ScriptEngine.GetRuntimeHeapInfo(). Get the ref from V8EngineFactory, but maybe expose it in upper level
 
+                // Memory
                 ["memory_usage"] = BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
                 ["total_used_memory"] = BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
                 ["gc_used_memory"] = BytesFormatter.Convert((ulong)profiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
 
-                // MainThread FrameTime Report
+                // MainThread
                 ["samples"] = mainThreadReport.Value.Samples,
                 ["total_time"] = mainThreadReport.Value.SumTime,
 
@@ -88,7 +88,7 @@ namespace DCL.Analytics.Systems
                 ["frame_time_percentile_90"] = mainThreadReport.Value.Percentiles[6] * NS_TO_MS,
                 ["frame_time_percentile_95"] = mainThreadReport.Value.Percentiles[7] * NS_TO_MS,
 
-                // GPU FrameTime Report
+                // GPU
                 ["gpu_hiccups_in_thousand_frames"] = gpuFrameTimeReport.Value.Stats.HiccupCount,
 
                 ["gpu_min_frame_time"] = gpuFrameTimeReport.Value.Stats.MinFrameTime * NS_TO_MS,
