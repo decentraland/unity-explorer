@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
 using ECS;
 using JetBrains.Annotations;
@@ -9,7 +10,6 @@ using SceneRuntime.Apis.Modules.SignedFetch.Messages;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
 using Utility;
 using Utility.Times;
@@ -19,15 +19,19 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
     public class SignedFetchWrap : IJsApiWrapper
     {
         private readonly IWebRequestController webController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly ISceneData sceneData;
         private readonly IRealmData realmData;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
 
-        public SignedFetchWrap(IWebRequestController webController,
+        public SignedFetchWrap(
+            IWebRequestController webController,
+            IDecentralandUrlsSource decentralandUrlsSource,
             ISceneData sceneData,
             IRealmData realmData)
         {
             this.webController = webController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.sceneData = sceneData;
             this.realmData = realmData;
         }
@@ -67,10 +71,11 @@ namespace SceneRuntime.Apis.Modules.SignedFetch
             ulong unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
             string signatureMetadata = CreateSignatureMetadata();
 
+            string hostUrl = decentralandUrlsSource.Url(DecentralandUrl.Host);
+
             var headers = new WebRequestHeadersInfo(request.init?.headers)
-                          // TODO: get origin & referer from program args?
-                         .Add("Origin", "https://decentraland.org")
-                         .Add("Referer", "https://decentraland.org")
+                         .Add("Origin", hostUrl)
+                         .Add("Referer", hostUrl)
                          .WithSign(signatureMetadata, unixTimestamp);
 
             var signInfo = WebRequestSignInfo.NewFromRaw(

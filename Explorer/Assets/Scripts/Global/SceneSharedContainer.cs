@@ -1,6 +1,7 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
@@ -24,6 +25,7 @@ namespace Global
         public ISceneFactory SceneFactory { get; private set; }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
@@ -54,6 +56,7 @@ namespace Global
                     mvcManager,
                     profileRepository,
                     web3IdentityCache,
+                    decentralandUrlsSource,
                     webRequestController,
                     roomHub,
                     realmData,

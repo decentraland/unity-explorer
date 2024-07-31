@@ -165,7 +165,9 @@ namespace Global.Static
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)).EnsureNotNull());
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
+            var sceneSharedContainer = SceneSharedContainer.Create(
+                in staticContainer,
+                decentralandUrlsSource,
                 new MVCManager(
                     new WindowStackManager(),
                     new CancellationTokenSource(), null

@@ -157,6 +157,7 @@ namespace Global.Dynamic
 
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
+                bootstrapContainer.DecentralandUrlsSource,
                 dynamicWorldContainer.MvcManager,
                 bootstrapContainer.IdentityCache,
                 dynamicWorldContainer.ProfileRepository,

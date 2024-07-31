@@ -142,9 +142,16 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)));
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
-                Substitute.For<IMVCManager>(), web3IdentityCache, profileRepository, IWebRequestController.DEFAULT, new IRoomHub.Fake(),
-                Substitute.For<IRealmData>(), new IMessagePipesHub.Fake());
+            var sceneSharedContainer = SceneSharedContainer.Create(
+                in staticContainer,
+                Substitute.For<IDecentralandUrlsSource>(),
+                Substitute.For<IMVCManager>(),
+                web3IdentityCache, profileRepository,
+                IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(),
+                new IMessagePipesHub.Fake()
+            );
 
             return (staticContainer, sceneSharedContainer);
         }

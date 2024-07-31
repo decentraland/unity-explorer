@@ -8,6 +8,7 @@ using CrdtEcsBridge.RestrictedActions;
 using Cysharp.Threading.Tasks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Profiles;
 using DCL.Web3;
@@ -41,6 +42,7 @@ namespace SceneRunner
         private readonly IEthereumApi ethereumApi;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IWebRequestController webRequestController;
         private readonly IRoomHub roomHub;
         private readonly SceneRuntimeFactory sceneRuntimeFactory;
@@ -64,6 +66,7 @@ namespace SceneRunner
             IMVCManager mvcManager,
             IProfileRepository profileRepository,
             IWeb3IdentityCache identityCache,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
@@ -80,6 +83,7 @@ namespace SceneRunner
             this.mvcManager = mvcManager;
             this.profileRepository = profileRepository;
             this.identityCache = identityCache;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.webRequestController = webRequestController;
             this.roomHub = roomHub;
             this.realmData = realmData;
@@ -186,12 +190,13 @@ namespace SceneRunner
                     ethereumApi,
                     runtimeDeps.WebSocketAipImplementation,
                     identityCache,
+                    decentralandUrlsSource,
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
                     realmData!
-                    );
+                );
             }
             else
             {
@@ -205,6 +210,7 @@ namespace SceneRunner
                     runtimeDeps.SceneApiImplementation,
                     webRequestController,
                     runtimeDeps.RestrictedActionsAPI,
+                    decentralandUrlsSource,
                     runtimeDeps.RuntimeImplementation,
                     ethereumApi,
                     runtimeDeps.WebSocketAipImplementation,
@@ -213,7 +219,8 @@ namespace SceneRunner
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
                     sceneData,
-                    realmData!);
+                    realmData!
+                );
             }
 
             sceneRuntime.ExecuteSceneJson();
