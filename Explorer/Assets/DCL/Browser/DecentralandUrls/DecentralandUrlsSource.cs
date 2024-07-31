@@ -30,6 +30,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
             decentralandUrl switch
             {
                 DecentralandUrl.DiscordLink => $"https://decentraland.{ZONE}/discord/",
+                DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ZONE}/privacy",
+                DecentralandUrl.TermsOfUse => $"https://decentraland.{ZONE}/terms",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }
