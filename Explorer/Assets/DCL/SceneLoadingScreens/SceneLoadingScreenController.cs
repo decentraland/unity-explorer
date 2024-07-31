@@ -28,8 +28,6 @@ namespace DCL.SceneLoadingScreens
         private CancellationTokenSource? tipsFadeCancellationToken;
         private IntVariable? progressLabel;
         private readonly List<UniTask> fadingTasks = new ();
-        private float originalWorldAudioVolume;
-        private float originalAvatarAudioVolume;
 
         public SceneLoadingScreenController(ViewFactoryMethod viewFactory,
             ISceneTipsProvider sceneTipsProvider,

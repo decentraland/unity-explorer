@@ -47,7 +47,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
-        private float originalAvatarAudioVolume;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
