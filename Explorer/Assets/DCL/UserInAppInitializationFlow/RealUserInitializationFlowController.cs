@@ -93,14 +93,9 @@ namespace DCL.UserInAppInitializationFlow
 
             await realmNavigator.SwitchMiscVisibilityAsync();
             await LoadPlayerAvatar(world, playerEntity, ownProfile, ct);
+            await LoadLandscapeAsync(parentLoadReport, ct);
 
-            AsyncLoadProcessReport? landscapeLoadReport
-                = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
-
-            await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
-            parentLoadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
-
-            AsyncLoadProcessReport? teleportLoadReport
+            AsyncLoadProcessReport teleportLoadReport
                 = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
 
             if (reloadRealm)
@@ -108,6 +103,15 @@ namespace DCL.UserInAppInitializationFlow
 
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
+        }
+
+        private async UniTask LoadLandscapeAsync(AsyncLoadProcessReport parentLoadReport, CancellationToken ct)
+        {
+            AsyncLoadProcessReport landscapeLoadReport
+                = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[LandscapeLoaded]);
+
+            await realmNavigator.LoadTerrainAsync(landscapeLoadReport, ct);
+            parentLoadReport.SetProgress(loadingStatus.SetStage(LandscapeLoaded));
         }
 
         /// <summary>
