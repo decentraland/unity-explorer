@@ -42,6 +42,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
                 DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
+                DecentralandUrl.PeerAbout => $"https://peer.decentraland.{ENV}/about",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }

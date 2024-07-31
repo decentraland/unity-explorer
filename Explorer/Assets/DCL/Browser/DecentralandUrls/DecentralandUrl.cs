@@ -21,5 +21,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         GateKeeperSceneAdapter,
 
         OpenSea,
+
+        PeerAbout,
     }
 }
