@@ -374,12 +374,7 @@ download_log(id)
 if not build_healthy:
     print(f'Build unhealthy - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
     sys.exit(1)
-
-# Cleanup (only if build is healthy)
-if get_any_running_builds(os.getenv('TARGET')):
-    delete_build(id)
 else:
-    # Deleting the parent target also removes all builds
-    delete_current_target()
+    print(f'Build Healthy! - check the downloaded logs or go to https://cloud.unity.com/ and search for target "{os.getenv('TARGET')}" and build ID "{id}"')
 
 utils.delete_build_info()
