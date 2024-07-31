@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
 using DCL.Character;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.DecentralandUrls;

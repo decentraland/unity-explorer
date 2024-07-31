@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
 using DCL.Character.Components;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.LiveConnections;

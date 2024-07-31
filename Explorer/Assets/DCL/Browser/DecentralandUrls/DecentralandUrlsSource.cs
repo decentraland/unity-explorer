@@ -1,26 +1,30 @@
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using System;
 using System.Collections.Generic;
 
-namespace DCL.Multiplayer.Connections.DecentralandUrls
+namespace DCL.Browser.DecentralandUrls
 {
     //TODO test urls
     public class DecentralandUrlsSource : IDecentralandUrlsSource
     {
-        private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private const string ENV = "{ENV}";
+
+        private readonly Dictionary<DecentralandUrl, string> cache = new ();
+        private readonly string environmentDomainLowerCase;
 
         public DecentralandEnvironment Environment { get; }
 
         public DecentralandUrlsSource(DecentralandEnvironment environment)
         {
             this.Environment = environment;
+            environmentDomainLowerCase = Environment.ToString()!.ToLower();
         }
 
         public string Url(DecentralandUrl decentralandUrl)
         {
             if (cache.TryGetValue(decentralandUrl, out string? url) == false)
             {
-                url = RawUrl(decentralandUrl).Replace(ENV, Environment.ToString()!.ToLower());
+                url = RawUrl(decentralandUrl).Replace(ENV, environmentDomainLowerCase);
                 cache[decentralandUrl] = url;
             }
 

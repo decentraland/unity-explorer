@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
