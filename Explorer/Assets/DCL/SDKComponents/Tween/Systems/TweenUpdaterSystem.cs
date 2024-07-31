@@ -201,10 +201,9 @@ namespace DCL.SDKComponents.Tween.Systems
 
             ReturnTweenToPool(ref sdkTweenComponent);
 
-            if (!EASING_FUNCTIONS_MAP.TryGetValue(tweenModel.EasingFunction, out Ease ease))
-                ease = Linear;
+            Ease ease = EASING_FUNCTIONS_MAP.GetValueOrDefault(tweenModel.EasingFunction, Linear);
 
-            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, entityTransform, durationInSeconds);
+            sdkTweenComponent.CustomTweener = tweenerPool.GetTweener(tweenModel, sdkTransform, entityTransform, durationInSeconds);
             sdkTweenComponent.CustomTweener.DoTween(ease, tweenModel.CurrentTime * durationInSeconds, isPlaying);
         }
 
