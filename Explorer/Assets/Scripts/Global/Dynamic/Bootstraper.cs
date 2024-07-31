@@ -205,7 +205,7 @@ namespace Global.Dynamic
 
             bool deepLinkFound = false;
             string lastKeyStored = string.Empty;
-            for (int i = 1; i < cmdArgs.Length; i++)
+            for (int i = 0; i < cmdArgs.Length; i++)
             {
                 var arg = cmdArgs[i];
 
