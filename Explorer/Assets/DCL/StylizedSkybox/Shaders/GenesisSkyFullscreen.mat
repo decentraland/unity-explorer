@@ -63,7 +63,7 @@ Material:
     - _Cloud_Opacity: 1
     - _CloudsRotationSpeed: 0.01
     - _CompensateFlip: 0
-    - _CubemapFace: 0
+    - _CubemapFace: 5
     - _Ground_Blend: 0.436
     - _Ground_Spread: 0.2
     - _Moon_Mask_Size: 0.16004796
@@ -71,7 +71,7 @@ Material:
     - _Rim_Spread: 0.362
     - _Second_Sun_Orbit_Size: 0.1
     - _Second_Sun_Rotation_Speed: 0.1
-    - _Second_Sun_Size_Factor: 0.1
+    - _Second_Sun_Size_Factor: 1
     - _Stars_Brightness: 4.62
     - _SunOpacity: 1
     - _SunSize: 0.12

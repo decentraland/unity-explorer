@@ -31,7 +31,7 @@ namespace DCL.StylizedSkybox.Scripts
             this.material = material;
             this.originalMaterial = originalMaterial;
 
-            renderPassEvent = RenderPassEvent.AfterRenderingSkybox;
+            renderPassEvent = RenderPassEvent.BeforeRenderingSkybox;
             profilingSampler = new ProfilingSampler($"{nameof(SkyboxToCubemapRendererFeature)}.{nameof(SkyboxToCubemapRenderPass)}");
 
             // It looks like upon Rendering Unity compensates UV Flip automatically
@@ -45,6 +45,8 @@ namespace DCL.StylizedSkybox.Scripts
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
+            if (!material || !originalMaterial) return;
+
             // Copy properties from the original material as it is being constantly modified
             material.CopyPropertiesFromMaterial(originalMaterial);
 

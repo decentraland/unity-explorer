@@ -22,6 +22,8 @@ namespace DCL.StylizedSkybox.Scripts
             if (settings.skyBoxShader == null || settings.originalMaterial == null)
                 return;
 
+            if (!Mathf.IsPowerOfTwo(settings.dimensions)) return;
+
             CoreUtils.Destroy(skyBoxMaterial); // destroy previously created material
             skyBoxMaterial = new Material(settings.skyBoxShader);
 
@@ -38,7 +40,7 @@ namespace DCL.StylizedSkybox.Scripts
             // Create renderTexture cubeMap
 
             desc = new RenderTextureDescriptor();
-            desc.autoGenerateMips = false;
+            desc.autoGenerateMips = true;
             desc.bindMS = false;
             desc.colorFormat = RenderTextureFormat.ARGB32;
             desc.depthBufferBits = 0;
@@ -55,7 +57,7 @@ namespace DCL.StylizedSkybox.Scripts
             desc.sRGB = false;
             desc.stencilFormat = GraphicsFormat.None;
             desc.useDynamicScale = false;
-            desc.useMipMap = false;
+            desc.useMipMap = true;
             desc.volumeDepth = 0;
             desc.vrUsage = VRTextureUsage.None;
 
