@@ -70,9 +70,6 @@ namespace DCL.PluginSystem.Global
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
-        private PersistentExploreOpenerView? exploreOpener;
-        private PersistentExplorePanelOpenerController? explorePanelOpener;
-        private readonly ICollection<string> forceRender;
         private ExplorePanelInputHandler? inputHandler;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -167,7 +164,6 @@ namespace DCL.PluginSystem.Global
             ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
-            exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
             navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
