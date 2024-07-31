@@ -47,6 +47,13 @@ def clone_current_target():
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
 
+        # Copy cache check
+        if cache:
+            body['settings']['buildTargetCopyCache'] = template_target
+        else:
+            if 'buildTargetCopyCache' in body['settings']:
+                del body['settings']['buildTargetCopyCache']
+
         return body
 
     # Set target name based on branch, without commit SHA
