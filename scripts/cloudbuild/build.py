@@ -67,11 +67,14 @@ def clone_current_target():
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
     print(f"Attempting to clone/update target: {new_target_name}")
 
+    build_options = os.getenv('BUILD_OPTIONS', '').split(',')
+    build_options = [option for option in build_options if option]  # Remove empty strings
+
     body = generate_body(
         os.getenv('TARGET'),
         new_target_name,
         os.getenv('BRANCH_NAME'),
-        os.getenv('BUILD_OPTIONS').split(','),
+        build_options,
         (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
 
     if body is None:
