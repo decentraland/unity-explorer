@@ -114,8 +114,8 @@ namespace Global.Dynamic
                     StaticLoadPositions = launchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
-                    EnableLandscape = enableLandscape,
-                    EnableLOD = enableLOD,
+                    EnableLandscape = enableLandscape && !localSceneDevelopment,
+                    EnableLOD = enableLOD && !localSceneDevelopment,
                     EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
                     LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
                     AppParameters = appParameters

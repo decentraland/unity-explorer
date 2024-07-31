@@ -1,5 +1,6 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
@@ -16,7 +17,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
@@ -37,7 +37,6 @@ namespace DCL.AuthenticationScreenFlow
 
         private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
-        private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -47,7 +46,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly Animator splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly AudioMixer generalAudioMixer;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -69,7 +68,7 @@ namespace DCL.AuthenticationScreenFlow
             Animator splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
             FeatureFlagsCache featureFlagsCache,
-            AudioMixer generalAudioMixer)
+            AudioMixerVolumesController audioMixerVolumesController)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
@@ -80,7 +79,7 @@ namespace DCL.AuthenticationScreenFlow
             this.splashScreenAnimator = splashScreenAnimator;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.featureFlagsCache = featureFlagsCache;
-            this.generalAudioMixer = generalAudioMixer;
+            this.audioMixerVolumesController = audioMixerVolumesController;
         }
 
         public override void Dispose()
@@ -123,9 +122,15 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
+        }
 
-            generalAudioMixer.GetFloat(WORLD_VOLUME_EXPOSED_PARAM, out originalWorldAudioVolume);
-            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, -80);
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         protected override void OnViewClose()
@@ -136,7 +141,10 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             viewInstance.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
-            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, originalWorldAudioVolume);
+
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
