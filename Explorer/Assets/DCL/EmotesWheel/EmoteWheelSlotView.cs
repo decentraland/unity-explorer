@@ -10,6 +10,10 @@ namespace DCL.EmotesWheel
 {
     public class EmoteWheelSlotView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        public event Action<int>? OnPlay;
+        public event Action<int>? OnHover;
+        public event Action<int>? OnFocusLeave;
+
         [SerializeField]
         private Button playButton;
 
@@ -73,9 +77,5 @@ namespace DCL.EmotesWheel
             SlotAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
             OnFocusLeave?.Invoke(Slot);
         }
-
-        public event Action<int>? OnPlay;
-        public event Action<int>? OnHover;
-        public event Action<int>? OnFocusLeave;
     }
 }

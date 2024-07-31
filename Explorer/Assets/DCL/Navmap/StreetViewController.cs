@@ -25,7 +25,6 @@ namespace DCL.Navmap
             this.mapRenderer = mapRenderer;
 
             rectTransform = view.GetComponent<RectTransform>();
-            ;
             view.StreetViewRenderImage.EmbedMapCameraDragBehavior(mapCameraDragBehaviorData);
         }
 

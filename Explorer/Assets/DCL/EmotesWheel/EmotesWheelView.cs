@@ -12,6 +12,8 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelView : ViewBase, IView
     {
+        public event Action? OnClose;
+
         [SerializeField]
         private Button[] closeButtons = null!;
 
@@ -49,8 +51,6 @@ namespace DCL.EmotesWheel
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
         }
-
-        public event Action? OnClose;
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {

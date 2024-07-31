@@ -16,16 +16,16 @@ namespace DCL.Notification.NewNotification
     public class NewNotificationController : ControllerBase<NewNotificationView>
     {
         private const float ANIMATION_DURATION = 0.5f;
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly IWebRequestController webRequestController;
         private readonly Queue<INotification> notificationQueue = new ();
-        private bool isDisplaying = false;
+        private bool isDisplaying;
         private ImageController thumbnailImageController;
         private CancellationTokenSource cts;
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public NewNotificationController(
             ViewFactoryMethod viewFactory,
@@ -33,7 +33,7 @@ namespace DCL.Notification.NewNotification
             NotificationIconTypes notificationIconTypes,
             NftTypeIconSO rarityBackgroundMapping,
             IWebRequestController webRequestController
-            ) : base(viewFactory)
+        ) : base(viewFactory)
         {
             this.notificationsBusController = notificationsBusController;
             this.notificationIconTypes = notificationIconTypes;
@@ -61,7 +61,7 @@ namespace DCL.Notification.NewNotification
             cts.Token.ThrowIfCancellationRequested();
         }
 
-        private void ClickedNotification(NotificationType notificationType, string notificationId)
+        private void ClickedNotification(NotificationType notificationType, string _)
         {
             StopAnimation();
             notificationsBusController.ClickNotification(notificationType);
@@ -70,10 +70,8 @@ namespace DCL.Notification.NewNotification
         private void QueueNewNotification(INotification newNotification)
         {
             notificationQueue.Enqueue(newNotification);
-            if (!isDisplaying)
-            {
-                DisplayNewNotificationAsync().Forget();
-            }
+
+            if (!isDisplaying) { DisplayNewNotificationAsync().Forget(); }
         }
 
         private async UniTaskVoid DisplayNewNotificationAsync()
@@ -94,6 +92,7 @@ namespace DCL.Notification.NewNotification
                 }
 
             }
+
             isDisplaying = false;
         }
 
