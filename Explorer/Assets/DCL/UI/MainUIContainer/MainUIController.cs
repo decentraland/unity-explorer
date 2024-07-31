@@ -34,7 +34,7 @@ namespace DCL.UI.MainUI
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public MainUIController(
-            [NotNull] ViewFactoryMethod viewFactory,
+            ViewFactoryMethod viewFactory,
             ISidebarBus sidebarBus,
             IMVCManager mvcManager) : base(viewFactory)
         {
@@ -60,7 +60,6 @@ namespace DCL.UI.MainUI
             hideSidebarCancellationTokenSource = hideSidebarCancellationTokenSource.SafeRestart();
             showSidebarCancellationTokenSource = showSidebarCancellationTokenSource.SafeRestart();
         }
-
 
         private void OnSidebarBlockStatusChanged(bool status)
         {
@@ -103,7 +102,7 @@ namespace DCL.UI.MainUI
             }
         }
 
-        private async UniTask WaitAndHide(CancellationToken ct)
+        private async UniTaskVoid WaitAndHide(CancellationToken ct)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(HIDE_SIDEBAR_WAIT_TIME), cancellationToken: ct);
             waitingToHideSidebar = false;
@@ -115,7 +114,7 @@ namespace DCL.UI.MainUI
             showingSidebar = false;
         }
 
-        private async UniTask WaitAndShow(CancellationToken ct)
+        private async UniTaskVoid WaitAndShow(CancellationToken ct)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(SHOW_SIDEBAR_WAIT_TIME), cancellationToken: ct);
             waitingToShowSidebar = false;

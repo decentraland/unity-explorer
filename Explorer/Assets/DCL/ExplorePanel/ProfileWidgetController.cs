@@ -11,6 +11,8 @@ namespace DCL.ExplorePanel
 {
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
+        private const string GUEST_NAME = "Guest";
+
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
@@ -53,7 +55,7 @@ namespace DCL.ExplorePanel
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, ct);
 
-            if (viewInstance.NameLabel != null) viewInstance.NameLabel.text = profile?.Name ?? "Guest";
+            if (viewInstance.NameLabel != null) viewInstance.NameLabel.text = profile?.Name ?? GUEST_NAME;
 
             if (viewInstance.AddressLabel != null)
             {
