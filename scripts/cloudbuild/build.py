@@ -24,16 +24,27 @@ parser.add_argument('--cancel', help='Cancel a running build stored in build_inf
 
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
-
     if response.status_code == 200:
         return response.json()
     elif response.status_code == 404:
         print(f'Target "{target}" does not exist (yet?)')
+        print("Available build targets:")
+        list_build_targets()
         return response.json()
     else:
         print("Failed to get target data with status code:", response.status_code)
         print("Response body:", response.text)
         sys.exit(1)
+
+def list_build_targets():
+    response = requests.get(f'{URL}/buildtargets', headers=HEADERS)
+    if response.status_code == 200:
+        targets = response.json()
+        for target in targets:
+            print(f"- {target}")
+    else:
+        print("Failed to retrieve build targets with status code:", response.status_code)
+        print("Response body:", response.text)
 
 # Some of the code in here won't be used
 # Unity does not allow more than 1 item in queue by target
@@ -68,6 +79,8 @@ def clone_current_target():
         (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
 
     existing_target = get_target(new_target_name)
+
+    sys.exit(1)
     
     if 'error' in existing_target:
         # Create new target
