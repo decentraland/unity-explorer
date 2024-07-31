@@ -2,6 +2,7 @@ using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notification;
 using DCL.Notification.NewNotification;
 using DCL.Notification.NotificationsBus;
@@ -27,6 +28,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
             IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
             INotificationsBusController notificationsBusController)
         {
@@ -34,7 +36,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
-            notificationsRequestController = new NotificationsRequestController(webRequestController, notificationsBusController, web3IdentityCache);
+            notificationsRequestController = new NotificationsRequestController(webRequestController, notificationsBusController, decentralandUrlsSource, web3IdentityCache);
         }
 
         public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)

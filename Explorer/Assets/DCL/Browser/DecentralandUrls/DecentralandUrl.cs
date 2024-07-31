@@ -25,5 +25,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         PeerAbout,
 
         DAO,
+
+        Notification,
+        NotificationRead,
     }
 }
