@@ -1,5 +1,6 @@
 #nullable enable
 
+using DCL.Browser.DecentralandUrls;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.StreamableLoading.NFTShapes.URNs;
 using NUnit.Framework;
@@ -19,7 +20,12 @@ namespace ECS.StreamableLoading.Tests.URNs
         ]
         public void UrnToUrlTest(string urn, string expectedUrl)
         {
-            Assert.AreEqual(expectedUrl, new BasedURNSource(DecentralandEnvironment.Org).UrlOrEmpty(urn).Value);
+            Assert.AreEqual(
+                expectedUrl,
+                new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))
+                   .UrlOrEmpty(urn)
+                   .Value
+            );
         }
     }
 }

@@ -22,7 +22,7 @@ namespace ECS.StreamableLoading.NFTShapes.URNs
                 url;
         }
 
-        public static string BaseURL(DecentralandEnvironment environment) =>
-            $"https://opensea.decentraland.{environment.ToString()!.ToLower()}/api/v2/chain/{{chain}}/contract/{{address}}/nfts/{{id}}";
+        public static string BaseURL(IDecentralandUrlsSource decentralandUrlsSource) =>
+            $"{decentralandUrlsSource.Url(DecentralandUrl.OpenSea)}/api/v2/chain/{{chain}}/contract/{{address}}/nfts/{{id}}";
     }
 }

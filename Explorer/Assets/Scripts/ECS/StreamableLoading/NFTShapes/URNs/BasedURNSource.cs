@@ -7,8 +7,8 @@ namespace ECS.StreamableLoading.NFTShapes.URNs
     {
         private readonly URLAddress baseUrl;
 
-        public BasedURNSource(DecentralandEnvironment decentralandEnvironment)
-            : this(IURNSource.BaseURL(decentralandEnvironment)) { }
+        public BasedURNSource(IDecentralandUrlsSource decentralandUrlsSource)
+            : this(IURNSource.BaseURL(decentralandUrlsSource)) { }
 
         public BasedURNSource(string baseUrl)
             : this(URLAddress.FromString(baseUrl)) { }
