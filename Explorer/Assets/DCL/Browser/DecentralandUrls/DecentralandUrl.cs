@@ -13,5 +13,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         ApiAuth,
         AuthSignature,
+
+        GateKeeperSceneAdapter,
     }
 }

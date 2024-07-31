@@ -8,7 +8,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
     {
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly DecentralandEnvironment environment;
-        private const string ZONE = "{ZONE}";
+        private const string ENV = "{ENV}";
 
         public DecentralandUrlsSource(DecentralandEnvironment environment)
         {
@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         {
             if (cache.TryGetValue(decentralandUrl, out string? url) == false)
             {
-                url = RawUrl(decentralandUrl).Replace(ZONE, environment.ToString()!.ToLower());
+                url = RawUrl(decentralandUrl).Replace(ENV, environment.ToString()!.ToLower());
                 cache[decentralandUrl] = url;
             }
 
@@ -29,14 +29,15 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         private static string RawUrl(DecentralandUrl decentralandUrl) =>
             decentralandUrl switch
             {
-                DecentralandUrl.DiscordLink => $"https://decentraland.{ZONE}/discord/",
-                DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ZONE}/privacy",
-                DecentralandUrl.TermsOfUse => $"https://decentraland.{ZONE}/terms",
-                DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ZONE}/api/places",
-                DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ZONE}",
-                DecentralandUrl.AuthSignature => $"https://decentraland.{ZONE}/auth/requests",
-                DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ZONE}/pois",
-                DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ZONE}/api/report",
+                DecentralandUrl.DiscordLink => $"https://decentraland.{ENV}/discord/",
+                DecentralandUrl.PrivacyPolicy => $"https://decentraland.{ENV}/privacy",
+                DecentralandUrl.TermsOfUse => $"https://decentraland.{ENV}/terms",
+                DecentralandUrl.ApiPlaces => $"https://places.decentraland.{ENV}/api/places",
+                DecentralandUrl.ApiAuth => $"https://auth-api.decentraland.{ENV}",
+                DecentralandUrl.AuthSignature => $"https://decentraland.{ENV}/auth/requests",
+                DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
+                DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
+                DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }
