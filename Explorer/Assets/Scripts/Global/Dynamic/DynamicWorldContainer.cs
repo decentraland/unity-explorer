@@ -8,7 +8,6 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
-using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Chat.Commands;
@@ -155,7 +154,7 @@ namespace Global.Dynamic
 
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, assetsProvisioner, ct).ThrowOnFail();
-                container.LODContainer = await LODContainer.CreateAsync(assetsProvisioner, staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
+                container.LODContainer = await LODContainer.CreateAsync(assetsProvisioner, bootstrapContainer.DecentralandUrlsSource, staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
