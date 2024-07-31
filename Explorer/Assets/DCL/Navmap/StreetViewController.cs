@@ -1,10 +1,8 @@
-using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
 using DCL.UI;
-using System;
 using UnityEngine;
 
 namespace DCL.Navmap
@@ -26,13 +24,14 @@ namespace DCL.Navmap
             this.mapCameraDragBehaviorData = mapCameraDragBehaviorData;
             this.mapRenderer = mapRenderer;
 
-            rectTransform = view.GetComponent<RectTransform>();;
+            rectTransform = view.GetComponent<RectTransform>();
+            ;
             view.StreetViewRenderImage.EmbedMapCameraDragBehavior(mapCameraDragBehaviorData);
         }
 
         public void InjectCameraController(IMapCameraController controller)
         {
-            this.cameraController = controller;
+            cameraController = controller;
         }
 
         public void Activate()
@@ -55,7 +54,7 @@ namespace DCL.Navmap
 
         public void Animate(int triggerId)
         {
-            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
+            view.gameObject.SetActive(triggerId == UIAnimationHashes.IN);
         }
 
         public void ResetAnimator() { }

@@ -7,6 +7,7 @@ using DCL.Utilities;
 using DCL.WebRequests;
 using SuperScrollView;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using Utility;
 
@@ -51,9 +52,9 @@ namespace DCL.Notification.NotificationsMenu
             view.gameObject.SetActive(false);
         }
 
-        public void ToggleNotificationsPanel()
+        public void ToggleNotificationsPanel(bool forceClose)
         {
-            view.gameObject.SetActive(!view.gameObject.activeSelf);
+            view.gameObject.SetActive(!forceClose && !view.gameObject.activeSelf);
         }
 
         private async UniTaskVoid InitialNotificationRequest()
@@ -74,14 +75,8 @@ namespace DCL.Notification.NotificationsMenu
 
             SetItemData(notificationView, notificationData);
 
-            if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
-            {
-                notificationView.NotificationImage.SetImage(thumbnailSprite);
-            }
-            else
-            {
-                LoadNotificationThumbnailAsync(notificationView, notificationData).Forget();
-            }
+            if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite)) { notificationView.NotificationImage.SetImage(thumbnailSprite); }
+            else { LoadNotificationThumbnailAsync(notificationView, notificationData).Forget(); }
 
             return listItem;
         }
@@ -109,8 +104,8 @@ namespace DCL.Notification.NotificationsMenu
 
         private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData)
         {
-            Texture2D texture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), new System.Threading.CancellationToken());
-            Sprite thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+            Texture2D texture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), new CancellationToken());
+            var thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);
             notificationView.NotificationImage.SetImage(thumbnailSprite);
         }

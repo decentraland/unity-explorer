@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Character.CharacterMotion.Components;
+using DCL.UI;
 using MVC;
 using System;
 using System.Threading;
@@ -12,8 +12,6 @@ namespace DCL.EmotesWheel
 {
     public class EmotesWheelView : ViewBase, IView
     {
-        public event Action? OnClose;
-
         [SerializeField]
         private Button[] closeButtons = null!;
 
@@ -39,10 +37,7 @@ namespace DCL.EmotesWheel
         private void Awake()
         {
             foreach (Button button in closeButtons)
-                button.onClick.AddListener(() =>
-                {
-                    OnClose?.Invoke();
-                });
+                button.onClick.AddListener(() => { OnClose?.Invoke(); });
         }
 
         private void OnEnable()
@@ -55,6 +50,8 @@ namespace DCL.EmotesWheel
             UIAudioEventsBus.Instance.SendPlayAudioEvent(CloseAudio);
         }
 
+        public event Action? OnClose;
+
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
             return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
@@ -63,7 +60,8 @@ namespace DCL.EmotesWheel
 
         protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
         {
-            EmotesWheelAnimator.SetTrigger(AnimationHashes.OUT);
+            EmotesWheelAnimator.SetTrigger(UIAnimationHashes.OUT);
+
             return UniTask.WaitUntil(() => EmotesWheelAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1,
                 cancellationToken: ct);
         }

@@ -40,13 +40,13 @@ namespace DCL.Minimap
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmData realmData;
         private readonly IChatMessagesBus chatMessagesBus;
+        private readonly IRealmNavigator realmNavigator;
+        private readonly IScenesCache scenesCache;
         private CancellationTokenSource cts;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
         private IMapCameraController mapCameraController;
         private Vector2Int previousParcelPosition;
-        private readonly IRealmNavigator realmNavigator;
-        private readonly IScenesCache scenesCache;
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = false } } };
@@ -100,7 +100,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
-            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.EXPAND);
+            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);
         }
 
         private void CollapseMinimap()
@@ -108,7 +108,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
-            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.COLLAPSE);
+            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.COLLAPSE);
         }
 
         private void OpenSideMenu()
