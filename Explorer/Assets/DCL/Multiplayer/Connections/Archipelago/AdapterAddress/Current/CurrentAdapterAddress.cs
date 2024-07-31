@@ -1,24 +1,25 @@
+using System;
 using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Archipelago.WorldAboutUrl.Current;
 using System.Threading;
+using ECS;
 
 namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current
 {
     public class CurrentAdapterAddress : ICurrentAdapterAddress
     {
         private readonly IAdapterAddresses adapterAddresses;
-        private readonly ICurrentWorldAboutUrl currentWorldAboutUrl;
+        private readonly IRealmData currentRealmData;
 
-        public CurrentAdapterAddress(IAdapterAddresses adapterAddresses, ICurrentWorldAboutUrl currentWorldAboutUrl)
+        public CurrentAdapterAddress(IAdapterAddresses adapterAddresses, IRealmData currentRealmData)
         {
             this.adapterAddresses = adapterAddresses;
-            this.currentWorldAboutUrl = currentWorldAboutUrl;
+            this.currentRealmData = currentRealmData;
         }
 
-        public async UniTask<string> AdapterUrlAsync(CancellationToken token)
+        public string AdapterUrlAsync()
         {
-            string aboutUrl = currentWorldAboutUrl.AboutUrl();
-            return await adapterAddresses.AdapterUrlAsync(aboutUrl, token);
+            return adapterAddresses.AdapterUrlAsync(currentRealmData.CommsAdapter);
         }
+     
     }
 }

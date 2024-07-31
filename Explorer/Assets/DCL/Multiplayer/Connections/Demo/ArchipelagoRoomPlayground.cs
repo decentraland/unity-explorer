@@ -64,7 +64,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 identityCache,
                 signFlow,
                 loonCharacterObject,
-                ICurrentAdapterAddress.NewDefault(IWebRequestController.DEFAULT, new IRealmData.Fake())
+                ICurrentAdapterAddress.NewDefault(new IRealmData.Fake())
             );
             var realFlowLoadingStatus = new RealFlowLoadingStatus();
             realFlowLoadingStatus.SetStage(RealFlowLoadingStatus.Stage.Completed);
