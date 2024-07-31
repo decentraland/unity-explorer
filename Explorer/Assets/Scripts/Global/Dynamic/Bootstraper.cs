@@ -73,7 +73,7 @@ namespace Global.Dynamic
 
             string settingsRealm = launchSettings.GetStartingRealm();
 
-            // We also check against 'settingsRealm' in case LOCALHOST wad configured from the Editor
+            // We also check against 'settingsRealm' in case LOCALHOST was configured from the Editor
             localSceneDevelopment |= settingsRealm == IRealmNavigator.LOCALHOST;
 
             startingRealm = URLDomain.FromString(settingsRealm);
