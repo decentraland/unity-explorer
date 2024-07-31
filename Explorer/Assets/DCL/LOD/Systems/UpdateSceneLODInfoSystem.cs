@@ -85,7 +85,7 @@ namespace DCL.LOD.Systems
                     sceneLODCandidate = (byte)(i + 1);
             }
 
-            if (sceneLODInfo.metadata.CullRelativeHeight >= 0.3f && sceneLODCandidate == 1)
+            if (sceneLODInfo.metadata.CullRelativeHeight >= 0.3f && sceneLODCandidate == 1 && !sceneLODInfo.HasLOD(0))
                 sceneLODCandidate = 0;
 
             return sceneLODCandidate;
