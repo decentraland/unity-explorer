@@ -8,5 +8,11 @@ namespace DCL.SceneLoadingScreens.LoadingScreen
     public interface ILoadingScreen
     {
         UniTask ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct);
+
+        class EmptyLoadingScreen : ILoadingScreen
+        {
+            public UniTask ShowWhileExecuteTaskAsync(Func<AsyncLoadProcessReport, UniTask> operation, CancellationToken ct) =>
+                operation(AsyncLoadProcessReport.Create());
+        }
     }
 }

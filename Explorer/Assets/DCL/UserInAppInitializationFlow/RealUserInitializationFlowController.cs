@@ -36,6 +36,8 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRealmController realmController;
         private readonly Dictionary<string, string> appParameters;
 
+        private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
+
         public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
@@ -70,39 +72,43 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity,
             CancellationToken ct)
         {
-            UIAudioEventsBus.Instance.SendPlayContinuousAudioEvent(backgroundMusic);
-
-            if (showAuthentication)
-                await ShowAuthenticationScreenAsync(ct);
-
-            if (showLoading)
-                await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(reloadRealm, parentLoadReport, world, playerEntity, ct), ct);
-            else
-                await LoadCharacterAndWorldAsync(reloadRealm, AsyncLoadProcessReport.Create(), world, playerEntity, ct);
-
-            UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(backgroundMusic);
+            using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
+            if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
+            await LoadingScreen(showLoading).ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(reloadRealm, parentLoadReport, world, playerEntity, ct), ct);
         }
 
         private async UniTask LoadCharacterAndWorldAsync(bool reloadRealm, AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
         {
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
             await InitializeFeatureFlagsAsync(ct);
-
-            Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
-            parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
-
+            var ownProfile = await LoadProfileAsync(parentLoadReport, ct);
             await realmNavigator.SwitchMiscVisibilityAsync();
             await LoadPlayerAvatar(world, playerEntity, ownProfile, ct);
             await LoadLandscapeAsync(parentLoadReport, ct);
+            await TryRestartRealm(reloadRealm, ct);
+            await TeleportAsync(parentLoadReport, ct);
+        }
 
+        private async UniTask TryRestartRealm(bool reloadRealm, CancellationToken ct)
+        {
+            if (reloadRealm)
+                await realmController.RestartRealmAsync(ct);
+        }
+
+        private async UniTask TeleportAsync(AsyncLoadProcessReport parentLoadReport, CancellationToken ct)
+        {
             AsyncLoadProcessReport teleportLoadReport
                 = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
 
-            if (reloadRealm)
-                await realmController.RestartRealmAsync(ct);
-
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
+        }
+
+        private async UniTask<Profile> LoadProfileAsync(AsyncLoadProcessReport parentLoadReport, CancellationToken ct)
+        {
+            Profile ownProfile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
+            parentLoadReport.SetProgress(loadingStatus.SetStage(ProfileLoaded));
+            return ownProfile;
         }
 
         private async UniTask LoadLandscapeAsync(AsyncLoadProcessReport parentLoadReport, CancellationToken ct)
@@ -141,5 +147,8 @@ namespace DCL.UserInAppInitializationFlow
             try { await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
+
+        private ILoadingScreen LoadingScreen(bool withUI) =>
+            withUI ? loadingScreen : EMPTY_LOADING_SCREEN;
     }
 }
