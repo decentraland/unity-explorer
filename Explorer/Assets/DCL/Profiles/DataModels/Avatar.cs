@@ -47,14 +47,19 @@ namespace DCL.Profiles
             BodySnapshotUrl = URLAddress.EMPTY;
         }
 
-        public bool IsSameAvatar(Avatar other) =>
-            BodyShape.Equals(other.BodyShape)
-            && wearables.SetEquals(other.wearables)
-            && emotes.EqualsContentInOrder(other.emotes)
-            && forceRender.SetEquals(other.forceRender)
-            && HairColor.Equals(other.HairColor)
-            && EyesColor.Equals(other.EyesColor)
-            && SkinColor.Equals(other.SkinColor);
+        public bool IsSameAvatar(Avatar? other)
+        {
+            if (other == null)
+                return false;
+
+            return BodyShape.Equals(other.BodyShape)
+                   && wearables.SetEquals(other.wearables)
+                   && emotes.EqualsContentInOrder(other.emotes)
+                   && forceRender.SetEquals(other.forceRender)
+                   && HairColor.Equals(other.HairColor)
+                   && EyesColor.Equals(other.EyesColor)
+                   && SkinColor.Equals(other.SkinColor);
+        }
 
         public void Clear()
         {
