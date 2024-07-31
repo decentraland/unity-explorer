@@ -27,7 +27,7 @@ namespace DCL.UI.MainUI
         private bool waitingToHideSidebar;
         private bool showingSidebar;
         private bool sidebarBlockStatus;
-        private bool autoHideSidebar;
+        private bool autoHideSidebar = true;
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
@@ -71,7 +71,7 @@ namespace DCL.UI.MainUI
 
         private void OnPointerEnter()
         {
-            if (autoHideSidebar || sidebarBlockStatus) return;
+            if (!autoHideSidebar || sidebarBlockStatus) return;
 
             if (showingSidebar) { waitingToShowSidebar = false; }
 
@@ -89,7 +89,7 @@ namespace DCL.UI.MainUI
 
         private void OnPointerExit()
         {
-            if (autoHideSidebar || sidebarBlockStatus) return;
+            if (!autoHideSidebar || sidebarBlockStatus) return;
 
             if (waitingToShowSidebar || showingSidebar) { showSidebarCancellationTokenSource.Cancel(); }
 
