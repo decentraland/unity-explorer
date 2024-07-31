@@ -44,6 +44,13 @@ namespace ECS.Unity.Materials.Systems
 
             if (textureComponent is { IsVideoTexture: true })
                 material.SetTextureScale(propId, VIDEO_TEXTURE_VERTICAL_FLIP);
+
+            // When the material is re-used for another texture we need to restore the texture scale
+            // Otherwise in case it was previously a video texture it gets x:1,y:-1 scale which is undesired
+            // This case happens on nft-museum at sdk-goerli-plaza 85,-8. A plane exists which has a texture that acts as a "preview" of the stream.
+            // Whenever you get close or far, the texture is changed either to video stream or regular exposing this issue
+            else
+                material.SetTextureScale(propId, Vector2.one);
         }
     }
 }
