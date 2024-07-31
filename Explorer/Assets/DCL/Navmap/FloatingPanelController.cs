@@ -95,7 +95,7 @@ namespace DCL.Navmap
             {
                 view.panelAnimator.Rebind();
                 view.panelAnimator.Update(0f);
-                view.panelAnimator.SetTrigger(AnimationHashes.TO_LEFT);
+                view.panelAnimator.SetTrigger(UIAnimationHashes.TO_LEFT);
                 ShowPanel(parcel, -1);
             }
             else
@@ -104,13 +104,13 @@ namespace DCL.Navmap
                 {
                     view.panelAnimator.Rebind();
                     view.panelAnimator.Update(0f);
-                    view.panelAnimator.SetTrigger(AnimationHashes.IN);
-                    ShowPanel(parcel, AnimationHashes.LOADED);
+                    view.panelAnimator.SetTrigger(UIAnimationHashes.IN);
+                    ShowPanel(parcel, UIAnimationHashes.LOADED);
                 }
                 else
                 {
-                    view.panelAnimator.SetTrigger(AnimationHashes.LOADING);
-                    GetPlaceInfoAsync(parcel, AnimationHashes.LOADED).Forget();
+                    view.panelAnimator.SetTrigger(UIAnimationHashes.LOADING);
+                    GetPlaceInfoAsync(parcel, UIAnimationHashes.LOADED).Forget();
                 }
             }
         }
@@ -276,14 +276,14 @@ namespace DCL.Navmap
 
         private void HidePanelFromBackButton()
         {
-            view.panelAnimator.SetTrigger(AnimationHashes.TO_RIGHT);
+            view.panelAnimator.SetTrigger(UIAnimationHashes.TO_RIGHT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }
 
         public void HidePanel()
         {
-            view.panelAnimator.SetTrigger(AnimationHashes.OUT);
+            view.panelAnimator.SetTrigger(UIAnimationHashes.OUT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }

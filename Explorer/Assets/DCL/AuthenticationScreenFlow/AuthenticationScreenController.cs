@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -25,8 +26,6 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
-        private const int ANIMATION_DELAY = 300;
-
         private enum ViewState
         {
             Login,
@@ -34,6 +33,8 @@ namespace DCL.AuthenticationScreenFlow
             Loading,
             Finalize,
         }
+
+        private const int ANIMATION_DELAY = 300;
 
         private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
@@ -170,7 +171,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.SetTrigger(AnimationHashes.OUT);
+            splashScreenAnimator.SetTrigger(UIAnimationHashes.OUT);
         }
 
         private void ShowRestrictedUserPopup()
@@ -267,7 +268,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.TO_OTHER);
+                viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 SwitchState(ViewState.Login);
@@ -283,7 +284,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.JUMP_IN);
+                viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
@@ -302,7 +303,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.IN);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
@@ -313,8 +314,8 @@ namespace DCL.AuthenticationScreenFlow
                     ResetAnimator(viewInstance.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.Slides.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.OUT);
-                    viewInstance.VerificationAnimator.SetTrigger(AnimationHashes.IN);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
@@ -340,7 +341,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(true);
-                    viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.IN);
+                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;

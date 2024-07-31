@@ -3,6 +3,7 @@ using DCL.ExplorePanel;
 using DCL.Notification;
 using DCL.Notification.NotificationsBus;
 using DCL.Notification.NotificationsMenu;
+using DCL.SidebarBus;
 using MVC;
 using System.Threading;
 using Utility;
@@ -11,17 +12,17 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarController : ControllerBase<SidebarView>
     {
-        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
-
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
         private readonly ProfileWidgetController profileMenuWidgetController;
         private readonly SystemMenuController systemMenuController;
+        private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public SidebarController(
             ViewFactoryMethod viewFactory,
@@ -30,13 +31,15 @@ namespace DCL.UI.Sidebar
             NotificationsMenuController notificationsMenuController,
             ProfileWidgetController profileIconWidgetController,
             ProfileWidgetController profileMenuWidgetController,
-            SystemMenuController systemMenuController)
+            SystemMenuController systemMenuController,
+            ISidebarBus sidebarBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
             this.profileMenuWidgetController = profileMenuWidgetController;
             this.systemMenuController = systemMenuController;
+            this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
         }
@@ -48,14 +51,45 @@ namespace DCL.UI.Sidebar
                 viewInstance.backpackNotificationIndicator.SetActive(false);
                 OpenExplorePanelInSection(ExploreSections.Backpack);
             });
+
             viewInstance.settingsButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Settings));
             viewInstance.mapButton.onClick.AddListener(() => OpenExplorePanelInSection(ExploreSections.Navmap));
-            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfilePopup);
+            viewInstance.ProfileWidget.OpenProfileButton.onClick.AddListener(OpenProfileWidget);
+            viewInstance.sidebarSettingsButton.onClick.AddListener(OpenSidebarSettings);
             viewInstance.notificationsButton.onClick.AddListener(OpenNotificationsPanel);
+            viewInstance.autoHideToggle.onValueChanged.AddListener(OnAutoHideToggleChanged);
             viewInstance.backpackNotificationIndicator.SetActive(false);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationReceived);
-            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT,  OnRewardNotificationClicked);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
+            notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
+            viewInstance.sidebarSettingsWidget.OnWidgetClosed += OnSidebarSettingsClosed;
+        }
 
+        private void OnAutoHideToggleChanged(bool value)
+        {
+            sidebarBus.SetAutoHideSidebarStatus(value);
+        }
+
+        private void CloseAllWidgets()
+        {
+            systemMenuCts = systemMenuCts.SafeRestart();
+            systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+            notificationsMenuController.ToggleNotificationsPanel(true);
+            viewInstance.sidebarSettingsWidget.CloseWidget();
+            sidebarBus.UnblockSidebar();
+        }
+
+        private void OpenSidebarSettings()
+        {
+            CloseAllWidgets();
+            sidebarBus.BlockSidebar();
+            viewInstance.sidebarSettingsWidget.gameObject.SetActive(true);
+            viewInstance.sidebarSettingsButton.OnSelect(null);
+        }
+
+        private void OnSidebarSettingsClosed()
+        {
+            sidebarBus.UnblockSidebar();
+            viewInstance.sidebarSettingsButton.OnDeselect(null);
         }
 
         private void OnRewardNotificationClicked(object[] parameters)
@@ -84,30 +118,30 @@ namespace DCL.UI.Sidebar
             systemMenuCts.SafeCancelAndDispose();
         }
 
-        private void OpenProfilePopup()
+        private void OpenProfileWidget()
         {
+            CloseAllWidgets();
+            sidebarBus.BlockSidebar();
             viewInstance.profileMenu.gameObject.SetActive(true);
-            ShowSystemMenu();
+            ToggleSystemMenu();
         }
 
         private void OpenNotificationsPanel()
         {
-            notificationsMenuController.ToggleNotificationsPanel();
+            CloseAllWidgets();
+            sidebarBus.BlockSidebar();
+            notificationsMenuController.ToggleNotificationsPanel(false);
         }
 
-        private void ShowSystemMenu()
+        private void ToggleSystemMenu()
         {
             systemMenuCts = systemMenuCts.SafeRestart();
 
-            async UniTaskVoid ShowSystemMenuAsync(CancellationToken ct)
-            {
-                await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
-                    new ControllerNoData(), ct);
-                await systemMenuController.HideViewAsync(ct);
-            }
-
             if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+            {
                 systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+                sidebarBus.UnblockSidebar();
+            }
             else
             {
                 profileMenuWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
@@ -115,9 +149,19 @@ namespace DCL.UI.Sidebar
             }
         }
 
+        private async UniTaskVoid ShowSystemMenuAsync(CancellationToken ct)
+        {
+            await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
+                new ControllerNoData(), ct);
+
+            await systemMenuController.HideViewAsync(ct);
+            sidebarBus.UnblockSidebar();
+        }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
         {
+            CloseAllWidgets();
+
             mvcManager.ShowAsync(
                 ExplorePanelController.IssueCommand(
                     new ExplorePanelParameter(section, backpackSection)));
@@ -125,6 +169,5 @@ namespace DCL.UI.Sidebar
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
-
     }
 }

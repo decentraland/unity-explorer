@@ -13,6 +13,7 @@ using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.UI.MainUI;
 using DCL.UI.Sidebar;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -21,6 +22,7 @@ using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -41,13 +43,12 @@ namespace Global.Dynamic
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
 
-        public bool EnableAnalytics { private get; init; }
-
         private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
         private Dictionary<string, string> appParameters = new Dictionary<string, string>();
+        public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(DebugSettings debugSettings)
         {
@@ -203,7 +204,6 @@ namespace Global.Dynamic
             for (int i = 1; i < cmdArgs.Length; i++)
             {
                 var arg = cmdArgs[i];
-
                 if (arg.StartsWith("--"))
                 {
                     if (arg.Length > 2)
@@ -303,16 +303,13 @@ namespace Global.Dynamic
             new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
 
         private bool IsRealmALocalUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out var uriResult)
+            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
-            mvcManager.ShowAsync(SidebarController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
-            //mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
-            mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }

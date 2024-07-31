@@ -36,11 +36,13 @@ namespace DCL.UI
         private void OnEnable()
         {
             tabAnimator.enabled = true;
+
             if (tabAnimator != null)
             {
                 tabAnimator.Rebind();
                 tabAnimator.Update(0);
             }
+
             TabSelectorToggle.onValueChanged.AddListener(OnToggle);
         }
 
@@ -50,22 +52,22 @@ namespace DCL.UI
             tabAnimator.enabled = false;
         }
 
-        private void OnToggle(bool toggle)
-        {
-            if(toggle)
-                UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
-        }
-
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (tabAnimator != null)
-                tabAnimator.SetTrigger(AnimationHashes.HOVER);
+                tabAnimator.SetTrigger(UIAnimationHashes.HOVER);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if(tabAnimator != null)
-                tabAnimator.SetTrigger(AnimationHashes.UNHOVER);
+            if (tabAnimator != null)
+                tabAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
+        }
+
+        private void OnToggle(bool toggle)
+        {
+            if (toggle)
+                UIAudioEventsBus.Instance.SendPlayAudioEvent(TabClickAudio);
         }
     }
 }

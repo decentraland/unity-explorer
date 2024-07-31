@@ -1,6 +1,7 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapLayers.Pins;
+using DCL.UI;
 using DCL.UI.Buttons;
 using MVC;
 using System.Collections.Generic;
@@ -79,9 +80,9 @@ namespace DCL.Minimap
         }
 
         private void OnHoverMap() =>
-            minimapAnimator.SetTrigger(AnimationHashes.HOVER);
+            minimapAnimator.SetTrigger(UIAnimationHashes.HOVER);
 
         private void OnUnHoverMap() =>
-            minimapAnimator.SetTrigger(AnimationHashes.UNHOVER);
+            minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
     }
 }

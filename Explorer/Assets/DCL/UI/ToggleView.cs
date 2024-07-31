@@ -7,6 +7,8 @@ namespace DCL.UI
 {
     public class ToggleView : MonoBehaviour
     {
+        [field: SerializeField] internal bool autoToggleImagesOnToggle { get; private set; }
+
         [field: SerializeField]
         public Toggle Toggle { get; private set; }
 
@@ -21,7 +23,7 @@ namespace DCL.UI
 
         [field: SerializeField]
         public Image OffBackgroundImage { get; private set; }
-        
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ToggleOnAudio { get; private set; }
@@ -41,6 +43,14 @@ namespace DCL.UI
         private void OnToggle(bool toggle)
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(toggle ? ToggleOnAudio : ToggleOffAudio);
+
+            if (autoToggleImagesOnToggle)
+            {
+                OnImage.SetActive(toggle);
+                OffImage.SetActive(!toggle);
+                OnBackgroundImage.gameObject.SetActive(toggle);
+                OffBackgroundImage.gameObject.SetActive(!toggle);
+            }
         }
     }
 }

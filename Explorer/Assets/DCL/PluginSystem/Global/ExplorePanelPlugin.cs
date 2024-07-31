@@ -72,6 +72,7 @@ namespace DCL.PluginSystem.Global
         private BackpackSubPlugin? backpackSubPlugin;
         private PersistentExploreOpenerView? exploreOpener;
         private PersistentExplorePanelOpenerController? explorePanelOpener;
+        private readonly ICollection<string> forceRender;
         private ExplorePanelInputHandler? inputHandler;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
@@ -181,11 +182,6 @@ namespace DCL.PluginSystem.Global
                     new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
                     dclInput, notificationsBusController, mvcManager));
 
-                explorePanelOpener = new PersistentExplorePanelOpenerController(
-                    PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager);
-
-                mvcManager.RegisterController(explorePanelOpener);
-
                 inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
             };
         }
@@ -198,14 +194,6 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject ExplorePanelPrefab;
-
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject PersistentExploreOpenerPrefab;
-
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject MinimapPrefab;
 
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }

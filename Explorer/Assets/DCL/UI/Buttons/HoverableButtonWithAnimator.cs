@@ -13,13 +13,13 @@ namespace DCL.UI.Buttons
         public new void OnPointerEnter(PointerEventData eventData)
         {
             base.OnPointerEnter(eventData);
-            Animator.SetTrigger(AnimationHashes.HOVER);
+            Animator.SetTrigger(UIAnimationHashes.HOVER);
         }
 
         public new void OnPointerExit(PointerEventData eventData)
         {
             base.OnPointerExit(eventData);
-            Animator.SetTrigger(AnimationHashes.UNHOVER);
+            Animator.SetTrigger(UIAnimationHashes.UNHOVER);
         }
     }
 }

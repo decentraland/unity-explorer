@@ -29,7 +29,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IInputBlock inputBlock;
         private readonly IEventSystem eventSystem;
-        private readonly MainUIContainer mainUIContainer;
+        private readonly MainUIView mainUIView;
 
         private ChatController chatController;
 
@@ -42,7 +42,7 @@ namespace DCL.PluginSystem.Global
             NametagsData nametagsData,
             DCLInput dclInput,
             IEventSystem eventSystem,
-            MainUIContainer mainUIContainer,
+            MainUIView mainUIView,
             IInputBlock inputBlock
         )
         {
@@ -55,7 +55,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.inputBlock = inputBlock;
             this.eventSystem = eventSystem;
-            this.mainUIContainer = mainUIContainer;
+            this.mainUIView = mainUIView;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -67,14 +67,13 @@ namespace DCL.PluginSystem.Global
             EmojiSectionView emojiSectionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSectionPrefab, ct)).Value;
             EmojiButton emojiButtonPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiButtonPrefab, ct)).Value;
             EmojiSuggestionView emojiSuggestionPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.EmojiSuggestionPrefab, ct)).Value;
-            //ChatView chatView = (await assetsProvisioner.ProvideMainAssetAsync(settings.ChatPanelPrefab, ct: ct)).Value.GetComponent<ChatView>();
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
                 chatController = new ChatController(
                     () =>
                     {
-                        var view = mainUIContainer.ChatView;
+                        var view = mainUIView.ChatView;
                         view.gameObject.SetActive(true);
                         return view;
                     },
@@ -103,8 +102,6 @@ namespace DCL.PluginSystem.Global
         {
             [field: Header(nameof(ChatPlugin) + "." + nameof(ChatSettings))]
             [field: Space]
-            [field: SerializeField]
-            public ChatViewRef ChatPanelPrefab { get; private set; }
 
             [field: SerializeField]
             public EmojiButtonRef EmojiButtonPrefab { get; private set; }
@@ -156,13 +153,7 @@ namespace DCL.PluginSystem.Global
             }
 
             [Serializable]
-            public class ChatViewRef : ComponentReference<ChatView>
-            {
-                public ChatViewRef(string guid) : base(guid) { }
-            }
-
-            [Serializable]
-            public class MainUIRef : ComponentReference<MainUIContainer>
+            public class MainUIRef : ComponentReference<MainUIView>
             {
                 public MainUIRef(string guid) : base(guid) { }
             }

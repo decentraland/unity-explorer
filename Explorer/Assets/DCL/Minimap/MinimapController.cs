@@ -109,7 +109,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(true);
             viewInstance.expandMinimapButton.gameObject.SetActive(false);
             viewInstance.minimapRendererButton.gameObject.SetActive(true);
-            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.EXPAND);
+            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.EXPAND);
         }
 
         private void CollapseMinimap()
@@ -117,7 +117,7 @@ namespace DCL.Minimap
             viewInstance.collapseMinimapButton.gameObject.SetActive(false);
             viewInstance.expandMinimapButton.gameObject.SetActive(true);
             viewInstance.minimapRendererButton.gameObject.SetActive(false);
-            viewInstance.minimapAnimator.SetTrigger(AnimationHashes.COLLAPSE);
+            viewInstance.minimapAnimator.SetTrigger(UIAnimationHashes.COLLAPSE);
         }
 
         private void OpenSideMenu()

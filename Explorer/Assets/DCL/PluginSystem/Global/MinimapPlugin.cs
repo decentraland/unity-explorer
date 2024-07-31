@@ -23,11 +23,11 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmNavigator realmNavigator;
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IScenesCache scenesCache;
-        private readonly MainUIContainer mainUIContainer;
+        private readonly MainUIView mainUIView;
         private readonly IMapPathEventBus mapPathEventBus;
 
         public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIContainer mainUIContainer,
+            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView,
             IMapPathEventBus mapPathEventBus)
         {
             this.mvcManager = mvcManager;
@@ -37,8 +37,8 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
-            this.mainUIContainer = mainUIContainer;
             this.mapPathEventBus = mapPathEventBus;
+            this.mainUIView = mainUIView;
         }
 
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(MinimapSettings settings, CancellationToken ct)
@@ -48,7 +48,7 @@ namespace DCL.PluginSystem.Global
                 mvcManager.RegisterController(new MinimapController(
                     () =>
                     {
-                        MinimapView? view = mainUIContainer.MinimapView;
+                        MinimapView? view = mainUIView.MinimapView;
                         view.gameObject.SetActive(true);
                         return view;
                     },

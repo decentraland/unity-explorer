@@ -2,7 +2,6 @@
 using System;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utility;
 
@@ -24,33 +23,37 @@ namespace DCL.UI.MainUI
         internal float animationTime { get; private set; }
 
         [field: SerializeField]
-        internal OpenSidebarView openSidebarView { get; private set; }
-
-        private bool waitingToShow;
-        private bool waitingToHide;
-        private bool showing;
+        internal PointerDetectionArea pointerDetectionArea { get; private set; }
+        private bool forceOpen;
+        private CancellationTokenSource hideCancellationTokenSource = new ();
 
         private CancellationTokenSource showCancellationTokenSource = new ();
-        private CancellationTokenSource hideCancellationTokenSource = new ();
+        private bool showing;
+        private bool waitingToHide;
+
+        private bool waitingToShow;
 
         private void Start()
         {
             showing = true;
-            openSidebarView.EnterOpenArea += OnPointerEnter;
-            openSidebarView.ExitOpenArea += OnPointerExit;
+            pointerDetectionArea.OnEnterArea += OnPointerOnEnter;
+            pointerDetectionArea.OnExitArea += OnPointerOnExit;
         }
 
-        public void OnPointerEnter()
+        public void SetForceOpen(bool value)
         {
-            if (showing)
-            {
-                waitingToShow = false;
-            }
+            forceOpen = value;
+            hideCancellationTokenSource = hideCancellationTokenSource.SafeRestart();
+            showCancellationTokenSource = showCancellationTokenSource.SafeRestart();
+        }
 
-            if (showCancellationTokenSource.IsCancellationRequested)
-            {
-                waitingToShow = false;
-            }
+        private void OnPointerOnEnter()
+        {
+            if (forceOpen) return;
+
+            if (showing) { waitingToShow = false; }
+
+            if (showCancellationTokenSource.IsCancellationRequested) { waitingToShow = false; }
 
             if (!showing && !waitingToShow)
             {
@@ -59,23 +62,16 @@ namespace DCL.UI.MainUI
                 WaitAndShow(showCancellationTokenSource.Token).Forget();
             }
 
-            if (waitingToHide)
-            {
-                hideCancellationTokenSource.Cancel();
-            }
+            if (waitingToHide) { hideCancellationTokenSource.Cancel(); }
         }
 
-        public void OnPointerExit()
+        private void OnPointerOnExit()
         {
-            if (waitingToShow || showing)
-            {
-                showCancellationTokenSource.Cancel();
-            }
+            if (forceOpen) return;
 
-            if (hideCancellationTokenSource.IsCancellationRequested)
-            {
-                waitingToHide = false;
-            }
+            if (waitingToShow || showing) { showCancellationTokenSource.Cancel(); }
+
+            if (hideCancellationTokenSource.IsCancellationRequested) { waitingToHide = false; }
 
             if (!waitingToHide && showing)
             {
@@ -109,12 +105,11 @@ namespace DCL.UI.MainUI
             showing = true;
         }
 
-
         private async UniTask AnimateWidthAsync(float width, CancellationToken ct)
         {
             float startWidth = layoutElement.preferredWidth;
             float endWidth = width;
-            float elapsedTime = 0f;
+            var elapsedTime = 0f;
 
             while (elapsedTime < animationTime)
             {
@@ -123,6 +118,7 @@ namespace DCL.UI.MainUI
                     layoutElement.preferredWidth = startWidth;
                     return;
                 }
+
                 elapsedTime += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsedTime / animationTime);
                 layoutElement.preferredWidth = Mathf.Lerp(startWidth, endWidth, t);
@@ -131,6 +127,5 @@ namespace DCL.UI.MainUI
 
             layoutElement.preferredWidth = endWidth;
         }
-
     }
 }
