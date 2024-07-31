@@ -111,22 +111,45 @@ def clone_current_target():
     
     if existing_target is None:
         # Create new target
-        response = make_request('POST', f'{URL}/buildtargets', headers=HEADERS, json=body)
+        print('No target found. Creating a new one.')
+        url = f'{URL}/buildtargets'
+        method = 'POST'
     else:
         # Target exists, update it
-        response = make_request('PUT', f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
-    
-    if response.status_code == 200 or response.status_code == 201:
-        # Override target ENV
-        os.environ['TARGET'] = new_target_name
-    elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
-        print('Target update failed due to a possible race condition. Retrying...')
-        time.sleep(2)  # Add a small delay before retrying
-        clone_current_target()  # Retry the whole process
-    else:
-        print('Target failed to clone/update with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
+        print('Target found. Updating it.')
+        url = f'{URL}/buildtargets/{new_target_name}'
+        method = 'PUT'
+
+    print(f"Sending {method} request to {url}")
+    print(f"Request body: {json.dumps(body, indent=2)}")
+
+    try:
+        response = make_request(method, url, headers=HEADERS, json=body)
+        
+        if response.status_code == 200 or response.status_code == 201:
+            # Override target ENV
+            os.environ['TARGET'] = new_target_name
+            print(f"Successfully {'created' if method == 'POST' else 'updated'} target. Response: {response.json()}")
+        elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
+            print('Target update failed due to a possible race condition. Retrying...')
+            time.sleep(2)  # Add a small delay before retrying
+            clone_current_target()  # Retry the whole process
+        else:
+            print(f'Target failed to clone/update with status code: {response.status_code}')
+            print(f'Response headers: {response.headers}')
+            print(f'Response body: {response.text}')
+            sys.exit(1)
+    except requests.RequestException as e:
+        print(f"Request failed: {e}")
+        print(f"Request URL: {url}")
+        print(f"Request method: {method}")
+        print(f"Request headers: {HEADERS}")
+        print(f"Request body: {json.dumps(body, indent=2)}")
+        if hasattr(e, 'response'):
+            print(f"Response status code: {e.response.status_code}")
+            print(f"Response headers: {e.response.headers}")
+            print(f"Response body: {e.response.text}")
+        raise
 
 def get_param_env_variables():
     param_variables = {}
