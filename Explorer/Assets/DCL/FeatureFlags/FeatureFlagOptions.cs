@@ -21,30 +21,13 @@ namespace DCL.FeatureFlags
         /// </summary>
         public string Hostname { get; set; }
 
-        private static FeatureFlagOptions NewOrg() =>
-            new ()
+        public static FeatureFlagOptions NewFeatureFlagOptions(IDecentralandUrlsSource decentralandUrlsSource) =>
+            new()
             {
                 AppName = "explorer",
-                URL = URLDomain.FromString("https://feature-flags.decentraland.org"),
+                URL = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.FeatureFlags)),
                 Debug = false,
-                Hostname = "https://decentraland.org",
-            };
-
-        private static FeatureFlagOptions NewZone() =>
-            new ()
-            {
-                AppName = "explorer",
-                URL = URLDomain.FromString("https://feature-flags.decentraland.zone"),
-                Debug = false,
-                Hostname = "https://decentraland.zone",
-            };
-
-        public static FeatureFlagOptions NewFeatureFlagOptions(DecentralandEnvironment environment) =>
-            environment switch
-            {
-                DecentralandEnvironment.Org => NewOrg(),
-                DecentralandEnvironment.Zone => NewZone(),
-                _ => throw new ArgumentOutOfRangeException(nameof(environment), environment, null)
+                Hostname = decentralandUrlsSource.Url(DecentralandUrl.Host),
             };
     }
 }

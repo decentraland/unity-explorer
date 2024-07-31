@@ -28,5 +28,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
 
         Notification,
         NotificationRead,
+
+        FeatureFlags,
     }
 }

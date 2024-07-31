@@ -1,4 +1,5 @@
 using Arch.Core;
+using DCL.Browser.DecentralandUrls;
 using DCL.DemoWorlds;
 using DCL.ECSComponents;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -58,7 +59,7 @@ namespace DCL.SDKComponents.NFTShape.Demo
                         }
                     )
                 ).InitializeAndReturnSelf(),
-                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(DecentralandEnvironment.Org)),
+                w => new LoadCycleNftShapeSystem(w, new BasedURNSource(new DecentralandUrlsSource(DecentralandEnvironment.Org))),
                 w => new InstantiateNftShapeSystem(w, new PoolNFTShapeRendererFactory(new ComponentPoolsRegistry(), framesPool), new FrameTimeCapBudget.Default(), framePrefabs, buffer),
                 w => new VisibilityNftShapeSystem(w, buffer)
             );

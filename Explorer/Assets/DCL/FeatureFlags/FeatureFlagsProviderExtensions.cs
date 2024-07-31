@@ -14,12 +14,12 @@ namespace DCL.FeatureFlags
 
         public static async UniTask<FeatureFlagsConfiguration> InitializeAsync(
             this IFeatureFlagsProvider featureFlagsProvider,
+            IDecentralandUrlsSource decentralandUrlsSource,
             Web3Address? userAddress,
-            DecentralandEnvironment environment,
             Dictionary<string, string> appParameters,
             CancellationToken ct)
         {
-            FeatureFlagOptions options = FeatureFlagOptions.NewFeatureFlagOptions(environment);
+            FeatureFlagOptions options = FeatureFlagOptions.NewFeatureFlagOptions(decentralandUrlsSource);
 
             // App parameters example:
             // #!/bin/bash

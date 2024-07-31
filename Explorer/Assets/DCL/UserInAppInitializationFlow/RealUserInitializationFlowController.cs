@@ -139,7 +139,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
-            try { await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, decentralandUrlsSource.Environment, appParameters, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
     }

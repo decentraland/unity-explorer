@@ -12,12 +12,9 @@ namespace DCL.Browser.DecentralandUrls
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
         private readonly string environmentDomainLowerCase;
 
-        public DecentralandEnvironment Environment { get; }
-
         public DecentralandUrlsSource(DecentralandEnvironment environment)
         {
-            this.Environment = environment;
-            environmentDomainLowerCase = Environment.ToString()!.ToLower();
+            environmentDomainLowerCase = environment.ToString()!.ToLower();
         }
 
         public string Url(DecentralandUrl decentralandUrl)
@@ -50,6 +47,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.DAO => $"https://decentraland.{ENV}/dao/",
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
+                DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }

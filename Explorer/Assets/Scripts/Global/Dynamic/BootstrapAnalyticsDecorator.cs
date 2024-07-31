@@ -76,9 +76,9 @@ namespace Global.Dynamic
             return result;
         }
 
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, DecentralandEnvironment decentralandEnvironment, CancellationToken ct)
+        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            UniTask result = core.InitializeFeatureFlagsAsync(identity, staticContainer, decentralandEnvironment, ct);
+            UniTask result = core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
