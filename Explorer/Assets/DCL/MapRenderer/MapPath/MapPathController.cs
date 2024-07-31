@@ -69,7 +69,7 @@ namespace DCL.MapRenderer
                 if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
                 {
                     mapPathEventBus.ArrivedToDestination();
-                    notificationsBusController.AddNotification(new DestinationReachedNotification(){ Type = NotificationType.ARRIVED_TO_DESTINATION});
+                    notificationsBusController.AddNotification(new DestinationReachedNotification(){ Type = NotificationType.INTERNAL_ARRIVED_TO_DESTINATION});
                 }
                 else
                 {

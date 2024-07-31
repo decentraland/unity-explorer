@@ -41,7 +41,7 @@ namespace DCL.Notification.NewNotification
             this.webRequestController = webRequestController;
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, QueueNewNotification);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.EVENTS_STARTED, QueueNewNotification);
-            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.ARRIVED_TO_DESTINATION, QueueNewNotification);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.INTERNAL_ARRIVED_TO_DESTINATION, QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
         }
@@ -85,7 +85,7 @@ namespace DCL.Notification.NewNotification
 
                 switch (notification.Type)
                 {
-                    case NotificationType.ARRIVED_TO_DESTINATION:
+                    case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
                         await ProcessArrivedNotification(notification);
                         break;
                     default:

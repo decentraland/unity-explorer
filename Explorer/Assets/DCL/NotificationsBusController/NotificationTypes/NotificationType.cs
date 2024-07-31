@@ -2,6 +2,7 @@ namespace DCL.Notification
 {
     public enum NotificationType
     {
+        //Notification types coming from BE
         BID_ACCEPTED,
         BID_RECEIVED,
         EVENTS_STARTED,
@@ -27,7 +28,7 @@ namespace DCL.Notification
         WORLDS_PERMISSION_GRANTED,
         WORLDS_PERMISSION_REVOKED,
         BADGE_GRANTED,
-        ARRIVED_TO_DESTINATION,
-        SYSTEM_NOTIFICATION,
+        //Internal notification types
+        INTERNAL_ARRIVED_TO_DESTINATION,
     }
 }
