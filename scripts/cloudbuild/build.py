@@ -79,6 +79,9 @@ def get_target(target):
 def clone_current_target():
     def generate_body(template_target, name, branch, options, cache):
         body = get_target(template_target)
+        if body is None:
+            print(f"Template target {template_target} not found. Cannot generate body.")
+            sys.exit(1)
 
         body['name'] = name
         body['settings']['scm']['branch'] = branch
@@ -106,7 +109,7 @@ def clone_current_target():
 
     existing_target = get_target(new_target_name)
     
-    if 'error' in existing_target:
+    if existing_target is None:
         # Create new target
         response = make_request('POST', f'{URL}/buildtargets', headers=HEADERS, json=body)
     else:
