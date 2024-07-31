@@ -47,7 +47,6 @@ def clone_current_target():
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
 
-        # Copy cache check
         if cache:
             body['settings']['buildTargetCopyCache'] = template_target
         else:
@@ -56,10 +55,8 @@ def clone_current_target():
 
         return body
 
-    # Set target name based on branch, without commit SHA
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
-    # Generate request body
     body = generate_body(
         os.getenv('TARGET'),
         new_target_name,
@@ -67,26 +64,41 @@ def clone_current_target():
         os.getenv('BUILD_OPTIONS').split(','),
         (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
 
-    existing_target = get_target(new_target_name)
-    
-    if 'error' in existing_target:
-        # Create new target
-        response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
-    else:
-        # Target exists, update it
-        response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+    max_retries = 5
+    retry_delay = 5  # seconds
 
-    if response.status_code == 200 or response.status_code == 201:
-        # Override target ENV
-        os.environ['TARGET'] = new_target_name
-    elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
-        print('Target update failed due to a possible race condition. Retrying...')
-        time.sleep(2)  # Add a small delay before retrying
-        clone_current_target()  # Retry the whole process
-    else:
-        print('Target failed to clone/update with status code:', response.status_code)
-        print('Response body:', response.text)
-        sys.exit(1)
+    for attempt in range(max_retries):
+        try:
+            existing_target = get_target(new_target_name)
+            
+            if 'error' in existing_target:
+                response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
+            else:
+                response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
+
+            if response.status_code == 200 or response.status_code == 201:
+                os.environ['TARGET'] = new_target_name
+                print(f"Target successfully cloned/updated on attempt {attempt + 1}")
+                return
+            elif response.status_code == 500 and 'Build target name already in use for this project!' in response.text:
+                print(f'Target update failed due to a possible race condition. Retrying... (Attempt {attempt + 1})')
+                time.sleep(retry_delay)
+            else:
+                print(f'Target failed to clone/update with status code: {response.status_code}')
+                print('Response body:', response.text)
+                raise Exception("Unexpected response")
+
+        except RequestException as e:
+            print(f"Request exception occurred on attempt {attempt + 1}: {e}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("Max retries reached. Exiting.")
+                raise
+
+    print("Failed to clone/update target after maximum retries.")
+    sys.exit(1)
 
 def get_param_env_variables():
     param_variables = {}
