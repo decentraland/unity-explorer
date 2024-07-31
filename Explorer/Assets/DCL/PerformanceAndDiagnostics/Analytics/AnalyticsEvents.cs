@@ -32,5 +32,10 @@
         {
             public const string JUMP_IN = "map_jump_in"; // 🟢
         }
+
+        public static class Badges
+        {
+            public const string HEIGHT_REACHED = "vertical_height_reached";
+        }
     }
 }

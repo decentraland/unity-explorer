@@ -2,6 +2,7 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Components;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
@@ -56,10 +57,13 @@ namespace DCL.Analytics.Systems
         private void UpdateWalkedDistance()
         {
             Vector3 currentPosition = World.Get<CharacterTransform>(playerEntity).Transform.position;
-
             float distanceSquared = (currentPosition - lastPosition).sqrMagnitude;
 
             if (IsTeleported()) return;
+
+            AnimationStates playerStates = World.Get<CharacterAnimationComponent>(playerEntity).States;
+            if (playerStates.IsFalling || playerStates.IsJumping || !playerStates.IsGrounded)
+                return;
 
             totalDistanceSquared += distanceSquared;
             lastPosition = currentPosition;
