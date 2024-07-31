@@ -74,10 +74,10 @@ namespace DCL.UserInAppInitializationFlow
         {
             using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
             if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
-            await LoadingScreen(showLoading).ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(reloadRealm, parentLoadReport, world, playerEntity, ct), ct);
+            await LoadingScreen(showLoading).ShowWhileExecuteTaskAsync(parentLoadReport => LoadGameAsync(reloadRealm, parentLoadReport, world, playerEntity, ct), ct);
         }
 
-        private async UniTask LoadCharacterAndWorldAsync(bool reloadRealm, AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
+        private async UniTask LoadGameAsync(bool reloadRealm, AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
         {
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
             await InitializeFeatureFlagsAsync(ct);
@@ -85,11 +85,11 @@ namespace DCL.UserInAppInitializationFlow
             await realmNavigator.SwitchMiscVisibilityAsync();
             await LoadPlayerAvatar(world, playerEntity, ownProfile, ct);
             await LoadLandscapeAsync(parentLoadReport, ct);
-            await TryRestartRealm(reloadRealm, ct);
+            await TryRestartRealmAsync(reloadRealm, ct);
             await TeleportAsync(parentLoadReport, ct);
         }
 
-        private async UniTask TryRestartRealm(bool reloadRealm, CancellationToken ct)
+        private async UniTask TryRestartRealmAsync(bool reloadRealm, CancellationToken ct)
         {
             if (reloadRealm)
                 await realmController.RestartRealmAsync(ct);
