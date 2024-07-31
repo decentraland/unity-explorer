@@ -48,6 +48,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.Notification => $"https://notifications.decentraland.{ENV}/notifications",
                 DecentralandUrl.NotificationRead => $"https://notifications.decentraland.{ENV}/notifications/read",
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
+                DecentralandUrl.Market => $"https://market.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }

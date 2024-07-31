@@ -456,7 +456,9 @@ namespace Global.Dynamic
                     characterPreviewEventBus,
                     selfProfile,
                     dclInput,
-                    webBrowser),
+                    webBrowser,
+                    bootstrapContainer.DecentralandUrlsSource
+                ),
             };
 
             globalPlugins.AddRange(staticContainer.SharedPlugins);

@@ -30,5 +30,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         NotificationRead,
 
         FeatureFlags,
+
+        Market,
     }
 }
