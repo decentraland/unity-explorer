@@ -189,7 +189,7 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, ct);
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, ct);
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);

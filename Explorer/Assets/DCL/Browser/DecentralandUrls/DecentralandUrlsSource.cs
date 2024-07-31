@@ -41,6 +41,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
                 DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
                 DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 DecentralandUrl.Host => $"https://decentraland.{ENV}",
+                DecentralandUrl.ApiChunks => $"https://api.decentraland.{ENV}/v1/map.png",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }

@@ -9,6 +9,8 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         PrivacyPolicy,
         TermsOfUse,
 
+        ApiChunks,
+
         ApiPlaces,
         POI,
         ContentModerationReport,
