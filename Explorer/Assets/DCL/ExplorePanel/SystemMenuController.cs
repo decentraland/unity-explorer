@@ -72,11 +72,11 @@ namespace DCL.ExplorePanel
         {
             base.OnViewInstantiated();
 
-            viewInstance.LogoutButton.onClick.AddListener(Logout);
-            viewInstance.ExitAppButton.onClick.AddListener(ExitApp);
-            viewInstance.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
-            viewInstance.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
-            viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);
+            viewInstance.LogoutButton.onClick!.AddListener(Logout);
+            viewInstance.ExitAppButton.onClick!.AddListener(ExitApp);
+            viewInstance.PrivacyPolicyButton.onClick!.AddListener(ShowPrivacyPolicy);
+            viewInstance.TermsOfServiceButton.onClick!.AddListener(ShowTermsOfService);
+            viewInstance.PreviewProfileButton.onClick!.AddListener(ShowPassport);
         }
 
         protected override void OnViewClose()
@@ -94,17 +94,22 @@ namespace DCL.ExplorePanel
 
         private void ShowPassport()
         {
-            var userId = web3IdentityCache.Identity!.Address;
+            string userId = web3IdentityCache.Identity?.Address ?? string.Empty;
+
             if (string.IsNullOrEmpty(userId))
                 return;
 
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
         }
 
-        private void ExitApp() =>
-
-            // TODO: abstraction (?)
+        private void ExitApp()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            return;
+#endif
             Application.Quit();
+        }
 
         private void Logout()
         {
@@ -117,6 +122,7 @@ namespace DCL.ExplorePanel
                 profileCache.Remove(address);
 
                 await userInAppInitializationFlow.ExecuteAsync(true, true,
+
                     // We have to reload the realm so the scenes are recreated when coming back to the world
                     // The realm fetches the scene entity definitions again and creates the components in ecs
                     // so the SceneFacade can be later attached into the entity
