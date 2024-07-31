@@ -52,18 +52,25 @@ def make_request(method, url, **kwargs):
     return response
 
 
+@retry_decorator(exceptions=(requests.RequestException,))
 def get_target(target):
-    response = make_request('GET', f'{URL}/buildtargets/{target}', headers=HEADERS)
+    try:
+        response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
+        
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 404:
+            print(f'Target "{target}" does not exist (yet?)')
+            return None
+        else:
+            # For other status codes, raise an HTTPError
+            response.raise_for_status()
+    except requests.RequestException as e:
+        print(f"Request failed: {e}")
+        raise  # Re-raise the exception to trigger a retry
 
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 404:
-        print(f'Target "{target}" does not exist (yet?)')
-        return response.json()
-    else:
-        print("Failed to get target data with status code:", response.status_code)
-        print("Response body:", response.text)
-        sys.exit(1)
+    # This line will never be reached due to the above, but we'll keep it for completeness
+    return None
 
 # Some of the code in here won't be used
 # Unity does not allow more than 1 item in queue by target
