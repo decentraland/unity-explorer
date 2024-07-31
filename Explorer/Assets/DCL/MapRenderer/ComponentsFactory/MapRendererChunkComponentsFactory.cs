@@ -10,6 +10,7 @@ using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
+using DCL.Notification.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
@@ -31,6 +32,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IPlacesAPIService placesAPIService;
         private readonly MapRendererSettings mapSettings;
         private readonly IMapPathEventBus mapPathEventBus;
+        private readonly INotificationsBusController notificationsBusController;
         private PlayerMarkerInstaller playerMarkerInstaller { get; }
         private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
         private PinMarkerInstaller pinMarkerInstaller { get; }
@@ -44,7 +46,8 @@ namespace DCL.MapRenderer.ComponentsFactory
             IWebRequestController webRequestController,
             MapRendererTextureContainer textureContainer,
             IPlacesAPIService placesAPIService,
-            IMapPathEventBus mapPathEventBus)
+            IMapPathEventBus mapPathEventBus,
+            INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
             mapSettings = settings;
@@ -52,6 +55,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             this.textureContainer = textureContainer;
             this.placesAPIService = placesAPIService;
             this.mapPathEventBus = mapPathEventBus;
+            this.notificationsBusController = notificationsBusController;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -89,7 +93,7 @@ namespace DCL.MapRenderer.ComponentsFactory
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
                 hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken),
-                mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken)
+                mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);

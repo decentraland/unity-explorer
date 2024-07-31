@@ -3,6 +3,8 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
+using DCL.Notification;
+using DCL.Notification.NotificationsBus;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -23,6 +25,7 @@ namespace DCL.MapRenderer
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly MapPathRenderer mapPathRenderer;
         private readonly IMapCullingController cullingController;
+        private readonly INotificationsBusController notificationsBusController;
         private readonly IObjectPool<PinMarkerObject> objectsPool;
 
         private IPinMarker internalPinMarker;
@@ -37,13 +40,15 @@ namespace DCL.MapRenderer
             IMapPathEventBus mapPathEventBus,
             MapPathRenderer mapPathRenderer,
             ICoordsUtils coordsUtils,
-            IMapCullingController cullingController) : base(instantiationParent, coordsUtils, cullingController)
+            IMapCullingController cullingController,
+            INotificationsBusController notificationsBusController) : base(instantiationParent, coordsUtils, cullingController)
         {
             this.mapPathEventBus = mapPathEventBus;
             this.mapPathRenderer = mapPathRenderer;
             this.objectsPool = objectsPool;
             this.builder = builder;
             this.cullingController = cullingController;
+            this.notificationsBusController = notificationsBusController;
         }
 
         public void Initialize()
@@ -64,6 +69,7 @@ namespace DCL.MapRenderer
                 if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
                 {
                     mapPathEventBus.ArrivedToDestination();
+                    notificationsBusController.AddNotification(new DestinationReachedNotification(){ Type = NotificationType.ARRIVED_TO_DESTINATION});
                 }
                 else
                 {

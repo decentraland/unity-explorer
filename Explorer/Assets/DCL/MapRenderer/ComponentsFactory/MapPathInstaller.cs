@@ -4,6 +4,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
+using DCL.Notification.NotificationsBus;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -25,6 +26,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             MapRendererSettings settings,
             IAssetsProvisioner assetProv,
             IMapPathEventBus mapPathEventBus,
+            INotificationsBusController notificationsBusController,
             CancellationToken cancellationToken)
         {
             mapSettings = settings;
@@ -46,7 +48,8 @@ namespace DCL.MapRenderer.ComponentsFactory
                 mapPathEventBus,
                 pathInstance.Value,
                 coordsUtils,
-                cullingController);
+                cullingController,
+                notificationsBusController);
 
             pathRendererController.Initialize();
 
