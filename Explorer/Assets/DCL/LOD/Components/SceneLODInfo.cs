@@ -1,4 +1,6 @@
-﻿using Arch.Core;
+﻿using System;
+using Arch.Core;
+using Codice.CM.Common;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -89,16 +91,24 @@ namespace DCL.LOD.Components
                 // Encapsulate the bounds of the remaining renderers
                 for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
 
-                metadata.CullRelativeHeight = Mathf.Clamp(CalculateScreenRelativeTransitionHeight(defaultFOV, defaultLodBias, distance, mergedBounds), 0.02f, 0.999f);
+
+                float objectSize = Mathf.Max(Mathf.Max(mergedBounds.extents.x, mergedBounds.extents.y), mergedBounds.extents.z) * defaultLodBias;
+                float halfFov = defaultFOV / 2.0f * Mathf.Deg2Rad;
+                float tanValue = Mathf.Tan(halfFov);
+                metadata.CullRelativeHeight = Mathf.Clamp(CalculateScreenRelativeTransitionHeight(tanValue, distance, objectSize), 0.02f, 0.999f);
+                metadata.LODChangeRelativeHeight = CalculateLODChangeRelativeHeight(tanValue, objectSize);
             }
         }
 
-        public float CalculateScreenRelativeTransitionHeight(float defaultFOV, float defaultLodBias, float distance, Bounds rendererBounds)
+        private float CalculateScreenRelativeTransitionHeight(float tanValue, float distance, float objectSize)
         {
-            float objectSize = Mathf.Max(Mathf.Max(rendererBounds.extents.x, rendererBounds.extents.y), rendererBounds.extents.z) * defaultLodBias;
-            float halfFov = (defaultFOV / 2.0f) * Mathf.Deg2Rad;
-            float ScreenRelativeTransitionHeight = objectSize / ((distance + objectSize) * Mathf.Tan(halfFov));
-            return ScreenRelativeTransitionHeight;
+            return objectSize / ((distance + objectSize) * tanValue);
+        }
+
+        private float CalculateLODChangeRelativeHeight(float tanValue, float objectSize)
+        {
+            float halfDistancePercentage = (1 - metadata.CullRelativeHeight) / 2 + metadata.CullRelativeHeight;
+            return objectSize / (halfDistancePercentage * tanValue) - objectSize;
         }
 
         public bool HasLOD(byte lodForAcquisition)

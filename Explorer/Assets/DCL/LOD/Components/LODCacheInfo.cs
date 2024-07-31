@@ -15,6 +15,7 @@ namespace DCL.LOD.Components
         public byte SuccessfullLODs;
         public byte FailedLODs;
         public float CullRelativeHeight;
+        public float LODChangeRelativeHeight;
         public LODAsset[] LODAssets;
 
         public void Dispose()
