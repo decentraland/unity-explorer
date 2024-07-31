@@ -23,5 +23,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         OpenSea,
 
         PeerAbout,
+
+        DAO,
     }
 }
