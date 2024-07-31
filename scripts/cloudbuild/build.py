@@ -7,6 +7,8 @@ import zipfile
 import requests
 import datetime
 import argparse
+from functools import wraps  # Add this import
+
 # Local
 import utils
 
@@ -189,9 +191,10 @@ def poll_build(id):
     wait_time = 2
     while retries < max_retries:
         try:
-            response = requests.get(f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
+            response = requests.get(f'{URL}/buildtargets/{os.getenv("TARGET")}/builds/{id}', headers=HEADERS)
+            response.raise_for_status()
             break
-        except Exception as e:
+        except requests.RequestException as e:
             print(f'Request failed: {e}')
             retries += 1
             if retries < max_retries:
@@ -201,31 +204,24 @@ def poll_build(id):
             else:
                 raise Exception(f'Failed after {max_retries} retries')
 
-    if response.status_code != 200:
-        print(f'Failed to poll build with ID {id} with status code: {response.status_code}')
-        print('Response body:', response.text)
-        sys.exit(1)
-
-    global build_healthy
     response_json = response.json()
 
     # { created , queued , sentToBuilder , started , restarted , success , failure , canceled , unknown }
     status = response_json['buildStatus']
-    match status:
-        case 'created' | 'queued' | 'sentToBuilder' | 'started' | 'restarted':
-            print(f'Build status: {status}')
-            return True
-        case 'success':
-            print(f'Build finished successfully! | Elapsed (Unity) time: {datetime.timedelta(seconds=(response_json['totalTimeInSeconds']))}')
-            return False
-        case 'failure' | 'canceled' | 'unknown':
-            print(f'Build error! Last known status: "{status}"')
-            build_healthy = False
-            return False
-        case _:
-            print(f'Build status is not known!: "{status}"')
-            sys.exit(1)
-            return False
+    if status in ['created', 'queued', 'sentToBuilder', 'started', 'restarted']:
+        print(f'Build status: {status}')
+        return True
+    elif status == 'success':
+        print(f'Build finished successfully! | Elapsed (Unity) time: {datetime.timedelta(seconds=(response_json["totalTimeInSeconds"]))}')
+        return False
+    elif status in ['failure', 'canceled', 'unknown']:
+        print(f'Build error! Last known status: "{status}"')
+        global build_healthy
+        build_healthy = False
+        return False
+    else:
+        print(f'Build status is not known!: "{status}"')
+        sys.exit(1)
 
 def download_artifact(id):
     response = make_request('GET', f'{URL}/buildtargets/{os.getenv('TARGET')}/builds/{id}', headers=HEADERS)
