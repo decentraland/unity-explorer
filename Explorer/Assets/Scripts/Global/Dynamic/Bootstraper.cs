@@ -46,7 +46,7 @@ namespace Global.Dynamic
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
-        private Dictionary<string, string> appParameters = new Dictionary<string, string>();
+        private Dictionary<string, string> appParameters = new ();
 
         public Bootstrap(DebugSettings debugSettings)
         {
@@ -179,18 +179,29 @@ namespace Global.Dynamic
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
-            GlobalWorld? globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot, CancellationToken ct)
+            GlobalWorld globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot, CancellationToken ct)
         {
-            if (showSplash)
-                await UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1, cancellationToken: ct);
-
+            //TODO unify splashScreenAnimation and splashRoot
+            await TryShowSplash(splashScreenAnimation, ct);
             splashScreenAnimation.transform.SetSiblingIndex(1);
-
-            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(showAuthentication, showLoading, false,
-                globalWorld!.EcsWorld, playerEntity, ct);
+            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(
+                showAuthentication,
+                showLoading,
+                false,
+                globalWorld.EcsWorld,
+                playerEntity,
+                ct
+            );
 
             splashRoot.SetActive(false);
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
+        }
+
+        private UniTask TryShowSplash(Animator splashScreenAnimation, CancellationToken ct)
+        {
+            return showSplash
+                ? UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1, cancellationToken: ct)
+                : UniTask.CompletedTask;
         }
 
         private Dictionary<string, string> ParseApplicationParameters()
@@ -199,6 +210,7 @@ namespace Global.Dynamic
 
             bool deepLinkFound = false;
             string lastKeyStored = string.Empty;
+
             for (int i = 1; i < cmdArgs.Length; i++)
             {
                 var arg = cmdArgs[i];
@@ -251,9 +263,7 @@ namespace Global.Dynamic
             var uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
             foreach (string uriQueryKey in uriQuery.AllKeys)
-            {
                 appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
-            }
         }
 
         private void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)
@@ -277,6 +287,7 @@ namespace Global.Dynamic
             Vector2Int targetPosition = Vector2Int.zero;
 
             var matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+
             if (matches.Count > 1)
             {
                 targetPosition.x = int.Parse(matches[0].Value);
@@ -292,6 +303,7 @@ namespace Global.Dynamic
 
             bool returnValue = false;
             var match = new Regex(@"true|false").Match(localSceneParameter);
+
             if (match.Success)
                 bool.TryParse(match.Value, out returnValue);
 
