@@ -7,19 +7,20 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
     public class DecentralandUrlsSource : IDecentralandUrlsSource
     {
         private readonly Dictionary<DecentralandUrl, string> cache = new ();
-        private readonly DecentralandEnvironment environment;
         private const string ENV = "{ENV}";
+
+        public DecentralandEnvironment Environment { get; }
 
         public DecentralandUrlsSource(DecentralandEnvironment environment)
         {
-            this.environment = environment;
+            this.Environment = environment;
         }
 
         public string Url(DecentralandUrl decentralandUrl)
         {
             if (cache.TryGetValue(decentralandUrl, out string? url) == false)
             {
-                url = RawUrl(decentralandUrl).Replace(ENV, environment.ToString()!.ToLower());
+                url = RawUrl(decentralandUrl).Replace(ENV, Environment.ToString()!.ToLower());
                 cache[decentralandUrl] = url;
             }
 
@@ -38,6 +39,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
                 DecentralandUrl.POI => $"https://dcl-lists.decentraland.{ENV}/pois",
                 DecentralandUrl.ContentModerationReport => $"https://places.decentraland.{ENV}/api/report",
                 DecentralandUrl.GateKeeperSceneAdapter => $"https://comms-gatekeeper.decentraland.{ENV}/get-scene-adapter",
+                DecentralandUrl.OpenSea => $"https://opensea.decentraland.{ENV}",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }
