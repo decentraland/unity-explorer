@@ -1,6 +1,6 @@
 using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.Wearables;
-using System;
+using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -46,6 +46,15 @@ namespace DCL.Profiles
             FaceSnapshotUrl = URLAddress.EMPTY;
             BodySnapshotUrl = URLAddress.EMPTY;
         }
+
+        public bool IsSameAvatar(Avatar other) =>
+            BodyShape.Equals(other.BodyShape)
+            && wearables.SetEquals(other.wearables)
+            && emotes.EqualsContentInOrder(other.emotes)
+            && forceRender.SetEquals(other.forceRender)
+            && HairColor.Equals(other.HairColor)
+            && EyesColor.Equals(other.EyesColor)
+            && SkinColor.Equals(other.SkinColor);
 
         public void Clear()
         {
