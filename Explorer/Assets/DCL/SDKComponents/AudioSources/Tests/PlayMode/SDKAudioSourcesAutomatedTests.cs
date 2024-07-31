@@ -3,6 +3,7 @@ using DCL.AssetsProvision;
 using DCL.AssetsProvision.Provisions;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -126,6 +127,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
             // First load the common global plugin
             (StaticContainer? staticContainer, bool isLoaded)
                 = await StaticContainer.CreateAsync(
+                    new DecentralandUrlsSource(DecentralandEnvironment.Org),
                     assetProvisioner,
                     reportHandlingSettings.Value,
                     new DebugViewsCatalog(),

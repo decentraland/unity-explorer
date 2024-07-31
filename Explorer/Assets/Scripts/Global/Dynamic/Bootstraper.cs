@@ -9,6 +9,7 @@ using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Minimap;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
@@ -46,7 +47,7 @@ namespace Global.Dynamic
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
-        private Dictionary<string, string> appParameters = new Dictionary<string, string>();
+        private Dictionary<string, string> appParameters = new ();
 
         public Bootstrap(DebugSettings debugSettings)
         {
@@ -83,7 +84,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.Web3VerifiedAuthenticator, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
@@ -142,9 +143,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, DecentralandEnvironment decentralandEnvironment, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, appParameters, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, decentralandEnvironment, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -199,6 +200,7 @@ namespace Global.Dynamic
 
             bool deepLinkFound = false;
             string lastKeyStored = string.Empty;
+
             for (int i = 1; i < cmdArgs.Length; i++)
             {
                 var arg = cmdArgs[i];
@@ -250,10 +252,7 @@ namespace Global.Dynamic
             var uri = new Uri(deepLinkString);
             var uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            foreach (string uriQueryKey in uriQuery.AllKeys)
-            {
-                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
-            }
+            foreach (string uriQueryKey in uriQuery.AllKeys) { appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey); }
         }
 
         private void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)
@@ -277,6 +276,7 @@ namespace Global.Dynamic
             Vector2Int targetPosition = Vector2Int.zero;
 
             var matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+
             if (matches.Count > 1)
             {
                 targetPosition.x = int.Parse(matches[0].Value);
@@ -292,6 +292,7 @@ namespace Global.Dynamic
 
             bool returnValue = false;
             var match = new Regex(@"true|false").Match(localSceneParameter);
+
             if (match.Success)
                 bool.TryParse(match.Value, out returnValue);
 

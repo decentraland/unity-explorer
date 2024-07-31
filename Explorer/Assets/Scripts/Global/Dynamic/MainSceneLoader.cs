@@ -24,6 +24,7 @@ namespace Global.Dynamic
         public bool showLoading;
         public bool enableLandscape;
         public bool enableLOD;
+        public bool enableEmulateNoLivekitConnection;
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
         public DebugSettings Get() =>
@@ -37,6 +38,7 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
+                enableEmulateNoLivekitConnection = false,
             };
     }
 
@@ -129,7 +131,7 @@ namespace Global.Dynamic
                     return;
                 }
 
-                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, staticContainer!, ct);
+                await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, staticContainer!, bootstrapContainer.DecentralandUrlsSource.Environment, ct);
 
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {

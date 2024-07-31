@@ -31,7 +31,7 @@ namespace DCL.Multiplayer.Connections.Demo
 
             var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone);
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource);
             var character = new ICharacterObject.Fake(Vector3.zero);
             var webRequests = new LogWebRequestController(new WebRequestController(identityCache));
             var places = new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests, urlsSource));

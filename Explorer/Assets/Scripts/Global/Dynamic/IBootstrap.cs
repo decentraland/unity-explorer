@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Web3.Identities;
@@ -27,7 +28,7 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer, PluginSettingsContainer globalPluginSettingsContainer,
             CancellationToken ct);
 
-        UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct);
+        UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, DecentralandEnvironment decentralandEnvironment, CancellationToken ct);
 
         (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
             UIDocument debugUiRoot);

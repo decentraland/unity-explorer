@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.Web3.Authenticators;
@@ -22,6 +23,8 @@ namespace Global.Dynamic
 
         private bool enableAnalytics;
 
+        public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
+        public IWebBrowser WebBrowser { get; private set; }
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
@@ -41,19 +44,28 @@ namespace Global.Dynamic
             IdentityCache?.Dispose();
         }
 
-        public static async UniTask<BootstrapContainer> CreateAsync(DebugSettings debugSettings, DynamicSceneLoaderSettings sceneLoaderSettings,
-            IPluginSettingsContainer settingsContainer, CancellationToken ct)
+        public static async UniTask<BootstrapContainer> CreateAsync(
+            DebugSettings debugSettings,
+            DynamicSceneLoaderSettings sceneLoaderSettings,
+            IPluginSettingsContainer settingsContainer,
+            CancellationToken ct
+        )
         {
+            var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment);
+            var browser = new UnityAppWebBrowser(decentralandUrlsSource);
+
             var bootstrapContainer = new BootstrapContainer
             {
                 AssetsProvisioner = new AddressablesProvisioner(),
+                DecentralandUrlsSource = decentralandUrlsSource,
+                WebBrowser = browser,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
-                (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings);
+                (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser);
 
                 container.diagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
@@ -111,7 +123,7 @@ namespace Global.Dynamic
         }
 
         private static (LogWeb3IdentityCache identityCache, DappWeb3Authenticator web3VerifiedAuthenticator, ProxyVerifiedWeb3Authenticator web3Authenticator)
-            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings)
+            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings, IWebBrowser webBrowser)
         {
             var identityCache = new LogWeb3IdentityCache(
                 new ProxyIdentityCache(
@@ -122,7 +134,8 @@ namespace Global.Dynamic
                 )
             );
 
-            var web3VerifiedAuthenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
+            var web3VerifiedAuthenticator = new DappWeb3Authenticator(
+                webBrowser,
                 GetAuthUrl(sceneLoaderSettings.AuthWebSocketUrl, sceneLoaderSettings.AuthWebSocketUrlDev),
                 GetAuthUrl(sceneLoaderSettings.AuthSignatureUrl, sceneLoaderSettings.AuthSignatureUrlDev),
                 identityCache, new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods));
