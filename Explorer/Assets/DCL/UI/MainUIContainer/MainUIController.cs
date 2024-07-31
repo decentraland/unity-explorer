@@ -3,6 +3,7 @@ using DCL.Chat;
 using DCL.Minimap;
 using DCL.SidebarBus;
 using DCL.UI.Sidebar;
+using DG.Tweening;
 using JetBrains.Annotations;
 using MVC;
 using System;
@@ -126,28 +127,8 @@ namespace DCL.UI.MainUI
             showingSidebar = true;
         }
 
-        private async UniTask AnimateWidthAsync(float width, CancellationToken ct)
-        {
-            float startWidth = viewInstance.sidebarLayoutElement.preferredWidth;
-            float endWidth = width;
-            var elapsedTime = 0f;
-
-            while (elapsedTime < SIDEBAR_ANIMATION_TIME)
-            {
-                if (ct.IsCancellationRequested)
-                {
-                    viewInstance.sidebarLayoutElement.preferredWidth = startWidth;
-                    return;
-                }
-
-                elapsedTime += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsedTime / SIDEBAR_ANIMATION_TIME);
-                viewInstance.sidebarLayoutElement.preferredWidth = Mathf.Lerp(startWidth, endWidth, t);
-                await UniTask.Yield();
-            }
-
-            viewInstance.sidebarLayoutElement.preferredWidth = endWidth;
-        }
+        private async UniTask AnimateWidthAsync(float width, CancellationToken ct) =>
+            await viewInstance.sidebarLayoutElement.DOPreferredSize(new Vector2(width, 1f), SIDEBAR_ANIMATION_TIME).ToUniTask(cancellationToken: ct);
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             UniTask.Never(ct);
