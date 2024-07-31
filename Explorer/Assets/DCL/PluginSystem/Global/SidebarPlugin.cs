@@ -84,8 +84,7 @@ namespace DCL.PluginSystem.Global
                     notificationsBusController,
                     new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus),
                     new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new ProfileWidgetController(() => mainUIView.SidebarView.ProfileMenuWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => mainUIView.SidebarView.SystemMenuView, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
+                    new SidebarProfileController(() => mainUIView.SidebarView.SidebarProfileView, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
                     sidebarBus
                 ));
             };

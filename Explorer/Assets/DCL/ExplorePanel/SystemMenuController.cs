@@ -9,6 +9,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
+using Unity.Plastic.Antlr3.Runtime.Misc;
 using UnityEngine;
 using Utility;
 
@@ -82,7 +83,6 @@ namespace DCL.ExplorePanel
         protected override void OnViewClose()
         {
             base.OnViewClose();
-
             logoutCts.SafeCancelAndDispose();
         }
 

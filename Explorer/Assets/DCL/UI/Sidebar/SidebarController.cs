@@ -14,11 +14,10 @@ namespace DCL.UI.Sidebar
     {
         private readonly IMVCManager mvcManager;
         private readonly ProfileWidgetController profileIconWidgetController;
-        private readonly ProfileWidgetController profileMenuWidgetController;
-        private readonly SystemMenuController systemMenuController;
         private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
+        private readonly SidebarProfileController sidebarProfileController;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -30,15 +29,13 @@ namespace DCL.UI.Sidebar
             INotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
             ProfileWidgetController profileIconWidgetController,
-            ProfileWidgetController profileMenuWidgetController,
-            SystemMenuController systemMenuController,
+            SidebarProfileController profileMenuWidgetController,
             ISidebarBus sidebarBus)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
-            this.profileMenuWidgetController = profileMenuWidgetController;
-            this.systemMenuController = systemMenuController;
+            this.sidebarProfileController = profileMenuWidgetController;
             this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
@@ -72,7 +69,7 @@ namespace DCL.UI.Sidebar
         private void CloseAllWidgets()
         {
             systemMenuCts = systemMenuCts.SafeRestart();
-            systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+            if (sidebarProfileController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { sidebarProfileController.HideViewAsync(systemMenuCts.Token).Forget(); }
             notificationsMenuController.ToggleNotificationsPanel(true);
             viewInstance.sidebarSettingsWidget.CloseWidget();
             sidebarBus.UnblockSidebar();
@@ -105,10 +102,8 @@ namespace DCL.UI.Sidebar
         protected override void OnViewShow()
         {
             profileWidgetCts = profileWidgetCts.SafeRestart();
+            //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
-
-            if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
-                systemMenuController.HideViewAsync(CancellationToken.None).Forget();
         }
 
         protected override void OnViewClose()
@@ -137,25 +132,19 @@ namespace DCL.UI.Sidebar
         {
             systemMenuCts = systemMenuCts.SafeRestart();
 
-            if (systemMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+            if (sidebarProfileController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
             {
-                systemMenuController.HideViewAsync(systemMenuCts.Token).Forget();
+                sidebarProfileController.HideViewAsync(systemMenuCts.Token).Forget();
                 sidebarBus.UnblockSidebar();
             }
             else
             {
-                profileMenuWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
-                ShowSystemMenuAsync(systemMenuCts.Token).Forget();
+                sidebarProfileController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
             }
         }
 
         private async UniTaskVoid ShowSystemMenuAsync(CancellationToken ct)
         {
-            await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0),
-                new ControllerNoData(), ct);
-
-            await systemMenuController.HideViewAsync(ct);
-            sidebarBus.UnblockSidebar();
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)
