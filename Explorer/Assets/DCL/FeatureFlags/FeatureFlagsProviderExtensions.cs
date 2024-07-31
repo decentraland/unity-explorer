@@ -1,6 +1,7 @@
 ﻿using System.Threading;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
 using System.Collections.Generic;
 
@@ -14,10 +15,11 @@ namespace DCL.FeatureFlags
         public static async UniTask<FeatureFlagsConfiguration> InitializeAsync(
             this IFeatureFlagsProvider featureFlagsProvider,
             Web3Address? userAddress,
+            DecentralandEnvironment environment,
             Dictionary<string, string> appParameters,
             CancellationToken ct)
         {
-            FeatureFlagOptions options = FeatureFlagOptions.ORG;
+            FeatureFlagOptions options = FeatureFlagOptions.NewFeatureFlagOptions(environment);
 
             // App parameters example:
             // #!/bin/bash
