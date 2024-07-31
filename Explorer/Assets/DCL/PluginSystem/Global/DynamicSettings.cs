@@ -6,6 +6,7 @@ using DCL.Nametags;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Audio;
 
 namespace DCL.PluginSystem.Global
 {
@@ -19,5 +20,6 @@ namespace DCL.PluginSystem.Global
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }
         [field: SerializeField] public AssetReferenceGameObject MainUIView { get; private set; }
+        [field: SerializeField] public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
     }
 }

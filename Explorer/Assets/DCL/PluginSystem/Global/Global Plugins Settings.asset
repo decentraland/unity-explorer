@@ -401,6 +401,11 @@ MonoBehaviour:
         <FallbackImagesTable>k__BackingField: SceneLoadingDefaultImages
         <TipDisplayDuration>k__BackingField: 10
         <MinimumScreenDisplayDuration>k__BackingField: 3
+        <GeneralAudioMixer>k__BackingField:
+          m_AssetGUID: e38b0fb061d7ffa47b54d89ecd483bd2
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 4132209997426458630
       type: {class: InputSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
