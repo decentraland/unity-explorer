@@ -4,15 +4,13 @@ using DCL.Browser;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
-using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -35,7 +33,6 @@ namespace DCL.AuthenticationScreenFlow
             Finalize,
         }
 
-        private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
         private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
 
@@ -46,7 +43,6 @@ namespace DCL.AuthenticationScreenFlow
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly Animator splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-        private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixer generalAudioMixer;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
@@ -68,7 +64,6 @@ namespace DCL.AuthenticationScreenFlow
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
-            FeatureFlagsCache featureFlagsCache,
             AudioMixer generalAudioMixer)
             : base(viewFactory)
         {
@@ -79,7 +74,6 @@ namespace DCL.AuthenticationScreenFlow
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
             this.characterPreviewEventBus = characterPreviewEventBus;
-            this.featureFlagsCache = featureFlagsCache;
             this.generalAudioMixer = generalAudioMixer;
         }
 
@@ -370,7 +364,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private void OpenDiscord() =>
-            webBrowser.OpenUrl(DISCORD_LINK);
+            webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
 
         private void CancelVerificationCountdown()
         {
