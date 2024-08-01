@@ -30,15 +30,23 @@ namespace DCL.ExplorePanel
         public Button TermsOfServiceButton { get; private set; } = null!;
 
         [field: SerializeField]
-        public CanvasGroup CanvasGroup { get; private set; } = null!;
+        public CanvasGroup? CanvasGroup { get; private set; }
 
         protected override UniTask PlayShowAnimationAsync(CancellationToken ct)
         {
-            CanvasGroup.alpha = 0;
-            return CanvasGroup.DOFade(1, PANEL_FADE_TIME).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+            if (CanvasGroup != null)
+            {
+                CanvasGroup.alpha = 0;
+                return CanvasGroup.DOFade(1, PANEL_FADE_TIME).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+            }
+            return UniTask.CompletedTask;
         }
 
-        protected override UniTask PlayHideAnimationAsync(CancellationToken ct) =>
-            CanvasGroup.DOFade(0, PANEL_FADE_TIME).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct);
+        protected override UniTask PlayHideAnimationAsync(CancellationToken ct)
+        {
+            if (CanvasGroup != null) { return CanvasGroup.DOFade(0, PANEL_FADE_TIME).SetEase(Ease.Linear).ToUniTask(cancellationToken: ct); }
+
+            return UniTask.CompletedTask;
+        }
     }
 }

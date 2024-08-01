@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -33,6 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly Animator splashScreenAnimator;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
 
         private CancellationTokenSource? cancellationTokenSource;
         private AuthenticationScreenController authenticationScreenController = null!;
@@ -48,6 +50,7 @@ namespace DCL.PluginSystem.Global
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
+            AudioMixerVolumesController audioMixerVolumesController,
             FeatureFlagsCache featureFlagsCache,
             CharacterPreviewEventBus characterPreviewEventBus)
         {
@@ -62,6 +65,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
             this.featureFlagsCache = featureFlagsCache;
+            this.audioMixerVolumesController = audioMixerVolumesController;
             this.characterPreviewEventBus = characterPreviewEventBus;
         }
 
@@ -70,7 +74,6 @@ namespace DCL.PluginSystem.Global
         public async UniTask InitializeAsync(Web3AuthPluginSettings settings, CancellationToken ct)
         {
             AuthenticationScreenView authScreenPrefab = (await assetsProvisioner.ProvideMainAssetAsync(settings.AuthScreenPrefab, ct: ct)).Value;
-            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
@@ -91,9 +94,6 @@ namespace DCL.PluginSystem.Global
         [field: Space]
         [field: SerializeField]
         public AuthScreenObjectRef AuthScreenPrefab { get; private set; }
-
-        [field: SerializeField]
-        public AssetReferenceT<AudioMixer> GeneralAudioMixer { get; private set; }
 
         [Serializable]
         public class AuthScreenObjectRef : ComponentReference<AuthenticationScreenView>

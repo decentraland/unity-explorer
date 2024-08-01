@@ -30,13 +30,14 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             IWeb3IdentityCache web3IdentityCache,
-            INotificationsBusController notificationsBusController)
+            INotificationsBusController notificationsBusController,
+            NotificationsRequestController notificationsRequestController)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
             this.webRequestController = webRequestController;
             this.notificationsBusController = notificationsBusController;
-            notificationsRequestController = new NotificationsRequestController(webRequestController, notificationsBusController, decentralandUrlsSource, web3IdentityCache);
+            this.notificationsRequestController = notificationsRequestController;
         }
 
         public async UniTask InitializeAsync(NotificationSettings settings, CancellationToken ct)
