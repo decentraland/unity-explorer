@@ -107,27 +107,26 @@ namespace DCL.LOD.Components
 
             //Object size required to be the largest of the 3 axis
             float maxExtents = Mathf.Max(Mathf.Max(mergedBounds.extents.x, mergedBounds.extents.y), mergedBounds.extents.z);
-            float maxExtentsWithLODBias = maxExtents * defaultLodBias;
             //We set the bounds of the LODGroup
             metadata.LodGroup.size = maxExtents;
 
             float halfFov = defaultFOV / 2.0f * Mathf.Deg2Rad;
             float tanValue = Mathf.Tan(halfFov);
-            metadata.CullRelativeHeightPercentage = Mathf.Clamp(CalculateScreenRelativeCullHeight(tanValue, cullDistance, maxExtentsWithLODBias), 0.02f, 0.999f);
-            metadata.LODChangeRelativeDistance = CalculateLODChangeRelativeHeight(tanValue, maxExtentsWithLODBias);
+            metadata.CullRelativeHeightPercentage = Mathf.Clamp(CalculateScreenRelativeCullHeight(tanValue, cullDistance, maxExtents, defaultLodBias), 0.02f, 0.999f);
+            metadata.LODChangeRelativeDistance = CalculateLODChangeRelativeHeight(tanValue, maxExtents, defaultLodBias);
         }
 
         //This will give us the percent of the screen in which the object will be culled when being at (unloadingDistance - 1) parcel
-        private float CalculateScreenRelativeCullHeight(float tanValue, float distance, float objectSize)
+        private float CalculateScreenRelativeCullHeight(float tanValue, float distance, float objectSize, float defaultLODBias)
         {
-            return objectSize / ((distance + objectSize) * tanValue);
+            return objectSize / ((distance + objectSize) * tanValue) * defaultLODBias;
         }
 
         //This will give us the distance at which the LOD change should occur if we consider the percentage at the middle between 
         //cull distance and 100% of the screen
-        private float CalculateLODChangeRelativeHeight(float tanValue, float objectSize)
+        private float CalculateLODChangeRelativeHeight(float tanValue, float objectSize, float defaultLodBias)
         {
-            float halfDistancePercentage = (1 - metadata.CullRelativeHeightPercentage) / 2 + metadata.CullRelativeHeightPercentage;
+            float halfDistancePercentage = ((1 - metadata.CullRelativeHeightPercentage) / 2 + metadata.CullRelativeHeightPercentage) / defaultLodBias;
             return objectSize / (halfDistancePercentage * tanValue) - objectSize;
         }
 
