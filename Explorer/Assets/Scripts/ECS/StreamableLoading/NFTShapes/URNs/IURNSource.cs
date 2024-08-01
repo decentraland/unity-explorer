@@ -1,11 +1,10 @@
 using CommunicationData.URLHelpers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 
 namespace ECS.StreamableLoading.NFTShapes.URNs
 {
     public interface IURNSource
     {
-        const string BASE_URL = "https://opensea.decentraland.org/api/v2/chain/{chain}/contract/{address}/nfts/{id}";
-
         URLAddress UrlOrEmpty(URN urn);
 
         class Fake : IURNSource
@@ -22,5 +21,8 @@ namespace ECS.StreamableLoading.NFTShapes.URNs
             public URLAddress UrlOrEmpty(URN urn) =>
                 url;
         }
+
+        public static string BaseURL(IDecentralandUrlsSource decentralandUrlsSource) =>
+            $"{decentralandUrlsSource.Url(DecentralandUrl.OpenSea)}/api/v2/chain/{{chain}}/contract/{{address}}/nfts/{{id}}";
     }
 }

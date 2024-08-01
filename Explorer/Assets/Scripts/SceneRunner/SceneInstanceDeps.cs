@@ -16,6 +16,7 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Time;
 using DCL.Utilities.Extensions;
@@ -115,14 +116,20 @@ namespace SceneRunner
             this.ecsWorldSharedDependencies = ecsWorldSharedDependencies;
         }
 
-        public SceneInstanceDependencies(ISDKComponentsRegistry sdkComponentsRegistry, IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            ISceneData sceneData, IPartitionComponent partitionProvider,
-            IECSWorldFactory ecsWorldFactory, ISceneEntityFactory entityFactory)
+        public SceneInstanceDependencies(
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISDKComponentsRegistry sdkComponentsRegistry,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            ISceneData sceneData,
+            IPartitionComponent partitionProvider,
+            IECSWorldFactory ecsWorldFactory,
+            ISceneEntityFactory entityFactory
+        )
         {
             this.sceneData = sceneData;
             ecsMutexSync = new MutexSync();
             CRDTProtocol = new CRDTProtocol();
-            worldTimeProvider = new WorldTimeProvider();
+            worldTimeProvider = new WorldTimeProvider(decentralandUrlsSource);
             SceneStateProvider = new SceneStateProvider();
             systemGroupThrottler = new SystemGroupsUpdateGate();
             systemsUpdateGate = new SystemsPriorityComponentsGate();
@@ -228,9 +235,7 @@ namespace SceneRunner
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation()),
                     new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator, syncDeps.ecsWorldSharedDependencies.SceneStateProvider),
                     syncDeps,
-                    sceneRuntime)
-            {
-            }
+                    sceneRuntime) { }
 
             public void Dispose()
             {
@@ -266,16 +271,16 @@ namespace SceneRunner
             (SceneInstanceDependencies syncDeps, SceneRuntimeImpl sceneRuntime, ISharedPoolsProvider sharedPoolsProvider, ICRDTSerializer crdtSerializer, IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions, IRealmData realmData, ICommunicationControllerHub messagePipesHub)
                 : base(new SDKObservableEventsEngineAPIImplementation(
-                    sharedPoolsProvider,
-                    syncDeps.PoolsProvider,
-                    syncDeps.CRDTProtocol,
-                    syncDeps.crdtDeserializer,
-                    crdtSerializer,
-                    syncDeps.CRDTWorldSynchronizer,
-                    syncDeps.OutgoingCRDTMessagesProvider,
-                    syncDeps.systemGroupThrottler,
-                    syncDeps.ExceptionsHandler,
-                    syncDeps.ecsMutexSync),
+                        sharedPoolsProvider,
+                        syncDeps.PoolsProvider,
+                        syncDeps.CRDTProtocol,
+                        syncDeps.crdtDeserializer,
+                        crdtSerializer,
+                        syncDeps.CRDTWorldSynchronizer,
+                        syncDeps.OutgoingCRDTMessagesProvider,
+                        syncDeps.systemGroupThrottler,
+                        syncDeps.ExceptionsHandler,
+                        syncDeps.ecsMutexSync),
                     syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub) { }
         }
     }
