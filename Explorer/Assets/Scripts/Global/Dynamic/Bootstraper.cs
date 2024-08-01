@@ -74,7 +74,12 @@ namespace Global.Dynamic
             if (appParameters.ContainsKey(APP_PARAMETER_POSITION))
                 ProcessPositionAppParameter(appParameters[APP_PARAMETER_POSITION], launchSettings);
 
-            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
+            string settingsRealm = launchSettings.GetStartingRealm();
+
+            // We also check against 'settingsRealm' in case LOCALHOST was configured from the Editor
+            localSceneDevelopment |= settingsRealm == IRealmNavigator.LOCALHOST;
+
+            startingRealm = URLDomain.FromString(settingsRealm);
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
@@ -165,7 +170,8 @@ namespace Global.Dynamic
                 staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.RealmController.RealmData,
-                dynamicWorldContainer.MessagePipesHub
+                dynamicWorldContainer.MessagePipesHub,
+                !localSceneDevelopment
             );
 
             (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);
@@ -203,7 +209,7 @@ namespace Global.Dynamic
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
-            for (var i = 1; i < cmdArgs.Length; i++)
+            for (int i = 0; i < cmdArgs.Length; i++)
             {
                 string arg = cmdArgs[i];
 
@@ -263,9 +269,11 @@ namespace Global.Dynamic
 
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            localSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue) && ParseLocalSceneParameter(localSceneParamValue);
+            localSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue)
+                                    && ParseLocalSceneParameter(localSceneParamValue)
+                                    && IsRealmAValidUrl(realmParamValue);
 
-            if (localSceneDevelopment && IsRealmALocalUrl(realmParamValue))
+            if (localSceneDevelopment)
                 launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);
             else if (IsRealmAWorld(realmParamValue))
                 launchSettings.SetWorldRealm(realmParamValue);
@@ -304,7 +312,7 @@ namespace Global.Dynamic
         private bool IsRealmAWorld(string realmParam) =>
             new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
 
-        private bool IsRealmALocalUrl(string realmParam) =>
+        private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
