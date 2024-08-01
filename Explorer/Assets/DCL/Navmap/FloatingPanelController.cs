@@ -32,9 +32,10 @@ namespace DCL.Navmap
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
         private Vector2Int destination = DEFAULT_DESTINATION_PARCEL;
+        private PlacesData.PlaceInfo currentParcelPlaceInfo;
 
         public event Action<Vector2Int> OnJumpIn;
-        public event Action OnSetAsDestination;
+        public event Action<PlacesData.PlaceInfo?> OnSetAsDestination;
 
         public FloatingPanelController(
             FloatingPanelView view,
@@ -145,13 +146,13 @@ namespace DCL.Navmap
                 view.removeDestinationButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
                 view.removeMapPinDestinationButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
                 view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
-                PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
+                currentParcelPlaceInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
 
-                if (placeInfo == null)
+                if (currentParcelPlaceInfo == null)
                     SetEmptyParcelInfo(parcel);
                 else
-                    SetFloatingPanelInfo(placeInfo);
+                    SetFloatingPanelInfo(currentParcelPlaceInfo);
             }
             catch (Exception) { SetEmptyParcelInfo(parcel); }
             finally
@@ -176,7 +177,7 @@ namespace DCL.Navmap
         {
             destination = parcel;
             SetupDestinationButtons(parcelIsDestination: true);
-            OnSetAsDestination?.Invoke();
+            OnSetAsDestination?.Invoke(currentParcelPlaceInfo);
         }
 
         private void SetupDestinationButtons(bool parcelIsDestination)

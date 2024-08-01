@@ -7,7 +7,6 @@ using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
-using DCL.Notification.NotificationsBus;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -19,25 +18,11 @@ namespace DCL.MapRenderer
 {
     public partial class MapRenderer : IMapRenderer
     {
-        private class MapLayerStatus
-        {
-            public readonly IMapLayerController MapLayerController;
-            public readonly List<IMapActivityOwner> ActivityOwners = new ();
-
-            public bool? SharedActive;
-            public CancellationTokenSource CTS;
-
-            public MapLayerStatus(IMapLayerController mapLayerController)
-            {
-                MapLayerController = mapLayerController;
-            }
-        }
-
         private static readonly MapLayer[] ALL_LAYERS = EnumUtils.Values<MapLayer>();
 
-        private CancellationToken cancellationToken;
-
         private readonly IMapRendererComponentsFactory componentsFactory;
+
+        private CancellationToken cancellationToken;
 
         private Dictionary<MapLayer, MapLayerStatus> layers;
         private List<IZoomScalingLayer> zoomScalingLayers;
@@ -55,7 +40,7 @@ namespace DCL.MapRenderer
 
         public async UniTask InitializeAsync(CancellationToken ct)
         {
-            this.cancellationToken = ct;
+            cancellationToken = ct;
             layers = new Dictionary<MapLayer, MapLayerStatus>();
             zoomScalingLayers = new List<IZoomScalingLayer>();
 
@@ -146,10 +131,7 @@ namespace DCL.MapRenderer
 
         public void CreateSystems(ref ArchSystemsWorldBuilder<World> builder)
         {
-            foreach (MapLayerStatus mapLayerStatus in layers.Values)
-            {
-                mapLayerStatus.MapLayerController.CreateSystems(ref builder);
-            }
+            foreach (MapLayerStatus mapLayerStatus in layers.Values) { mapLayerStatus.MapLayerController.CreateSystems(ref builder); }
         }
 
         private void EnableLayers(IMapActivityOwner owner, MapLayer mask)
@@ -189,7 +171,7 @@ namespace DCL.MapRenderer
                 }
                 else
                 {
-                    var currentOwner = mapLayerStatus.ActivityOwners[^1];
+                    IMapActivityOwner currentOwner = mapLayerStatus.ActivityOwners[^1];
                     IReadOnlyDictionary<MapLayer, IMapLayerParameter> parametersByLayer = currentOwner.LayersParameters;
 
                     if (parametersByLayer.ContainsKey(mapLayer))
@@ -227,6 +209,20 @@ namespace DCL.MapRenderer
 
             if (configurationInstance)
                 UnityObjectUtils.SafeDestroy(configurationInstance.gameObject);
+        }
+
+        private class MapLayerStatus
+        {
+            public readonly IMapLayerController MapLayerController;
+            public readonly List<IMapActivityOwner> ActivityOwners = new ();
+
+            public bool? SharedActive;
+            public CancellationTokenSource CTS;
+
+            public MapLayerStatus(IMapLayerController mapLayerController)
+            {
+                MapLayerController = mapLayerController;
+            }
         }
     }
 }

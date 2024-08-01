@@ -18,6 +18,7 @@ using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -27,6 +28,7 @@ namespace DCL.Navmap
 {
     public class NavmapController : IMapActivityOwner, ISection, IDisposable
     {
+        private const string EMPTY_PARCEL_NAME = "Empty parcel";
         private const string WORLDS_WARNING_MESSAGE = "This is the Genesis City map. If you jump into any of this places you will leave the world you are currently visiting.";
         private const MapLayer ACTIVE_MAP_LAYERS =
             MapLayer.SatelliteAtlas | MapLayer.ParcelsAtlas | MapLayer.PlayerMarker | MapLayer.ParcelHoverHighlight | MapLayer.ScenesOfInterest | MapLayer.Favorites | MapLayer.HotUsersMarkers | MapLayer.Pins;
@@ -53,6 +55,7 @@ namespace DCL.Navmap
         private Vector2 lastParcelHovered;
         private NavmapSections lastShownSection;
         private MapRenderImage.ParcelClickData lastParcelClicked;
+        private StringBuilder parcelTitleStringBuilder = new StringBuilder();
 
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
@@ -83,7 +86,7 @@ namespace DCL.Navmap
             FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator, mapPathEventBus);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
-            this.navmapView.DestinationSetView.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
+            this.navmapView.DestinationInfoElement.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
@@ -119,7 +122,7 @@ namespace DCL.Navmap
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             lastParcelHovered = Vector2.zero;
 
-            navmapView.DestinationSetView.gameObject.SetActive(false);
+            navmapView.DestinationInfoElement.gameObject.SetActive(false);
 
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
@@ -147,18 +150,20 @@ namespace DCL.Navmap
 
         private void RemoveDestination()
         {
-            navmapView.DestinationSetView.gameObject.SetActive(false);
+            navmapView.DestinationInfoElement.gameObject.SetActive(false);
         }
 
-        private void SetDestination()
+        private void SetDestination(PlacesData.PlaceInfo? placeInfo)
         {
             mapPathEventBus.SetDestination(lastParcelClicked.Parcel, lastParcelClicked.PinMarker);
-            navmapView.DestinationSetView.gameObject.SetActive(true);
-            if (lastParcelClicked.PinMarker != null) { navmapView.DestinationSetView.Setup(lastParcelClicked.PinMarker.Title, true, lastParcelClicked.PinMarker.CurrentSprite); }
+            navmapView.DestinationInfoElement.gameObject.SetActive(true);
+
+            if (lastParcelClicked.PinMarker != null) { navmapView.DestinationInfoElement.Setup(lastParcelClicked.PinMarker.Title, true, lastParcelClicked.PinMarker.CurrentSprite); }
             else
             {
-
-                navmapView.DestinationSetView.Setup("Generic Parcel " + lastParcelClicked.Parcel, false, null);
+                parcelTitleStringBuilder.Clear();
+                var parcelDescription = parcelTitleStringBuilder.Append(placeInfo != null ? placeInfo.title : EMPTY_PARCEL_NAME).Append(" ").Append(lastParcelClicked.Parcel.ToString()).ToString();
+                navmapView.DestinationInfoElement.Setup(parcelDescription, false, null);
             }
         }
 
