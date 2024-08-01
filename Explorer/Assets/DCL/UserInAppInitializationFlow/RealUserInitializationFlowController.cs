@@ -12,6 +12,7 @@ using MVC;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
@@ -25,6 +26,7 @@ namespace DCL.UserInAppInitializationFlow
     {
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly Vector2Int startParcel;
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -36,9 +38,11 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IRealmController realmController;
         private readonly Dictionary<string, string> appParameters;
 
-        public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
+        public RealUserInitializationFlowController(
+            RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
+            IDecentralandUrlsSource decentralandUrlsSource,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
@@ -51,6 +55,7 @@ namespace DCL.UserInAppInitializationFlow
         {
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
             this.loadingStatus = loadingStatus;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
@@ -134,7 +139,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
-            try { await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, appParameters, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
     }

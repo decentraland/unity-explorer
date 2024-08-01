@@ -9,6 +9,7 @@ using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Minimap;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
@@ -74,7 +75,12 @@ namespace Global.Dynamic
             if (appParameters.ContainsKey(APP_PARAMETER_POSITION))
                 ProcessPositionAppParameter(appParameters[APP_PARAMETER_POSITION], launchSettings);
 
-            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
+            string settingsRealm = launchSettings.GetStartingRealm();
+
+            // We also check against 'settingsRealm' in case LOCALHOST was configured from the Editor
+            localSceneDevelopment |= settingsRealm == IRealmNavigator.LOCALHOST;
+
+            startingRealm = URLDomain.FromString(settingsRealm);
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
@@ -86,7 +92,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.Web3VerifiedAuthenticator, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
@@ -145,9 +151,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, appParameters, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -159,13 +165,15 @@ namespace Global.Dynamic
 
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
+                bootstrapContainer.DecentralandUrlsSource,
                 dynamicWorldContainer.MvcManager,
                 bootstrapContainer.IdentityCache,
                 dynamicWorldContainer.ProfileRepository,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.RealmController.RealmData,
-                dynamicWorldContainer.MessagePipesHub
+                dynamicWorldContainer.MessagePipesHub,
+                !localSceneDevelopment
             );
 
             (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);
@@ -203,7 +211,7 @@ namespace Global.Dynamic
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
-            for (var i = 1; i < cmdArgs.Length; i++)
+            for (int i = 0; i < cmdArgs.Length; i++)
             {
                 string arg = cmdArgs[i];
 
@@ -263,9 +271,11 @@ namespace Global.Dynamic
 
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            localSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue) && ParseLocalSceneParameter(localSceneParamValue);
+            localSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue)
+                                    && ParseLocalSceneParameter(localSceneParamValue)
+                                    && IsRealmAValidUrl(realmParamValue);
 
-            if (localSceneDevelopment && IsRealmALocalUrl(realmParamValue))
+            if (localSceneDevelopment)
                 launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);
             else if (IsRealmAWorld(realmParamValue))
                 launchSettings.SetWorldRealm(realmParamValue);
@@ -304,7 +314,7 @@ namespace Global.Dynamic
         private bool IsRealmAWorld(string realmParam) =>
             new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
 
-        private bool IsRealmALocalUrl(string realmParam) =>
+        private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 

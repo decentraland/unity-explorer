@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Roads.Settings;
@@ -55,6 +56,7 @@ namespace DCL.LOD.Systems
 
         public static async UniTask<(LODContainer? container, bool success)> CreateAsync(
             IAssetsProvisioner assetsProvisioner,
+            IDecentralandUrlsSource decentralandUrlsSource,
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
             RealmData realmData,
@@ -92,7 +94,7 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                    staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
+                    staticContainer.RealmPartitionSettings, c.LodCache,lodGroupPool, decentralandUrlsSource,new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
 
                 return UniTask.CompletedTask;
             });

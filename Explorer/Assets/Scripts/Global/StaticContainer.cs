@@ -12,6 +12,7 @@ using DCL.Gizmos.Plugin;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Interaction.Utility;
 using DCL.Ipfs;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
@@ -36,6 +37,7 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
+using Global.Dynamic;
 using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
@@ -132,6 +134,7 @@ namespace Global
         }
 
         public static async UniTask<(StaticContainer? container, bool success)> CreateAsync(
+            IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             DebugViewsCatalog debugViewsCatalog,
@@ -190,6 +193,7 @@ namespace Global
             container.PhysicsTickProvider = new PhysicsTickProvider();
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
+
             container.FeatureFlagsProvider = new HttpFeatureFlagsProvider(container.WebRequestsContainer.WebRequestController,
                 container.FeatureFlagsCache);
 
@@ -202,7 +206,7 @@ namespace Global
             {
                 new TransformsPlugin(sharedDependencies, exposedPlayerTransform, exposedGlobalDataContainer.ExposedCameraData),
                 new BillboardPlugin(exposedGlobalDataContainer.ExposedCameraData),
-                new NFTShapePlugin(container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
+                new NFTShapePlugin(decentralandUrlsSource, container.assetsProvisioner, sharedDependencies.FrameTimeBudget, componentsContainer.ComponentPoolsRegistry, container.WebRequestsContainer.WebRequestController, container.CacheCleaner),
                 new TextShapePlugin(sharedDependencies.FrameTimeBudget, container.CacheCleaner, componentsContainer.ComponentPoolsRegistry),
                 new MaterialsPlugin(sharedDependencies, container.assetsProvisioner, videoTexturePool),
                 textureResolvePlugin,

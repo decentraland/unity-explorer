@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using System.Threading;
 
@@ -14,13 +15,25 @@ namespace Global.Dynamic
 
         public static async UniTask<MapRendererContainer> CreateAsync(
             StaticContainer staticContainer,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             MapRendererSettings settings,
             IPlacesAPIService placesAPIService,
             CancellationToken ct)
         {
             var textureContainer = new MapRendererTextureContainer();
-            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(assetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController, textureContainer, placesAPIService));
+
+            var mapRenderer = new MapRenderer(
+                new MapRendererChunkComponentsFactory(
+                    assetsProvisioner,
+                    settings,
+                    staticContainer.WebRequestsContainer.WebRequestController,
+                    decentralandUrlsSource,
+                    textureContainer,
+                    placesAPIService
+                )
+            );
+
             await mapRenderer.InitializeAsync(ct);
             return new MapRendererContainer { MapRenderer = mapRenderer, TextureContainer = textureContainer };
         }

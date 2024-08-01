@@ -6,6 +6,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.DebugUtilities;
 using DCL.LOD;
 using DCL.LOD.Systems;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
@@ -23,6 +24,7 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IDebugContainerBuilder debugBuilder;
@@ -32,7 +34,7 @@ namespace DCL.PluginSystem.Global
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
 
         private IExtendedObjectPool<Material> lodMaterialPool;
-        private ILODSettingsAsset lodSettingsAsset;
+        private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneAssetLock sceneAssetLock;
         private TextureArrayContainer lodTextureArrayContainer;
         private readonly CacheCleaner cacheCleaner;
@@ -49,9 +51,10 @@ namespace DCL.PluginSystem.Global
             IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
             ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
             ILODSettingsAsset lodSettingsAsset, SceneAssetLock sceneAssetLock, IRealmPartitionSettings partitionSettings,
-            ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, Transform lodCacheParent, bool lodEnabled, int lodLevels)
+            ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, IDecentralandUrlsSource decentralandUrlsSource,Transform lodCacheParent, bool lodEnabled, int lodLevels)
         {
             this.realmData = realmData;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
@@ -88,7 +91,7 @@ namespace DCL.PluginSystem.Global
             {
                 CalculateLODBiasSystem.InjectToWorld(ref builder);
                 InitializeSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodLevels, lodGroupPool, lodCacheParent);
-                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue);
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, decentralandUrlsSource);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodLevels);
             }

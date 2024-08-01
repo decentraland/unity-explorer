@@ -4,7 +4,7 @@ using Arch.SystemGroups;
 using AssetManagement;
 using DCL.Diagnostics;
 using DCL.LOD.Components;
-using DCL.Optimization.Pools;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
@@ -12,11 +12,12 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.AssetBundles;
+using SceneRunner.Scene;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData,
     ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
-
 
 namespace DCL.LOD.Systems
 {
@@ -27,13 +28,16 @@ namespace DCL.LOD.Systems
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly IScenesCache scenesCache;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private IReadOnlyList<SceneAssetBundleManifest>? manifestCache;
 
         public UpdateSceneLODInfoSystem(World world, ILODSettingsAsset lodSettingsAsset,
-            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue) : base(world)
+            IScenesCache scenesCache, ISceneReadinessReportQueue sceneReadinessReportQueue, IDecentralandUrlsSource decentralandUrlsSource) : base(world)
         {
             this.lodSettingsAsset = lodSettingsAsset;
             this.scenesCache = scenesCache;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         protected override void Update(float t)
@@ -61,7 +65,7 @@ namespace DCL.LOD.Systems
             sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
 
             string platformLODKey = $"{sceneDefinitionComponent.Definition.id.ToLower()}_{level.ToString()}{PlatformUtils.GetPlatform()}";
-            var manifest = LODUtils.LOD_MANIFESTS[level];
+            var manifest = LODUtils.LODManifests(decentralandUrlsSource)[level];
 
             var assetBundleIntention = GetAssetBundleIntention.FromHash(typeof(GameObject),
                 platformLODKey,
