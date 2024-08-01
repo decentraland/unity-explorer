@@ -20,7 +20,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
         //This value indicates how big the difference of sqr magnitudes between the last Updated
         //position and the new position must be for a position change event to be triggered
         //This reduces the number of re-calculations done on the path renderer and the minimap pins positions
-        private const int MIN_SQR_POSITION_DIFFERENCE_FOR_EVENT_TRIGGER = 500;
+        private const int MIN_SQR_POSITION_DIFFERENCE_FOR_EVENT_TRIGGER = 300;
 
         private readonly PlayerMarkerBuilder builder;
         private readonly IMapPathEventBus mapPathEventBus;

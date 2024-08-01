@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace DCL.MapRenderer
@@ -5,16 +6,16 @@ namespace DCL.MapRenderer
     [RequireComponent(typeof(LineRenderer))]
     public class MapPathRenderer : MonoBehaviour
     {
-        private const float DOT_SIZE = 20;
-        private const int NUM_CAP_VERTICES = 5;
-        private const float SPACE_BETWEEN_DOTS = 10;
+        private const float MIN_DOT_SIZE = 30;
+        private const int NUM_CAP_VERTICES = 0;
 
-        public Vector2 DestinationPoint => destinationPoint;
+        private float currentDotSize;
 
         private bool destinationSet;
-        private Vector2 destinationPoint;
         private LineRenderer lineRenderer;
         private Vector2 originPoint;
+
+        public Vector2 DestinationPoint { get; private set; }
 
         private void Awake()
         {
@@ -25,20 +26,38 @@ namespace DCL.MapRenderer
         private void SetupLineRenderer()
         {
             lineRenderer.useWorldSpace = true;
-            lineRenderer.startWidth = DOT_SIZE;
-            lineRenderer.endWidth = DOT_SIZE;
-            lineRenderer.numCapVertices = NUM_CAP_VERTICES;
-
             Material lineMaterial = lineRenderer.material;
-            float textureRepeat = 1f / (DOT_SIZE + SPACE_BETWEEN_DOTS);
-            lineMaterial.mainTextureScale = new Vector2(textureRepeat, 1);
             lineMaterial.mainTextureOffset = new Vector2(0f, 0f);
+            lineRenderer.numCapVertices = NUM_CAP_VERTICES;
+            currentDotSize = MIN_DOT_SIZE;
+            RecalculateLineSize(MIN_DOT_SIZE);
+        }
+
+        private void RecalculateLineSize(float scale)
+        {
+            currentDotSize = scale;
+            Material lineMaterial = lineRenderer.material;
+            lineRenderer.startWidth = scale;
+            lineRenderer.endWidth = scale;
+            float textureRepeat = 1f / (scale * 2);
+            lineMaterial.mainTextureScale = new Vector2(textureRepeat, 1);
+            UpdateLine();
+        }
+
+        public void SetZoom(float baseZoom, float newZoom)
+        {
+            RecalculateLineSize(Math.Max(newZoom / baseZoom * MIN_DOT_SIZE, MIN_DOT_SIZE));
+        }
+
+        public void ResetScale()
+        {
+            RecalculateLineSize(MIN_DOT_SIZE);
         }
 
         public void SetDestination(Vector2 destination)
         {
             destinationSet = true;
-            destinationPoint = destination;
+            DestinationPoint = destination;
             UpdateLine();
         }
 
@@ -51,10 +70,10 @@ namespace DCL.MapRenderer
 
         private void UpdateLine()
         {
-            Vector3 direction = destinationPoint - originPoint;
+            Vector3 direction = DestinationPoint - originPoint;
             float distance = direction.magnitude;
 
-            float totalUnitLength = DOT_SIZE + SPACE_BETWEEN_DOTS;
+            float totalUnitLength = currentDotSize + currentDotSize;
             int numberOfDots = Mathf.FloorToInt(distance / totalUnitLength) + 1;
 
             lineRenderer.positionCount = numberOfDots * 2;
@@ -62,13 +81,13 @@ namespace DCL.MapRenderer
             for (var i = 0; i < numberOfDots; i++)
             {
                 float startT = i * totalUnitLength / distance;
-                float endT = startT + (DOT_SIZE / distance);
+                float endT = startT + (currentDotSize / distance);
 
-                var dotStart = Vector3.Lerp(originPoint, destinationPoint, startT);
-                var dotEnd = Vector3.Lerp(originPoint, destinationPoint, endT);
+                var dotStart = Vector3.Lerp(originPoint, DestinationPoint, startT);
+                var dotEnd = Vector3.Lerp(originPoint, DestinationPoint, endT);
 
-                lineRenderer.SetPosition(i * 2, dotStart);
-                lineRenderer.SetPosition((i * 2) + 1, dotEnd);
+                lineRenderer.SetPosition(i * 2, dotEnd);
+                lineRenderer.SetPosition((i * 2) + 1, dotStart);
             }
         }
     }

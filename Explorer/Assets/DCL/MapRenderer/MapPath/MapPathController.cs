@@ -13,13 +13,10 @@ namespace DCL.MapRenderer
 {
     public class MapPathController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
+        internal delegate IPinMarker PinMarkerBuilder(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController);
         private const float ARRIVAL_TOLERANCE_SQRD = 50;
         private const float MINIMAP_RADIUS = 130;
         private const float MINIMAP_SQR_DISTANCE_TO_HIDE_PIN = 26000;
-
-        internal delegate IPinMarker PinMarkerBuilder(
-            IObjectPool<PinMarkerObject> objectsPool,
-            IMapCullingController cullingController);
 
         private readonly PinMarkerBuilder builder;
         private readonly IMapPathEventBus mapPathEventBus;
@@ -27,6 +24,8 @@ namespace DCL.MapRenderer
         private readonly IMapCullingController cullingController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly IObjectPool<PinMarkerObject> objectsPool;
+        private readonly DestinationReachedNotification destinationReachedNotification = new()
+            { Type = NotificationType.INTERNAL_ARRIVED_TO_DESTINATION };
 
         private IPinMarker internalPinMarker;
         private IPinMarker currentDestinationPin;
@@ -64,12 +63,13 @@ namespace DCL.MapRenderer
         private void OnUpdatedPlayerPosition(Vector2 newPosition)
         {
             cachedPlayerMarkerPosition = newPosition;
+
             if (destinationSet)
             {
                 if (CheckIfArrivedToDestination(cachedPlayerMarkerPosition, mapPathRenderer.DestinationPoint))
                 {
                     mapPathEventBus.ArrivedToDestination();
-                    notificationsBusController.AddNotification(new DestinationReachedNotification(){ Type = NotificationType.INTERNAL_ARRIVED_TO_DESTINATION});
+                    notificationsBusController.AddNotification(destinationReachedNotification);
                 }
                 else
                 {
@@ -81,13 +81,13 @@ namespace DCL.MapRenderer
 
         private static bool CheckIfArrivedToDestination(Vector2 newPosition, Vector2 destinationPosition)
         {
-            var difference = newPosition - destinationPosition;
+            Vector2 difference = newPosition - destinationPosition;
             return difference.sqrMagnitude <= ARRIVAL_TOLERANCE_SQRD;
         }
 
         private void UpdatePositionInMinimapEdge(Vector2 origin, Vector2 destination)
         {
-            var minimapRadius = MINIMAP_RADIUS;
+            float minimapRadius = MINIMAP_RADIUS;
             Vector2 direction = destination - origin;
             float distanceAB = direction.sqrMagnitude;
 
@@ -98,7 +98,7 @@ namespace DCL.MapRenderer
             }
 
             direction.Normalize();
-            Vector2 intersectionPoint = (direction * minimapRadius);
+            Vector2 intersectionPoint = direction * minimapRadius;
             mapPathEventBus.UpdatePinPositionInMinimapEdge(intersectionPoint);
         }
 
@@ -138,10 +138,7 @@ namespace DCL.MapRenderer
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
         {
-            if (internalPinMarker.IsDestination)
-            {
-                internalPinMarker.OnBecameVisible();
-            }
+            if (internalPinMarker.IsDestination) { internalPinMarker.OnBecameVisible(); }
         }
 
         public void OnMapObjectCulled(IPinMarker obj)
@@ -169,11 +166,13 @@ namespace DCL.MapRenderer
         public void ApplyCameraZoom(float baseZoom, float newZoom)
         {
             internalPinMarker.SetZoom(coordsUtils.ParcelSize, baseZoom, newZoom);
+            mapPathRenderer.SetZoom(baseZoom, newZoom);
         }
 
         public void ResetToBaseScale()
         {
             internalPinMarker.ResetScale(coordsUtils.ParcelSize);
+            mapPathRenderer.ResetScale();
         }
     }
 }
