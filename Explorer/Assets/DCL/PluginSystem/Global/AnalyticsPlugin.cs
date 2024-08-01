@@ -1,15 +1,13 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Analytics.Systems;
-using DCL.Diagnostics;
+using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.Profiling;
+using DCL.Utilities;
 using ECS;
 using ECS.SceneLifeCycle;
-using System;
 using System.Threading;
-using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace DCL.PluginSystem.Global
 {
@@ -18,28 +16,37 @@ namespace DCL.PluginSystem.Global
         private readonly IProfilingProvider profilingProvider;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
-
         private readonly IAnalyticsController analytics;
 
-        public AnalyticsPlugin(IAnalyticsController analytics, IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache)
+        private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
+
+        public AnalyticsPlugin(IAnalyticsController analytics, IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
             this.analytics = analytics;
 
             this.profilingProvider = profilingProvider;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
+
+            walkedDistanceAnalytics = new WalkedDistanceAnalytics(analytics, mainPlayerAvatarBaseProxy);
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
+            walkedDistanceAnalytics.Initialize();
+
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            WalkedDistanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, profilingProvider);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
         }
 
-        public void Dispose() { }
+
+
+        public void Dispose()
+        {
+            walkedDistanceAnalytics.Dispose();
+        }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct) =>
             UniTask.CompletedTask;

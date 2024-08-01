@@ -2,6 +2,7 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using JetBrains.Annotations;
+using System;
 using UnityEngine;
 using System.Threading;
 
@@ -38,6 +39,8 @@ namespace DCL.CharacterMotion.Animation
         private float lastJumpTime;
         private float lastLandTime;
         private bool playingContinuousAudio;
+
+        public event Action? PlayerStepped;
 
         [PublicAPI("Used by Animation Events")]
         public void AnimEvent_Jump()
@@ -87,6 +90,8 @@ namespace DCL.CharacterMotion.Animation
                 case MovementKind.Walk:
                     if (currentTime - lastFootstepTime > walkIntervalSeconds)
                     {
+                        PlayerStepped?.Invoke();
+
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepWalk);
                         lastFootstepTime = currentTime;
                         ParticlesController.ShowParticles(footTransform, AvatarAnimationEventType.Step);
@@ -96,6 +101,8 @@ namespace DCL.CharacterMotion.Animation
                 case MovementKind.Jog:
                     if (currentTime - lastFootstepTime > jobIntervalSeconds)
                     {
+                        PlayerStepped?.Invoke();
+
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepJog);
                         lastFootstepTime = currentTime;
                         ParticlesController.ShowParticles(footTransform, AvatarAnimationEventType.Step);
@@ -105,6 +112,8 @@ namespace DCL.CharacterMotion.Animation
                 case MovementKind.Run:
                     if (currentTime - lastFootstepTime > runIntervalSeconds)
                     {
+                        PlayerStepped?.Invoke();
+
                         PlayAudioForType(AvatarAudioSettings.AvatarAudioClipType.StepRun);
                         lastFootstepTime = currentTime;
                         ParticlesController.ShowParticles(footTransform, AvatarAnimationEventType.Step);
