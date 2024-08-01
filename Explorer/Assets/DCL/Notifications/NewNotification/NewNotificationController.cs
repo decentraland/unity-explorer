@@ -84,7 +84,7 @@ namespace DCL.Notification.NewNotification
                 switch (notification.Type)
                 {
                     case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
-                        await ProcessArrivedNotification(notification);
+                        await ProcessArrivedNotificationAsync(notification);
                         break;
                     default:
                         await ProcessDefaultNotificationAsync(notification);
@@ -95,13 +95,13 @@ namespace DCL.Notification.NewNotification
             isDisplaying = false;
         }
 
-        private async UniTask ProcessArrivedNotification(INotification notification)
+        private async UniTask ProcessArrivedNotificationAsync(INotification notification)
         {
             viewInstance.SystemNotificationView.HeaderText.text = notification.GetHeader();
             viewInstance.SystemNotificationView.NotificationType = notification.Type;
             viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
-            await AnimateNotificationCanvasGroup(viewInstance.SystemNotificationViewCanvasGroup);
+            await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
         }
 
         private async UniTask ProcessDefaultNotificationAsync(INotification notification)
@@ -115,7 +115,7 @@ namespace DCL.Notification.NewNotification
 
             viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
 
-            await AnimateNotificationCanvasGroup(viewInstance.NotificationViewCanvasGroup);
+            await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
         }
 
         private void ProcessCustomMetadata(INotification notification)
@@ -128,7 +128,7 @@ namespace DCL.Notification.NewNotification
             }
         }
 
-        private async UniTask AnimateNotificationCanvasGroup(CanvasGroup notificationCanvasGroup)
+        private async UniTask AnimateNotificationCanvasGroupAsync(CanvasGroup notificationCanvasGroup)
         {
             try
             {
