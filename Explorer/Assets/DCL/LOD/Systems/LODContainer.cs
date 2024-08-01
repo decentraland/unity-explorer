@@ -83,7 +83,7 @@ namespace DCL.LOD.Systems
                     staticContainer.ScenesCache, staticContainer.SceneReadinessReportQueue);
 
                 IComponentPool<LODGroup> lodGroupPool = staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddGameObjectPool(LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
-                LODGroupPoolUtils.DEAULT_LOD_AMOUT = LOD_LEVELS;
+                LODGroupPoolUtils.DEFAULT_LOD_AMOUT = LOD_LEVELS;
                 LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool, LODGROUP_POOL_PREWARM_VALUE);
 
                 c.LodCache = new LODCache(lodGroupPool);

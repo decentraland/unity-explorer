@@ -19,9 +19,7 @@ namespace DCL.LOD.Tests
         private const string fakeSceneIDCached = "fakeSceneIDCached";
         private const string fakeSceneIDMisssing = "fakeSceneIDMissing";
 
-        private LODCacheInfo cahedInfo;
-        private LODCacheInfo newInfo;
-
+        private LODCacheInfo cachedInfo;
 
         private SceneLODInfo sceneLODInfo;
         private PartitionComponent partitionComponent;
@@ -32,16 +30,13 @@ namespace DCL.LOD.Tests
         {
             IComponentPool<LODGroup> lodGroupPool = new GameObjectPool<LODGroup>(new GameObject().transform);
 
-            cahedInfo = new LODCacheInfo(lodGroupPool.Get(), 2);
+            cachedInfo = new LODCacheInfo(lodGroupPool.Get(), 2);
+            cachedInfo.SuccessfullLODs = 1;
             lodCache = Substitute.For<ILODCache>();
+            
             lodCache.TryGet(fakeSceneIDCached, out Arg.Any<LODCacheInfo>()).Returns(call =>
             {
-                call[1] = cahedInfo;
-                return true;
-            });
-            lodCache.TryGet(fakeSceneIDCached, out Arg.Any<LODCacheInfo>()).Returns(call =>
-            {
-                call[1] = newInfo;
+                call[1] = cachedInfo;
                 return true;
             });
 
@@ -78,7 +73,7 @@ namespace DCL.LOD.Tests
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
             Assert.AreEqual(sceneLODInfoRetrieved.id, fakeSceneIDCached);
-            Assert.AreEqual(sceneLODInfoRetrieved.metadata, cahedInfo);
+            Assert.AreEqual(sceneLODInfoRetrieved.metadata, cachedInfo);
         }
 
         [Test]
@@ -96,7 +91,8 @@ namespace DCL.LOD.Tests
             //Assert
             var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
             Assert.AreEqual(sceneLODInfoRetrieved.id, fakeSceneIDMisssing);
-            Assert.AreEqual(sceneLODInfoRetrieved.metadata, newInfo);
+            Assert.AreEqual(sceneLODInfoRetrieved.metadata.SuccessfullLODs, (byte)0);
+            Assert.AreEqual(sceneLODInfoRetrieved.metadata.FailedLODs, (byte)0);
         }
     }
 }

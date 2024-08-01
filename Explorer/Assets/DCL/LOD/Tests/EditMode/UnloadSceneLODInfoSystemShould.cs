@@ -24,6 +24,7 @@ namespace DCL.LOD.Tests
         private SceneLODInfo SceneLODInfo;
         private ILODCache lodCache;
         private IScenesCache scenesCache;
+        private IComponentPool<LODGroup> lodGroupPool;
 
         private SceneDefinitionComponent sceneDefinitionComponent;
 
@@ -35,19 +36,11 @@ namespace DCL.LOD.Tests
         public void Setup()
         {
             scenesCache = Substitute.For<IScenesCache>();
-            IComponentPool<LODGroup> lodGroupPool = new GameObjectPool<LODGroup>(new GameObject().transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
-            LODGroupPoolUtils.DEAULT_LOD_AMOUT = 2;
-            LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool, 5);
+            lodGroupPool = new GameObjectPool<LODGroup>(new GameObject().transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
+            LODGroupPoolUtils.DEFAULT_LOD_AMOUT = 2;
+            LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool, LOD_PREWARM_VALUE);
 
             lodCache = new LODCache(lodGroupPool);
-            var lodCacheInfoWithValue = new LODCacheInfo(lodGroupPool.Get(), 2);
-            lodCacheInfoWithValue.SuccessfullLODs = 1;
-
-            var lodCacheInfoWithoutValue = new LODCacheInfo(lodGroupPool.Get(), 2);
-
-            ((LODCache)lodCache).lodCache["WITHVALUE"] = lodCacheInfoWithValue;
-            ((LODCache)lodCache).lodCache["EMPTY"] = lodCacheInfoWithoutValue;
-
 
             var sceneEntityDefinition = new SceneEntityDefinition
             {
@@ -74,7 +67,7 @@ namespace DCL.LOD.Tests
             //Arrange
             var sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.id = CachedSceneID;
-            lodCache.TryGet("WITHVALUE", out sceneLODInfo.metadata);
+            sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
             sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
             var createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, new VisualSceneState());
@@ -98,7 +91,7 @@ namespace DCL.LOD.Tests
             //Arrange
             var sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.id = CachedSceneID;
-            lodCache.TryGet("EMPTY", out sceneLODInfo.metadata);
+            sceneLODInfo.metadata = new LODCacheInfo(lodGroupPool.Get(), 5);
 
             var createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, new VisualSceneState());
             //One empty update to allow creation
