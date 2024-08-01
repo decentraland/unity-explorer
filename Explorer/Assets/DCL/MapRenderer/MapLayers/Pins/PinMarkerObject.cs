@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using UnityEngine;
 using Utility;
 
@@ -23,7 +24,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetAsDestination(bool isDestination)
         {
-            destinationBackground?.SetActive(isDestination);
+            destinationBackground.SetActive(isDestination);
         }
     }
 }

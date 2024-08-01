@@ -220,8 +220,7 @@ MonoBehaviour:
   <mapPinIconOutline>k__BackingField: {fileID: 5662755829442619425}
   <renderers>k__BackingField:
   - {fileID: 7726644933239631887}
-  - {fileID: 3290362502632212307}
-  - {fileID: 5662755829442619425}
+  <destinationBackground>k__BackingField: {fileID: 2857942142988292972}
 --- !u!1 &6487472922783259709
 GameObject:
   m_ObjectHideFlags: 0
