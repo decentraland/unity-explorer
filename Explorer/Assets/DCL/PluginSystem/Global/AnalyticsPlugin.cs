@@ -13,7 +13,7 @@ namespace DCL.PluginSystem.Global
 {
     public class AnalyticsPlugin : IDCLGlobalPlugin
     {
-        private readonly IProfilingProvider profilingProvider;
+        private readonly IAnalyticsReportProfiler profiler;
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
         private readonly IAnalyticsController analytics;
@@ -24,7 +24,7 @@ namespace DCL.PluginSystem.Global
         {
             this.analytics = analytics;
 
-            this.profilingProvider = profilingProvider;
+            this.profiler = profiler;
             this.realmData = realmData;
             this.scenesCache = scenesCache;
 
@@ -36,7 +36,7 @@ namespace DCL.PluginSystem.Global
             walkedDistanceAnalytics.Initialize();
 
             PlayerParcelChangedAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, scenesCache, arguments.PlayerEntity);
-            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, profilingProvider);
+            PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
         }

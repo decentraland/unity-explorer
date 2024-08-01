@@ -37,13 +37,9 @@ MonoBehaviour:
     events:
     - eventName: move_to_parcel
       isEnabled: 1
-    - eventName: time_spent_in_world
-      isEnabled: 1
-  - groupName: Badges
-    events:
-    - eventName: vertical_height_reached
-      isEnabled: 1
     - eventName: walked_distance
+      isEnabled: 1
+    - eventName: time_spent_in_world
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
