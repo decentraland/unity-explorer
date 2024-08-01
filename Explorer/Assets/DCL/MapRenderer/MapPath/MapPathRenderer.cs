@@ -10,7 +10,6 @@ namespace DCL.MapRenderer
         private const int NUM_CAP_VERTICES = 0;
 
         private float currentDotSize;
-
         private bool destinationSet;
         private LineRenderer lineRenderer;
         private Vector2 originPoint;
@@ -41,17 +40,18 @@ namespace DCL.MapRenderer
             lineRenderer.endWidth = scale;
             float textureRepeat = 1f / (scale * 2);
             lineMaterial.mainTextureScale = new Vector2(textureRepeat, 1);
-            UpdateLine();
         }
 
         public void SetZoom(float baseZoom, float newZoom)
         {
             RecalculateLineSize(Math.Max(newZoom / baseZoom * MIN_DOT_SIZE, MIN_DOT_SIZE));
+            UpdateLine();
         }
 
         public void ResetScale()
         {
             RecalculateLineSize(MIN_DOT_SIZE);
+            UpdateLine();
         }
 
         public void SetDestination(Vector2 destination)

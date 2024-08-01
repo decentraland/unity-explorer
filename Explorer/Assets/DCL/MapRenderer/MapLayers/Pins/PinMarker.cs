@@ -74,14 +74,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
             if (isDestination)
             {
                 SetScaleAndResetPulse(currentNewScale);
-                SetAsDestination(true);
+                poolableBehavior.instance.SetAsDestination(true);
             }
             else
             {
                 cancellationTokenSource = cancellationTokenSource.SafeRestart();
 
                 if (currentBaseScale != 0) { poolableBehavior.instance?.SetScale(currentNewScale); }
-                SetAsDestination(false);
+                poolableBehavior.instance?.SetAsDestination(false);
             }
         }
 
@@ -107,7 +107,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
             poolableBehavior.OnBecameVisible();
             if (Icon != null) { poolableBehavior.instance?.SetTexture(Icon); }
             SetScaleAndResetPulse(currentNewScale);
-            SetAsDestination(IsDestination);
+            poolableBehavior.instance?.SetAsDestination(IsDestination);
         }
 
         public void OnBecameInvisible()
@@ -133,9 +133,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private void SetScaleAndResetPulse(float newScale)
         {
             cancellationTokenSource = cancellationTokenSource.SafeRestart();
-            SetAsDestination(IsDestination);
+
             if (poolableBehavior.instance != null)
             {
+                poolableBehavior.instance.SetAsDestination(IsDestination);
                 poolableBehavior.instance.SetScale(newScale);
                 if (IsDestination) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.gameObject.transform, ct: cancellationTokenSource.Token).Forget();
             }
