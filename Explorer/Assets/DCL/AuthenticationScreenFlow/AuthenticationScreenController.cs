@@ -7,6 +7,7 @@ using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -44,7 +45,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly Animator splashScreenAnimator;
+        private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixer generalAudioMixer;
@@ -66,7 +67,7 @@ namespace DCL.AuthenticationScreenFlow
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            Animator splashScreenAnimator,
+            ISplashScreen splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
             FeatureFlagsCache featureFlagsCache,
             AudioMixer generalAudioMixer)
@@ -170,7 +171,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.SetTrigger(AnimationHashes.OUT);
+            splashScreenAnimator.NotifyFinish();
         }
 
         private void ShowRestrictedUserPopup()

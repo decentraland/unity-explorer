@@ -19,7 +19,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
             foreach (IStartupOperation startupOperation in operations)
             {
                 var result = await startupOperation.ExecuteAsync(report, ct);
-                if (result.Success == false) return result;
+
+                if (result.Success == false)
+                {
+                    report.SetProgress(1);
+                    return result;
+                }
             }
 
             return StartupResult.SuccessResult();

@@ -2,6 +2,7 @@
 using DCL.DebugUtilities;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using SceneRunner.Debugging;
@@ -24,7 +25,7 @@ namespace Global.Dynamic
         public DynamicSettings DynamicSettings;
         public IWeb3VerifiedAuthenticator Web3Authenticator;
         public IWeb3IdentityCache Web3IdentityCache;
-        public Animator SplashAnimator;
+        public ISplashScreen SplashScreen;
         public WorldInfoTool WorldInfoTool;
     }
 

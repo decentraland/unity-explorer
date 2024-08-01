@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.AsyncLoadReporting;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
@@ -50,6 +49,7 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.loadingScreen = loadingScreen;
 
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation();
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(realmNavigator);
@@ -59,6 +59,7 @@ namespace DCL.UserInAppInitializationFlow
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
 
             startupOperation = new SeveralStartupOperation(
+                ensureLivekitConnectionStartupOperation,
                 initializeFeatureFlagsStartupOperation,
                 preloadProfileStartupOperation,
                 switchRealmMiscVisibilityStartupOperation,
@@ -82,13 +83,17 @@ namespace DCL.UserInAppInitializationFlow
             using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
             if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
 
-            await LoadingScreen(showLoading)
-               .ShowWhileExecuteTaskAsync(parentLoadReport => LoadAsync(parentLoadReport, showAuthentication, ct), ct);
-        }
+            StartupResult result = default;
 
-        private async UniTask LoadAsync(AsyncLoadProcessReport parentLoadReport, bool showAuthentication, CancellationToken ct)
-        {
-            var result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+            await LoadingScreen(showLoading)
+               .ShowWhileExecuteTaskAsync(
+                    async parentLoadReport =>
+                    {
+                        result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+                    },
+                    ct
+                );
+
             if (result.Success == false && showAuthentication) await ShowAuthenticationScreenAsync(ct);
         }
 

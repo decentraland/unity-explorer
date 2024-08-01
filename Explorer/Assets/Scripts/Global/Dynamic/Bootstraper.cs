@@ -13,6 +13,7 @@ using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
@@ -58,9 +59,10 @@ namespace Global.Dynamic
         }
 
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
-            GameObject splashRoot, CancellationToken _)
+            ISplashScreen splashScreen, CancellationToken _)
         {
-            splashRoot.SetActive(showSplash);
+            //splashRoot.SetActive(showSplash);
+            splashScreen.ShowSplashAsync(_).Forget();
             cursorRoot.EnsureNotNull();
 
             appParameters = ParseApplicationParameters();
@@ -88,7 +90,7 @@ namespace Global.Dynamic
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
             PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, Animator splashScreenAnimation, AudioClipConfig backgroundMusic, WorldInfoTool worldInfoTool,
+            UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic, WorldInfoTool worldInfoTool,
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
@@ -102,7 +104,7 @@ namespace Global.Dynamic
                 Web3IdentityCache = bootstrapContainer.IdentityCache,
                 RootUIDocument = uiToolkitRoot,
                 CursorUIDocument = cursorRoot,
-                SplashAnimator = splashScreenAnimation,
+                SplashScreen = splashScreen,
                 WorldInfoTool = worldInfoTool,
             };
 
@@ -179,11 +181,9 @@ namespace Global.Dynamic
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
-            GlobalWorld globalWorld, Entity playerEntity, Animator splashScreenAnimation, GameObject splashRoot, CancellationToken ct)
+            GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
-            //TODO unify splashScreenAnimation and splashRoot
-            await TryShowSplash(splashScreenAnimation, ct);
-            splashScreenAnimation.transform.SetSiblingIndex(1);
+            await splashScreen.ShowSplashAsync(ct);
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 showAuthentication,
                 showLoading,
@@ -193,15 +193,8 @@ namespace Global.Dynamic
                 ct
             );
 
-            splashRoot.SetActive(false);
+            splashScreen.HideSplash();
             OpenDefaultUI(dynamicWorldContainer.MvcManager, ct);
-        }
-
-        private UniTask TryShowSplash(Animator splashScreenAnimation, CancellationToken ct)
-        {
-            return showSplash
-                ? UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1, cancellationToken: ct)
-                : UniTask.CompletedTask;
         }
 
         private Dictionary<string, string> ParseApplicationParameters()
