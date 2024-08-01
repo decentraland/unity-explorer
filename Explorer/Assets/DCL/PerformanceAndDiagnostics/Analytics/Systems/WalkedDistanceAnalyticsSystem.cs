@@ -2,15 +2,16 @@
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.Character.Components;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
 using Segment.Serialization;
 using UnityEngine;
-using Entity = Arch.Core.Entity;
 
 namespace DCL.Analytics.Systems
 {
+    [LogCategory(ReportCategory.ANALYTICS)]
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class WalkedDistanceAnalyticsSystem : BaseUnityLoopSystem
     {

@@ -22,6 +22,11 @@
             public const string TIME_SPENT_IN_WORLD = "time_spent_in_world"; // 🟡 missing disposal + does it track for genesis?
         }
 
+        public static class Wearables
+        {
+            public const string USED_EMOTE = "used_emote";
+        }
+
         public static class Chat
         {
             public const string MESSAGE_SENT = "chat_message_sent"; // 🔴 - needs Channel and Reciever Id (for private message)

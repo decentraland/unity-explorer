@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
+using DCL.Diagnostics;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using ECS;
 using ECS.Abstract;
@@ -8,6 +9,7 @@ using Segment.Serialization;
 
 namespace DCL.Analytics.Systems
 {
+    [LogCategory(ReportCategory.ANALYTICS)]
     [UpdateInGroup(typeof(PostRenderingSystemGroup))]
     public partial class TimeSpentInWorldAnalyticsSystem : BaseUnityLoopSystem
     {
