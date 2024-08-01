@@ -1,6 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Character.CharacterMotion.Components;
+using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -25,6 +25,7 @@ namespace DCL.Navmap
 
         private readonly ImageController placeImageController;
         private readonly ImageController mapPinPlaceImageController;
+        private readonly IMapPathEventBus mapPathEventBus;
 
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
@@ -33,15 +34,19 @@ namespace DCL.Navmap
         private Vector2Int destination = DEFAULT_DESTINATION_PARCEL;
 
         public event Action<Vector2Int> OnJumpIn;
-        public event Action OnRemoveDestination;
         public event Action OnSetAsDestination;
 
-        public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
-            IWebRequestController webRequestController, IRealmNavigator realmNavigator)
+        public FloatingPanelController(
+            FloatingPanelView view,
+            IPlacesAPIService placesAPIService,
+            IWebRequestController webRequestController,
+            IRealmNavigator realmNavigator,
+            IMapPathEventBus mapPathEventBus)
         {
             this.view = view;
             this.placesAPIService = placesAPIService;
             this.realmNavigator = realmNavigator;
+            this.mapPathEventBus = mapPathEventBus;
 
             view.closeButton.onClick.AddListener(HidePanel);
             view.mapPinCloseButton.onClick.AddListener(HidePanel);
@@ -56,6 +61,7 @@ namespace DCL.Navmap
 
             ResetCategories();
             InitButtons();
+            this.mapPathEventBus.OnRemovedDestination += RemoveDestination;
         }
 
         public void Dispose()
@@ -136,8 +142,8 @@ namespace DCL.Navmap
                 view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel));
                 view.removeDestinationButton.onClick.RemoveAllListeners();
                 view.removeMapPinDestinationButton.onClick.RemoveAllListeners();
-                view.removeDestinationButton.onClick.AddListener(() => OnRemoveDestination?.Invoke()); //I DONT LIKE THIS
-                view.removeMapPinDestinationButton.onClick.AddListener(() => OnRemoveDestination?.Invoke()); //I DONT LIKE THIS
+                view.removeDestinationButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
+                view.removeMapPinDestinationButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
                 view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
                 PlacesData.PlaceInfo? placeInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
@@ -155,11 +161,15 @@ namespace DCL.Navmap
             }
         }
 
-        public void RemoveDestination()
+        private void OnRemoveDestinationButtonClicked()
+        {
+            mapPathEventBus.RemoveDestination();
+        }
+
+        private void RemoveDestination()
         {
             destination = DEFAULT_DESTINATION_PARCEL;
             SetupDestinationButtons(parcelIsDestination: false);
-            OnRemoveDestination?.Invoke();
         }
 
         private void SetAsDestination(Vector2Int parcel)

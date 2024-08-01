@@ -80,15 +80,15 @@ namespace DCL.Navmap
             zoomController = new NavmapZoomController(navmapView.zoomView, dclInput);
             filterController = new NavmapFilterController(this.navmapView.filterView, mapRenderer, webBrowser);
             searchBarController = new NavmapSearchBarController(navmapView.SearchBarView, navmapView.SearchBarResultPanel, navmapView.HistoryRecordPanelView, placesAPIService, navmapView.floatingPanelView, webRequestController, dclInput);
-            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator);
+            FloatingPanelController = new FloatingPanelController(navmapView.floatingPanelView, placesAPIService, webRequestController, realmNavigator, mapPathEventBus);
             FloatingPanelController.OnJumpIn += _ => searchBarController.ResetSearch();
             FloatingPanelController.OnSetAsDestination += SetDestination;
-            FloatingPanelController.OnRemoveDestination += RemoveDestination;
-            this.navmapView.DestinationSetView.QuitButton.onClick.AddListener(RemoveDestination);
+            this.navmapView.DestinationSetView.QuitButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
             searchBarController.OnResultClicked += OnResultClicked;
             searchBarController.OnSearchTextChanged += FloatingPanelController.HidePanel;
             satelliteController = new SatelliteController(navmapView.GetComponentInChildren<SatelliteView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer, webBrowser);
             streetViewController = new StreetViewController(navmapView.GetComponentInChildren<StreetViewView>(), this.navmapView.MapCameraDragBehaviorData, mapRenderer);
+            mapPathEventBus.OnRemovedDestination += RemoveDestination;
 
             mapSections = new Dictionary<NavmapSections, ISection>
             {
@@ -119,6 +119,8 @@ namespace DCL.Navmap
             this.navmapView.StreetViewRenderImage.EmbedMapCameraDragBehavior(this.navmapView.MapCameraDragBehaviorData);
             lastParcelHovered = Vector2.zero;
 
+            navmapView.DestinationSetView.gameObject.SetActive(false);
+
             navmapView.WorldsWarningNotificationView.SetText(WORLDS_WARNING_MESSAGE);
             navmapView.WorldsWarningNotificationView.Hide();
             mouse = InputSystem.GetDevice<Mouse>();
@@ -138,21 +140,25 @@ namespace DCL.Navmap
             searchBarController?.Dispose();
         }
 
-        private void RemoveDestination()
+        private void OnRemoveDestinationButtonClicked()
         {
             mapPathEventBus.RemoveDestination();
+        }
+
+        private void RemoveDestination()
+        {
             navmapView.DestinationSetView.gameObject.SetActive(false);
-            FloatingPanelController.RemoveDestination();
         }
 
         private void SetDestination()
         {
             mapPathEventBus.SetDestination(lastParcelClicked.Parcel, lastParcelClicked.PinMarker);
             navmapView.DestinationSetView.gameObject.SetActive(true);
-            if (lastParcelClicked.PinMarker != null) { navmapView.DestinationSetView.Setup(lastParcelClicked.PinMarker.Description, true, lastParcelClicked.PinMarker.CurrentSprite); }
+            if (lastParcelClicked.PinMarker != null) { navmapView.DestinationSetView.Setup(lastParcelClicked.PinMarker.Title, true, lastParcelClicked.PinMarker.CurrentSprite); }
             else
             {
-                navmapView.DestinationSetView.Setup("Generic Parcel" + lastParcelClicked.Parcel, false, null);
+
+                navmapView.DestinationSetView.Setup("Generic Parcel " + lastParcelClicked.Parcel, false, null);
             }
         }
 
