@@ -23,7 +23,6 @@ namespace DCL.LOD.Systems
         private readonly ILODCache lodCache;
         private readonly int lodLevels;
 
-
         public InitializeSceneLODInfoSystem(World world, ILODCache lodCache, int lodLevels) : base(world)
         {
             this.lodLevels = lodLevels;

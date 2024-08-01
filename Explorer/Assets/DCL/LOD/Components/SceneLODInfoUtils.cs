@@ -8,7 +8,7 @@
             return result;
         }
 
-        public static int CountLOD(byte loadedLODs)
+        public static int LODCount(byte loadedLODs)
         {
             int count = 0;
             byte temp = loadedLODs;

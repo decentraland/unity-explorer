@@ -69,8 +69,7 @@ namespace DCL.LOD.Systems
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                 manifest: manifest);
 
-            sceneLODInfo.CurrentLODLevelPromise = level;
-            sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
+            sceneLODInfo.SetCurrentLODPromise(Promise.Create(World, assetBundleIntention, partitionComponent), level);
         }
 
         private byte GetLODLevelForPartition(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
@@ -85,7 +84,9 @@ namespace DCL.LOD.Systems
                     sceneLODCandidate = (byte)(i + 1);
             }
 
-            if (sceneLODInfo.metadata.LODChangeRelativeHeight >= partitionComponent.Bucket * ParcelMathHelper.PARCEL_SIZE
+            //LOD0 load distance may be very far away from its show distance depending on the object size. 
+            //So, we force it if it has not been loaded and we passed the show distance threshold
+            if (sceneLODInfo.metadata.LODChangeRelativeDistance >= partitionComponent.Bucket * ParcelMathHelper.PARCEL_SIZE
                 && sceneLODCandidate == 1 && !sceneLODInfo.HasLOD(0))
                 sceneLODCandidate = 0;
 

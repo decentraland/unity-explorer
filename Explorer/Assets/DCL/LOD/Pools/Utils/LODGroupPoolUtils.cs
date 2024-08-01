@@ -6,24 +6,20 @@ namespace DCL.LOD.Systems
 {
     public static class LODGroupPoolUtils
     {
+        public static int DEAULT_LOD_AMOUT = 2;
+        
         public static void ReleaseLODGroup(LODGroup lodGroup)
         {
-            GenerateDefaultLODs(lodGroup);
+            ResetToDefaultLOD(lodGroup);
         }
 
-        public static void GenerateDefaultLODs(LODGroup lodGroup)
+        public static void ResetToDefaultLOD(LODGroup lodGroup)
         {
             lodGroup.name = "LODGroup";
-            var lod0 = new UnityEngine.LOD();
-            var lod1 = new UnityEngine.LOD();
-            lod0.renderers = Array.Empty<Renderer>();
-            lod1.renderers = Array.Empty<Renderer>();
-            lod0.screenRelativeTransitionHeight = 1;
-            lod1.screenRelativeTransitionHeight = 0.9999f;
-            lodGroup.SetLODs(new []
-            {
-                lod0, lod1
-            });
+            var lods = new UnityEngine.LOD[DEAULT_LOD_AMOUT];
+            for (int i = 0; i < DEAULT_LOD_AMOUT; i++)
+                lods[i] = new UnityEngine.LOD(1f - i * 0.0001f, Array.Empty<Renderer>());
+            lodGroup.SetLODs(lods);
         }
 
         public static void PrewarmLODGroupPool(GameObjectPool<LODGroup> lodGroupPool, int preWarmValue)
@@ -40,7 +36,7 @@ namespace DCL.LOD.Systems
             var lodGroup = new GameObject().AddComponent<LODGroup>();
             lodGroup.fadeMode = LODFadeMode.CrossFade;
             lodGroup.animateCrossFading = true;
-            GenerateDefaultLODs(lodGroup);
+            ResetToDefaultLOD(lodGroup);
             return lodGroup;
         }
     }

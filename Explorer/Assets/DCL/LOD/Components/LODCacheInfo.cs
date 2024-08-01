@@ -9,15 +9,26 @@ namespace DCL.LOD.Components
 {
     public struct LODCacheInfo : IDisposable
     {
-        public LODGroup LodGroup;
+        public readonly LODGroup LodGroup;
+        public readonly LODAsset[] LODAssets;
 
+        public float CullRelativeHeightPercentage;
+        public float LODChangeRelativeDistance;
+        
         //We can represent 8 LODS loaded state with a byte
         public byte SuccessfullLODs;
         public byte FailedLODs;
-        public float CullRelativeHeight;
-        public float LODChangeRelativeHeight;
-        public LODAsset[] LODAssets;
 
+        public LODCacheInfo(LODGroup lodGroup, int lodLevels)
+        {
+            LodGroup = lodGroup;
+            LODAssets = new LODAsset[lodLevels];
+            CullRelativeHeightPercentage = 0;
+            LODChangeRelativeDistance = 0;
+            SuccessfullLODs = 0;
+            FailedLODs = 0;
+        }
+        
         public void Dispose()
         {
             foreach (var lodAsset in LODAssets)
@@ -26,7 +37,8 @@ namespace DCL.LOD.Components
 
         public int LODLoadedCount()
         {
-            return SceneLODInfoUtils.CountLOD(SuccessfullLODs) + SceneLODInfoUtils.CountLOD(FailedLODs);
+            return SceneLODInfoUtils.LODCount(SuccessfullLODs) + SceneLODInfoUtils.LODCount(FailedLODs);
         }
+        
     }
 }

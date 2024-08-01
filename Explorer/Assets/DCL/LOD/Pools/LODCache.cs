@@ -12,7 +12,6 @@ namespace DCL.LOD
 {
     public class LODCache : ILODCache
     {
-        internal const int POOL_PREWARM_VALUE = 500;
         
         internal readonly Dictionary<string, LODCacheInfo> lodCache;
         private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
@@ -23,8 +22,13 @@ namespace DCL.LOD
         {
             lodContainer = new GameObject("POOL_CONTAINER_LODS").transform;
             lodsGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
-            LODGroupPoolUtils.PrewarmLODGroupPool(lodsGroupPool, POOL_PREWARM_VALUE);
             lodCache = new Dictionary<string, LODCacheInfo>();
+        }
+
+        public void PrewarmLODGroupPool(int lodLevels, int lodgroupPoolPrewarmValue)
+        {
+            LODGroupPoolUtils.DEAULT_LOD_AMOUT = lodLevels;
+            LODGroupPoolUtils.PrewarmLODGroupPool(lodsGroupPool, lodgroupPoolPrewarmValue);
         }
 
         public LODCacheInfo Get(in string key, int lodLevels)
@@ -37,12 +41,9 @@ namespace DCL.LOD
             }
 
             //If not in cache, create new
-            return new LODCacheInfo
-            {
-                LodGroup = InitializeLODGroup(key, lodContainer), LODAssets = new LODAsset[lodLevels]
-            };
+            return new LODCacheInfo(InitializeLODGroup(key, lodContainer), lodLevels);
         }
-
+        
         private LODGroup InitializeLODGroup(string sceneID, Transform lodCacheParent)
         {
             var newLODGroup = lodsGroupPool.Get();

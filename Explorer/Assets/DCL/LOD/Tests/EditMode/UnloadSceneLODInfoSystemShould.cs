@@ -27,12 +27,14 @@ namespace DCL.LOD.Tests
 
         private const string CachedSceneID = "CachedSceneID";
 
-
+        private const int LOD_PREWARM_VALUE = 5;
+        
         [SetUp]
         public void Setup()
         {
             scenesCache = Substitute.For<IScenesCache>();
             lodCache = new LODCache();
+            lodCache.PrewarmLODGroupPool(2, LOD_PREWARM_VALUE);
 
             var sceneEntityDefinition = new SceneEntityDefinition
             {
@@ -75,7 +77,7 @@ namespace DCL.LOD.Tests
             //Assert
             Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention, VisualSceneState>(createdEntity));
             Assert.AreEqual(((LODCache)lodCache).lodCache.Count, 1);
-            Assert.AreEqual(((LODCache)lodCache).lodsGroupPool.CountInactive, LODCache.POOL_PREWARM_VALUE - 1);
+            Assert.AreEqual(((LODCache)lodCache).lodsGroupPool.CountInactive, LOD_PREWARM_VALUE - 1);
         }
 
         [Test]
@@ -98,7 +100,7 @@ namespace DCL.LOD.Tests
             //Assert
             Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention, VisualSceneState>(createdEntity));
             Assert.AreEqual(((LODCache)lodCache).lodCache.Count, 0);
-            Assert.AreEqual(((LODCache)lodCache).lodsGroupPool.CountInactive, LODCache.POOL_PREWARM_VALUE);
+            Assert.AreEqual(((LODCache)lodCache).lodsGroupPool.CountInactive, LOD_PREWARM_VALUE);
         }
     }
 }

@@ -72,10 +72,7 @@ namespace DCL.LOD.Tests
             sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
-            sceneLODInfo.metadata = new LODCacheInfo
-            {
-                LodGroup = new GameObject().AddComponent<LODGroup>(), LODAssets = new LODAsset[2]
-            };
+            sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2 );
 
             var textureArrayContainerFactory = new TextureArrayContainerFactory(new Dictionary<TextureArrayKey, Texture>());
             system = new InstantiateSceneLODInfoSystem(world,  frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue,
@@ -90,8 +87,7 @@ namespace DCL.LOD.Tests
         {
             //Arrange
             var promiseGenerated = GenerateSuccessfullPromise();
-            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
-            sceneLODInfo.CurrentLODLevelPromise = 0;
+            sceneLODInfo.SetCurrentLODPromise(promiseGenerated.Item2, 0);
             var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
@@ -111,8 +107,7 @@ namespace DCL.LOD.Tests
         public void ResolveFailedPromise()
         {
             //Arrange
-            sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
-            sceneLODInfo.CurrentLODLevelPromise = 0;
+            sceneLODInfo.SetCurrentLODPromise(GenerateFailedPromise(), 0);
             var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
