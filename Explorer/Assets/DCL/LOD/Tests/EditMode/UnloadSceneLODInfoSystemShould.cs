@@ -2,6 +2,8 @@
 using Arch.System;
 using DCL.Ipfs;
 using DCL.LOD.Components;
+using DCL.LOD.Systems;
+using DCL.Optimization.Pools;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
@@ -33,8 +35,19 @@ namespace DCL.LOD.Tests
         public void Setup()
         {
             scenesCache = Substitute.For<IScenesCache>();
-            lodCache = new LODCache();
-            lodCache.PrewarmLODGroupPool(2, LOD_PREWARM_VALUE);
+            IComponentPool<LODGroup> lodGroupPool = new GameObjectPool<LODGroup>(new GameObject().transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
+            LODGroupPoolUtils.DEAULT_LOD_AMOUT = 2;
+            LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool, 5);
+
+            lodCache = new LODCache(lodGroupPool);
+            var lodCacheInfoWithValue = new LODCacheInfo(lodGroupPool.Get(), 2);
+            lodCacheInfoWithValue.SuccessfullLODs = 1;
+
+            var lodCacheInfoWithoutValue = new LODCacheInfo(lodGroupPool.Get(), 2);
+
+            ((LODCache)lodCache).lodCache["WITHVALUE"] = lodCacheInfoWithValue;
+            ((LODCache)lodCache).lodCache["EMPTY"] = lodCacheInfoWithoutValue;
+
 
             var sceneEntityDefinition = new SceneEntityDefinition
             {
@@ -59,10 +72,9 @@ namespace DCL.LOD.Tests
         public void LODCached()
         {
             //Arrange
-
             var sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.id = CachedSceneID;
-            sceneLODInfo.metadata = lodCache.Get("fake", 0);
+            lodCache.TryGet("WITHVALUE", out sceneLODInfo.metadata);
             sceneLODInfo.metadata.SuccessfullLODs = SceneLODInfoUtils.SetLODResult(sceneLODInfo.metadata.SuccessfullLODs, 0);
 
             var createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, new VisualSceneState());
@@ -77,7 +89,7 @@ namespace DCL.LOD.Tests
             //Assert
             Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention, VisualSceneState>(createdEntity));
             Assert.AreEqual(((LODCache)lodCache).lodCache.Count, 1);
-            Assert.AreEqual(((LODCache)lodCache).lodsGroupPool.CountInactive, LOD_PREWARM_VALUE - 1);
+            Assert.AreEqual(((LODCache)lodCache).lodsGroupsPool.CountInactive, LOD_PREWARM_VALUE - 1);
         }
 
         [Test]
@@ -86,12 +98,11 @@ namespace DCL.LOD.Tests
             //Arrange
             var sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.id = CachedSceneID;
-            sceneLODInfo.metadata = lodCache.Get("fake", 0);
+            lodCache.TryGet("EMPTY", out sceneLODInfo.metadata);
 
             var createdEntity = world.Create(sceneDefinitionComponent, sceneLODInfo, new VisualSceneState());
             //One empty update to allow creation
             system.Update(0);
-
 
             //Act
             world.Add<DeleteEntityIntention>(createdEntity);
@@ -100,7 +111,7 @@ namespace DCL.LOD.Tests
             //Assert
             Assert.IsFalse(world.Has<SceneLODInfo, DeleteEntityIntention, VisualSceneState>(createdEntity));
             Assert.AreEqual(((LODCache)lodCache).lodCache.Count, 0);
-            Assert.AreEqual(((LODCache)lodCache).lodsGroupPool.CountInactive, LOD_PREWARM_VALUE);
+            Assert.AreEqual(((LODCache)lodCache).lodsGroupsPool.CountInactive, LOD_PREWARM_VALUE);
         }
     }
 }

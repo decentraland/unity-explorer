@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using DCL.Optimization.Pools;
 using UnityEngine;
 
@@ -7,9 +8,12 @@ namespace DCL.LOD.Systems
     public static class LODGroupPoolUtils
     {
         public static int DEAULT_LOD_AMOUT = 2;
+        public static readonly ArrayPool<Renderer> RENDERER_ARRAY_POOL = ArrayPool<Renderer>.Create();
         
         public static void ReleaseLODGroup(LODGroup lodGroup)
         {
+            foreach (var loD in lodGroup.GetLODs())
+                RENDERER_ARRAY_POOL.Return(loD.renderers, true);
             ResetToDefaultLOD(lodGroup);
         }
 
@@ -22,7 +26,7 @@ namespace DCL.LOD.Systems
             lodGroup.SetLODs(lods);
         }
 
-        public static void PrewarmLODGroupPool(GameObjectPool<LODGroup> lodGroupPool, int preWarmValue)
+        public static void PrewarmLODGroupPool(IComponentPool<LODGroup> lodGroupPool, int preWarmValue)
         {
             var lodGroupArray = new LODGroup[preWarmValue];
             for (int i = 0; i < preWarmValue; i++)

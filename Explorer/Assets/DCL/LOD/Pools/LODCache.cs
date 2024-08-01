@@ -12,44 +12,21 @@ namespace DCL.LOD
 {
     public class LODCache : ILODCache
     {
-        
         internal readonly Dictionary<string, LODCacheInfo> lodCache;
         private readonly SimplePriorityQueue<string, long> unloadQueue = new ();
-        internal readonly GameObjectPool<LODGroup> lodsGroupPool;
-        private readonly Transform lodContainer;
+        internal readonly IComponentPool<LODGroup> lodsGroupsPool;
 
-        public LODCache()
+        public LODCache(IComponentPool<LODGroup> lodsGroupsPool)
         {
-            lodContainer = new GameObject("POOL_CONTAINER_LODS").transform;
-            lodsGroupPool = new GameObjectPool<LODGroup>(lodContainer.transform, LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
+            this.lodsGroupsPool = lodsGroupsPool;
             lodCache = new Dictionary<string, LODCacheInfo>();
         }
 
-        public void PrewarmLODGroupPool(int lodLevels, int lodgroupPoolPrewarmValue)
+        public bool TryGet(in string key, out LODCacheInfo cacheInfo)
         {
-            LODGroupPoolUtils.DEAULT_LOD_AMOUT = lodLevels;
-            LODGroupPoolUtils.PrewarmLODGroupPool(lodsGroupPool, lodgroupPoolPrewarmValue);
-        }
-
-        public LODCacheInfo Get(in string key, int lodLevels)
-        {
-            //If in cache, return
-            if (lodCache.Remove(key, out var asset))
-            {
-                asset.LodGroup.gameObject.SetActive(true);
-                return asset;
-            }
-
-            //If not in cache, create new
-            return new LODCacheInfo(InitializeLODGroup(key, lodContainer), lodLevels);
-        }
-        
-        private LODGroup InitializeLODGroup(string sceneID, Transform lodCacheParent)
-        {
-            var newLODGroup = lodsGroupPool.Get();
-            newLODGroup.name = $"LODGroup_{sceneID}";
-            newLODGroup.transform.SetParent(lodCacheParent);
-            return newLODGroup;
+            if (lodCache.TryGetValue(key, out cacheInfo))
+                return true;
+            return false;
         }
 
         public void Release(in string key, LODCacheInfo asset)
@@ -66,7 +43,7 @@ namespace DCL.LOD
             else
             {
                 //The info has not been initialized. It can be returned to pool
-                lodsGroupPool.Release(asset.LodGroup);
+                lodsGroupsPool.Release(asset.LodGroup);
             }
         }
 
@@ -79,7 +56,7 @@ namespace DCL.LOD
                    && unloadQueue.TryDequeue(out string key) && lodCache.Remove(key, out var asset))
             {
                 unloadedAmount++;
-                lodsGroupPool.Release(asset.LodGroup);
+                lodsGroupsPool.Release(asset.LodGroup);
                 asset.Dispose();
             }
         }

@@ -13,6 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using DCL.Optimization.Pools;
+using DCL.ResourcesUnloading;
 using UnityEngine;
 
 namespace DCL.LOD.Systems
@@ -42,6 +44,10 @@ namespace DCL.LOD.Systems
 
         public RoadPlugin RoadPlugin { get; private set; } = null!;
 
+        public ILODCache LodCache { get; private set; } = null!;
+
+        private const int LOD_LEVELS = 2;
+        private const int LODGROUP_POOL_PREWARM_VALUE = 500;
         private LODContainer(IAssetsProvisioner assetsProvisioner)
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -74,12 +80,19 @@ namespace DCL.LOD.Systems
                     staticContainer.SingletonSharedDependencies.MemoryBudget, c.roadAssetsPrefabList, roadDataDictionary,
                     staticContainer.ScenesCache, staticContainer.SceneReadinessReportQueue);
 
+                IComponentPool<LODGroup> lodGroupPool = staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddGameObjectPool(LODGroupPoolUtils.CreateLODGroup, onRelease: LODGroupPoolUtils.ReleaseLODGroup);
+                LODGroupPoolUtils.DEAULT_LOD_AMOUT = LOD_LEVELS;
+                LODGroupPoolUtils.PrewarmLODGroupPool(lodGroupPool, LODGROUP_POOL_PREWARM_VALUE);
+
+                c.LodCache = new LODCache(lodGroupPool);
+                staticContainer.CacheCleaner.Register(c.LodCache);
+                
                 c.LODPlugin = new LODPlugin(realmData,
                     staticContainer.SingletonSharedDependencies.MemoryBudget,
                     staticContainer.SingletonSharedDependencies.FrameTimeBudget,
                     staticContainer.ScenesCache, debugBuilder, staticContainer.SceneReadinessReportQueue,
                     visualSceneStateResolver, textureArrayContainerFactory, c.lodSettingsAsset.Value, staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                    lodEnabled, staticContainer.LODCache, staticContainer.RealmPartitionSettings);
+                    staticContainer.RealmPartitionSettings, c.LodCache, lodGroupPool, new GameObject("LOD_CACHE").transform, lodEnabled, LOD_LEVELS);
 
                 return UniTask.CompletedTask;
             });

@@ -29,7 +29,7 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -43,7 +43,6 @@ namespace Global.Dynamic
         private readonly PartitionDataContainer partitionDataContainer;
         private readonly IScenesCache scenesCache;
         private readonly SceneAssetLock sceneAssetLock;
-        private readonly ILODCache lodCache;
 
         private GlobalWorld? globalWorld;
         private Entity realmEntity;
@@ -71,8 +70,7 @@ namespace Global.Dynamic
             RealmData realmData,
             IScenesCache scenesCache,
             PartitionDataContainer partitionDataContainer,
-            SceneAssetLock sceneAssetLock,
-            ILODCache lodCache)
+            SceneAssetLock sceneAssetLock)
         {
             this.web3IdentityCache = web3IdentityCache;
             this.webRequestController = webRequestController;
@@ -84,7 +82,6 @@ namespace Global.Dynamic
             this.scenesCache = scenesCache;
             this.partitionDataContainer = partitionDataContainer;
             this.sceneAssetLock = sceneAssetLock;
-            this.lodCache = lodCache;
         }
 
         public async UniTask SetRealmAsync(URLDomain realm, CancellationToken ct)
@@ -151,15 +148,7 @@ namespace Global.Dynamic
         {
             if (globalWorld != null)
             {
-                World world = globalWorld.EcsWorld;
                 FindLoadedScenes();
-                world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
-                    (ref SceneLODInfo lod) =>
-                    {
-                        lodCache.Release(lod.id, lod.metadata);
-                        lod.Dispose(world);
-                    });
-
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
@@ -182,13 +171,6 @@ namespace Global.Dynamic
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
                 globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
-
-            world.Query(new QueryDescription().WithAll<SceneLODInfo>(),
-                (ref SceneLODInfo lod) =>
-                {
-                    lodCache.Release(lod.id, lod.metadata);
-                    lod.Dispose(world);
-                });
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);

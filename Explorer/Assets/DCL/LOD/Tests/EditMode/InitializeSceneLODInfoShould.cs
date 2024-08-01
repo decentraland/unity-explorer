@@ -1,6 +1,7 @@
 ﻿using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.TestSuite;
@@ -29,10 +30,20 @@ namespace DCL.LOD.Tests
         [SetUp]
         public void SetUp()
         {
-            cahedInfo = new LODCacheInfo();
+            IComponentPool<LODGroup> lodGroupPool = new GameObjectPool<LODGroup>(new GameObject().transform);
+
+            cahedInfo = new LODCacheInfo(lodGroupPool.Get(), 2);
             lodCache = Substitute.For<ILODCache>();
-            lodCache.Get(fakeSceneIDCached, LOD_LEVELS).Returns(cahedInfo);
-            lodCache.Get(fakeSceneIDMisssing, LOD_LEVELS).Returns(newInfo);
+            lodCache.TryGet(fakeSceneIDCached, out Arg.Any<LODCacheInfo>()).Returns(call =>
+            {
+                call[1] = cahedInfo;
+                return true;
+            });
+            lodCache.TryGet(fakeSceneIDCached, out Arg.Any<LODCacheInfo>()).Returns(call =>
+            {
+                call[1] = newInfo;
+                return true;
+            });
 
             var sceneEntityDefinition = new SceneEntityDefinition
             {
@@ -49,7 +60,7 @@ namespace DCL.LOD.Tests
             };
             sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
             partitionComponent = new PartitionComponent();
-            system = new InitializeSceneLODInfoSystem(world, lodCache, LOD_LEVELS);
+            system = new InitializeSceneLODInfoSystem(world, lodCache, LOD_LEVELS, lodGroupPool, new GameObject().transform);
         }
 
         [Test]

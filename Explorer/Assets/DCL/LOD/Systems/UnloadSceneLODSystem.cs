@@ -36,6 +36,7 @@ namespace ECS.SceneLifeCycle.Systems
         public void FinalizeComponents(in Query query)
         {
             AbortSucceededLODPromisesQuery(World);
+            DestroySceneLODQuery(World);
         }
 
         [Query]
@@ -53,6 +54,12 @@ namespace ECS.SceneLifeCycle.Systems
                 result.Asset!.Dispose();
             else
                 sceneLODInfo.CurrentLODPromise.ForgetLoading(World);
+        }
+
+        [Query]
+        private void DestroySceneLOD(ref SceneDefinitionComponent sceneDefinitionComponent, ref SceneLODInfo sceneLODInfo)
+        {
+            sceneLODInfo.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
         }
     }
 }

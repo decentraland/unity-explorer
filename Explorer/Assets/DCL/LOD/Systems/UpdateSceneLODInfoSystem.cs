@@ -69,7 +69,8 @@ namespace DCL.LOD.Systems
                 customEmbeddedSubDirectory: LODUtils.LOD_EMBEDDED_SUBDIRECTORIES,
                 manifest: manifest);
 
-            sceneLODInfo.SetCurrentLODPromise(Promise.Create(World, assetBundleIntention, partitionComponent), level);
+            sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
+            sceneLODInfo.SetCurrentLODPromise(sceneLODInfo.CurrentLODPromise, level);
         }
 
         private byte GetLODLevelForPartition(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)

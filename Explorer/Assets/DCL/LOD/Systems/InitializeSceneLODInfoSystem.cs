@@ -22,10 +22,15 @@ namespace DCL.LOD.Systems
     {
         private readonly ILODCache lodCache;
         private readonly int lodLevels;
+        private readonly IComponentPool<LODGroup> lodGroupsPool;
+        private readonly Transform lodCacheParent;
 
-        public InitializeSceneLODInfoSystem(World world, ILODCache lodCache, int lodLevels) : base(world)
+
+        public InitializeSceneLODInfoSystem(World world, ILODCache lodCache, int lodLevels, IComponentPool<LODGroup> lodGroupsPool, Transform lodCacheParent) : base(world)
         {
             this.lodLevels = lodLevels;
+            this.lodGroupsPool = lodGroupsPool;
+            this.lodCacheParent = lodCacheParent;
             this.lodCache = lodCache;
         }
 
@@ -42,9 +47,21 @@ namespace DCL.LOD.Systems
             if (!string.IsNullOrEmpty(sceneLODInfo.id))
                 return;
 
-            string sceneID = sceneDefinitionComponent.Definition.id;
-            sceneLODInfo.metadata = lodCache.Get(sceneID, lodLevels);
+            string sceneID = sceneDefinitionComponent.Definition.id!;
+
+            if (lodCache.TryGet(sceneID, out var cacheInfo))
+                sceneLODInfo.metadata = cacheInfo;
+            else
+                sceneLODInfo.metadata = new LODCacheInfo(InitializeLODGroup(sceneID), lodLevels);
             sceneLODInfo.id = sceneID;
+        }
+
+        private LODGroup InitializeLODGroup(string sceneID)
+        {
+            var newLODGroup = lodGroupsPool.Get();
+            newLODGroup.name = $"LODGroup_{sceneID}";
+            newLODGroup.transform.SetParent(lodCacheParent);
+            return newLODGroup;
         }
 
 

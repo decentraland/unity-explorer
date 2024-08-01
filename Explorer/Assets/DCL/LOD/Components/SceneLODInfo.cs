@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System.Buffers;
+using System.Collections.Generic;
 using Arch.Core;
+using DCL.LOD.Systems;
 using DCL.Optimization.Pools;
 using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common;
@@ -16,7 +18,7 @@ namespace DCL.LOD.Components
         public string id;
         public LODCacheInfo metadata;
 
-        public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise { get; private set; }
+        public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
         public byte CurrentLODLevelPromise { get; private set; }
         
         public void Dispose(World world)
@@ -46,7 +48,7 @@ namespace DCL.LOD.Components
             instantiatedLOD.transform.SetParent(metadata.LodGroup.transform);
 
             instantiatedLOD.GetComponentsInChildren(true, TEMP_RENDERERS);
-
+            
             if (TEMP_RENDERERS.Count != 0)
                 RecalculateLODValues(defaultFOV, defaultLodBias, loadingDistance);
 
@@ -57,12 +59,15 @@ namespace DCL.LOD.Components
         {
             int loadedLODAmount = SceneLODInfoUtils.LODCount(metadata.SuccessfullLODs);
             var lods = metadata.LodGroup.GetLODs();
-            lods[CurrentLODLevelPromise].renderers = TEMP_RENDERERS.ToArray();
+
+            var renderers = LODGroupPoolUtils.RENDERER_ARRAY_POOL.Rent(TEMP_RENDERERS.Count);
+            TEMP_RENDERERS.CopyTo(renderers);
+            lods[CurrentLODLevelPromise].renderers = renderers;
             
             if (loadedLODAmount == 1)
             {
                 //We only have to make this calculations for the first LOD (assuming they have the same bounds)
-                CalculateCullRelativeHeight(lods[CurrentLODLevelPromise].renderers, defaultFOV, defaultLodBias, loadingDistance);
+                CalculateCullRelativeHeight(lods[CurrentLODLevelPromise].renderers, TEMP_RENDERERS.Count, defaultFOV, defaultLodBias, loadingDistance);
                 
                 if (CurrentLODLevelPromise == 0)
                 {
@@ -86,33 +91,34 @@ namespace DCL.LOD.Components
             metadata.LodGroup.SetLODs(lods);
         }
 
-        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, float defaultFOV, float defaultLodBias, int loadingDistance)
+        private void CalculateCullRelativeHeight(Renderer[] lodRenderers, int renderersLength, float defaultFOV, float defaultLodBias, int loadingDistance)
         {
-            if (lodRenderers.Length > 0)
+            var mergedBounds = lodRenderers[0].bounds;
+
+            // Encapsulate the bounds of the remaining renderers
+            for (int i = 1; i < renderersLength; i++)
             {
-                var mergedBounds = lodRenderers[0].bounds;
-
-                // Encapsulate the bounds of the remaining renderers
-                for (int i = 1; i < lodRenderers.Length; i++) { mergedBounds.Encapsulate(lodRenderers[i].bounds); }
-
-                //The cull distance is at loading distance - 1 parcel for some space buffer
-                //(It should first load, and then cull in)
-                float cullDistance = (loadingDistance - 1) * ParcelMathHelper.PARCEL_SIZE;
-
-                //Object size required to be the largest of the 3 axis
-                float objectSize = Mathf.Max(Mathf.Max(mergedBounds.extents.x, mergedBounds.extents.y), mergedBounds.extents.z) * defaultLodBias;
-                //We set the bounds of the LODGroup
-                metadata.LodGroup.size = objectSize;
-
-                float halfFov = defaultFOV / 2.0f * Mathf.Deg2Rad;
-                float tanValue = Mathf.Tan(halfFov);
-                metadata.CullRelativeHeightPercentage = Mathf.Clamp(CalculateScreenRelativeTransitionHeight(tanValue, cullDistance, objectSize), 0.02f, 0.999f);
-                metadata.LODChangeRelativeDistance = CalculateLODChangeRelativeHeight(tanValue, objectSize);
+                mergedBounds.Encapsulate(lodRenderers[i].bounds);
             }
+
+            //The cull distance is at loading distance - 1 parcel for some space buffer
+            //(It should first load, and then cull in)
+            float cullDistance = (loadingDistance - 1) * ParcelMathHelper.PARCEL_SIZE;
+
+            //Object size required to be the largest of the 3 axis
+            float maxExtents = Mathf.Max(Mathf.Max(mergedBounds.extents.x, mergedBounds.extents.y), mergedBounds.extents.z);
+            float maxExtentsWithLODBias = maxExtents * defaultLodBias;
+            //We set the bounds of the LODGroup
+            metadata.LodGroup.size = maxExtents;
+
+            float halfFov = defaultFOV / 2.0f * Mathf.Deg2Rad;
+            float tanValue = Mathf.Tan(halfFov);
+            metadata.CullRelativeHeightPercentage = Mathf.Clamp(CalculateScreenRelativeCullHeight(tanValue, cullDistance, maxExtentsWithLODBias), 0.02f, 0.999f);
+            metadata.LODChangeRelativeDistance = CalculateLODChangeRelativeHeight(tanValue, maxExtentsWithLODBias);
         }
 
         //This will give us the percent of the screen in which the object will be culled when being at (unloadingDistance - 1) parcel
-        private float CalculateScreenRelativeTransitionHeight(float tanValue, float distance, float objectSize)
+        private float CalculateScreenRelativeCullHeight(float tanValue, float distance, float objectSize)
         {
             return objectSize / ((distance + objectSize) * tanValue);
         }
@@ -134,7 +140,7 @@ namespace DCL.LOD.Components
 
         public void SetCurrentLODPromise(AssetPromise<AssetBundleData, GetAssetBundleIntention> promise, byte lodLevel)
         {
-            CurrentLODPromise = promise;
+            //CurrentLODPromise = promise;
             CurrentLODLevelPromise = lodLevel;
         }
 

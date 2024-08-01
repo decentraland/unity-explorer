@@ -1,14 +1,13 @@
 ﻿using DCL.LOD.Components;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using UnityEngine;
 
 namespace DCL.LOD
 {
     public interface ILODCache
     {
-        void PrewarmLODGroupPool(int lodLevels, int lodgroupPoolPrewarmValue);
-        
-        LODCacheInfo Get(in string key, int lodLevels);
+        bool TryGet(in string key, out LODCacheInfo cacheInfo);
 
         void Release(in string key, LODCacheInfo asset);
 

@@ -7,10 +7,10 @@ using Utility;
 
 namespace DCL.LOD.Components
 {
-    public struct LODCacheInfo : IDisposable
+    public class LODCacheInfo : IDisposable
     {
         public readonly LODGroup LodGroup;
-        public readonly LODAsset[] LODAssets;
+        public LODAsset[] LODAssets { get; private set; }
 
         public float CullRelativeHeightPercentage;
         public float LODChangeRelativeDistance;
@@ -33,6 +33,8 @@ namespace DCL.LOD.Components
         {
             foreach (var lodAsset in LODAssets)
                 lodAsset?.Dispose();
+
+            LODAssets = null;
         }
 
         public int LODLoadedCount()

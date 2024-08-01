@@ -246,8 +246,7 @@ namespace Global.Dynamic
                 staticContainer.RealmData,
                 staticContainer.ScenesCache,
                 staticContainer.PartitionDataContainer,
-                staticContainer.SingletonSharedDependencies.SceneAssetLock,
-                staticContainer.LODCache);
+                staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
@@ -511,7 +510,8 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                container.CharacterDataPropagationUtility);
+                container.CharacterDataPropagationUtility,
+                container.LODContainer.LodCache);
 
             container.GlobalPlugins = globalPlugins;
 
