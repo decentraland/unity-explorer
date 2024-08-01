@@ -5,8 +5,9 @@ namespace DCL.MapRenderer
     [RequireComponent(typeof(LineRenderer))]
     public class MapPathRenderer : MonoBehaviour
     {
-        public float dotSize = 0.2f;
-        public float spaceBetweenDots = 0.2f;
+        private const float DOT_SIZE = 20;
+        private const int NUM_CAP_VERTICES = 5;
+        private const float SPACE_BETWEEN_DOTS = 10;
 
         public Vector2 DestinationPoint => destinationPoint;
 
@@ -24,12 +25,12 @@ namespace DCL.MapRenderer
         private void SetupLineRenderer()
         {
             lineRenderer.useWorldSpace = true;
-            lineRenderer.startWidth = dotSize * 2;
-            lineRenderer.endWidth = dotSize * 2;
-            lineRenderer.numCapVertices = 5;
+            lineRenderer.startWidth = DOT_SIZE;
+            lineRenderer.endWidth = DOT_SIZE;
+            lineRenderer.numCapVertices = NUM_CAP_VERTICES;
 
             Material lineMaterial = lineRenderer.material;
-            float textureRepeat = 1f / (dotSize + spaceBetweenDots);
+            float textureRepeat = 1f / (DOT_SIZE + SPACE_BETWEEN_DOTS);
             lineMaterial.mainTextureScale = new Vector2(textureRepeat, 1);
             lineMaterial.mainTextureOffset = new Vector2(0f, 0f);
         }
@@ -53,7 +54,7 @@ namespace DCL.MapRenderer
             Vector3 direction = destinationPoint - originPoint;
             float distance = direction.magnitude;
 
-            float totalUnitLength = dotSize + spaceBetweenDots;
+            float totalUnitLength = DOT_SIZE + SPACE_BETWEEN_DOTS;
             int numberOfDots = Mathf.FloorToInt(distance / totalUnitLength) + 1;
 
             lineRenderer.positionCount = numberOfDots * 2;
@@ -61,7 +62,7 @@ namespace DCL.MapRenderer
             for (var i = 0; i < numberOfDots; i++)
             {
                 float startT = i * totalUnitLength / distance;
-                float endT = startT + (dotSize / distance);
+                float endT = startT + (DOT_SIZE / distance);
 
                 var dotStart = Vector3.Lerp(originPoint, destinationPoint, startT);
                 var dotEnd = Vector3.Lerp(originPoint, destinationPoint, endT);
