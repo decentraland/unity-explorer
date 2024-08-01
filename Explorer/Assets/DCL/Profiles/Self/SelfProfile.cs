@@ -75,7 +75,7 @@ namespace DCL.Profiles.Self
 
             if (onlyBasicInfo)
             {
-                // In 'onlyBasicInfo' we ignore the publication of wearables and emotes info, keeping them as they previously were
+                // With 'onlyBasicInfo' we ignore the publication of wearables and emotes info, keeping them as they previously were
                 newProfile = profileBuilder.From(profile)
                                            .WithVersion(profile.Version + 1)
                                            .WithForceRender(forceRender)
