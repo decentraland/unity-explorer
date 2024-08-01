@@ -109,6 +109,7 @@ namespace Global
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             QualityContainer.Dispose();
+            Profiler.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)

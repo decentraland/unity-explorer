@@ -20,7 +20,7 @@ namespace DCL.PluginSystem.Global
 
         private readonly WalkedDistanceAnalytics walkedDistanceAnalytics;
 
-        public AnalyticsPlugin(IAnalyticsController analytics, IProfilingProvider profilingProvider, IRealmData realmData, IScenesCache scenesCache, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
+        public AnalyticsPlugin(IAnalyticsController analytics, IAnalyticsReportProfiler profiler, IRealmData realmData, IScenesCache scenesCache, ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy)
         {
             this.analytics = analytics;
 

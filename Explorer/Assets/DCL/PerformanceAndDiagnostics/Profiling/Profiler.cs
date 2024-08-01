@@ -32,6 +32,9 @@ namespace DCL.Profiling
         public void Dispose()
         {
             systemUsedMemoryRecorder.Dispose();
+            totalUsedMemoryRecorder.Dispose();
+            gcUsedMemoryRecorder.Dispose();
+
             mainThreadTimeRecorder.Dispose();
             gpuFrameTimeRecorder.Dispose();
         }
