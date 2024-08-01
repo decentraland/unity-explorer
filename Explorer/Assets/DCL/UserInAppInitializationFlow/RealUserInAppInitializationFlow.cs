@@ -1,4 +1,3 @@
-using System;
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
@@ -9,10 +8,10 @@ using DCL.Profiles.Self;
 using DCL.Utilities;
 using MVC;
 using System.Threading;
-using DCL.Diagnostics;
 using DCL.FeatureFlags;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
+using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
@@ -24,17 +23,12 @@ namespace DCL.UserInAppInitializationFlow
     {
         private readonly IMVCManager mvcManager;
         private readonly AudioClipConfig backgroundMusic;
-        private readonly IRealmNavigator realmNavigator;
         private readonly ILoadingScreen loadingScreen;
-        private readonly IFeatureFlagsProvider featureFlagsProvider;
-        private readonly IWeb3IdentityCache web3IdentityCache;
-        private readonly IRealmController realmController;
-        private readonly Dictionary<string, string> appParameters;
 
-        private readonly PreloadProfileStartupOperation preloadProfileStartupOperation;
         private readonly LoadPlayerAvatarStartupOperation loadPlayerAvatarStartupOperation;
-        private readonly LoadLandscapeStartupOperation loadLandscapeStartupOperation;
-        private readonly TeleportStartupOperation teleportStartupOperation;
+        private readonly RestartRealmStartupOperation restartRealmStartupOperation;
+
+        private readonly IStartupOperation startupOperation;
 
         private static readonly ILoadingScreen.EmptyLoadingScreen EMPTY_LOADING_SCREEN = new ();
 
@@ -54,17 +48,25 @@ namespace DCL.UserInAppInitializationFlow
         {
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
-            this.realmNavigator = realmNavigator;
             this.loadingScreen = loadingScreen;
-            this.featureFlagsProvider = featureFlagsProvider;
-            this.web3IdentityCache = web3IdentityCache;
-            this.realmController = realmController;
-            this.appParameters = appParameters;
 
-            preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
+            var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, appParameters);
+            var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
+            var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(selfProfile, mainPlayerAvatarBaseProxy);
-            loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
-            teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
+            var loadLandscapeStartupOperation = new LoadLandscapeStartupOperation(loadingStatus, realmNavigator);
+            restartRealmStartupOperation = new RestartRealmStartupOperation(realmController);
+            var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
+
+            startupOperation = new SeveralStartupOperation(
+                initializeFeatureFlagsStartupOperation,
+                preloadProfileStartupOperation,
+                switchRealmMiscVisibilityStartupOperation,
+                loadPlayerAvatarStartupOperation,
+                loadLandscapeStartupOperation,
+                restartRealmStartupOperation,
+                teleportStartupOperation
+            );
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -75,38 +77,24 @@ namespace DCL.UserInAppInitializationFlow
             CancellationToken ct)
         {
             loadPlayerAvatarStartupOperation.AssignWorld(world, playerEntity);
+            restartRealmStartupOperation.EnableReload(reloadRealm);
+
             using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
             if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
-            await LoadingScreen(showLoading).ShowWhileExecuteTaskAsync(parentLoadReport => LoadGameAsync(reloadRealm, parentLoadReport, ct), ct);
+
+            await LoadingScreen(showLoading)
+               .ShowWhileExecuteTaskAsync(parentLoadReport => LoadAsync(parentLoadReport, showAuthentication, ct), ct);
         }
 
-        private async UniTask LoadGameAsync(bool reloadRealm, AsyncLoadProcessReport parentLoadReport, CancellationToken ct)
+        private async UniTask LoadAsync(AsyncLoadProcessReport parentLoadReport, bool showAuthentication, CancellationToken ct)
         {
-            // Re-initialize feature flags since the user might have changed thus the data to be resolved
-            await InitializeFeatureFlagsAsync(ct);
-            await preloadProfileStartupOperation.ExecuteAsync(parentLoadReport, ct);
-            await realmNavigator.SwitchMiscVisibilityAsync();
-            await loadPlayerAvatarStartupOperation.ExecuteAsync(parentLoadReport, ct);
-            await loadLandscapeStartupOperation.ExecuteAsync(parentLoadReport, ct);
-            await TryRestartRealmAsync(reloadRealm, ct);
-            await teleportStartupOperation.ExecuteAsync(parentLoadReport, ct);
-        }
-
-        private async UniTask TryRestartRealmAsync(bool reloadRealm, CancellationToken ct)
-        {
-            if (reloadRealm)
-                await realmController.RestartRealmAsync(ct);
+            var result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
+            if (result.Success == false && showAuthentication) await ShowAuthenticationScreenAsync(ct);
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
         {
             await mvcManager.ShowAsync(AuthenticationScreenController.IssueCommand(), ct);
-        }
-
-        private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
-        {
-            try { await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, appParameters, ct); }
-            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
         private ILoadingScreen LoadingScreen(bool withUI) =>
