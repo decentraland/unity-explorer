@@ -57,8 +57,8 @@ namespace DCL.UserInAppInitializationFlow
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(
                 new SeveralHealthCheck(
-                    new URLHealthCheck(webRequestController, DecentralandUrl.ArchipelagoStatus),
-                    new URLHealthCheck(webRequestController, DecentralandUrl.GatekeeperStatus)
+                    new URLHealthCheck(webRequestController, decentralandUrlsSource, DecentralandUrl.ArchipelagoStatus),
+                    new URLHealthCheck(webRequestController, decentralandUrlsSource, DecentralandUrl.GatekeeperStatus)
                 )
             );
 

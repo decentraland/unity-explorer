@@ -86,12 +86,11 @@ namespace DCL.WebRequests
         public static Adapter<GenericHeadRequest, GenericHeadArguments> HeadAsync(
             this IWebRequestController controller,
             CommonArguments commonArguments,
-            GenericHeadArguments arguments,
             CancellationToken ct,
             string reportCategory = ReportCategory.GENERIC_WEB_REQUEST,
             WebRequestHeadersInfo? headersInfo = null,
             WebRequestSignInfo? signInfo = null) =>
-            new (controller, commonArguments, arguments, ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
+            new (controller, commonArguments, default(GenericHeadArguments), ct, reportCategory, headersInfo, signInfo, null, HEAD_GENERIC);
 
         private static async UniTask SwitchToMainThreadAsync(WRThreadFlags flags)
         {
