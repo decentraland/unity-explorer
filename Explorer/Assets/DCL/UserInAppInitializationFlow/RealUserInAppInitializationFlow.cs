@@ -94,6 +94,8 @@ namespace DCL.UserInAppInitializationFlow
                         async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
                         ct
                     );
+
+                //TODO notification popup on failure
             }
             while (result.Success == false && showAuthentication);
         }
