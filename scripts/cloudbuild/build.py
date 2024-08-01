@@ -60,12 +60,13 @@ def clone_current_target():
     new_target_name = f'{re.sub(r'^t_', '', os.getenv('TARGET'))}-{re.sub('[^A-Za-z0-9]+', '-', os.getenv('BRANCH_NAME'))}'.lower()
 
     # Generate request body
+    # Disabled cache for now as its not playing well with Unity and we delete builds anyway!
     body = generate_body(
         os.getenv('TARGET'),
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
-        (os.getenv('USE_CACHE') == 'true' or os.getenv('USE_CACHE') == ''))
+        false)
 
     existing_target = get_target(new_target_name)
     
