@@ -81,7 +81,7 @@ namespace DCL.UI.MainUI
             {
                 waitingToShowSidebar = true;
                 showSidebarCancellationTokenSource = showSidebarCancellationTokenSource.SafeRestart();
-                WaitAndShow(showSidebarCancellationTokenSource.Token).Forget();
+                WaitAndShowAsync(showSidebarCancellationTokenSource.Token).Forget();
             }
 
             if (waitingToHideSidebar) { hideSidebarCancellationTokenSource.Cancel(); }
@@ -99,11 +99,11 @@ namespace DCL.UI.MainUI
             {
                 waitingToHideSidebar = true;
                 hideSidebarCancellationTokenSource = hideSidebarCancellationTokenSource.SafeRestart();
-                WaitAndHide(hideSidebarCancellationTokenSource.Token).Forget();
+                WaitAndHideAsync(hideSidebarCancellationTokenSource.Token).Forget();
             }
         }
 
-        private async UniTaskVoid WaitAndHide(CancellationToken ct)
+        private async UniTaskVoid WaitAndHideAsync(CancellationToken ct)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(HIDE_SIDEBAR_WAIT_TIME), cancellationToken: ct);
             waitingToHideSidebar = false;
@@ -115,7 +115,7 @@ namespace DCL.UI.MainUI
             showingSidebar = false;
         }
 
-        private async UniTaskVoid WaitAndShow(CancellationToken ct)
+        private async UniTaskVoid WaitAndShowAsync(CancellationToken ct)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(SHOW_SIDEBAR_WAIT_TIME), cancellationToken: ct);
             waitingToShowSidebar = false;

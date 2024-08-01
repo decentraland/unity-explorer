@@ -47,10 +47,10 @@ namespace DCL.UI.Sidebar
         {
             base.OnViewShow();
             profileWidgetCts = profileWidgetCts.SafeRestart();
-            LaunchChildViews().Forget();
+            LaunchChildViewsAsync().Forget();
         }
 
-        private async UniTask LaunchChildViews()
+        private async UniTask LaunchChildViewsAsync()
         {
             profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
             await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);

@@ -43,7 +43,7 @@ namespace DCL.Notification.NotificationsMenu
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
 
-            InitialNotificationRequest().Forget();
+            InitialNotificationRequestAsync().Forget();
         }
 
         private void ClosePanel()
@@ -57,9 +57,9 @@ namespace DCL.Notification.NotificationsMenu
             view.gameObject.SetActive(!forceClose && !view.gameObject.activeSelf);
         }
 
-        private async UniTaskVoid InitialNotificationRequest()
+        private async UniTaskVoid InitialNotificationRequestAsync()
         {
-            List<INotification> requestNotifications = await notificationsRequestController.RequestNotifications();
+            List<INotification> requestNotifications = await notificationsRequestController.RequestNotificationsAsync();
 
             foreach (INotification requestNotification in requestNotifications)
                 notifications.Add(requestNotification);
