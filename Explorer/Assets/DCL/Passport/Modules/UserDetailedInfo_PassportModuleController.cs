@@ -161,17 +161,18 @@ namespace DCL.Passport.Modules
             try
             {
                 // Update profile data
-                currentProfile = await selfProfile.PublishAsync(ct, onlyBasicInfo: true);
+                var profile = await selfProfile.PublishAsync(ct, onlyBasicInfo: true);
 
-                if (currentProfile != null)
+                if (profile != null)
                 {
                     // Update player entity in world
-                    currentProfile.IsDirty = true;
-                    world.Set(playerEntity, currentProfile);
+                    profile.IsDirty = true;
+                    world.Set(playerEntity, profile);
 
-                    // Update submodule controllers
-                    additionalFieldsController.Setup(currentProfile);
-                    descriptionController.Setup(currentProfile);
+                    // Update current profile
+                    currentProfile = profile;
+                    additionalFieldsController.Setup(profile);
+                    descriptionController.Setup(profile);
                 }
 
             }
