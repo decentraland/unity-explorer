@@ -11,6 +11,8 @@ namespace DCL.ExplorePanel
 {
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
+        private const string GUEST_NAME = "Guest";
+
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
         private readonly IWebRequestController webRequestController;
@@ -53,11 +55,15 @@ namespace DCL.ExplorePanel
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, ct);
 
-            viewInstance.NameLabel.text = profile?.Name ?? "Guest";
-            viewInstance.AddressLabel.gameObject.SetActive(!profile!.HasClaimedName);
+            if (viewInstance.NameLabel != null) viewInstance.NameLabel.text = profile?.Name ?? GUEST_NAME;
 
-            if (!profile.HasClaimedName)
-                viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
+            if (viewInstance.AddressLabel != null)
+            {
+                viewInstance.AddressLabel.gameObject.SetActive(!profile!.HasClaimedName);
+
+                if (!profile.HasClaimedName)
+                    viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
+            }
 
             profileImageController!.StopLoading();
 
