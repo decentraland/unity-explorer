@@ -1,5 +1,6 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
+using DCL.UI;
 using DCL.UI.Buttons;
 using MVC;
 using System.Collections.Generic;
@@ -39,19 +40,19 @@ namespace DCL.Minimap
         internal TMP_Text placeNameText { get; private set; }
 
         [field: SerializeField]
-        internal TMP_Text placeCoordinatesText  { get; private set; }
+        internal TMP_Text placeCoordinatesText { get; private set; }
 
         [field: SerializeField]
-        internal RectTransform sdk6Label  { get; private set; }
+        internal RectTransform sdk6Label { get; private set; }
 
         [field: SerializeField]
-        internal RectTransform minimapContainer  { get; private set; }
+        internal RectTransform minimapContainer { get; private set; }
 
         [field: SerializeField]
-        internal SideMenuView sideMenuView  { get; private set; }
+        internal SideMenuView sideMenuView { get; private set; }
 
         [field: SerializeField]
-        internal Animator minimapAnimator  { get; private set; }
+        internal Animator minimapAnimator { get; private set; }
 
         [field: SerializeField]
         internal Button goToGenesisCityButton { get; private set; }
@@ -75,10 +76,9 @@ namespace DCL.Minimap
         }
 
         private void OnHoverMap() =>
-            minimapAnimator.SetTrigger(AnimationHashes.HOVER);
+            minimapAnimator.SetTrigger(UIAnimationHashes.HOVER);
 
         private void OnUnHoverMap() =>
-            minimapAnimator.SetTrigger(AnimationHashes.UNHOVER);
-
+            minimapAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
     }
 }

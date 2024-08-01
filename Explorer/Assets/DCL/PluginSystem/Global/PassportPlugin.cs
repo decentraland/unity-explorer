@@ -107,7 +107,7 @@ namespace DCL.PluginSystem.Global
 
         public override void Dispose()
         {
-            passportController.Dispose();
+            passportController?.Dispose();
             base.Dispose();
         }
 
