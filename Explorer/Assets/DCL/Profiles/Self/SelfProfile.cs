@@ -57,7 +57,7 @@ namespace DCL.Profiles.Self
             );
         }
 
-        public async UniTask<Profile?> PublishAsync(CancellationToken ct)
+        public async UniTask<Profile?> PublishAsync(CancellationToken ct, bool onlyBasicInfo = false)
         {
             Profile? profile = await ProfileAsync(ct);
 
@@ -71,17 +71,29 @@ namespace DCL.Profiles.Self
                 return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
             }
 
-            using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
+            Profile newProfile;
 
-            uniqueWearables = uniqueWearables.EnsureNotNull();
-            ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
+            if (onlyBasicInfo)
+            {
+                // In 'onlyBasicInfo' we ignore the publication of wearables and emotes info, keeping them as they previously were
+                newProfile = profileBuilder.From(profile)
+                                           .WithVersion(profile.Version + 1)
+                                           .WithForceRender(forceRender)
+                                           .Build();
+            }
+            else
+            {
+                using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
 
-            var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
-            ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
+                uniqueWearables = uniqueWearables.EnsureNotNull();
+                ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
 
-            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
+                var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
+                ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
-            var newProfile = profileBuilder.From(profile)
+                var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
+
+                newProfile = profileBuilder.From(profile)
                                            .WithBodyShape(bodyShape)
                                            .WithWearables(uniqueWearables)
                                            .WithColors(equippedWearables.GetColors())
@@ -89,11 +101,13 @@ namespace DCL.Profiles.Self
                                            .WithForceRender(forceRender)
                                            .WithVersion(profile!.Version + 1)
                                            .Build();
+            }
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 
             // Skip publishing the same profile
-            if (newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
+            if (!onlyBasicInfo
+                && newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
                 && newProfile.Avatar.wearables.SetEquals(profile.Avatar.wearables)
                 && newProfile.Avatar.emotes.EqualsContentInOrder(profile.Avatar.emotes)
                 && newProfile.Avatar.forceRender.SetEquals(profile.Avatar.forceRender)

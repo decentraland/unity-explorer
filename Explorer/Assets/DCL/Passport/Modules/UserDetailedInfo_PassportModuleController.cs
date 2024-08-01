@@ -15,7 +15,6 @@ namespace DCL.Passport.Modules
     {
         private readonly UserDetailedInfo_PassportModuleView view;
         private readonly ISelfProfile selfProfile;
-        private readonly IProfileRepository profileRepository;
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly PassportErrorsController passportErrorsController;
@@ -31,7 +30,6 @@ namespace DCL.Passport.Modules
             UserDetailedInfo_PassportModuleView view,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
-            IProfileRepository profileRepository,
             World world,
             Entity playerEntity,
             AddLink_PassportModal addLinkModal,
@@ -39,14 +37,13 @@ namespace DCL.Passport.Modules
         {
             this.view = view;
             this.selfProfile = selfProfile;
-            this.profileRepository = profileRepository;
             this.world = world;
             this.playerEntity = playerEntity;
             this.passportErrorsController = passportErrorsController;
 
             additionalFieldsController = new UserAdditionalFields_PassportSubModuleController(view);
             descriptionController = new UserDescription_PassportSubModuleController(view, additionalFieldsController);
-            linksController = new UserLinks_PassportSubModuleController(view, addLinkModal, mvcManager, profileRepository, world, playerEntity, passportErrorsController);
+            linksController = new UserLinks_PassportSubModuleController(view, addLinkModal, mvcManager, world, playerEntity, passportErrorsController, selfProfile);
 
             view.InfoEditionButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(true));
             view.CancelInfoButton.onClick.AddListener(() => SetInfoSectionAsEditionMode(false));
@@ -164,11 +161,19 @@ namespace DCL.Passport.Modules
             try
             {
                 // Update profile data
-                await profileRepository.SetAsync(currentProfile, ct);
+                currentProfile = await selfProfile.PublishAsync(ct, onlyBasicInfo: true);
 
-                // Update player entity in world
-                currentProfile.IsDirty = true;
-                world.Set(playerEntity, currentProfile);
+                if (currentProfile != null)
+                {
+                    // Update player entity in world
+                    currentProfile.IsDirty = true;
+                    world.Set(playerEntity, currentProfile);
+
+                    // Update submodule controllers
+                    additionalFieldsController.Setup(currentProfile);
+                    descriptionController.Setup(currentProfile);
+                }
+
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -176,11 +181,6 @@ namespace DCL.Passport.Modules
                 const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
                 passportErrorsController.Show();
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
-            }
-            finally
-            {
-                if (currentProfile != null)
-                    currentProfile = await profileRepository.GetAsync(currentProfile.UserId, 0, ct);
             }
         }
     }
