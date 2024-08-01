@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
@@ -324,13 +325,20 @@ namespace Global.Dynamic
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
             };
 
-            IChatMessagesBus chatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
                                              .WithSelfResend(identityCache, container.ProfileRepository)
                                              .WithIgnoreSymbols()
                                              .WithCommands(chatCommandsFactory)
                                              .WithDebugPanel(debugBuilder);
 
-            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics ? new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
+            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics
+                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
+                : coreChatMessageBus;
+
+            var coreBackpackEventBus = new BackpackEventBus();
+            IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
+                ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
+                : coreBackpackEventBus;
 
             if (!string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm))
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
@@ -443,7 +451,8 @@ namespace Global.Dynamic
                     profileCache,
                     ASSET_BUNDLES_URL,
                     notificationsBusController,
-                    characterPreviewEventBus
+                    characterPreviewEventBus,
+                    backpackEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

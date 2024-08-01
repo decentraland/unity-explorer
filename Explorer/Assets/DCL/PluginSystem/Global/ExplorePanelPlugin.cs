@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
+using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
@@ -58,6 +59,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -92,7 +94,8 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             URLDomain assetBundleURL,
             INotificationsBusController notificationsBusController,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IBackpackEventBus backpackEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -118,6 +121,7 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.backpackEventBus = backpackEventBus;
         }
 
         public override void Dispose()
@@ -145,7 +149,8 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 assetBundleURL,
                 webRequestController,
-                characterPreviewEventBus
+                characterPreviewEventBus,
+                backpackEventBus
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
