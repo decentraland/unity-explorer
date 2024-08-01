@@ -467,11 +467,8 @@ MonoBehaviour:
     predefinedScenes:
       enabled: 0
       parcels:
-      - {x: 83, y: -3}
-      - {x: 83, y: -2}
-      - {x: 84, y: -3}
-      - {x: 84, y: -2}
-    targetWorld: globalpx.dcl.eth
+      - {x: 145, y: 60}
+    targetWorld: MetadyneLabs.dcl.eth
     customRealm: https://sdk-team-cdn.decentraland.org/ipfs/goerli-plaza-main-latest
     remoteHibridWorld: MetadyneLabs.dcl.eth
     remoteHybridSceneContentServer: 1
@@ -564,10 +561,10 @@ MonoBehaviour:
         m_SubObjectType: 
         m_EditorAssetChanged: 0
       <PathDestinationPin>k__BackingField:
-        m_AssetGUID: 55f1de672716d164bab43b54e576c9fb
+        m_AssetGUID: e7d14406516774d91886b6b4d1a26a58
         m_SubObjectName: 
         m_SubObjectType: 
-        m_EditorAssetChanged: 1
+        m_EditorAssetChanged: 0
     <ChatEntryConfiguration>k__BackingField:
       m_AssetGUID: 6afb31861b85441b6ab2b988819bb96a
       m_SubObjectName: 

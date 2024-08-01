@@ -90,7 +90,6 @@ namespace DCL.Notification.NewNotification
                         await ProcessDefaultNotificationAsync(notification);
                         break;
                 }
-
             }
 
             isDisplaying = false;

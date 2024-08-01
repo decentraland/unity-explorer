@@ -48,7 +48,7 @@ namespace DCL.Notification
             GetNewNotificationAsync().SuppressCancellationThrow().Forget();
         }
 
-        public async UniTask<List<INotification>> RequestNotifications()
+        public async UniTask<List<INotification>> RequestNotificationsAsync()
         {
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(NOTIFICATION_URL))

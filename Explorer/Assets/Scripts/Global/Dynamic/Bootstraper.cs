@@ -47,7 +47,8 @@ namespace Global.Dynamic
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
-        private Dictionary<string, string> appParameters = new Dictionary<string, string>();
+        private Dictionary<string, string> appParameters = new ();
+
         public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(DebugSettings debugSettings)
@@ -116,11 +117,11 @@ namespace Global.Dynamic
                     StaticLoadPositions = launchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
-                    EnableLandscape = enableLandscape,
-                    EnableLOD = enableLOD,
+                    EnableLandscape = enableLandscape && !localSceneDevelopment,
+                    EnableLOD = enableLOD && !localSceneDevelopment,
                     EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
                     LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
-                    AppParameters = appParameters
+                    AppParameters = appParameters,
                 },
                 backgroundMusic,
                 ct);
@@ -199,11 +200,13 @@ namespace Global.Dynamic
         {
             string[] cmdArgs = Environment.GetCommandLineArgs();
 
-            bool deepLinkFound = false;
+            var deepLinkFound = false;
             string lastKeyStored = string.Empty;
-            for (int i = 1; i < cmdArgs.Length; i++)
+
+            for (var i = 1; i < cmdArgs.Length; i++)
             {
-                var arg = cmdArgs[i];
+                string arg = cmdArgs[i];
+
                 if (arg.StartsWith("--"))
                 {
                     if (arg.Length > 2)
@@ -246,15 +249,12 @@ namespace Global.Dynamic
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.com/?");
 
-            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out var res)) return;
+            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? res)) return;
 
             var uri = new Uri(deepLinkString);
-            var uriQuery = HttpUtility.ParseQueryString(uri.Query);
+            NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            foreach (string uriQueryKey in uriQuery.AllKeys)
-            {
-                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
-            }
+            foreach (string uriQueryKey in uriQuery.AllKeys) { appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey); }
         }
 
         private void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)
@@ -277,7 +277,8 @@ namespace Global.Dynamic
 
             Vector2Int targetPosition = Vector2Int.zero;
 
-            var matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+            MatchCollection matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+
             if (matches.Count > 1)
             {
                 targetPosition.x = int.Parse(matches[0].Value);
@@ -291,8 +292,9 @@ namespace Global.Dynamic
         {
             if (string.IsNullOrEmpty(localSceneParameter)) return false;
 
-            bool returnValue = false;
-            var match = new Regex(@"true|false").Match(localSceneParameter);
+            var returnValue = false;
+            Match match = new Regex(@"true|false").Match(localSceneParameter);
+
             if (match.Success)
                 bool.TryParse(match.Value, out returnValue);
 
