@@ -9,10 +9,10 @@ namespace DCL.UI
     public class ButtonWithAnimationView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         [field: SerializeField]
-        public Button Button { get; private set;}
+        public Button Button { get; private set; }
 
         [field: SerializeField]
-        public Animator ButtonAnimator { get; private set;}
+        public Animator ButtonAnimator { get; private set; }
 
         [field: Header("Audio")]
         [field: SerializeField]
@@ -34,21 +34,21 @@ namespace DCL.UI
             ButtonAnimator.enabled = false;
         }
 
-        private void OnClick()
-        {
-            ButtonAnimator.SetTrigger(AnimationHashes.PRESSED);
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
-        }
-
         public void OnPointerEnter(PointerEventData eventData)
         {
-            ButtonAnimator.SetTrigger(AnimationHashes.HOVER);
+            ButtonAnimator.SetTrigger(UIAnimationHashes.HOVER);
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoverAudio);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            ButtonAnimator.SetTrigger(AnimationHashes.UNHOVER);
+            ButtonAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
+        }
+
+        private void OnClick()
+        {
+            ButtonAnimator.SetTrigger(UIAnimationHashes.PRESSED);
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
         }
     }
 }

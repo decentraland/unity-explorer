@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3.Accounts;
 using DCL.Web3.Chains;
 using DCL.Web3.Identities;
@@ -12,7 +13,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Web3.Authenticators
 {
@@ -261,23 +261,13 @@ namespace DCL.Web3.Authenticators
             private readonly IWeb3VerifiedAuthenticator originAuth;
             private readonly IVerifiedEthereumApi originApi;
 
-            public Default(IWeb3IdentityCache identityCache)
+            public Default(IWeb3IdentityCache identityCache, IDecentralandUrlsSource decentralandUrlsSource)
             {
-#if !UNITY_EDITOR
-                string serverUrl = Debug.isDebugBuild
-                    ? "https://auth-api.decentraland.zone"
-                    : "https://auth-api.decentraland.org";
-
-                string signatureUrl = Debug.isDebugBuild
-                    ? "https://decentraland.zone/auth/requests"
-                    : "https://decentraland.org/auth/requests";
-#else
-                const string serverUrl = "https://auth-api.decentraland.org";
-                const string signatureUrl = "https://decentraland.org/auth/requests";
-#endif
+                string serverUrl = decentralandUrlsSource.Url(DecentralandUrl.ApiAuth);
+                string signatureUrl = decentralandUrlsSource.Url(DecentralandUrl.AuthSignature);
 
                 var origin = new DappWeb3Authenticator(
-                    new UnityAppWebBrowser(),
+                    new UnityAppWebBrowser(decentralandUrlsSource),
                     serverUrl,
                     signatureUrl,
                     identityCache,
@@ -298,7 +288,7 @@ namespace DCL.Web3.Authenticators
 
             public void Dispose()
             {
-                originAuth.Dispose();// Disposes both
+                originAuth.Dispose(); // Disposes both
             }
 
             public UniTask<T> SendAsync<T>(EthApiRequest request, CancellationToken ct) =>

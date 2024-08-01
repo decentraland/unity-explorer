@@ -1,5 +1,6 @@
 using DCL.Audio;
 using DCL.Character.CharacterMotion.Components;
+using DCL.UI;
 using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -66,14 +67,14 @@ namespace DCL.EmotesWheel
         {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(HoverAudio);
             hoverBackground.SetActive(true);
-            SlotAnimator.SetTrigger(AnimationHashes.HOVER);
+            SlotAnimator.SetTrigger(UIAnimationHashes.HOVER);
             OnHover?.Invoke(Slot);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             hoverBackground.SetActive(false);
-            SlotAnimator.SetTrigger(AnimationHashes.UNHOVER);
+            SlotAnimator.SetTrigger(UIAnimationHashes.UNHOVER);
             OnFocusLeave?.Invoke(Slot);
         }
     }

@@ -1,4 +1,5 @@
 using CommunicationData.URLHelpers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 
 namespace ECS.StreamableLoading.NFTShapes.URNs
 {
@@ -6,7 +7,8 @@ namespace ECS.StreamableLoading.NFTShapes.URNs
     {
         private readonly URLAddress baseUrl;
 
-        public BasedURNSource() : this(IURNSource.BASE_URL) { }
+        public BasedURNSource(IDecentralandUrlsSource decentralandUrlsSource)
+            : this(IURNSource.BaseURL(decentralandUrlsSource)) { }
 
         public BasedURNSource(string baseUrl)
             : this(URLAddress.FromString(baseUrl)) { }

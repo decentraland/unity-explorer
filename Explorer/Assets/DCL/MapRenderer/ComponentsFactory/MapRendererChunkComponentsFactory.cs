@@ -10,6 +10,7 @@ using DCL.MapRenderer.MapLayers.Atlas.SatelliteAtlas;
 using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
@@ -33,6 +34,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly MapRendererTextureContainer textureContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly MapRendererSettings mapSettings;
@@ -41,12 +43,14 @@ namespace DCL.MapRenderer.ComponentsFactory
             IAssetsProvisioner assetsProvisioner,
             MapRendererSettings settings,
             IWebRequestController webRequestController,
+            IDecentralandUrlsSource decentralandUrlsSource,
             MapRendererTextureContainer textureContainer,
             IPlacesAPIService placesAPIService)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mapSettings = settings;
             this.webRequestController = webRequestController;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.textureContainer = textureContainer;
             this.placesAPIService = placesAPIService;
         }
@@ -78,7 +82,6 @@ namespace DCL.MapRenderer.ComponentsFactory
                 x => x.SetActive(false),
                 x => x.Dispose()
             );
-
 
             await UniTask.WhenAll(
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
@@ -137,7 +140,15 @@ namespace DCL.MapRenderer.ComponentsFactory
             {
                 SpriteRenderer atlasChunkPrefab = await GetAtlasChunkPrefabAsync(parent, ct);
 
-                var chunk = new ParcelChunkController(webRequestController, atlasChunkPrefab, chunkLocalPosition, coordsCenter, parent);
+                var chunk = new ParcelChunkController(
+                    webRequestController,
+                    decentralandUrlsSource,
+                    atlasChunkPrefab,
+                    chunkLocalPosition,
+                    coordsCenter,
+                    parent
+                );
+
                 chunk.SetDrawOrder(MapRendererDrawOrder.ATLAS);
 
                 // If it takes more than CHUNKS_MAX_WAIT_TIME to load the chunk, it will be finished asynchronously
