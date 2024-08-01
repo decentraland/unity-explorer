@@ -16,29 +16,29 @@ MonoBehaviour:
   - groupName: General
     events:
     - eventName: system_info_report
-      isEnabled: 0
+      isEnabled: 1
     - eventName: initial_loading
-      isEnabled: 0
+      isEnabled: 1
     - eventName: performance_report
-      isEnabled: 0
+      isEnabled: 1
     - eventName: error
-      isEnabled: 0
+      isEnabled: 1
   - groupName: Chat
     events:
     - eventName: chat_message_sent
-      isEnabled: 0
+      isEnabled: 1
     - eventName: chat_bubble_switched
-      isEnabled: 0
+      isEnabled: 1
   - groupName: Map
     events:
     - eventName: map_jump_in
-      isEnabled: 0
+      isEnabled: 1
   - groupName: World
     events:
     - eventName: move_to_parcel
-      isEnabled: 0
+      isEnabled: 1
     - eventName: time_spent_in_world
-      isEnabled: 0
+      isEnabled: 1
   - groupName: Badges
     events:
     - eventName: vertical_height_reached
