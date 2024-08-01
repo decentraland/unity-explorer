@@ -65,7 +65,7 @@ namespace DCL.Notification
         public async UniTask<List<INotification>> RequestNotificationsAsync()
         {
             urlBuilder.Clear();
-            urlBuilder.AppendDomain(URLDomain.FromString(NOTIFICATION_URL))
+            urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Notification)))
                       .AppendParameter(limitParameter);
             commonArguments = new CommonArguments(urlBuilder.Build());
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
