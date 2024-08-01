@@ -66,7 +66,7 @@ def clone_current_target():
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
-        false)
+        False)
 
     existing_target = get_target(new_target_name)
     
