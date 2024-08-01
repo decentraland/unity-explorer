@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using DCL.Multiplayer.Connections.DecentralandUrls;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Global.Dynamic
@@ -6,6 +7,7 @@ namespace Global.Dynamic
     [CreateAssetMenu(fileName = "DynamicSceneLoaderSettings", menuName = "SO/DynamicSceneLoaderSettings")]
     public class DynamicSceneLoaderSettings : ScriptableObject
     {
+        [field: SerializeField] public DecentralandEnvironment DecentralandEnvironment { get; private set; }
         [field: SerializeField] public List<string> Realms { get; private set; }
         [field: SerializeField] public string AuthWebSocketUrl { get; private set; }
         [field: SerializeField] public string AuthWebSocketUrlDev { get; private set; }

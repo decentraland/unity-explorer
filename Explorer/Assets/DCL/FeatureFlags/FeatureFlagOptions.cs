@@ -1,5 +1,7 @@
 using CommunicationData.URLHelpers;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Web3;
+using System;
 
 namespace DCL.FeatureFlags
 {
@@ -19,20 +21,13 @@ namespace DCL.FeatureFlags
         /// </summary>
         public string Hostname { get; set; }
 
-        public static FeatureFlagOptions ORG = new()
-        {
-            AppName = "explorer",
-            URL = URLDomain.FromString("https://feature-flags.decentraland.org"),
-            Debug = false,
-            Hostname = "https://decentraland.org",
-        };
-
-        public static FeatureFlagOptions ZONE = new()
-        {
-            AppName = "explorer",
-            URL = URLDomain.FromString("https://feature-flags.decentraland.zone"),
-            Debug = false,
-            Hostname = "https://decentraland.zone",
-        };
+        public static FeatureFlagOptions NewFeatureFlagOptions(IDecentralandUrlsSource decentralandUrlsSource) =>
+            new()
+            {
+                AppName = "explorer",
+                URL = URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.FeatureFlags)),
+                Debug = false,
+                Hostname = decentralandUrlsSource.Url(DecentralandUrl.Host),
+            };
     }
 }

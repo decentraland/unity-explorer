@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
@@ -76,9 +77,9 @@ namespace Global.Dynamic
             return result;
         }
 
-        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity identity, StaticContainer staticContainer, CancellationToken ct)
+        public UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            UniTask result = core.InitializeFeatureFlagsAsync(identity, staticContainer, ct);
+            UniTask result = core.InitializeFeatureFlagsAsync(identity, decentralandUrlsSource, staticContainer, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

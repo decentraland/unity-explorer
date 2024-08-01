@@ -13,6 +13,7 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Profiles.Self;
 using DCL.Web3.Identities;
 using DCL.ResourcesUnloading;
+using DCL.UI.MainUI;
 using DCL.WebRequests;
 using ECS;
 using ECS.StreamableLoading.AudioClips;
@@ -40,10 +41,11 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IReadOnlyEntityParticipantTable entityParticipantTable;
-        private AudioSource? audioSourceReference;
-        private EmotesWheelController? emotesWheelController;
         private readonly AudioClipsCache audioClipsCache;
         private readonly URLDomain assetBundleURL;
+        private readonly MainUIView mainUIView;
+        private AudioSource? audioSourceReference;
+        private EmotesWheelController? emotesWheelController;
 
         public EmotePlugin(IWebRequestController webRequestController,
             IEmoteCache emoteCache,
@@ -56,7 +58,9 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             CacheCleaner cacheCleaner,
             IWeb3IdentityCache web3IdentityCache,
-            IReadOnlyEntityParticipantTable entityParticipantTable, URLDomain assetBundleURL)
+            IReadOnlyEntityParticipantTable entityParticipantTable,
+            URLDomain assetBundleURL,
+            MainUIView mainUIView)
         {
             this.messageBus = messageBus;
             this.debugBuilder = debugBuilder;
@@ -70,6 +74,7 @@ namespace DCL.PluginSystem.Global
             this.webRequestController = webRequestController;
             this.emoteCache = emoteCache;
             this.realmData = realmData;
+            this.mainUIView = mainUIView;
 
             audioClipsCache = new AudioClipsCache();
             cacheCleaner.Register(audioClipsCache);
@@ -118,12 +123,7 @@ namespace DCL.PluginSystem.Global
             foreach (IEmote embeddedEmote in embeddedEmotes)
                 emoteCache.Set(embeddedEmote.GetUrn(), embeddedEmote);
 
-            PersistentEmoteWheelOpenerView persistentEmoteWheelOpenerView = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentEmoteWheelOpenerPrefab, ct))
-                                                                           .Value.GetComponent<PersistentEmoteWheelOpenerView>();
-
-            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(
-                PersistentEmoteWheelOpenerController.CreateLazily(persistentEmoteWheelOpenerView, null),
-                mvcManager);
+            var persistentEmoteWheelOpenerController = new PersistentEmoteWheelOpenerController(() => mainUIView.SidebarView.PersistentEmoteWheelOpener, mvcManager);
 
             mvcManager.RegisterController(persistentEmoteWheelOpenerController);
 
