@@ -1,6 +1,8 @@
+using DCL.Browser.DecentralandUrls;
 using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
@@ -54,7 +56,7 @@ namespace DCL.LOD.Tests
             sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
-            system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue);
+            system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org));
         }
 
 
