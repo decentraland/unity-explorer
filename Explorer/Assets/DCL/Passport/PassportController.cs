@@ -49,6 +49,8 @@ namespace DCL.Passport
         private PassportCharacterPreviewController characterPreviewController;
         private readonly List<IPassportModuleController> passportModules = new ();
 
+        public event Action<string> PassportOpened;
+
         public PassportController(
             [NotNull] ViewFactoryMethod viewFactory,
             ICursor cursor,
@@ -103,6 +105,8 @@ namespace DCL.Passport
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
             dclInput.Shortcuts.Disable();
             viewInstance.ErrorNotification.Hide(true);
+
+            PassportOpened?.Invoke(currentUserId);
         }
 
         protected override void OnViewClose()

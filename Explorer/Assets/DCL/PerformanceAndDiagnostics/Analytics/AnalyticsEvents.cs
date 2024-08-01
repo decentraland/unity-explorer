@@ -22,10 +22,11 @@
             public const string TIME_SPENT_IN_WORLD = "time_spent_in_world"; // 🟡 missing disposal + does it track for genesis?
         }
 
-        public static class Chat
+        public static class UI
         {
             public const string MESSAGE_SENT = "chat_message_sent"; // 🔴 - needs Channel and Reciever Id (for private message)
             public const string BUBBLE_SWITCHED = "chat_bubble_switched"; // 🟡 - is it working?
+            public const string PASSPORT_OPENED = "passport_opened";
         }
 
         public static class Map

@@ -32,7 +32,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             core.Send(message);
 
-            analytics.Track(AnalyticsEvents.Chat.MESSAGE_SENT, new JsonObject
+            analytics.Track(AnalyticsEvents.UI.MESSAGE_SENT, new JsonObject
             {
                 { "message", message },
             });
