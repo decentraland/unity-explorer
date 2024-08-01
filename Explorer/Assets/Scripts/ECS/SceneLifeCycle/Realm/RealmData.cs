@@ -17,6 +17,7 @@ namespace ECS
         public int NetworkId{ get; private set; }
         public string CommsAdapter { get; private set; }
         public string Protocol { get; private set; }
+        public string Hostname { get; private set; }
         public bool Configured { get; private set; }
 
         public IIpfsRealm Ipfs
@@ -45,24 +46,25 @@ namespace ECS
             RealmName = string.Empty;
             CommsAdapter = string.Empty;
             Protocol = string.Empty;
+            Hostname = string.Empty;
         }
 
         public RealmData(IIpfsRealm ipfsRealm)
         {
-            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty);
+            Reconfigure(ipfsRealm, string.Empty, DEFAULT_NETWORK_ID, string.Empty, string.Empty, string.Empty);
         }
 
-        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol)
+        public void Reconfigure(IIpfsRealm ipfsRealm, string realmName, int networkId, string commsAdapter, string protocol, string hostname)
         {
             IsDirty = true;
             Configured = true;
-
             RealmName = realmName;
             scenesAreFixed = ipfsRealm.SceneUrns is { Count: > 0 };
             ipfs = ipfsRealm;
             CommsAdapter = commsAdapter;
             Protocol = protocol;
             NetworkId = networkId;
+            Hostname = hostname;
         }
 
         /// <summary>
