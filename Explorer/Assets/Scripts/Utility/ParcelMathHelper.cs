@@ -89,10 +89,6 @@ namespace Utility
         public static Vector2Int FloorToParcel(Vector3 position) =>
             new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
 
-        public static Vector2Int ToParcel(this Vector3 position) =>
-            new (Mathf.FloorToInt(position.x / PARCEL_SIZE), Mathf.FloorToInt(position.z / PARCEL_SIZE));
-
-
         public static void ParcelsInRange(Vector3 position, int loadRadius, HashSet<int2> results)
         {
             float range = loadRadius * PARCEL_SIZE;

@@ -77,6 +77,7 @@ namespace DCL.Profiling
         public AnalyticsFrameTimeReport? GetGpuThreadFramesNs(int[] percentile) =>
             GetFrameStatsWithPercentiles(gpuFrameTimeRecorder, percentile);
 
+        // Exclusive percentile calculation variant, it rounds to nearest (in contrast to inclusive approach)
         private AnalyticsFrameTimeReport? GetFrameStatsWithPercentiles(ProfilerRecorder recorder, int[] percentile)
         {
             int samplesCount = recorder.Capacity;
