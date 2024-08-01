@@ -4,6 +4,7 @@ using DCL.Browser;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
+using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -44,6 +45,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly Animator splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly AudioMixer generalAudioMixer;
+        private readonly FeatureFlagsCache featureFlagsCache;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -59,6 +61,7 @@ namespace DCL.AuthenticationScreenFlow
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
             ISelfProfile selfProfile,
+            FeatureFlagsCache featureFlagsCache,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -69,6 +72,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
+            this.featureFlagsCache = featureFlagsCache;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
