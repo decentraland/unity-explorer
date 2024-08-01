@@ -17,16 +17,6 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 03287bc88d1666443b4c6e7373ace385
   m_SerializeEntries:
-  - m_GUID: 31f3cd961c052c84baf27b3938e5b0f4
-    m_Address: HoverInteractableValid
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 0c9a2d5b397aa7e4b892825b20d8bcb8
-    m_Address: HoverInteractableInvalid
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bf22911f490866b45b81ddea869255f2
     m_Address: Assets/DCL/Interaction/Assets/Cursor.png
     m_ReadOnly: 0

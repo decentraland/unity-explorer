@@ -9,10 +9,13 @@ using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Minimap;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.UI.MainUI;
+using DCL.UI.Sidebar;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
@@ -20,6 +23,7 @@ using MVC;
 using SceneRunner.Debugging;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -40,13 +44,13 @@ namespace Global.Dynamic
         private readonly bool enableLOD;
         private readonly bool enableLandscape;
 
-        public bool EnableAnalytics { private get; init; }
-
         private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
-        private Dictionary<string, string> appParameters = new Dictionary<string, string>();
+        private Dictionary<string, string> appParameters = new ();
+
+        public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(DebugSettings debugSettings)
         {
@@ -71,7 +75,12 @@ namespace Global.Dynamic
             if (appParameters.ContainsKey(APP_PARAMETER_POSITION))
                 ProcessPositionAppParameter(appParameters[APP_PARAMETER_POSITION], launchSettings);
 
-            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
+            string settingsRealm = launchSettings.GetStartingRealm();
+
+            // We also check against 'settingsRealm' in case LOCALHOST was configured from the Editor
+            localSceneDevelopment |= settingsRealm == IRealmNavigator.LOCALHOST;
+
+            startingRealm = URLDomain.FromString(settingsRealm);
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
@@ -83,7 +92,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.Web3VerifiedAuthenticator, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
@@ -114,11 +123,11 @@ namespace Global.Dynamic
                     StaticLoadPositions = launchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
-                    EnableLandscape = enableLandscape,
-                    EnableLOD = enableLOD,
+                    EnableLandscape = enableLandscape && !localSceneDevelopment,
+                    EnableLOD = enableLOD && !localSceneDevelopment,
                     EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
                     LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
-                    AppParameters = appParameters
+                    AppParameters = appParameters,
                 },
                 backgroundMusic,
                 ct);
@@ -142,9 +151,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, appParameters, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -156,13 +165,15 @@ namespace Global.Dynamic
 
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
+                bootstrapContainer.DecentralandUrlsSource,
                 dynamicWorldContainer.MvcManager,
                 bootstrapContainer.IdentityCache,
                 dynamicWorldContainer.ProfileRepository,
                 staticContainer.WebRequestsContainer.WebRequestController,
                 dynamicWorldContainer.RoomHub,
                 dynamicWorldContainer.RealmController.RealmData,
-                dynamicWorldContainer.MessagePipesHub
+                dynamicWorldContainer.MessagePipesHub,
+                !localSceneDevelopment
             );
 
             (globalWorld, playerEntity) = dynamicWorldContainer.GlobalWorldFactory.Create(sceneSharedContainer.SceneFactory);
@@ -197,11 +208,12 @@ namespace Global.Dynamic
         {
             string[] cmdArgs = Environment.GetCommandLineArgs();
 
-            bool deepLinkFound = false;
+            var deepLinkFound = false;
             string lastKeyStored = string.Empty;
-            for (int i = 1; i < cmdArgs.Length; i++)
+
+            for (int i = 0; i < cmdArgs.Length; i++)
             {
-                var arg = cmdArgs[i];
+                string arg = cmdArgs[i];
 
                 if (arg.StartsWith("--"))
                 {
@@ -245,15 +257,12 @@ namespace Global.Dynamic
             // Update deep link so that Uri class allows the host name
             deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.com/?");
 
-            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out var res)) return;
+            if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? res)) return;
 
             var uri = new Uri(deepLinkString);
-            var uriQuery = HttpUtility.ParseQueryString(uri.Query);
+            NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            foreach (string uriQueryKey in uriQuery.AllKeys)
-            {
-                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
-            }
+            foreach (string uriQueryKey in uriQuery.AllKeys) { appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey); }
         }
 
         private void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)
@@ -262,9 +271,11 @@ namespace Global.Dynamic
 
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
-            localSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue) && ParseLocalSceneParameter(localSceneParamValue);
+            localSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue)
+                                    && ParseLocalSceneParameter(localSceneParamValue)
+                                    && IsRealmAValidUrl(realmParamValue);
 
-            if (localSceneDevelopment && IsRealmALocalUrl(realmParamValue))
+            if (localSceneDevelopment)
                 launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);
             else if (IsRealmAWorld(realmParamValue))
                 launchSettings.SetWorldRealm(realmParamValue);
@@ -276,7 +287,8 @@ namespace Global.Dynamic
 
             Vector2Int targetPosition = Vector2Int.zero;
 
-            var matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+            MatchCollection matches = new Regex(@"-*\d+").Matches(positionParameterValue);
+
             if (matches.Count > 1)
             {
                 targetPosition.x = int.Parse(matches[0].Value);
@@ -290,8 +302,9 @@ namespace Global.Dynamic
         {
             if (string.IsNullOrEmpty(localSceneParameter)) return false;
 
-            bool returnValue = false;
-            var match = new Regex(@"true|false").Match(localSceneParameter);
+            var returnValue = false;
+            Match match = new Regex(@"true|false").Match(localSceneParameter);
+
             if (match.Success)
                 bool.TryParse(match.Value, out returnValue);
 
@@ -299,18 +312,16 @@ namespace Global.Dynamic
         }
 
         private bool IsRealmAWorld(string realmParam) =>
-            new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
+            realmParam.IsEns();
 
-        private bool IsRealmALocalUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out var uriResult)
+        private bool IsRealmAValidUrl(string realmParam) =>
+            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
             && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
         private static void OpenDefaultUI(IMVCManager mvcManager, CancellationToken ct)
         {
             // TODO: all of these UIs should be part of a single canvas. We cannot make a proper layout by having them separately
-            mvcManager.ShowAsync(MinimapController.IssueCommand(), ct).Forget();
-            mvcManager.ShowAsync(PersistentExplorePanelOpenerController.IssueCommand(new EmptyParameter()), ct).Forget();
-            mvcManager.ShowAsync(ChatController.IssueCommand(), ct).Forget();
+            mvcManager.ShowAsync(MainUIController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(NewNotificationController.IssueCommand(), ct).Forget();
             mvcManager.ShowAsync(PersistentEmoteWheelOpenerController.IssueCommand(), ct).Forget();
         }

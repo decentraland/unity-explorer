@@ -8,9 +8,6 @@ namespace DCL.UI.Buttons
 {
     public class HoverableButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public event Action OnButtonHover;
-        public event Action OnButtonUnhover;
-
         [field: SerializeField]
         public Button Button { get; private set; }
 
@@ -30,12 +27,8 @@ namespace DCL.UI.Buttons
             Button.onClick.RemoveListener(OnButtonPressed);
         }
 
-        private void OnButtonPressed()
+        public void OnPointerEnter(PointerEventData eventData)
         {
-            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
-        }
-
-        public void OnPointerEnter(PointerEventData eventData) {
             UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonHoveredAudio);
             OnButtonHover?.Invoke();
         }
@@ -43,5 +36,12 @@ namespace DCL.UI.Buttons
         public void OnPointerExit(PointerEventData eventData) =>
             OnButtonUnhover?.Invoke();
 
+        public event Action OnButtonHover;
+        public event Action OnButtonUnhover;
+
+        internal void OnButtonPressed()
+        {
+            UIAudioEventsBus.Instance.SendPlayAudioEvent(ButtonPressedAudio);
+        }
     }
 }

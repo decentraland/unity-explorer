@@ -16,20 +16,19 @@ namespace DCL.Navmap
 {
     public class FloatingPanelController : IDisposable
     {
-        public event Action<Vector2Int> OnJumpIn;
-
         private readonly FloatingPanelView view;
         private readonly IPlacesAPIService placesAPIService;
         private readonly IRealmNavigator realmNavigator;
         private readonly Dictionary<string, GameObject> categoriesDictionary;
 
+        private readonly ImageController placeImageController;
+        private readonly ImageController mapPinPlaceImageController;
+
         private MultiStateButtonController likeButtonController;
         private MultiStateButtonController dislikeButtonController;
         private MultiStateButtonController favoriteButtonController;
         private CancellationTokenSource cts;
-
-        private readonly ImageController placeImageController;
-        private readonly ImageController mapPinPlaceImageController;
+        public event Action<Vector2Int> OnJumpIn;
 
         public FloatingPanelController(FloatingPanelView view, IPlacesAPIService placesAPIService,
             IWebRequestController webRequestController, IRealmNavigator realmNavigator)
@@ -87,7 +86,7 @@ namespace DCL.Navmap
             {
                 view.panelAnimator.Rebind();
                 view.panelAnimator.Update(0f);
-                view.panelAnimator.SetTrigger(AnimationHashes.TO_LEFT);
+                view.panelAnimator.SetTrigger(UIAnimationHashes.TO_LEFT);
                 ShowPanel(parcel, -1);
             }
             else
@@ -96,13 +95,13 @@ namespace DCL.Navmap
                 {
                     view.panelAnimator.Rebind();
                     view.panelAnimator.Update(0f);
-                    view.panelAnimator.SetTrigger(AnimationHashes.IN);
-                    ShowPanel(parcel, AnimationHashes.LOADED);
+                    view.panelAnimator.SetTrigger(UIAnimationHashes.IN);
+                    ShowPanel(parcel, UIAnimationHashes.LOADED);
                 }
                 else
                 {
-                    view.panelAnimator.SetTrigger(AnimationHashes.LOADING);
-                    GetPlaceInfoAsync(parcel, AnimationHashes.LOADED).Forget();
+                    view.panelAnimator.SetTrigger(UIAnimationHashes.LOADING);
+                    GetPlaceInfoAsync(parcel, UIAnimationHashes.LOADED).Forget();
                 }
             }
         }
@@ -239,14 +238,14 @@ namespace DCL.Navmap
 
         private void HidePanelFromBackButton()
         {
-            view.panelAnimator.SetTrigger(AnimationHashes.TO_RIGHT);
+            view.panelAnimator.SetTrigger(UIAnimationHashes.TO_RIGHT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }
 
         public void HidePanel()
         {
-            view.panelAnimator.SetTrigger(AnimationHashes.OUT);
+            view.panelAnimator.SetTrigger(UIAnimationHashes.OUT);
             view.CanvasGroup.interactable = false;
             view.CanvasGroup.blocksRaycasts = false;
         }

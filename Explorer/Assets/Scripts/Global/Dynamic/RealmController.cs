@@ -13,6 +13,7 @@ using DCL.WebRequests;
 using ECS;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Components;
+using ECS.SceneLifeCycle.Realm;
 using ECS.SceneLifeCycle.SceneDefinition;
 using ECS.StreamableLoading.Common;
 using SceneRunner.Scene;
@@ -52,6 +53,7 @@ namespace Global.Dynamic
         public GlobalWorld GlobalWorld
         {
             get => globalWorld.EnsureNotNull("GlobalWorld in RealmController is null");
+
             set
             {
                 globalWorld = value;
@@ -97,12 +99,15 @@ namespace Global.Dynamic
             var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
+            string hostname = ResolveHostname(realm, result);
+
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, realm, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
-                result.comms?.protocol ?? string.Empty
+                result.comms?.protocol ?? "v3",
+                hostname
             );
 
             // Add the realm component
@@ -145,17 +150,19 @@ namespace Global.Dynamic
 
         public void DisposeGlobalWorld()
         {
+            List<ISceneFacade> loadedScenes = allScenes;
+
             if (globalWorld != null)
             {
                 World world = globalWorld.EcsWorld;
-                FindLoadedScenes();
+                loadedScenes = FindLoadedScenesAndClearSceneCache();
                 world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
 
-            foreach (ISceneFacade scene in allScenes)
+            foreach (ISceneFacade scene in loadedScenes)
 
                 // Scene Info is contained in the ReportData, don't include it into the exception
                 scene.SafeDispose(new ReportData(ReportCategory.SCENE_LOADING, sceneShortInfo: scene.Info),
@@ -168,7 +175,7 @@ namespace Global.Dynamic
 
             World world = globalWorld.EcsWorld;
 
-            FindLoadedScenes();
+            List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
@@ -184,7 +191,7 @@ namespace Global.Dynamic
             teleportController.InvalidateRealm();
             realmData.Invalidate();
 
-            await UniTask.WhenAll(allScenes.Select(s => s.DisposeAsync()));
+            await UniTask.WhenAll(loadedScenes.Select(s => s.DisposeAsync()));
             sceneAssetLock.Reset();
 
             currentDomain = null;
@@ -210,13 +217,32 @@ namespace Global.Dynamic
             return false;
         }
 
-        private void FindLoadedScenes()
+        private List<ISceneFacade> FindLoadedScenesAndClearSceneCache()
         {
             allScenes.Clear();
             allScenes.AddRange(scenesCache.Scenes);
 
             // Dispose all scenes
             scenesCache.Clear();
+
+            return allScenes;
+        }
+
+        private string ResolveHostname(URLDomain realm, ServerAbout about)
+        {
+            string hostname;
+
+            if (about.configurations.realmName.IsEns())
+                hostname = $"worlds-content-server.decentraland.org/world/{about.configurations.realmName.ToLower()}";
+            else
+                hostname = about.comms == null
+
+                    // Consider it as the "main" realm which shares the comms with many catalysts
+                    // TODO: take in consideration the web3-network. If its sepolia then it should be .zone
+                    ? "realm-provider.decentraland.org"
+                    : new Uri(realm.Value).Host;
+
+            return hostname;
         }
     }
 }

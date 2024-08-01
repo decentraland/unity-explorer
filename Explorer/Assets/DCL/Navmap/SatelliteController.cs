@@ -45,7 +45,7 @@ namespace DCL.Navmap
 
         public void InjectCameraController(IMapCameraController controller)
         {
-            this.cameraController = controller;
+            cameraController = controller;
         }
 
         public void Activate()
@@ -67,7 +67,7 @@ namespace DCL.Navmap
 
         public void Animate(int triggerId)
         {
-            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
+            view.gameObject.SetActive(triggerId == UIAnimationHashes.IN);
         }
 
         public void ResetAnimator() { }

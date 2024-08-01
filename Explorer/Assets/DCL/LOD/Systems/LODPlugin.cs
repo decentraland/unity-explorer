@@ -5,6 +5,7 @@ using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.DebugUtilities;
 using DCL.LOD;
 using DCL.LOD.Systems;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
@@ -22,6 +23,7 @@ namespace DCL.PluginSystem.Global
         private readonly LODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly IPerformanceBudget frameCapBudget;
         private readonly IPerformanceBudget memoryBudget;
         private readonly IDebugContainerBuilder debugBuilder;
@@ -31,20 +33,31 @@ namespace DCL.PluginSystem.Global
         private readonly bool lodEnabled;
 
         private IExtendedObjectPool<Material> lodMaterialPool;
-        private ILODSettingsAsset lodSettingsAsset;
+        private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneAssetLock sceneAssetLock;
         private TextureArrayContainer lodTextureArrayContainer;
 
-
-        public LODPlugin(CacheCleaner cacheCleaner, RealmData realmData, IPerformanceBudget memoryBudget,
-            IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
-            ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
-            ILODSettingsAsset lodSettingsAsset, SceneAssetLock sceneAssetLock, bool lodEnabled)
+        public LODPlugin(
+            CacheCleaner cacheCleaner,
+            RealmData realmData,
+            IDecentralandUrlsSource decentralandUrlsSource,
+            IPerformanceBudget memoryBudget,
+            IPerformanceBudget frameCapBudget,
+            IScenesCache scenesCache,
+            IDebugContainerBuilder debugBuilder,
+            ISceneReadinessReportQueue sceneReadinessReportQueue,
+            VisualSceneStateResolver visualSceneStateResolver,
+            TextureArrayContainerFactory textureArrayContainerFactory,
+            ILODSettingsAsset lodSettingsAsset,
+            SceneAssetLock sceneAssetLock,
+            bool lodEnabled
+        )
         {
             lodAssetsPool = new LODAssetsPool();
             cacheCleaner.Register(lodAssetsPool);
 
             this.realmData = realmData;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.memoryBudget = memoryBudget;
             this.frameCapBudget = frameCapBudget;
             this.scenesCache = scenesCache;
@@ -78,23 +91,17 @@ namespace DCL.PluginSystem.Global
 
             if (lodEnabled)
             {
-                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue);
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, decentralandUrlsSource);
                 UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, lodAssetsPool, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, lodContainer.transform);
                 LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
             }
-            else
-            {
-                UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);
-            }
-
+            else { UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache); }
         }
 
         public void Dispose()
         {
             lodAssetsPool.Unload(frameCapBudget, 3);
         }
-
     }
-
 }
