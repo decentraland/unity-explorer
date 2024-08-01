@@ -70,7 +70,7 @@ namespace DCL.MapRenderer
 
         private void UpdateLine()
         {
-            Vector3 direction = DestinationPoint - originPoint;
+            Vector3 direction = originPoint - DestinationPoint;
             float distance = direction.magnitude;
 
             float totalUnitLength = currentDotSize + currentDotSize;
@@ -83,11 +83,11 @@ namespace DCL.MapRenderer
                 float startT = i * totalUnitLength / distance;
                 float endT = startT + (currentDotSize / distance);
 
-                var dotStart = Vector3.Lerp(originPoint, DestinationPoint, startT);
-                var dotEnd = Vector3.Lerp(originPoint, DestinationPoint, endT);
+                var dotStart = Vector3.Lerp(DestinationPoint, originPoint, startT);
+                var dotEnd = Vector3.Lerp(DestinationPoint, originPoint, endT);
 
-                lineRenderer.SetPosition(i * 2, dotEnd);
-                lineRenderer.SetPosition((i * 2) + 1, dotStart);
+                lineRenderer.SetPosition(i * 2, dotStart);
+                lineRenderer.SetPosition((i * 2) + 1, dotEnd);
             }
         }
     }
