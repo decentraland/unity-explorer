@@ -34,11 +34,11 @@ namespace DCL.LOD
 
         public void Release(in string key, LODCacheInfo asset)
         {
-            Assert.IsFalse(lodCache.ContainsKey(key)); // 1 to 1 - relation, if it is true then we have a problem in our logic
-
             //We add to cache only if some LODs are loaded
             if (asset.LODLoadedCount() > 0)
             {
+                Assert.IsFalse(lodCache.ContainsKey(key)); // 1 to 1 - relation, if it is true then we have a problem in our logic
+
                 asset.LodGroup.gameObject.SetActive(false);
                 lodCache[key] = asset;
                 unloadQueue.Enqueue(key, MultithreadingUtility.FrameCount);
