@@ -26,6 +26,7 @@ namespace DCL.LOD
         {
             if (lodCache.Remove(key, out cacheInfo))
             {
+                cacheInfo.LodGroup.gameObject.SetActive(true);
                 return true;
             }
             return false;
