@@ -184,7 +184,7 @@ namespace Global.Dynamic
             //TODO unify splashScreenAnimation and splashRoot
             await TryShowSplash(splashScreenAnimation, ct);
             splashScreenAnimation.transform.SetSiblingIndex(1);
-            await dynamicWorldContainer.UserInAppInitializationFlow.ExecuteAsync(
+            await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 showAuthentication,
                 showLoading,
                 false,

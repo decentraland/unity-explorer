@@ -93,7 +93,7 @@ namespace Global.Dynamic
 
         public ParcelServiceContainer ParcelServiceContainer { get; private set; } = null!;
 
-        public RealUserInitializationFlowController UserInAppInitializationFlow { get; private set; } = null!;
+        public RealUserInAppInitializationFlow UserInAppInAppInitializationFlow { get; private set; } = null!;
 
         // TODO move multiplayer related dependencies to a separate container
         public ICharacterDataPropagationUtility CharacterDataPropagationUtility { get; private set; } = null!;
@@ -280,7 +280,7 @@ namespace Global.Dynamic
                 exposedGlobalDataContainer.CameraSamplingData
             );
 
-            container.UserInAppInitializationFlow = new RealUserInitializationFlowController(
+            container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
                 container.RealFlowLoadingStatus,
                 container.MvcManager,
                 selfProfile,
@@ -406,7 +406,7 @@ namespace Global.Dynamic
                     characterPreviewFactory,
                     container.ProfileRepository,
                     dynamicWorldDependencies.Web3Authenticator,
-                    container.UserInAppInitializationFlow,
+                    container.UserInAppInAppInitializationFlow,
                     selfProfile,
                     equippedWearables,
                     equippedEmotes,
