@@ -288,9 +288,9 @@ namespace Global.Dynamic
 
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
                 container.RealFlowLoadingStatus,
+                bootstrapContainer.DecentralandUrlsSource,
                 container.MvcManager,
                 selfProfile,
-                bootstrapContainer.DecentralandUrlsSource,
                 dynamicWorldParams.StartParcel,
                 staticContainer.MainPlayerAvatarBaseProxy,
                 backgroundMusic,
@@ -298,6 +298,7 @@ namespace Global.Dynamic
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
                 identityCache,
+                staticContainer.WebRequestsContainer.WebRequestController,
                 container.RealmController,
                 dynamicWorldParams.AppParameters
             );
@@ -414,7 +415,7 @@ namespace Global.Dynamic
                     staticContainer.WebRequestsContainer.WebRequestController,
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
-                    container.UserInAppInitializationFlow,
+                    container.UserInAppInAppInitializationFlow,
                     profileCache,
                     sidebarBus),
                 new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView),
@@ -447,7 +448,7 @@ namespace Global.Dynamic
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
-                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashAnimator, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus),
+                new Web3AuthenticationPlugin(assetsProvisioner, dynamicWorldDependencies.Web3Authenticator, debugBuilder, container.MvcManager, selfProfile, webBrowser, staticContainer.RealmData, identityCache, characterPreviewFactory, dynamicWorldDependencies.SplashScreen, audioMixerVolumesController, staticContainer.FeatureFlagsCache, characterPreviewEventBus),
                 new StylizedSkyboxPlugin(assetsProvisioner, dynamicSettings.DirectionalLight, debugBuilder),
                 new LoadingScreenPlugin(assetsProvisioner, container.MvcManager, audioMixerVolumesController),
                 new ExternalUrlPromptPlugin(assetsProvisioner, webBrowser, container.MvcManager, dclCursor), new TeleportPromptPlugin(assetsProvisioner, realmNavigator, container.MvcManager, staticContainer.WebRequestsContainer.WebRequestController, placesAPIService, dclCursor),

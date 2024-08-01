@@ -8,12 +8,16 @@ using DCL.Utilities;
 using MVC;
 using System.Threading;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.HealthChecks;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Web3.Identities;
+using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
+using System.Net;
 using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow
@@ -33,6 +37,7 @@ namespace DCL.UserInAppInitializationFlow
 
         public RealUserInAppInitializationFlow(
             RealFlowLoadingStatus loadingStatus,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             Vector2Int startParcel,
@@ -42,6 +47,7 @@ namespace DCL.UserInAppInitializationFlow
             ILoadingScreen loadingScreen,
             IFeatureFlagsProvider featureFlagsProvider,
             IWeb3IdentityCache web3IdentityCache,
+            IWebRequestController webRequestController,
             IRealmController realmController,
             Dictionary<string, string> appParameters)
         {
@@ -49,8 +55,14 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.loadingScreen = loadingScreen;
 
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation();
-            var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, appParameters);
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(
+                new SeveralHealthCheck(
+                    new URLHealthCheck(webRequestController, DecentralandUrl.ArchipelagoStatus),
+                    new URLHealthCheck(webRequestController, DecentralandUrl.GatekeeperStatus)
+                )
+            );
+
+            var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(realmNavigator);
             loadPlayerAvatarStartupOperation = new LoadPlayerAvatarStartupOperation(selfProfile, mainPlayerAvatarBaseProxy);
