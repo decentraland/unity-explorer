@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
@@ -12,16 +13,23 @@ namespace DCL.Time
 {
     public class WorldTimeProvider : IWorldTimeProvider
     {
-        private const string TIME_SERVER_URL = "https://peer.decentraland.org/about";
         private const int TIME_BETWEEN_UPDATES = 5000;
         private const float GAME_HOURS_PER_CYCLE = 24;
         private const float REAL_MINUTES_PER_CYCLE = 120;
         private const float STARTING_CYCLE_HOUR = 0.01f;
 
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private DateTime cachedServerTime;
         private DateTime cachedSystemTime;
         private float cachedTimeInSeconds;
         private bool isPaused;
+
+        private string TIME_SERVER_URL => decentralandUrlsSource.Url(DecentralandUrl.PeerAbout);
+
+        public WorldTimeProvider(IDecentralandUrlsSource decentralandUrlsSource)
+        {
+            this.decentralandUrlsSource = decentralandUrlsSource;
+        }
 
         public async UniTask<float> GetWorldTimeAsync(CancellationToken ct)
         {
