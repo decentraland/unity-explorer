@@ -75,7 +75,7 @@ namespace DCL.Profiles.Self
 
             if (onlyBasicInfo)
             {
-                // With 'onlyBasicInfo' we publish only update the basic info of the profile and keep the rest of the data
+                // With 'onlyBasicInfo' we only update the basic info of the profile and keep the rest of the data
                 newProfile = profileBuilder.From(profile)
                                            .WithVersion(profile.Version + 1)
                                            .WithForceRender(forceRender)
