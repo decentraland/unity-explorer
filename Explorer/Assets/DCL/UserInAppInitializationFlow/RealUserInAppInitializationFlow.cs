@@ -78,21 +78,24 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity,
             CancellationToken ct)
         {
+            StartupResult result = default;
+
             loadPlayerAvatarStartupOperation.AssignWorld(world, playerEntity);
             restartRealmStartupOperation.EnableReload(reloadRealm);
 
             using var playAudioScope = UIAudioEventsBus.Instance.NewPlayAudioScope(backgroundMusic);
-            if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
 
-            StartupResult result = default;
+            do
+            {
+                if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
 
-            await LoadingScreen(showLoading)
-               .ShowWhileExecuteTaskAsync(
-                    async parentLoadReport => { result = await startupOperation.ExecuteAsync(parentLoadReport, ct); },
-                    ct
-                );
-
-            if (result.Success == false && showAuthentication) await ShowAuthenticationScreenAsync(ct);
+                await LoadingScreen(showLoading)
+                   .ShowWhileExecuteTaskAsync(
+                        async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
+                        ct
+                    );
+            }
+            while (result.Success == false && showAuthentication);
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)
