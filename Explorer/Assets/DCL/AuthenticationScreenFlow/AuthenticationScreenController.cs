@@ -171,7 +171,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.NotifyFinish();
+            splashScreenAnimator.HideSplash();
         }
 
         private void ShowRestrictedUserPopup()

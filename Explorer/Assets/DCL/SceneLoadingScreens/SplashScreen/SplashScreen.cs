@@ -1,6 +1,4 @@
-using Cysharp.Threading.Tasks;
 using DCL.Character.CharacterMotion.Components;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -19,28 +17,16 @@ namespace DCL.SceneLoadingScreens.SplashScreen
             this.showSplash = showSplash;
         }
 
-        public void NotifyFinish()
-        {
-            splashScreenAnimation.SetTrigger(AnimationHashes.OUT);
-        }
-
-        public async UniTask ShowSplashAsync(CancellationToken ct)
+        public void ShowSplash()
         {
             splashRoot.SetActive(showSplash);
-            await TryShowSplash(ct);
             splashScreenAnimation.transform.SetSiblingIndex(1);
+            splashScreenAnimation.SetBool(AnimationHashes.ENABLE, true);
         }
 
         public void HideSplash()
         {
-            splashRoot.SetActive(false);
-        }
-
-        private UniTask TryShowSplash(CancellationToken ct)
-        {
-            return showSplash
-                ? UniTask.WaitUntil(() => splashScreenAnimation.GetCurrentAnimatorStateInfo(0).normalizedTime > 1, cancellationToken: ct)
-                : UniTask.CompletedTask;
+            splashScreenAnimation.SetBool(AnimationHashes.ENABLE, false);
         }
     }
 }

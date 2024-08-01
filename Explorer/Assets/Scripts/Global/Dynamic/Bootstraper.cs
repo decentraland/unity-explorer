@@ -61,8 +61,7 @@ namespace Global.Dynamic
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
             ISplashScreen splashScreen, CancellationToken _)
         {
-            //splashRoot.SetActive(showSplash);
-            splashScreen.ShowSplashAsync(_).Forget();
+            splashScreen.ShowSplash();
             cursorRoot.EnsureNotNull();
 
             appParameters = ParseApplicationParameters();
@@ -183,7 +182,7 @@ namespace Global.Dynamic
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
             GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
-            await splashScreen.ShowSplashAsync(ct);
+            splashScreen.ShowSplash();
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
                 showAuthentication,
                 showLoading,

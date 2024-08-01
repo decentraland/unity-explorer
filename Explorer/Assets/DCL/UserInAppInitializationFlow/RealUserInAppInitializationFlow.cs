@@ -59,6 +59,7 @@ namespace DCL.UserInAppInitializationFlow
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
 
             startupOperation = new SeveralStartupOperation(
+                loadingStatus,
                 ensureLivekitConnectionStartupOperation,
                 initializeFeatureFlagsStartupOperation,
                 preloadProfileStartupOperation,
@@ -87,10 +88,7 @@ namespace DCL.UserInAppInitializationFlow
 
             await LoadingScreen(showLoading)
                .ShowWhileExecuteTaskAsync(
-                    async parentLoadReport =>
-                    {
-                        result = await startupOperation.ExecuteAsync(parentLoadReport, ct);
-                    },
+                    async parentLoadReport => { result = await startupOperation.ExecuteAsync(parentLoadReport, ct); },
                     ct
                 );
 
