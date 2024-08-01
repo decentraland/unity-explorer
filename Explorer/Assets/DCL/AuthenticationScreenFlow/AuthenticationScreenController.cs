@@ -6,6 +6,7 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
@@ -33,10 +34,8 @@ namespace DCL.AuthenticationScreenFlow
             Loading,
             Finalize,
         }
-
         private const int ANIMATION_DELAY = 300;
 
-        private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
@@ -63,17 +62,18 @@ namespace DCL.AuthenticationScreenFlow
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
             ISelfProfile selfProfile,
+            FeatureFlagsCache featureFlagsCache,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
-            FeatureFlagsCache featureFlagsCache,
             AudioMixerVolumesController audioMixerVolumesController)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
+            this.featureFlagsCache = featureFlagsCache;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
@@ -379,7 +379,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private void OpenDiscord() =>
-            webBrowser.OpenUrl(DISCORD_LINK);
+            webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
 
         private void CancelVerificationCountdown()
         {
