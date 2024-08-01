@@ -75,7 +75,7 @@ namespace DCL.Profiles.Self
 
             if (onlyBasicInfo)
             {
-                // With 'onlyBasicInfo' we only update the basic info of the profile and keep the rest of the data
+                // With 'onlyBasicInfo' as true we only update the basic info of the profile and keep the rest of the data
                 newProfile = profileBuilder.From(profile)
                                            .WithVersion(profile.Version + 1)
                                            .WithForceRender(forceRender)
@@ -93,6 +93,7 @@ namespace DCL.Profiles.Self
 
                 var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
+                // With 'onlyBasicInfo' as false we update all the info of the profile
                 newProfile = profileBuilder.From(profile)
                                            .WithBodyShape(bodyShape)
                                            .WithWearables(uniqueWearables)
