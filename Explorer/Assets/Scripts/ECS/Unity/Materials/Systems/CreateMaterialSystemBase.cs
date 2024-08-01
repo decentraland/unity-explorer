@@ -23,7 +23,12 @@ namespace ECS.Unity.Materials.Systems
 
         protected void DestroyEntityReference(ref Promise? promise)
         {
-            promise?.Consume(World);
+            if (promise == null) return;
+            Promise promiseValue = promise.Value;
+            promiseValue.Consume(World);
+
+            // Write the value back as `promise.Value` produces a copy of the struct
+            promise = promiseValue;
         }
 
         protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<Texture2D> textureResult)
@@ -33,7 +38,12 @@ namespace ECS.Unity.Materials.Systems
             if (promise == null)
                 return true;
 
-            return promise.Value.TryGetResult(World, out textureResult);
+            Promise value = promise.Value;
+            bool result = value.TryGetResult(World, out textureResult);
+
+            // Write the value back as `promise.Value` produces a copy of the struct
+            promise = value;
+            return result;
         }
 
         protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId, in TextureComponent? textureComponent)

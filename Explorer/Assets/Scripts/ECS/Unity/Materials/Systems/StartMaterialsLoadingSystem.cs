@@ -171,6 +171,11 @@ namespace ECS.Unity.Materials.Systems
 
             TextureComponent textureComponentValue = textureComponent.Value;
 
+            // If data inside promise has not changed just reuse the same promise
+            // as creating and waiting for a new one can be expensive
+            if (Equals(in textureComponentValue, in promise))
+                return false;
+
             // If component is being reused forget the previous promise
             ReleaseMaterial.TryAddAbortIntention(World, ref promise);
 
@@ -181,20 +186,9 @@ namespace ECS.Unity.Materials.Systems
                 FilterMode = textureComponentValue.FilterMode,
             };
 
-            if (textureComponent.Value.IsVideoTexture)
-                promise = Promise.CreateFinalized(intention, GetOrAddVideoTextureResult(textureComponentValue));
-            else
-            {
-                if (Equals(ref textureComponentValue, ref promise)
-                    && promise!.Value.TryGetResult(World!, out var texture))
-                {
-                    // If data inside promise has not changed just reuse the same promise
-                    // as creating and waiting for a new one can be expensive
-                    promise = Promise.CreateFinalized(intention, texture);
-                }
-                else
-                    promise = Promise.Create(World!, intention, partitionComponent);
-            }
+            promise = textureComponent.Value.IsVideoTexture
+                ? Promise.CreateFinalized(intention, GetOrAddVideoTextureResult(textureComponentValue))
+                : Promise.Create(World!, intention, partitionComponent);
 
             return true;
         }
@@ -215,7 +209,7 @@ namespace ECS.Unity.Materials.Systems
             return new StreamableLoadingResult<Texture2D>(ecsSystemException);
         }
 
-        private static bool Equals(ref TextureComponent textureComponent, ref Promise? promise)
+        private static bool Equals(in TextureComponent textureComponent, in Promise? promise)
         {
             if (promise == null) return false;
 

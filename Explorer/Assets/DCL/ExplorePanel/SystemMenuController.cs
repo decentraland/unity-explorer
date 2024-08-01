@@ -82,7 +82,6 @@ namespace DCL.ExplorePanel
         protected override void OnViewClose()
         {
             base.OnViewClose();
-
             logoutCts.SafeCancelAndDispose();
         }
 

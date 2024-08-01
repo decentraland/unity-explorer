@@ -1,6 +1,5 @@
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack.BackpackBus;
-using DCL.Character.CharacterMotion.Components;
 using DCL.UI;
 using System;
 using UnityEngine;
@@ -55,7 +54,7 @@ namespace DCL.Backpack
         }
 
         public void Animate(int triggerId) =>
-            view.gameObject.SetActive(triggerId == AnimationHashes.IN);
+            view.gameObject.SetActive(triggerId == UIAnimationHashes.IN);
 
         public void ResetAnimator() { }
 
