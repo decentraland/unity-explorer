@@ -24,8 +24,10 @@ namespace DCL.LOD
 
         public bool TryGet(in string key, out LODCacheInfo cacheInfo)
         {
-            if (lodCache.TryGetValue(key, out cacheInfo))
+            if (lodCache.Remove(key, out cacheInfo))
+            {
                 return true;
+            }
             return false;
         }
 
