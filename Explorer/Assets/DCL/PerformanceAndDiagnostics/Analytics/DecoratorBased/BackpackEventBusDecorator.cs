@@ -51,6 +51,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                         { "is_base", !emoteUrn.StartsWith("urn:") },
                         { "name", emote.GetName() },
                         { "emote_index", slot },
+                        { "source", "backpack" },
                     });
                 }
             };

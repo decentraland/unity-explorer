@@ -45,14 +45,14 @@ namespace DCL.Analytics.Systems
                 if (lastEmoteId != emoteIntent.EmoteId)
                 {
                     lastEmoteId = emoteIntent.EmoteId;
-                    SendAnalytics(emoteIntent.EmoteId, !lastEmoteId.StartsWith("urn:"));
+                    SendAnalytics(emoteIntent.EmoteId, !lastEmoteId.StartsWith("urn:"), emoteIntent.TriggerSource.ToString().ToLower());
                 }
             }
             else
                 lastEmoteId = string.Empty;
         }
 
-        private void SendAnalytics(string id, bool isBase)
+        private void SendAnalytics(string id, bool isBase, string source)
         {
             analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JsonObject
             {
@@ -60,6 +60,7 @@ namespace DCL.Analytics.Systems
                 { "is_base", isBase }, // if the item is a base emote
                 { "name", string.Empty },
                 { "emote_index", -1 }, // Index where the emote was placed if the user equipped an emote.
+                { "source", source },
             });
         }
     }
