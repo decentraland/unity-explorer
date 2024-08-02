@@ -32,14 +32,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             cts = new CancellationTokenSource();
             SubscribeToPlayerStepAsync(cts.Token).Forget();
 
-            Application.wantsToQuit += () =>
-            {
-                SendAnalytics();
-                return true;
-            };
-
-            Application.quitting += SendAnalytics;
-            AppDomain.CurrentDomain.ProcessExit += (_, _) => SendAnalytics();
+            Application.quitting += Dispose;
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => Dispose();
         }
 
         public void Dispose()

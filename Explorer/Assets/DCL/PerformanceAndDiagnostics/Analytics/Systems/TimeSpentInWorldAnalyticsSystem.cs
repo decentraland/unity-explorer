@@ -16,7 +16,7 @@ namespace DCL.Analytics.Systems
         private readonly IAnalyticsController analytics;
         private readonly IRealmData realmData;
 
-        private string realmName;
+        private string currentRealmName;
 
         private float timeSpentInWorld;
         private bool isDisposed;
@@ -31,14 +31,8 @@ namespace DCL.Analytics.Systems
         {
             base.Initialize();
 
-            Application.wantsToQuit += () =>
-            {
-                SendAnalytics();
-                return true;
-            };
-
-            Application.quitting += SendAnalytics;
-            AppDomain.CurrentDomain.ProcessExit += (_, _) => SendAnalytics();
+            Application.quitting += Dispose;
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => Dispose();
         }
 
         ~TimeSpentInWorldAnalyticsSystem()
@@ -61,14 +55,14 @@ namespace DCL.Analytics.Systems
         {
             if (!realmData.Configured) return;
 
-            if (realmData.RealmName != realmName)
+            if (realmData.RealmName != currentRealmName)
             {
-                if (!string.IsNullOrEmpty(realmName))
+                if (!string.IsNullOrEmpty(currentRealmName))
                     SendAnalytics();
 
-                realmName = realmData.RealmName;
+                currentRealmName = realmData.RealmName;
             }
-            else if (!string.IsNullOrEmpty(realmName))
+            else if (!string.IsNullOrEmpty(currentRealmName))
                 timeSpentInWorld += t;
         }
 
@@ -79,7 +73,7 @@ namespace DCL.Analytics.Systems
             analytics.Track(AnalyticsEvents.World.TIME_SPENT_IN_WORLD, new JsonObject
             {
                 ["time_spent"] = timeSpentInWorld,
-                ["realm_name"] = realmName,
+                ["realm_name"] = currentRealmName,
             });
 
             timeSpentInWorld = 0;
