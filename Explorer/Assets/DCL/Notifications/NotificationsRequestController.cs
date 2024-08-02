@@ -64,6 +64,12 @@ namespace DCL.Notification
 
         public async UniTask<List<INotification>> RequestNotificationsAsync()
         {
+            do
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(5), DelayType.Realtime, cancellationToken: cancellationToken.Token);
+            }
+            while (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired);
+
             urlBuilder.Clear();
             urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Notification)))
                       .AppendParameter(limitParameter);
