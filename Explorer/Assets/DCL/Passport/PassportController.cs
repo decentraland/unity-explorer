@@ -48,6 +48,7 @@ namespace DCL.Passport
         private CancellationTokenSource characterPreviewLoadingCts;
         private PassportErrorsController passportErrorsController;
         private PassportCharacterPreviewController characterPreviewController;
+        private PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> passportModules = new ();
 
         public PassportController(
@@ -93,9 +94,12 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+            passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity, passportErrorsController);
             passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
-            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, passportErrorsController));
+            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
+
+            passportProfileInfoController.OnProfilePublished += SetupPassportModules;
         }
 
         protected override void OnViewShow()
@@ -106,6 +110,8 @@ namespace DCL.Passport
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
             dclInput.Shortcuts.Disable();
+            dclInput.Camera.Disable();
+            dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
         }
 
@@ -113,6 +119,8 @@ namespace DCL.Passport
         {
             passportErrorsController.Hide(true);
             dclInput.Shortcuts.Enable();
+            dclInput.Camera.Enable();
+            dclInput.Player.Enable();
             characterPreviewController.OnHide();
 
             foreach (IPassportModuleController module in passportModules)
@@ -130,6 +138,7 @@ namespace DCL.Passport
             characterPreviewLoadingCts?.SafeCancelAndDispose();
             characterPreviewController?.Dispose();
 
+            passportProfileInfoController.OnProfilePublished -= SetupPassportModules;
             foreach (IPassportModuleController module in passportModules)
                 module.Dispose();
         }
@@ -151,8 +160,7 @@ namespace DCL.Passport
                 characterPreviewController.OnShow();
 
                 // Load passport modules
-                foreach (IPassportModuleController module in passportModules)
-                    module.Setup(profile);
+                SetupPassportModules(profile);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -161,6 +169,12 @@ namespace DCL.Passport
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private void SetupPassportModules(Profile profile)
+        {
+            foreach (IPassportModuleController module in passportModules)
+                module.Setup(profile);
         }
     }
 }
