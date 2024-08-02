@@ -14,16 +14,21 @@ namespace DCL.Emoji
         public event Action<string> OnSearchTextChanged;
 
         private readonly SearchBarView view;
+        private readonly DCLInput dclInput;
         private CancellationTokenSource cts;
         private readonly IObjectPool<EmojiButton> searchItemsPool;
         private readonly List<EmojiButton> usedPoolItems = new ();
 
-        public EmojiSearchController(SearchBarView view, Transform parent, EmojiButton emojiButton)
+        public EmojiSearchController(SearchBarView view, Transform parent, EmojiButton emojiButton, DCLInput dclInput)
         {
             this.view = view;
+            this.dclInput = dclInput;
 
             view.inputField.onValueChanged.AddListener(OnValueChanged);
+            view.inputField.onSelect.AddListener(DisableDCLInput);
+            view.inputField.onDeselect.AddListener(EnableDCLInput);
             view.clearSearchButton.onClick.AddListener(ClearSearch);
+
             view.clearSearchButton.gameObject.SetActive(false);
 
             searchItemsPool = new ObjectPool<EmojiButton>(
@@ -32,6 +37,30 @@ namespace DCL.Emoji
                 actionOnGet: buttonView => { buttonView.gameObject.SetActive(true); },
                 actionOnRelease: buttonView => { buttonView.gameObject.SetActive(false); }
             );
+        }
+
+        public void Dispose()
+        {
+            ReleaseAllSearchResults();
+
+            view.inputField.onValueChanged.RemoveListener(OnValueChanged);
+            view.inputField.onSelect.RemoveListener(DisableDCLInput);
+            view.inputField.onDeselect.RemoveListener(EnableDCLInput);
+            view.clearSearchButton.onClick.RemoveListener(ClearSearch);
+
+            EnableDCLInput(string.Empty);
+        }
+
+        private void DisableDCLInput(string _)
+        {
+            dclInput.Shortcuts.Disable();
+            dclInput.Player.Disable();
+        }
+
+        private void EnableDCLInput(string _)
+        {
+            dclInput.Shortcuts.Enable();
+            dclInput.Player.Enable();
         }
 
         private EmojiButton CreatePoolElements(Transform parent, EmojiButton emojiButton)
@@ -85,11 +114,6 @@ namespace DCL.Emoji
                 searchItemsPool.Release(emojiSuggestionView);
 
             usedPoolItems.Clear();
-        }
-
-        public void Dispose()
-        {
-            ReleaseAllSearchResults();
         }
     }
 }
