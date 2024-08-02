@@ -110,6 +110,8 @@ namespace DCL.Passport
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
             dclInput.Shortcuts.Disable();
+            dclInput.Camera.Disable();
+            dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
         }
 
@@ -117,6 +119,8 @@ namespace DCL.Passport
         {
             passportErrorsController.Hide(true);
             dclInput.Shortcuts.Enable();
+            dclInput.Camera.Enable();
+            dclInput.Player.Enable();
             characterPreviewController.OnHide();
 
             foreach (IPassportModuleController module in passportModules)
