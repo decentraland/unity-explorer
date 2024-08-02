@@ -45,8 +45,7 @@ namespace DCL.AvatarRendering.Wearables.Components
 
         public bool IsOnChain()
         {
-            IAvatarAttachment attachment = this;
-            var id = attachment.GetUrn().ToString();
+            var id = ((IAvatarAttachment) this).GetUrn().ToString();
             return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
         }
 
