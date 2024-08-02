@@ -15,7 +15,7 @@ namespace ECS.StreamableLoading.Tests
         [SetUp]
         public void SetUp()
         {
-            profilingProvider = new ProfilingProvider();
+            profiler = new Profiler();
         }
 
         public struct DummyComponent
@@ -24,12 +24,12 @@ namespace ECS.StreamableLoading.Tests
         }
 
         private FrameTimeCapBudget budget;
-        private ProfilingProvider profilingProvider;
+        private IBudgetProfiler profiler;
 
         [Test]
         public async Task SpendBudget()
         {
-            budget = new FrameTimeCapBudget(5f, profilingProvider);
+            budget = new FrameTimeCapBudget(5f, profiler);
 
             //We need to wait one frame for the Profiling Provider start getting samples
             await UniTask.Yield();
@@ -47,7 +47,7 @@ namespace ECS.StreamableLoading.Tests
         [Test]
         public async Task StopSystemWhenBudgetIsBlown()
         {
-            budget = new FrameTimeCapBudget(15f, profilingProvider);
+            budget = new FrameTimeCapBudget(15f, profiler);
 
             var world = World.Create();
             Entity e = world.Create(new DummyComponent());

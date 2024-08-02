@@ -6,19 +6,19 @@ namespace DCL.Optimization.PerformanceBudgeting
     public class FrameTimeSharedBudget : IReleasablePerformanceBudget
     {
         private readonly float totalBudgetAvailable;
-        private readonly IProfilingProvider profilingProvider;
+        private readonly IBudgetProfiler profilerProvider;
         private double currentAvailableBudget;
         private ulong startTime;
         private bool outOfBudget;
 
         private long currentFrameNumber;
 
-        public FrameTimeSharedBudget(float totalBudgetAvailableInMiliseconds, IProfilingProvider profilingProvider)
+        public FrameTimeSharedBudget(float totalBudgetAvailableInMiliseconds, IBudgetProfiler profilerProvider)
         {
             //FrameTime return CurrentValue in nanoseconds, so we are converting milliseconds to nanoseconds
             totalBudgetAvailable = totalBudgetAvailableInMiliseconds * 1000000;
             currentAvailableBudget = totalBudgetAvailable;
-            this.profilingProvider = profilingProvider;
+            this.profilerProvider = profilerProvider;
 
             currentFrameNumber = MultithreadingUtility.FrameCount;
         }
@@ -30,7 +30,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             if (outOfBudget)
                 return false;
 
-            currentAvailableBudget -= profilingProvider.CurrentFrameTimeValueInNS - startTime;
+            currentAvailableBudget -= profilerProvider.CurrentFrameTimeValueNs - startTime;
             ReleaseBudget();
 
             outOfBudget = currentAvailableBudget < 0;
@@ -40,7 +40,7 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public void ReleaseBudget()
         {
-            startTime = profilingProvider.CurrentFrameTimeValueInNS;
+            startTime = profilerProvider.CurrentFrameTimeValueNs;
         }
 
         private void TryResetBudget()

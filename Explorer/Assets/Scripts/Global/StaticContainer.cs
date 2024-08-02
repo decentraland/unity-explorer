@@ -83,7 +83,7 @@ namespace Global
 
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
-        public IProfilingProvider ProfilingProvider { get; private set; }
+        public Profiler Profiler { get; private set; }
 
         public PhysicsTickProvider PhysicsTickProvider { get; private set; }
 
@@ -147,7 +147,7 @@ namespace Global
 
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
-            var profilingProvider = new ProfilingProvider();
+            var profilingProvider = new Profiler();
 
             var container = new StaticContainer();
 
@@ -186,7 +186,7 @@ namespace Global
 
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
-            container.ProfilingProvider = profilingProvider;
+            container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
