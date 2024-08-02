@@ -1,22 +1,16 @@
 using Arch.Core;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
 using ECS.Prioritization.Components;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Common.Systems;
 using GLTFast;
-using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
 using System.Threading;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 
 namespace ECS.StreamableLoading.GLTF
 {
@@ -42,6 +36,36 @@ namespace ECS.StreamableLoading.GLTF
             gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partitionComponent);
         }
 
+        // Might be used later
+        // private AnimationMethod GetAnimationMethod()
+        // {
+        //     string sPlatform = PlatformUtils.GetPlatform();
+        //     BuildTarget bt = BuildTarget.StandaloneWindows64; // default
+        //
+        //     switch (sPlatform)
+        //     {
+        //         case "_windows":
+        //         {
+        //             bt = BuildTarget.StandaloneWindows64;
+        //             break;
+        //         }
+        //         case "_mac":
+        //         {
+        //             bt = BuildTarget.StandaloneOSX;
+        //             break;
+        //         }
+        //         case "_linux":
+        //         {
+        //             bt = BuildTarget.StandaloneLinux64;
+        //             break;
+        //         }
+        //     }
+        //
+        //     return bt is BuildTarget.StandaloneWindows64 or BuildTarget.StandaloneOSX
+        //         ? AnimationMethod.Mecanim
+        //         : AnimationMethod.Legacy;
+        // }
+
         protected override async UniTask<StreamableLoadingResult<GLTFData>> FlowInternalAsync(GetGLTFIntention intention, IAcquiredBudget acquiredBudget, IPartitionComponent partition, CancellationToken ct)
         {
             if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl))
@@ -53,7 +77,6 @@ namespace ECS.StreamableLoading.GLTF
 
             var gltFastSettings = new ImportSettings
             {
-                AnimationMethod = AnimationMethod.Mecanim, // Could be legacy in some cases according to ABConverter?
                 NodeNameMethod = NameImportMethod.OriginalUnique,
                 AnisotropicFilterLevel = 0,
                 GenerateMipMaps = false,

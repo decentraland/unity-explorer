@@ -1,16 +1,16 @@
 using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.Metadata;
 using DCL.Diagnostics;
 using DCL.Optimization.PerformanceBudgeting;
+using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.StreamableLoading;
-using ECS.StreamableLoading.AssetBundles;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Components;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Utility;
 
@@ -61,26 +61,27 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             // GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
 
+            // TODO: Uncommenting this causes all GLTF to not render at all, need to research why
             // Collect all renderers, they are needed for Visibility system
-            /*using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
-            {
-                instance.GetComponentsInChildren(true, instanceRenderers.Value);
-                result.Renderers.AddRange(instanceRenderers.Value);
-            }*/
+            // using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
+            // {
+            //     gltfData.containerGameObject.GetComponentsInChildren(true, instanceRenderers.Value);
+            //     result.Renderers.AddRange(instanceRenderers.Value);
+            // }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
-            /*using PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope();
+            using PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope();
             {
-                instance.GetComponentsInChildren(true, animationScope.Value);
+                gltfData.containerGameObject.GetComponentsInChildren(true, animationScope.Value);
                 result.Animations.AddRange(animationScope.Value);
-            }*/
+            }
 
             // Collect all Animators as they are used in Animation System
-            /*using PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope();
+            using PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope();
             {
-                instance.GetComponentsInChildren(true, animatorScope.Value);
+                gltfData.containerGameObject.GetComponentsInChildren(true, animatorScope.Value);
                 result.Animators.AddRange(animatorScope.Value);
-            }*/
+            }
 
             // Collect colliders from mesh filters
             // Colliders are created/fetched disabled as its layer is controlled by another system
@@ -137,7 +138,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             {
                 if (r.name.Contains("_collider", StringComparison.OrdinalIgnoreCase))
                     UnityObjectUtils.SafeDestroy(r);
-                    //DestroyImmediate(r);
             }
         }
 
@@ -147,7 +147,6 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             {
                 Physics.BakeMesh(filter.sharedMesh.GetInstanceID(), false);
                 filter.gameObject.AddComponent<MeshCollider>();
-                //DestroyImmediate(filter.GetComponent<MeshRenderer>());
                 UnityObjectUtils.SafeDestroy(filter.GetComponent<MeshRenderer>());
             }
 
