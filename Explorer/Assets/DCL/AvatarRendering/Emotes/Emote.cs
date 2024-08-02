@@ -21,7 +21,7 @@ namespace DCL.AvatarRendering.Emotes
         {
             IAvatarAttachment attachment = this;
             var id = attachment.GetUrn().ToString();
-            return id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+            return id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:");
         }
 
         public AvatarAttachmentDTO GetDTO() =>
