@@ -32,7 +32,7 @@ namespace DCL.ResourcesUnloading.Tests
         private TexturesCache texturesCache;
         private AudioClipsCache audioClipsCache;
         private GltfContainerAssetsCache gltfContainerAssetsCache;
-        private LODAssetsPool lodAssets;
+        private LODCache lodAssets;
         private RoadAssetsPool roadAssets;
 
 
@@ -51,7 +51,7 @@ namespace DCL.ResourcesUnloading.Tests
             gltfContainerAssetsCache = new GltfContainerAssetsCache();
             wearableAssetsCache = new WearableAssetsCache(100);
             wearableCatalog = new WearableCatalog();
-            lodAssets = new LODAssetsPool();
+            lodAssets = new LODCache(new GameObjectPool<LODGroup>(new GameObject().transform));
             roadAssets = new RoadAssetsPool(new List<GameObject>());
 
 

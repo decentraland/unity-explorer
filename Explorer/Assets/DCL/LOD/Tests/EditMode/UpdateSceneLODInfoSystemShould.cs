@@ -3,6 +3,7 @@ using DCL.Ipfs;
 using DCL.LOD.Components;
 using DCL.LOD.Systems;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Optimization.Pools;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
@@ -11,13 +12,13 @@ using ECS.TestSuite;
 using NSubstitute;
 using NUnit.Framework;
 using UnityEngine;
+using Assert = UnityEngine.Assertions.Assert;
 
 namespace DCL.LOD.Tests
 {
     public class UpdateSceneLODInfoSystemShould : UnitySystemTestBase<UpdateSceneLODInfoSystem>
     {
         private SceneLODInfo sceneLODInfo;
-        private LODAssetsPool lodAssetsPool;
         private PartitionComponent partitionComponent;
         private SceneDefinitionComponent sceneDefinitionComponent;
 
@@ -55,9 +56,8 @@ namespace DCL.LOD.Tests
             sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
-            lodAssetsPool = new LODAssetsPool();
-
-            system = new UpdateSceneLODInfoSystem(world, lodAssetsPool, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org) );
+            sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2);
+            system = new UpdateSceneLODInfoSystem(world, lodSettings, scenesCache, sceneReadinessReportQueue, new DecentralandUrlsSource(DecentralandEnvironment.Org));
         }
 
 
@@ -79,46 +79,8 @@ namespace DCL.LOD.Tests
             //Act
             system.Update(0);
 
-            //Assert
-            Assert.AreEqual(expectedLODLevel, world.Get<SceneLODInfo>(entity).CurrentLODLevel);
+            var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(entity);
+            Assert.AreEqual(sceneLODInfoRetrieved.CurrentLODLevelPromise, expectedLODLevel);
         }
-
-
-
-
-
-
-        /*
-   TODO: Uncomment when LOD Async Instantiation is back up
-  [Test]
-  public void ResolvePromiseAndDontInstantiate()
-  {
-      var frameCapBudget = Substitute.For<IPerformanceBudget>();
-      frameCapBudget.TrySpendBudget().Returns(true, false);
-
-      system.frameCapBudget = frameCapBudget;
-
-      //Arrange
-      var promiseGenerated = GenerateLODPromise();
-      sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
-      sceneLODInfo.CurrentLODLevel = 1;
-      sceneLODInfo.IsDirty = true;
-      var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
-
-      //Act
-      system.Update(0);
-
-      //Assert
-      var sceneLODInfoRetrieved = world.Get<SceneLODInfo>(sceneLodInfoEntity);
-      Assert.IsTrue(sceneLODInfoRetrieved.IsDirty);
-      Assert.Null(sceneLODInfoRetrieved.CurrentLOD?.Root);
-      Assert.AreNotEqual(sceneLODInfoRetrieved.CurrentLOD, sceneLODInfoRetrieved.CurrentVisibleLOD);
-      Assert.AreEqual(new LODKey(fakeHash, 1), sceneLODInfoRetrieved.CurrentLOD!.LodKey);
-      Assert.AreEqual(promiseGenerated.Item1, sceneLODInfoRetrieved.CurrentLOD!.AssetBundleReference);
-  }
-  */
-
-
-
     }
 }
