@@ -1,14 +1,12 @@
-
 using DCL.Browser;
 using DCL.MapRenderer;
 using DCL.MapRenderer.MapLayers;
-using System;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 
 namespace DCL.Navmap
 {
     public class NavmapFilterController
     {
-        private const string DAO_URL = "https://decentraland.org/dao/";
         private readonly NavmapFilterView filterView;
         private readonly IMapRenderer mapRenderer;
 
@@ -18,7 +16,7 @@ namespace DCL.Navmap
             this.mapRenderer = mapRenderer;
             filterView.infoButton.onClick.AddListener(ToggleInfoContent);
             filterView.OnFilterChanged += ToggleLayer;
-            filterView.daoButton.onClick.AddListener(()=>webBrowser.OpenUrl(DAO_URL));
+            filterView.daoButton.onClick.AddListener(() => webBrowser.OpenUrl(DecentralandUrl.DAO));
         }
 
         public void CloseFilterContent()

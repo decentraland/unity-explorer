@@ -5,7 +5,6 @@ using System.Linq;
 using SceneRunner.Scene;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Global.Dynamic
 {
@@ -66,6 +65,12 @@ namespace Global.Dynamic
         }
 
         public void SetTargetScene(Vector2Int newTargetScene) => targetScene = newTargetScene;
+
+        public void SetWorldRealm(string targetWorld)
+        {
+            this.targetWorld = targetWorld;
+            initialRealm = InitialRealm.World;
+        }
 
         public void SetLocalSceneDevelopmentRealm(string targetRealm)
         {

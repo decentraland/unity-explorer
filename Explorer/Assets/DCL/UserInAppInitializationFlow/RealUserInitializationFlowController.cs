@@ -1,6 +1,5 @@
 using System;
 using Arch.Core;
-using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Audio;
@@ -13,9 +12,11 @@ using MVC;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
+using System.Collections.Generic;
 using UnityEngine;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
@@ -25,6 +26,7 @@ namespace DCL.UserInAppInitializationFlow
     {
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly Vector2Int startParcel;
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -34,10 +36,13 @@ namespace DCL.UserInAppInitializationFlow
         private readonly IFeatureFlagsProvider featureFlagsProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IRealmController realmController;
+        private readonly Dictionary<string, string> appParameters;
 
-        public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
+        public RealUserInitializationFlowController(
+            RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
+            IDecentralandUrlsSource decentralandUrlsSource,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
@@ -45,10 +50,12 @@ namespace DCL.UserInAppInitializationFlow
             ILoadingScreen loadingScreen,
             IFeatureFlagsProvider featureFlagsProvider,
             IWeb3IdentityCache web3IdentityCache,
-            IRealmController realmController)
+            IRealmController realmController,
+            Dictionary<string, string> appParameters)
         {
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
             this.loadingStatus = loadingStatus;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
@@ -58,6 +65,7 @@ namespace DCL.UserInAppInitializationFlow
             this.featureFlagsProvider = featureFlagsProvider;
             this.web3IdentityCache = web3IdentityCache;
             this.realmController = realmController;
+            this.appParameters = appParameters;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
@@ -131,7 +139,7 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
-            try { await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, ct); }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
     }

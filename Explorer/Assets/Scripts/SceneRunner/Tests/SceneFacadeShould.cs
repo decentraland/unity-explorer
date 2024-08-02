@@ -15,7 +15,9 @@ using CrdtEcsBridge.PoolsProviders;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World;
 using DCL.PluginSystem.World.Dependencies;
@@ -86,11 +88,25 @@ namespace SceneRunner.Tests
             crdtSerializer = Substitute.For<ICRDTSerializer>().EnsureNotNull();
             componentsRegistry = Substitute.For<ISDKComponentsRegistry>().EnsureNotNull();
 
-            sceneFactory = new SceneFactory(ecsWorldFactory, sceneRuntimeFactory, sharedPoolsProvider, crdtSerializer, componentsRegistry,
-                new SceneEntityFactory(), new EntityCollidersGlobalCache(), Substitute.For<IEthereumApi>(), Substitute.For<IMVCManager>(),
-                Substitute.For<IProfileRepository>(), Substitute.For<IWeb3IdentityCache>(), IWebRequestController.DEFAULT,
-                new IRoomHub.Fake(), Substitute.For<IRealmData>(), Substitute.For<ICommunicationControllerHub>(),
-                Substitute.For<IPortableExperiencesController>());
+            sceneFactory = new SceneFactory(
+                ecsWorldFactory,
+                sceneRuntimeFactory,
+                sharedPoolsProvider,
+                crdtSerializer,
+                componentsRegistry,
+                new SceneEntityFactory(),
+                new EntityCollidersGlobalCache(),
+                Substitute.For<IEthereumApi>(),
+                Substitute.For<IMVCManager>(),
+                Substitute.For<IProfileRepository>(),
+                Substitute.For<IWeb3IdentityCache>(),
+                Substitute.For<IDecentralandUrlsSource>(),
+                IWebRequestController.DEFAULT,
+                new IRoomHub.Fake(),
+                Substitute.For<IRealmData>(),
+                Substitute.For<ICommunicationControllerHub>(),
+                Substitute.For<IPortableExperiencesController>()
+            );
         }
 
         [OneTimeTearDown]

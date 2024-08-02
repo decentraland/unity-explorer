@@ -17,6 +17,7 @@ using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using DCL.Interaction.Utility;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PluginSystem.World.Dependencies;
 using DCL.Time;
 using DCL.Utilities.Extensions;
@@ -118,14 +119,20 @@ namespace SceneRunner
             this.ecsWorldSharedDependencies = ecsWorldSharedDependencies;
         }
 
-        public SceneInstanceDependencies(ISDKComponentsRegistry sdkComponentsRegistry, IEntityCollidersGlobalCache entityCollidersGlobalCache,
-            ISceneData sceneData, IPartitionComponent partitionProvider,
-            IECSWorldFactory ecsWorldFactory, ISceneEntityFactory entityFactory)
+        public SceneInstanceDependencies(
+            IDecentralandUrlsSource decentralandUrlsSource,
+            ISDKComponentsRegistry sdkComponentsRegistry,
+            IEntityCollidersGlobalCache entityCollidersGlobalCache,
+            ISceneData sceneData,
+            IPartitionComponent partitionProvider,
+            IECSWorldFactory ecsWorldFactory,
+            ISceneEntityFactory entityFactory
+        )
         {
             this.sceneData = sceneData;
             ecsMutexSync = new MutexSync();
             CRDTProtocol = new CRDTProtocol();
-            worldTimeProvider = new WorldTimeProvider();
+            worldTimeProvider = new WorldTimeProvider(decentralandUrlsSource);
             SceneStateProvider = new SceneStateProvider();
             systemGroupThrottler = new SystemGroupsUpdateGate();
             systemsUpdateGate = new SystemsPriorityComponentsGate();

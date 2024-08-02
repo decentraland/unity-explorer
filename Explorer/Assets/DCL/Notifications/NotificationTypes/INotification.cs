@@ -6,7 +6,7 @@ namespace DCL.Notification
         NotificationType Type { get; }
         string Address { get; }
         string Timestamp { get; }
-        bool Read { get; }
+        bool Read { get; set; }
 
         public string GetHeader();
         public string GetTitle();
