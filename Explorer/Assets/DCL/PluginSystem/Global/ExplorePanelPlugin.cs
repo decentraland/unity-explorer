@@ -71,7 +71,6 @@ namespace DCL.PluginSystem.Global
         private NavmapController? navmapController;
         private SettingsController? settingsController;
         private BackpackSubPlugin? backpackSubPlugin;
-        private ExplorePanelInputHandler? inputHandler;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,

@@ -80,13 +80,16 @@ namespace PortableExperiences.Controller
                 throw new Exception($"Scene not Available in provided Portable Experience with ens:{ens} - urn: {urn}");
             }
             var realmData = new RealmData();
+
             realmData.Reconfigure(
                 new IpfsRealm(web3IdentityCache, webRequestController, portableExperiencePath, result),
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
-                result.comms?.protocol ?? string.Empty
+                result.comms?.protocol ?? "v3",
+                portableExperiencePath.Value
             );
+
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";

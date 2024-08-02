@@ -345,7 +345,6 @@ namespace Global.Dynamic
                 )
             );
 
-            INotificationsBusController notificationsBusController = new NotificationsBusController();
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);

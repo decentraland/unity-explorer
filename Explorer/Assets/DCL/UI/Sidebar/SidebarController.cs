@@ -6,7 +6,6 @@ using DCL.Notification.NotificationsMenu;
 using DCL.SidebarBus;
 using MVC;
 using System.Threading;
-using UnityEngine.Playables;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -95,7 +94,7 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackNotificationIndicator.SetActive(false);
         }
 
-        private void OnRewardNotificationReceived(INotification newNotification)
+        private void OnRewardNotificationReceived(Notification.INotification notification)
         {
             viewInstance.backpackNotificationIndicator.SetActive(true);
         }

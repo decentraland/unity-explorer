@@ -1,4 +1,3 @@
-using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.UI;

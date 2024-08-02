@@ -3,7 +3,6 @@ using Arch.System;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
 using Cysharp.Threading.Tasks;
-using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
 using DCL.Chat.MessageBus;
 using DCL.Diagnostics;
