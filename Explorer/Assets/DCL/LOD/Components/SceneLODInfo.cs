@@ -137,11 +137,5 @@ namespace DCL.LOD.Components
                    CurrentLODLevelPromise == lodForAcquisition;
         }
 
-        public void SetCurrentLODPromise(AssetPromise<AssetBundleData, GetAssetBundleIntention> promise, byte lodLevel)
-        {
-            //CurrentLODPromise = promise;
-            CurrentLODLevelPromise = lodLevel;
-        }
-
     }
 }
