@@ -23,6 +23,7 @@ namespace ECS
         int NetworkId { get; }
         string CommsAdapter { get; }
         string Protocol { get; }
+        string Hostname { get; }
 
         /// <summary>
         ///     Whether the data was set at least once
@@ -38,17 +39,19 @@ namespace ECS
             public int NetworkId { get; }
             public string CommsAdapter { get; }
             public string Protocol { get; }
+            public string Hostname { get; }
             public bool Configured { get; }
             public bool IsDirty { get; internal set; }
 
-            public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr", string protocol = "v3") : this(
+            public Fake(int networkId = 1, string commsAdapter = "", string realmName = "baldr", string protocol = "v3",
+                string hostname = "realm-provider.decentraland.org") : this(
                 new LocalIpfsRealm(new URLDomain()),
                 true,
                 realmName,
-                true, networkId, commsAdapter, protocol) { }
+                true, networkId, commsAdapter, protocol, hostname) { }
 
             public Fake(IIpfsRealm ipfs, bool scenesAreFixed, string realmName, bool configured, int networkId,
-                string commsAdapter, string protocol)
+                string commsAdapter, string protocol, string hostname)
             {
                 Ipfs = ipfs;
                 ScenesAreFixed = scenesAreFixed;
@@ -57,6 +60,7 @@ namespace ECS
                 NetworkId = networkId;
                 CommsAdapter = commsAdapter;
                 Protocol = protocol;
+                Hostname = hostname;
             }
         }
     }

@@ -35,6 +35,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Track(AnalyticsEvents.Chat.MESSAGE_SENT, new JsonObject
             {
                 { "message", message },
+                { "channel_mame", "nearby"}, // temporally hardcoded
+                { "receiver_id", string.Empty} // temporal mock
             });
         }
     }

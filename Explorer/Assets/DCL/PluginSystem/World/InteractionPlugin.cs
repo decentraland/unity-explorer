@@ -25,7 +25,7 @@ namespace DCL.PluginSystem.World
     public class InteractionPlugin : IDCLWorldPlugin<InteractionPlugin.Settings>
     {
         private readonly IGlobalInputEvents globalInputEvents;
-        private readonly IProfilingProvider profilingProvider;
+        private readonly IBudgetProfiler profiler;
         private readonly ECSWorldSingletonSharedDependencies sharedDependencies;
         private readonly IComponentPoolsRegistry poolsRegistry;
         private readonly IAssetsProvisioner assetsProvisioner;
@@ -34,10 +34,10 @@ namespace DCL.PluginSystem.World
         private Settings settings = null!;
         private InteractionSettingsData interactionData = null!;
 
-        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IProfilingProvider profilingProvider, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner)
+        public InteractionPlugin(ECSWorldSingletonSharedDependencies sharedDependencies, IBudgetProfiler profiler, IGlobalInputEvents globalInputEvents, IComponentPoolsRegistry poolsRegistry, IAssetsProvisioner assetsProvisioner)
         {
             this.sharedDependencies = sharedDependencies;
-            this.profilingProvider = profilingProvider;
+            this.profiler = profiler;
             this.globalInputEvents = globalInputEvents;
             this.poolsRegistry = poolsRegistry;
             this.assetsProvisioner = assetsProvisioner;
@@ -48,7 +48,7 @@ namespace DCL.PluginSystem.World
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
             this.settings = settings;
-            raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profilingProvider);
+            raycastBudget = new FrameTimeSharedBudget(settings.RaycastFrameBudgetMs, profiler);
             interactionData = (await assetsProvisioner.ProvideMainAssetAsync(this.settings.Data, ct)).Value;
         }
 
