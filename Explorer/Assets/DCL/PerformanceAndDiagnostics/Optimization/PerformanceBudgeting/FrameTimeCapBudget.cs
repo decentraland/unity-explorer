@@ -8,39 +8,39 @@ namespace DCL.Optimization.PerformanceBudgeting
     public class FrameTimeCapBudget : IPerformanceBudget
     {
         private readonly ulong totalBudgetAvailable;
-        private readonly IProfilingProvider profilingProvider;
+        private readonly IBudgetProfiler profiler;
 
-        public FrameTimeCapBudget(float budgetCapInMS, IProfilingProvider profilingProvider) : this(
+        public FrameTimeCapBudget(float budgetCapInMS, IBudgetProfiler profiler) : this(
             TimeSpan.FromMilliseconds(budgetCapInMS),
-            profilingProvider
+            profiler
         ) { }
 
-        public FrameTimeCapBudget(TimeSpan totalBudgetAvailable, IProfilingProvider profilingProvider) : this(
+        public FrameTimeCapBudget(TimeSpan totalBudgetAvailable, IBudgetProfiler profiler) : this(
             Convert.ToUInt64(
                 totalBudgetAvailable.TotalMilliseconds * 1000000 //converting milliseconds to nanoseconds
             ),
-            profilingProvider
+            profiler
         ) { }
 
-        public FrameTimeCapBudget(ulong totalBudgetAvailable, IProfilingProvider profilingProvider)
+        public FrameTimeCapBudget(ulong totalBudgetAvailable, IBudgetProfiler profiler)
         {
-            this.profilingProvider = profilingProvider;
+            this.profiler = profiler;
             this.totalBudgetAvailable = totalBudgetAvailable;
         }
 
         public bool TrySpendBudget() =>
-            profilingProvider.CurrentFrameTimeValueInNS < totalBudgetAvailable;
+             profiler.CurrentFrameTimeValueNs < totalBudgetAvailable;
 
         public class Default : IPerformanceBudget
         {
             private readonly IPerformanceBudget performanceBudget;
 
-            public Default() : this(new ProfilingProvider()) { }
+            public Default() : this(new Profiler()) { }
 
             //33 in [ms]. Table: 33ms ~ 30fps | 16ms ~ 60fps | 11ms ~ 90 fps | 8ms ~ 120fps
-            public Default(IProfilingProvider profilingProvider)
+            public Default(IBudgetProfiler profiler)
             {
-                performanceBudget = new FrameTimeCapBudget(33f, profilingProvider);
+                performanceBudget = new FrameTimeCapBudget(33f, profiler);
             }
 
             public bool TrySpendBudget() =>

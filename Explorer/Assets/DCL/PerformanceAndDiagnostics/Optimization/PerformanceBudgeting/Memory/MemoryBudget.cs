@@ -16,30 +16,30 @@ namespace DCL.Optimization.PerformanceBudgeting
 
     public class MemoryBudget : IMemoryUsageProvider, IPerformanceBudget
     {
-        private const ulong BYTES_IN_MEGABYTE = 1024 * 1024;
-        private const ulong NO_MEMORY = 0;
+        private const long BYTES_IN_MEGABYTE = 1024 * 1024;
+        private const long NO_MEMORY = 0;
 
-        private readonly IProfilingProvider profilingProvider;
+        private readonly IBudgetProfiler profiler;
         private readonly IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold;
 
         // Debug
         private readonly bool isReleaseBuild = !Debug.isDebugBuild;
         public MemoryUsageStatus SimulatedMemoryUsage { private get; set; }
 
-        internal ulong ActualSystemMemory;
+        internal long actualSystemMemory;
 
-        public MemoryBudget(ISystemMemory systemMemory, IProfilingProvider profilingProvider, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
+        public MemoryBudget(ISystemMemory systemMemory, IBudgetProfiler profiler, IReadOnlyDictionary<MemoryUsageStatus, float> memoryThreshold)
         {
             SimulatedMemoryUsage = Normal;
-            this.profilingProvider = profilingProvider;
+            this.profiler = profiler;
             this.memoryThreshold = memoryThreshold;
-            ActualSystemMemory = systemMemory.TotalSizeInMB;
+            actualSystemMemory = systemMemory.TotalSizeInMB;
         }
 
         public MemoryUsageStatus GetMemoryUsageStatus()
         {
-            ulong usedMemory = profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE;
-            ulong totalSystemMemory = GetTotalSystemMemory();
+            long usedMemory = profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE;
+            long totalSystemMemory = GetTotalSystemMemory();
 
             return usedMemory switch
                    {
@@ -51,28 +51,28 @@ namespace DCL.Optimization.PerformanceBudgeting
 
         public (float warning, float full) GetMemoryRanges()
         {
-            ulong totalSizeInMB = GetTotalSystemMemory();
+            long totalSizeInMB = GetTotalSystemMemory();
             return (totalSizeInMB * memoryThreshold[Warning], totalSizeInMB * memoryThreshold[Full]);
         }
 
         public bool TrySpendBudget() =>
             GetMemoryUsageStatus() != Full;
 
-        private ulong GetTotalSystemMemory() =>
-            isReleaseBuild ? ActualSystemMemory : GetSimulatedSystemMemory();
+        private long GetTotalSystemMemory() =>
+            isReleaseBuild ? actualSystemMemory : GetSimulatedSystemMemory();
 
-        private ulong GetSimulatedSystemMemory()
+        private long GetSimulatedSystemMemory()
         {
             return SimulatedMemoryUsage switch
                    {
                        Full => NO_MEMORY,
                        Warning => CalculateSystemMemoryForWarningThreshold(),
-                       _ => ActualSystemMemory
+                       _ => actualSystemMemory
                    };
 
             // ReSharper disable once PossibleLossOfFraction
-            ulong CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
-                (ulong)(profilingProvider.TotalUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[Warning] * 1.1f));
+            long CalculateSystemMemoryForWarningThreshold() => // 10% higher than Warning threshold for current usedMemory
+                (long)(profiler.SystemUsedMemoryInBytes / BYTES_IN_MEGABYTE / (memoryThreshold[Warning] * 1.1f));
         }
 
         public class Default : IPerformanceBudget
@@ -89,7 +89,7 @@ namespace DCL.Optimization.PerformanceBudgeting
             {
                 performanceBudget = new MemoryBudget(
                     new StandaloneSystemMemory(),
-                    new ProfilingProvider(),
+                    new Profiler(),
                     MEMORY_THRESHOLD
                 );
             }
