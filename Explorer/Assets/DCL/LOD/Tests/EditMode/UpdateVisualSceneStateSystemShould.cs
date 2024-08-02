@@ -33,7 +33,7 @@ public class UpdateVisualSceneStateSystemShould : UnitySystemTestBase<UpdateVisu
         lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
         var scenesCahce = Substitute.For<IScenesCache>();
-        var lodAssetsPool = Substitute.For<ILODAssetsPool>();
+        var lodAssetsPool = Substitute.For<ILODCache>();
         var realmData = Substitute.For<IRealmData>();
 
         partitionComponent = new PartitionComponent();

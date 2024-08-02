@@ -41,6 +41,8 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
             RemoveComponentQuery(World);
 
             AddRemotePlayerCRDTEntityQuery(World);
+
+            AddOwnPlayerCRDTEntityQuery(World);
         }
 
         [Query]
@@ -70,7 +72,27 @@ namespace DCL.Multiplayer.SDK.Systems.GlobalWorld
         }
 
         [Query]
-        [None(typeof(PlayerComponent))]
+        [All(typeof(Profile), typeof(PlayerComponent))]
+        [None(typeof(PlayerCRDTEntity), typeof(DeleteEntityIntention))]
+        private void AddOwnPlayerCRDTEntity(in Entity entity, ref CharacterTransform characterTransform)
+        {
+            if (!scenesCache.TryGetByParcel(ParcelMathHelper.FloorToParcel(characterTransform.Transform.position), out ISceneFacade sceneFacade))
+                return;
+
+            if (sceneFacade.IsEmpty || !sceneFacade.SceneStateProvider.IsCurrent)
+                return;
+
+            SceneEcsExecutor sceneEcsExecutor = sceneFacade.EcsExecutor;
+
+            Entity sceneWorldEntity = sceneEcsExecutor.World.Create();
+            var crdtEntity = new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY);
+
+            sceneEcsExecutor.World.Add(sceneWorldEntity, new PlayerSceneCRDTEntity(crdtEntity));
+
+            World.Add(entity, new PlayerCRDTEntity(crdtEntity, sceneFacade, sceneWorldEntity));
+        }
+
+        [Query]
         private void RemoveComponentOnOutsideCurrentScene(in Entity entity, ref CharacterTransform characterTransform, ref PlayerCRDTEntity playerCRDTEntity)
         {
             // Only target entities outside the current scene

@@ -7,10 +7,10 @@ using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Modules;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using JetBrains.Annotations;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -42,17 +42,19 @@ namespace DCL.Passport
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
         private PassportErrorsController passportErrorsController;
         private PassportCharacterPreviewController characterPreviewController;
+        private PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> passportModules = new ();
 
         public event Action<string> PassportOpened;
 
         public PassportController(
-            [NotNull] ViewFactoryMethod viewFactory,
+            ViewFactoryMethod viewFactory,
             ICursor cursor,
             IProfileRepository profileRepository,
             ICharacterPreviewFactory characterPreviewFactory,
@@ -67,7 +69,9 @@ namespace DCL.Passport
             Entity playerEntity,
             IThumbnailProvider thumbnailProvider,
             DCLInput dclInput,
-            IWebBrowser webBrowser) : base(viewFactory)
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource
+        ) : base(viewFactory)
         {
             this.cursor = cursor;
             this.profileRepository = profileRepository;
@@ -84,6 +88,7 @@ namespace DCL.Passport
             this.thumbnailProvider = thumbnailProvider;
             this.dclInput = dclInput;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         protected override void OnViewInstantiated()
@@ -91,9 +96,12 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
+            passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity, passportErrorsController);
             passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
-            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, profileRepository, world, playerEntity, viewInstance.AddLinkModal, passportErrorsController));
-            passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, viewInstance.MainContainer, webBrowser, passportErrorsController));
+            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
+            passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
+
+            passportProfileInfoController.OnProfilePublished += SetupPassportModules;
         }
 
         protected override void OnViewShow()
@@ -104,6 +112,8 @@ namespace DCL.Passport
             LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
             dclInput.Shortcuts.Disable();
+            dclInput.Camera.Disable();
+            dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
 
             PassportOpened?.Invoke(currentUserId);
@@ -113,6 +123,8 @@ namespace DCL.Passport
         {
             passportErrorsController.Hide(true);
             dclInput.Shortcuts.Enable();
+            dclInput.Camera.Enable();
+            dclInput.Player.Enable();
             characterPreviewController.OnHide();
 
             foreach (IPassportModuleController module in passportModules)
@@ -130,6 +142,7 @@ namespace DCL.Passport
             characterPreviewLoadingCts?.SafeCancelAndDispose();
             characterPreviewController?.Dispose();
 
+            passportProfileInfoController.OnProfilePublished -= SetupPassportModules;
             foreach (IPassportModuleController module in passportModules)
                 module.Dispose();
         }
@@ -140,6 +153,7 @@ namespace DCL.Passport
             {
                 // Load user profile
                 var profile = await profileRepository.GetAsync(userId, 0, ct);
+
                 if (profile == null)
                     return;
 
@@ -150,8 +164,7 @@ namespace DCL.Passport
                 characterPreviewController.OnShow();
 
                 // Load passport modules
-                foreach (IPassportModuleController module in passportModules)
-                    module.Setup(profile);
+                SetupPassportModules(profile);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -160,6 +173,12 @@ namespace DCL.Passport
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private void SetupPassportModules(Profile profile)
+        {
+            foreach (IPassportModuleController module in passportModules)
+                module.Setup(profile);
         }
     }
 }

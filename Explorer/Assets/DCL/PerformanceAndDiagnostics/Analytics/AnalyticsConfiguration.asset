@@ -23,6 +23,12 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: error
       isEnabled: 1
+  - groupName: Chat
+    events:
+    - eventName: chat_message_sent
+      isEnabled: 1
+    - eventName: chat_bubble_switched
+      isEnabled: 1
   - groupName: Map
     events:
     - eventName: map_jump_in
@@ -31,17 +37,13 @@ MonoBehaviour:
     events:
     - eventName: move_to_parcel
       isEnabled: 1
-    - eventName: walked_distance
-      isEnabled: 1
     - eventName: time_spent_in_world
       isEnabled: 1
-  - groupName: UI
+  - groupName: Badges
     events:
-    - eventName: chat_message_sent
+    - eventName: walked_distance
       isEnabled: 1
-    - eventName: chat_bubble_switched
-      isEnabled: 1
-    - eventName: passport_opened
+    - eventName: vertical_height_reached
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20

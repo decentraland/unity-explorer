@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
 using DCL.Browser;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport.Fields;
 using DCL.Profiles;
 using ECS.Prioritization.Components;
@@ -35,16 +36,16 @@ namespace DCL.Passport.Modules
         private readonly NFTColorsSO rarityColors;
         private readonly NftTypeIconSO categoryIcons;
         private readonly IThumbnailProvider thumbnailProvider;
-        private readonly RectTransform scrollContainer;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly PassportErrorsController passportErrorsController;
 
         private readonly IObjectPool<EquippedItem_PassportFieldView> loadingItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new();
+        private readonly List<EquippedItem_PassportFieldView> instantiatedLoadingItems = new ();
         private readonly IObjectPool<EquippedItem_PassportFieldView> equippedItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedEquippedItems = new();
+        private readonly List<EquippedItem_PassportFieldView> instantiatedEquippedItems = new ();
         private readonly IObjectPool<EquippedItem_PassportFieldView> emptyItemsPool;
-        private readonly List<EquippedItem_PassportFieldView> instantiatedEmptyItems = new();
+        private readonly List<EquippedItem_PassportFieldView> instantiatedEmptyItems = new ();
 
         private Profile currentProfile;
         private CancellationTokenSource getEquippedItemsCts;
@@ -56,8 +57,8 @@ namespace DCL.Passport.Modules
             NFTColorsSO rarityColors,
             NftTypeIconSO categoryIcons,
             IThumbnailProvider thumbnailProvider,
-            RectTransform scrollContainer,
             IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource,
             PassportErrorsController passportErrorsController)
         {
             this.view = view;
@@ -66,8 +67,8 @@ namespace DCL.Passport.Modules
             this.rarityColors = rarityColors;
             this.categoryIcons = categoryIcons;
             this.thumbnailProvider = thumbnailProvider;
-            this.scrollContainer = scrollContainer;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.passportErrorsController = passportErrorsController;
 
             loadingItemsPool = new ObjectPool<EquippedItem_PassportFieldView>(
@@ -227,6 +228,7 @@ namespace DCL.Passport.Modules
             }
 
             int missingEmptyItems = CalculateMissingEmptyItems(elementsAddedInTheGird);
+
             for (var i = 0; i < missingEmptyItems; i++)
             {
                 var emptyItem = emptyItemsPool.Get();
@@ -319,9 +321,9 @@ namespace DCL.Passport.Modules
             instantiatedEmptyItems.Clear();
         }
 
-        private static string GetMarketplaceLink(string id)
+        private string GetMarketplaceLink(string id)
         {
-            const string MARKETPLACE = "https://market.decentraland.org/contracts/{0}/items/{1}";
+            string MARKETPLACE = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
             ReadOnlySpan<char> idSpan = id.AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
@@ -339,6 +341,5 @@ namespace DCL.Passport.Modules
 
             return string.Format(MARKETPLACE, contract, item);
         }
-
     }
 }
