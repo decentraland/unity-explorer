@@ -16,7 +16,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public async UniTask<StartupResult> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
-            var result = await healthCheck.IsRemoteAvailableAsync();
+            var result = await healthCheck.IsRemoteAvailableAsync(ct);
 
             return result.success
                 ? StartupResult.SuccessResult()
