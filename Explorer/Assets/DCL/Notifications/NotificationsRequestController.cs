@@ -19,6 +19,7 @@ namespace DCL.Notification
     public class NotificationsRequestController : IDisposable
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
+        private static readonly TimeSpan NOTIFICATIONS_DELAY = TimeSpan.FromSeconds(5);
 
         private readonly CancellationTokenSource cancellationToken;
         private readonly IWebRequestController webRequestController;
@@ -33,6 +34,7 @@ namespace DCL.Notification
         private CommonArguments commonArguments;
         private ulong unixTimestamp;
         private ulong lastPolledTimestamp;
+
 
         public NotificationsRequestController(
             IWebRequestController webRequestController,
@@ -66,7 +68,7 @@ namespace DCL.Notification
         {
             do
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(5), DelayType.Realtime, cancellationToken: cancellationToken.Token);
+                await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: cancellationToken.Token);
             }
             while (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired);
 
@@ -90,7 +92,7 @@ namespace DCL.Notification
         {
             do
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(5), DelayType.Realtime, cancellationToken: cancellationToken.Token);
+                await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: cancellationToken.Token);
 
                 if(web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
                     continue;
