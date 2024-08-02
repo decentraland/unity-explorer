@@ -288,7 +288,7 @@ namespace Global.Dynamic
 
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
                 container.RealFlowLoadingStatus,
-                staticContainer.RoomHubProxy.StrictObject,
+                container.RoomHub,
                 bootstrapContainer.DecentralandUrlsSource,
                 container.MvcManager,
                 selfProfile,
