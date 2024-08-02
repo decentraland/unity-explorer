@@ -1,5 +1,4 @@
 using Arch.Core;
-using CRDT;
 using CrdtEcsBridge.Components;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character;
@@ -65,8 +64,9 @@ namespace DCL.Multiplayer.SDK.Tests
             world.Dispose();
         }
 
-        [Test]
-        public void SetupPlayerCRDTEntityForPlayerInsideScene()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void SetupPlayerCRDTEntityForPlayerInsideScene(bool isMainPlayer)
         {
             scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
@@ -75,6 +75,9 @@ namespace DCL.Multiplayer.SDK.Tests
             world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
+
+            if (isMainPlayer)
+                world.Add(entity, new PlayerComponent());
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
@@ -85,8 +88,9 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.AreEqual(playerCRDTEntity.CRDTEntity, scenePlayerCRDTEntity.CRDTEntity);
         }
 
-        [Test]
-        public void NotSetupPlayerCRDTEntityForPlayersOutsideScene()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void NotSetupPlayerCRDTEntityForPlayersOutsideScene(bool isMainPlayer)
         {
             scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
@@ -96,6 +100,9 @@ namespace DCL.Multiplayer.SDK.Tests
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
+            if (isMainPlayer)
+                world.Add(entity, new PlayerComponent());
+
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
             system.Update(0);
@@ -103,8 +110,9 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
         }
 
-        [Test]
-        public void RemovePlayerCRDTEntityForPlayersLeavingScene()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void RemovePlayerCRDTEntityForPlayersLeavingScene(bool isMainPlayer)
         {
             scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
@@ -113,6 +121,9 @@ namespace DCL.Multiplayer.SDK.Tests
             world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
+
+            if (isMainPlayer)
+                world.Add(entity, new PlayerComponent());
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
@@ -130,8 +141,9 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity));
         }
 
-        [Test]
-        public void RemovePlayerCRDTEntityForPlayersOnNoLongerCurrentScene()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void RemovePlayerCRDTEntityForPlayersOnNoLongerCurrentScene(bool isMainPlayer)
         {
             scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
@@ -140,6 +152,9 @@ namespace DCL.Multiplayer.SDK.Tests
             world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
+
+            if (isMainPlayer)
+                world.Add(entity, new PlayerComponent());
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
@@ -158,8 +173,9 @@ namespace DCL.Multiplayer.SDK.Tests
             Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity));
         }
 
-        [Test]
-        public void RemovePlayerCRDTEntityForOnPlayersDisconnection()
+        [TestCase(true)]
+        [TestCase(false)]
+        public void RemovePlayerCRDTEntityForOnPlayersDisconnection(bool isMainPlayer)
         {
             scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
             scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
@@ -168,6 +184,9 @@ namespace DCL.Multiplayer.SDK.Tests
             world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
+
+            if (isMainPlayer)
+                world.Add(entity, new PlayerComponent());
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
 
@@ -193,6 +212,7 @@ namespace DCL.Multiplayer.SDK.Tests
             fakeCharacterUnityTransform.position = Vector3.one;
 
             world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
+                new PlayerComponent(),
                 new CharacterTransform(fakeCharacterUnityTransform)
             );
 
@@ -201,7 +221,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(SpecialEntitiesID.PLAYER_ENTITY, playerCRDTEntity.CRDTEntity.Id);
 
             // Add 2 more players
             Entity entity2 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
@@ -210,7 +230,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity2, out playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
 
             Entity entity3 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
                 new CharacterTransform(fakeCharacterUnityTransform));
@@ -218,7 +238,7 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity3, out playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 2, playerCRDTEntity.CRDTEntity.Id);
+            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, playerCRDTEntity.CRDTEntity.Id);
 
             // "Disconnect" 2nd player
             world.Add(entity2, new DeleteEntityIntention());
@@ -231,38 +251,6 @@ namespace DCL.Multiplayer.SDK.Tests
             system.Update(0);
 
             Assert.IsTrue(world.TryGet(entity4, out playerCRDTEntity));
-            Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM + 1, playerCRDTEntity.CRDTEntity.Id);
-        }
-
-        [Test]
-        public void IgnoreMainPlayer()
-        {
-            scene1Facade.SceneStateProvider.IsCurrent.Returns(true);
-            scene2Facade.SceneStateProvider.IsCurrent.Returns(false);
-
-            // Add main player
-            fakeMainCharacterUnityTransform.position = Vector3.one;
-
-            world.Add(entity, Profile.NewRandomProfile(FAKE_USER_ID),
-                new CharacterTransform(fakeMainCharacterUnityTransform),
-                new PlayerComponent(),
-                new CRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)
-            );
-
-            // Add another player
-            fakeCharacterUnityTransform.position = Vector3.one;
-
-            Entity entity2 = world.Create(Profile.NewRandomProfile(FAKE_USER_ID),
-                new CharacterTransform(fakeCharacterUnityTransform));
-
-            Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
-            Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity2));
-
-            system.Update(0);
-
-            Assert.IsFalse(world.TryGet(entity, out PlayerCRDTEntity playerCRDTEntity));
-
-            Assert.IsTrue(world.TryGet(entity2, out playerCRDTEntity));
             Assert.AreEqual(SpecialEntitiesID.OTHER_PLAYER_ENTITIES_FROM, playerCRDTEntity.CRDTEntity.Id);
         }
     }
