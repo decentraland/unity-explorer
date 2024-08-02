@@ -34,8 +34,7 @@ namespace Global.Dynamic.ChatCommands
             { "test", IRealmNavigator.TEST_SCENES_URL },
         };
 
-        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+,-?\d+$).+?)(?:\s+(-?\d+),(-?\d+))?$", RegexOptions.Compiled);
-
+        public static readonly Regex REGEX = new ($@"^/({COMMAND_WORLD}|{COMMAND_GOTO})\s+((?!-?\d+\s*,\s*-?\d+$).+?)(?:\s+(-?\d+)\s*,\s*(-?\d+))?$", RegexOptions.Compiled);
         private readonly URLDomain worldDomain = URLDomain.FromString(IRealmNavigator.WORLDS_DOMAIN);
 
         private readonly Dictionary<string, URLAddress> worldAddressesCaches = new ();
