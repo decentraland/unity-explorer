@@ -9,7 +9,9 @@ using MVC;
 using System.Threading;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
+using DCL.Multiplayer.HealthChecks.Livekit;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
@@ -17,7 +19,6 @@ using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
-using System.Net;
 using UnityEngine;
 
 namespace DCL.UserInAppInitializationFlow
@@ -37,6 +38,7 @@ namespace DCL.UserInAppInitializationFlow
 
         public RealUserInAppInitializationFlow(
             RealFlowLoadingStatus loadingStatus,
+            IRoomHub roomHub,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
@@ -57,8 +59,11 @@ namespace DCL.UserInAppInitializationFlow
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(
                 new SeveralHealthCheck(
-                    new URLHealthCheck(webRequestController, decentralandUrlsSource, DecentralandUrl.ArchipelagoStatus),
-                    new URLHealthCheck(webRequestController, decentralandUrlsSource, DecentralandUrl.GatekeeperStatus)
+                    new ParallelHealthCheck(
+                        new URLHealthCheck(webRequestController, decentralandUrlsSource, DecentralandUrl.ArchipelagoStatus),
+                        new URLHealthCheck(webRequestController, decentralandUrlsSource, DecentralandUrl.GatekeeperStatus)
+                    ),
+                    new LivekitHealthCheck(roomHub)
                 )
             );
 
