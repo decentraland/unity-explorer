@@ -60,7 +60,6 @@ namespace DCL.Navmap
         public IReadOnlyDictionary<MapLayer, IMapLayerParameter> LayersParameters { get; } = new Dictionary<MapLayer, IMapLayerParameter>
             { { MapLayer.PlayerMarker, new PlayerMarkerParameter { BackgroundIsActive = true } } };
         public FloatingPanelController FloatingPanelController { get; }
-        public event Action OnSetDestination;
 
         public NavmapController(
             NavmapView navmapView,

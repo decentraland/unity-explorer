@@ -95,8 +95,6 @@ namespace DCL.ExplorePanel
                 { ExploreSections.Backpack, backpackController },
             };
 
-            NavmapController.OnSetDestination += SetDestination;
-
             sectionSelectorController = new SectionSelectorController<ExploreSections>(exploreSections, ExploreSections.Navmap);
 
             lastShownSection = ExploreSections.Navmap;
@@ -248,11 +246,6 @@ namespace DCL.ExplorePanel
             world.TryRemove<CameraBlockerComponent>(playerEntity);
             world.TryRemove<MovementBlockerComponent>(playerEntity);
             dclInput.Camera.Enable();
-        }
-
-        private void SetDestination()
-        {
-            viewInstance.CloseButton.onClick.Invoke();
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct)
