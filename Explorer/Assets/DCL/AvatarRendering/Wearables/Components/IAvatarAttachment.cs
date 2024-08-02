@@ -61,11 +61,7 @@ namespace DCL.AvatarRendering.Wearables.Components
         bool IsUnisex() =>
             GetDTO().Metadata.AbstractData.representations.Length > 1;
 
-        bool IsCollectible()
-        {
-            var id = GetUrn().ToString();
-            return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
-        }
+        bool IsOnChain();
 
         AvatarAttachmentDTO GetDTO();
 

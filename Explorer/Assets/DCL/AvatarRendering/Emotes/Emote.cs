@@ -17,6 +17,13 @@ namespace DCL.AvatarRendering.Emotes
 
         public bool IsLoading { get; set; } = true;
 
+        public bool IsOnChain()
+        {
+            IAvatarAttachment attachment = this;
+            var id = attachment.GetUrn().ToString();
+            return id.StartsWith("urn:") && !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+        }
+
         public AvatarAttachmentDTO GetDTO() =>
             Model.Asset!;
 

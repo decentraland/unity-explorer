@@ -197,7 +197,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage(wearable.GetCategory());
                 string marketPlaceLink = GetMarketplaceLink(wearable.GetUrn());
-                equippedWearableItem.BuyButton.interactable = wearable.IsCollectible() && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.interactable = wearable.IsOnChain() && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 WaitForThumbnailAsync(wearable, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
@@ -220,7 +220,7 @@ namespace DCL.Passport.Modules
                 equippedWearableItem.FlapBackground.color = rarityColor;
                 equippedWearableItem.CategoryImage.sprite = categoryIcons.GetTypeImage("emote");
                 string marketPlaceLink = GetMarketplaceLink(emote.GetUrn());
-                equippedWearableItem.BuyButton.interactable = emote.IsCollectible() && rarityName != "base" && marketPlaceLink != string.Empty;
+                equippedWearableItem.BuyButton.interactable = emote.IsOnChain() && rarityName != "base" && marketPlaceLink != string.Empty;
                 equippedWearableItem.BuyButton.onClick.AddListener(() => webBrowser.OpenUrl(marketPlaceLink));
                 WaitForThumbnailAsync(emote, equippedWearableItem, getEquippedItemsCts.Token).Forget();
                 instantiatedEquippedItems.Add(equippedWearableItem);
