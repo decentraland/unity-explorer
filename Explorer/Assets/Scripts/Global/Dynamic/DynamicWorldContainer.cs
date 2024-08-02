@@ -18,6 +18,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
+using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -176,6 +177,7 @@ namespace Global.Dynamic
             var dclInput = new DCLInput();
             staticContainer.InputProxy.SetObject(dclInput);
 
+            INotificationsBusController notificationsBusController = new NotificationsBusController();
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
             PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
@@ -191,7 +193,8 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, ct);
+            var mapPathEventBus = new MapPathEventBus();
+            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, mapPathEventBus, notificationsBusController, ct);
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
@@ -343,7 +346,7 @@ namespace Global.Dynamic
             );
 
             INotificationsBusController notificationsBusController = new NotificationsBusController();
-            NotificationsRequestController notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
@@ -416,7 +419,7 @@ namespace Global.Dynamic
                     container.UserInAppInitializationFlow,
                     profileCache,
                     sidebarBus),
-                new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView),
+                new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
@@ -442,7 +445,8 @@ namespace Global.Dynamic
                     profileCache,
                     assetBundlesURL,
                     notificationsBusController,
-                    characterPreviewEventBus
+                    characterPreviewEventBus,
+                    mapPathEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

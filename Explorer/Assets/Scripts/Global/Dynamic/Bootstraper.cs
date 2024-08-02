@@ -49,7 +49,6 @@ namespace Global.Dynamic
         private bool localSceneDevelopment;
         private DynamicWorldDependencies dynamicWorldDependencies;
         private Dictionary<string, string> appParameters = new ();
-
         public bool EnableAnalytics { private get; init; }
 
         public Bootstrap(DebugSettings debugSettings)

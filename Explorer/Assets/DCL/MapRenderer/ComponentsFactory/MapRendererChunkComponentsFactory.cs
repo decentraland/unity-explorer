@@ -11,6 +11,7 @@ using DCL.MapRenderer.MapLayers.ParcelHighlight;
 using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.SatelliteAtlas;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Notification.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.WebRequests;
 using System;
@@ -25,12 +26,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     public class MapRendererChunkComponentsFactory : IMapRendererComponentsFactory
     {
-        private PlayerMarkerInstaller playerMarkerInstaller { get; }
-        private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
-        private PinMarkerInstaller pinMarkerInstaller { get; }
-        private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
-        private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
-
         private readonly IAssetsProvisioner assetsProvisioner;
 
         private readonly IWebRequestController webRequestController;
@@ -38,6 +33,14 @@ namespace DCL.MapRenderer.ComponentsFactory
         private readonly MapRendererTextureContainer textureContainer;
         private readonly IPlacesAPIService placesAPIService;
         private readonly MapRendererSettings mapSettings;
+        private readonly IMapPathEventBus mapPathEventBus;
+        private readonly INotificationsBusController notificationsBusController;
+        private PlayerMarkerInstaller playerMarkerInstaller { get; }
+        private SceneOfInterestsMarkersInstaller sceneOfInterestMarkerInstaller { get; }
+        private PinMarkerInstaller pinMarkerInstaller { get; }
+        private FavoritesMarkersInstaller favoritesMarkersInstaller { get; }
+        private HotUsersMarkersInstaller hotUsersMarkersInstaller { get; }
+        private MapPathInstaller mapPathInstaller { get; }
 
         public MapRendererChunkComponentsFactory(
             IAssetsProvisioner assetsProvisioner,
@@ -45,14 +48,18 @@ namespace DCL.MapRenderer.ComponentsFactory
             IWebRequestController webRequestController,
             IDecentralandUrlsSource decentralandUrlsSource,
             MapRendererTextureContainer textureContainer,
-            IPlacesAPIService placesAPIService)
+            IPlacesAPIService placesAPIService,
+            IMapPathEventBus mapPathEventBus,
+            INotificationsBusController notificationsBusController)
         {
             this.assetsProvisioner = assetsProvisioner;
-            this.mapSettings = settings;
+            mapSettings = settings;
             this.webRequestController = webRequestController;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.textureContainer = textureContainer;
             this.placesAPIService = placesAPIService;
+            this.mapPathEventBus = mapPathEventBus;
+            this.notificationsBusController = notificationsBusController;
         }
 
         async UniTask<MapRendererComponents> IMapRendererComponentsFactory.CreateAsync(CancellationToken cancellationToken)
@@ -74,7 +81,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             );
 
             MapCameraObject mapCameraObjectPrefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.MapCameraObject, ct: CancellationToken.None)).Value.GetComponent<MapCameraObject>();
-            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken);
+            PinMarkerController pinMarkerController = await pinMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken);
 
             IObjectPool<IMapCameraControllerInternal> cameraControllersPool = new ObjectPool<IMapCameraControllerInternal>(
                 CameraControllerBuilder,
@@ -86,10 +93,11 @@ namespace DCL.MapRenderer.ComponentsFactory
             await UniTask.WhenAll(
                 CreateAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
                 CreateSatelliteAtlasAsync(layers, configuration, coordsUtils, cullingController, cancellationToken),
-                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, cancellationToken),
+                playerMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, cancellationToken),
                 sceneOfInterestMarkerInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, placesAPIService, cancellationToken),
                 favoritesMarkersInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, placesAPIService, assetsProvisioner, mapSettings, cancellationToken),
-                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken)
+                hotUsersMarkersInstaller.InstallAsync(layers, configuration, coordsUtils, cullingController, assetsProvisioner, mapSettings, cancellationToken),
+                mapPathInstaller.InstallAsync(layers, zoomScalingLayers, configuration, coordsUtils, cullingController, mapSettings, assetsProvisioner, mapPathEventBus, notificationsBusController, cancellationToken)
                 /* List of other creators that can be executed in parallel */);
 
             return new MapRendererComponents(configuration, layers, zoomScalingLayers, cullingController, cameraControllersPool);

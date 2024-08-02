@@ -1,9 +1,12 @@
+using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.Culling;
 using DG.Tweening;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
+using Utility;
 
 namespace DCL.MapRenderer.MapLayers.Pins
 {
@@ -12,18 +15,21 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private readonly IMapCullingController cullingController;
 
         private MapMarkerPoolableBehavior<PinMarkerObject> poolableBehavior;
-        private float currentBaseScale;
         private float currentNewScale;
+        private CancellationTokenSource cancellationTokenSource;
 
         public Vector3 CurrentPosition => poolableBehavior.currentPosition;
+        public Sprite CurrentSprite => poolableBehavior.instance?.mapPinIcon.sprite;
 
         public bool IsVisible => poolableBehavior.isVisible;
+        public bool IsDestination { get; private set; }
         public string Title { get; private set; }
         public Texture2D Icon { get; private set; }
         public string Description { get; private set; }
         public Vector2Int ParcelPosition { get; private set; }
 
         public Vector2 Pivot => new (0.5f, 0.5f);
+        private float currentBaseScale { get; set; }
 
         public PinMarker(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController)
         {
@@ -35,16 +41,19 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             OnBecameInvisible();
             cullingController.StopTracking(this);
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         public void SetPosition(Vector2 position, Vector2Int parcelPosition)
         {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             ParcelPosition = parcelPosition;
             poolableBehavior.SetCurrentPosition(position);
         }
 
         public void AnimateIn()
         {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             poolableBehavior.instance?.gameObject.transform.DOScaleX(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
             poolableBehavior.instance?.gameObject.transform.DOScaleY(poolableBehavior.instance.gameObject.transform.localScale.x * 1.5f, 0.5f).SetEase(Ease.OutBack);
             SetIconOutline(true);
@@ -52,9 +61,30 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void AnimateOut()
         {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             poolableBehavior.instance?.gameObject.transform.DOScaleX(currentNewScale, 0.5f).SetEase(Ease.OutBack);
             poolableBehavior.instance?.gameObject.transform.DOScaleY(currentNewScale, 0.5f).SetEase(Ease.OutBack);
             SetIconOutline(false);
+        }
+
+        public void SetAsDestination(bool isDestination)
+        {
+            IsDestination = isDestination;
+
+            if (isDestination)
+            {
+                SetScaleAndResetPulse(currentNewScale);
+
+                //Also enable the new destination background thing
+            }
+            else
+            {
+                cancellationTokenSource = cancellationTokenSource.SafeRestart();
+
+                if (currentBaseScale != 0) { poolableBehavior.instance?.SetScale(currentNewScale); }
+
+                //Also disable the new destination background thing
+            }
         }
 
         public void SetIconOutline(bool isActive)
@@ -77,14 +107,13 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void OnBecameVisible()
         {
             poolableBehavior.OnBecameVisible();
-            poolableBehavior.instance?.SetTexture(Icon);
-
-            if(currentBaseScale != 0)
-                poolableBehavior.instance?.SetScale(currentBaseScale, currentNewScale);
+            if (Icon != null) { poolableBehavior.instance?.SetTexture(Icon); }
+            SetScaleAndResetPulse(currentNewScale);
         }
 
         public void OnBecameInvisible()
         {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
             poolableBehavior.OnBecameInvisible();
         }
 
@@ -93,16 +122,26 @@ namespace DCL.MapRenderer.MapLayers.Pins
             currentBaseScale = baseScale;
             currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
 
-            if (poolableBehavior.instance != null)
-                poolableBehavior.instance?.SetScale(currentBaseScale, currentNewScale);
+            SetScaleAndResetPulse(currentNewScale);
         }
 
         public void ResetScale(float scale)
         {
             currentNewScale = scale;
+            SetScaleAndResetPulse(scale);
+        }
+
+        private void SetScaleAndResetPulse(float newScale)
+        {
+            cancellationTokenSource = cancellationTokenSource.SafeRestart();
 
             if (poolableBehavior.instance != null)
-                poolableBehavior.instance?.SetScale(scale, scale);
+            {
+                poolableBehavior.instance.SetScale(newScale);
+
+                if (IsDestination)
+                    PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.gameObject.transform, ct: cancellationTokenSource.Token).Forget();
+            }
         }
     }
 }

@@ -29,7 +29,7 @@ namespace DCL.Notification
         private readonly StringBuilder bodyBuilder = new ();
         private readonly URLParameter onlyUnreadParameter = new ("onlyUnread", "true");
         private readonly URLParameter limitParameter = new ("limit", "50");
-        private readonly URLBuilder urlBuilder = new ();
+        private readonly URLBuilder urlBuilder = new();
         private CommonArguments commonArguments;
         private ulong unixTimestamp;
         private ulong lastPolledTimestamp;

@@ -1,4 +1,3 @@
-using DCL.Backpack;
 using DCL.Chat;
 using DCL.Input;
 using DCL.MapRenderer;

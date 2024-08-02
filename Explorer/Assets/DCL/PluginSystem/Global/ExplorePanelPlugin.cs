@@ -10,6 +10,8 @@ using DCL.Backpack;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
+using DCL.Landscape.Settings;
+using DCL.MapRenderer;
 using DCL.Navmap;
 using DCL.Notification.NotificationsBus;
 using DCL.PlacesAPIService;
@@ -23,7 +25,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -58,16 +60,18 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
-
-        private NavmapController? navmapController;
-        private SettingsController? settingsController;
-        private BackpackSubPlugin? backpackSubPlugin;
+        private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
         private ExplorePanelInputHandler? inputHandler;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
         private readonly INotificationsBusController notificationsBusController;
+
+        private NavmapController? navmapController;
+        private SettingsController? settingsController;
+        private BackpackSubPlugin? backpackSubPlugin;
+        private ExplorePanelInputHandler? inputHandler;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -92,7 +96,8 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             URLDomain assetBundleURL,
             INotificationsBusController notificationsBusController,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IMapPathEventBus mapPathEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -118,6 +123,7 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.mapPathEventBus = mapPathEventBus;
         }
 
         public override void Dispose()
@@ -151,14 +157,14 @@ namespace DCL.PluginSystem.Global
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            var settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
-            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
-            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
-            var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-            var qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
-            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
+            ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
+            ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
+            ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
 
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData);
+            ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
+            ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
+            settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus);
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 

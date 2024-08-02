@@ -3,6 +3,7 @@ using DCL.AssetsProvision;
 using DCL.MapRenderer;
 using DCL.MapRenderer.ComponentsFactory;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Notification.NotificationsBus;
 using DCL.PlacesAPIService;
 using System.Threading;
 
@@ -19,21 +20,12 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner,
             MapRendererSettings settings,
             IPlacesAPIService placesAPIService,
+            IMapPathEventBus mapPathEventBus,
+            INotificationsBusController notificationsBusController,
             CancellationToken ct)
         {
             var textureContainer = new MapRendererTextureContainer();
-
-            var mapRenderer = new MapRenderer(
-                new MapRendererChunkComponentsFactory(
-                    assetsProvisioner,
-                    settings,
-                    staticContainer.WebRequestsContainer.WebRequestController,
-                    decentralandUrlsSource,
-                    textureContainer,
-                    placesAPIService
-                )
-            );
-
+            var mapRenderer = new MapRenderer(new MapRendererChunkComponentsFactory(assetsProvisioner, settings, staticContainer.WebRequestsContainer.WebRequestController, decentralandUrlsSource, textureContainer, placesAPIService, mapPathEventBus, notificationsBusController));
             await mapRenderer.InitializeAsync(ct);
             return new MapRendererContainer { MapRenderer = mapRenderer, TextureContainer = textureContainer };
         }

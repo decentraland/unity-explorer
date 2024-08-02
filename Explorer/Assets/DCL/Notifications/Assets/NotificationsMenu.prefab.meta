@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/DCL/Notifications/Assets/NotificationsMenu.prefab.meta
 guid: 731de304d3ee148789880b058319e4f7
+========
+guid: 35952767f681174489f6fba74d3a31c2
+>>>>>>>> feat/goto_map_pin:Explorer/Assets/DCL/Minimap/Assets/MinimapPinMarkerObject.prefab.meta
 PrefabImporter:
   externalObjects: {}
   userData: 

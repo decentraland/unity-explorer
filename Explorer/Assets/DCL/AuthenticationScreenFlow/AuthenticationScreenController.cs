@@ -35,7 +35,7 @@ namespace DCL.AuthenticationScreenFlow
             Finalize,
         }
         private const int ANIMATION_DELAY = 300;
-
+        private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;

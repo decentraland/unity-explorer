@@ -26,24 +26,26 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             MapRendererSettings settings,
             IAssetsProvisioner assetProv,
+            IMapPathEventBus mapPathEventBus,
             CancellationToken cancellationToken)
         {
-            this.mapSettings = settings;
-            this.assetsProvisioner = assetProv;
+            mapSettings = settings;
+            assetsProvisioner = assetProv;
             PinMarkerObject prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<PinMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
                 defaultCapacity: PREWARM_COUNT,
-                actionOnGet: (obj) => obj.gameObject.SetActive(true),
-                actionOnRelease: (obj) => obj.gameObject.SetActive(false));
+                actionOnGet: obj => obj.gameObject.SetActive(true),
+                actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             var controller = new PinMarkerController(
                 objectsPool,
                 CreateMarker,
                 configuration.PinMarkerRoot,
                 coordsUtils,
-                cullingController
+                cullingController,
+                mapPathEventBus
             );
 
             writer.Add(MapLayer.Pins, controller);
@@ -54,6 +56,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static PinMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, PinMarkerObject prefab, ICoordsUtils coordsUtils)
         {
             PinMarkerObject pinMarkerObject = Object.Instantiate(prefab, configuration.PinMarkerRoot);
+
             for (var i = 0; i < pinMarkerObject.renderers.Length; i++)
                 pinMarkerObject.renderers[i].sortingOrder = MapRendererDrawOrder.PIN_MARKER;
 
@@ -69,6 +72,5 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         internal async UniTask<PinMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
             (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PinMarker, ct: cancellationToken)).Value.GetComponent<PinMarkerObject>();
-
     }
 }

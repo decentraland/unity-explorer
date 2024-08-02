@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+<<<<<<<< HEAD:Explorer/Assets/Scripts/ECS/SceneLifeCycle/Realm/PortableExperienceRealmComponent.cs.meta
+guid: 52e1c7fbf4288944a924e723aa58d323
+========
+guid: d19a905ffee281e419bd8b8a6eef7c99
+>>>>>>>> feat/goto_map_pin:Explorer/Assets/DCL/MapRenderer/MapPath/MapPathRenderer.cs.meta
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,4 +1,5 @@
 using DCL.AssetsProvision;
+using DCL.MapRenderer.MapLayers.Pins;
 using System;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -10,6 +11,7 @@ namespace DCL.MapRenderer
     {
         public const int ATLAS_CHUNK_SIZE = 1020;
         public const int PARCEL_SIZE = 20;
+
         // it is quite expensive to disable TextMeshPro so larger bounds should help keeping the right balance
         public const float CULLING_BOUNDS_IN_PARCELS = 10;
 
@@ -40,10 +42,28 @@ namespace DCL.MapRenderer
         [field: SerializeField]
         public AssetReferenceGameObject UserMarker { get; private set; }
 
+        [field: SerializeField]
+        public DottedLineRef DestinationPathLine { get; private set; }
+
+        [field: SerializeField]
+        public PathDestinationPinRef PathDestinationPin { get; private set; }
+
         [Serializable]
         public class SpriteRendererRef : ComponentReference<SpriteRenderer>
         {
             public SpriteRendererRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class DottedLineRef : ComponentReference<MapPathRenderer>
+        {
+            public DottedLineRef(string guid) : base(guid) { }
+        }
+
+        [Serializable]
+        public class PathDestinationPinRef : ComponentReference<PinMarkerObject>
+        {
+            public PathDestinationPinRef(string guid) : base(guid) { }
         }
     }
 }
