@@ -77,15 +77,14 @@ namespace DCL.Profiles.Self
 
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
-            // With 'onlyBasicInfo' as false we update all the info of the profile
             var newProfile = profileBuilder.From(profile)
-                                       .WithBodyShape(bodyShape)
-                                       .WithWearables(uniqueWearables)
-                                       .WithColors(equippedWearables.GetColors())
-                                       .WithEmotes(uniqueEmotes)
-                                       .WithForceRender(forceRender)
-                                       .WithVersion(profile!.Version + 1)
-                                       .Build();
+                                           .WithBodyShape(bodyShape)
+                                           .WithWearables(uniqueWearables)
+                                           .WithColors(equippedWearables.GetColors())
+                                           .WithEmotes(uniqueEmotes)
+                                           .WithForceRender(forceRender)
+                                           .WithVersion(profile!.Version + 1)
+                                           .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 
