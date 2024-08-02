@@ -15,8 +15,8 @@ namespace DCL.Multiplayer.HealthChecks.Livekit
 
         public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
         {
-            await roomHub.StartAsync();
-            return (true, null);
+            bool result = await roomHub.StartAsync();
+            return (result, null);
         }
     }
 }
