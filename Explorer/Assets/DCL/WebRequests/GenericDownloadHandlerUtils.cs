@@ -159,6 +159,9 @@ namespace DCL.WebRequests
             public UniTask<byte[]> GetDataCopyAsync() =>
                 SendAsync<GetDataCopyOp<TRequest>, byte[]>(new GetDataCopyOp<TRequest>());
 
+            public UniTask<int> StatusCodeAsync() =>
+                SendAsync<StatusCodeOp<TRequest>, int>(new StatusCodeOp<TRequest>());
+
             public UniTask<T> OverwriteFromJsonAsync<T>(
                 T targetObject,
                 WRJsonParser jsonParser,
@@ -190,6 +193,12 @@ namespace DCL.WebRequests
         {
             public UniTask<string?> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
                 UniTask.FromResult(webRequest.UnityWebRequest.downloadHandler.text)!;
+        }
+
+        public struct StatusCodeOp<TRequest> : IWebRequestOp<TRequest, int> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
+        {
+            public UniTask<int> ExecuteAsync(TRequest webRequest, CancellationToken ct) =>
+                UniTask.FromResult((int)webRequest.UnityWebRequest.responseCode);
         }
 
         public struct CreateFromJsonOp<T, TRequest> : IWebRequestOp<TRequest, T> where TRequest: struct, ITypedWebRequest, IGenericDownloadHandlerRequest
