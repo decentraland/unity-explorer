@@ -514,7 +514,8 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                container.CharacterDataPropagationUtility);
+                container.CharacterDataPropagationUtility,
+                container.LODContainer.LodCache);
 
             container.GlobalPlugins = globalPlugins;
 

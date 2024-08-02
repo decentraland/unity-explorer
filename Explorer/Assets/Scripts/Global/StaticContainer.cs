@@ -35,6 +35,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
 using Global.Dynamic;
 using SceneRunner.Mapping;
@@ -155,7 +156,7 @@ namespace Global
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
-
+            
             container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
 
             container.assetsProvisioner = assetsProvisioner;
