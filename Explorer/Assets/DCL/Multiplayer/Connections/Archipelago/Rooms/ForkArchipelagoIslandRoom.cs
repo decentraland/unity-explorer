@@ -4,7 +4,6 @@ using DCL.Multiplayer.Connections.Rooms;
 using DCL.Multiplayer.Connections.Rooms.Connective;
 using LiveKit.Rooms;
 using System;
-using System.Threading;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
@@ -24,12 +23,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             this.httpsRoomFactory = httpsRoomFactory;
         }
 
-        public void Start()
-        {
-            StartAsync().Forget();
-        }
-
-        private async UniTaskVoid StartAsync()
+        public async UniTask<bool> StartAsync()
         {
             if (current != null && current.CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("First stop previous room before starting a new one");
@@ -43,11 +37,13 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             else
                 throw new InvalidOperationException($"Cannot determine the protocol from the about url: {adapterUrl}");
 
-            current!.Start();
+            var task = current!.StartAsync();
             interiorRoom.Assign(current.Room(), out _);
+            return await task;
         }
 
-        public UniTask StopAsync() => current?.StopAsync() ?? throw new InvalidOperationException("Nothing to stop");
+        public UniTask StopAsync() =>
+            current?.StopAsync() ?? throw new InvalidOperationException("Nothing to stop");
 
         public IConnectiveRoom.State CurrentState() =>
             current?.CurrentState() ?? IConnectiveRoom.State.Stopped;

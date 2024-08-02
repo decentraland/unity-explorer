@@ -35,8 +35,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
             );
         }
 
-        public void Start() =>
-            connectiveRoom.Start();
+        public UniTask<bool> StartAsync() =>
+            connectiveRoom.StartAsync();
 
         public UniTask StopAsync() =>
             connectiveRoom.StopAsync();

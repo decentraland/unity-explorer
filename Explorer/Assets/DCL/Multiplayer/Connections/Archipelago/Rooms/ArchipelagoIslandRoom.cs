@@ -65,8 +65,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             );
         }
 
-        public void Start() =>
-            connectiveRoom.Start();
+        public UniTask<bool> StartAsync() =>
+            connectiveRoom.StartAsync();
 
         public UniTask StopAsync() =>
             UniTask.WhenAll(

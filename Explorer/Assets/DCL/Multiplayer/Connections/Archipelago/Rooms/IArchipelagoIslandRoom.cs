@@ -38,10 +38,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         class Fake : IArchipelagoIslandRoom
         {
-            public void Start()
-            {
-                //ignore
-            }
+            public UniTask<bool> StartAsync() =>
+                UniTask.FromResult(false);
 
             public UniTask StopAsync() =>
                 UniTask.CompletedTask;
