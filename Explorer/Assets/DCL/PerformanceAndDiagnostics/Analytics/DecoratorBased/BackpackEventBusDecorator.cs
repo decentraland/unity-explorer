@@ -3,6 +3,7 @@ using DCL.AvatarRendering.Wearables.Components;
 using DCL.Backpack.BackpackBus;
 using DCL.CharacterPreview;
 using DCL.UI;
+using Segment.Serialization;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -39,12 +40,19 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.EquipEmoteEvent += (slot, emote, manuallyEquipped) =>
             {
                 EquipEmoteEvent?.Invoke(slot, emote, manuallyEquipped);
-                analytics.Track(AnalyticsEvents.Backpack.EMOTE_EQUIPPED, new Dictionary<string, object>
+
+                if (manuallyEquipped)
                 {
-                    { "slot", slot },
-                    { "emote", emote.id },
-                    { "manuallyEquipped", manuallyEquipped }
-                });
+                    var emoteUrn = emote.GetUrn().ToString();
+
+                    analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JsonObject
+                    {
+                        { "item_id", emoteUrn }, // Id of the item <contract-address>-<item_id>
+                        { "is_base", !emoteUrn.StartsWith("urn:") },
+                        { "name", emote.GetName() },
+                        { "emote_index", slot },
+                    });
+                }
             };
 
             // Re-emit core events
