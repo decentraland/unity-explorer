@@ -19,7 +19,7 @@ namespace DCL.LOD.Components
         public LODCacheInfo metadata;
 
         public AssetPromise<AssetBundleData, GetAssetBundleIntention> CurrentLODPromise;
-        public byte CurrentLODLevelPromise { get; private set; }
+        public byte CurrentLODLevelPromise;
         
         public void Dispose(World world)
         {

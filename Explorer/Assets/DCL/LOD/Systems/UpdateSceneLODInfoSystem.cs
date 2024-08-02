@@ -74,7 +74,7 @@ namespace DCL.LOD.Systems
                 manifest: manifest);
 
             sceneLODInfo.CurrentLODPromise = Promise.Create(World, assetBundleIntention, partitionComponent);
-            sceneLODInfo.SetCurrentLODPromise(sceneLODInfo.CurrentLODPromise, level);
+            sceneLODInfo.CurrentLODLevelPromise = level;
         }
 
         private byte GetLODLevelForPartition(ref PartitionComponent partitionComponent, ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)

@@ -87,7 +87,8 @@ namespace DCL.LOD.Tests
         {
             //Arrange
             var promiseGenerated = GenerateSuccessfullPromise();
-            sceneLODInfo.SetCurrentLODPromise(promiseGenerated.Item2, 0);
+            sceneLODInfo.CurrentLODPromise = promiseGenerated.Item2;
+            sceneLODInfo.CurrentLODLevelPromise = 0;
             var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
@@ -107,7 +108,8 @@ namespace DCL.LOD.Tests
         public void ResolveFailedPromise()
         {
             //Arrange
-            sceneLODInfo.SetCurrentLODPromise(GenerateFailedPromise(), 0);
+            sceneLODInfo.CurrentLODPromise = GenerateFailedPromise();
+            sceneLODInfo.CurrentLODLevelPromise = 0;
             var sceneLodInfoEntity = world.Create(sceneLODInfo, sceneDefinitionComponent);
 
             //Act
