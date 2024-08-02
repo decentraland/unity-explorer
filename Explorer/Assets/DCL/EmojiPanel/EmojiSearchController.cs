@@ -47,8 +47,6 @@ namespace DCL.Emoji
             view.inputField.onSelect.RemoveListener(DisableDCLInput);
             view.inputField.onDeselect.RemoveListener(EnableDCLInput);
             view.clearSearchButton.onClick.RemoveListener(ClearSearch);
-
-            EnableDCLInput(string.Empty);
         }
 
         private void DisableDCLInput(string _)
