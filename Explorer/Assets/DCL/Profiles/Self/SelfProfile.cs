@@ -57,7 +57,7 @@ namespace DCL.Profiles.Self
             );
         }
 
-        public async UniTask<Profile?> PublishAsync(CancellationToken ct, bool onlyBasicInfo = false)
+        public async UniTask<Profile?> PublishAsync(CancellationToken ct)
         {
             Profile? profile = await ProfileAsync(ct);
 
@@ -71,44 +71,30 @@ namespace DCL.Profiles.Self
                 return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
             }
 
-            Profile newProfile;
+            using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
 
-            if (onlyBasicInfo)
-            {
-                // With 'onlyBasicInfo' as true we only update the basic info of the profile and keep the rest of the data
-                newProfile = profileBuilder.From(profile)
-                                           .WithVersion(profile.Version + 1)
-                                           .WithForceRender(forceRender)
-                                           .Build();
-            }
-            else
-            {
-                using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
+            uniqueWearables = uniqueWearables.EnsureNotNull();
+            ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
 
-                uniqueWearables = uniqueWearables.EnsureNotNull();
-                ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
+            var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
+            ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
-                var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
-                ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
+            var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
 
-                var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
-
-                // With 'onlyBasicInfo' as false we update all the info of the profile
-                newProfile = profileBuilder.From(profile)
-                                           .WithBodyShape(bodyShape)
-                                           .WithWearables(uniqueWearables)
-                                           .WithColors(equippedWearables.GetColors())
-                                           .WithEmotes(uniqueEmotes)
-                                           .WithForceRender(forceRender)
-                                           .WithVersion(profile!.Version + 1)
-                                           .Build();
-            }
+            // With 'onlyBasicInfo' as false we update all the info of the profile
+            var newProfile = profileBuilder.From(profile)
+                                       .WithBodyShape(bodyShape)
+                                       .WithWearables(uniqueWearables)
+                                       .WithColors(equippedWearables.GetColors())
+                                       .WithEmotes(uniqueEmotes)
+                                       .WithForceRender(forceRender)
+                                       .WithVersion(profile!.Version + 1)
+                                       .Build();
 
             newProfile.UserId = web3IdentityCache.Identity.Address;
 
             // Skip publishing the same profile
-            if (!onlyBasicInfo
-                && newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
+            if (newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
                 && newProfile.Avatar.wearables.SetEquals(profile.Avatar.wearables)
                 && newProfile.Avatar.emotes.EqualsContentInOrder(profile.Avatar.emotes)
                 && newProfile.Avatar.forceRender.SetEquals(profile.Avatar.forceRender)
@@ -116,6 +102,30 @@ namespace DCL.Profiles.Self
                 && newProfile.Avatar.EyesColor.Equals(profile.Avatar.EyesColor)
                 && newProfile.Avatar.SkinColor.Equals(profile.Avatar.SkinColor))
                 return profile;
+
+            await profileRepository.SetAsync(newProfile, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+        }
+
+        public async UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct)
+        {
+            Profile? profile = await ProfileAsync(ct);
+
+            if (web3IdentityCache.Identity == null)
+                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+
+            if (profile == null)
+            {
+                profile = Profile.NewRandomProfile(web3IdentityCache.Identity.Address);
+                await profileRepository.SetAsync(profile, ct);
+                return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
+            }
+
+            Profile newProfile = profileBuilder.From(profile)
+                                               .WithVersion(profile.Version + 1)
+                                               .Build();
+
+            newProfile.UserId = web3IdentityCache.Identity.Address;
 
             await profileRepository.SetAsync(newProfile, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);

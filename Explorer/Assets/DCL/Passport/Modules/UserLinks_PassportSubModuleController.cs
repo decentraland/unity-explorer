@@ -1,11 +1,8 @@
-using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.Diagnostics;
 using DCL.ExternalUrlPrompt;
 using DCL.Passport.Fields;
 using DCL.Passport.Modals;
 using DCL.Profiles;
-using DCL.Profiles.Self;
 using MVC;
 using System;
 using System.Collections.Generic;
@@ -23,10 +20,7 @@ namespace DCL.Passport.Modules
         private readonly UserDetailedInfo_PassportModuleView view;
         private readonly AddLink_PassportModal addLinkModal;
         private readonly IMVCManager mvcManager;
-        private readonly World world;
-        private readonly Entity playerEntity;
-        private readonly PassportErrorsController passportErrorsController;
-        private readonly ISelfProfile selfProfile;
+        private readonly PassportProfileInfoController passportProfileInfoController;
 
         private Profile currentProfile;
         private readonly IObjectPool<Link_PassportFieldView> linksPool;
@@ -40,18 +34,12 @@ namespace DCL.Passport.Modules
             UserDetailedInfo_PassportModuleView view,
             AddLink_PassportModal addLinkModal,
             IMVCManager mvcManager,
-            World world,
-            Entity playerEntity,
-            PassportErrorsController passportErrorsController,
-            ISelfProfile selfProfile)
+            PassportProfileInfoController passportProfileInfoController)
         {
             this.view = view;
             this.addLinkModal = addLinkModal;
             this.mvcManager = mvcManager;
-            this.world = world;
-            this.playerEntity = playerEntity;
-            this.passportErrorsController = passportErrorsController;
-            this.selfProfile = selfProfile;
+            this.passportProfileInfoController = passportProfileInfoController;
 
             linksPool = new ObjectPool<Link_PassportFieldView>(
                 InstantiateLinkPrefab,
@@ -85,8 +73,12 @@ namespace DCL.Passport.Modules
             addLinkModal.OnSave += CreateNewLink;
         }
 
-        public void Setup(Profile profile) =>
+        public void Setup(Profile profile)
+        {
             this.currentProfile = profile;
+            LoadLinks();
+            SetLinksSectionAsEditionMode(false);
+        }
 
         public void Dispose()
         {
@@ -132,7 +124,7 @@ namespace DCL.Passport.Modules
             instantiatedLinksForEdition.Clear();
         }
 
-        public void LoadLinks()
+        private void LoadLinks()
         {
             view.NoLinksLabel.gameObject.SetActive(currentProfile.Links == null || currentProfile.Links.Count == 0);
             view.LinksContainer.gameObject.SetActive(currentProfile.Links is { Count: > 0 });
@@ -177,7 +169,7 @@ namespace DCL.Passport.Modules
         public void SetSaveButtonAsInteractable(bool isInteractable) =>
             view.SaveLinksButton.interactable = isInteractable;
 
-        public void SetLinksSectionAsEditionMode(bool isEditMode)
+        private void SetLinksSectionAsEditionMode(bool isEditMode)
         {
             SetLinksSectionAsSavingStatus(false);
 
@@ -252,10 +244,7 @@ namespace DCL.Passport.Modules
                     });
                 }
 
-                await UpdateProfileAsync(ct);
-                ClearAllLinks();
-                LoadLinks();
-                SetLinksSectionAsEditionMode(false);
+                await passportProfileInfoController.UpdateProfileAsync(ct);
             }
         }
 
@@ -271,32 +260,6 @@ namespace DCL.Passport.Modules
 
             foreach (var link in instantiatedLinks)
                 link.SetAsInteractable(!isSaving);
-        }
-
-        private async UniTask UpdateProfileAsync(CancellationToken ct)
-        {
-            try
-            {
-                // Update profile data
-                var profile = await selfProfile.PublishAsync(ct, onlyBasicInfo: true);
-
-                if (profile != null)
-                {
-                    // Update player entity in world
-                    profile.IsDirty = true;
-                    world.Set(playerEntity, profile);
-
-                    // Update current profile
-                    Setup(profile);
-                }
-            }
-            catch (OperationCanceledException) { }
-            catch (Exception e)
-            {
-                const string ERROR_MESSAGE = "There was an error while trying to update your profile links. Please try again!";
-                passportErrorsController.Show();
-                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
-            }
         }
     }
 }
