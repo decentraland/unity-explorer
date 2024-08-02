@@ -377,10 +377,7 @@ if not build_healthy:
     sys.exit(1)
 
 # Cleanup (only if build is healthy)
-if get_any_running_builds(os.getenv('TARGET')):
-    delete_build(id)
-else:
-    # Deleting the parent target also removes all builds
-    delete_current_target()
+# We only delete all artifacts, not the build target
+delete_build(id)
 
 utils.delete_build_info()
