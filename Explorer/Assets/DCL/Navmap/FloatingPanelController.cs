@@ -139,13 +139,19 @@ namespace DCL.Navmap
             {
                 view.setAsDestinationButton.onClick.RemoveAllListeners();
                 view.setAsDestinationButton.onClick.AddListener(() => SetAsDestination(parcel));
+
                 view.setAsDestinationMapPinButton.onClick.RemoveAllListeners();
                 view.setAsDestinationMapPinButton.onClick.AddListener(() => SetAsDestination(parcel));
+
                 view.removeDestinationButton.onClick.RemoveAllListeners();
-                view.removeMapPinDestinationButton.onClick.RemoveAllListeners();
                 view.removeDestinationButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
+
+                view.removeMapPinDestinationButton.onClick.RemoveAllListeners();
                 view.removeMapPinDestinationButton.onClick.AddListener(OnRemoveDestinationButtonClicked);
+
+                view.jumpInButton.onClick.RemoveAllListeners();
                 view.jumpInButton.onClick.AddListener(() => JumpIn(parcel));
+
                 currentParcelPlaceInfo = await placesAPIService.GetPlaceAsync(parcel, cts.Token);
                 ResetCategories();
 
