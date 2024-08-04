@@ -14,6 +14,8 @@ namespace DCL.MapRenderer.ConsumerUtils
     public class MapRenderImage : RawImage, IPointerMoveHandler, IPointerExitHandler, IPointerClickHandler,
         IDragHandler, IBeginDragHandler, IEndDragHandler
     {
+        public event Action<ParcelClickData> ParcelClicked;
+
         private static readonly string DRAG_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnDrag));
         private static readonly string POINTER_MOVE_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnPointerMove));
         private static readonly string POINTER_CLICK_SAMPLE_NAME = string.Format("{0}.{1}", nameof(MapRenderImage), nameof(OnPointerClick));
@@ -126,9 +128,6 @@ namespace DCL.MapRenderer.ConsumerUtils
 
             Profiler.EndSample();
         }
-
-        public event Action<ParcelClickData> ParcelClicked;
-        public event Action<ParcelClickData> MapPinHovered;
 
         /// <summary>
         ///     Notifies with the world position
