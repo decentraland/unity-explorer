@@ -18,13 +18,12 @@ namespace DCL.MapRenderer.ComponentsFactory
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            MapRendererSettings mapSettings,
+            IMapRendererSettings mapSettings,
             IAssetsProvisioner assetsProvisioner,
             IMapPathEventBus mapPathEventBus,
             CancellationToken cancellationToken)
         {
-            ProvidedAsset<GameObject> providedAsset = await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PlayerMarker, ct: cancellationToken);
-            PlayerMarkerObject prefab = providedAsset.Value.GetComponent<PlayerMarkerObject>();
+            PlayerMarkerObject prefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PlayerMarker, ct: cancellationToken)).Value;
 
             var playerMarkerController = new PlayerMarkerController(
                 CreateMarker,

@@ -14,7 +14,6 @@ namespace DCL.PluginSystem.Global
     {
         [field: SerializeField] public AssetReferenceGameObject PopupCloserView { get; private set; }
         [field: SerializeField] public Light DirectionalLight { get; private set; }
-        [field: SerializeField] public MapRendererSettings MapRendererSettings { get; private set; }
         [field: SerializeField] public AssetReferenceT<ChatEntryConfigurationSO> ChatEntryConfiguration { get; private set; }
         [field: SerializeField] public AssetReferenceT<NametagsData> NametagsData { get; private set; }
         [field: SerializeField] public AssetReferenceT<CursorSettings> CursorSettings { get; private set; }

@@ -15,7 +15,7 @@ namespace DCL.MapRenderer.ComponentsFactory
     internal struct MapPathInstaller
     {
         private IAssetsProvisioner assetsProvisioner;
-        private MapRendererSettings mapSettings;
+        private IMapRendererSettings mapSettings;
 
         public async UniTask InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
@@ -23,7 +23,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            MapRendererSettings settings,
+            IMapRendererSettings settings,
             IAssetsProvisioner assetProv,
             IMapPathEventBus mapPathEventBus,
             INotificationsBusController notificationsBusController,

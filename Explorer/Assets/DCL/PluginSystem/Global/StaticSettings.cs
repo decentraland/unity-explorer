@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using DCL.Roads.Settings;
 using DCL.AvatarRendering;
+using DCL.MapRenderer;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -20,7 +21,6 @@ namespace DCL.PluginSystem.Global
     public class StaticSettings : IDCLPluginSettings
     {
         [field: Header(nameof(StaticSettings))] [field: Space]
-
         [field: SerializeField]
         public PartitionSettingsRef PartitionSettings { get; private set; }
 

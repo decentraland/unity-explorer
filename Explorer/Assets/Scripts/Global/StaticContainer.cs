@@ -11,7 +11,7 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Interaction.Utility;
-using DCL.Ipfs;
+using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -36,7 +36,6 @@ using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
 using ECS.SceneLifeCycle.Components;
-using Global.Dynamic;
 using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
@@ -63,33 +62,24 @@ namespace Global
         private ProvidedAsset<PartitionSettingsAsset> partitionSettings;
         private ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings;
 
+        private IAssetsProvisioner assetsProvisioner;
+
         public ComponentsContainer ComponentsContainer { get; private set; }
-
         public CharacterContainer CharacterContainer { get; private set; }
-
         public QualityContainer QualityContainer { get; private set; }
-
         public ExposedGlobalDataContainer ExposedGlobalDataContainer { get; private set; }
-
         public WebRequestsContainer WebRequestsContainer { get; private set; }
-
         public IReadOnlyList<IDCLWorldPlugin> ECSWorldPlugins { get; private set; }
 
         /// <summary>
         ///     Some plugins may implement both interfaces
         /// </summary>
         public IReadOnlyList<IDCLGlobalPlugin> SharedPlugins { get; private set; }
-
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
-
         public Profiler Profiler { get; private set; }
-
         public PhysicsTickProvider PhysicsTickProvider { get; private set; }
-
         public IEntityCollidersGlobalCache EntityCollidersGlobalCache { get; private set; }
-
         public IPartitionSettings PartitionSettings => partitionSettings.Value;
-
         public IRealmPartitionSettings RealmPartitionSettings => realmPartitionSettings.Value;
         public StaticSettings StaticSettings { get; private set; }
         public CacheCleaner CacheCleaner { get; private set; }
@@ -99,10 +89,7 @@ namespace Global
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
-
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
-
-        private IAssetsProvisioner assetsProvisioner;
 
         public void Dispose()
         {

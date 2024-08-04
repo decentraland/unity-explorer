@@ -102,8 +102,13 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 55f1de672716d164bab43b54e576c9fb
-    m_Address: Assets/DCL/MapRenderer/Addressables/DestinationMapPin.prefab
+  - m_GUID: eb94acb2812554e4695a383fa2eae4b7
+    m_Address: PinMarkerObject_Destination Variant
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
+    m_Address: MapRendererSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

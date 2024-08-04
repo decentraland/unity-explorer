@@ -16,7 +16,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private const int PREWARM_COUNT = 60;
 
         private IAssetsProvisioner assetsProvisioner;
-        private MapRendererSettings mapSettings;
+        private IMapRendererSettings mapSettings;
 
         public async UniTask<PinMarkerController> InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
@@ -24,7 +24,7 @@ namespace DCL.MapRenderer.ComponentsFactory
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            MapRendererSettings settings,
+            IMapRendererSettings settings,
             IAssetsProvisioner assetProv,
             IMapPathEventBus mapPathEventBus,
             CancellationToken cancellationToken)
@@ -70,7 +70,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static IPinMarker CreateMarker(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController) =>
             new PinMarker(objectsPool, cullingController);
 
-        internal async UniTask<PinMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PinMarker, ct: cancellationToken)).Value.GetComponent<PinMarkerObject>();
+        private async UniTask<PinMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
+            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PinMarker, ct: cancellationToken)).Value;
     }
 }
