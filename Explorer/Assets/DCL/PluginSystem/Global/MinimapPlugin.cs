@@ -1,6 +1,7 @@
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.Chat.MessageBus;
+using DCL.MapRenderer;
 using DCL.Minimap;
 using DCL.PlacesAPIService;
 using DCL.UI.MainUI;
@@ -23,9 +24,11 @@ namespace DCL.PluginSystem.Global
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IScenesCache scenesCache;
         private readonly MainUIView mainUIView;
+        private readonly IMapPathEventBus mapPathEventBus;
 
         public MinimapPlugin(IMVCManager mvcManager, MapRendererContainer mapRendererContainer, IPlacesAPIService placesAPIService,
-            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView)
+            IRealmData realmData, IChatMessagesBus chatMessagesBus, IRealmNavigator realmNavigator, IScenesCache scenesCache, MainUIView mainUIView,
+            IMapPathEventBus mapPathEventBus)
         {
             this.mvcManager = mvcManager;
             this.mapRendererContainer = mapRendererContainer;
@@ -34,6 +37,7 @@ namespace DCL.PluginSystem.Global
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
+            this.mapPathEventBus = mapPathEventBus;
             this.mainUIView = mainUIView;
         }
 
@@ -49,7 +53,7 @@ namespace DCL.PluginSystem.Global
                         return view;
                     },
                     mapRendererContainer.MapRenderer, mvcManager, placesAPIService, TrackPlayerPositionSystem.InjectToWorld(ref world),
-                    realmData, chatMessagesBus, realmNavigator, scenesCache));
+                    realmData, chatMessagesBus, realmNavigator, scenesCache, mapPathEventBus));
             };
         }
 
