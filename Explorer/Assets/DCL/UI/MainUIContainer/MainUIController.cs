@@ -15,6 +15,7 @@ namespace DCL.UI.MainUI
 {
     public class MainUIController : ControllerBase<MainUIView>
     {
+        private const int MS_WAIT_BEFORE_FIRST_HIDE = 3000;
         private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 80;
         private const float HIDE_SIDEBAR_LAYOUT_WIDTH = 20;
         private const float HIDE_SIDEBAR_WAIT_TIME = 0.3f;
@@ -53,6 +54,13 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
             showingSidebar = true;
+            InitialHideAsync().Forget();
+        }
+
+        private async UniTaskVoid InitialHideAsync()
+        {
+            await UniTask.Delay(MS_WAIT_BEFORE_FIRST_HIDE, cancellationToken: showSidebarCancellationTokenSource.Token);
+            OnPointerExit();
         }
 
         private void OnSidebarAutohideStatusChanged(bool status)
