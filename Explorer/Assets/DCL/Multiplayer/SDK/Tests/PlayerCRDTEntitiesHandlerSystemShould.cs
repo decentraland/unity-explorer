@@ -5,6 +5,7 @@ using DCL.Character;
 using DCL.Character.Components;
 using DCL.Multiplayer.SDK.Components;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
+using DCL.PluginSystem.World;
 using DCL.Profiles;
 using ECS.LifeCycle.Components;
 using ECS.SceneLifeCycle;
@@ -34,11 +35,15 @@ namespace DCL.Multiplayer.SDK.Tests
         public void Setup()
         {
             var scenesCache = new ScenesCache();
+
             scene1World = World.Create();
             scene1Facade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.zero, scene1World);
+            scene1Facade.PersistentEntities.Returns(new PersistentEntities(scene1World.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)), Entity.Null, Entity.Null));
             scenesCache.Add(scene1Facade, new[] { scene1Facade.Info.BaseParcel });
+
             scene2World = World.Create();
             scene2Facade = SceneFacadeUtils.CreateSceneFacadeSubstitute(Vector2Int.one, scene2World);
+            scene2Facade.PersistentEntities.Returns(new PersistentEntities(scene2World.Create(new PlayerSceneCRDTEntity(SpecialEntitiesID.PLAYER_ENTITY)), Entity.Null, Entity.Null));
             scenesCache.Add(scene2Facade, new[] { scene2Facade.Info.BaseParcel });
 
             fakeCharacterUnityTransform = new GameObject("fake-character").transform;
@@ -138,7 +143,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
             Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
-            Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity));
+            Assert.That(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity), playerCRDTEntity.SceneEntityIsPersistent ? Is.False : Is.True);
         }
 
         [TestCase(true)]
@@ -170,7 +175,7 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
             Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
-            Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity));
+            Assert.That(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity), playerCRDTEntity.SceneEntityIsPersistent ? Is.False : Is.True);
         }
 
         [TestCase(true)]
@@ -201,7 +206,8 @@ namespace DCL.Multiplayer.SDK.Tests
 
             Assert.IsFalse(world.Has<PlayerCRDTEntity>(entity));
             Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<PlayerSceneCRDTEntity>(playerCRDTEntity.SceneWorldEntity));
-            Assert.IsTrue(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity));
+
+            Assert.That(playerCRDTEntity.SceneFacade.EcsExecutor.World.Has<DeleteEntityIntention>(playerCRDTEntity.SceneWorldEntity), playerCRDTEntity.SceneEntityIsPersistent ? Is.False : Is.True);
         }
 
         [Test]
