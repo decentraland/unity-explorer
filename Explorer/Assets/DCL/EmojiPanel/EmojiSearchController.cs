@@ -27,6 +27,10 @@ namespace DCL.Emoji
             view.inputField.onValueChanged.AddListener(OnValueChanged);
             view.inputField.onSelect.AddListener(DisableDCLInput);
             view.inputField.onDeselect.AddListener(EnableDCLInput);
+            view.inputField.onDeselect.AddListener(EnableDCLInput);
+            view.inputField.onEndEdit.AddListener(EnableDCLInput);
+            view.Disabled += EnableDCLInput;
+
             view.clearSearchButton.onClick.AddListener(ClearSearch);
 
             view.clearSearchButton.gameObject.SetActive(false);
@@ -46,6 +50,9 @@ namespace DCL.Emoji
             view.inputField.onValueChanged.RemoveListener(OnValueChanged);
             view.inputField.onSelect.RemoveListener(DisableDCLInput);
             view.inputField.onDeselect.RemoveListener(EnableDCLInput);
+            view.inputField.onEndEdit.RemoveListener(EnableDCLInput);
+            view.Disabled -= EnableDCLInput;
+
             view.clearSearchButton.onClick.RemoveListener(ClearSearch);
         }
 
@@ -55,7 +62,10 @@ namespace DCL.Emoji
             dclInput.Player.Disable();
         }
 
-        private void EnableDCLInput(string _)
+        private void EnableDCLInput(string _) =>
+            EnableDCLInput();
+
+        private void EnableDCLInput()
         {
             dclInput.Shortcuts.Enable();
             dclInput.Player.Enable();
