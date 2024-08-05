@@ -30,7 +30,7 @@ namespace Global.Dynamic
     [Serializable]
     public class DebugSettings : IDebugSettings
     {
-        private static readonly IDebugSettings RELEASE_SETTINGS = Release();
+        private static readonly DebugSettings RELEASE_SETTINGS = Release();
 
         [SerializeField]
         private bool showSplash;
@@ -57,12 +57,12 @@ namespace Global.Dynamic
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
-        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.ShowSplash;
-        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.ShowAuthentication;
-        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.ShowLoading;
-        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.EnableLandscape;
-        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.EnableLOD;
-        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.EnableEmulateNoLivekitConnection;
+        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
+        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
+        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
+        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
+        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
+        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
     }
 
     public class MainSceneLoader : MonoBehaviour
