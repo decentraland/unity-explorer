@@ -7,7 +7,6 @@ using DCL.MapRenderer.ComponentsFactory;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
-using DCL.Notification.NotificationsBus;
 using System;
 using System.Collections.Generic;
 using System.Threading;

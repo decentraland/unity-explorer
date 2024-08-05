@@ -3,7 +3,7 @@
 namespace DCL.MapRenderer.ComponentsFactory
 {
     /// <summary>
-    ///     Placed on the prefab, contains the hierarchical structure needed for Map Layers
+    /// Placed on the prefab, contains the hierarchical structure needed for Map Layers
     /// </summary>
     public class MapRendererConfiguration : MonoBehaviour
     {
@@ -33,9 +33,6 @@ namespace DCL.MapRenderer.ComponentsFactory
 
         [field: SerializeField]
         public Transform PlayerMarkerRoot { get; private set; }
-
-        [field: SerializeField]
-        public Transform MapPathRoot { get; private set; }
 
         [field: SerializeField]
         public Transform PinMarkerRoot { get; private set; }

@@ -1,6 +1,5 @@
 using DCL.Character.CharacterMotion.Components;
 using DCL.MapRenderer.ConsumerUtils;
-using DCL.MapRenderer.MapLayers.Pins;
 using DCL.UI;
 using DCL.UI.Buttons;
 using MVC;
@@ -69,9 +68,6 @@ namespace DCL.Minimap
 
         [field: SerializeField]
         internal List<GameObject> objectsToActivateForWorlds { get; private set; }
-
-        [field: SerializeField]
-        internal MinimapPinMarkerObject destinationPinMarker { get; private set; }
 
         private void Start()
         {

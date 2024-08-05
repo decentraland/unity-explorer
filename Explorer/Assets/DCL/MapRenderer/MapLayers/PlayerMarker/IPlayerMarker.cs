@@ -16,7 +16,5 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
         void ResetToBaseScale();
 
         void SetBackgroundVisibility(bool backgroundIsActive);
-
-        Transform GetTransform();
     }
 }

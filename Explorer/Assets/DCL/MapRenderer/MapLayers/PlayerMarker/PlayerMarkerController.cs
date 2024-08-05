@@ -17,28 +17,17 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
     {
         internal delegate IPlayerMarker PlayerMarkerBuilder(Transform parent);
 
-        //This value indicates how big the difference of sqr magnitudes between the last Updated
-        //position and the new position must be for a position change event to be triggered
-        //This reduces the number of re-calculations done on the path renderer and the minimap pins positions
-        private const int MIN_SQR_POSITION_DIFFERENCE_FOR_EVENT_TRIGGER = 500;
-
         private readonly PlayerMarkerBuilder builder;
-        private readonly IMapPathEventBus mapPathEventBus;
 
         private IPlayerMarker playerMarker;
         private TrackPlayerPositionSystem system;
-        private float lastUpdatePositionSqrMagnitude;
 
         internal PlayerMarkerController(
             PlayerMarkerBuilder builder,
-            Transform instantiationParent,
-            ICoordsUtils coordsUtils,
-            IMapCullingController cullingController,
-            IMapPathEventBus mapPathEventBus)
+            Transform instantiationParent, ICoordsUtils coordsUtils, IMapCullingController cullingController)
             : base(instantiationParent, coordsUtils, cullingController)
         {
             this.builder = builder;
-            this.mapPathEventBus = mapPathEventBus;
         }
 
         public void Initialize()
@@ -82,15 +71,7 @@ namespace DCL.MapRenderer.MapLayers.PlayerMarker
         private void SetPosition(Vector3 position)
         {
             Vector2 gridPosition = ParcelMathHelper.WorldToGridPositionUnclamped(position);
-            Vector3 newMarkerPosition = coordsUtils.PivotPosition(playerMarker, coordsUtils.CoordsToPositionWithOffset(gridPosition));
-
-            if (lastUpdatePositionSqrMagnitude == 0 || Mathf.Abs(newMarkerPosition.sqrMagnitude - lastUpdatePositionSqrMagnitude) > MIN_SQR_POSITION_DIFFERENCE_FOR_EVENT_TRIGGER)
-            {
-                mapPathEventBus.PathUpdated(newMarkerPosition);
-                lastUpdatePositionSqrMagnitude = newMarkerPosition.sqrMagnitude;
-            }
-
-            playerMarker.SetPosition(newMarkerPosition);
+            playerMarker.SetPosition(coordsUtils.PivotPosition(playerMarker, coordsUtils.CoordsToPositionWithOffset(gridPosition)));
         }
 
         private void SetRotation(Quaternion rotation)

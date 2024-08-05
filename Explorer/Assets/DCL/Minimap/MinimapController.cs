@@ -13,7 +13,6 @@ using DCL.MapRenderer.CommonBehavior;
 using DCL.MapRenderer.ConsumerUtils;
 using DCL.MapRenderer.MapCameraController;
 using DCL.MapRenderer.MapLayers;
-using DCL.MapRenderer.MapLayers.Pins;
 using DCL.MapRenderer.MapLayers.PlayerMarker;
 using DCL.PlacesAPIService;
 using DCL.UI;
@@ -43,7 +42,6 @@ namespace DCL.Minimap
         private readonly IChatMessagesBus chatMessagesBus;
         private readonly IRealmNavigator realmNavigator;
         private readonly IScenesCache scenesCache;
-        private readonly IMapPathEventBus mapPathEventBus;
         private CancellationTokenSource cts;
 
         private MapRendererTrackPlayerPosition mapRendererTrackPlayerPosition;
@@ -64,8 +62,7 @@ namespace DCL.Minimap
             IRealmData realmData,
             IChatMessagesBus chatMessagesBus,
             IRealmNavigator realmNavigator,
-            IScenesCache scenesCache,
-            IMapPathEventBus mapPathEventBus
+            IScenesCache scenesCache
         ) : base(viewFactory)
         {
             this.mapRenderer = mapRenderer;
@@ -76,7 +73,6 @@ namespace DCL.Minimap
             this.chatMessagesBus = chatMessagesBus;
             this.realmNavigator = realmNavigator;
             this.scenesCache = scenesCache;
-            this.mapPathEventBus = mapPathEventBus;
         }
 
         private void OnRealmChanged(bool isGenesis)
@@ -97,11 +93,6 @@ namespace DCL.Minimap
             new SideMenuController(viewInstance.sideMenuView);
             SetWorldMode(realmData.ScenesAreFixed);
             realmNavigator.RealmChanged += OnRealmChanged;
-            mapPathEventBus.OnShowPinInMinimapEdge += ShowPinInMinimapEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge += HidePinInMinimapEdge;
-            mapPathEventBus.OnRemovedDestination += HidePinInMinimapEdge;
-            mapPathEventBus.OnUpdatePinPositionInMinimapEdge += UpdatePinPositionInMinimapEdge;
-            viewInstance.destinationPinMarker.HidePin();
         }
 
         private void ExpandMinimap()
@@ -129,24 +120,6 @@ namespace DCL.Minimap
                 viewInstance.SideMenuCanvasGroup.DOFade(1, ANIMATION_TIME).SetEase(Ease.InOutQuad);
             }
         }
-
-        private void ShowPinInMinimapEdge(IPinMarker pinMarker)
-        {
-            if (string.IsNullOrEmpty(pinMarker.Description)) { viewInstance.destinationPinMarker.SetupAsScenePin(); }
-            else { viewInstance.destinationPinMarker.SetupAsMapPin(pinMarker.CurrentSprite); }
-        }
-
-        private void UpdatePinPositionInMinimapEdge(Vector2 newPosition)
-        {
-            viewInstance.destinationPinMarker.RestorePin();
-            viewInstance.destinationPinMarker.SetPosition(newPosition);
-        }
-
-        private void HidePinInMinimapEdge()
-        {
-            viewInstance.destinationPinMarker.HidePin();
-        }
-
 
         [All(typeof(PlayerComponent))]
         [Query]
@@ -247,8 +220,6 @@ namespace DCL.Minimap
         {
             cts.SafeCancelAndDispose();
             realmNavigator.RealmChanged -= OnRealmChanged;
-            mapPathEventBus.OnShowPinInMinimapEdge -= ShowPinInMinimapEdge;
-            mapPathEventBus.OnHidePinInMinimapEdge -= HidePinInMinimapEdge;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

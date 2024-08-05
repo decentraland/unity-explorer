@@ -6,7 +6,6 @@ using DCL.Notification.NotificationsMenu;
 using DCL.SidebarBus;
 using MVC;
 using System.Threading;
-using UnityEngine.Playables;
 using Utility;
 
 namespace DCL.UI.Sidebar
