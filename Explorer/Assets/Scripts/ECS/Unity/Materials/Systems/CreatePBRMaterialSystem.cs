@@ -61,12 +61,12 @@ namespace ECS.Unity.Materials.Systems
 
                 SetUpColors(materialComponent.Result, materialComponent.Data.AlbedoColor, materialComponent.Data.EmissiveColor, materialComponent.Data.ReflectivityColor, materialComponent.Data.EmissiveIntensity);
                 SetUpProps(materialComponent.Result, materialComponent.Data.Metallic, materialComponent.Data.Roughness, materialComponent.Data.SpecularIntensity, materialComponent.Data.DirectIntensity);
-                SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, materialComponent.Data.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
+                SetUpTransparency(materialComponent.Result, materialComponent.Data.TransparencyMode, in materialComponent.Data.Textures.AlphaTexture, materialComponent.Data.AlbedoColor, materialComponent.Data.AlphaTest);
 
-                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, materialComponent.Data.AlbedoTexture);
-                TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap, materialComponent.Data.EmissiveTexture);
-                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture, materialComponent.Data.AlphaTexture);
-                TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, materialComponent.Data.BumpTexture);
+                TrySetTexture(materialComponent.Result, ref albedoResult, ShaderUtils.BaseMap, in materialComponent.Data.Textures.AlbedoTexture);
+                TrySetTexture(materialComponent.Result, ref emissiveResult, ShaderUtils.EmissionMap, in materialComponent.Data.Textures.EmissiveTexture);
+                TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture, in materialComponent.Data.Textures.AlphaTexture);
+                TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, in materialComponent.Data.Textures.BumpTexture);
 
                 DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
                 DestroyEntityReference(ref materialComponent.EmissiveTexPromise);
@@ -97,7 +97,7 @@ namespace ECS.Unity.Materials.Systems
         }
 
         public static void SetUpTransparency(Material material, MaterialTransparencyMode transparencyMode,
-            TextureComponent? alphaTexture, Color albedoColor, float alphaTest)
+            in TextureComponent? alphaTexture, Color albedoColor, float alphaTest)
         {
             if (transparencyMode == MaterialTransparencyMode.Auto)
             {

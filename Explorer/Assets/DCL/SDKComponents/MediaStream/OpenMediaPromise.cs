@@ -8,16 +8,16 @@ namespace DCL.SDKComponents.MediaStream
 {
     public class OpenMediaPromise
     {
-        private enum Status
+        internal enum Status
         {
             Pending, Resolved, Consumed,
         }
 
-        private Status status;
+        internal Status status;
 
         // TODO (Vit): add caching mechanism for resolved promises: <url, isReachable> (on some upper level)
-        private string url;
-        private bool isReachable;
+        internal string url;
+        internal bool isReachable;
 
         public bool IsResolved => status == Status.Resolved;
 
