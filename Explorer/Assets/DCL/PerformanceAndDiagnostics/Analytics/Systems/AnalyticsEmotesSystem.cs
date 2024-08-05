@@ -45,7 +45,7 @@ namespace DCL.Analytics.Systems
                 if (lastEmoteId != emoteIntent.EmoteId)
                 {
                     lastEmoteId = emoteIntent.EmoteId;
-                    SendAnalytics(emoteIntent.EmoteId, !lastEmoteId.StartsWith("urn:"), emoteIntent.TriggerSource.ToString().ToLower());
+                    SendAnalytics(emoteIntent.EmoteId, !Emote.IsOnChain(emoteIntent.EmoteId), emoteIntent.TriggerSource.ToString().ToLower());
                 }
             }
             else

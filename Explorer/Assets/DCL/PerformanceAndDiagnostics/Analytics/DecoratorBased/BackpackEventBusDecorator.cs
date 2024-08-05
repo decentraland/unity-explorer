@@ -48,7 +48,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JsonObject
                     {
                         { "item_id", emoteUrn }, // Id of the item <contract-address>-<item_id>
-                        { "is_base", !emoteUrn.StartsWith("urn:") },
+                        { "is_base", !Emote.IsOnChain(emoteUrn) },
                         { "name", emote.GetName() },
                         { "emote_index", slot },
                         { "source", "backpack" },
