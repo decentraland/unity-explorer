@@ -47,19 +47,9 @@ namespace PortableExperiences.Controller
             this.scenesCache = scenesCache;
         }
 
-        public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceAsync(ENS ens, URN urn, CancellationToken ct, bool isGlobalPortableExperience = false)
+        public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceByEnsAsync(ENS ens, CancellationToken ct, bool isGlobalPortableExperience = false)
         {
-            //According to kernel implementation, the id value is used as an urn
-            //https://github.com/decentraland/unity-renderer/blob/b3b170e404ec43bb8bc08ec1f6072812005ebad3/browser-interface/packages/shared/apis/host/PortableExperiences.ts#L28
-            //And is validated first. As it has no ipfs config, it uses the one from the current realm apparently
-
             string worldUrl = string.Empty;
-
-            if (!string.IsNullOrEmpty(urn))
-            {
-                //TODO: Enable loading PX from urns using current scene realm data. -> will be done in next iteration.
-                //worldUrl = IpfsHelper.ParseUrn(urn).BaseUrl.Value;
-            }
 
             if (ens.IsValid) { worldUrl = ENSUtils.ConvertEnsToWorldUrl(ens); }
 
@@ -68,7 +58,6 @@ namespace PortableExperiences.Controller
             var portableExperiencePath = URLDomain.FromString(worldUrl);
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
 
-
             GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
 
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
@@ -76,7 +65,7 @@ namespace PortableExperiences.Controller
             if (result.configurations.scenesUrn.Count == 0)
             {
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
-                throw new Exception($"Scene not Available in provided Portable Experience with ens:{ens} - urn: {urn}");
+                throw new Exception($"Scene not Available in provided Portable Experience with ens:{ens}");
             }
             var realmData = new RealmData();
             realmData.Reconfigure(

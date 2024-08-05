@@ -18,20 +18,18 @@ namespace SceneRunner
     {
         internal readonly SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps;
 
-        private int intervalMS;
-
         public ISceneStateProvider SceneStateProvider => deps.SyncDeps.SceneStateProvider;
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
         public PersistentEntities PersistentEntities => deps.SyncDeps.ECSWorldFacade.PersistentEntities;
-
         public ISceneData SceneData { get; }
-
         public bool IsEmpty => false;
-
         public SceneShortInfo Info => SceneData.SceneShortInfo;
+
 
         private ISceneRuntime runtimeInstance => deps.Runtime;
         private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
+        private int intervalMS;
+
 
         public PortableExperienceSceneFacade(
             ISceneData sceneData,

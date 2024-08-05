@@ -7,10 +7,6 @@ using Utility;
 
 namespace ECS.SceneLifeCycle.SceneDefinition
 {
-    public struct PortableExperienceComponent
-    { };
-
-
     /// <summary>
     ///     Scene definition in ECS, indicates the definition is loaded but does not tell the state of SceneFacade itself
     /// </summary>

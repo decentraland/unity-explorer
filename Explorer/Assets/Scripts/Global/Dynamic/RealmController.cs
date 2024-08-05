@@ -175,9 +175,13 @@ namespace Global.Dynamic
 
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
+
+            if (scenesCache.PortableExperiencesScenes.Count == 0)
             // release pooled entities
-            for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+            {
+                for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
+                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+            }
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);

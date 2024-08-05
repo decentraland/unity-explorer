@@ -157,7 +157,7 @@ namespace Global.Dynamic
                 {
                     foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
                     {
-                        await staticContainer.PortableExperiencesController.CreatePortableExperienceAsync(new ENS(pxEns), string.Empty, ct, true);
+                        await staticContainer.PortableExperiencesController.CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true);
                     }
                 }
             }
