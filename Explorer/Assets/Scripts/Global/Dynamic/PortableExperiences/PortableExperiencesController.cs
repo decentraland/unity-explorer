@@ -14,7 +14,6 @@ using System.Collections.Generic;
 using System.Threading;
 using DCL.Utilities.Extensions;
 using SceneRunner.Scene;
-using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using System.Linq;
 using GetSceneDefinition = ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinition;
 
@@ -34,7 +33,7 @@ namespace PortableExperiences.Controller
         private List<Entity> entitiesToDestroy = new ();
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
         private World world => globalWorldProxy.Object;
-        private List<IPortableExperiencesApi.SpawnResponse> spawnResponsesList = new ();
+        private List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
 
         public PortableExperiencesController(
             ObjectProxy<World> world,
@@ -48,7 +47,7 @@ namespace PortableExperiences.Controller
             this.scenesCache = scenesCache;
         }
 
-        public async UniTask<IPortableExperiencesApi.SpawnResponse> CreatePortableExperienceAsync(ENS ens, URN urn, CancellationToken ct, bool isGlobalPortableExperience = false)
+        public async UniTask<IPortableExperiencesController.SpawnResponse> CreatePortableExperienceAsync(ENS ens, URN urn, CancellationToken ct, bool isGlobalPortableExperience = false)
         {
             //According to kernel implementation, the id value is used as an urn
             //https://github.com/decentraland/unity-renderer/blob/b3b170e404ec43bb8bc08ec1f6072812005ebad3/browser-interface/packages/shared/apis/host/PortableExperiences.ts#L28
@@ -94,7 +93,7 @@ namespace PortableExperiences.Controller
             Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience));
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
 
-            return new IPortableExperiencesApi.SpawnResponse
+            return new IPortableExperiencesController.SpawnResponse
                 { name = realmData.RealmName, ens = ens.ToString(), parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
         }
 
@@ -112,7 +111,7 @@ namespace PortableExperiences.Controller
             return false;
         }
 
-        public List<IPortableExperiencesApi.SpawnResponse> GetAllPortableExperiences()
+        public List<IPortableExperiencesController.SpawnResponse> GetAllPortableExperiences()
         {
             spawnResponsesList.Clear();
 
@@ -120,7 +119,7 @@ namespace PortableExperiences.Controller
             {
                 PortableExperienceRealmComponent pxRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperience.Value);
 
-                spawnResponsesList.Add(new IPortableExperiencesApi.SpawnResponse {
+                spawnResponsesList.Add(new IPortableExperiencesController.SpawnResponse {
                         name = pxRealmComponent.RealmData.RealmName,
                         ens = portableExperience.Key.ToString(),
                         parent_cid = pxRealmComponent.ParentSceneId,
@@ -130,7 +129,7 @@ namespace PortableExperiences.Controller
             return spawnResponsesList;
         }
 
-        public async UniTask<IPortableExperiencesApi.ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct)
+        public async UniTask<IPortableExperiencesController.ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct)
         {
             if (ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
 
@@ -172,11 +171,11 @@ namespace PortableExperiences.Controller
                 world.Destroy(portableExperienceEntity);
                 PortableExperienceEntities.Remove(ens);
 
-                return new IPortableExperiencesApi.ExitResponse
+                return new IPortableExperiencesController.ExitResponse
                     { status = true };
             }
 
-            return new IPortableExperiencesApi.ExitResponse
+            return new IPortableExperiencesController.ExitResponse
                 { status = false };
         }
 

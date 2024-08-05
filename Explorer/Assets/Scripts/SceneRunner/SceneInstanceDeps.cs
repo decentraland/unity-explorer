@@ -12,7 +12,6 @@ using CrdtEcsBridge.JsModulesImplementation;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.PortableExperiencesApi;
 using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
@@ -34,7 +33,6 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
-using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
@@ -190,7 +188,6 @@ namespace SceneRunner
             public readonly IWebSocketApi WebSocketAipImplementation;
             public readonly ICommunicationsControllerAPI CommunicationsControllerAPI;
             public readonly ISimpleFetchApi SimpleFetchApi;
-            public readonly IPortableExperiencesApi PortableExperiencesApi;
 
             public readonly SceneInstanceDependencies SyncDeps;
             public readonly ISceneRuntime Runtime;
@@ -208,8 +205,7 @@ namespace SceneRunner
                 ISimpleFetchApi simpleFetchApi,
                 ICommunicationsControllerAPI communicationsControllerAPI,
                 SceneInstanceDependencies syncDeps,
-                ISceneRuntime runtime,
-                IPortableExperiencesApi portableExperiencesApi)
+                ISceneRuntime runtime)
             {
                 EngineAPI = engineAPI;
                 RestrictedActionsAPI = restrictedActionsAPI;
@@ -220,7 +216,6 @@ namespace SceneRunner
                 SimpleFetchApi = simpleFetchApi;
                 SyncDeps = syncDeps;
                 Runtime = runtime;
-                PortableExperiencesApi = portableExperiencesApi;
             }
 
             protected WithRuntimeAndJsAPIBase(
@@ -231,8 +226,8 @@ namespace SceneRunner
                 IMVCManager mvcManager,
                 IGlobalWorldActions globalWorldActions,
                 IRealmData realmData,
-                ICommunicationControllerHub messagePipesHub,
-                IPortableExperiencesController portableExperiencesController)
+                ICommunicationControllerHub messagePipesHub
+                )
                 : this(
                     engineApi,
                     new RestrictedActionsAPIImplementation(mvcManager, syncDeps.ecsWorldSharedDependencies.SceneStateProvider, globalWorldActions, syncDeps.sceneData),
@@ -242,8 +237,7 @@ namespace SceneRunner
                     new LogSimpleFetchApi(new SimpleFetchApiImplementation()),
                     new CommunicationsControllerAPIImplementation(syncDeps.sceneData, messagePipesHub, jsOperations, syncDeps.CRDTMemoryAllocator, syncDeps.ecsWorldSharedDependencies.SceneStateProvider),
                     syncDeps,
-                    sceneRuntime,
-                    new PortableExperiencesApiImplementation(portableExperiencesController, syncDeps.sceneData)) { }
+                    sceneRuntime) { }
 
             public void Dispose()
             {
@@ -270,7 +264,7 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMutexSync),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, portableExperiencesController) { }
+                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub) { }
         }
 
         internal class WithRuntimeJsAndSDKObservablesEngineAPI : WithRuntimeAndJsAPIBase
@@ -289,7 +283,7 @@ namespace SceneRunner
                         syncDeps.systemGroupThrottler,
                         syncDeps.ExceptionsHandler,
                         syncDeps.ecsMutexSync),
-                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub, portableExperiencesController) { }
+                    syncDeps, sceneRuntime, sceneRuntime, mvcManager, globalWorldActions, realmData, messagePipesHub) { }
         }
     }
 }

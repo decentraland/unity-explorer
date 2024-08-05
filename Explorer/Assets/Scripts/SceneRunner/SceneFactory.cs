@@ -198,9 +198,9 @@ namespace SceneRunner
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
-                    runtimeDeps.PortableExperiencesApi,
                     sceneData,
-                    realmData!
+                    realmData!,
+                    portableExperiencesController
                 );
             }
             else
@@ -223,9 +223,9 @@ namespace SceneRunner
                     runtimeDeps.CommunicationsControllerAPI,
                     deps.PoolsProvider,
                     runtimeDeps.SimpleFetchApi,
-                    runtimeDeps.PortableExperiencesApi,
                     sceneData,
-                    realmData!
+                    realmData!,
+                    portableExperiencesController
                 );
             }
 

@@ -1,24 +1,27 @@
 using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.ClearScript.JavaScript;
+using PortableExperiences.Controller;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Utility;
 
 namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
 {
-    public class PortableExperiencesApiWrapper : JsApiWrapperBase<IPortableExperiencesApi>
+    public class PortableExperiencesApiWrapper : IJsApiWrapper
     {
-        private readonly IPortableExperiencesApi api;
         private readonly CancellationTokenSource cancellationTokenSource;
         private readonly IJavaScriptApiExceptionsHandler exceptionsHandler;
+        private readonly IPortableExperiencesController portableExperiencesController;
+        private readonly ISceneData sceneData;
 
-        public PortableExperiencesApiWrapper(IPortableExperiencesApi api, IJavaScriptApiExceptionsHandler exceptionsHandler) : base(api)
+        public PortableExperiencesApiWrapper(IPortableExperiencesController portableExperiencesController, IJavaScriptApiExceptionsHandler exceptionsHandler)
         {
-            this.api = api;
+            this.portableExperiencesController = portableExperiencesController;
             this.exceptionsHandler = exceptionsHandler;
             cancellationTokenSource = new CancellationTokenSource();
         }
@@ -26,31 +29,58 @@ namespace SceneRuntime.Apis.Modules.PortableExperiencesApi
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object Spawn(string pid, string ens)
         {
-            try { return api.SpawnAsync(new URN(pid), new ENS(ens), cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            try { return SpawnAsync(new URN(pid), new ENS(ens), cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object Kill(string ens)
         {
-            try { return api.KillAsync(new ENS(ens), cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            try { return KillAsync(new ENS(ens), cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object Exit()
         {
-            try { return api.ExitAsync(cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
+            try { return ExitAsync(cancellationTokenSource.Token).ReportAndRethrowException(exceptionsHandler).ToDisconnectedPromise(); }
             catch (Exception e) { return Task.FromException(e).ToPromise(); }
         }
 
         [PublicAPI("Used by StreamingAssets/Js/Modules/PortableExperiences.js")]
         public object GetLoadedPortableExperiences() =>
-            api.GetLoadedPortableExperiences(cancellationTokenSource.Token);
+            GetLoadedPortableExperiences(cancellationTokenSource.Token);
 
-        protected override void DisposeInternal()
+
+        private async UniTask<IPortableExperiencesController.SpawnResponse> SpawnAsync(URN pid, ENS ens, CancellationToken ct)
         {
-            cancellationTokenSource.SafeCancelAndDispose();
+            await UniTask.SwitchToMainThread();
+            return await portableExperiencesController.CreatePortableExperienceAsync(ens, pid, ct);
+        }
+
+        private async UniTask<IPortableExperiencesController.ExitResponse> KillAsync(ENS ens, CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+
+            if (!portableExperiencesController.CanKillPortableExperience(ens))
+                return new IPortableExperiencesController.ExitResponse { status = false };
+
+            return await portableExperiencesController.UnloadPortableExperienceAsync(ens, ct);
+        }
+
+        private async UniTask<IPortableExperiencesController.ExitResponse> ExitAsync(CancellationToken ct)
+        {
+            await UniTask.SwitchToMainThread();
+            return await portableExperiencesController.UnloadPortableExperienceAsync(new ENS(sceneData.SceneEntityDefinition.id), ct);
+        }
+
+        private List<IPortableExperiencesController.SpawnResponse> GetLoadedPortableExperiences(CancellationToken ct) =>
+            portableExperiencesController.GetAllPortableExperiences();
+
+
+        public void Dispose()
+        {
+            cancellationTokenSource.Dispose();
         }
 
     }

@@ -265,7 +265,6 @@ namespace SceneRunner.Tests
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.WebSocketAipImplementation));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.CommunicationsControllerAPI));
             runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.RuntimeImplementation));
-            runtime.Register(string.Empty, new TestAPIWrapper(sceneFacade.deps.PortableExperiencesApi));
 
             await UniTask.SwitchToThreadPool();
 
@@ -377,8 +376,7 @@ namespace SceneRunner.Tests
                     Substitute.For<ISystemsUpdateGate>(),
                     Substitute.For<IWorldTimeProvider>(),
                     new ECSWorldInstanceSharedDependencies()),
-                Substitute.For<ISceneRuntime>(),
-                Substitute.For<IPortableExperiencesApi>()) { }
+                Substitute.For<ISceneRuntime>()) { }
         }
 
         public class TestAPIWrapper : IJsApiWrapper

@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 namespace PortableExperiences.Controller
@@ -13,11 +13,25 @@ namespace PortableExperiences.Controller
 
         bool CanKillPortableExperience(ENS ens);
 
-        UniTask<IPortableExperiencesApi.SpawnResponse> CreatePortableExperienceAsync(ENS ens, URN urn, CancellationToken ct, bool isGlobalPortableExperience = false);
+        UniTask<SpawnResponse> CreatePortableExperienceAsync(ENS ens, URN urn, CancellationToken ct, bool isGlobalPortableExperience = false);
 
-        UniTask<IPortableExperiencesApi.ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct);
+        UniTask<ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct);
 
-        List<IPortableExperiencesApi.SpawnResponse> GetAllPortableExperiences();
+        List<SpawnResponse> GetAllPortableExperiences();
 
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        public struct SpawnResponse
+        {
+            public string pid;
+            public string parent_cid;
+            public string name;
+            public string ens;
+        }
+
+        [SuppressMessage("ReSharper", "InconsistentNaming")]
+        public struct ExitResponse
+        {
+            public bool status;
+        }
     }
 }
