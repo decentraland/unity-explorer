@@ -27,7 +27,6 @@ namespace ECS.SceneLifeCycle.Systems
         [None(typeof(PortableExperienceScenePointers))]
         private void InitiateDefinitionLoading(in Entity entity, ref PortableExperienceRealmComponent portableExperienceRealmComponent)
         {
-            // tolerate allocations as it's once per realm only
             var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[portableExperienceRealmComponent.Ipfs.SceneUrns.Count];
 
             for (var i = 0; i < portableExperienceRealmComponent.Ipfs.SceneUrns.Count; i++)
@@ -59,14 +58,14 @@ namespace ECS.SceneLifeCycle.Systems
 
                 if (promise.TryConsume(World, out StreamableLoadingResult<SceneEntityDefinition> result))
                 {
-                    if (result.Succeeded)
+                    if (result is {Asset: not null, Succeeded: true })
                     {
-                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath, true);
+                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
                     }
                 }
                 else
                 {
-                    // at least one unresolved promises
+                    // at least one unresolved promise
                     portableExperienceScenePointers.AllPromisesResolved = false;
                 }
             }
