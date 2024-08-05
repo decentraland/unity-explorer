@@ -26,9 +26,18 @@ MonoBehaviour:
   - rid: 892605770607624195
   - rid: 892605770607624196
   - rid: 7615904969758605314
+  - rid: 634089542387236867
   references:
     version: 2
     RefIds:
+    - rid: 634089542387236867
+      type: {class: MapRendererContainer/Settings, ns: Global.Dynamic, asm: DCL.Plugins}
+      data:
+        <MapRendererSettings>k__BackingField:
+          m_AssetGUID: 2044c17e0fa1b3f4d9d2d3a25cfa77de
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
     - rid: 758312499805421571
       type: {class: AudioSourcesPlugin/AudioSourcesPluginSettings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
