@@ -2,7 +2,7 @@
 
 namespace DCL.MapRenderer.MapCameraController
 {
-    internal class MapCameraObject : MonoBehaviour
+    public class MapCameraObject : MonoBehaviour
     {
         [field: SerializeField]
         internal Camera mapCamera;

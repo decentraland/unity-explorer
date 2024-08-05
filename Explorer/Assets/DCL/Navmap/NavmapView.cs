@@ -56,12 +56,14 @@ namespace DCL.Navmap
         [field: SerializeField]
         public WarningNotificationView WorldsWarningNotificationView { get; private set; }
 
+        [field: SerializeField]
+        public DestinationInfoElement DestinationInfoElement { get; private set; }
+
         [field: Header("Audio")]
         [field: SerializeField]
         public AudioClipConfig ClickAudio { get; private set; }
         [field: SerializeField]
         public AudioClipConfig HoverAudio { get; private set; }
-
     }
 
     [Serializable]
