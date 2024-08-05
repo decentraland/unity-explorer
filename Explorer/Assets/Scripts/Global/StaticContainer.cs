@@ -35,6 +35,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
 using PortableExperiences.Controller;
 using Global.Dynamic;
@@ -111,6 +112,7 @@ namespace Global
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             QualityContainer.Dispose();
+            Profiler.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -156,7 +158,7 @@ namespace Global
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
-
+            
             container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
 
             container.assetsProvisioner = assetsProvisioner;

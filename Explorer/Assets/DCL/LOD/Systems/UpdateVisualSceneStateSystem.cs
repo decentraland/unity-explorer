@@ -17,7 +17,7 @@ using System.Runtime.CompilerServices;
 namespace ECS.SceneLifeCycle.Systems
 {
     [UpdateInGroup(typeof(RealmGroup))]
-    [UpdateAfter(typeof(ResolveVisualSceneStateSystem))]
+    [UpdateAfter(typeof(ResolveVisualSceneStateSystem))]f
     [UpdateAfter(typeof(PartitionSceneEntitiesSystem))]
     [LogCategory(ReportCategory.LOD)]
     public partial class UpdateVisualSceneStateSystem : BaseUnityLoopSystem
@@ -28,7 +28,7 @@ namespace ECS.SceneLifeCycle.Systems
         private delegate void ContinuationMethod<T>(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref T switchComponent);
         private readonly IRealmData realmData;
         private readonly IScenesCache scenesCache;
-        private readonly ILODAssetsPool lodAssetsPool;
+        private readonly ILODCache lodCache;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneAssetLock sceneAssetLock;
         private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
@@ -41,12 +41,12 @@ namespace ECS.SceneLifeCycle.Systems
         private readonly ContinuationMethod<SceneLODInfo> sceneLODToScenePromiseContinuation;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
 
-        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODAssetsPool lodAssetsPool,
+        internal UpdateVisualSceneStateSystem(World world, IRealmData realmData, IScenesCache scenesCache, ILODCache lodCache,
             ILODSettingsAsset lodSettingsAsset, VisualSceneStateResolver visualSceneStateResolver, SceneAssetLock sceneAssetLock) : base(world)
         {
             this.realmData = realmData;
             this.scenesCache = scenesCache;
-            this.lodAssetsPool = lodAssetsPool;
+            this.lodCache = lodCache;
             this.lodSettingsAsset = lodSettingsAsset;
             this.visualSceneStateResolver = visualSceneStateResolver;
             this.sceneAssetLock = sceneAssetLock;
@@ -134,10 +134,10 @@ namespace ECS.SceneLifeCycle.Systems
 
         private void SwapLODToScenePromise(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref SceneLODInfo switchComponent)
         {
-            if (visualSceneState.CurrentVisualSceneState != VisualSceneStateEnum.SHOWING_SCENE) return;
-
-            switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, World);
-            visualSceneState.IsDirty = false;
+            if (visualSceneState.CurrentVisualSceneState == VisualSceneStateEnum.SHOWING_SCENE)
+            {
+                switchComponent.DisposeSceneLODAndRemoveFromCache(scenesCache, sceneDefinitionComponent.Parcels, lodCache, World);
+                visualSceneState.IsDirty = false;
 
             //Show Scene
             World.Add(entity, AssetPromise<ISceneFacade, GetSceneFacadeIntention>.Create(World,
@@ -145,7 +145,7 @@ namespace ECS.SceneLifeCycle.Systems
                 partitionComponent));
 
             World.Remove<SceneLODInfo>(entity);
-        }
+            }
 
         private void SwapSceneFacadeToLOD(Entity entity, ref VisualSceneState visualSceneState, ref SceneDefinitionComponent sceneDefinitionComponent, ref PartitionComponent partitionComponent, ref ISceneFacade switchComponent)
         {

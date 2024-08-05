@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
@@ -10,6 +11,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.ResourcesUnloading;
 using ECS;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.Systems;
@@ -20,7 +22,6 @@ namespace DCL.PluginSystem.Global
 {
     public class LODPlugin : IDCLGlobalPlugin
     {
-        private readonly LODAssetsPool lodAssetsPool;
         private readonly IScenesCache scenesCache;
         private readonly IRealmData realmData;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -28,34 +29,30 @@ namespace DCL.PluginSystem.Global
         private readonly IPerformanceBudget memoryBudget;
         private readonly IDebugContainerBuilder debugBuilder;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
+        private readonly IRealmPartitionSettings partitionSettings;
         private readonly VisualSceneStateResolver visualSceneStateResolver;
         private readonly TextureArrayContainerFactory textureArrayContainerFactory;
-        private readonly bool lodEnabled;
 
         private IExtendedObjectPool<Material> lodMaterialPool;
         private readonly ILODSettingsAsset lodSettingsAsset;
         private readonly SceneAssetLock sceneAssetLock;
         private TextureArrayContainer lodTextureArrayContainer;
+        private readonly CacheCleaner cacheCleaner;
 
-        public LODPlugin(
-            CacheCleaner cacheCleaner,
-            RealmData realmData,
-            IDecentralandUrlsSource decentralandUrlsSource,
-            IPerformanceBudget memoryBudget,
-            IPerformanceBudget frameCapBudget,
-            IScenesCache scenesCache,
-            IDebugContainerBuilder debugBuilder,
-            ISceneReadinessReportQueue sceneReadinessReportQueue,
-            VisualSceneStateResolver visualSceneStateResolver,
-            TextureArrayContainerFactory textureArrayContainerFactory,
-            ILODSettingsAsset lodSettingsAsset,
-            SceneAssetLock sceneAssetLock,
-            bool lodEnabled
-        )
+
+        private readonly ILODCache lodCache;
+        private readonly IComponentPool<LODGroup> lodGroupPool;
+
+        private readonly bool lodEnabled;
+        private readonly int lodLevels;
+        private readonly Transform lodCacheParent;
+
+        public LODPlugin(RealmData realmData, IPerformanceBudget memoryBudget,
+            IPerformanceBudget frameCapBudget, IScenesCache scenesCache, IDebugContainerBuilder debugBuilder,
+            ISceneReadinessReportQueue sceneReadinessReportQueue, VisualSceneStateResolver visualSceneStateResolver, TextureArrayContainerFactory textureArrayContainerFactory,
+            ILODSettingsAsset lodSettingsAsset, SceneAssetLock sceneAssetLock, IRealmPartitionSettings partitionSettings,
+            ILODCache lodCache, IComponentPool<LODGroup> lodGroupPool, IDecentralandUrlsSource decentralandUrlsSource,Transform lodCacheParent, bool lodEnabled, int lodLevels)
         {
-            lodAssetsPool = new LODAssetsPool();
-            cacheCleaner.Register(lodAssetsPool);
-
             this.realmData = realmData;
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.memoryBudget = memoryBudget;
@@ -68,6 +65,11 @@ namespace DCL.PluginSystem.Global
             this.lodSettingsAsset = lodSettingsAsset;
             this.sceneAssetLock = sceneAssetLock;
             this.lodEnabled = lodEnabled;
+            this.partitionSettings = partitionSettings;
+            this.lodCache = lodCache;
+            this.lodGroupPool = lodGroupPool;
+            this.lodCacheParent = lodCacheParent;
+            this.lodLevels = lodLevels;
         }
 
         public UniTask Initialize(IPluginSettingsContainer container, CancellationToken ct)
@@ -77,31 +79,33 @@ namespace DCL.PluginSystem.Global
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments)
         {
-            var lodContainer = new GameObject("POOL_CONTAINER_LODS");
-            var lodDebugContainer = new GameObject("POOL_CONTAINER_DEBUG_LODS");
-            lodDebugContainer.transform.SetParent(lodContainer.transform);
-
-            AsyncInstantiateOperation.SetIntegrationTimeMS(lodSettingsAsset.AsyncIntegrationTimeMS);
-
             lodTextureArrayContainer = textureArrayContainerFactory.CreateSceneLOD(SCENE_TEX_ARRAY_SHADER, lodSettingsAsset.DefaultTextureArrayResolutionDescriptors,
                 TextureFormat.BC7, lodSettingsAsset.ArraySizeForMissingResolutions, lodSettingsAsset.CapacityForMissingResolutions);
 
-            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
-            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodAssetsPool, lodSettingsAsset, visualSceneStateResolver, sceneAssetLock);
 
+            
+            ResolveVisualSceneStateSystem.InjectToWorld(ref builder, lodSettingsAsset, visualSceneStateResolver, realmData);
+            UpdateVisualSceneStateSystem.InjectToWorld(ref builder, realmData, scenesCache, lodCache, lodSettingsAsset, visualSceneStateResolver, sceneAssetLock);
+            
             if (lodEnabled)
             {
-                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodAssetsPool, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, decentralandUrlsSource);
-                UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache);
-                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, lodAssetsPool, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, lodContainer.transform);
-                LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodDebugContainer.transform);
+                CalculateLODBiasSystem.InjectToWorld(ref builder);
+                InitializeSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodLevels, lodGroupPool, lodCacheParent);
+                UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, decentralandUrlsSource);
+                InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings);
+                LODDebugToolsSystem.InjectToWorld(ref builder, debugBuilder, lodSettingsAsset, lodLevels);
             }
-            else { UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache); }
+            else
+            {
+                UpdateSceneLODInfoMockSystem.InjectToWorld(ref builder, sceneReadinessReportQueue, scenesCache);
+            }
         }
+        
 
         public void Dispose()
         {
-            lodAssetsPool.Unload(frameCapBudget, 3);
+            lodCache.Unload(frameCapBudget, 3);
+            lodGroupPool?.Dispose();
         }
     }
 }

@@ -498,7 +498,8 @@ namespace Global.Dynamic
                         bootstrapContainer.Analytics!,
                         staticContainer.Profiler,
                         staticContainer.RealmData,
-                        staticContainer.ScenesCache
+                        staticContainer.ScenesCache,
+                        staticContainer.MainPlayerAvatarBaseProxy
                     )
                 );
 
@@ -512,7 +513,8 @@ namespace Global.Dynamic
                 debugBuilder,
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
-                container.CharacterDataPropagationUtility);
+                container.CharacterDataPropagationUtility,
+                container.LODContainer.LodCache);
 
             container.GlobalPlugins = globalPlugins;
 

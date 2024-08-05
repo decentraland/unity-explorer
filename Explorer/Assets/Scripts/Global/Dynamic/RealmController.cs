@@ -20,6 +20,7 @@ using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using Unity.Mathematics;
 
 namespace Global.Dynamic
@@ -29,7 +30,7 @@ namespace Global.Dynamic
         // TODO it can be dangerous to clear the realm, instead we may destroy it fully and reconstruct but we will need to
         // TODO construct player/camera entities again and allocate more memory. Evaluate
         // Realms + Promises
-        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent>();
+        private static readonly QueryDescription CLEAR_QUERY = new QueryDescription().WithAny<RealmComponent, GetSceneDefinition, GetSceneDefinitionList, SceneDefinitionComponent, SceneLODInfo>();
 
         private readonly List<ISceneFacade> allScenes = new (PoolConstants.SCENES_COUNT);
         private readonly ServerAbout serverAbout = new ();
@@ -154,10 +155,7 @@ namespace Global.Dynamic
 
             if (globalWorld != null)
             {
-                World world = globalWorld.EcsWorld;
                 loadedScenes = FindLoadedScenesAndClearSceneCache();
-                world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
-
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
@@ -180,8 +178,6 @@ namespace Global.Dynamic
             // release pooled entities
             for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
                 globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
-
-            world.Query(new QueryDescription().WithAll<SceneLODInfo>(), (ref SceneLODInfo lod) => lod.Dispose(world));
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
