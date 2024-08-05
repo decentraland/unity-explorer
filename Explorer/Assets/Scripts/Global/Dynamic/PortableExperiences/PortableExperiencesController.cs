@@ -85,7 +85,8 @@ namespace PortableExperiences.Controller
                 result.configurations.realmName.EnsureNotNull("Realm name not found"),
                 result.configurations.networkId,
                 result.comms?.adapter ?? string.Empty,
-                result.comms?.protocol ?? string.Empty
+                result.comms?.protocol ?? string.Empty,
+                portableExperiencePath.Value
             );
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
