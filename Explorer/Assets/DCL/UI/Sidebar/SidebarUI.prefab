@@ -1382,9 +1382,69 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9164904624699036997}
     m_Modifications:
+    - target: {fileID: 238900942922377082, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 238900942922377082, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 238900942922377082, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 290599697974945711, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1740157142827455356, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 154.53
+      objectReference: {fileID: 0}
+    - target: {fileID: 1740157142827455356, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16.95
+      objectReference: {fileID: 0}
+    - target: {fileID: 3851204880759882478, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 32
+      objectReference: {fileID: 0}
+    - target: {fileID: 3851204880759882478, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 18
+      objectReference: {fileID: 0}
     - target: {fileID: 4466871651195778395, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_Name
       value: SidebarSettingsButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704302672301971345, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Colors.m_NormalColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704302672301971345, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Colors.m_NormalColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704302672301971345, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Colors.m_NormalColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704302672301971345, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Colors.m_SelectedColor.a
+      value: 0.69803923
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704302672301971345, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Colors.m_SelectedColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704302672301971345, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Colors.m_SelectedColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5704302672301971345, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Colors.m_SelectedColor.r
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5818222327650142412, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_Pivot.x
@@ -1416,7 +1476,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5818222327650142412, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 20
+      value: 16
       objectReference: {fileID: 0}
     - target: {fileID: 5818222327650142412, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_LocalPosition.x
