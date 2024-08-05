@@ -2,20 +2,16 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
-using DCL.Chat;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
-using DCL.ExplorePanel;
 using DCL.FeatureFlags;
-using DCL.Minimap;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.UI.MainUI;
-using DCL.UI.Sidebar;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities.Extensions;
 using DCL.Web3.Identities;
@@ -39,11 +35,7 @@ namespace Global.Dynamic
         private const string APP_PARAMETER_LOCAL_SCENE = "local-scene";
         private const string APP_PARAMETER_POSITION = "position";
 
-        private readonly bool showSplash;
-        private readonly bool showAuthentication;
-        private readonly bool showLoading;
-        private readonly bool enableLOD;
-        private readonly bool enableLandscape;
+        private readonly IDebugSettings debugSettings;
 
         private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
@@ -53,13 +45,9 @@ namespace Global.Dynamic
 
         public bool EnableAnalytics { private get; init; }
 
-        public Bootstrap(DebugSettings debugSettings)
+        public Bootstrap(IDebugSettings debugSettings)
         {
-            showSplash = debugSettings.showSplash;
-            showAuthentication = debugSettings.showAuthentication;
-            showLoading = debugSettings.showLoading;
-            enableLOD = debugSettings.enableLOD;
-            enableLandscape = debugSettings.enableLandscape;
+            this.debugSettings = debugSettings;
         }
 
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
@@ -124,8 +112,8 @@ namespace Global.Dynamic
                     StaticLoadPositions = launchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
-                    EnableLandscape = enableLandscape && !localSceneDevelopment,
-                    EnableLOD = enableLOD && !localSceneDevelopment,
+                    EnableLandscape = debugSettings.EnableLandscape && !localSceneDevelopment,
+                    EnableLOD = debugSettings.EnableLOD && !localSceneDevelopment,
                     EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
                     LocalSceneDevelopmentRealm = localSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
                     AppParameters = appParameters,
@@ -158,8 +146,12 @@ namespace Global.Dynamic
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
-        public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, DynamicWorldContainer dynamicWorldContainer,
-            UIDocument debugUiRoot)
+        public (GlobalWorld, Entity) CreateGlobalWorldAndPlayer(
+            BootstrapContainer bootstrapContainer,
+            StaticContainer staticContainer,
+            DynamicWorldContainer dynamicWorldContainer,
+            UIDocument debugUiRoot
+        )
         {
             Entity playerEntity;
             GlobalWorld globalWorld;
@@ -194,9 +186,10 @@ namespace Global.Dynamic
             GlobalWorld globalWorld, Entity playerEntity, ISplashScreen splashScreen, CancellationToken ct)
         {
             splashScreen.ShowSplash();
+
             await dynamicWorldContainer.UserInAppInAppInitializationFlow.ExecuteAsync(
-                showAuthentication,
-                showLoading,
+                debugSettings.ShowAuthentication,
+                debugSettings.ShowLoading,
                 false,
                 globalWorld.EcsWorld,
                 playerEntity,

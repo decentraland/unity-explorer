@@ -17,19 +17,33 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    [Serializable]
-    public class DebugSettings
+    public interface IDebugSettings
     {
-        public bool showSplash;
-        public bool showAuthentication;
-        public bool showLoading;
-        public bool enableLandscape;
-        public bool enableLOD;
-        public bool enableEmulateNoLivekitConnection;
+        bool ShowSplash { get; }
+        bool ShowAuthentication { get; }
+        bool ShowLoading { get; }
+        bool EnableLandscape { get; }
+        bool EnableLOD { get; }
+        bool EnableEmulateNoLivekitConnection { get; }
+    }
 
-        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
-        public DebugSettings Get() =>
-            Debug.isDebugBuild ? this : Release();
+    [Serializable]
+    public class DebugSettings : IDebugSettings
+    {
+        private static readonly IDebugSettings RELEASE_SETTINGS = Release();
+
+        [SerializeField]
+        private bool showSplash;
+        [SerializeField]
+        private bool showAuthentication;
+        [SerializeField]
+        private bool showLoading;
+        [SerializeField]
+        private bool enableLandscape;
+        [SerializeField]
+        private bool enableLOD;
+        [SerializeField]
+        private bool enableEmulateNoLivekitConnection;
 
         public static DebugSettings Release() =>
             new ()
@@ -41,6 +55,14 @@ namespace Global.Dynamic
                 enableLOD = true,
                 enableEmulateNoLivekitConnection = false,
             };
+
+        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.ShowSplash;
+        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.ShowAuthentication;
+        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.ShowLoading;
+        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.EnableLandscape;
+        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.EnableLOD;
+        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.EnableEmulateNoLivekitConnection;
     }
 
     public class MainSceneLoader : MonoBehaviour
@@ -52,7 +74,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space]
-        [SerializeField] private DebugSettings debugSettings;
+        [SerializeField] private DebugSettings debugSettings = new ();
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -112,7 +134,7 @@ namespace Global.Dynamic
 
             try
             {
-                var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.Get().showSplash);
+                var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
 
                 bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
