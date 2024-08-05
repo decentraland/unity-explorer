@@ -59,9 +59,7 @@ namespace DCL.ExplorePanel
 
             if (viewInstance.AddressLabel != null)
             {
-                viewInstance.AddressLabel.gameObject.SetActive(!profile!.HasClaimedName);
-
-                if (!profile.HasClaimedName)
+                if (profile is { HasClaimedName: false })
                     viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
             }
 
