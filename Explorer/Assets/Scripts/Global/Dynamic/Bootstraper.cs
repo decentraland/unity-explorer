@@ -309,7 +309,7 @@ namespace Global.Dynamic
         }
 
         private bool IsRealmAWorld(string realmParam) =>
-            new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
+            realmParam.IsEns();
 
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)

@@ -65,11 +65,7 @@ namespace DCL.Profiles.Self
                 throw new Web3IdentityMissingException("Web3 Identity is not initialized");
 
             if (profile == null)
-            {
-                profile = Profile.NewRandomProfile(web3IdentityCache.Identity.Address);
-                await profileRepository.SetAsync(profile, ct);
-                return await profileRepository.GetAsync(profile.UserId, profile.Version, ct);
-            }
+                throw new Exception("Self profile not found");
 
             using var _ = HashSetPool<URN>.Get(out HashSet<URN> uniqueWearables);
 
@@ -95,6 +91,26 @@ namespace DCL.Profiles.Self
             // Skip publishing the same profile
             if (newProfile.Avatar.IsSameAvatar(profile.Avatar))
                 return profile;
+
+            await profileRepository.SetAsync(newProfile, ct);
+            return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);
+        }
+
+        public async UniTask<Profile?> ForcePublishWithoutModificationsAsync(CancellationToken ct)
+        {
+            Profile? profile = await ProfileAsync(ct);
+
+            if (web3IdentityCache.Identity == null)
+                throw new Web3IdentityMissingException("Web3 Identity is not initialized");
+
+            if (profile == null)
+                throw new Exception("Self profile not found");
+
+            Profile newProfile = profileBuilder.From(profile)
+                                               .WithVersion(profile.Version + 1)
+                                               .Build();
+
+            newProfile.UserId = web3IdentityCache.Identity.Address;
 
             await profileRepository.SetAsync(newProfile, ct);
             return await profileRepository.GetAsync(newProfile.UserId, newProfile.Version, ct);

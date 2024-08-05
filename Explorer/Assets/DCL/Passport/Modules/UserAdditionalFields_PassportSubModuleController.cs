@@ -43,8 +43,11 @@ namespace DCL.Passport.Modules
                 actionOnRelease: buttonView => buttonView.gameObject.SetActive(false));
         }
 
-        public void Setup(Profile profile) =>
+        public void Setup(Profile profile)
+        {
             this.currentProfile = profile;
+            LoadAdditionalFields();
+        }
 
         private AdditionalField_PassportFieldView InstantiateAdditionalFieldPrefab()
         {
@@ -80,7 +83,7 @@ namespace DCL.Passport.Modules
             instantiatedAdditionalFieldsForEdition.Clear();
         }
 
-        public void LoadAdditionalFields()
+        private void LoadAdditionalFields()
         {
             if (!string.IsNullOrEmpty(currentProfile.Gender))
             {
