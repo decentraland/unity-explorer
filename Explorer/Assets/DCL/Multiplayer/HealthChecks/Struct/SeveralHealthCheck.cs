@@ -2,7 +2,7 @@ using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace DCL.Multiplayer.HealthChecks
+namespace DCL.Multiplayer.HealthChecks.Struct
 {
     public class SeveralHealthCheck : IHealthCheck
     {

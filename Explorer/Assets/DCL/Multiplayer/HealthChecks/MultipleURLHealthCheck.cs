@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
+using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.WebRequests;
 using System.Linq;
 using System.Threading;

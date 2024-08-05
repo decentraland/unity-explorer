@@ -12,6 +12,8 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
 using DCL.Multiplayer.HealthChecks.Livekit;
+using DCL.Multiplayer.HealthChecks.Struct;
+using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
@@ -42,6 +44,7 @@ namespace DCL.UserInAppInitializationFlow
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
+            IAnalyticsController analyticsController,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
@@ -57,16 +60,18 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.loadingScreen = loadingScreen;
 
-            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(
+            IHealthCheck livekitHealthCheck =
                 new SeveralHealthCheck(
-                    new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
-                        DecentralandUrl.ArchipelagoStatus,
-                        DecentralandUrl.GatekeeperStatus
-                    ),
-                    new LivekitHealthCheck(roomHub)
-                )
-            );
+                        new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
+                            DecentralandUrl.ArchipelagoStatus,
+                            DecentralandUrl.GatekeeperStatus
+                        ),
+                        new LivekitHealthCheck(roomHub)
+                    )
+                   .WithAnalytics(analyticsController, "livekit_health_check_failed")
+                   .WithRetries(3);
 
+            var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
             var preloadProfileStartupOperation = new PreloadProfileStartupOperation(loadingStatus, selfProfile);
             var switchRealmMiscVisibilityStartupOperation = new SwitchRealmMiscVisibilityStartupOperation(realmNavigator);
