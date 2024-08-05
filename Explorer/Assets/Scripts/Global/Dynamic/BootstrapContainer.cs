@@ -12,7 +12,6 @@ using DCL.Web3.Identities;
 using Segment.Analytics;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -31,7 +30,7 @@ namespace Global.Dynamic
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
-        public IVerifiedEthereumApi? Web3VerifiedAuthenticator { get; private set; }
+        public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
@@ -43,7 +42,7 @@ namespace Global.Dynamic
             diagnosticsContainer?.Dispose();
             reportHandlingSettings.Dispose();
             Web3Authenticator?.Dispose();
-            Web3VerifiedAuthenticator?.Dispose();
+            VerifiedEthereumApi?.Dispose();
             IdentityCache?.Dispose();
         }
 
@@ -68,7 +67,7 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
-                (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
+                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
 
                 container.diagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
