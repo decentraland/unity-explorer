@@ -1,5 +1,7 @@
 using Segment.Analytics;
 using Segment.Serialization;
+using System;
+using UnityEngine;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
@@ -11,6 +13,14 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             analytics = new Segment.Analytics.Analytics(segmentConfiguration);
             Segment.Analytics.Analytics.Logger = new SegmentLogger();
+
+            Application.quitting += () => analytics.Flush();
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => analytics.Flush();
+        }
+
+        ~SegmentAnalyticsService()
+        {
+            analytics.Flush();
         }
 
         public void Identify(string userId, JsonObject traits = null) =>

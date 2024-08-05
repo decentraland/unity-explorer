@@ -8,9 +8,13 @@ namespace DCL.LOD
 {
     public static class SceneLODInfoExtensions
     {
-        public static void DisposeSceneLODAndRemoveFromCache(this SceneLODInfo sceneLODInfo, IScenesCache scenesCache,
-            IReadOnlyList<Vector2Int> parcels, World world)
+        public static void DisposeSceneLODAndRemoveFromCache(this SceneLODInfo sceneLODInfo,
+                                                                IScenesCache scenesCache,
+                                                                IReadOnlyList<Vector2Int> parcels,
+            ILODCache lodCache,
+                                                                World world)
         {
+            lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
             sceneLODInfo.Dispose(world);
             scenesCache.RemoveNonRealScene(parcels);
         }

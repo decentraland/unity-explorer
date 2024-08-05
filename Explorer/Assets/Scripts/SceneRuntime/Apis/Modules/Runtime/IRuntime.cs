@@ -56,27 +56,30 @@ namespace SceneRuntime.Apis.Modules.Runtime
         {
             private const bool IS_PREVIEW_DEFAULT_VALUE = false;
 
-            public string baseUrl;
+            public string domain;
             public string realmName;
             public int networkId;
             public string commsAdapter;
             public bool isPreview;
+            public string protocol;
 
             public RealmInfo(IRealmData realmData) : this(
-                realmData.Ipfs.CatalystBaseUrl.Value,
+                new Uri(realmData.Ipfs.CatalystBaseUrl.Value).GetLeftPart(UriPartial.Authority),
                 realmData.RealmName,
                 realmData.NetworkId,
                 realmData.CommsAdapter,
-                IS_PREVIEW_DEFAULT_VALUE
+                IS_PREVIEW_DEFAULT_VALUE,
+                realmData.Protocol
             ) { }
 
-            public RealmInfo(string baseURL, string realmName, int networkId, string commsAdapter, bool isPreview)
+            public RealmInfo(string domain, string realmName, int networkId, string commsAdapter, bool isPreview, string protocol)
             {
-                this.baseUrl = baseURL;
+                this.domain = domain;
                 this.realmName = realmName;
                 this.networkId = networkId;
                 this.commsAdapter = commsAdapter;
                 this.isPreview = isPreview;
+                this.protocol = protocol;
             }
         }
 

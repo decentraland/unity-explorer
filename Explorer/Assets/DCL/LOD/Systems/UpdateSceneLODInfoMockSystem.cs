@@ -38,13 +38,10 @@ namespace DCL.LOD.Systems
         [None(typeof(DeleteEntityIntention))]
         private void UpdateLODLevel(ref SceneLODInfo sceneLODInfo, SceneDefinitionComponent sceneDefinitionComponent)
         {
-            if (sceneLODInfo.CurrentLODLevel != byte.MaxValue) return;
-            
             //If LODs are not enabled, we can consider the scene as ready,
             //and check scene readiness so not to block the loading screen
             scenesCache.AddNonRealScene(sceneDefinitionComponent.Parcels);
             LODUtils.CheckSceneReadiness(sceneReadinessReportQueue, sceneDefinitionComponent);
-            sceneLODInfo.CurrentLODLevel = 0;
         }
 
         [Query]

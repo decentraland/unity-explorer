@@ -9,6 +9,7 @@ using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.FeatureFlags;
 using DCL.Minimap;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Notification.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
@@ -91,7 +92,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.Web3VerifiedAuthenticator, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
@@ -150,9 +151,9 @@ namespace Global.Dynamic
             return anyFailure;
         }
 
-        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, StaticContainer staticContainer, CancellationToken ct)
+        public async UniTask InitializeFeatureFlagsAsync(IWeb3Identity? identity, IDecentralandUrlsSource decentralandUrlsSource, StaticContainer staticContainer, CancellationToken ct)
         {
-            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(identity?.Address, appParameters, ct); }
+            try { await staticContainer.FeatureFlagsProvider.InitializeAsync(decentralandUrlsSource, identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
 
@@ -164,6 +165,7 @@ namespace Global.Dynamic
 
             var sceneSharedContainer = SceneSharedContainer.Create(
                 in staticContainer,
+                bootstrapContainer.DecentralandUrlsSource,
                 dynamicWorldContainer.MvcManager,
                 bootstrapContainer.IdentityCache,
                 dynamicWorldContainer.ProfileRepository,
@@ -310,7 +312,7 @@ namespace Global.Dynamic
         }
 
         private bool IsRealmAWorld(string realmParam) =>
-            new Regex(@"^[a-zA-Z0-9.]+\.eth$").Match(realmParam).Success;
+            realmParam.IsEns();
 
         private bool IsRealmAValidUrl(string realmParam) =>
             Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)

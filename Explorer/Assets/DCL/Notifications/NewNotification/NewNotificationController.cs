@@ -8,6 +8,7 @@ using MVC;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace DCL.Notification.NewNotification
@@ -40,6 +41,7 @@ namespace DCL.Notification.NewNotification
             this.webRequestController = webRequestController;
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, QueueNewNotification);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.EVENTS_STARTED, QueueNewNotification);
+            notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.INTERNAL_ARRIVED_TO_DESTINATION, QueueNewNotification);
             cts = new CancellationTokenSource();
             cts.Token.ThrowIfCancellationRequested();
         }
@@ -49,6 +51,7 @@ namespace DCL.Notification.NewNotification
             thumbnailImageController = new ImageController(viewInstance.NotificationView.NotificationImage, webRequestController);
             viewInstance.NotificationView.NotificationClicked += ClickedNotification;
             viewInstance.NotificationView.CloseButton.onClick.AddListener(StopAnimation);
+            viewInstance.SystemNotificationView.CloseButton.onClick.AddListener(StopAnimation);
         }
 
         private void StopAnimation()
@@ -77,33 +80,42 @@ namespace DCL.Notification.NewNotification
             {
                 isDisplaying = true;
                 INotification notification = notificationQueue.Dequeue();
-                viewInstance.NotificationView.HeaderText.text = notification.GetHeader();
-                viewInstance.NotificationView.TitleText.text = notification.GetTitle();
-                viewInstance.NotificationView.NotificationType = notification.Type;
-                ProcessCustomMetadata(notification);
 
-                if (!string.IsNullOrEmpty(notification.GetThumbnail()))
-                    thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
-
-                viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
-
-                try
+                switch (notification.Type)
                 {
-                    viewInstance.NotificationViewCanvasGroup.interactable = true;
-                    viewInstance.NotificationViewCanvasGroup.blocksRaycasts = true;
-                    await viewInstance.NotificationViewCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
-                    await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: cts.Token);
-                }
-                catch (OperationCanceledException) { }
-                finally
-                {
-                    viewInstance.NotificationViewCanvasGroup.interactable = false;
-                    viewInstance.NotificationViewCanvasGroup.blocksRaycasts = false;
-                    await viewInstance.NotificationViewCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
+                    case NotificationType.INTERNAL_ARRIVED_TO_DESTINATION:
+                        await ProcessArrivedNotificationAsync(notification);
+                        break;
+                    default:
+                        await ProcessDefaultNotificationAsync(notification);
+                        break;
                 }
             }
 
             isDisplaying = false;
+        }
+
+        private async UniTask ProcessArrivedNotificationAsync(INotification notification)
+        {
+            viewInstance.SystemNotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.SystemNotificationView.NotificationType = notification.Type;
+            viewInstance.SystemNotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.SystemNotificationViewCanvasGroup);
+        }
+
+        private async UniTask ProcessDefaultNotificationAsync(INotification notification)
+        {
+            viewInstance.NotificationView.HeaderText.text = notification.GetHeader();
+            viewInstance.NotificationView.TitleText.text = notification.GetTitle();
+            viewInstance.NotificationView.NotificationType = notification.Type;
+            ProcessCustomMetadata(notification);
+            if(!string.IsNullOrEmpty(notification.GetThumbnail()))
+                thumbnailImageController.RequestImage(notification.GetThumbnail(), true);
+
+            viewInstance.NotificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notification.Type);
+
+            await AnimateNotificationCanvasGroupAsync(viewInstance.NotificationViewCanvasGroup);
         }
 
         private void ProcessCustomMetadata(INotification notification)
@@ -113,6 +125,26 @@ namespace DCL.Notification.NewNotification
                 case RewardAssignedNotification rewardAssignedNotification:
                     viewInstance.NotificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
                     break;
+            }
+        }
+
+        private async UniTask AnimateNotificationCanvasGroupAsync(CanvasGroup notificationCanvasGroup)
+        {
+            try
+            {
+                notificationCanvasGroup.interactable = true;
+                notificationCanvasGroup.blocksRaycasts = true;
+                await notificationCanvasGroup.DOFade(1, ANIMATION_DURATION).ToUniTask(cancellationToken: cts.Token);
+                await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                notificationCanvasGroup.interactable = false;
+                notificationCanvasGroup.blocksRaycasts = false;
+                await notificationCanvasGroup.DOFade(0, ANIMATION_DURATION).ToUniTask();
             }
         }
 

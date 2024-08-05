@@ -14,12 +14,14 @@ namespace DCL.Multiplayer.SDK.Components
         public readonly CRDTEntity CRDTEntity;
         public readonly ISceneFacade SceneFacade;
         public readonly Entity SceneWorldEntity;
+        public readonly bool SceneEntityIsPersistent;
 
-        public PlayerCRDTEntity(CRDTEntity crdtEntity, ISceneFacade sceneFacade, Entity sceneWorldEntity)
+        public PlayerCRDTEntity(CRDTEntity crdtEntity, ISceneFacade sceneFacade, Entity sceneWorldEntity, bool sceneEntityIsPersistent = false)
         {
             CRDTEntity = crdtEntity;
             SceneFacade = sceneFacade;
             SceneWorldEntity = sceneWorldEntity;
+            SceneEntityIsPersistent = sceneEntityIsPersistent;
             IsDirty = true;
         }
 
