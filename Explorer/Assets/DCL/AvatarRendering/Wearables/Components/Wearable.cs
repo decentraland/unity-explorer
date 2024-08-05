@@ -43,6 +43,12 @@ namespace DCL.AvatarRendering.Wearables.Components
             IsLoading = false;
         }
 
+        public bool IsOnChain()
+        {
+            var id = ((IAvatarAttachment) this).GetUrn().ToString();
+            return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+        }
+
         public AvatarAttachmentDTO GetDTO() =>
             WearableDTO.Asset!;
 
