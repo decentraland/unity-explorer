@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
+using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using System.Threading;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
@@ -25,5 +26,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
 
         public static StartupResult ErrorResult(string errorMessage) =>
             new (false, errorMessage);
+    }
+
+    public static class StartupOperationExtensions
+    {
+        public static IStartupOperation WithHandleExceptions(this IStartupOperation origin) =>
+            new HandleExceptionsStartupOperation(origin);
     }
 }

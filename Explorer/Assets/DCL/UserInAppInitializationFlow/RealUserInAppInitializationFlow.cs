@@ -72,7 +72,7 @@ namespace DCL.UserInAppInitializationFlow
                 loadLandscapeStartupOperation,
                 restartRealmStartupOperation,
                 teleportStartupOperation
-            );
+            ).WithHandleExceptions();
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
