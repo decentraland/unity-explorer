@@ -1,19 +1,21 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.Notification.NotificationEntry;
-using DCL.Notification.NotificationsBus;
+using DCL.Notifications.NotificationEntry;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.SidebarBus;
 using DCL.Utilities;
 using DCL.WebRequests;
 using SuperScrollView;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Notification.NotificationsMenu
+namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuController
+    public class NotificationsMenuController : IDisposable
     {
         private const int PIXELS_PER_UNIT = 50;
 
@@ -25,6 +27,9 @@ namespace DCL.Notification.NotificationsMenu
         private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
+        private readonly CancellationTokenSource lifeCycleCts = new ();
+
+        private CancellationTokenSource? notificationThumbnailCts;
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -43,7 +48,13 @@ namespace DCL.Notification.NotificationsMenu
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
 
-            InitialNotificationRequestAsync().Forget();
+            InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
+        }
+
+        public void Dispose()
+        {
+            notificationThumbnailCts.SafeCancelAndDispose();
+            lifeCycleCts.SafeCancelAndDispose();
         }
 
         private void ClosePanel()
@@ -57,9 +68,9 @@ namespace DCL.Notification.NotificationsMenu
             view.gameObject.SetActive(!forceClose && !view.gameObject.activeSelf);
         }
 
-        private async UniTaskVoid InitialNotificationRequestAsync()
+        private async UniTaskVoid InitialNotificationRequestAsync(CancellationToken ct)
         {
-            List<INotification> requestNotifications = await notificationsRequestController.RequestNotificationsAsync();
+            List<INotification> requestNotifications = await notificationsRequestController.RequestNotificationsAsync(ct);
 
             foreach (INotification requestNotification in requestNotifications)
                 notifications.Add(requestNotification);
@@ -75,8 +86,13 @@ namespace DCL.Notification.NotificationsMenu
 
             SetItemData(notificationView, notificationData);
 
-            if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite)) { notificationView.NotificationImage.SetImage(thumbnailSprite); }
-            else { LoadNotificationThumbnailAsync(notificationView, notificationData).Forget(); }
+            if (notificationThumbnailCache.TryGetValue(notificationData.Id, out Sprite thumbnailSprite))
+                notificationView.NotificationImage.SetImage(thumbnailSprite);
+            else
+            {
+                notificationThumbnailCts = notificationThumbnailCts.SafeRestart();
+                LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts.Token).Forget();
+            }
 
             return listItem;
         }
@@ -92,7 +108,7 @@ namespace DCL.Notification.NotificationsMenu
             notificationView.UnreadImage.SetActive(!notificationData.Read);
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
-            notificationsRequestController.SetNotificationAsRead(notificationData.Id);
+            notificationsRequestController.SetNotificationAsReadAsync(notificationData.Id, lifeCycleCts.Token).Forget();
             notificationData.Read = true;
             notificationView.NotificationClicked += ClickedNotification;
         }
@@ -102,10 +118,16 @@ namespace DCL.Notification.NotificationsMenu
             notificationsBusController.ClickNotification(notificationType);
         }
 
-        private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData)
+        private async UniTask LoadNotificationThumbnailAsync(NotificationView notificationView, INotification notificationData,
+            CancellationToken ct)
         {
-            Texture2D texture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), new CancellationToken());
-            var thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
+            Texture2D texture = await webRequestController.GetTextureAsync(
+                new CommonArguments(URLAddress.FromString(notificationData.GetThumbnail())),
+                new GetTextureArguments(false),
+                GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp),
+                ct);
+            Sprite? thumbnailSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height),
+                VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             notificationThumbnailCache.Add(notificationData.Id, thumbnailSprite);
             notificationView.NotificationImage.SetImage(thumbnailSprite);
         }

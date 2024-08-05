@@ -1,4 +1,4 @@
-namespace DCL.Notification
+namespace DCL.NotificationsBusController.NotificationTypes
 {
     public interface INotification
     {

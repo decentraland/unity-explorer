@@ -1,12 +1,11 @@
 using Cysharp.Threading.Tasks;
 using DCL.ExplorePanel;
-using DCL.Notification;
-using DCL.Notification.NotificationsBus;
-using DCL.Notification.NotificationsMenu;
+using DCL.Notifications.NotificationsMenu;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.SidebarBus;
 using MVC;
 using System.Threading;
-using UnityEngine.Playables;
 using Utility;
 
 namespace DCL.UI.Sidebar
@@ -22,6 +21,7 @@ namespace DCL.UI.Sidebar
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
+
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         public SidebarController(
@@ -40,6 +40,13 @@ namespace DCL.UI.Sidebar
             this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+
+            notificationsMenuController.Dispose();
         }
 
         protected override void OnViewInstantiated()
@@ -95,7 +102,7 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackNotificationIndicator.SetActive(false);
         }
 
-        private void OnRewardNotificationReceived(Notification.INotification newNotification)
+        private void OnRewardNotificationReceived(INotification newNotification)
         {
             viewInstance.backpackNotificationIndicator.SetActive(true);
         }
@@ -139,13 +146,7 @@ namespace DCL.UI.Sidebar
                 sidebarBus.UnblockSidebar();
             }
             else
-            {
                 sidebarProfileController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
-            }
-        }
-
-        private async UniTaskVoid ShowSystemMenuAsync(CancellationToken ct)
-        {
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

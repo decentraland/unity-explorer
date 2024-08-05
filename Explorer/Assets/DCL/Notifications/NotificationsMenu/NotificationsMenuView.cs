@@ -2,7 +2,7 @@ using SuperScrollView;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Notification.NotificationsMenu
+namespace DCL.Notifications.NotificationsMenu
 {
     public class NotificationsMenuView : MonoBehaviour
     {
