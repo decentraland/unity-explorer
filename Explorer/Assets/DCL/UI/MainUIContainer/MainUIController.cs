@@ -103,6 +103,7 @@ namespace DCL.UI.MainUI
             }
         }
 
+
         private async UniTaskVoid WaitAndHideAsync(CancellationToken ct)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(HIDE_SIDEBAR_WAIT_TIME), cancellationToken: ct);

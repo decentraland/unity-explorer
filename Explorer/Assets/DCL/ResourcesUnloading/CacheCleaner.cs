@@ -35,7 +35,7 @@ namespace DCL.ResourcesUnloading
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IGltfContainerAssetsCache gltfContainerAssetsCache;
         private IStreamableCache<Texture2D, GetTextureIntention> texturesCache;
-        private ILODAssetsPool lodCache;
+        private ILODCache lodCache;
         private IStreamableCache<AudioClip, GetAudioClipIntention> audioClipsCache;
         private IStreamableCache<Texture2D, GetNFTShapeIntention> nftShapeCache = new IStreamableCache<Texture2D, GetNFTShapeIntention>.Fake();
 
@@ -81,8 +81,10 @@ namespace DCL.ResourcesUnloading
                     pool.ClearThrottled(POOLS_UNLOAD_CHUNK);
         }
 
-        public void Register(ILODAssetsPool lodAssetsPool) =>
+        public void Register(ILODCache lodAssetsPool)
+        {
             lodCache = lodAssetsPool;
+        }
 
         public void Register(IRoadAssetPool roadAssetPool) =>
             roadCache = roadAssetPool;

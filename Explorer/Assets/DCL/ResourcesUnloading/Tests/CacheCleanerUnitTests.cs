@@ -29,7 +29,7 @@ namespace DCL.ResourcesUnloading.Tests
         private IStreamableCache<AssetBundleData, GetAssetBundleIntention> assetBundleCache;
         private IExtendedObjectPool<Material> materialPool;
         private IProfileCache profileCache;
-        private ILODAssetsPool lodAssetsPool;
+        private ILODCache lodAssetsPool;
         private IRoadAssetPool roadAssetPool;
 
 
@@ -49,7 +49,7 @@ namespace DCL.ResourcesUnloading.Tests
             assetBundleCache = Substitute.For<IStreamableCache<AssetBundleData, GetAssetBundleIntention>>();
             gltfContainerAssetsCache = Substitute.For<IGltfContainerAssetsCache>();
             profileCache = Substitute.For<IProfileCache>();
-            lodAssetsPool = Substitute.For<ILODAssetsPool>();
+            lodAssetsPool = Substitute.For<ILODCache>();
             roadAssetPool = Substitute.For<IRoadAssetPool>();
 
 
