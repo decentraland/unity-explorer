@@ -32,10 +32,9 @@ namespace Global
 
             var byteListPool = new ListObjectPool<byte>();
 
-            var inputEventsDictionaryPool = new ObjectPool<Dictionary<InputAction, PointerEventType>>(
-                () => new Dictionary<InputAction, PointerEventType>(),
-                actionOnRelease: e => e.Clear()
-            );
+            var inputEventsDictionaryPool = new ListObjectPool<(InputAction, PointerEventType)>(collectionCheck: PoolConstants.CHECK_COLLECTIONS,
+                listInstanceDefaultCapacity: Enum.GetValues(typeof(InputAction)).Length,
+                defaultCapacity: PoolConstants.SCENES_COUNT * PoolConstants.INTERACTABLE_ENTITIES_PER_SCENE_COUNT);
 
             // Add all SDK components here
             sdkComponentsRegistry
