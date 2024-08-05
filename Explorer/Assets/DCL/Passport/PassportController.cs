@@ -51,6 +51,8 @@ namespace DCL.Passport
         private PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> passportModules = new ();
 
+        public event Action<string> PassportOpened;
+
         public PassportController(
             ViewFactoryMethod viewFactory,
             ICursor cursor,
@@ -113,6 +115,8 @@ namespace DCL.Passport
             dclInput.Camera.Disable();
             dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
+
+            PassportOpened?.Invoke(currentUserId);
         }
 
         protected override void OnViewClose()

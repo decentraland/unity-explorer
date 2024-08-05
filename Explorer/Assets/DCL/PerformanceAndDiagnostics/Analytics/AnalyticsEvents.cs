@@ -2,10 +2,9 @@
 {
     public static class AnalyticsEvents
     {
-        // TODO (Vit): Add more events
+        // TODO (Vit): Remains
         // - Used emote
         // - Equip item
-        // - Open passport
 
         public static class General
         {
@@ -21,10 +20,11 @@
             public const string TIME_SPENT_IN_WORLD = "time_spent_in_world";
         }
 
-        public static class Chat
+        public static class UI
         {
             public const string MESSAGE_SENT = "chat_message_sent";
             public const string BUBBLE_SWITCHED = "chat_bubble_switched";
+            public const string PASSPORT_OPENED = "passport_opened";
         }
 
         public static class Map
