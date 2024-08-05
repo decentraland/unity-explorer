@@ -1,17 +1,17 @@
 using Cysharp.Threading.Tasks;
-using DCL.PerformanceAndDiagnostics.Analytics;
+using DCL.Multiplayer.HealthChecks;
 using Segment.Serialization;
 using System.Threading;
 
-namespace DCL.Multiplayer.HealthChecks
+namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class AnalyticsHealthCheck : IHealthCheck
+    public class AnalyticsHealthCheckDecorator : IHealthCheck
     {
         private readonly IHealthCheck healthCheck;
         private readonly IAnalyticsController analytics;
         private readonly string eventName;
 
-        public AnalyticsHealthCheck(IHealthCheck healthCheck, IAnalyticsController analytics, string eventName)
+        public AnalyticsHealthCheckDecorator(IHealthCheck healthCheck, IAnalyticsController analytics, string eventName)
         {
             this.healthCheck = healthCheck;
             this.analytics = analytics;

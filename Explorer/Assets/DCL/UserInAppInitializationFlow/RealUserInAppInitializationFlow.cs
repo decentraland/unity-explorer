@@ -9,16 +9,11 @@ using MVC;
 using System.Threading;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.HealthChecks;
-using DCL.Multiplayer.HealthChecks.Livekit;
-using DCL.Multiplayer.HealthChecks.Struct;
-using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.UserInAppInitializationFlow.StartupOperations;
 using DCL.UserInAppInitializationFlow.StartupOperations.Struct;
 using DCL.Web3.Identities;
-using DCL.WebRequests;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using UnityEngine;
@@ -40,12 +35,10 @@ namespace DCL.UserInAppInitializationFlow
 
         public RealUserInAppInitializationFlow(
             RealFlowLoadingStatus loadingStatus,
-            IRoomHub roomHub,
+            IHealthCheck livekitHealthCheck,
             IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
-            IAnalyticsController analyticsController,
-            bool debugNoLivekitConnection,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
@@ -53,25 +46,12 @@ namespace DCL.UserInAppInitializationFlow
             ILoadingScreen loadingScreen,
             IFeatureFlagsProvider featureFlagsProvider,
             IWeb3IdentityCache web3IdentityCache,
-            IWebRequestController webRequestController,
             IRealmController realmController,
             Dictionary<string, string> appParameters)
         {
             this.mvcManager = mvcManager;
             this.backgroundMusic = backgroundMusic;
             this.loadingScreen = loadingScreen;
-
-            IHealthCheck livekitHealthCheck = debugNoLivekitConnection
-                ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
-                : new SeveralHealthCheck(
-                      new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
-                          DecentralandUrl.ArchipelagoStatus,
-                          DecentralandUrl.GatekeeperStatus
-                      ),
-                      new LivekitHealthCheck(roomHub)
-                  )
-                 //.WithAnalytics(analyticsController, "livekit_health_check_failed")
-                 .WithRetries(3);
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);

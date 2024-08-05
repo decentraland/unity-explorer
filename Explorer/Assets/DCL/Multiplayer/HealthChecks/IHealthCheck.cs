@@ -26,8 +26,5 @@ namespace DCL.Multiplayer.HealthChecks
     {
         public static IHealthCheck WithRetries(this IHealthCheck origin, int retriesCount) =>
             new RetriesHealthCheck(origin, retriesCount);
-
-        public static IHealthCheck WithAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController, string eventName) =>
-            new AnalyticsHealthCheck(origin, analyticsController, eventName);
     }
 }

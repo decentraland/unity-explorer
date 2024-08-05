@@ -32,5 +32,10 @@
         {
             public const string JUMP_IN = "map_jump_in"; // 🟢
         }
+
+        public static class Livekit
+        {
+            public const string LIVEKIT_HEALTH_CHECK_FAILED = "livekit_health_check_failed"; // 🔴 - needs testing
+        }
     }
 }
