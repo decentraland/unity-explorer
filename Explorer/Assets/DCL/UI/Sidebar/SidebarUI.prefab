@@ -615,6 +615,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 9164904624699036997}
     m_Modifications:
+    - target: {fileID: 71468218957528954, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Color.a
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 816873455510436537, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -706,6 +710,26 @@ PrefabInstance:
     - target: {fileID: 816873455510436537, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2772674678068339908, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Transition
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2772674678068339908, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Colors.m_NormalColor.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2772674678068339908, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Colors.m_PressedColor.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2772674678068339908, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.a
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4392543827313620798, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8178171541332435676, guid: c522d0b7573224f59a5c1fde68c734e3, type: 3}
       propertyPath: m_Name
@@ -1919,7 +1943,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_text
-      value: Settings <color=#716B7C>[S]</color>
+      value: Settings <color=#716B7C>[P]</color>
       objectReference: {fileID: 0}
     - target: {fileID: 5984625867669522073, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_HorizontalAlignment
