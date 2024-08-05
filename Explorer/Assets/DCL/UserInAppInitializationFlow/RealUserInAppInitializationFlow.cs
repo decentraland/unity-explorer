@@ -45,6 +45,7 @@ namespace DCL.UserInAppInitializationFlow
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
             IAnalyticsController analyticsController,
+            bool debugNoLivekitConnection,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
@@ -60,16 +61,17 @@ namespace DCL.UserInAppInitializationFlow
             this.backgroundMusic = backgroundMusic;
             this.loadingScreen = loadingScreen;
 
-            IHealthCheck livekitHealthCheck =
-                new SeveralHealthCheck(
-                        new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
-                            DecentralandUrl.ArchipelagoStatus,
-                            DecentralandUrl.GatekeeperStatus
-                        ),
-                        new LivekitHealthCheck(roomHub)
-                    )
-                   .WithAnalytics(analyticsController, "livekit_health_check_failed")
-                   .WithRetries(3);
+            IHealthCheck livekitHealthCheck = debugNoLivekitConnection
+                ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
+                : new SeveralHealthCheck(
+                      new MultipleURLHealthCheck(webRequestController, decentralandUrlsSource,
+                          DecentralandUrl.ArchipelagoStatus,
+                          DecentralandUrl.GatekeeperStatus
+                      ),
+                      new LivekitHealthCheck(roomHub)
+                  )
+                 //.WithAnalytics(analyticsController, "livekit_health_check_failed")
+                 .WithRetries(3);
 
             var ensureLivekitConnectionStartupOperation = new EnsureLivekitConnectionStartupOperation(livekitHealthCheck);
             var initializeFeatureFlagsStartupOperation = new InitializeFeatureFlagsStartupOperation(featureFlagsProvider, web3IdentityCache, decentralandUrlsSource, appParameters);
