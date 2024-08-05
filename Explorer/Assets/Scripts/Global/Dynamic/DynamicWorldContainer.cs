@@ -27,6 +27,9 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
+using DCL.Multiplayer.HealthChecks;
+using DCL.Multiplayer.HealthChecks.Livekit;
+using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
 using DCL.Multiplayer.Profiles.BroadcastProfiles;
@@ -286,9 +289,22 @@ namespace Global.Dynamic
                 exposedGlobalDataContainer.CameraSamplingData
             );
 
+
+            var livekitHealthCheck = bootstrapContainer.DebugSettings.EnableEmulateNoLivekitConnection
+                ? new IHealthCheck.AlwaysFails("Livekit connection is in debug, always fail mode")
+                : new SeveralHealthCheck(
+                      new MultipleURLHealthCheck(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource,
+                          DecentralandUrl.ArchipelagoStatus,
+                          DecentralandUrl.GatekeeperStatus
+                      ),
+                      new LivekitHealthCheck(container.RoomHub)
+                  )
+                 .WithAnalytics(bootstrapContainer.Analytics!, AnalyticsEvents.Livekit.LIVEKIT_HEALTH_CHECK_FAILED, dynamicWorldParams.EnableAnalytics)
+                 .WithRetries(3);
+
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
                 container.RealFlowLoadingStatus,
-                container.RoomHub,
+                livekitHealthCheck,
                 bootstrapContainer.DecentralandUrlsSource,
                 container.MvcManager,
                 selfProfile,
@@ -299,7 +315,6 @@ namespace Global.Dynamic
                 loadingScreen,
                 staticContainer.FeatureFlagsProvider,
                 identityCache,
-                staticContainer.WebRequestsContainer.WebRequestController,
                 container.RealmController,
                 dynamicWorldParams.AppParameters
             );

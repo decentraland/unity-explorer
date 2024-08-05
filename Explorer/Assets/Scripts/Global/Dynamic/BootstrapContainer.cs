@@ -32,6 +32,7 @@ namespace Global.Dynamic
         public DappWeb3Authenticator? Web3VerifiedAuthenticator { get; private set; }
         public ProxyVerifiedWeb3Authenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
+        public IDebugSettings DebugSettings { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
 
         public override void Dispose()
@@ -60,6 +61,7 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
+                DebugSettings = debugSettings,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
