@@ -70,7 +70,7 @@ namespace DCL.Notifications.NotificationsMenu
 
         private async UniTaskVoid InitialNotificationRequestAsync(CancellationToken ct)
         {
-            List<INotification> requestNotifications = await notificationsRequestController.RequestNotificationsAsync(ct);
+            List<INotification> requestNotifications = await notificationsRequestController.GetMostRecentNotificationsAsync(ct);
 
             foreach (INotification requestNotification in requestNotifications)
                 notifications.Add(requestNotification);

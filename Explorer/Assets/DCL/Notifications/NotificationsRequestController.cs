@@ -58,9 +58,9 @@ namespace DCL.Notifications
             );
         }
 
-        public async UniTask<List<INotification>> RequestNotificationsAsync(CancellationToken ct)
+        public async UniTask<List<INotification>> GetMostRecentNotificationsAsync(CancellationToken ct)
         {
-            do { await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct); }
+            do await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
             while (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired);
 
             urlBuilder.Clear();
@@ -82,7 +82,7 @@ namespace DCL.Notifications
             return notifications;
         }
 
-        public async UniTask GetNewNotificationAsync(CancellationToken ct)
+        public async UniTask StartGettingNewNotificationsOverTimeAsync(CancellationToken ct)
         {
             do
             {
@@ -121,6 +121,8 @@ namespace DCL.Notifications
 
         public async UniTask SetNotificationAsReadAsync(string notificationId, CancellationToken ct)
         {
+            if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired) return;
+
             bodyBuilder.Clear();
 
             bodyBuilder.Append("{\"notificationIds\":[\"")
