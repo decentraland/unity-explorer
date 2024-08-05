@@ -200,7 +200,7 @@ MonoBehaviour:
     environmentSettings:
       sceneLoadRadius: 20
       lod1Threshold: 5
-      terrainLODBias: 50
+      terrainLODBias: 75
       detailDensity: 30
       grassDistance: 75
       chunkCullDistance: 1000
@@ -212,7 +212,7 @@ MonoBehaviour:
     environmentSettings:
       sceneLoadRadius: 50
       lod1Threshold: 5
-      terrainLODBias: 150
+      terrainLODBias: 100
       detailDensity: 70
       grassDistance: 150
       chunkCullDistance: 3000
@@ -224,7 +224,7 @@ MonoBehaviour:
     environmentSettings:
       sceneLoadRadius: 80
       lod1Threshold: 5
-      terrainLODBias: 250
+      terrainLODBias: 125
       detailDensity: 100
       grassDistance: 300
       chunkCullDistance: 7000

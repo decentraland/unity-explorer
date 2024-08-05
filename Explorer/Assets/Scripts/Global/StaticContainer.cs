@@ -35,6 +35,7 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
 using Global.Dynamic;
 using SceneRunner.Mapping;
@@ -82,7 +83,7 @@ namespace Global
 
         public ECSWorldSingletonSharedDependencies SingletonSharedDependencies { get; private set; }
 
-        public IProfilingProvider ProfilingProvider { get; private set; }
+        public Profiler Profiler { get; private set; }
 
         public PhysicsTickProvider PhysicsTickProvider { get; private set; }
 
@@ -109,6 +110,7 @@ namespace Global
             realmPartitionSettings.Dispose();
             partitionSettings.Dispose();
             QualityContainer.Dispose();
+            Profiler.Dispose();
         }
 
         public async UniTask InitializeAsync(StaticSettings settings, CancellationToken ct)
@@ -146,7 +148,7 @@ namespace Global
 
             var componentsContainer = ComponentsContainer.Create();
             var exposedGlobalDataContainer = ExposedGlobalDataContainer.Create();
-            var profilingProvider = new ProfilingProvider();
+            var profilingProvider = new Profiler();
 
             var container = new StaticContainer();
 
@@ -154,7 +156,7 @@ namespace Global
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
-
+            
             container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
 
             container.assetsProvisioner = assetsProvisioner;
@@ -185,7 +187,7 @@ namespace Global
 
             container.ComponentsContainer = componentsContainer;
             container.SingletonSharedDependencies = sharedDependencies;
-            container.ProfilingProvider = profilingProvider;
+            container.Profiler = profilingProvider;
             container.EntityCollidersGlobalCache = new EntityCollidersGlobalCache();
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
