@@ -101,7 +101,7 @@ namespace ECS.Unity.Materials.Tests
             Assert.AreEqual(expected.GetDiffuseColor(), actual.Data.DiffuseColor);
             Assert.AreEqual(expected.GetCastShadows(), actual.Data.CastShadows);
 
-            AssertTextureComponent(expected.Unlit.Texture, actual.Data.AlbedoTexture);
+            AssertTextureComponent(expected.Unlit.Texture, actual.Data.Textures.AlbedoTexture);
         }
 
         [Test]
@@ -333,10 +333,10 @@ namespace ECS.Unity.Materials.Tests
             Assert.AreEqual(expected.GetEmissiveColor(), actual.Data.EmissiveColor);
             Assert.AreEqual(expected.GetDirectIntensity(), actual.Data.DirectIntensity);
 
-            AssertTextureComponent(expected.Pbr.Texture, actual.Data.AlbedoTexture);
-            AssertTextureComponent(expected.Pbr.BumpTexture, actual.Data.BumpTexture);
-            AssertTextureComponent(expected.Pbr.AlphaTexture, actual.Data.AlphaTexture);
-            AssertTextureComponent(expected.Pbr.EmissiveTexture, actual.Data.EmissiveTexture);
+            AssertTextureComponent(expected.Pbr.Texture, actual.Data.Textures.AlbedoTexture);
+            AssertTextureComponent(expected.Pbr.BumpTexture, actual.Data.Textures.BumpTexture);
+            AssertTextureComponent(expected.Pbr.AlphaTexture, actual.Data.Textures.AlphaTexture);
+            AssertTextureComponent(expected.Pbr.EmissiveTexture, actual.Data.Textures.EmissiveTexture);
         }
 
         private static PBMaterial CreateBasicMaterial()

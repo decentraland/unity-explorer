@@ -38,7 +38,6 @@ namespace DCL.Passport
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
         private readonly World world;
-        private readonly Entity playerEntity;
         private readonly IThumbnailProvider thumbnailProvider;
         private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
@@ -48,8 +47,10 @@ namespace DCL.Passport
         private CancellationTokenSource characterPreviewLoadingCts;
         private PassportErrorsController passportErrorsController;
         private PassportCharacterPreviewController characterPreviewController;
-        private PassportProfileInfoController passportProfileInfoController;
+        private readonly PassportProfileInfoController passportProfileInfoController;
         private readonly List<IPassportModuleController> passportModules = new ();
+
+        public event Action<string> PassportOpened;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -82,11 +83,11 @@ namespace DCL.Passport
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
             this.world = world;
-            this.playerEntity = playerEntity;
             this.thumbnailProvider = thumbnailProvider;
             this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity);
         }
 
         protected override void OnViewInstantiated()
@@ -94,12 +95,17 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            passportProfileInfoController = new PassportProfileInfoController(selfProfile, world, playerEntity, passportErrorsController);
             passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
             passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
 
+            passportProfileInfoController.PublishError += OnPublishError;
             passportProfileInfoController.OnProfilePublished += SetupPassportModules;
+        }
+
+        private void OnPublishError()
+        {
+            passportErrorsController.Show();
         }
 
         protected override void OnViewShow()
@@ -113,6 +119,8 @@ namespace DCL.Passport
             dclInput.Camera.Disable();
             dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
+
+            PassportOpened?.Invoke(currentUserId);
         }
 
         protected override void OnViewClose()
@@ -139,6 +147,8 @@ namespace DCL.Passport
             characterPreviewController?.Dispose();
 
             passportProfileInfoController.OnProfilePublished -= SetupPassportModules;
+            passportProfileInfoController.PublishError -= OnPublishError;
+
             foreach (IPassportModuleController module in passportModules)
                 module.Dispose();
         }

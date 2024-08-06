@@ -112,12 +112,6 @@ namespace DCL.PluginSystem.Global
             };
         }
 
-        public override void Dispose()
-        {
-            passportController?.Dispose();
-            base.Dispose();
-        }
-
         public class PassportSettings : IDCLPluginSettings
         {
             [field: Header(nameof(PassportPlugin) + "." + nameof(PassportSettings))]

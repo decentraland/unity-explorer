@@ -8,6 +8,8 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.Backpack.BackpackBus;
+using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Chat.Commands;
@@ -18,6 +20,7 @@ using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
+using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -70,6 +73,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -79,12 +83,15 @@ namespace Global.Dynamic
 {
     public class DynamicWorldContainer : DCLWorldContainer<DynamicWorldSettings>
     {
+        private ECSReloadScene? reloadSceneController;
+        private LocalSceneDevelopmentController? localSceneDevelopmentController;
         public IMVCManager MvcManager { get; private set; } = null!;
 
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
 
         public LODContainer LODContainer { get; private set; } = null!;
 
+        public MapRendererContainer MapRendererContainer { get; private set; } = null!;
         public IGlobalRealmController RealmController { get; private set; } = null!;
 
         public GlobalWorldFactory GlobalWorldFactory { get; private set; } = null!;
@@ -109,9 +116,6 @@ namespace Global.Dynamic
         public IRoomHub RoomHub { get; private set; } = null!;
 
         public RealFlowLoadingStatus RealFlowLoadingStatus { get; private set; } = null!;
-
-        private ECSReloadScene? reloadSceneController;
-        private LocalSceneDevelopmentController? localSceneDevelopmentController;
 
         public override void Dispose()
         {
@@ -151,6 +155,10 @@ namespace Global.Dynamic
 
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
+            var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
+            var mapPathEventBus = new MapPathEventBus();
+            INotificationsBusController notificationsBusController = new NotificationsBusController();
+
             async UniTask InitializeContainersAsync(IPluginSettingsContainer settingsContainer, CancellationToken ct)
             {
                 // Init itself
@@ -159,10 +167,13 @@ namespace Global.Dynamic
                 // Init other containers
                 container.DefaultTexturesContainer = await DefaultTexturesContainer.CreateAsync(settingsContainer, assetsProvisioner, ct).ThrowOnFail();
                 container.LODContainer = await LODContainer.CreateAsync(assetsProvisioner, bootstrapContainer.DecentralandUrlsSource, staticContainer, settingsContainer, staticContainer.RealmData, container.DefaultTexturesContainer.TextureArrayContainerFactory, debugBuilder, dynamicWorldParams.EnableLOD, ct).ThrowOnFail();
+                container.MapRendererContainer = await MapRendererContainer.CreateAsync(settingsContainer, staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, placesAPIService, mapPathEventBus, notificationsBusController, ct);
             }
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
+
+
 
             CursorSettings cursorSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
@@ -191,12 +202,10 @@ namespace Global.Dynamic
             var parcelServiceContainer = ParcelServiceContainer.Create(staticContainer.RealmData, staticContainer.SceneReadinessReportQueue, debugBuilder, container.MvcManager, staticContainer.SingletonSharedDependencies.SceneAssetLock);
             container.ParcelServiceContainer = parcelServiceContainer;
 
-            var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
-            MapRendererContainer mapRendererContainer = await MapRendererContainer.CreateAsync(staticContainer, bootstrapContainer.DecentralandUrlsSource, assetsProvisioner, dynamicSettings.MapRendererSettings, placesAPIService, ct);
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
             var wearableCatalog = new WearableCatalog();
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
-            var webBrowser = bootstrapContainer.WebBrowser;
+            IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
             NametagsData nametagsData = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.NametagsData, ct)).Value;
 
@@ -209,7 +218,7 @@ namespace Global.Dynamic
             var genesisTerrain = new TerrainGenerator();
             var worldsTerrain = new WorldTerrainGenerator();
             var satelliteView = new SatelliteFloor();
-            var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, mapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
+            var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, container.MapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
 
             var multiPool = new ThreadSafeMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
@@ -271,7 +280,7 @@ namespace Global.Dynamic
 
             IRealmNavigator realmNavigator = new RealmNavigator(
                 loadingScreen,
-                mapRendererContainer.MapRenderer,
+                container.MapRendererContainer.MapRenderer,
                 container.RealmController,
                 parcelServiceContainer.TeleportController,
                 container.RoomHub,
@@ -324,13 +333,20 @@ namespace Global.Dynamic
                 { ReloadSceneChatCommand.REGEX, () => new ReloadSceneChatCommand(container.reloadSceneController) },
             };
 
-            IChatMessagesBus chatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
+            IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
                                              .WithSelfResend(identityCache, container.ProfileRepository)
                                              .WithIgnoreSymbols()
                                              .WithCommands(chatCommandsFactory)
                                              .WithDebugPanel(debugBuilder);
 
-            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics ? new ChatMessagesBusAnalyticsDecorator(chatMessageBus, bootstrapContainer.Analytics!) : chatMessageBus;
+            container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics
+                ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
+                : coreChatMessageBus;
+
+            var coreBackpackEventBus = new BackpackEventBus();
+            IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
+                ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
+                : coreBackpackEventBus;
 
             if (!string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm))
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
@@ -343,8 +359,7 @@ namespace Global.Dynamic
                 )
             );
 
-            INotificationsBusController notificationsBusController = new NotificationsBusController();
-            NotificationsRequestController notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
@@ -352,7 +367,7 @@ namespace Global.Dynamic
 
             var characterPreviewEventBus = new CharacterPreviewEventBus();
             var sidebarBus = new SidebarBus();
-            var generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
+            AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
@@ -402,7 +417,7 @@ namespace Global.Dynamic
                 ),
                 new MainUIPlugin(container.MvcManager, sidebarBus, mainUIView),
                 new ProfilePlugin(container.ProfileRepository, profileCache, staticContainer.CacheCleaner, new ProfileIntentionCache()),
-                new MapRendererPlugin(mapRendererContainer.MapRenderer),
+                new MapRendererPlugin(container.MapRendererContainer.MapRenderer),
                 new SidebarPlugin(
                     assetsProvisioner,
                     container.MvcManager,
@@ -415,14 +430,13 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInitializationFlow,
-                    profileCache,
-                    sidebarBus),
-                new MinimapPlugin(container.MvcManager, mapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView),
+                    profileCache, sidebarBus),
+                new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
                     assetsProvisioner,
                     container.MvcManager,
-                    mapRendererContainer,
+                    container.MapRendererContainer,
                     placesAPIService,
                     staticContainer.WebRequestsContainer.WebRequestController,
                     identityCache,
@@ -443,7 +457,9 @@ namespace Global.Dynamic
                     profileCache,
                     assetBundlesURL,
                     notificationsBusController,
-                    characterPreviewEventBus
+                    characterPreviewEventBus,
+                    mapPathEventBus,
+                    backpackEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

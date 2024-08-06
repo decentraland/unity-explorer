@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55753ab507954b8db50a4a27565680cc, type: 3}
+  m_Name: MapRendererSettings
+  m_EditorClassIdentifier: MapRenderer:DCL.MapRenderer:MapRendererSettingsAsset
+  <MapRendererConfiguration>k__BackingField:
+    m_AssetGUID: b54d9d4189903c2438fa811308f14ceb
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <MapCameraObject>k__BackingField:
+    m_AssetGUID: 3efe8a48fc3905f47a0648abd6859394
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <AtlasChunk>k__BackingField:
+    m_AssetGUID: f80a8f4fcad2b4246b66c94221314244
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <ParcelHighlight>k__BackingField:
+    m_AssetGUID: 7e150ada146ad0749b39e65968780157
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <PlayerMarker>k__BackingField:
+    m_AssetGUID: 0ae66608be2735a4f96e0f1aa9b3a75b
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <PinMarker>k__BackingField:
+    m_AssetGUID: e7d14406516774d91886b6b4d1a26a58
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <SceneOfInterestMarker>k__BackingField:
+    m_AssetGUID: 1f557ed079be146f9aeb090104c115c9
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <FavoriteMarker>k__BackingField:
+    m_AssetGUID: 5f2c1af519efc4b82b87b887f93077fc
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <UserMarker>k__BackingField:
+    m_AssetGUID: 53b70d09c4a814878a30c68582ad4523
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <DestinationPathLine>k__BackingField:
+    m_AssetGUID: e052984ad30813240bd28c945f4cab60
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
+  <PathDestinationPin>k__BackingField:
+    m_AssetGUID: eb94acb2812554e4695a383fa2eae4b7
+    m_SubObjectName: 
+    m_SubObjectType: 
+    m_EditorAssetChanged: 0
