@@ -12,9 +12,11 @@ using MVC;
 using System.Threading;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
+using System.Collections.Generic;
 using UnityEngine;
 using static DCL.UserInAppInitializationFlow.RealFlowLoadingStatus.Stage;
 
@@ -24,6 +26,7 @@ namespace DCL.UserInAppInitializationFlow
     {
         private readonly IMVCManager mvcManager;
         private readonly ISelfProfile selfProfile;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
         private readonly Vector2Int startParcel;
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy;
@@ -32,20 +35,27 @@ namespace DCL.UserInAppInitializationFlow
         private readonly ILoadingScreen loadingScreen;
         private readonly IFeatureFlagsProvider featureFlagsProvider;
         private readonly IWeb3IdentityCache web3IdentityCache;
+        private readonly IRealmController realmController;
+        private readonly Dictionary<string, string> appParameters;
 
-        public RealUserInitializationFlowController(RealFlowLoadingStatus loadingStatus,
+        public RealUserInitializationFlowController(
+            RealFlowLoadingStatus loadingStatus,
             IMVCManager mvcManager,
             ISelfProfile selfProfile,
+            IDecentralandUrlsSource decentralandUrlsSource,
             Vector2Int startParcel,
             ObjectProxy<AvatarBase> mainPlayerAvatarBaseProxy,
             AudioClipConfig backgroundMusic,
             IRealmNavigator realmNavigator,
             ILoadingScreen loadingScreen,
             IFeatureFlagsProvider featureFlagsProvider,
-            IWeb3IdentityCache web3IdentityCache)
+            IWeb3IdentityCache web3IdentityCache,
+            IRealmController realmController,
+            Dictionary<string, string> appParameters)
         {
             this.mvcManager = mvcManager;
             this.selfProfile = selfProfile;
+            this.decentralandUrlsSource = decentralandUrlsSource;
             this.startParcel = startParcel;
             this.loadingStatus = loadingStatus;
             this.mainPlayerAvatarBaseProxy = mainPlayerAvatarBaseProxy;
@@ -54,10 +64,13 @@ namespace DCL.UserInAppInitializationFlow
             this.loadingScreen = loadingScreen;
             this.featureFlagsProvider = featureFlagsProvider;
             this.web3IdentityCache = web3IdentityCache;
+            this.realmController = realmController;
+            this.appParameters = appParameters;
         }
 
         public async UniTask ExecuteAsync(bool showAuthentication,
             bool showLoading,
+            bool reloadRealm,
             World world,
             Entity playerEntity,
             CancellationToken ct)
@@ -67,17 +80,15 @@ namespace DCL.UserInAppInitializationFlow
             if (showAuthentication)
                 await ShowAuthenticationScreenAsync(ct);
 
-
-
             if (showLoading)
-                await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(parentLoadReport, world, playerEntity, ct), ct);
+                await loadingScreen.ShowWhileExecuteTaskAsync(parentLoadReport => LoadCharacterAndWorldAsync(reloadRealm, parentLoadReport, world, playerEntity, ct), ct);
             else
-                await LoadCharacterAndWorldAsync(AsyncLoadProcessReport.Create(), world, playerEntity, ct);
+                await LoadCharacterAndWorldAsync(reloadRealm, AsyncLoadProcessReport.Create(), world, playerEntity, ct);
 
             UIAudioEventsBus.Instance.SendStopPlayingContinuousAudioEvent(backgroundMusic);
         }
 
-        private async UniTask LoadCharacterAndWorldAsync(AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
+        private async UniTask LoadCharacterAndWorldAsync(bool reloadRealm, AsyncLoadProcessReport parentLoadReport, World world, Entity playerEntity, CancellationToken ct)
         {
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
             await InitializeFeatureFlagsAsync(ct);
@@ -96,6 +107,9 @@ namespace DCL.UserInAppInitializationFlow
 
             AsyncLoadProcessReport? teleportLoadReport
                 = parentLoadReport.CreateChildReport(RealFlowLoadingStatus.PROGRESS[PlayerTeleported]);
+
+            if (reloadRealm)
+                await realmController.RestartRealmAsync(ct);
 
             await realmNavigator.InitializeTeleportToSpawnPointAsync(teleportLoadReport, ct, startParcel);
             parentLoadReport.SetProgress(loadingStatus.SetStage(Completed));
@@ -125,14 +139,8 @@ namespace DCL.UserInAppInitializationFlow
 
         private async UniTask InitializeFeatureFlagsAsync(CancellationToken ct)
         {
-            try
-            {
-                await featureFlagsProvider.InitializeAsync(web3IdentityCache.Identity?.Address, ct);
-            }
-            catch (Exception e) when (e is not OperationCanceledException)
-            {
-                ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS));
-            }
+            try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
+            catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
         }
     }
 }

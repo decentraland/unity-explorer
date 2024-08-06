@@ -12,14 +12,10 @@ namespace DCL.MapRenderer.Tests.PlayerMarker
     [TestFixture]
     public class PlayerMarkerControllerShould
     {
-        private PlayerMarkerController controller;
-        private IPlayerMarker marker;
-        private PlayerMarkerController.PlayerMarkerBuilder builder;
-
         [SetUp]
         public void Setup()
         {
-            var coordUtils = Substitute.For<ICoordsUtils>();
+            ICoordsUtils coordUtils = Substitute.For<ICoordsUtils>();
 
             coordUtils.CoordsToPositionWithOffset(Arg.Any<Vector2>())
                       .Returns(info => (Vector3)info.Arg<Vector2>());
@@ -31,11 +27,16 @@ namespace DCL.MapRenderer.Tests.PlayerMarker
                 builder,
                 null,
                 coordUtils,
-                Substitute.For<IMapCullingController>()
+                Substitute.For<IMapCullingController>(),
+                Substitute.For<IMapPathEventBus>()
             );
 
             controller.Initialize();
         }
+
+        private PlayerMarkerController controller;
+        private IPlayerMarker marker;
+        private PlayerMarkerController.PlayerMarkerBuilder builder;
 
         [Test]
         public void Initialize()

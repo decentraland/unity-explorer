@@ -1,7 +1,9 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Browser.DecentralandUrls;
 using DCL.Character;
 using DCL.Character.Components;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.FfiClients;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
@@ -16,8 +18,6 @@ namespace DCL.Multiplayer.Connections.Demo
 {
     public class GateKeeperRoomPlayground : MonoBehaviour
     {
-        [SerializeField] private string gateKeeperUrl = "https://comms-gatekeeper.decentraland.zone/get-scene-handler";
-
         private void Start()
         {
             LaunchAsync().Forget();
@@ -30,16 +30,18 @@ namespace DCL.Multiplayer.Connections.Demo
             var world = World.Create();
             world.Create(new CharacterTransform(new GameObject("Player").transform));
 
-            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync();
+            var urlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Zone);
+
+            IWeb3IdentityCache? identityCache = await ArchipelagoFakeIdentityCache.NewAsync(urlsSource);
             var character = new ICharacterObject.Fake(Vector3.zero);
             var webRequests = new LogWebRequestController(new WebRequestController(identityCache));
-            var places = new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests));
+            var places = new PlacesAPIService.PlacesAPIService(new PlacesAPIClient(webRequests, urlsSource));
             var realmData = new IRealmData.Fake();
 
             new GateKeeperSceneRoom(
                 webRequests,
                 new LogMetaDataSource(new MetaDataSource(realmData, character, places)),
-                gateKeeperUrl
+                urlsSource
             ).Start();
         }
     }

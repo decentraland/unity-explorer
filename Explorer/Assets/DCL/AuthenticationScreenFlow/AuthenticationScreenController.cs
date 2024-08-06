@@ -1,12 +1,15 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
+using DCL.Audio;
 using DCL.Browser;
 using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.UI;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -16,7 +19,6 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.Audio;
 using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
@@ -25,8 +27,6 @@ namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
     {
-        private const int ANIMATION_DELAY = 300;
-
         private enum ViewState
         {
             Login,
@@ -34,10 +34,9 @@ namespace DCL.AuthenticationScreenFlow
             Loading,
             Finalize,
         }
+        private const int ANIMATION_DELAY = 300;
 
-        private const string DISCORD_LINK = "https://decentraland.org/discord/";
         private const string REQUEST_BETA_ACCESS_LINK = "https://68zbqa0m12c.typeform.com/to/y9fZeNWm";
-        private const string WORLD_VOLUME_EXPOSED_PARAM = "World_Volume";
 
         private readonly IWeb3VerifiedAuthenticator web3Authenticator;
         private readonly ISelfProfile selfProfile;
@@ -47,7 +46,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly Animator splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
-        private readonly AudioMixer generalAudioMixer;
+        private readonly AudioMixerVolumesController audioMixerVolumesController;
 
         private AuthenticationScreenCharacterPreviewController? characterPreviewController;
         private CancellationTokenSource? loginCancellationToken;
@@ -63,24 +62,25 @@ namespace DCL.AuthenticationScreenFlow
             ViewFactoryMethod viewFactory,
             IWeb3VerifiedAuthenticator web3Authenticator,
             ISelfProfile selfProfile,
+            FeatureFlagsCache featureFlagsCache,
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
             Animator splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
-            FeatureFlagsCache featureFlagsCache,
-            AudioMixer generalAudioMixer)
+            AudioMixerVolumesController audioMixerVolumesController)
             : base(viewFactory)
         {
             this.web3Authenticator = web3Authenticator;
             this.selfProfile = selfProfile;
+            this.featureFlagsCache = featureFlagsCache;
             this.webBrowser = webBrowser;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
             this.splashScreenAnimator = splashScreenAnimator;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.featureFlagsCache = featureFlagsCache;
-            this.generalAudioMixer = generalAudioMixer;
+            this.audioMixerVolumesController = audioMixerVolumesController;
         }
 
         public override void Dispose()
@@ -123,9 +123,15 @@ namespace DCL.AuthenticationScreenFlow
             base.OnBeforeViewShow();
 
             CheckValidIdentityAndStartInitialFlowAsync().Forget();
+        }
 
-            generalAudioMixer.GetFloat(WORLD_VOLUME_EXPOSED_PARAM, out originalWorldAudioVolume);
-            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, -80);
+        protected override void OnViewShow()
+        {
+            base.OnViewShow();
+
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.MuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         protected override void OnViewClose()
@@ -136,7 +142,10 @@ namespace DCL.AuthenticationScreenFlow
             CancelVerificationCountdown();
             viewInstance.FinalizeContainer.SetActive(false);
             web3Authenticator.SetVerificationListener(null);
-            generalAudioMixer.SetFloat(WORLD_VOLUME_EXPOSED_PARAM, originalWorldAudioVolume);
+
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.World_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Avatar_Volume);
+            audioMixerVolumesController.UnmuteGroup(AudioMixerExposedParam.Chat_Volume);
         }
 
         private async UniTaskVoid CheckValidIdentityAndStartInitialFlowAsync()
@@ -170,7 +179,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.SetTrigger(AnimationHashes.OUT);
+            splashScreenAnimator.SetTrigger(UIAnimationHashes.OUT);
         }
 
         private void ShowRestrictedUserPopup()
@@ -267,7 +276,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid ChangeAccountAsync(CancellationToken ct)
             {
-                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.TO_OTHER);
+                viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.TO_OTHER);
                 await UniTask.Delay(ANIMATION_DELAY, cancellationToken: ct);
                 await web3Authenticator.LogoutAsync(ct);
                 SwitchState(ViewState.Login);
@@ -283,7 +292,7 @@ namespace DCL.AuthenticationScreenFlow
         {
             async UniTaskVoid AnimateAndAwaitAsync()
             {
-                viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.JUMP_IN);
+                viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.JUMP_IN);
                 await UniTask.Delay(ANIMATION_DELAY);
                 characterPreviewController?.OnHide();
                 lifeCycleTask?.TrySetResult();
@@ -302,7 +311,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.PendingAuthentication.SetActive(false);
                     viewInstance.Slides.SetActive(true);
                     viewInstance.LoginContainer.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.IN);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
@@ -313,8 +322,8 @@ namespace DCL.AuthenticationScreenFlow
                     ResetAnimator(viewInstance.VerificationAnimator);
                     viewInstance.PendingAuthentication.SetActive(true);
                     viewInstance.Slides.SetActive(true);
-                    viewInstance.LoginAnimator.SetTrigger(AnimationHashes.OUT);
-                    viewInstance.VerificationAnimator.SetTrigger(AnimationHashes.IN);
+                    viewInstance.LoginAnimator.SetTrigger(UIAnimationHashes.OUT);
+                    viewInstance.VerificationAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(false);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
@@ -340,7 +349,7 @@ namespace DCL.AuthenticationScreenFlow
                     viewInstance.LoginContainer.SetActive(false);
                     viewInstance.ProgressContainer.SetActive(false);
                     viewInstance.FinalizeContainer.SetActive(true);
-                    viewInstance.FinalizeAnimator.SetTrigger(AnimationHashes.IN);
+                    viewInstance.FinalizeAnimator.SetTrigger(UIAnimationHashes.IN);
                     viewInstance.ConnectingToServerContainer.SetActive(false);
                     viewInstance.VerificationCodeHintContainer.SetActive(false);
                     viewInstance.LoginButton.interactable = false;
@@ -370,7 +379,7 @@ namespace DCL.AuthenticationScreenFlow
         }
 
         private void OpenDiscord() =>
-            webBrowser.OpenUrl(DISCORD_LINK);
+            webBrowser.OpenUrl(DecentralandUrl.DiscordLink);
 
         private void CancelVerificationCountdown()
         {

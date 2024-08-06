@@ -33,6 +33,7 @@ using SceneRunner;
 using SceneRunner.Scene;
 using System.Collections.Generic;
 using System.Threading;
+using DCL.LOD;
 using SystemGroups.Visualiser;
 using Utility;
 
@@ -57,18 +58,19 @@ namespace Global.Dynamic
         private readonly StaticSettings staticSettings;
         private readonly StaticContainer staticContainer;
         private readonly IScenesCache scenesCache;
+        private readonly ILODCache lodCache;
         private readonly CharacterContainer characterContainer;
 
         private readonly HybridSceneParams hybridSceneParams;
-        private readonly ReloadSceneController reloadSceneController;
         private readonly ICharacterDataPropagationUtility characterDataPropagationUtility;
 
         public GlobalWorldFactory( in StaticContainer staticContainer,
             CameraSamplingData cameraSamplingData, RealmSamplingData realmSamplingData,
             URLDomain assetBundlesURL, IRealmData realmData,
             IReadOnlyList<IDCLGlobalPlugin> globalPlugins, IDebugContainerBuilder debugContainerBuilder,
-            IScenesCache scenesCache, HybridSceneParams hybridSceneParams, ReloadSceneController reloadSceneController,
-            ICharacterDataPropagationUtility characterDataPropagationUtility)
+            IScenesCache scenesCache, HybridSceneParams hybridSceneParams,
+            ICharacterDataPropagationUtility characterDataPropagationUtility,
+            ILODCache lodCache)
         {
             partitionedWorldsAggregateFactory = staticContainer.SingletonSharedDependencies.AggregateFactory;
             componentPoolsRegistry = staticContainer.ComponentsContainer.ComponentPoolsRegistry;
@@ -87,8 +89,8 @@ namespace Global.Dynamic
             this.staticContainer = staticContainer;
             this.scenesCache = scenesCache;
             this.hybridSceneParams = hybridSceneParams;
-            this.reloadSceneController = reloadSceneController;
             this.characterDataPropagationUtility = characterDataPropagationUtility;
+            this.lodCache = lodCache;
 
             memoryBudget = staticContainer.SingletonSharedDependencies.MemoryBudget;
             physicsTickProvider = staticContainer.PhysicsTickProvider;
@@ -160,7 +162,6 @@ namespace Global.Dynamic
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
-            reloadSceneController.Initialize(world, playerEntity, staticContainer.ScenesCache, debugContainerBuilder);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
 
@@ -168,10 +169,10 @@ namespace Global.Dynamic
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
-
+            
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
-                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock),
+                UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),
                 new ReleaseRealmPooledComponentSystem(componentPoolsRegistry),
             };
 

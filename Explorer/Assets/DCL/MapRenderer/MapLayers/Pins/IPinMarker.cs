@@ -7,12 +7,14 @@ namespace DCL.MapRenderer.MapLayers.Pins
     public interface IPinMarker : IMapRendererMarker, IMapPositionProvider, IDisposable
     {
         bool IsVisible { get; }
+        bool IsDestination { get; }
 
         public string Title { get; }
 
         public string Description { get; }
 
         public Vector2Int ParcelPosition { get; }
+        public Sprite CurrentSprite { get; }
 
         void SetPosition(Vector2 position, Vector2Int parcelPosition);
 
@@ -21,6 +23,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
         void AnimateIn();
 
         void AnimateOut();
+
+        void SetAsDestination(bool isDestination);
 
         void SetIconOutline(bool isActive);
 

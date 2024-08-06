@@ -17,7 +17,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private const int PREWARM_COUNT = 60;
 
         private IAssetsProvisioner assetsProvisioner;
-        private MapRendererSettings mapSettings;
+        private IMapRendererSettings mapSettings;
         private IPlacesAPIService placesAPIService;
 
         public async UniTask InstallAsync(
@@ -28,20 +28,20 @@ namespace DCL.MapRenderer.ComponentsFactory
             IMapCullingController cullingController,
             IPlacesAPIService placesAPI,
             IAssetsProvisioner assetsProv,
-            MapRendererSettings settings,
+            IMapRendererSettings settings,
             CancellationToken cancellationToken
         )
         {
             placesAPIService = placesAPI;
             assetsProvisioner = assetsProv;
             mapSettings = settings;
-            var prefab = await GetPrefabAsync(cancellationToken);
+            FavoriteMarkerObject? prefab = await GetPrefabAsync(cancellationToken);
 
             var objectsPool = new ObjectPool<FavoriteMarkerObject>(
                 () => CreatePoolMethod(configuration, prefab, coordsUtils),
                 defaultCapacity: PREWARM_COUNT,
-                actionOnGet: (obj) => obj.gameObject.SetActive(true),
-                actionOnRelease: (obj) => obj.gameObject.SetActive(false));
+                actionOnGet: obj => obj.gameObject.SetActive(true),
+                actionOnRelease: obj => obj.gameObject.SetActive(false));
 
             var controller = new FavoritesMarkerController(
                 placesAPIService,
@@ -59,6 +59,7 @@ namespace DCL.MapRenderer.ComponentsFactory
         private static FavoriteMarkerObject CreatePoolMethod(MapRendererConfiguration configuration, FavoriteMarkerObject prefab, ICoordsUtils coordsUtils)
         {
             FavoriteMarkerObject favorite = Object.Instantiate(prefab, configuration.FavoritesMarkersRoot);
+
             for (var i = 0; i < favorite.renderers.Length; i++)
                 favorite.renderers[i].sortingOrder = MapRendererDrawOrder.FAVORITES;
 

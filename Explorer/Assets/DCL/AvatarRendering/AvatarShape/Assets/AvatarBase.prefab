@@ -3520,7 +3520,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2645e75a453f6954f8aa7b950093750d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  avatarAnimator: {fileID: 6654053651110562472}
+  <AvatarAnimator>k__BackingField: {fileID: 6654053651110562472}
   <AvatarSkinnedMeshRenderer>k__BackingField: {fileID: 918335364077391645}
   <FeetIKRig>k__BackingField: {fileID: 8371887180010344672}
   <RightLegConstraint>k__BackingField: {fileID: 1621103848960102164}

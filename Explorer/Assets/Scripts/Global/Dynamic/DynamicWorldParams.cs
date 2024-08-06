@@ -38,7 +38,7 @@ namespace Global.Dynamic
         public bool EnableAnalytics { get; init; }
         public HybridSceneParams HybridSceneParams { get; init; }
         public string LocalSceneDevelopmentRealm { get; init; }
-
+        public Dictionary<string, string> AppParameters { get; init; }
     }
 
     public struct HybridSceneParams

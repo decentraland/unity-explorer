@@ -38,7 +38,7 @@
     "com.unity.visualeffectgraph": "14.0.10",
     "com.unity.visualscripting": "1.8.0",
     "decentraland.grassshader": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedGrassShader",
-    "io.sentry.unity": "https://github.com/getsentry/unity.git#1.6.0",
+    "io.sentry.unity": "https://github.com/getsentry/unity.git#2.1.3",
     "net.tnrd.nsubstitute": "https://github.com/decentraland/Unity3D-NSubstitute.git",
     "sc.stylizedwater2": "git@github.com:decentraland/unity-explorer-packages.git?path=/StylizedWater2",
     "superscrollview": "git@github.com:decentraland/unity-explorer-packages.git?path=/SuperScrollView",

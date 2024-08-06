@@ -1,6 +1,7 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
@@ -16,9 +17,6 @@ namespace DCL.ExplorePanel
 {
     public class SystemMenuController : ControllerBase<SystemMenuView>
     {
-        private const string PRIVACY_POLICY_URL = "https://decentraland.org/privacy";
-        private const string TERMS_URL = "https://decentraland.org/terms";
-
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3Authenticator web3Authenticator;
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
@@ -32,7 +30,8 @@ namespace DCL.ExplorePanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Popup;
 
-        public SystemMenuController(ViewFactoryMethod viewFactory,
+        public SystemMenuController(
+            ViewFactoryMethod viewFactory,
             World world,
             Entity playerEntity,
             IWebBrowser webBrowser,
@@ -40,8 +39,8 @@ namespace DCL.ExplorePanel
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
             IWeb3IdentityCache web3IdentityCache,
-            IMVCManager mvcManager)
-            : base(viewFactory)
+            IMVCManager mvcManager
+        ) : base(viewFactory)
         {
             this.webBrowser = webBrowser;
             this.web3Authenticator = web3Authenticator;
@@ -72,48 +71,61 @@ namespace DCL.ExplorePanel
         {
             base.OnViewInstantiated();
 
-            viewInstance.LogoutButton.onClick.AddListener(Logout);
-            viewInstance.ExitAppButton.onClick.AddListener(ExitApp);
-            viewInstance.PrivacyPolicyButton.onClick.AddListener(ShowPrivacyPolicy);
-            viewInstance.TermsOfServiceButton.onClick.AddListener(ShowTermsOfService);
-            viewInstance.PreviewProfileButton.onClick.AddListener(ShowPassport);
+            viewInstance.LogoutButton.onClick!.AddListener(Logout);
+            viewInstance.ExitAppButton.onClick!.AddListener(ExitApp);
+            viewInstance.PrivacyPolicyButton.onClick!.AddListener(ShowPrivacyPolicy);
+            viewInstance.TermsOfServiceButton.onClick!.AddListener(ShowTermsOfService);
+            viewInstance.PreviewProfileButton.onClick!.AddListener(ShowPassport);
         }
 
         protected override void OnViewClose()
         {
             base.OnViewClose();
-
             logoutCts.SafeCancelAndDispose();
         }
 
         private void ShowTermsOfService() =>
-            webBrowser.OpenUrl(TERMS_URL);
+            webBrowser.OpenUrl(DecentralandUrl.TermsOfUse);
 
         private void ShowPrivacyPolicy() =>
-            webBrowser.OpenUrl(PRIVACY_POLICY_URL);
+            webBrowser.OpenUrl(DecentralandUrl.PrivacyPolicy);
 
         private void ShowPassport()
         {
-            var userId = web3IdentityCache.Identity!.Address;
+            string userId = web3IdentityCache.Identity?.Address ?? string.Empty;
+
             if (string.IsNullOrEmpty(userId))
                 return;
 
             mvcManager.ShowAsync(PassportController.IssueCommand(new PassportController.Params(userId))).Forget();
         }
 
-        private void ExitApp() =>
-
-            // TODO: abstraction (?)
+        private void ExitApp()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+            return;
+#endif
             Application.Quit();
+        }
 
         private void Logout()
         {
             async UniTaskVoid LogoutAsync(CancellationToken ct)
             {
                 Web3Address address = web3IdentityCache.Identity!.Address;
+
                 await web3Authenticator.LogoutAsync(ct);
+
                 profileCache.Remove(address);
-                await userInAppInitializationFlow.ExecuteAsync(true, true, world, playerEntity, ct);
+
+                await userInAppInitializationFlow.ExecuteAsync(true, true,
+
+                    // We have to reload the realm so the scenes are recreated when coming back to the world
+                    // The realm fetches the scene entity definitions again and creates the components in ecs
+                    // so the SceneFacade can be later attached into the entity
+                    true,
+                    world, playerEntity, ct);
             }
 
             logoutCts = logoutCts.SafeRestart();

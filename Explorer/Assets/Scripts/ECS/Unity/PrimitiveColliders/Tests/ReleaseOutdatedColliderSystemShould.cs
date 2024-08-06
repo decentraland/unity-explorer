@@ -5,6 +5,7 @@ using DCL.Optimization.Pools;
 using ECS.TestSuite;
 using ECS.Unity.PrimitiveColliders.Components;
 using ECS.Unity.PrimitiveColliders.Systems;
+using ECS.Unity.SceneBoundsChecker;
 using NSubstitute;
 using NUnit.Framework;
 using System;
@@ -29,12 +30,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         {
             BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();
 
-            var comp = new PrimitiveColliderComponent
-            {
-                Collider = oldCollider,
-                ColliderType = typeof(BoxCollider),
-                SDKType = PBMeshCollider.MeshOneofCase.Box,
-            };
+            var comp = new PrimitiveColliderComponent(new SDKCollider(oldCollider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
 
             var sdkComp = new PBMeshCollider { Sphere = new PBMeshCollider.Types.SphereMesh(), IsDirty = true };
 
@@ -53,12 +49,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         {
             BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();
 
-            var comp = new PrimitiveColliderComponent
-            {
-                Collider = oldCollider,
-                ColliderType = typeof(BoxCollider),
-                SDKType = PBMeshCollider.MeshOneofCase.Box,
-            };
+            var comp = new PrimitiveColliderComponent(new SDKCollider(oldCollider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
 
             // No SDK component attached
             Entity entity = world.Create(comp);
@@ -74,13 +65,7 @@ namespace ECS.Unity.PrimitiveColliders.Tests
         public void DoNothingIfNotDirty()
         {
             BoxCollider oldCollider = new GameObject().AddComponent<BoxCollider>();
-
-            var comp = new PrimitiveColliderComponent
-            {
-                Collider = oldCollider,
-                ColliderType = typeof(BoxCollider),
-                SDKType = PBMeshCollider.MeshOneofCase.Box,
-            };
+            var comp = new PrimitiveColliderComponent(new SDKCollider(oldCollider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
 
             var sdkComp = new PBMeshCollider { Sphere = new PBMeshCollider.Types.SphereMesh(), IsDirty = false };
 

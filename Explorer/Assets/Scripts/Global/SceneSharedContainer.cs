@@ -1,6 +1,7 @@
 using CRDT.Serializer;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.PoolsProviders;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem.World.Dependencies;
@@ -24,13 +25,15 @@ namespace Global
         public ISceneFactory SceneFactory { get; private set; }
 
         public static SceneSharedContainer Create(in StaticContainer staticContainer,
+            IDecentralandUrlsSource decentralandUrlsSource,
             IMVCManager mvcManager,
             IWeb3IdentityCache web3IdentityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
             IRoomHub roomHub,
             IRealmData? realmData,
-            IMessagePipesHub messagePipesHub)
+            IMessagePipesHub messagePipesHub,
+            bool cacheJsSources = true)
         {
             ECSWorldSingletonSharedDependencies sharedDependencies = staticContainer.SingletonSharedDependencies;
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
@@ -44,7 +47,7 @@ namespace Global
             {
                 SceneFactory = new SceneFactory(
                     ecsWorldFactory,
-                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake()),
+                    new SceneRuntimeFactory(staticContainer.WebRequestsContainer.WebRequestController, realmData ?? new IRealmData.Fake(), cacheJsSources),
                     new SharedPoolsProvider(),
                     new CRDTSerializer(),
                     staticContainer.ComponentsContainer.SDKComponentsRegistry,
@@ -54,6 +57,7 @@ namespace Global
                     mvcManager,
                     profileRepository,
                     web3IdentityCache,
+                    decentralandUrlsSource,
                     webRequestController,
                     roomHub,
                     realmData,

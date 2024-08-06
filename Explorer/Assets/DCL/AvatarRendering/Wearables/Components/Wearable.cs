@@ -43,19 +43,30 @@ namespace DCL.AvatarRendering.Wearables.Components
             IsLoading = false;
         }
 
+        public bool IsOnChain()
+        {
+            var id = ((IAvatarAttachment) this).GetUrn().ToString();
+            return !id.StartsWith("urn:decentraland:off-chain:base-avatars:");
+        }
+
         public AvatarAttachmentDTO GetDTO() =>
             WearableDTO.Asset!;
 
         public string GetCategory() =>
             WearableDTO.Asset!.metadata.data.category;
 
-        public void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
+        public bool TryResolveDTO(StreamableLoadingResult<WearableDTO> result)
         {
-            Assert.IsTrue(!WearableDTO.IsInitialized || !WearableDTO.Succeeded);
+            if (WearableDTO.IsInitialized)
+                return false;
 
+            ResolveDTO(result);
+            return true;
+        }
+
+        private void ResolveDTO(StreamableLoadingResult<WearableDTO> result)
+        {
             WearableDTO = result;
-
-            if (!result.Succeeded) return;
 
             if (IsFacialFeature())
                 Type = WearableType.FacialFeature;
@@ -63,6 +74,11 @@ namespace DCL.AvatarRendering.Wearables.Components
                 Type = WearableType.BodyShape;
             else
                 Type = WearableType.Regular;
+        }
+
+        public void ResolvedFailedDTO(StreamableLoadingResult<WearableDTO> result)
+        {
+            WearableDTO = result;
         }
 
         public bool TryGetFileHashConditional(BodyShape bodyShape, Func<string, bool> contentMatch, out string? hash)
