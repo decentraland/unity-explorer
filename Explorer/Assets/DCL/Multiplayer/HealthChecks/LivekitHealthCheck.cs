@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.RoomHubs;
 using System;
 using System.Threading;
@@ -21,7 +22,11 @@ namespace DCL.Multiplayer.HealthChecks
                 bool result = await roomHub.StartAsync();
                 return (result, result ? null : "Cannot connect to livekit rooms");
             }
-            catch (Exception) { return (false, "Cannot connect to livekit rooms"); }
+            catch (Exception e)
+            {
+                ReportHub.LogException(e, ReportCategory.LIVEKIT);
+                return (false, "Cannot connect to livekit rooms");
+            }
         }
     }
 }
