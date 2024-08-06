@@ -66,7 +66,7 @@ namespace CommandTerminal
 
         private void OnEnable()
         {
-            consoleBuffer = new ConsoleBuffer(1024);
+            consoleBuffer = new ConsoleBuffer(512);
         }
 
         private void OnGUI()
@@ -148,18 +148,16 @@ namespace CommandTerminal
             labelStyle.font = consoleFont;
             labelStyle.normal.textColor = foregroundColor;
             labelStyle.wordWrap = true;
+            labelStyle.alignment = TextAnchor.LowerRight;
+            labelStyle.fontSize = 25;
         }
 
         private void DrawConsole(int Window2D)
         {
-            GUILayout.BeginVertical();
-
             scrollPosition = GUILayout.BeginScrollView(scrollPosition, false, false, GUIStyle.none, GUIStyle.none);
             GUILayout.FlexibleSpace();
             DrawLogs();
             GUILayout.EndScrollView();
-
-            GUILayout.EndVertical();
         }
 
         private void DrawLogs()
