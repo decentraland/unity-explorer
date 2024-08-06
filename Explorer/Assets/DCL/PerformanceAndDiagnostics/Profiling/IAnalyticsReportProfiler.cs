@@ -2,7 +2,7 @@
 {
     public interface IAnalyticsReportProfiler : IBudgetProfiler
     {
-        long TotalUsedMemoryInBytes { get; }
+        long SystemUsedMemoryInBytes { get; }
 
         long GcUsedMemoryInBytes { get; }
 

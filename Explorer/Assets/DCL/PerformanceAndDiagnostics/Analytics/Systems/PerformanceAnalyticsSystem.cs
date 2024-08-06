@@ -60,18 +60,18 @@ namespace DCL.Analytics.Systems
             {
                 // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
                 ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
-
+                //["scenes_load_radius"] =
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
                 ["used_jsheap_size"] = 0, // TODO (Vit): use V8ScriptEngine.GetRuntimeHeapInfo(). Get the ref from V8EngineFactory, but maybe expose it in upper level
 
                 // Memory
-                ["memory_usage"] = BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
                 ["total_used_memory"] = BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["system_used_memory"] = BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
                 ["gc_used_memory"] = BytesFormatter.Convert((ulong)profiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
 
                 // MainThread
                 ["samples"] = mainThreadReport.Value.Samples,
-                ["total_time"] = mainThreadReport.Value.SumTime,
+                ["total_time"] = mainThreadReport.Value.SumTime * NS_TO_MS,
 
                 ["hiccups_in_thousand_frames"] = mainThreadReport.Value.Stats.HiccupCount,
 

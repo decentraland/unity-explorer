@@ -22,8 +22,8 @@ namespace DCL.Profiling
         private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
         private ProfilerRecorder gpuFrameTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
 
-        public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
         public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
+        public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
         public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
 
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
