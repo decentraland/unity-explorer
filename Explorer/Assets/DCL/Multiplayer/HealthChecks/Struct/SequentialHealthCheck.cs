@@ -4,11 +4,11 @@ using System.Threading;
 
 namespace DCL.Multiplayer.HealthChecks.Struct
 {
-    public class SeveralHealthCheck : IHealthCheck
+    public class SequentialHealthCheck : IHealthCheck
     {
         private readonly IReadOnlyList<IHealthCheck> list;
 
-        public SeveralHealthCheck(params IHealthCheck[] list)
+        public SequentialHealthCheck(params IHealthCheck[] list)
         {
             this.list = list;
         }

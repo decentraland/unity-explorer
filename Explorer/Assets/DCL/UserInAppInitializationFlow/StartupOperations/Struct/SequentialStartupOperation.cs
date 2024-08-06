@@ -5,12 +5,12 @@ using System.Threading;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 {
-    public class SeveralStartupOperation : IStartupOperation
+    public class SequentialStartupOperation : IStartupOperation
     {
         private readonly RealFlowLoadingStatus loadingStatus;
         private readonly IReadOnlyList<IStartupOperation> operations;
 
-        public SeveralStartupOperation(RealFlowLoadingStatus loadingStatus, params IStartupOperation[] operations)
+        public SequentialStartupOperation(RealFlowLoadingStatus loadingStatus, params IStartupOperation[] operations)
         {
             this.loadingStatus = loadingStatus;
             this.operations = operations;

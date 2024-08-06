@@ -62,7 +62,7 @@ namespace DCL.UserInAppInitializationFlow
             restartRealmStartupOperation = new RestartRealmStartupOperation(realmController);
             var teleportStartupOperation = new TeleportStartupOperation(loadingStatus, realmNavigator, startParcel);
 
-            startupOperation = new SeveralStartupOperation(
+            startupOperation = new SequentialStartupOperation(
                 loadingStatus,
                 ensureLivekitConnectionStartupOperation,
                 initializeFeatureFlagsStartupOperation,
