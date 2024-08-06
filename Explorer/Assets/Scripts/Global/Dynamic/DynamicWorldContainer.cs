@@ -307,7 +307,7 @@ namespace Global.Dynamic
                       new LivekitHealthCheck(container.RoomHub)
                   )
                  .WithFailAnalytics(bootstrapContainer.Analytics!, dynamicWorldParams.EnableAnalytics)
-                 .WithRetries(3);
+                 .WithRetries();
 
             container.UserInAppInAppInitializationFlow = new RealUserInAppInitializationFlow(
                 container.RealFlowLoadingStatus,
