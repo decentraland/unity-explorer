@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             if (current != null && current.CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("First stop previous room before starting a new one");
 
-            string adapterUrl = currentAdapterAddress.AdapterUrlAsync();
+            string adapterUrl = currentAdapterAddress.AdapterUrl();
 
             if (adapterUrl.Contains("wss://"))
                 current = wssRoomFactory();

@@ -111,7 +111,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 
         private async UniTask ConnectToArchipelagoAsync(CancellationToken token)
         {
-            string adapterUrl = currentAdapterAddress.AdapterUrlAsync();
+            string adapterUrl = currentAdapterAddress.AdapterUrl();
             LightResult<string> welcomePeerId = await WelcomePeerIdAsync(adapterUrl, token);
             welcomePeerId.EnsureSuccess("Cannot authorize with current address and signature, peer id is invalid");
         }
