@@ -37,24 +37,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             this.core = core;
             this.analytics = analytics;
 
-            core.EquipEmoteEvent += (slot, emote, manuallyEquipped) =>
-            {
-                EquipEmoteEvent?.Invoke(slot, emote, manuallyEquipped);
-
-                if (manuallyEquipped)
-                {
-                    var emoteUrn = emote.GetUrn().ToString();
-
-                    analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JsonObject
-                    {
-                        { "item_id", emoteUrn }, // Id of the item <contract-address>-<item_id>
-                        { "is_base", !Emote.IsOnChain(emoteUrn) },
-                        { "name", emote.GetName() },
-                        { "emote_index", slot },
-                        { "source", "backpack" },
-                    });
-                }
-            };
+            core.EquipEmoteEvent += ReEmitWithAnalytics;
 
             // Re-emit core events
             core.SelectWearableEvent += wearable => SelectWearableEvent?.Invoke(wearable);
@@ -72,6 +55,28 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.PublishProfileEvent += () => PublishProfileEvent?.Invoke();
             core.FilterCategoryByEnumEvent += categoryEnum => FilterCategoryByEnumEvent?.Invoke(categoryEnum);
             core.DeactivateEvent += () => DeactivateEvent?.Invoke();
+        }
+
+        ~BackpackEventBusAnalyticsDecorator()
+        {
+            core.EquipEmoteEvent -= ReEmitWithAnalytics;
+        }
+
+        private void ReEmitWithAnalytics(int slot, IEmote emote, bool manuallyEquipped)
+        {
+            EquipEmoteEvent?.Invoke(slot, emote, manuallyEquipped);
+
+            if (!manuallyEquipped) return;
+
+            var emoteUrn = emote.GetUrn().ToString();
+            analytics.Track(AnalyticsEvents.Wearables.USED_EMOTE, new JsonObject
+            {
+                { "item_id", emoteUrn }, // Id of the item <contract-address>-<item_id>
+                { "is_base", !Emote.IsOnChain(emoteUrn) },
+                { "name", emote.GetName() },
+                { "emote_index", slot },
+                { "source", "backpack" },
+            });
         }
 
         public void SendUnEquipAll() =>

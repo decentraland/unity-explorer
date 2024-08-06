@@ -35,10 +35,8 @@ namespace DCL.Analytics.Systems
         {
             if (!realmData.Configured) return;
 
-            if (World.TryGet(playerEntity, typeof(CharacterEmoteIntent), out object? intent))
+            if (World.TryGet<CharacterEmoteIntent>(playerEntity, out var emoteIntent))
             {
-                var emoteIntent = (CharacterEmoteIntent)intent;
-
                 if (emoteIntent.TriggerSource is TriggerSource.REMOTE or TriggerSource.PREVIEW)
                     return;
 
