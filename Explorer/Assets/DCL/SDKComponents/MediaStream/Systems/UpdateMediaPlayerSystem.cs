@@ -72,10 +72,13 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [All(typeof(PBVideoPlayer))]
-        private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureComponent assignedTexture)
+        private void UpdateVideoTexture(ref MediaPlayerComponent playerComponent, ref VideoTextureConsumer assignedTexture)
         {
-            if (!playerComponent.IsPlaying || playerComponent.State == VideoState.VsError || !playerComponent.MediaPlayer.MediaOpened || !frameTimeBudget.TrySpendBudget())
+            if (!playerComponent.IsPlaying || playerComponent.State == VideoState.VsError || !playerComponent.MediaPlayer.MediaOpened)
                 return;
+
+            // Video is already playing in the background, and CopyTexture is a GPU operation,
+            // so it does not make sense to budget by CPU as it can lead to much worse UX
 
             Texture avText = playerComponent.MediaPlayer.TextureProducer.GetTexture();
             if (avText == null) return;
