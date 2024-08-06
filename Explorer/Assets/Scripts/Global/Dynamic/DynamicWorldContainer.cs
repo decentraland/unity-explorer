@@ -30,7 +30,6 @@ using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
-using DCL.Multiplayer.HealthChecks.Livekit;
 using DCL.Multiplayer.HealthChecks.Struct;
 using DCL.Multiplayer.Movement;
 using DCL.Multiplayer.Movement.Systems;
