@@ -112,6 +112,41 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d2b6974d311b52d418b15738f4ef38dc
+    m_Address: Authentication.spriteatlas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1c359f0bee710da4fa6342a37ca26ae8
+    m_Address: LogoDCL154x154SpriteAtlas.spriteatlas
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bdd6d1e45d38dbc44b593240a7768188
+    m_Address: EmoteIconPressedSpriteAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25307fc8924cf8747a2b0fd87a729aca
+    m_Address: M_LoadingSpinnerBackground.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c77c82b7631304e47a8c0ba64982cebb
+    m_Address: M_ChargeBarV2.mat
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 07db06d5ea38bfb4f9ce238cbb0ef68a
+    m_Address: RarityBackground.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 73b47c88148e7a14f9ea5e351d2d792d
+    m_Address: Assets/DCL/MapRenderer/Textures/MapRenderer.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: fc8a9d2b539788c47a5b305639fa8b34, type: 2}
   m_SchemaSet:
