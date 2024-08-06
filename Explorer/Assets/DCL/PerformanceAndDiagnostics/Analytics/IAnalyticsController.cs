@@ -36,9 +36,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
     public static class AnalyticsExtensions
     {
-        public static IHealthCheck WithFailAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController, bool enableAnalytics) =>
-            enableAnalytics
-                ? new FailAnalyticsHealthCheckDecorator(origin, analyticsController)
-                : origin;
+        public static IHealthCheck WithFailAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController) =>
+            new FailAnalyticsHealthCheckDecorator(origin, analyticsController);
     }
 }
