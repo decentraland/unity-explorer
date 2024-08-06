@@ -5,17 +5,16 @@ using System.Threading;
 
 namespace DCL.PerformanceAndDiagnostics.Analytics
 {
-    public class AnalyticsHealthCheckDecorator : IHealthCheck
+    public class FailAnalyticsHealthCheckDecorator : IHealthCheck
     {
         private readonly IHealthCheck healthCheck;
         private readonly IAnalyticsController analytics;
-        private readonly string eventName;
+        private const string EVENT_NAME = AnalyticsEvents.Livekit.LIVEKIT_HEALTH_CHECK_FAILED;
 
-        public AnalyticsHealthCheckDecorator(IHealthCheck healthCheck, IAnalyticsController analytics, string eventName)
+        public FailAnalyticsHealthCheckDecorator(IHealthCheck healthCheck, IAnalyticsController analytics)
         {
             this.healthCheck = healthCheck;
             this.analytics = analytics;
-            this.eventName = eventName;
         }
 
         public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
@@ -24,10 +23,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             if (result.success == false)
                 analytics.Track(
-                    eventName,
+                    EVENT_NAME,
                     new JsonObject
                     {
-                        ["message"] = result.errorMessage
+                        ["message"] = result.errorMessage,
                     }
                 );
 
