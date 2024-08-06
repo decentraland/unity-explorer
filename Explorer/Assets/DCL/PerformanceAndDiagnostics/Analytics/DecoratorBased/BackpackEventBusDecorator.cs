@@ -40,26 +40,43 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             core.EquipEmoteEvent += ReEmitWithAnalytics;
 
             // Re-emit core events
-            core.SelectWearableEvent += wearable => SelectWearableEvent?.Invoke(wearable);
-            core.EquipWearableEvent += wearable => EquipWearableEvent?.Invoke(wearable);
-            core.UnEquipWearableEvent += wearable => UnEquipWearableEvent?.Invoke(wearable);
-            core.UnEquipEmoteEvent += (slot, emote) => UnEquipEmoteEvent?.Invoke(slot, emote);
-            core.EmoteSlotSelectEvent += slot => EmoteSlotSelectEvent?.Invoke(slot);
-            core.SelectEmoteEvent += emote => SelectEmoteEvent?.Invoke(emote);
-            core.ForceRenderEvent += forceRender => ForceRenderEvent?.Invoke(forceRender);
-            core.FilterCategoryEvent += category => FilterCategoryEvent?.Invoke(category);
-            core.SearchEvent += searchText => SearchEvent?.Invoke(searchText);
-            core.ChangedBackpackSectionEvent += section => ChangedBackpackSectionEvent?.Invoke(section);
-            core.ChangeColorEvent += (color, category) => ChangeColorEvent?.Invoke(color, category);
-            core.UnEquipAllEvent += () => UnEquipAllEvent?.Invoke();
-            core.PublishProfileEvent += () => PublishProfileEvent?.Invoke();
-            core.FilterCategoryByEnumEvent += categoryEnum => FilterCategoryByEnumEvent?.Invoke(categoryEnum);
-            core.DeactivateEvent += () => DeactivateEvent?.Invoke();
+            core.SelectWearableEvent += OnSelectWearable;
+            core.EquipWearableEvent += OnEquipWearable;
+            core.UnEquipWearableEvent += OnUnEquipWearable;
+            core.UnEquipEmoteEvent += OnUnEquipEmote;
+            core.EmoteSlotSelectEvent += OnEmoteSlotSelect;
+            core.SelectEmoteEvent += OnSelectEmote;
+            core.ForceRenderEvent += OnForceRender;
+            core.FilterCategoryEvent += OnFilterCategory;
+            core.SearchEvent += OnSearch;
+            core.ChangedBackpackSectionEvent += OnChangedBackpackSection;
+            core.ChangeColorEvent += OnChangeColor;
+            core.UnEquipAllEvent += OnUnEquipAll;
+            core.PublishProfileEvent += OnPublishProfile;
+            core.FilterCategoryByEnumEvent += OnFilterCategoryByEnum;
+            core.DeactivateEvent += OnDeactivate;
         }
 
         ~BackpackEventBusAnalyticsDecorator()
         {
             core.EquipEmoteEvent -= ReEmitWithAnalytics;
+
+            // Unsubscribe from re-emited events
+            core.SelectWearableEvent -= OnSelectWearable;
+            core.EquipWearableEvent -= OnEquipWearable;
+            core.UnEquipWearableEvent -= OnUnEquipWearable;
+            core.UnEquipEmoteEvent -= OnUnEquipEmote;
+            core.EmoteSlotSelectEvent -= OnEmoteSlotSelect;
+            core.SelectEmoteEvent -= OnSelectEmote;
+            core.ForceRenderEvent -= OnForceRender;
+            core.FilterCategoryEvent -= OnFilterCategory;
+            core.SearchEvent -= OnSearch;
+            core.ChangedBackpackSectionEvent -= OnChangedBackpackSection;
+            core.ChangeColorEvent -= OnChangeColor;
+            core.UnEquipAllEvent -= OnUnEquipAll;
+            core.PublishProfileEvent -= OnPublishProfile;
+            core.FilterCategoryByEnumEvent -= OnFilterCategoryByEnum;
+            core.DeactivateEvent -= OnDeactivate;
         }
 
         private void ReEmitWithAnalytics(int slot, IEmote emote, bool manuallyEquipped)
@@ -78,6 +95,22 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "source", "backpack" },
             });
         }
+
+        private void OnSelectWearable(IWearable wearable) => SelectWearableEvent?.Invoke(wearable);
+        private void OnEquipWearable(IWearable wearable) => EquipWearableEvent?.Invoke(wearable);
+        private void OnUnEquipWearable(IWearable wearable) => UnEquipWearableEvent?.Invoke(wearable);
+        private void OnUnEquipEmote(int slot, IEmote emote) => UnEquipEmoteEvent?.Invoke(slot, emote);
+        private void OnEmoteSlotSelect(int slot) => EmoteSlotSelectEvent?.Invoke(slot);
+        private void OnSelectEmote(IEmote emote) => SelectEmoteEvent?.Invoke(emote);
+        private void OnForceRender(IReadOnlyCollection<string> forceRender) => ForceRenderEvent?.Invoke(forceRender);
+        private void OnFilterCategory(string category) => FilterCategoryEvent?.Invoke(category);
+        private void OnSearch(string searchText) => SearchEvent?.Invoke(searchText);
+        private void OnChangedBackpackSection(BackpackSections section) => ChangedBackpackSectionEvent?.Invoke(section);
+        private void OnChangeColor(Color color, string category) => ChangeColorEvent?.Invoke(color, category);
+        private void OnUnEquipAll() => UnEquipAllEvent?.Invoke();
+        private void OnPublishProfile() => PublishProfileEvent?.Invoke();
+        private void OnFilterCategoryByEnum(AvatarWearableCategoryEnum categoryEnum) => FilterCategoryByEnumEvent?.Invoke(categoryEnum);
+        private void OnDeactivate() => DeactivateEvent?.Invoke();
 
         public void SendUnEquipAll() =>
             core.SendUnEquipAll();
