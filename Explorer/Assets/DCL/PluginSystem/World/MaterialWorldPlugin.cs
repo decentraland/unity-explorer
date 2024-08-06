@@ -44,11 +44,11 @@ namespace DCL.PluginSystem.World
 
         public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            ProvidedAsset<Material> basicMatReference = await assetsProvisioner.ProvideMainAssetAsync(settings.basicMaterial, ct: ct);
-            ProvidedAsset<Material> pbrMaterialReference = await assetsProvisioner.ProvideMainAssetAsync(settings.pbrMaterial, ct: ct);
+            // ProvidedAsset<Material> basicMatReference = await assetsProvisioner.ProvideMainAssetAsync(settings.basicMaterial, ct: ct);
+            // ProvidedAsset<Material> pbrMaterialReference = await assetsProvisioner.ProvideMainAssetAsync(settings.pbrMaterial, ct: ct);
 
-            basicMatPool = new ObjectPool<Material>(() => new Material(basicMatReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
-            pbrMatPool = new ObjectPool<Material>(() => new Material(pbrMaterialReference.Value), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            basicMatPool = new ObjectPool<Material>(() => new Material(settings.basicMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
+            pbrMatPool = new ObjectPool<Material>(() => new Material(settings.pbrMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
@@ -71,11 +71,14 @@ namespace DCL.PluginSystem.World
         [Serializable]
         public class Settings : IDCLPluginSettings
         {
+            /// <summary>
+            /// replaced from Addressables, Being in Addressables caused a problem with strobe-lights because shaders were not being compiled
+            /// </summary>
             [field: SerializeField]
-            public AssetReferenceMaterial basicMaterial;
+            public Material basicMaterial = null!;
 
             [field: SerializeField]
-            public AssetReferenceMaterial pbrMaterial;
+            public Material pbrMaterial = null!;
             [field: Header(nameof(MaterialsPlugin) + "." + nameof(Settings))]
             [field: Space]
             [field: SerializeField]
