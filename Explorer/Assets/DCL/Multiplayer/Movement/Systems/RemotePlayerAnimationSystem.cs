@@ -44,6 +44,11 @@ namespace DCL.Multiplayer.Movement.Systems
         private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
+            if (!anim.States.IsGrounded)
+            {
+                Debug.Log($"VVV {anim.States.ToString()}");
+            }
+
             if (remotePlayerMovement.WasPassedThisFrame)
             {
                 remotePlayerMovement.WasPassedThisFrame = false;

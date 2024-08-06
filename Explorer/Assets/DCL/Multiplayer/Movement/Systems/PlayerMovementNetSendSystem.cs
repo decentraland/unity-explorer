@@ -82,8 +82,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 timestamp = UnityEngine.Time.unscaledTime,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
-                animState = animation.States,
                 isStunned = playerStunComponent.IsStunned,
+                animState = animation.States,
             };
 
             // We use AnimatorController value directly, because AnimationState is not always equal to actual Controller due to the blend shapes. Check ApplyAnimationMovementBlend.cs logic for more details.

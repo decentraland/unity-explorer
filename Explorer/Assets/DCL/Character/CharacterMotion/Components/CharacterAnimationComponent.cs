@@ -49,6 +49,11 @@ namespace DCL.CharacterMotion.Components
             }
         }
 
+        public override string ToString()
+        {
+            return $"{IsGrounded} {MovementBlendValue} {SlideBlendValue} {IsJumping} {IsLongJump} {IsFalling} {IsLongFall}";
+        }
+
         public static bool operator ==(AnimationStates left, AnimationStates right) =>
             left.Equals(right);
 
