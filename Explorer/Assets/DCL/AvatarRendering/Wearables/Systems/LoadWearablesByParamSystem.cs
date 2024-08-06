@@ -17,7 +17,6 @@ using ECS.StreamableLoading.Common.Systems;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Utility.Multithreading;
 
 namespace DCL.AvatarRendering.Wearables.Systems
 {
@@ -56,15 +55,13 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 await webRequestController.GetAsync(new CommonArguments(BuildURL(intention.UserID, intention.Params), attemptsCount: 1), ct, GetReportCategory())
                    .CreateFromJson<WearableDTO.LambdaResponse>(WRJsonParser.Unity);
 
-
             // The following logic is not thread-safe!
             // TODO make it thread-safe: cache and CreateWearableThumbnailPromise
 
             intention.TotalAmount = lambdaResponse.totalAmount;
 
-            for (var i = 0; i < lambdaResponse.elements.Count; i++)
+            foreach (var element in lambdaResponse.elements)
             {
-                WearableDTO.LambdaResponseElementDto element = lambdaResponse.elements[i];
                 WearableDTO wearableDto = element.entity;
 
                 IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDto);
@@ -82,9 +79,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                             individualData.tokenId, DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
                 }
+
                 intention.Results.Add(wearable);
             }
-
 
             return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results.ToArray(), intention.TotalAmount));
         }

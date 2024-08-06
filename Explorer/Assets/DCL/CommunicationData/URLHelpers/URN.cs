@@ -120,19 +120,13 @@ namespace CommunicationData.URLHelpers
 
         public URN Shorten()
         {
-            if (string.IsNullOrEmpty(urn)) return urn;
-            // Third party collections do not include the tokenId and have 7 parts, so we must keep all of them
-            if (IsThirdPartyCollection()) return urn;
+            if (string.IsNullOrEmpty(urn)) return this;
+            if (!IsExtended()) return this;
 
-            int index = -1;
+            // TokenId is always placed in the last part
+            int index = urn.LastIndexOf(':');
 
-            for (var i = 0; i < SHORTEN_URN_PARTS; i++)
-            {
-                index = urn.IndexOf(':', index + 1);
-                if (index == -1) break;
-            }
-
-            return index != -1 ? urn[..index] : urn;
+            return index != -1 ? urn[..index] : this;
         }
 
         public bool IsExtended()
@@ -140,13 +134,7 @@ namespace CommunicationData.URLHelpers
             // Third party collections do not apply to shortened/extended rules
             if (IsThirdPartyCollection()) return false;
 
-            var count = 0;
-
-            foreach (char c in urn)
-                if (c == ':')
-                    count++;
-
-            return count >= SHORTEN_URN_PARTS;
+            return CountParts() > SHORTEN_URN_PARTS;
         }
 
         public static implicit operator URN(int urn) =>
@@ -160,6 +148,20 @@ namespace CommunicationData.URLHelpers
 
         private bool IsThirdPartyCollection() =>
             !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
+
+        private int CountParts()
+        {
+            int count = 1;
+            int index = urn.IndexOf(':');
+
+            while (index != -1)
+            {
+                count++;
+                index = urn.IndexOf(':', index + 1);
+            }
+
+            return count;
+        }
     }
 
     public class URNIgnoreCaseEqualityComparer : IEqualityComparer<URN>

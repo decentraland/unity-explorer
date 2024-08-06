@@ -36,7 +36,8 @@ namespace DCL.Backpack
         private const string ASCENDING = "ASC";
         private const string DESCENDING = "DESC";
         private const string ON_CHAIN_COLLECTION_TYPE = "on-chain";
-
+        private const string THIRD_PARTY_COLLECTION_TYPE = "third-party";
+        private const string BASE_WEARABLE_COLLECTION_TYPE = "base-wearable";
         private const int CURRENT_PAGE_SIZE = 16;
         private static readonly string CURRENT_PAGE_SIZE_STR = CURRENT_PAGE_SIZE.ToString();
 
@@ -216,7 +217,16 @@ namespace DCL.Backpack
             requestParameters.Add((ORDER_DIRECTION, currentSort.SortAscending ? ASCENDING : DESCENDING));
 
             if (currentCollectiblesOnly)
+            {
                 requestParameters.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
+                requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
+            }
+            else
+            {
+                requestParameters.Add((COLLECTION_TYPE, ON_CHAIN_COLLECTION_TYPE));
+                requestParameters.Add((COLLECTION_TYPE, THIRD_PARTY_COLLECTION_TYPE));
+                requestParameters.Add((COLLECTION_TYPE, BASE_WEARABLE_COLLECTION_TYPE));
+            }
 
             if (!string.IsNullOrEmpty(currentSearch))
                 requestParameters.Add((SEARCH, currentSearch));

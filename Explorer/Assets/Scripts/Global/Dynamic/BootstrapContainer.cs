@@ -67,7 +67,7 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
-                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
+                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container, decentralandUrlsSource);
 
                 container.diagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
@@ -125,7 +125,8 @@ namespace Global.Dynamic
         }
 
         private static (LogWeb3IdentityCache identityCache, IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator)
-            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings, IWebBrowser webBrowser, BootstrapContainer container)
+            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings, IWebBrowser webBrowser, BootstrapContainer container,
+                IDecentralandUrlsSource decentralandUrlsSource)
         {
             var identityCache = new LogWeb3IdentityCache(
                 new ProxyIdentityCache(
@@ -138,8 +139,8 @@ namespace Global.Dynamic
 
             var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
-                GetAuthUrl(sceneLoaderSettings.AuthWebSocketUrl, sceneLoaderSettings.AuthWebSocketUrlDev),
-                GetAuthUrl(sceneLoaderSettings.AuthSignatureUrl, sceneLoaderSettings.AuthSignatureUrlDev),
+                decentralandUrlsSource.Url(DecentralandUrl.ApiAuth),
+                decentralandUrlsSource.Url(DecentralandUrl.AuthSignature),
                 identityCache, new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods));
 
             IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
@@ -148,10 +149,6 @@ namespace Global.Dynamic
                 coreWeb3Authenticator = new IdentityAnalyticsDecorator(coreWeb3Authenticator, container.Analytics!);
 
             return (identityCache, dappWeb3Authenticator, coreWeb3Authenticator);
-
-            // Allow devUrl only in DebugBuilds (Debug.isDebugBuild is always true in Editor)
-            string GetAuthUrl(string releaseUrl, string devUrl) =>
-                Application.isEditor || !Debug.isDebugBuild ? releaseUrl : devUrl;
         }
 
         public static async UniTask<ProvidedAsset<ReportsHandlingSettings>> ProvideReportHandlingSettingsAsync(IAssetsProvisioner assetsProvisioner, BootstrapSettings settings, CancellationToken ct)

@@ -59,7 +59,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             // Only DTO loading requires realmData
             if (realmData.Configured)
-                FinalizeWearableDTOQuery(World, defaultWearablesResolved);
+                FinalizeWearableDTOQuery(World);
 
             ResolveWearablePromiseQuery(World, defaultWearablesResolved);
 
@@ -169,7 +169,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         }
 
         [Query]
-        private void FinalizeWearableDTO([Data] bool defaultWearablesResolved, in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
+        private void FinalizeWearableDTO(in Entity entity, ref AssetPromise<WearablesDTOList, GetWearableDTOByPointersIntention> promise, ref BodyShape bodyShape)
         {
             if (promise.LoadingIntention.CancellationTokenSource.IsCancellationRequested)
             {
@@ -188,7 +188,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 if (!promiseResult.Succeeded)
                 {
-                    //No wearable representation is going to be possible 
+                    //No wearable representation is going to be possible
                     foreach (string pointerID in promise.LoadingIntention.Pointers)
                         ReportAndFinalizeWithError(pointerID);
                 }
@@ -196,10 +196,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     var failedDTOList = WearableComponentsUtils.POINTERS_POOL.Get();
                     failedDTOList.AddRange(promise.LoadingIntention.Pointers);
-                    
+
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
                         bool isWearableInCatalog = wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component);
+
                         if (!isWearableInCatalog)
                         {
                             //A wearable that has a DTO request should already have an empty representation in the catalog at this point
@@ -208,8 +209,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                         }
 
                         if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO is has already been initialized: {assetEntity.metadata.id}");
-
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO has already been initialized: {assetEntity.metadata.id}");
 
                         failedDTOList.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
