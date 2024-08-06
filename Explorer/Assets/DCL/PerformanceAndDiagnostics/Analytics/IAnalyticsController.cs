@@ -14,7 +14,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform);
 
-        void Track(string eventName, JsonObject properties = null);
+        void Track(string eventName, JsonObject? properties = null);
 
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
@@ -30,15 +30,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
             public void SetCommonParam(IRealmData _, IWeb3IdentityCache __, ExposedTransform ___) { }
 
-            public void Track(string _, JsonObject __ = null) { }
+            public void Track(string _, JsonObject? __ = null) { }
         }
     }
 
     public static class AnalyticsExtensions
     {
-        public static IHealthCheck WithAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController, string eventName, bool enableAnalytics) =>
+        public static IHealthCheck WithFailAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController, bool enableAnalytics) =>
             enableAnalytics
-                ? new AnalyticsHealthCheckDecorator(origin, analyticsController, eventName)
+                ? new FailAnalyticsHealthCheckDecorator(origin, analyticsController)
                 : origin;
     }
 }

@@ -49,7 +49,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             );
         }
 
-        public void Track(string eventName, JsonObject properties = null)
+        public void Track(string eventName, JsonObject? properties = null)
         {
             if (Configuration.EventIsEnabled(eventName))
                 analytics.Track(eventName, properties);
