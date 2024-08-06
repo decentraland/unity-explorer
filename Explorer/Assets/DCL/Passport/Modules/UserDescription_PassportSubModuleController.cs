@@ -19,10 +19,13 @@ namespace DCL.Passport.Modules
             this.additionalFieldsController = additionalFieldsController;
         }
 
-        public void Setup(Profile profile) =>
+        public void Setup(Profile profile)
+        {
             this.currentProfile = profile;
+            LoadDescription();
+        }
 
-        public void LoadDescription() =>
+        private void LoadDescription() =>
             view.Description.text = !string.IsNullOrEmpty(currentProfile.Description) || additionalFieldsController.CurrentAdditionalFieldsCount > 0 ? currentProfile.Description : NO_INTRO_TEXT;
 
         public void ResetEdition() =>

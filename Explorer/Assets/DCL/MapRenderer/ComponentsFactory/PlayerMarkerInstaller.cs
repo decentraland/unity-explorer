@@ -12,34 +12,31 @@ namespace DCL.MapRenderer.ComponentsFactory
 {
     internal struct PlayerMarkerInstaller
     {
-        private IAssetsProvisioner assetsProvisioner;
-        private MapRendererSettings mapSettings;
-
         public async UniTask InstallAsync(
             Dictionary<MapLayer, IMapLayerController> writer,
             List<IZoomScalingLayer> zoomScalingWriter,
             MapRendererConfiguration configuration,
             ICoordsUtils coordsUtils,
             IMapCullingController cullingController,
-            MapRendererSettings settings,
-            IAssetsProvisioner assetProv,
+            IMapRendererSettings mapSettings,
+            IAssetsProvisioner assetsProvisioner,
+            IMapPathEventBus mapPathEventBus,
             CancellationToken cancellationToken)
         {
-            this.mapSettings = settings;
-            this.assetsProvisioner = assetProv;
-            PlayerMarkerObject prefab = await GetPrefabAsync(cancellationToken);
+            PlayerMarkerObject prefab = (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PlayerMarker, ct: cancellationToken)).Value;
 
-            var controller = new PlayerMarkerController(
+            var playerMarkerController = new PlayerMarkerController(
                 CreateMarker,
                 configuration.PlayerMarkerRoot,
                 coordsUtils,
-                cullingController
+                cullingController,
+                mapPathEventBus
             );
 
-            controller.Initialize();
+            playerMarkerController.Initialize();
 
-            writer.Add(MapLayer.PlayerMarker, controller);
-            zoomScalingWriter.Add(controller);
+            writer.Add(MapLayer.PlayerMarker, playerMarkerController);
+            zoomScalingWriter.Add(playerMarkerController);
             return;
 
             IPlayerMarker CreateMarker(Transform parent)
@@ -52,9 +49,5 @@ namespace DCL.MapRenderer.ComponentsFactory
                 return new PlayerMarker(pmObject);
             }
         }
-
-        internal async UniTask<PlayerMarkerObject> GetPrefabAsync(CancellationToken cancellationToken) =>
-            (await assetsProvisioner.ProvideMainAssetAsync(mapSettings.PlayerMarker, ct: CancellationToken.None)).Value.GetComponent<PlayerMarkerObject>();
-
     }
 }

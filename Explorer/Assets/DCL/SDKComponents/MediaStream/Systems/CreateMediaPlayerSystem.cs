@@ -55,17 +55,17 @@ namespace DCL.SDKComponents.MediaStream
 
         [Query]
         [None(typeof(MediaPlayerComponent))]
-        [All(typeof(VideoTextureComponent))]
+        [All(typeof(VideoTextureConsumer))]
         private void CreateVideoPlayer(in Entity entity, PBVideoPlayer sdkComponent)
         {
             CreateMediaPlayer(entity, sdkComponent.Src, sdkComponent.HasVolume, sdkComponent.Volume);
         }
 
-        private void CreateMediaPlayer(in Entity entity, string url, bool hasVolume, float volume)
+        private void CreateMediaPlayer(Entity entity, string url, bool hasVolume, float volume)
         {
             if (!frameTimeBudget.TrySpendBudget()) return;
 
-            MediaPlayerComponent component = CreateMediaPlayerComponent(url, hasVolume, volume);
+            MediaPlayerComponent component = CreateMediaPlayerComponent(entity, url, hasVolume, volume);
 
             if (component.State != VideoState.VsError)
                 component.OpenMediaPromise.UrlReachabilityResolveAsync(webRequestController, component.URL, component.Cts.Token).SuppressCancellationThrow().Forget();
@@ -73,7 +73,7 @@ namespace DCL.SDKComponents.MediaStream
             World.Add(entity, component);
         }
 
-        private MediaPlayerComponent CreateMediaPlayerComponent(string url, bool hasVolume, float volume)
+        private MediaPlayerComponent CreateMediaPlayerComponent(Entity entity, string url, bool hasVolume, float volume)
         {
             // if it is not valid, we try get it as a scene local video
             if (!url.IsValidUrl() && sceneData.TryGetMediaUrl(url, out URLAddress mediaUrl))
@@ -87,6 +87,10 @@ namespace DCL.SDKComponents.MediaStream
                 Cts = new CancellationTokenSource(),
                 OpenMediaPromise = new OpenMediaPromise(),
             };
+
+#if UNITY_EDITOR
+            component.MediaPlayer.gameObject.name = $"MediaPlayer_Entity_{entity}";
+#endif
 
             component.MediaPlayer.UpdateVolume(sceneStateProvider.IsCurrent, hasVolume, volume);
 

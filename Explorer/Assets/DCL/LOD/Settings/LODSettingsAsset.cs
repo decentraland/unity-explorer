@@ -24,7 +24,7 @@ namespace DCL.LOD
         public int ArraySizeForMissingResolutions => 50;
         public int CapacityForMissingResolutions => 1;
 
-        public bool IsColorDebuging { get; set; }
+        public bool IsColorDebugging { get; set; }
         [field: SerializeField] public Color[] LODDebugColors { get; set; } = { Color.green, Color.yellow, Color.red };
         [field: SerializeField] public DebugCube DebugCube { get; set; }
         [field: SerializeField] public bool EnableLODStreaming { get; set; }
