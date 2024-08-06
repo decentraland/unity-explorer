@@ -2,6 +2,7 @@ using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.WebRequests;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -34,9 +35,14 @@ namespace DCL.Multiplayer.HealthChecks
         public async UniTask<(bool success, string? errorMessage)> IsRemoteAvailableAsync(CancellationToken ct)
         {
             var urlAddress = Url();
-            int code = await webRequestController.HeadAsync(new CommonArguments(urlAddress, attemptsCount: ATTEMPTS), ct).StatusCodeAsync();
-            bool success = ERROR_CODES.Contains(code) == false;
-            return (success, success ? null : $"Cannot connect to {urlAddress}");
+
+            try
+            {
+                int code = await webRequestController.HeadAsync(new CommonArguments(urlAddress, attemptsCount: ATTEMPTS), ct).StatusCodeAsync();
+                bool success = ERROR_CODES.Contains(code) == false;
+                return (success, success ? null : $"Cannot connect to {urlAddress}");
+            }
+            catch (Exception) { return (false, $"Cannot connect to {urlAddress}"); }
         }
 
         private URLAddress Url()
