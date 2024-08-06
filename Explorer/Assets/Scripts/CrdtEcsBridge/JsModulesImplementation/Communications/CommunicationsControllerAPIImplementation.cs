@@ -1,15 +1,11 @@
 ﻿using CRDT.Memory;
-using CrdtEcsBridge.PoolsProviders;
 using DCL.Multiplayer.Connections.Messaging;
 using Decentraland.Kernel.Comms.Rfc4;
 using SceneRunner.Scene;
 using SceneRuntime;
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading;
-using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -29,66 +25,6 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             sceneStateProvider)
         {
             this.crdtMemoryAllocator = crdtMemoryAllocator;
-        }
-
-        public void Dispose()
-        {
-            lock (eventsToProcess) { CleanUpReceivedMessages(); }
-
-            cancellationTokenSource.SafeCancelAndDispose();
-        }
-
-        public void OnSceneIsCurrentChanged(bool isCurrent)
-        {
-            if (isCurrent)
-                messagePipesHub.SetSceneMessageHandler(onMessageReceivedCached);
-            else
-                messagePipesHub.RemoveSceneMessageHandler(onMessageReceivedCached);
-        }
-
-        public object SendBinary(IReadOnlyList<PoolableByteArray> data)
-        {
-            if (!sceneStateProvider.IsCurrent)
-                return jsOperations.ConvertToScriptTypedArrays(Array.Empty<IMemoryOwner<byte>>());
-
-            foreach (var poolable in data)
-            {
-                if (poolable.Length == 0)
-                    continue;
-
-                var message = poolable.Memory;
-
-                EncodeAndSend();
-
-                void EncodeAndSend()
-                {
-                    Span<byte> encodedMessage = stackalloc byte[message.Length + 1];
-                    encodedMessage[0] = (byte)MsgType.Uint8Array;
-                    message.Span.CopyTo(encodedMessage[1..]);
-                    SendMessage(encodedMessage);
-                }
-            }
-
-            lock (eventsToProcess)
-            {
-                object result = jsOperations.ConvertToScriptTypedArrays(eventsToProcess);
-                CleanUpReceivedMessages();
-
-                return result;
-            }
-        }
-
-        private void CleanUpReceivedMessages()
-        {
-            foreach (IMemoryOwner<byte>? message in eventsToProcess)
-                message.Dispose();
-
-            eventsToProcess.Clear();
-        }
-
-        private void SendMessage(ReadOnlySpan<byte> message)
-        {
-            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
         }
 
         protected override void OnMessageReceived(ReceivedMessage<Scene> receivedMessage)

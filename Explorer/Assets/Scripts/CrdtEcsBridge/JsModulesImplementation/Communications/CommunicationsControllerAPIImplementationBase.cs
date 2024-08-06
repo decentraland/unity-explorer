@@ -8,6 +8,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -46,8 +47,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -100,7 +100,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private void SendMessage(ReadOnlySpan<byte> message)
         {
-            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
+            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
         protected virtual void OnMessageReceived(ReceivedMessage<Scene> receivedMessage) { }
