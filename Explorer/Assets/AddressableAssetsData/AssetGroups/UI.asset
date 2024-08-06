@@ -137,13 +137,28 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 07db06d5ea38bfb4f9ce238cbb0ef68a
-    m_Address: RarityBackground.spriteatlasv2
+  - m_GUID: 67c43eeeaf9c34744807086742498bf8
+    m_Address: BackpackAtlas.spriteatlasv2
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 73b47c88148e7a14f9ea5e351d2d792d
     m_Address: Assets/DCL/MapRenderer/Textures/MapRenderer.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 506fef2fcce22b54ba4571ced3af5dc6
+    m_Address: LoadingAtlast.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6dfe28bda416549a9b6598e822044ba1
+    m_Address: CommonTexturesAtlas.spriteatlasv2
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c522d0b7573224f59a5c1fde68c734e3
+    m_Address: PersistentEmoteWheelOpener.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
