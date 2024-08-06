@@ -132,6 +132,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     globalSettingsContainer,
                     web3IdentityCache,
                     ethereumApi,
+                    false,
                     ct
                 );
 

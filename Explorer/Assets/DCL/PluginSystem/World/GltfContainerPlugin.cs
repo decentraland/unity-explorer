@@ -30,14 +30,15 @@ namespace DCL.PluginSystem.World
         private readonly GltfContainerAssetsCache assetsCache;
         private readonly ECSWorldSingletonSharedDependencies globalDeps;
         private readonly ISceneReadinessReportQueue sceneReadinessReportQueue;
-
         private readonly SceneAssetLock sceneAssetLock;
+        private bool localSceneDevelopment;
 
-        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock)
+        public GltfContainerPlugin(ECSWorldSingletonSharedDependencies globalDeps, CacheCleaner cacheCleaner, ISceneReadinessReportQueue sceneReadinessReportQueue, SceneAssetLock sceneAssetLock, bool localSceneDevelopment)
         {
             this.globalDeps = globalDeps;
             this.sceneReadinessReportQueue = sceneReadinessReportQueue;
             this.sceneAssetLock = sceneAssetLock;
+            this.localSceneDevelopment = localSceneDevelopment;
             assetsCache = new GltfContainerAssetsCache();
 
             cacheCleaner.Register(assetsCache);
@@ -55,11 +56,16 @@ namespace DCL.PluginSystem.World
 
             LoadGLTFSystem.InjectToWorld(ref builder, new NoCache<GLTFData, GetGLTFIntention>(false, false), sharedDependencies.SceneData, sharedDependencies.ScenePartition);
 
-            // Asset loading
-            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache);
+            // TODO: for debugging only, REMOVE later!
+            localSceneDevelopment = true;
 
-            CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
-            //CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+            // Asset loading
+            PrepareGltfAssetLoadingSystem.InjectToWorld(ref builder, assetsCache, localSceneDevelopment);
+
+            if (localSceneDevelopment)
+                CreateGltfAssetFromRawGltfSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
+            else
+                CreateGltfAssetFromAssetBundleSystem.InjectToWorld(ref builder, globalDeps.FrameTimeBudget, globalDeps.MemoryBudget);
 
             ReportGltfErrorsSystem.InjectToWorld(ref builder, globalDeps.ReportsHandlingSettings);
 

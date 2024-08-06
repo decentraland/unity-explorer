@@ -153,6 +153,7 @@ namespace Global.Static
                 globalSettingsContainer,
                 web3IdentityProvider,
                 ethereumApi,
+                false,
                 ct
             )!;
 

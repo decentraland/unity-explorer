@@ -24,10 +24,12 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     public partial class PrepareGltfAssetLoadingSystem : BaseUnityLoopSystem
     {
         private readonly IGltfContainerAssetsCache cache;
+        private bool localSceneDevelopment;
 
-        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache) : base(world)
+        internal PrepareGltfAssetLoadingSystem(World world, IGltfContainerAssetsCache cache, bool localSceneDevelopment) : base(world)
         {
             this.cache = cache;
+            this.localSceneDevelopment = localSceneDevelopment;
         }
 
         protected override void Update(float t)
@@ -39,6 +41,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
+            // TODO: RE-ENABLE later
             // Try load from cache
             /*if (cache.TryGet(intention.Hash, out GltfContainerAsset asset))
             {
@@ -47,10 +50,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 return;
             }*/
 
-            // TODO: for debugging only, CHANGE later
-            var useRawGLTFLoad = true;
-
-            if (useRawGLTFLoad)
+            if (localSceneDevelopment)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));
             else
                 World.Add(entity, GetAssetBundleIntention.Create(typeof(GameObject), $"{intention.Hash}{PlatformUtils.GetPlatform()}", intention.Name));
