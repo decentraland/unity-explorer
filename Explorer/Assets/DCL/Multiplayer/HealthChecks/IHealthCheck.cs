@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.HealthChecks.Struct;
+using System;
 using System.Threading;
 
 namespace DCL.Multiplayer.HealthChecks
@@ -24,7 +25,7 @@ namespace DCL.Multiplayer.HealthChecks
 
     public static class HealthCheckExtensions
     {
-        public static IHealthCheck WithRetries(this IHealthCheck origin, int retriesCount) =>
-            new RetriesHealthCheck(origin, retriesCount);
+        public static IHealthCheck WithRetries(this IHealthCheck origin, int? retriesCount = null, TimeSpan? delayBetweenRetries = null) =>
+            new RetriesHealthCheck(origin, retriesCount, delayBetweenRetries);
     }
 }

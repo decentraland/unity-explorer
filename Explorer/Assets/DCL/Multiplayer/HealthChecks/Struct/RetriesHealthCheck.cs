@@ -10,12 +10,13 @@ namespace DCL.Multiplayer.HealthChecks.Struct
         private readonly int retriesCount;
         private readonly TimeSpan delayBetweenRetries;
 
+        private const int DEFAULT_RETRIES_COUNT = 3;
         private static readonly TimeSpan DEFAULT_DELAY_BETWEEN_RETRIES = TimeSpan.FromSeconds(1);
 
-        public RetriesHealthCheck(IHealthCheck origin, int retriesCount, TimeSpan? delayBetweenRetries = null)
+        public RetriesHealthCheck(IHealthCheck origin, int? retriesCount = null, TimeSpan? delayBetweenRetries = null)
         {
             this.origin = origin;
-            this.retriesCount = retriesCount;
+            this.retriesCount = retriesCount ?? DEFAULT_RETRIES_COUNT;
             this.delayBetweenRetries = delayBetweenRetries ?? DEFAULT_DELAY_BETWEEN_RETRIES;
         }
 
