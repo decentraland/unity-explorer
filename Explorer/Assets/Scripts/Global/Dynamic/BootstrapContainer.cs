@@ -6,6 +6,7 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.PerformanceAndDiagnostics.Analytics;
 using DCL.PluginSystem;
+using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using Segment.Analytics;
@@ -29,8 +30,8 @@ namespace Global.Dynamic
         public IAssetsProvisioner? AssetsProvisioner { get; private init; }
         public IBootstrap? Bootstrap { get; private set; }
         public IWeb3IdentityCache? IdentityCache { get; private set; }
-        public DappWeb3Authenticator? Web3VerifiedAuthenticator { get; private set; }
-        public ProxyVerifiedWeb3Authenticator? Web3Authenticator { get; private set; }
+        public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
+        public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
 
@@ -41,7 +42,7 @@ namespace Global.Dynamic
             diagnosticsContainer?.Dispose();
             reportHandlingSettings.Dispose();
             Web3Authenticator?.Dispose();
-            Web3VerifiedAuthenticator?.Dispose();
+            VerifiedEthereumApi?.Dispose();
             IdentityCache?.Dispose();
         }
 
@@ -66,7 +67,7 @@ namespace Global.Dynamic
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
                 (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, ct);
-                (container.IdentityCache, container.Web3VerifiedAuthenticator, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser);
+                (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
 
                 container.diagnosticsContainer = container.enableAnalytics
                     ? DiagnosticsContainer.Create(container.ReportHandlingSettings, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
@@ -123,8 +124,8 @@ namespace Global.Dynamic
             return new DebugAnalyticsService();
         }
 
-        private static (LogWeb3IdentityCache identityCache, DappWeb3Authenticator web3VerifiedAuthenticator, ProxyVerifiedWeb3Authenticator web3Authenticator)
-            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings, IWebBrowser webBrowser)
+        private static (LogWeb3IdentityCache identityCache, IVerifiedEthereumApi web3VerifiedAuthenticator, IWeb3VerifiedAuthenticator web3Authenticator)
+            CreateWeb3Dependencies(DynamicSceneLoaderSettings sceneLoaderSettings, IWebBrowser webBrowser, BootstrapContainer container)
         {
             var identityCache = new LogWeb3IdentityCache(
                 new ProxyIdentityCache(
@@ -135,15 +136,18 @@ namespace Global.Dynamic
                 )
             );
 
-            var web3VerifiedAuthenticator = new DappWeb3Authenticator(
+            var dappWeb3Authenticator = new DappWeb3Authenticator(
                 webBrowser,
                 GetAuthUrl(sceneLoaderSettings.AuthWebSocketUrl, sceneLoaderSettings.AuthWebSocketUrlDev),
                 GetAuthUrl(sceneLoaderSettings.AuthSignatureUrl, sceneLoaderSettings.AuthSignatureUrlDev),
                 identityCache, new HashSet<string>(sceneLoaderSettings.Web3WhitelistMethods));
 
-            var web3Authenticator = new ProxyVerifiedWeb3Authenticator(web3VerifiedAuthenticator, identityCache);
+            IWeb3VerifiedAuthenticator coreWeb3Authenticator = new ProxyVerifiedWeb3Authenticator(dappWeb3Authenticator, identityCache);
 
-            return (identityCache, web3VerifiedAuthenticator, web3Authenticator);
+            if (container.enableAnalytics)
+                coreWeb3Authenticator = new IdentityAnalyticsDecorator(coreWeb3Authenticator, container.Analytics!);
+
+            return (identityCache, dappWeb3Authenticator, coreWeb3Authenticator);
 
             // Allow devUrl only in DebugBuilds (Debug.isDebugBuild is always true in Editor)
             string GetAuthUrl(string releaseUrl, string devUrl) =>

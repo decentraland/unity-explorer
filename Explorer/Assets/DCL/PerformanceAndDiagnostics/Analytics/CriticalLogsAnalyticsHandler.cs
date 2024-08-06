@@ -28,8 +28,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", "unhandled exception" },
-                { "category", "UNDEFINED" },
-                { "scene_hash", "UNDEFINED" },
+                { "category", IAnalyticsController.UNDEFINED },
+                { "scene_hash", IAnalyticsController.UNDEFINED },
                 { "message", e.Message },
             });
         }
@@ -60,7 +60,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             {
                 { "type", "exception" },
                 { "category", "ecs" },
-                { "scene_hash", "UNDEFINED" },
+                { "scene_hash", IAnalyticsController.UNDEFINED },
                 { "message", ecsSystemException.Message },
             });
         }
