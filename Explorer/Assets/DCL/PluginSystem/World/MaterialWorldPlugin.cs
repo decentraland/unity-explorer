@@ -42,17 +42,15 @@ namespace DCL.PluginSystem.World
 
         public void Dispose() { }
 
-        public async UniTask InitializeAsync(Settings settings, CancellationToken ct)
+        public UniTask InitializeAsync(Settings settings, CancellationToken ct)
         {
-            // ProvidedAsset<Material> basicMatReference = await assetsProvisioner.ProvideMainAssetAsync(settings.basicMaterial, ct: ct);
-            // ProvidedAsset<Material> pbrMaterialReference = await assetsProvisioner.ProvideMainAssetAsync(settings.pbrMaterial, ct: ct);
-
             basicMatPool = new ObjectPool<Material>(() => new Material(settings.basicMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
             pbrMatPool = new ObjectPool<Material>(() => new Material(settings.pbrMaterial), actionOnDestroy: UnityObjectUtils.SafeDestroy, defaultCapacity: settings.PoolInitialCapacity, maxSize: settings.PoolMaxSize);
 
             destroyMaterial = (in MaterialData data, Material material) => { (data.IsPbrMaterial ? pbrMatPool : basicMatPool).Release(material); };
 
             loadingAttemptsCount = settings.LoadingAttemptsCount;
+            return UniTask.CompletedTask;
         }
 
         public void InjectToWorld(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in ECSWorldInstanceSharedDependencies sharedDependencies, in PersistentEntities persistentEntities, List<IFinalizeWorldSystem> finalizeWorldSystems, List<ISceneIsCurrentListener> sceneIsCurrentListeners)
