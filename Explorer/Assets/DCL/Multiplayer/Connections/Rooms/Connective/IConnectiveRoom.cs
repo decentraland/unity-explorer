@@ -39,11 +39,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
     public static class GateKeeperSceneRoomExtensions
     {
-        public static void StartIfNot(this IConnectiveRoom room)
-        {
-            if (room.CurrentState() is IConnectiveRoom.State.Stopped)
-                room.StartAsync();
-        }
+        public static UniTask<bool> StartIfNotAsync(this IConnectiveRoom room) =>
+            room.CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping
+                ? room.StartAsync()
+                : UniTask.FromResult(true);
 
         public static UniTask StopIfNotAsync(this IConnectiveRoom room) =>
             room.CurrentState() is IConnectiveRoom.State.Running

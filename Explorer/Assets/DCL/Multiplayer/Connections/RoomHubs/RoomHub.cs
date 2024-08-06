@@ -24,8 +24,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
         public async UniTask<bool> StartAsync()
         {
             var result = await UniTask.WhenAll(
-                archipelagoIslandRoom.StartAsync(),
-                gateKeeperSceneRoom.StartAsync()
+                archipelagoIslandRoom.StartIfNotAsync(),
+                gateKeeperSceneRoom.StartIfNotAsync()
             );
 
             return result is { Item1: true, Item2: true };
