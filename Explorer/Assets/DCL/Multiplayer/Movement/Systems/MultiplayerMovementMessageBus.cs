@@ -116,7 +116,7 @@ namespace DCL.Multiplayer.Movement.Systems
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
         }
 
-        private SimplePriorityQueue<NetworkMovementMessage>? QueueFor(string walletId)
+        private IPriorityQueue<NetworkMovementMessage, float>? QueueFor(string walletId)
         {
             if (entityParticipantTable.Has(walletId) == false)
             {
@@ -133,9 +133,14 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public async UniTaskVoid SelfSendWithDelayAsync(NetworkMovementMessage message, float delay)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
-            Inbox(message, @for: RemotePlayerMovementComponent.TEST_ID);
+            CompressedNetworkMovementMessage compressedMessage = message.Compress();
+            // await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
+            var decompressedMessage = compressedMessage.Decompress();
+
+            Debug.Log($"VVV {message.timestamp} - {decompressedMessage.timestamp} - {compressedMessage.compressedData}");
+            Inbox(decompressedMessage, @for: RemotePlayerMovementComponent.TEST_ID);
         }
+
 
         public void Dispose()
         {

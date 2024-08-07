@@ -10,8 +10,8 @@ namespace DCL.Multiplayer.Movement
     {
         public const string TEST_ID = "SelfReplica";
 
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
-        private readonly SimplePriorityQueue<NetworkMovementMessage> queue;
+        private readonly IObjectPool<IPriorityQueue<NetworkMovementMessage, float>> queuePool;
+        private readonly IPriorityQueue<NetworkMovementMessage, float> queue;
         private bool disposed;
 
         public NetworkMovementMessage PastMessage;
@@ -20,9 +20,9 @@ namespace DCL.Multiplayer.Movement
         public bool WasTeleported;
         public bool WasPassedThisFrame;
 
-        public readonly SimplePriorityQueue<NetworkMovementMessage>? Queue => disposed ? null : queue;
+        public readonly IPriorityQueue<NetworkMovementMessage, float>? Queue => disposed ? null : queue;
 
-        public RemotePlayerMovementComponent(IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool)
+        public RemotePlayerMovementComponent(IObjectPool<IPriorityQueue<NetworkMovementMessage, float>> queuePool)
         {
             this.queuePool = queuePool;
             queue = queuePool.Get()!;

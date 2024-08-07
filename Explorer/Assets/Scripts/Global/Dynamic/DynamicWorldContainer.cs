@@ -262,9 +262,9 @@ namespace Global.Dynamic
 
             var entityParticipantTable = new EntityParticipantTable();
 
-            var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
+            var queuePoolFullMovementMessage = new ObjectPool<IPriorityQueue<NetworkMovementMessage, float>>(
                 () => new SimplePriorityQueue<NetworkMovementMessage>(),
-                actionOnRelease: x => x.Clear()
+                actionOnRelease: queue => queue.Clear()
             );
 
             var remoteEntities = new RemoteEntities(

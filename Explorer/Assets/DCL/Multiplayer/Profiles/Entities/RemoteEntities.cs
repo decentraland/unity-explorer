@@ -28,7 +28,7 @@ namespace DCL.Multiplayer.Profiles.Entities
     {
         private readonly IRoomHub roomHub;
         private readonly IEntityParticipantTable entityParticipantTable;
-        private readonly IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool;
+        private readonly IObjectPool<IPriorityQueue<NetworkMovementMessage, float>> queuePool;
         private readonly IComponentPoolsRegistry componentPoolsRegistry;
         private readonly List<string> tempRemoveAll = new ();
         private readonly IEntityCollidersGlobalCache collidersGlobalCache;
@@ -40,7 +40,7 @@ namespace DCL.Multiplayer.Profiles.Entities
             IRoomHub roomHub,
             IEntityParticipantTable entityParticipantTable,
             IComponentPoolsRegistry componentPoolsRegistry,
-            IObjectPool<SimplePriorityQueue<NetworkMovementMessage>> queuePool,
+            IObjectPool<IPriorityQueue<NetworkMovementMessage, float>> queuePool,
             IEntityCollidersGlobalCache collidersGlobalCache)
         {
             this.roomHub = roomHub;

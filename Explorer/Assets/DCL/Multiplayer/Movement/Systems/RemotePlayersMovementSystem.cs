@@ -91,7 +91,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, IPriorityQueue<NetworkMovementMessage, float> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
             var isBlend = false;
@@ -118,7 +118,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private static bool StopExtrapolationIfCan(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, IPriorityQueue<NetworkMovementMessage, float> playerInbox)
         {
             float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
@@ -151,7 +151,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            SimplePriorityQueue<NetworkMovementMessage> playerInbox)
+            IPriorityQueue<NetworkMovementMessage, float> playerInbox)
         {
             // Filter messages with the same position
             if (settings.InterpolationSettings.UseSpeedUp)
