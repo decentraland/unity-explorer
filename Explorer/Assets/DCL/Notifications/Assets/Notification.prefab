@@ -65,7 +65,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.03137255}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.011764706}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -94,7 +94,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d83ff9e39094063a84de761c0fe52ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.03137255}
+  <NormalColor>k__BackingField: {r: 1, g: 1, b: 1, a: 0.011764706}
   <HoveredColor>k__BackingField: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
   <Background>k__BackingField: {fileID: 1626829344947425582}
   <UnreadImage>k__BackingField: {fileID: 927537932988240709}
@@ -1284,6 +1284,10 @@ PrefabInstance:
     - target: {fileID: 2336035712942851721, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
       propertyPath: m_Name
       value: LoadingSpinner
+      objectReference: {fileID: 0}
+    - target: {fileID: 4079747381299179907, guid: d565b61885fb1ef41b1582a285e748e9, type: 3}
+      propertyPath: m_CullTransparentMesh
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
