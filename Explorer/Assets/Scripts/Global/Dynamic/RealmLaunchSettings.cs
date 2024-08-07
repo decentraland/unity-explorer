@@ -34,6 +34,9 @@ namespace Global.Dynamic
 
         public Vector2Int TargetScene => targetScene;
 
+        private bool isLocalSceneDevelopmentRealm;
+        public bool IsLocalSceneDevelopmentRealm => initialRealm == InitialRealm.Localhost || isLocalSceneDevelopmentRealm;
+
         public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
             ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()
             : Array.Empty<int2>();
@@ -71,17 +74,15 @@ namespace Global.Dynamic
         {
             Dictionary<string,string> appParameters = applicationParameters.Get();
 
-            if (appParameters.ContainsKey(APP_PARAMETER_REALM))
-                ParseRealmAppParameter(appParameters);
+            if (appParameters.TryGetValue(APP_PARAMETER_REALM, out string? realm))
+                ParseRealmAppParameter(appParameters, realm);
 
             if (appParameters.TryGetValue(APP_PARAMETER_POSITION, out string? position))
                 ParsePositionAppParameter(position);
         }
 
-        private void ParseRealmAppParameter(Dictionary<string, string> appParameters)
+        private void ParseRealmAppParameter(Dictionary<string, string> appParameters, string realmParamValue)
         {
-            string realmParamValue = appParameters[APP_PARAMETER_REALM];
-
             if (string.IsNullOrEmpty(realmParamValue)) return;
 
             bool isLocalSceneDevelopment = appParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue)
@@ -94,9 +95,9 @@ namespace Global.Dynamic
                 SetWorldRealm(realmParamValue);
         }
 
-        private void SetWorldRealm(string targetWorld)
+        private void SetWorldRealm(string world)
         {
-            this.targetWorld = targetWorld;
+            this.targetWorld = world;
             initialRealm = InitialRealm.World;
         }
 
@@ -105,6 +106,7 @@ namespace Global.Dynamic
             customRealm = targetRealm;
             initialRealm = InitialRealm.Custom;
             useRemoteAssetsBundles = false;
+            isLocalSceneDevelopmentRealm = true;
         }
 
         private void ParsePositionAppParameter(string targetPositionParam)

@@ -61,9 +61,7 @@ namespace Global.Dynamic
             cursorRoot.EnsureNotNull();
 
             string settingsRealm = launchSettings.GetStartingRealm();
-
-            // We also check against 'settingsRealm' in case LOCALHOST was configured from the Editor
-            localSceneDevelopment |= settingsRealm == IRealmNavigator.LOCALHOST;
+            localSceneDevelopment = launchSettings.IsLocalSceneDevelopmentRealm;
 
             startingRealm = URLDomain.FromString(settingsRealm);
             startingParcel = launchSettings.TargetScene;
