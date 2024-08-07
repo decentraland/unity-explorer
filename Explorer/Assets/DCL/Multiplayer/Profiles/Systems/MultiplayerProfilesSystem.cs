@@ -12,6 +12,8 @@ using DCL.Multiplayer.Profiles.RemoveIntentions;
 using DCL.UserInAppInitializationFlow;
 using ECS;
 using ECS.Abstract;
+using UnityEngine;
+using Utility;
 
 namespace DCL.Multiplayer.Profiles.Systems
 {
@@ -73,7 +75,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             remoteEntities.TryCreate(remoteProfiles, World!);
             remoteEntities.Remove(removeIntentions, World!);
             profileBroadcast.NotifyRemotes();
-            remotePoses.BroadcastSelfPose(characterObject);
+            remotePoses.BroadcastSelfPose(characterObject.Position.ToParcel());
         }
     }
 }

@@ -50,8 +50,7 @@ namespace DCL.Analytics.Systems
                 return;
             }
 
-            Vector3 playerPos = World.Get<CharacterTransform>(playerEntity).Transform.position;
-            Vector2Int newParcel = ParcelMathHelper.FloorToParcel(playerPos);
+            Vector2Int newParcel =  World.Get<CharacterTransform>(playerEntity).Transform.ParcelPosition();
 
             if (newParcel != oldParcel)
             {
