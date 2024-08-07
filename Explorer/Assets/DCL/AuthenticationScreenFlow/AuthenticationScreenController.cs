@@ -20,6 +20,11 @@ using UnityEngine.Localization.SmartFormat.PersistentVariables;
 using UnityEngine.UI;
 using Utility;
 
+#if !UNITY_EDITOR
+using DCL.Web3;
+using System.Collections.Generic;
+#endif
+
 namespace DCL.AuthenticationScreenFlow
 {
     public class AuthenticationScreenController : ControllerBase<AuthenticationScreenView>
