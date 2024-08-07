@@ -35,7 +35,7 @@ namespace DCL.Backpack
         private readonly Dictionary<BackpackSections, ISection> backpackSections;
         private readonly SectionSelectorController<BackpackSections> sectionSelectorController;
         private readonly Dictionary<BackpackSections, TabSelectorView> tabsBySections;
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private BackpackSections lastShownSection;
 
         private CancellationTokenSource? animationCts;
@@ -49,7 +49,7 @@ namespace DCL.Backpack
             AvatarView avatarView,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             BackpackCommandBus backpackCommandBus,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             BackpackGridController gridController,
             BackpackInfoPanelController wearableInfoPanelController,
             BackpackInfoPanelController emoteInfoPanelController,

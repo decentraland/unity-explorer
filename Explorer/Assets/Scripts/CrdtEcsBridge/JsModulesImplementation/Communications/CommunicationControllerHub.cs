@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
 using Google.Protobuf;
+using LiveKit.Proto;
 using System;
 using System.Threading;
 
@@ -44,7 +45,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
             MessageWrap<Scene> sceneMessage = messagePipe.NewMessage<Scene>();
             sceneMessage.Payload.Data = ByteString.CopyFrom(message);
             sceneMessage.Payload.SceneId = sceneId;
-            sceneMessage.SendAndDisposeAsync(ct).Forget();
+            sceneMessage.SendAndDisposeAsync(ct, DataPacketKind.KindReliable).Forget();
         }
     }
 }
