@@ -2,6 +2,7 @@
 using ECS;
 using JetBrains.Annotations;
 using Segment.Serialization;
+using System;
 using UnityEngine;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.IAnalyticsController;
@@ -60,5 +61,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     }
                 );
         }
+
+        public void Flush() =>
+            analytics.Flush();
     }
 }

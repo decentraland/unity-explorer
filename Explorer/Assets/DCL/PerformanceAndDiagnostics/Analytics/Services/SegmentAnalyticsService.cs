@@ -31,5 +31,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         public void AddPlugin(Plugin plugin) =>
             analytics.Add(plugin);
+
+        public void Flush() =>
+            analytics.Flush();
     }
 }

@@ -18,6 +18,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform);
         void Track(string eventName, JsonObject properties = null);
         void Identify(IWeb3Identity? identity);
+        void Flush();
 
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
@@ -34,6 +35,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public void SetCommonParam(IRealmData _, IWeb3IdentityCache __, ExposedTransform ___) { }
             public void Track(string _, JsonObject __ = null) { }
             public void Identify(IWeb3Identity _) { }
+            public void Flush() { }
         }
     }
 }
