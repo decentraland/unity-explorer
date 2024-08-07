@@ -28,7 +28,7 @@ namespace DCL.MapRenderer
             { Type = NotificationType.INTERNAL_ARRIVED_TO_DESTINATION };
 
         private IPinMarker internalPinMarker;
-        private IPinMarker currentDestinationPin;
+        private IPinMarker? currentDestinationPin;
         private bool destinationSet;
         private Vector2 cachedPlayerMarkerPosition;
 
@@ -109,7 +109,7 @@ namespace DCL.MapRenderer
             mapPathRenderer.gameObject.SetActive(false);
         }
 
-        private void OnSetDestination(Vector2Int parcel, IPinMarker pinMarker)
+        private void OnSetDestination(Vector2Int parcel, IPinMarker? pinMarker)
         {
             destinationSet = true;
             Vector3 mapPosition = coordsUtils.CoordsToPositionWithOffset(parcel);
@@ -127,8 +127,8 @@ namespace DCL.MapRenderer
             }
             else
             {
+                if (currentDestinationPin != null) { currentDestinationPin.SetAsDestination(false); }
                 currentDestinationPin = pinMarker;
-                internalPinMarker.SetAsDestination(false);
                 pinMarker.SetAsDestination(true);
             }
 
