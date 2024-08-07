@@ -6,6 +6,7 @@ using DCL.AvatarRendering.Emotes;
 using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
@@ -62,6 +63,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
 
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
@@ -100,7 +102,8 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
-            IBackpackEventBus backpackEventBus)
+            IBackpackEventBus backpackEventBus,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -128,6 +131,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
             this.backpackEventBus = backpackEventBus;
+            this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
         }
 
         public override void Dispose()
@@ -156,7 +160,8 @@ namespace DCL.PluginSystem.Global
                 assetBundleURL,
                 webRequestController,
                 characterPreviewEventBus,
-                backpackEventBus
+                backpackEventBus,
+                thirdPartyNftProviderSource
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();

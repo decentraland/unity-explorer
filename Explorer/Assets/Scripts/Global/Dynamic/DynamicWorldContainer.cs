@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
@@ -155,6 +156,11 @@ namespace Global.Dynamic
 
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
+            // TODO: it might be useful to cache the third-party nft providers info at start so we avoid undesired delays in the UI.
+            // However the chance of using this information is quite low, so its preferable to do it lazy avoiding extra http request & memory allocations
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource = new DecentralandHttpThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
+                bootstrapContainer.DecentralandUrlsSource);
+
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
             var mapPathEventBus = new MapPathEventBus();
             INotificationsBusController notificationsBusController = new NotificationsBusController();
@@ -172,8 +178,6 @@ namespace Global.Dynamic
 
             try { await InitializeContainersAsync(dynamicWorldDependencies.SettingsContainer, ct); }
             catch (Exception) { return (null, false); }
-
-
 
             CursorSettings cursorSettings = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.CursorSettings, ct)).Value;
             ProvidedAsset<Texture2D> normalCursorAsset = await assetsProvisioner.ProvideMainAssetAsync(cursorSettings.NormalCursor, ct);
@@ -459,7 +463,8 @@ namespace Global.Dynamic
                     notificationsBusController,
                     characterPreviewEventBus,
                     mapPathEventBus,
-                    backpackEventBus
+                    backpackEventBus,
+                    thirdPartyNftProviderSource
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

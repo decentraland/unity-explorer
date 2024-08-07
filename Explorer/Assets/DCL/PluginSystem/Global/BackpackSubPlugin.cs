@@ -8,6 +8,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
+using DCL.AvatarRendering.Wearables.ThirdParty;
 using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Backpack.CharacterPreview;
@@ -39,6 +40,7 @@ namespace DCL.PluginSystem.Global
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
+        private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly BackpackEquipStatusController backpackEquipStatusController;
         private readonly URLDomain assetBundleURL;
@@ -67,7 +69,8 @@ namespace DCL.PluginSystem.Global
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
-            IBackpackEventBus backpackEventBus)
+            IBackpackEventBus backpackEventBus,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -85,6 +88,7 @@ namespace DCL.PluginSystem.Global
 
             backpackCommandBus = new BackpackCommandBus();
             this.backpackEventBus = backpackEventBus;
+            this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
 
             backpackEquipStatusController = new BackpackEquipStatusController(
                 backpackEventBus,
@@ -130,7 +134,8 @@ namespace DCL.PluginSystem.Global
                 rarityInfoPanelBackgroundsMapping,
                 rarityColorMappings,
                 equippedWearables,
-                BackpackInfoPanelController.AttachmentType.Wearable
+                BackpackInfoPanelController.AttachmentType.Wearable,
+                thirdPartyNftProviderSource
             );
 
             EmotesView emoteView = view.GetComponentInChildren<EmotesView>().EnsureNotNull();
@@ -142,7 +147,8 @@ namespace DCL.PluginSystem.Global
                 rarityInfoPanelBackgroundsMapping,
                 rarityColorMappings,
                 equippedWearables,
-                BackpackInfoPanelController.AttachmentType.Emote
+                BackpackInfoPanelController.AttachmentType.Emote,
+                thirdPartyNftProviderSource
             );
 
             //not injected anywhere

@@ -34,5 +34,7 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
         Market,
 
         AssetBundlesCDN,
+
+        ThirdPartyNftProviders,
     }
 }
