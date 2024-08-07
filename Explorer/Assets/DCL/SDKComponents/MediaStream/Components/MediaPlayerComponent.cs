@@ -19,8 +19,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;
-
-        public Type PoolableComponentType => typeof(MediaPlayer);
+        
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
         public float Duration => (float)MediaPlayer.Info.GetDuration();
