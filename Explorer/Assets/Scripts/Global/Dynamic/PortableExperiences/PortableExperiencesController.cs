@@ -94,6 +94,9 @@ namespace PortableExperiences.Controller
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
                 PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
+
+                if (portableExperienceRealmComponent.IsGlobalPortableExperience) return false;
+
                 return portableExperienceRealmComponent.ParentSceneId == currentSceneFacade.Info.Name;
             }
 
@@ -120,9 +123,7 @@ namespace PortableExperiences.Controller
 
         public async UniTask<IPortableExperiencesController.ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct)
         {
-            if (ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
-
-            //TODO: We need to be able to kill PX using only the urn as well, it will mean some changes to this code, this will be done in the next iteration.
+            if (!ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
 
             //We need to dispose the scene that the PX has created.
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
@@ -131,9 +132,7 @@ namespace PortableExperiences.Controller
 
                 //Portable Experiences only have one scene
                 string sceneUrn = portableExperienceRealmComponent.Ipfs.SceneUrns[0];
-                string sceneEntityId = string.Empty;
-
-                sceneEntityId = IpfsHelper.ParseUrn(sceneUrn).EntityId;
+                string sceneEntityId = IpfsHelper.ParseUrn(sceneUrn).EntityId;
 
                 if (scenesCache.TryGetPortableExperienceBySceneUrn(sceneEntityId, out ISceneFacade sceneFacade))
                 {
@@ -145,6 +144,8 @@ namespace PortableExperiences.Controller
                 //for this we will need to go over all these entities in the query
                 //and check if their IpfsPath.EntityId coincides with the scene's entityId and if so, delete them.
                 entitiesToDestroy.Clear();
+
+                await UniTask.SwitchToMainThread();
 
                 if (!string.IsNullOrEmpty(sceneEntityId))
                 {
