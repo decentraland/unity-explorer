@@ -23,7 +23,12 @@ namespace ECS.Unity.Materials.Systems
 
         protected void DestroyEntityReference(ref Promise? promise)
         {
-            promise?.Consume(World);
+            if (promise == null) return;
+            Promise promiseValue = promise.Value;
+            promiseValue.Consume(World);
+
+            // Write the value back as `promise.Value` produces a copy of the struct
+            promise = promiseValue;
         }
 
         protected bool TryGetTextureResult(ref Promise? promise, out StreamableLoadingResult<Texture2D> textureResult)
@@ -33,7 +38,12 @@ namespace ECS.Unity.Materials.Systems
             if (promise == null)
                 return true;
 
-            return promise.Value.TryGetResult(World, out textureResult);
+            Promise value = promise.Value;
+            bool result = value.TryGetResult(World, out textureResult);
+
+            // Write the value back as `promise.Value` produces a copy of the struct
+            promise = value;
+            return result;
         }
 
         protected static void TrySetTexture(Material material, ref StreamableLoadingResult<Texture2D> textureResult, int propId, in TextureComponent? textureComponent)
@@ -44,6 +54,13 @@ namespace ECS.Unity.Materials.Systems
 
             if (textureComponent is { IsVideoTexture: true })
                 material.SetTextureScale(propId, VIDEO_TEXTURE_VERTICAL_FLIP);
+
+            // When the material is re-used for another texture we need to restore the texture scale
+            // Otherwise in case it was previously a video texture it gets x:1,y:-1 scale which is undesired
+            // This case happens on nft-museum at sdk-goerli-plaza 85,-8. A plane exists which has a texture that acts as a "preview" of the stream.
+            // Whenever you get close or far, the texture is changed either to video stream or regular exposing this issue
+            else
+                material.SetTextureScale(propId, Vector2.one);
         }
     }
 }

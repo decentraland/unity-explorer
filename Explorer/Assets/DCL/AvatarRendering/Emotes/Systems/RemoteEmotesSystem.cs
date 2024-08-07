@@ -1,7 +1,6 @@
 ﻿using Arch.Core;
 using Arch.SystemGroups;
 using Arch.SystemGroups.DefaultSystemGroups;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.Profiles.Bunches;
 using DCL.Multiplayer.Profiles.Tables;
@@ -55,6 +54,7 @@ namespace DCL.AvatarRendering.Emotes
                     ref CharacterEmoteIntent intention = ref World.AddOrGet<CharacterEmoteIntent>(entity);
                     intention.EmoteId = remoteEmoteIntention.EmoteId;
                     intention.Spatial = true;
+                    intention.TriggerSource = TriggerSource.REMOTE;
                 }
             }
 

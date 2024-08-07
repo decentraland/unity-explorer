@@ -1,28 +1,30 @@
-﻿using System.Collections.Generic;
-using CommunicationData.URLHelpers;
-using DCL.AvatarRendering.AvatarShape.ComputeShader;
+﻿using CommunicationData.URLHelpers;
 using DCL.AvatarRendering.AvatarShape.Rendering.TextureArray;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Optimization.Pools;
-using SceneRunner.Scene;
-using System.Linq;
 using ECS.SceneLifeCycle.Reporting;
 using ECS.SceneLifeCycle.SceneDefinition;
+using SceneRunner.Scene;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 using Utility;
 
-namespace DCL.LOD
+namespace DCL.LOD.Systems
 {
     public static class LODUtils
     {
-        public static readonly URLDomain LOD_WEB_URL = URLDomain.FromString("https://ab-cdn.decentraland.org/LOD/");
-
         public static readonly URLSubdirectory LOD_EMBEDDED_SUBDIRECTORIES = URLSubdirectory.FromString("lods");
 
-        public static readonly SceneAssetBundleManifest[] LOD_MANIFESTS =
-            Enumerable.Range(0, 4).Select(level => new SceneAssetBundleManifest(URLDomain.FromString($"{LOD_WEB_URL}{level}/"))).ToArray();
+        public static IReadOnlyList<SceneAssetBundleManifest> LODManifests(IDecentralandUrlsSource decentralandUrlsSource) =>
+            Enumerable
+               .Range(0, 4)
+               .Select(level => new SceneAssetBundleManifest(
+                        URLDomain.FromString($"{decentralandUrlsSource.Url(DecentralandUrl.AssetBundlesCDN)}/LOD/{level}/")
+                    )
+                )
+               .ToArray();
 
         private static readonly ListObjectPool<TextureArraySlot?> TEXTURE_ARRAY_SLOTS = new (listInstanceDefaultCapacity: 10, defaultCapacity: 20);
         public static string LOD_SHADER = "DCL/Scene_TexArray";
@@ -31,11 +33,13 @@ namespace DCL.LOD
         public static TextureArraySlot?[] ApplyTextureArrayToLOD(string sceneID, Vector2Int baseCoordinate, GameObject instantiatedLOD, TextureArrayContainer lodTextureArrayContainer)
         {
             var newSlots = TEXTURE_ARRAY_SLOTS.Get();
+
             using (var pooledList = instantiatedLOD.GetComponentsInChildrenIntoPooledList<Renderer>(true))
             {
                 for (int i = 0; i < pooledList.Value.Count; i++)
                 {
                     pooledList.Value[i].SafeGetMaterials(TEMP_MATERIALS);
+
                     for (int j = 0; j < TEMP_MATERIALS.Count; j++)
                     {
                         if (TEMP_MATERIALS[j].mainTexture != null)
@@ -50,6 +54,7 @@ namespace DCL.LOD
                             {
                                 ReportHub.LogWarning(ReportCategory.LOD, $"One material does not have the correct shader in {sceneID} {baseCoordinate}. " +
                                                                          $"It has {pooledList.Value[i].materials[j].shader} while it should be {LOD_SHADER}. Please check the AB Converter");
+
                                 continue;
                             }
 
@@ -74,5 +79,8 @@ namespace DCL.LOD
                 }
             }
         }
+        
+        
+        
     }
 }

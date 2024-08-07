@@ -2,6 +2,7 @@
 using DCL.ECSComponents;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
+using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Textures.Components;
@@ -41,7 +42,12 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 IPerformanceBudget budgetProvider = Substitute.For<IPerformanceBudget>();
                 budgetProvider.TrySpendBudget().Returns(true);
 
-                return new CreateMediaPlayerSystem(world, null, mediaPlayersPool, sceneStateProvider, budgetProvider);
+                return new CreateMediaPlayerSystem(world,
+                    Substitute.For<IWebRequestController>(),
+                    Substitute.For<ISceneData>(),
+                    mediaPlayersPool,
+                    sceneStateProvider,
+                    budgetProvider);
             }
         }
 
@@ -88,7 +94,7 @@ namespace DCL.SDKComponents.MediaStream.Tests
                 Loop = loop
             };
 
-            entity = world.Create(pbVideoPlayer, new VideoTextureComponent( new Texture2D(1, 1) ), PartitionComponent.TOP_PRIORITY); // Create entity
+            entity = world.Create(pbVideoPlayer, new VideoTextureConsumer(new Texture2D(1, 1)), PartitionComponent.TOP_PRIORITY); // Create entity
             AddTransformToEntity(entity);
 
             // Act
@@ -102,7 +108,9 @@ namespace DCL.SDKComponents.MediaStream.Tests
             MediaPlayer mediaPlayer = mediaPlayerComponent.MediaPlayer;
             Assert.That(mediaPlayer, Is.Not.Null);
             Assert.That(mediaPlayer.AudioVolume, Is.EqualTo(pbVideoPlayer.Volume));
-            Assert.That(mediaPlayer.Control.IsLooping(), Is.EqualTo(pbVideoPlayer.Loop));
+
+            // Control is not available before OpenMedia
+            // Assert.That(mediaPlayer.Control.IsLooping(), Is.EqualTo(pbVideoPlayer.Loop));
         }
 
         [Test]

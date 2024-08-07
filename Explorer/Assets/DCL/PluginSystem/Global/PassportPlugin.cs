@@ -8,6 +8,7 @@ using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
 using DCL.Input;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Passport;
 using DCL.Profiles;
 using DCL.Profiles.Self;
@@ -36,6 +37,7 @@ namespace DCL.PluginSystem.Global
         private readonly ISelfProfile selfProfile;
         private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -50,7 +52,9 @@ namespace DCL.PluginSystem.Global
             CharacterPreviewEventBus characterPreviewEventBus,
             ISelfProfile selfProfile,
             DCLInput dclInput,
-            IWebBrowser webBrowser)
+            IWebBrowser webBrowser,
+            IDecentralandUrlsSource decentralandUrlsSource
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -65,6 +69,7 @@ namespace DCL.PluginSystem.Global
             this.selfProfile = selfProfile;
             this.dclInput = dclInput;
             this.webBrowser = webBrowser;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -99,16 +104,12 @@ namespace DCL.PluginSystem.Global
                     arguments.PlayerEntity,
                     thumbnailProvider,
                     dclInput,
-                    webBrowser);
+                    webBrowser,
+                    decentralandUrlsSource
+                );
 
                 mvcManager.RegisterController(passportController);
             };
-        }
-
-        public override void Dispose()
-        {
-            passportController.Dispose();
-            base.Dispose();
         }
 
         public class PassportSettings : IDCLPluginSettings

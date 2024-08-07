@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using CrdtEcsBridge.Physics;
+using DCL.ECSComponents;
+using UnityEngine;
 
 namespace ECS.Unity.SceneBoundsChecker
 {
@@ -7,9 +9,10 @@ namespace ECS.Unity.SceneBoundsChecker
     /// </summary>
     public struct SDKCollider
     {
-        public readonly Collider Collider;
+        public readonly Collider? Collider;
 
         private bool isActiveByEntity;
+
         public bool IsActiveByEntity
         {
             get => isActiveByEntity;
@@ -30,13 +33,29 @@ namespace ECS.Unity.SceneBoundsChecker
         ///     When the structure is created Collider is disabled by default
         /// </summary>
         /// <param name="collider"></param>
-        public SDKCollider(Collider collider)
+        public SDKCollider(Collider? collider)
         {
             Collider = collider;
             isActiveByEntity = false;
             IsActiveBySceneBounds = false;
 
             ResolveColliderActivity();
+        }
+
+        public static SDKCollider NewInvalidSDKCollider() =>
+            new (null);
+
+        public void SetColliderLayer(ColliderLayer colliderLayer, out bool enabled)
+        {
+            GameObject colliderGameObject = Collider!.gameObject;
+
+            enabled = PhysicsLayers.TryGetUnityLayerFromSDKLayer(colliderLayer, out int unityLayer);
+
+            if (enabled)
+                colliderGameObject.layer = unityLayer;
+
+            IsActiveByEntity = enabled;
+            Collider.enabled = enabled;
         }
 
         public void ForceActiveBySceneBounds(bool value)
@@ -47,7 +66,8 @@ namespace ECS.Unity.SceneBoundsChecker
 
         private void ResolveColliderActivity()
         {
-            Collider.enabled = isActiveByEntity && IsActiveBySceneBounds;
+            if (Collider != null)
+                Collider.enabled = isActiveByEntity && IsActiveBySceneBounds;
         }
     }
 }

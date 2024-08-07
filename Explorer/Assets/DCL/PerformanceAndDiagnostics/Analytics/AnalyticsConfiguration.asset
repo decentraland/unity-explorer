@@ -23,12 +23,6 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: error
       isEnabled: 1
-  - groupName: Chat
-    events:
-    - eventName: chat_message_sent
-      isEnabled: 1
-    - eventName: chat_bubble_switched
-      isEnabled: 1
   - groupName: Map
     events:
     - eventName: map_jump_in
@@ -37,13 +31,29 @@ MonoBehaviour:
     events:
     - eventName: move_to_parcel
       isEnabled: 1
+    - eventName: time_spent_in_world
+      isEnabled: 1
+  - groupName: Badges
+    events:
     - eventName: walked_distance
       isEnabled: 1
-    - eventName: time_spent_in_world
+    - eventName: vertical_height_reached
+      isEnabled: 1
+  - groupName: UI
+    events:
+    - eventName: chat_message_sent
+      isEnabled: 1
+    - eventName: chat_bubble_switched
+      isEnabled: 1
+    - eventName: passport_opened
+      isEnabled: 1
+  - groupName: Wearables
+    events:
+    - eventName: used_emote
       isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
   flushInterval: 30
   segmentWriteKey: 
   <PerformanceReportInterval>k__BackingField: 15
-  <Mode>k__BackingField: 1
+  <Mode>k__BackingField: 0

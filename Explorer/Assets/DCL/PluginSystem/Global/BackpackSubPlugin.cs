@@ -38,7 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly BackpackEquipStatusController backpackEquipStatusController;
         private readonly URLDomain assetBundleURL;
@@ -66,7 +66,8 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IBackpackEventBus backpackEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
@@ -83,7 +84,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
 
             backpackCommandBus = new BackpackCommandBus();
-            backpackEventBus = new BackpackEventBus();
+            this.backpackEventBus = backpackEventBus;
 
             backpackEquipStatusController = new BackpackEquipStatusController(
                 backpackEventBus,

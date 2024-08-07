@@ -42,7 +42,7 @@ namespace DCL.Backpack
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
-        private readonly BackpackEventBus eventBus;
+        private readonly IBackpackEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
@@ -70,7 +70,7 @@ namespace DCL.Backpack
         public BackpackGridController(
             BackpackGridView view,
             BackpackCommandBus commandBus,
-            BackpackEventBus eventBus,
+            IBackpackEventBus eventBus,
             IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,

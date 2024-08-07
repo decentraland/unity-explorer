@@ -19,8 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Cysharp.Threading.Tasks;
-using UnityEngine.Assertions;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -86,7 +84,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             List<IWearable> resolvedDTOs = WearableComponentsUtils.WEARABLES_POOL.Get();
 
             var successfulResults = 0;
-            var successfulDtos = 0;
+            int finishedDTOs = 0;
 
             for (var index = 0; index < wearablesByPointersIntention.Pointers.Count; index++)
             {
@@ -114,8 +112,12 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                 if (wearable.WearableDTO.Succeeded)
                 {
-                    successfulDtos++;
+                    finishedDTOs++;
                     resolvedDTOs.Add(wearable);
+                }
+                else if (wearable.WearableDTO.Exception != null)
+                {
+                    finishedDTOs++;
                 }
             }
 
@@ -127,7 +129,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             ref HideWearablesResolution hideWearablesResolution = ref wearablesByPointersIntention.HideWearablesResolution;
 
-            if (successfulDtos == wearablesByPointersIntention.Pointers.Count)
+            if (finishedDTOs == wearablesByPointersIntention.Pointers.Count)
             {
                 if (hideWearablesResolution.VisibleWearables == null)
                     WearableComponentsUtils.ExtractVisibleWearables(wearablesByPointersIntention.BodyShape, resolvedDTOs, resolvedDTOs.Count, ref hideWearablesResolution);
@@ -183,32 +185,55 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 if (!promiseResult.Succeeded)
                 {
+                    //No wearable representation is going to be possible
                     foreach (string pointerID in promise.LoadingIntention.Pointers)
-                    {
-                        wearableCatalog.TryGetWearable(pointerID, out IWearable component);
-                        SetDefaultWearables(defaultWearablesResolved, component, in bodyShape);
-                        component.IsLoading = false;
-                    }
+                        ReportAndFinalizeWithError(pointerID);
                 }
                 else
                 {
+                    var failedDTOList = WearableComponentsUtils.POINTERS_POOL.Get();
+                    failedDTOList.AddRange(promise.LoadingIntention.Pointers);
+
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        if (!wearableCatalog.TryGetWearable(assetEntity.metadata.id, out IWearable component))
+                        bool isWearableInCatalog = wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component);
+                        if (!isWearableInCatalog)
                         {
-                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot finalize wearable DTO: {assetEntity.metadata.id}");
+                            //A wearable that has a DTO request should already have an empty representation in the catalog at this point
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Requested wearable {assetEntity.metadata.id} is not in the catalog");
                             continue;
                         }
 
-                        try { component.ResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)); }
-                        catch (AssertionException e) { ReportHub.LogError(new ReportData(GetReportCategory()), $"Cannot apply the DTO to the wearable {component.GetUrn()}: {e.Message}"); }
+                        if (!component.TryResolveDTO(new StreamableLoadingResult<WearableDTO>(assetEntity)))
+                            ReportHub.LogError(new ReportData(GetReportCategory()), $"Wearable DTO is has already been initialized: {assetEntity.metadata.id}");
 
+
+                        failedDTOList.Remove(assetEntity.metadata.id);
                         component.IsLoading = false;
                     }
+
+                    //If this list is not empty, it means we have at least one unresolvedDTO that was not completed. We need to finalize it as error
+                    foreach (var urn in failedDTOList)
+                        ReportAndFinalizeWithError(urn);
+
+                    WearableComponentsUtils.POINTERS_POOL.Release(failedDTOList);
                 }
 
                 WearableComponentsUtils.POINTERS_POOL.Release(promise.LoadingIntention.Pointers);
                 World.Destroy(entity);
+
+                void ReportAndFinalizeWithError(URN urn)
+                {
+                    //We have some missing pointers that were not completed. We have to consider them as failure
+                    var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
+                    ReportHub.LogError(new ReportData(GetReportCategory()), e);
+                    if (wearableCatalog.TryGetWearable(urn, out var component))
+                    {
+                        //If its not in the catalog, we cannot determine which one has failed
+                        component.ResolvedFailedDTO(new StreamableLoadingResult<WearableDTO>(e));
+                        component.IsLoading = false;
+                    }
+                }
             }
         }
 

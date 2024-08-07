@@ -7,9 +7,12 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
+using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.ExplorePanel;
+using DCL.Landscape.Settings;
+using DCL.MapRenderer;
 using DCL.Navmap;
 using DCL.Notification.NotificationsBus;
 using DCL.PlacesAPIService;
@@ -23,7 +26,7 @@ using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using ECS;
-using ECS.SceneLifeCycle;
+using ECS.Prioritization;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic;
 using MVC;
@@ -58,18 +61,19 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
 
-        private NavmapController? navmapController;
-        private SettingsController? settingsController;
-        private BackpackSubPlugin? backpackSubPlugin;
+        private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
-        private PersistentExploreOpenerView? exploreOpener;
-        private PersistentExplorePanelOpenerController? explorePanelOpener;
         private ExplorePanelInputHandler? inputHandler;
         private readonly IRealmData realmData;
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
         private readonly INotificationsBusController notificationsBusController;
+
+        private NavmapController? navmapController;
+        private SettingsController? settingsController;
+        private BackpackSubPlugin? backpackSubPlugin;
 
         public ExplorePanelPlugin(IAssetsProvisioner assetsProvisioner,
             IMVCManager mvcManager,
@@ -94,7 +98,9 @@ namespace DCL.PluginSystem.Global
             IProfileCache profileCache,
             URLDomain assetBundleURL,
             INotificationsBusController notificationsBusController,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IMapPathEventBus mapPathEventBus,
+            IBackpackEventBus backpackEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -120,6 +126,8 @@ namespace DCL.PluginSystem.Global
             this.emoteCache = emoteCache;
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
+            this.mapPathEventBus = mapPathEventBus;
+            this.backpackEventBus = backpackEventBus;
         }
 
         public override void Dispose()
@@ -147,21 +155,23 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 assetBundleURL,
                 webRequestController,
-                characterPreviewEventBus
+                characterPreviewEventBus,
+                backpackEventBus
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
             ControllerBase<ExplorePanelView, ExplorePanelParameter>.ViewFactoryMethod viewFactoryMethod = ExplorePanelController.Preallocate(panelViewAsset, null, out ExplorePanelView explorePanelView);
 
-            var settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
-            var generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
-            var realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
-            var landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
-            var qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
+            ProvidedAsset<SettingsMenuConfiguration> settingsMenuConfiguration = await assetsProvisioner.ProvideMainAssetAsync(settings.SettingsMenuConfiguration, ct);
+            ProvidedAsset<AudioMixer> generalAudioMixer = await assetsProvisioner.ProvideMainAssetAsync(settings.GeneralAudioMixer, ct);
+            ProvidedAsset<RealmPartitionSettingsAsset> realmPartitionSettings = await assetsProvisioner.ProvideMainAssetAsync(settings.RealmPartitionSettings, ct);
+
+            ProvidedAsset<LandscapeData> landscapeData = await assetsProvisioner.ProvideMainAssetAsync(settings.LandscapeData, ct);
+            ProvidedAsset<QualitySettingsAsset> qualitySettingsAsset = await assetsProvisioner.ProvideMainAssetAsync(settings.QualitySettingsAsset, ct);
             settingsController = new SettingsController(explorePanelView.GetComponentInChildren<SettingsView>(), settingsMenuConfiguration.Value, generalAudioMixer.Value, realmPartitionSettings.Value, landscapeData.Value, qualitySettingsAsset.Value);
 
-            exploreOpener = (await assetsProvisioner.ProvideMainAssetAsync(settings.PersistentExploreOpenerPrefab, ct: ct)).Value.GetComponent<PersistentExploreOpenerView>();
-            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData);
+            navmapController = new NavmapController(navmapView: explorePanelView.GetComponentInChildren<NavmapView>(), mapRendererContainer.MapRenderer, placesAPIService, webRequestController, webBrowser, dclInput, realmNavigator, realmData, mapPathEventBus);
+
             await navmapController.InitialiseAssetsAsync(assetsProvisioner, ct);
             ContinueInitialization? backpackInitialization = await backpackSubPlugin.InitializeAsync(settings.BackpackSettings, explorePanelView.GetComponentInChildren<BackpackView>(), ct);
 
@@ -175,11 +185,6 @@ namespace DCL.PluginSystem.Global
                     new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
                     dclInput, notificationsBusController, mvcManager));
 
-                explorePanelOpener = new PersistentExplorePanelOpenerController(
-                    PersistentExplorePanelOpenerController.CreateLazily(exploreOpener, null), mvcManager);
-
-                mvcManager.RegisterController(explorePanelOpener);
-
                 inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);
             };
         }
@@ -192,14 +197,6 @@ namespace DCL.PluginSystem.Global
             [field: Space]
             [field: SerializeField]
             public AssetReferenceGameObject ExplorePanelPrefab;
-
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject PersistentExploreOpenerPrefab;
-
-            [field: Space]
-            [field: SerializeField]
-            public AssetReferenceGameObject MinimapPrefab;
 
             [field: SerializeField]
             public BackpackSettings BackpackSettings { get; private set; }

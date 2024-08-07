@@ -1,8 +1,10 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Browser;
+using DCL.Browser.DecentralandUrls;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
@@ -68,7 +70,9 @@ namespace Global.Static
                 else
                     identityCache = new MemoryWeb3IdentityCache();
 
-                var dappWeb3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(),
+                var decentralandUrlsSource = new DecentralandUrlsSource(DecentralandEnvironment.Org);
+
+                var dappWeb3Authenticator = new DappWeb3Authenticator(new UnityAppWebBrowser(decentralandUrlsSource),
                     authenticationServerUrl, authenticationSignatureUrl,
                     identityCache,
                     new HashSet<string>(ethWhitelistMethods));
@@ -104,10 +108,11 @@ namespace Global.Static
 
                 var assetProvisioner = new AddressablesProvisioner().WithErrorTrace();
 
-                var reportHandlingSettings = await  BootstrapContainer.ProvideReportHandlingSettingsAsync(assetProvisioner,
+                var reportHandlingSettings = await BootstrapContainer.ProvideReportHandlingSettingsAsync(assetProvisioner,
                     globalPluginSettingsContainer.GetSettings<BootstrapSettings>(), ct);
 
                 (staticContainer, sceneSharedContainer) = await InstallAsync(
+                    decentralandUrlsSource,
                     assetProvisioner,
                     reportHandlingSettings.Value,
                     new DebugViewsCatalog(),
@@ -131,6 +136,7 @@ namespace Global.Static
         }
 
         public static async UniTask<(StaticContainer staticContainer, SceneSharedContainer sceneSharedContainer)> InstallAsync(
+            IDecentralandUrlsSource decentralandUrlsSource,
             IAssetsProvisioner assetsProvisioner,
             IReportsHandlingSettings reportHandlingSettings,
             DebugViewsCatalog debugViewsCatalog,
@@ -144,8 +150,8 @@ namespace Global.Static
             CancellationToken ct)
         {
             // First load the common global plugin
-            (StaticContainer? staticContainer, bool isLoaded)
-                = await StaticContainer.CreateAsync(
+            (StaticContainer? staticContainer, bool isLoaded) = await StaticContainer.CreateAsync(
+                decentralandUrlsSource,
                 assetsProvisioner,
                 reportHandlingSettings,
                 debugViewsCatalog,
@@ -161,7 +167,9 @@ namespace Global.Static
 
             await UniTask.WhenAll(staticContainer.ECSWorldPlugins.Select(gp => sceneSettingsContainer.InitializePluginAsync(gp, ct)).EnsureNotNull());
 
-            var sceneSharedContainer = SceneSharedContainer.Create(in staticContainer,
+            var sceneSharedContainer = SceneSharedContainer.Create(
+                in staticContainer,
+                decentralandUrlsSource,
                 new MVCManager(
                     new WindowStackManager(),
                     new CancellationTokenSource(), null
