@@ -18,7 +18,7 @@ namespace DCL.UI.Sidebar
         [field: Header("Profile")]
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; }
         [field: SerializeField] internal GameObject profileMenu { get; private set; }
-        [field: SerializeField] public SidebarProfileView SidebarProfileView { get; private set; }
+        [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; }
 
         [field: Header("Explore Panel Shortcuts")]
         [field: SerializeField] public PersistentEmoteWheelOpenerView PersistentEmoteWheelOpener { get; private set; }

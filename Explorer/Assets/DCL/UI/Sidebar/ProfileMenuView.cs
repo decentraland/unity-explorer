@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace DCL.UI.Sidebar
 {
-    public class SidebarProfileView : ViewBase, IView
+    public class ProfileMenuView : ViewBase, IView
     {
         private const float PANEL_FADE_TIME = 0.3f;
 

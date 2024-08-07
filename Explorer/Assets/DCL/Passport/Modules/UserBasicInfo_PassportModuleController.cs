@@ -14,9 +14,10 @@ namespace DCL.Passport.Modules
     public class UserBasicInfo_PassportModuleController : IPassportModuleController
     {
         private readonly UserBasicInfo_PassportModuleView view;
-        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly ISelfProfile selfProfile;
         private readonly PassportErrorsController passportErrorsController;
+        private readonly UserNameElementController nameElementController;
+        private readonly UserWalletAddressElementController walletAddressElementController;
 
         private Profile currentProfile;
         private CancellationTokenSource checkEditionAvailabilityCts;
@@ -28,41 +29,18 @@ namespace DCL.Passport.Modules
             PassportErrorsController passportErrorsController)
         {
             this.view = view;
-            this.chatEntryConfiguration = chatEntryConfiguration;
             this.selfProfile = selfProfile;
             this.passportErrorsController = passportErrorsController;
 
-            view.CopyNameWarningNotification.Hide(true);
-            view.CopyWalletWarningNotification.Hide(true);
-
-            view.CopyUserNameButton.onClick.AddListener(() =>
-            {
-                if (currentProfile == null)
-                    return;
-
-                CopyToClipboard(currentProfile.HasClaimedName ? view.UserNameText.text : $"{currentProfile.Name}#{currentProfile.UserId[^4..]}");
-                ShowCopyWarningAsync(view.CopyNameWarningNotification, CancellationToken.None).Forget();
-            });
-            view.CopyWalletAddressButton.onClick.AddListener(() =>
-            {
-                if (currentProfile == null)
-                    return;
-
-                CopyToClipboard(currentProfile.UserId);
-                ShowCopyWarningAsync(view.CopyWalletWarningNotification, CancellationToken.None).Forget();
-            });
+            nameElementController = new UserNameElementController(view.UserNameElement, chatEntryConfiguration);
+            walletAddressElementController = new UserWalletAddressElementController(view.UserWalletAddressElement);
         }
 
         public void Setup(Profile profile)
         {
             currentProfile = profile;
-
-            view.UserNameText.text = profile.Name;
-            view.UserNameText.color = chatEntryConfiguration.GetNameColor(profile.Name);
-            view.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
-            view.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
-            view.VerifiedMark.SetActive(profile.HasClaimedName);
-            view.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";
+            nameElementController.Setup(profile);
+            walletAddressElementController.Setup(profile);
 
             checkEditionAvailabilityCts = checkEditionAvailabilityCts.SafeRestart();
             // TODO (Santi): Uncomment this when the name's edition is available
@@ -74,21 +52,9 @@ namespace DCL.Passport.Modules
         public void Dispose()
         {
             checkEditionAvailabilityCts.SafeCancelAndDispose();
-            view.CopyUserNameButton.onClick.RemoveAllListeners();
-            view.CopyWalletAddressButton.onClick.RemoveAllListeners();
-            view.CopyNameWarningNotification.Hide(true);
-            view.CopyWalletWarningNotification.Hide(true);
+            nameElementController.Dispose();
+            walletAddressElementController.Dispose();
             Clear();
-        }
-
-        private void CopyToClipboard(string text) =>
-            GUIUtility.systemCopyBuffer = text;
-
-        private async UniTaskVoid ShowCopyWarningAsync(WarningNotificationView notificationView, CancellationToken ct)
-        {
-            notificationView.Show();
-            await UniTask.Delay(1000, cancellationToken: ct);
-            notificationView.Hide();
         }
 
         private async UniTaskVoid CheckForEditionAvailabilityAsync(CancellationToken ct)

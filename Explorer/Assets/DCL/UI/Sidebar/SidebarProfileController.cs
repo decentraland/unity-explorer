@@ -14,7 +14,7 @@ using Utility;
 
 namespace DCL.UI.Sidebar
 {
-    public class SidebarProfileController : ControllerBase<SidebarProfileView>
+    public class SidebarProfileController : ControllerBase<ProfileMenuView>
     {
         private readonly ProfileWidgetController profileWidgetController;
         private readonly SystemMenuController systemMenuController;
