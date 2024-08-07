@@ -7,7 +7,7 @@ using System;
 
 namespace DCL.Multiplayer.Connections.Archipelago.Rooms
 {
-    public class ForkArchipelagoIslandRoom : IArchipelagoIslandRoom
+    public class ForkGlobalRealmRoom : IArchipelagoIslandRoom
     {
         private readonly ICurrentAdapterAddress currentAdapterAddress;
         private readonly Func<IConnectiveRoom> wssRoomFactory;
@@ -16,7 +16,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
         private readonly InteriorRoom interiorRoom = new ();
         private IConnectiveRoom? current;
 
-        public ForkArchipelagoIslandRoom(ICurrentAdapterAddress currentAdapterAddress, Func<IConnectiveRoom> wssRoomFactory, Func<IConnectiveRoom> httpsRoomFactory)
+        public ForkGlobalRealmRoom(ICurrentAdapterAddress currentAdapterAddress, Func<IConnectiveRoom> wssRoomFactory, Func<IConnectiveRoom> httpsRoomFactory)
         {
             this.currentAdapterAddress = currentAdapterAddress;
             this.wssRoomFactory = wssRoomFactory;

@@ -21,7 +21,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             IWebRequestController webRequestController
         ) =>
             new RenewableArchipelagoIslandRoom(
-                () => new ForkArchipelagoIslandRoom(
+                () => new ForkGlobalRealmRoom(
                     currentAdapterAddress,
                     () => new ArchipelagoIslandRoom(
                         characterObject,
