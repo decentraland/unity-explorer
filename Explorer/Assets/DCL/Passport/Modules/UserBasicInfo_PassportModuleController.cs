@@ -3,10 +3,9 @@ using DCL.Chat;
 using DCL.Diagnostics;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
+using DCL.UI.ProfileElements;
 using System;
 using System.Threading;
-using UnityEngine;
 using Utility;
 
 namespace DCL.Passport.Modules

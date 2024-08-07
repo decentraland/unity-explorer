@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Passport.Modules
+namespace DCL.UI.ProfileElements
 {
     public class UserNameElement : MonoBehaviour
     {

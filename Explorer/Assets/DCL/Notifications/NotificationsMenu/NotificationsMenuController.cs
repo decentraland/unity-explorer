@@ -30,6 +30,7 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly CancellationTokenSource lifeCycleCts = new ();
 
         private CancellationTokenSource? notificationThumbnailCts;
+        private CancellationTokenSource? notificationPanelCts = new CancellationTokenSource();
 
         public NotificationsMenuController(
             NotificationsMenuView view,
@@ -54,18 +55,29 @@ namespace DCL.Notifications.NotificationsMenu
         public void Dispose()
         {
             notificationThumbnailCts.SafeCancelAndDispose();
+            notificationPanelCts.SafeCancelAndDispose();
             lifeCycleCts.SafeCancelAndDispose();
         }
 
         private void ClosePanel()
         {
             sidebarBus.UnblockSidebar();
-            view.gameObject.SetActive(false);
+            notificationPanelCts = notificationPanelCts.SafeRestart();
+            view.HideAsync(notificationPanelCts.Token).Forget();
         }
 
         public void ToggleNotificationsPanel(bool forceClose)
         {
-            view.gameObject.SetActive(!forceClose && !view.gameObject.activeSelf);
+            notificationPanelCts = notificationPanelCts.SafeRestart();
+
+            if (!forceClose && !view.gameObject.activeSelf)
+            {
+                view.ShowAsync(notificationPanelCts.Token).Forget();
+            }
+            else if (view.gameObject.activeSelf)
+            {
+                view.HideAsync(notificationPanelCts.Token).Forget();
+            }
         }
 
         private async UniTaskVoid InitialNotificationRequestAsync(CancellationToken ct)

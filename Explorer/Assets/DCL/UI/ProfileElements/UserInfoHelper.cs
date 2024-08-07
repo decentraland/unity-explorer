@@ -1,9 +1,8 @@
 ﻿using Cysharp.Threading.Tasks;
-using DCL.UI;
 using System.Threading;
 using UnityEngine;
 
-namespace DCL.Passport.Modules
+namespace DCL.UI.ProfileElements
 {
     public static class UserInfoHelper
     {
@@ -16,6 +15,5 @@ namespace DCL.Passport.Modules
             await UniTask.Delay(1000, cancellationToken: ct);
             notificationView.Hide();
         }
-
     }
 }

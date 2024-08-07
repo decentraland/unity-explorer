@@ -1493,6 +1493,7 @@ GameObject:
   - component: {fileID: 1417864235299858357}
   - component: {fileID: 2630432308209043527}
   - component: {fileID: 3935271799000028599}
+  - component: {fileID: 247327978048526739}
   m_Layer: 5
   m_Name: SidebarProfileWidget
   m_TagString: Untagged
@@ -1639,7 +1640,21 @@ MonoBehaviour:
   <raycaster>k__BackingField: {fileID: 1417864235299858357}
   <ProfileMenuWidget>k__BackingField: {fileID: 5526303982130552491}
   <SystemMenuView>k__BackingField: {fileID: 6083280960890443224}
-  <CanvasGroup>k__BackingField: {fileID: 2630432308209043527}
+  <viewAnimationElement>k__BackingField: {fileID: 0}
+--- !u!114 &247327978048526739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4625828311251772225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38b1c5e9144d4ef39861c60d5bc3c592, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <fadeTime>k__BackingField: 0.3
+  <canvasGroup>k__BackingField: {fileID: 2630432308209043527}
 --- !u!1 &4947192084918701551
 GameObject:
   m_ObjectHideFlags: 0

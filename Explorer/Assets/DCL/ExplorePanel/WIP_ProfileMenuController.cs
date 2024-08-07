@@ -1,0 +1,73 @@
+﻿using Cysharp.Threading.Tasks;
+using DCL.Profiles;
+using DCL.UI;
+using DCL.Web3.Identities;
+using DCL.WebRequests;
+using MVC;
+using System.Threading;
+using Utility;
+
+namespace DCL.ExplorePanel
+{
+    public class WIP_ProfileMenuController : ControllerBase<ProfileWidgetView>
+    {
+        private const string GUEST_NAME = "Guest";
+
+        private readonly IWeb3IdentityCache identityCache;
+        private readonly IProfileRepository profileRepository;
+        private readonly IWebRequestController webRequestController;
+
+        private ImageController? profileImageController;
+        private CancellationTokenSource? loadProfileCts;
+
+        public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
+
+        public WIP_ProfileMenuController(ViewFactoryMethod viewFactory,
+            IWeb3IdentityCache identityCache,
+            IProfileRepository profileRepository,
+            IWebRequestController webRequestController)
+            : base(viewFactory)
+        {
+            this.identityCache = identityCache;
+            this.profileRepository = profileRepository;
+            this.webRequestController = webRequestController;
+        }
+
+        protected override void OnViewInstantiated()
+        {
+            base.OnViewInstantiated();
+
+            profileImageController = new ImageController(viewInstance.FaceSnapshotImage, webRequestController);
+        }
+
+        protected override void OnBeforeViewShow()
+        {
+            base.OnBeforeViewShow();
+
+            loadProfileCts = loadProfileCts.SafeRestart();
+            LoadAsync(loadProfileCts.Token).Forget();
+        }
+
+        protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
+            UniTask.Never(ct);
+
+        private async UniTaskVoid LoadAsync(CancellationToken ct)
+        {
+            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, ct);
+
+            if (viewInstance.NameLabel != null) viewInstance.NameLabel.text = profile?.Name ?? GUEST_NAME;
+
+            if (viewInstance.AddressLabel != null)
+            {
+                if (profile is { HasClaimedName: false })
+                    viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
+            }
+
+            profileImageController!.StopLoading();
+
+            //temporarily disabled the profile image request untill we have the correct
+            //picture deployment
+            //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
+        }
+    }
+}

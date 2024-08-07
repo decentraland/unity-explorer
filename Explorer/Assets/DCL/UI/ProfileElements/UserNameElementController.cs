@@ -2,7 +2,7 @@
 using DCL.Profiles;
 using System.Threading;
 
-namespace DCL.Passport.Modules
+namespace DCL.UI.ProfileElements
 {
     public class UserNameElementController
     {

@@ -1,7 +1,8 @@
-﻿using DCL.Profiles;
+﻿using DCL.Passport.Modules;
+using DCL.Profiles;
 using System.Threading;
 
-namespace DCL.Passport.Modules
+namespace DCL.UI.ProfileElements
 {
     public class UserWalletAddressElementController
     {
