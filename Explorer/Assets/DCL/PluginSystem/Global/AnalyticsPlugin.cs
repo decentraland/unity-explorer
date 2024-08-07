@@ -43,6 +43,7 @@ namespace DCL.PluginSystem.Global
             PerformanceAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData, profiler);
             TimeSpentInWorldAnalyticsSystem.InjectToWorld(ref builder, analytics, realmData);
             BadgesHeightReachedSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
+            AnalyticsEmotesSystem.InjectToWorld(ref builder, analytics, realmData, arguments.PlayerEntity);
         }
 
         public void Dispose()

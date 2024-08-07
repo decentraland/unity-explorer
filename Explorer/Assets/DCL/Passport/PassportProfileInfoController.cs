@@ -11,22 +11,20 @@ namespace DCL.Passport
     public class PassportProfileInfoController
     {
         public event Action<Profile>? OnProfilePublished;
+        public event Action PublishError;
 
         private readonly ISelfProfile selfProfile;
         private readonly World world;
         private readonly Entity playerEntity;
-        private readonly PassportErrorsController passportErrorsController;
 
         public PassportProfileInfoController(
             ISelfProfile selfProfile,
             World world,
-            Entity playerEntity,
-            PassportErrorsController passportErrorsController)
+            Entity playerEntity)
         {
             this.selfProfile = selfProfile;
             this.world = world;
             this.playerEntity = playerEntity;
-            this.passportErrorsController = passportErrorsController;
         }
 
         public async UniTask UpdateProfileAsync(CancellationToken ct)
@@ -49,7 +47,7 @@ namespace DCL.Passport
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error while trying to update your profile info. Please try again!";
-                passportErrorsController.Show();
+                PublishError?.Invoke();
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
