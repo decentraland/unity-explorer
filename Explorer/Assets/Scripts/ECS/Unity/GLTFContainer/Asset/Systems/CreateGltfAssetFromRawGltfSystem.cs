@@ -20,6 +20,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
     [LogCategory(ReportCategory.GLTF_CONTAINER)]
     public partial class CreateGltfAssetFromRawGltfSystem : BaseUnityLoopSystem
     {
+        private const string COLLIDER_SUFFIX = "_collider";
         private readonly IPerformanceBudget instantiationFrameTimeBudget;
         private readonly IPerformanceBudget memoryBudget;
 
@@ -48,18 +49,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static GltfContainerAsset CreateGltfObject(GLTFData gltfData)
         {
-            // TODO: Create container GameObject, containerTransform, instantiate GLTF GameObject and
-            // populate GltfContainerAsset; Check 'CreateGltfAssetFromAssetBundleSystem.CreateGltfObject()'...
-
-            /*var container = new GameObject(gltfData.gltfImportedData.GetSceneName(0));
-
-            // Let the upper layer decide what to do with the root
-            container.SetActive(false);
-            Transform containerTransform = container.transform;*/
-
             var result = GltfContainerAsset.Create(gltfData.containerGameObject, gltfData);
-
-            // GameObject? instance = Object.Instantiate(assetBundleData.GetMainAsset<GameObject>(), containerTransform);
 
             // TODO: Uncommenting this causes all GLTF to not render at all, need to research why
             // Collect all renderers, they are needed for Visibility system
@@ -83,6 +73,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 result.Animators.AddRange(animatorScope.Value);
             }
 
+            // TODO: Collider work is still wip in PR v2, this PR does have basic collider handling though
             // Collect colliders from mesh filters
             // Colliders are created/fetched disabled as its layer is controlled by another system
             /*using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
@@ -103,6 +94,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 }
             }*/
 
+            // TODO: Collider work is still wip in PR v2
             // Collect colliders from skinned mesh renderers
             /*using (PoolExtensions.Scope<List<SkinnedMeshRenderer>> instanceRenderers = GltfContainerAsset.SKINNED_RENDERERS_POOL.AutoScope())
             {
@@ -128,7 +120,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             foreach (MeshFilter filter in meshFilters)
             {
-                if (filter.name.Contains("_collider", StringComparison.OrdinalIgnoreCase))
+                if (filter.name.Contains(COLLIDER_SUFFIX, StringComparison.OrdinalIgnoreCase))
                     ConfigureColliders(filter.transform, filter);
             }
 
@@ -136,14 +128,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
             foreach (Renderer r in renderers)
             {
-                if (r.name.Contains("_collider", StringComparison.OrdinalIgnoreCase))
+                if (r.name.Contains(COLLIDER_SUFFIX, StringComparison.OrdinalIgnoreCase))
                     UnityObjectUtils.SafeDestroy(r);
             }
         }
 
         private static void ConfigureColliders(Transform transform, MeshFilter filter)
         {
-            if (filter != null)
+            if (filter)
             {
                 Physics.BakeMesh(filter.sharedMesh.GetInstanceID(), false);
                 filter.gameObject.AddComponent<MeshCollider>();

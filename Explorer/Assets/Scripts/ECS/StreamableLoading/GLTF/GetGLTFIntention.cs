@@ -16,7 +16,7 @@ namespace ECS.StreamableLoading.GLTF
         private GetGLTFIntention(
             string? name = null,
             string? hash = null,
-            CancellationTokenSource cancellationTokenSource = null)
+            CancellationTokenSource? cancellationTokenSource = null)
         {
             Name = name;
             Hash = hash;

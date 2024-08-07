@@ -11,7 +11,6 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Interaction.Utility;
-using DCL.Ipfs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;

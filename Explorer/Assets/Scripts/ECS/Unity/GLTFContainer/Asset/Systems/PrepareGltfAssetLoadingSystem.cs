@@ -5,7 +5,6 @@ using DCL.Diagnostics;
 using ECS.Abstract;
 using ECS.StreamableLoading;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.GLTF;
 using ECS.Unity.GLTFContainer.Asset.Cache;
@@ -41,14 +40,13 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
         [None(typeof(StreamableLoadingResult<GltfContainerAsset>), typeof(GetAssetBundleIntention), typeof(GetGLTFIntention))]
         private void Prepare(in Entity entity, ref GetGltfContainerAssetIntention intention)
         {
-            // TODO: RE-ENABLE later
             // Try load from cache
-            /*if (cache.TryGet(intention.Hash, out GltfContainerAsset asset))
+            if (cache.TryGet(intention.Hash, out GltfContainerAsset? asset))
             {
                 // construct the result immediately
                 World.Add(entity, new StreamableLoadingResult<GltfContainerAsset>(asset));
                 return;
-            }*/
+            }
 
             if (localSceneDevelopment)
                 World.Add(entity, GetGLTFIntention.Create(intention.Name, intention.Hash));

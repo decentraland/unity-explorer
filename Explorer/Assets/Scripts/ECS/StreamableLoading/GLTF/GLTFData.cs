@@ -17,7 +17,6 @@ namespace ECS.StreamableLoading.GLTF
         public void Dispose()
         {
             gltfImportedData.Dispose();
-            // Object.Destroy(containerGameObject);
         }
     }
 }

@@ -15,7 +15,6 @@ using UnityEngine;
 namespace ECS.StreamableLoading.GLTF
 {
     [UpdateInGroup(typeof(StreamableLoadingGroup))]
-    //[LogCategory(ReportCategory.ASSET_BUNDLES)]
     public partial class LoadGLTFSystem: LoadSystemBase<GLTFData, GetGLTFIntention>
     {
         private ISceneData sceneData;
@@ -29,10 +28,6 @@ namespace ECS.StreamableLoading.GLTF
             IPartitionComponent partitionComponent) : base(world, cache)
         {
             this.sceneData = sceneData;
-
-            // Inject sceneData into GltFastDownloadProvider???
-            // sceneData.TryGetMediaUrl()
-
             gltfDownloadProvider = new GltFastDownloadProvider(World, sceneData, partitionComponent);
         }
 
@@ -70,9 +65,8 @@ namespace ECS.StreamableLoading.GLTF
         {
             if (!sceneData.SceneContent.TryGetContentUrl(intention.Name!, out var finalDownloadUrl))
                 return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
-            Debug.Log($"content final download URL: {finalDownloadUrl}");
 
-            gltfDownloadProvider.targetGltfOriginalPath = intention.Name!; // TODO: look for a better way
+            gltfDownloadProvider.TargetGltfOriginalPath = intention.Name!;
             var gltfImport = new GltfImport(downloadProvider: gltfDownloadProvider, logger: gltfConsoleLogger);
 
             var gltFastSettings = new ImportSettings
@@ -83,7 +77,6 @@ namespace ECS.StreamableLoading.GLTF
             };
 
             bool success = await gltfImport.Load(finalDownloadUrl, gltFastSettings, ct);
-            Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - SUCCESS ({intention.Name}): {success}");
 
             // Release budget now to not hold it until dependencies are resolved to prevent a deadlock
             acquiredBudget.Release();
@@ -101,7 +94,6 @@ namespace ECS.StreamableLoading.GLTF
                 return new StreamableLoadingResult<GLTFData>(new GLTFData(gltfImport, rootContainer));
             }
 
-            // Debug.Log($"LoadGLTFSystem.FlowInternalAsync() - LOADING ERROR: {gltfImport.LoadingError}");
             return new StreamableLoadingResult<GLTFData>(new Exception("The content to download couldn't be found"));
         }
 

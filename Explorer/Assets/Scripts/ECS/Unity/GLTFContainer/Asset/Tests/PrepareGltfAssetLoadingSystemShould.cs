@@ -1,6 +1,5 @@
 ﻿using Arch.Core;
 using ECS.StreamableLoading.AssetBundles;
-using ECS.StreamableLoading.Cache;
 using ECS.StreamableLoading.Common.Components;
 using ECS.TestSuite;
 using ECS.Unity.GLTFContainer.Asset.Cache;

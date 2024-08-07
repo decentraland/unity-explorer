@@ -1,6 +1,5 @@
 using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.WebRequests;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.Common.Components;
 using ECS.StreamableLoading.Textures;
@@ -8,19 +7,17 @@ using GLTFast;
 using GLTFast.Loading;
 using SceneRunner.Scene;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-using Object = UnityEngine.Object;
 using Promise = ECS.StreamableLoading.Common.AssetPromise<UnityEngine.Texture2D, ECS.StreamableLoading.Textures.GetTextureIntention>;
 
 namespace ECS.StreamableLoading.GLTF
 {
     internal class GltFastDownloadProvider : IDownloadProvider, IDisposable
     {
-        public string targetGltfOriginalPath = string.Empty;
+        public string TargetGltfOriginalPath = string.Empty;
 
         private ISceneData sceneData;
         private World world;
@@ -57,21 +54,10 @@ namespace ECS.StreamableLoading.GLTF
 
         public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable, bool forceLinear)
         {
-            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() - 1 -> \n"
-                      + $"uri.AbsoluteUri: {uri.AbsoluteUri};\n"
-                      + $"uri.Host: {uri.Host};\n"
-                      + $"uri.AbsolutePath: {uri.AbsolutePath};\n"
-                      + $"uri.OriginalString: {uri.OriginalString};\n"
-                      + $"uri.LocalPath: {uri.LocalPath};\n"
-                      + $"uri.Fragment: {uri.Fragment};\n"
-                      + $"uri.Query: {uri.Query};\n"
-                      + $"uri.PathAndQuery: {uri.PathAndQuery}");
-
             string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
-            string textureOriginalPath = string.Concat(targetGltfOriginalPath.Remove(targetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
+            string textureOriginalPath = string.Concat(TargetGltfOriginalPath.Remove(TargetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
 
             sceneData.SceneContent.TryGetContentUrl(textureOriginalPath, out var tryGetContentUrlResult);
-            Debug.Log($"PRAVS - GltFastDownloadProvider.RequestTexture() - 2 - texture final url: {tryGetContentUrlResult}");
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
@@ -101,9 +87,6 @@ namespace ECS.StreamableLoading.GLTF
 
         public void Dispose()
         {
-            // foreach (IDisposable disposable in disposables) { disposable.Dispose(); }
-            // disposables.Clear();
-            // isDisposed = true;
         }
     }
 

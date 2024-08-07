@@ -6,7 +6,6 @@ using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Web3;

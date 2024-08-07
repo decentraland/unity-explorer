@@ -11,7 +11,7 @@ namespace ECS.StreamableLoading.Common.Components
         public readonly bool Succeeded;
         public readonly T? Asset;
 
-        public StreamableLoadingResult(T asset) : this()
+        public StreamableLoadingResult(T? asset) : this()
         {
             Asset = asset;
             Succeeded = true;

@@ -17,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
-using DCL.PluginSystem.Global;
 using DCL.Utilities.Extensions;
 using Global.Dynamic;
 using UnityEngine;

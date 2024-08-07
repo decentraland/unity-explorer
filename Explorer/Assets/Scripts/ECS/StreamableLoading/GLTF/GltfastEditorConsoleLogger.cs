@@ -6,49 +6,50 @@ namespace ECS.StreamableLoading.GLTF
 {
     public class GltfastEditorConsoleLogger : ICodeLogger
     {
+        private const string GLTF_PREFIX = "GLTF - ";
         public LogCode LastErrorCode { get; private set; }
 
         public void Error(LogCode code, params string[] messages)
         {
             LastErrorCode = code;
-            Debug.LogError("PRAVS - " + LogMessages.GetFullMessage(code, messages));
+            Debug.LogError(GLTF_PREFIX + LogMessages.GetFullMessage(code, messages));
         }
 
         public void Warning(LogCode code, params string[] messages)
         {
-            LogWarning("PRAVS - " + LogMessages.GetFullMessage(code, messages));
+            LogWarning(GLTF_PREFIX + LogMessages.GetFullMessage(code, messages));
         }
 
         public void Info(LogCode code, params string[] messages)
         {
-            LogVerbose("PRAVS - " + LogMessages.GetFullMessage(code, messages));
+            LogVerbose(GLTF_PREFIX + LogMessages.GetFullMessage(code, messages));
         }
 
         public void Error(string message)
         {
-            Debug.LogError("PRAVS - " + message);
+            Debug.LogError(GLTF_PREFIX + message);
         }
 
         public void Warning(string message)
         {
-            LogWarning("PRAVS - " + message);
+            LogWarning(GLTF_PREFIX + message);
         }
 
         public void Info(string message)
         {
-            LogVerbose("PRAVS - " + message);
+            LogVerbose(GLTF_PREFIX + message);
         }
 
         [Conditional("UNITY_EDITOR")]
         private void LogWarning(string message)
         {
-            Debug.LogWarning("PRAVS - " + message);
+            Debug.LogWarning(GLTF_PREFIX + message);
         }
 
         [Conditional("UNITY_EDITOR")]
         private void LogVerbose(string message)
         {
-            Debug.Log("PRAVS - " + message);
+            Debug.Log(GLTF_PREFIX + message);
         }
     }
 }
