@@ -1,4 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
+using Cysharp.Threading.Tasks;
 using DCL.Ipfs;
 using System.Collections.Generic;
 using System.Linq;
@@ -45,8 +46,12 @@ namespace ECS.SceneLifeCycle.SceneDefinition
     public static class SceneDefinitionComponentFactory
     {
         private static readonly SceneMetadataScene EMPTY_METADATA = new ();
-        private static ParcelMathHelper.SceneGeometry cachedPortableExperiencesSceneGeometry;
-        private static List<ParcelMathHelper.ParcelCorners> cachedParcelsCorners;
+        //This is considering a size of -150 to 150 parcels
+        private const float PORTABLE_EXPERIENCE_MAX_VALUES = 2400f;
+        private static readonly ParcelMathHelper.SceneGeometry PORTABLE_EXPERIENCES_SCENE_GEOMETRY = new ParcelMathHelper.SceneGeometry(Vector3.zero,
+            new ParcelMathHelper.SceneCircumscribedPlanes(-PORTABLE_EXPERIENCE_MAX_VALUES, PORTABLE_EXPERIENCE_MAX_VALUES, -PORTABLE_EXPERIENCE_MAX_VALUES, PORTABLE_EXPERIENCE_MAX_VALUES));
+        //PX don't care about parcel corners as they work on all the map.
+        private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 
         public static SceneDefinitionComponent CreateFromDefinition(SceneEntityDefinition definition, IpfsPath ipfsPath)
         {
@@ -55,32 +60,17 @@ namespace ECS.SceneLifeCycle.SceneDefinition
             return CreateSceneDefinitionComponent(definition, definition.metadata.scene.DecodedParcels, ipfsPath, isEmpty: false, isSDK7: definition.metadata.runtimeVersion == "7", isPortableExperience: false);
         }
 
-        public static SceneDefinitionComponent CreatePortableExperienceSceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath)
-        {
-            if (cachedParcelsCorners == null)
-            {
-                var portableParcels = new List<Vector2Int>();
-
-                for (int i = -150; i < 150; i++)
-                {
-                    for (int j = -150; j < 150; j++) { portableParcels.Add(new Vector2Int(i, j)); }
-                }
-
-                cachedParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(portableParcels.Select(ParcelMathHelper.CalculateCorners));
-                cachedPortableExperiencesSceneGeometry = ParcelMathHelper.CreateSceneGeometry(cachedParcelsCorners, definition.metadata.scene.DecodedBase);
-            }
-
-            return new SceneDefinitionComponent(
+        private static SceneDefinitionComponent CreatePortableExperienceSceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
+            new (
                 definition,
                 parcels: definition.metadata.scene.DecodedParcels,
-                cachedParcelsCorners,
-                cachedPortableExperiencesSceneGeometry,
+                PORTABLE_EXPERIENCES_PARCEL_CORNERS,
+                PORTABLE_EXPERIENCES_SCENE_GEOMETRY,
                 ipfsPath,
                 isEmpty: false,
                 isSDK7: definition.metadata.runtimeVersion == "7",
                 isPortableExperience: true
             );
-        }
 
         /// <summary>
         ///     Create empty scene pointer

@@ -130,18 +130,15 @@ namespace PortableExperiences.Controller
                 PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
 
                 //Portable Experiences only have one scene
-                string? sceneUrn = portableExperienceRealmComponent.Ipfs.SceneUrns[0];
+                string sceneUrn = portableExperienceRealmComponent.Ipfs.SceneUrns[0];
                 string sceneEntityId = string.Empty;
 
-                if (sceneUrn != null)
-                {
-                    sceneEntityId = IpfsHelper.ParseUrn(sceneUrn).EntityId;
+                sceneEntityId = IpfsHelper.ParseUrn(sceneUrn).EntityId;
 
-                    if (scenesCache.TryGetPortableExperienceBySceneUrn(sceneEntityId, out ISceneFacade sceneFacade))
-                    {
-                        await sceneFacade.DisposeAsync();
-                        scenesCache.RemovePortableExperienceFacade(sceneEntityId);
-                    }
+                if (scenesCache.TryGetPortableExperienceBySceneUrn(sceneEntityId, out ISceneFacade sceneFacade))
+                {
+                    await sceneFacade.DisposeAsync();
+                    scenesCache.RemovePortableExperienceFacade(sceneEntityId);
                 }
 
                 // Clear the world from everything connected to the current PX
