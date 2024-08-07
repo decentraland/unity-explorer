@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Web;
+using UnityEngine;
 
 namespace Global.Dynamic
 {
     public class ApplicationParametersParser
     {
         private readonly string[] programArgs;
-        private Dictionary<string, string>? parameters;
+        private Dictionary<string, string>? parsedArgs;
 
         public ApplicationParametersParser(string[] programArgs)
         {
@@ -18,8 +19,8 @@ namespace Global.Dynamic
 
         public Dictionary<string, string> Get()
         {
-            if (parameters != null)
-                return parameters;
+            if (parsedArgs != null)
+                return parsedArgs;
 
             Dictionary<string, string> appParameters = new ();
 
@@ -65,7 +66,7 @@ namespace Global.Dynamic
             }
 #endif
 
-            parameters = appParameters;
+            parsedArgs = appParameters;
             return appParameters;
         }
 
@@ -79,7 +80,8 @@ namespace Global.Dynamic
             var uri = new Uri(deepLinkString);
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            foreach (string uriQueryKey in uriQuery.AllKeys) { appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey); }
+            foreach (string uriQueryKey in uriQuery.AllKeys)
+                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
         }
     }
 }
