@@ -33,14 +33,14 @@ namespace Global.Dynamic
             this.analytics = analytics;
         }
 
-        public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, CancellationToken ct)
+        public void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, CancellationToken ct)
         {
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {
                 { STAGE_KEY, "0 - started" },
             });
 
-            core.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, ct);
+            core.PreInitializeSetup(cursorRoot, debugUiRoot, splashRoot, ct);
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct)

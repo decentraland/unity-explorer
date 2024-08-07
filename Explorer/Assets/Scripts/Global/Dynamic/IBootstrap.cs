@@ -15,7 +15,7 @@ namespace Global.Dynamic
 {
     public interface IBootstrap
     {
-        void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, CancellationToken ct);
+        void PreInitializeSetup(UIDocument cursorRoot, UIDocument debugUiRoot, GameObject splashRoot, CancellationToken ct);
 
         UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct);
 

@@ -105,13 +105,22 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings, sceneLoaderSettings: settings, globalPluginSettingsContainer, destroyCancellationToken);
+            ApplicationParametersParser applicationParametersParser = new ApplicationParametersParser();
 
-            IBootstrap bootstrap = bootstrapContainer!.Bootstrap;
+            launchSettings.ApplyConfig(applicationParametersParser);
+
+            bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings,
+                sceneLoaderSettings: settings,
+                globalPluginSettingsContainer,
+                applicationParametersParser,
+                launchSettings,
+                destroyCancellationToken);
+
+            IBootstrap bootstrap = bootstrapContainer!.Bootstrap!;
 
             try
             {
-                bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, destroyCancellationToken);
+                bootstrap.PreInitializeSetup(cursorRoot, debugUiRoot, splashRoot, destroyCancellationToken);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
