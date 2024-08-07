@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.AuthenticationScreenFlow;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
+using DCL.Diagnostics;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using MVC;
@@ -17,6 +18,7 @@ using DCL.Web3.Identities;
 using ECS.SceneLifeCycle.Realm;
 using System.Collections.Generic;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow
 {
@@ -82,7 +84,7 @@ namespace DCL.UserInAppInitializationFlow
             Entity playerEntity,
             CancellationToken ct)
         {
-            StartupResult result = default;
+            Result result = default;
 
             loadPlayerAvatarStartupOperation.AssignWorld(world, playerEntity);
             restartRealmStartupOperation.EnableReload(reloadRealm);
@@ -93,15 +95,26 @@ namespace DCL.UserInAppInitializationFlow
             {
                 if (showAuthentication) await ShowAuthenticationScreenAsync(ct);
 
-                await LoadingScreen(showLoading)
+                var showResult = await LoadingScreen(showLoading)
                    .ShowWhileExecuteTaskAsync(
                         async parentLoadReport => result = await startupOperation.ExecuteAsync(parentLoadReport, ct),
                         ct
                     );
 
+                ApplyErrorIfTimeout(ref result, showResult);
+
+                if (result.Success == false)
+                    ReportHub.LogError(ReportCategory.DEBUG, result.ErrorMessage!);
+
                 //TODO notification popup on failure
             }
             while (result.Success == false && showAuthentication);
+        }
+
+        private static void ApplyErrorIfTimeout(ref Result result, ILoadingScreen.ShowResult showResult)
+        {
+            if (showResult == ILoadingScreen.ShowResult.Timeout)
+                result = Result.ErrorResult("Loading timed out");
         }
 
         private async UniTask ShowAuthenticationScreenAsync(CancellationToken ct)

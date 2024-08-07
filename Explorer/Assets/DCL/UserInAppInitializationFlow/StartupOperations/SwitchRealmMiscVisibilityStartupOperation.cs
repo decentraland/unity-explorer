@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using ECS.SceneLifeCycle.Realm;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
@@ -14,10 +15,10 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.realmNavigator = realmNavigator;
         }
 
-        public async UniTask<StartupResult> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             await realmNavigator.SwitchMiscVisibilityAsync();
-            return StartupResult.SuccessResult();
+            return Result.SuccessResult();
         }
     }
 }

@@ -7,6 +7,7 @@ using DCL.Web3.Identities;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
@@ -25,12 +26,12 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.appParameters = appParameters;
         }
 
-        public async UniTask<StartupResult> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             // Re-initialize feature flags since the user might have changed thus the data to be resolved
             try { await featureFlagsProvider.InitializeAsync(decentralandUrlsSource, web3IdentityCache.Identity?.Address, appParameters, ct); }
             catch (Exception e) when (e is not OperationCanceledException) { ReportHub.LogException(e, new ReportData(ReportCategory.FEATURE_FLAGS)); }
-            return StartupResult.SuccessResult();
+            return Result.SuccessResult();
         }
     }
 }

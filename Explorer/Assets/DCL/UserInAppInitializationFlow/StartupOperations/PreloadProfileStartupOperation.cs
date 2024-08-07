@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Profiles.Self;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
@@ -16,11 +17,11 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.selfProfile = selfProfile;
         }
 
-        public async UniTask<StartupResult> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             await selfProfile.ProfileOrPublishIfNotAsync(ct);
             report.SetProgress(loadingStatus.SetStage(RealFlowLoadingStatus.Stage.ProfileLoaded));
-            return StartupResult.SuccessResult();
+            return Result.SuccessResult();
         }
     }
 }

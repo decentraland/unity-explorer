@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using System.Collections.Generic;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
 {
@@ -16,7 +17,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
             this.operations = operations;
         }
 
-        public async UniTask<StartupResult> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             foreach (IStartupOperation startupOperation in operations)
             {
@@ -30,7 +31,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations.Struct
                 }
             }
 
-            return StartupResult.SuccessResult();
+            return Result.SuccessResult();
         }
     }
 }

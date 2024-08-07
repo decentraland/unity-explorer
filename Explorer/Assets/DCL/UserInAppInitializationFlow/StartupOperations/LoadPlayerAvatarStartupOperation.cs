@@ -6,6 +6,7 @@ using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Utilities;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
@@ -31,7 +32,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             playerEntity = newPlayerEntity;
         }
 
-        public async UniTask<StartupResult> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             var profile = await selfProfile.ProfileOrPublishIfNotAsync(ct);
 
@@ -45,7 +46,7 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             // Eventually it will lead to the Avatar Resolution or the entity destruction
             // if the avatar is already downloaded by the authentication screen it will be resolved immediately
             await UniTask.WaitWhile(() => !mainPlayerAvatarBaseProxy.Configured && world.IsAlive(playerEntity), PlayerLoopTiming.LastPostLateUpdate, ct);
-            return StartupResult.SuccessResult();
+            return Result.SuccessResult();
         }
     }
 }

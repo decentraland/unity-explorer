@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AsyncLoadReporting;
 using DCL.Multiplayer.HealthChecks;
 using System.Threading;
+using Utility.Types;
 
 namespace DCL.UserInAppInitializationFlow.StartupOperations
 {
@@ -14,13 +15,13 @@ namespace DCL.UserInAppInitializationFlow.StartupOperations
             this.healthCheck = healthCheck;
         }
 
-        public async UniTask<StartupResult> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
+        public async UniTask<Result> ExecuteAsync(AsyncLoadProcessReport report, CancellationToken ct)
         {
             var result = await healthCheck.IsRemoteAvailableAsync(ct);
 
             return result.success
-                ? StartupResult.SuccessResult()
-                : StartupResult.ErrorResult(result.errorMessage!);
+                ? Result.SuccessResult()
+                : Result.ErrorResult(result.errorMessage!);
         }
     }
 }
