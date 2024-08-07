@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace DCL.UI.Buttons
@@ -15,6 +16,12 @@ namespace DCL.UI.Buttons
         {
             base.OnEnable();
             Button.onClick.AddListener(OnButtonPressed);
+        }
+
+        public new void OnDisable()
+        {
+            Button.onClick.RemoveListener(OnButtonPressed);
+            base.OnEnable();
         }
 
         public void OnDeselect(BaseEventData eventData)

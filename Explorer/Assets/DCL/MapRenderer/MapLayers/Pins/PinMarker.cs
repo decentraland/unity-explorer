@@ -133,7 +133,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void ResetScale(float scale)
         {
             currentNewScale = scale;
-            poolableBehavior.instance.SetScale(scale);
+            poolableBehavior.instance?.SetScale(scale);
         }
 
         private void ResetPulseAnimation()

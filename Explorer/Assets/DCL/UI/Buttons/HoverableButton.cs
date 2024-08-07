@@ -8,6 +8,9 @@ namespace DCL.UI.Buttons
 {
     public class HoverableButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
+        public event Action OnButtonHover;
+        public event Action OnButtonUnhover;
+
         [field: SerializeField]
         public Button Button { get; private set; }
 
@@ -35,9 +38,6 @@ namespace DCL.UI.Buttons
 
         public void OnPointerExit(PointerEventData eventData) =>
             OnButtonUnhover?.Invoke();
-
-        public event Action OnButtonHover;
-        public event Action OnButtonUnhover;
 
         internal void OnButtonPressed()
         {
