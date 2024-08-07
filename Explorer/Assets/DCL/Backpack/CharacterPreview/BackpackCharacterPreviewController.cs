@@ -18,13 +18,13 @@ namespace DCL.Backpack.CharacterPreview
 {
     public class BackpackCharacterPreviewController : CharacterPreviewControllerBase
     {
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IEquippedEmotes equippedEmotes;
         private CancellationTokenSource? emotePreviewCancellationToken;
 
         public BackpackCharacterPreviewController(CharacterPreviewView view,
             ICharacterPreviewFactory previewFactory,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             World world,
             IEquippedEmotes equippedEmotes,
             CharacterPreviewEventBus characterPreviewEventBus)
