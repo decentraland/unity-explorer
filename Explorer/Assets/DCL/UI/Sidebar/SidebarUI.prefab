@@ -765,6 +765,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -20.785
       objectReference: {fileID: 0}
+    - target: {fileID: 4218377999163953302, guid: 731de304d3ee148789880b058319e4f7, type: 3}
+      propertyPath: m_BlocksRaycasts
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4399270246960512819, guid: 731de304d3ee148789880b058319e4f7, type: 3}
       propertyPath: _channelWeights.a
       value: 1
@@ -835,7 +839,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5519781503074448261, guid: 731de304d3ee148789880b058319e4f7, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 62.25
+      value: 44
       objectReference: {fileID: 0}
     - target: {fileID: 5519781503074448261, guid: 731de304d3ee148789880b058319e4f7, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -3111,6 +3115,10 @@ PrefabInstance:
     - target: {fileID: 935382261191405662, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.y
       value: 16.95
+      objectReference: {fileID: 0}
+    - target: {fileID: 1023683380798118866, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1095953891227981704, guid: 571c63ddcf1523b45a64fabd71cb6dd5, type: 3}
       propertyPath: m_SizeDelta.x

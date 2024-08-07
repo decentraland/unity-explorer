@@ -15,14 +15,12 @@ namespace DCL.UI.Buttons
         {
             hoverableButton.OnButtonHover += ShowTooltip;
             hoverableButton.OnButtonUnhover += HideTooltip;
-            hoverableButton.Button.onClick.AddListener(HideTooltip);
         }
 
         private void OnDestroy()
         {
             hoverableButton.OnButtonHover -= ShowTooltip;
             hoverableButton.OnButtonUnhover -= HideTooltip;
-            hoverableButton.Button.onClick.RemoveListener(HideTooltip);
         }
 
         private void ShowTooltip()
@@ -34,7 +32,7 @@ namespace DCL.UI.Buttons
         {
             SetTooltip(false);
         }
-
+        
         private void SetTooltip(bool show)
         {
             tooltip.SetActive(show);
