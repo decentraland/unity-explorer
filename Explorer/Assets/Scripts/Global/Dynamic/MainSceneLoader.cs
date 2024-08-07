@@ -107,6 +107,7 @@ namespace Global.Dynamic
         {
             ApplicationParametersParser applicationParametersParser = new ApplicationParametersParser();
 
+            settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);
 
             bootstrapContainer = await BootstrapContainer.CreateAsync(debugSettings,
