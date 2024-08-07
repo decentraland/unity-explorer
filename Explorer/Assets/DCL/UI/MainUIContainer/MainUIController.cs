@@ -4,7 +4,6 @@ using DCL.Minimap;
 using DCL.SidebarBus;
 using DCL.UI.Sidebar;
 using DG.Tweening;
-using JetBrains.Annotations;
 using MVC;
 using System;
 using System.Threading;
@@ -16,8 +15,8 @@ namespace DCL.UI.MainUI
     public class MainUIController : ControllerBase<MainUIView>
     {
         private const int MS_WAIT_BEFORE_FIRST_HIDE = 3000;
-        private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 80;
-        private const float HIDE_SIDEBAR_LAYOUT_WIDTH = 20;
+        private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 46;
+        private const float HIDE_SIDEBAR_LAYOUT_WIDTH = 0;
         private const float HIDE_SIDEBAR_WAIT_TIME = 0.3f;
         private const float SHOW_SIDEBAR_WAIT_TIME = 0.3f;
         private const float SIDEBAR_ANIMATION_TIME = 0.2f;
