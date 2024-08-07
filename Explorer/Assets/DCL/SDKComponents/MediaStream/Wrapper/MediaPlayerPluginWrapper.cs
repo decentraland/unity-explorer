@@ -75,6 +75,8 @@ namespace DCL.SDKComponents.MediaStream.Wrapper
             CleanUpMediaPlayerSystem.InjectToWorld(ref builder, mediaPlayerPool, videoTexturePool);
 
             VideoEventsSystem.InjectToWorld(ref builder, ecsToCrdtWriter, sceneStateProvider, componentPoolsRegistry.GetReferenceTypePool<PBVideoEvent>(), frameTimeBudget);
+
+            finalizeWorldSystems.RegisterReleasePoolableComponentSystem<MediaPlayer, MediaPlayerComponent>(ref builder, componentPoolsRegistry);
 #endif
         }
     }
