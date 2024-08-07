@@ -1,4 +1,5 @@
 ﻿using DCL.ECSComponents;
+using DCL.Optimization.Pools;
 using RenderHeads.Media.AVProVideo;
 using System;
 using System.Threading;
@@ -19,7 +20,7 @@ namespace DCL.SDKComponents.MediaStream
 
         public CancellationTokenSource Cts;
         public OpenMediaPromise OpenMediaPromise;
-        
+
         public bool IsPlaying => MediaPlayer.Control.IsPlaying();
         public float CurrentTime => (float)MediaPlayer.Control.GetCurrentTime();
         public float Duration => (float)MediaPlayer.Info.GetDuration();
