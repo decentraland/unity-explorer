@@ -32,7 +32,7 @@ namespace DCL.UI.Buttons
         {
             SetTooltip(false);
         }
-        
+
         private void SetTooltip(bool show)
         {
             tooltip.SetActive(show);

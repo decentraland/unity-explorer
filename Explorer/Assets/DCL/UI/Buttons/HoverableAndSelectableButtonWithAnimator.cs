@@ -12,17 +12,17 @@ namespace DCL.UI.Buttons
 
         private bool selected;
 
-        public new void OnEnable()
+        public new void Awake()
         {
-            base.OnEnable();
+            base.Awake();
             Button.onClick.AddListener(OnButtonPressed);
         }
 
-        public new void OnDisable()
+        private void OnDestroy()
         {
             Button.onClick.RemoveListener(OnButtonPressed);
-            base.OnEnable();
         }
+
 
         public void OnDeselect(BaseEventData eventData)
         {

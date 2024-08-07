@@ -20,12 +20,12 @@ namespace DCL.UI.Buttons
         [field: SerializeField]
         public AudioClipConfig ButtonHoveredAudio { get; private set; }
 
-        public void OnEnable()
+        public void Awake()
         {
             Button.onClick.AddListener(OnButtonPressed);
         }
 
-        private void OnDisable()
+        private void OnDestroy()
         {
             Button.onClick.RemoveListener(OnButtonPressed);
         }
