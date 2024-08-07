@@ -105,7 +105,7 @@ namespace Global.Dynamic
 
         private async UniTask InitializeFlowAsync(CancellationToken ct)
         {
-            ApplicationParametersParser applicationParametersParser = new ApplicationParametersParser();
+            ApplicationParametersParser applicationParametersParser = new ApplicationParametersParser(Environment.GetCommandLineArgs());
 
             settings.ApplyConfig(applicationParametersParser);
             launchSettings.ApplyConfig(applicationParametersParser);

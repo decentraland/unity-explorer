@@ -8,22 +8,27 @@ namespace Global.Dynamic
 {
     public class ApplicationParametersParser
     {
+        private readonly string[] programArgs;
         private Dictionary<string, string>? parameters;
+
+        public ApplicationParametersParser(string[] programArgs)
+        {
+            this.programArgs = programArgs;
+        }
 
         public Dictionary<string, string> Get()
         {
             if (parameters != null)
                 return parameters;
 
-            string[] cmdArgs = Environment.GetCommandLineArgs();
             Dictionary<string, string> appParameters = new ();
 
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
-            for (int i = 0; i < cmdArgs.Length; i++)
+            for (int i = 0; i < programArgs.Length; i++)
             {
-                string arg = cmdArgs[i];
+                string arg = programArgs[i];
 
                 if (arg.StartsWith("--"))
                 {
