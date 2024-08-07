@@ -94,12 +94,10 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms
             Vector3 position = characterObject.Position;
             await using ExecuteOnThreadPoolScope _ = await ExecuteOnThreadPoolScope.NewScopeWithReturnOnMainThreadAsync();
 
-            try { await signFlow.SendHeartbeatAsync(position, token); }
-            catch (ConnectionClosedException)
-            {
-                //ignore
-                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, "Cannot send heartbeat, connection is closed");
-            }
+            var result = await signFlow.SendHeartbeatAsync(position, token);
+
+            if (result.Success == false)
+                ReportHub.LogWarning(ReportCategory.ARCHIPELAGO_REQUEST, $"Cannot send heartbeat, connection is closed: {result.ErrorMessage}");
         }
 
         private void OnNewConnectionString(string connectionString, CancellationToken token)
