@@ -2,7 +2,6 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Browser;
-using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -153,7 +152,10 @@ namespace DCL.AuthenticationScreenFlow
         {
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
-            if (storedIdentity is { IsExpired: false })
+            if (storedIdentity is { IsExpired: false }
+                // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+                // getting the identity expired while in-world, provoking signed-fetch requests to fail
+                && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
             {
                 CancelLoginProcess();
                 loginCancellationToken = new CancellationTokenSource();

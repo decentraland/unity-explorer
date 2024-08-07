@@ -1,4 +1,4 @@
-﻿using DCL.Multiplayer.HealthChecks;
+using DCL.Multiplayer.HealthChecks;
 using DCL.Web3.Identities;
 using ECS;
 using Segment.Serialization;
@@ -10,11 +10,15 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public interface IAnalyticsController
     {
+        public const string UNDEFINED = "UNDEFINED";
+
         AnalyticsConfiguration Configuration { get; }
 
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform);
 
         void Track(string eventName, JsonObject? properties = null);
+
+        void Identify(IWeb3Identity? identity);
 
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
@@ -31,6 +35,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public void SetCommonParam(IRealmData _, IWeb3IdentityCache __, ExposedTransform ___) { }
 
             public void Track(string _, JsonObject? __ = null) { }
+
+            public void Identify(IWeb3Identity? _) { }
         }
     }
 

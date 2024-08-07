@@ -11,7 +11,7 @@ namespace DCL.Backpack.EmotesSection
     {
         private const int MIN_WAIT_TIME = 500;
 
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly IBackpackCommandBus backpackCommandBus;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly (EmoteSlotContainerView, CancellationTokenSource)[] avatarSlots;
@@ -20,7 +20,7 @@ namespace DCL.Backpack.EmotesSection
 
         public BackpackEmoteSlotsController(
             EmoteSlotContainerView[] avatarSlotViews,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             IBackpackCommandBus backpackCommandBus,
             NftTypeIconSO rarityBackgrounds)
         {
