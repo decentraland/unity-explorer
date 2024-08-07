@@ -19,7 +19,7 @@ namespace DCL.Backpack
             AvatarSlotView[] slotViews,
             NftTypeIconSO rarityBackgrounds,
             BackpackCommandBus backpackCommandBus,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             BackpackGridController backpackGridController,
             BackpackInfoPanelController backpackInfoPanelController,
             IThumbnailProvider thumbnailProvider,
