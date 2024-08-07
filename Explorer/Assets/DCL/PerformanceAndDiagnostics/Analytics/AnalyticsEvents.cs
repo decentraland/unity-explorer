@@ -20,6 +20,11 @@
             public const string TIME_SPENT_IN_WORLD = "time_spent_in_world";
         }
 
+        public static class Wearables
+        {
+            public const string USED_EMOTE = "used_emote";
+        }
+
         public static class UI
         {
             public const string MESSAGE_SENT = "chat_message_sent";

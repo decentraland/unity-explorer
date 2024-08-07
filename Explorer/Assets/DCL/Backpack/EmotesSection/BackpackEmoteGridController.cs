@@ -27,7 +27,7 @@ namespace DCL.Backpack.EmotesSection
 
         private readonly BackpackGridView view;
         private readonly BackpackCommandBus commandBus;
-        private readonly BackpackEventBus eventBus;
+        private readonly IBackpackEventBus eventBus;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly NftTypeIconSO rarityBackgrounds;
         private readonly NFTColorsSO rarityColors;
@@ -52,7 +52,7 @@ namespace DCL.Backpack.EmotesSection
         public BackpackEmoteGridController(
             BackpackGridView view,
             BackpackCommandBus commandBus,
-            BackpackEventBus eventBus,
+            IBackpackEventBus eventBus,
             IWeb3IdentityCache web3IdentityCache,
             NftTypeIconSO rarityBackgrounds,
             NFTColorsSO rarityColors,

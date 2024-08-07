@@ -18,7 +18,7 @@ namespace DCL.ECSComponents
         public Ray Ray { get; private set; }
         public UnityEngine.RaycastHit RaycastHit { get; private set; }
 
-        public readonly IReadOnlyDictionary<InputAction, PointerEventType> ValidInputActions => validInputActions;
+        public readonly IReadOnlyList<(InputAction inputAction, PointerEventType pointerEventType)> ValidInputActions => validInputActions;
 
         /// <summary>
         ///     Contains the indices of the <see cref="PBPointerEvents.Types.Entry" /> in this entity's <see cref="PBPointerEvents" />
@@ -32,7 +32,7 @@ namespace DCL.ECSComponents
         /// </summary>
         private List<byte> validIndices;
 
-        private Dictionary<InputAction, PointerEventType> validInputActions;
+        private List<(InputAction inputAction, PointerEventType pointerEventType)> validInputActions;
 
         public void Initialize(UnityEngine.RaycastHit raycastHit, Ray ray)
         {
@@ -43,10 +43,10 @@ namespace DCL.ECSComponents
 
         public void InitializeWithAlloc()
         {
-            Initialize(new List<byte>(), new Dictionary<InputAction, PointerEventType>());
+            Initialize(new List<byte>(), new List<(InputAction, PointerEventType)>());
         }
 
-        public void Initialize(List<byte> list, Dictionary<InputAction, PointerEventType> dictionary)
+        public void Initialize(List<byte> list, List<(InputAction, PointerEventType)> dictionary)
         {
             validIndices = list;
             validInputActions = dictionary;
@@ -55,7 +55,7 @@ namespace DCL.ECSComponents
 
         public void Release(
             [NotNull] IObjectPool<List<byte>> listPool,
-            [NotNull] IObjectPool<Dictionary<InputAction, PointerEventType>> dictionaryPool
+            [NotNull] IObjectPool<List<(InputAction, PointerEventType)>> dictionaryPool
         )
         {
             listPool.Release(validIndices);
@@ -77,7 +77,7 @@ namespace DCL.ECSComponents
 
         public void AddInputAction(InputAction ecsInputAction, PointerEventType pointerEventType)
         {
-            validInputActions!.Add(ecsInputAction, pointerEventType);
+            validInputActions!.Add((ecsInputAction, pointerEventType));
         }
 
         public void Clear()
