@@ -19,11 +19,12 @@ namespace DCL.Diagnostics
             Debug.unityLogger.logHandler = defaultLogHandler;
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params (ReportHandler, IReportHandler)[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool enableLocalSceneReporting = false, params (ReportHandler, IReportHandler)[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
-            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(additionalHandlers.Length + 2);
+            int handlersCount = additionalHandlers.Length + 2 + (enableLocalSceneReporting ? 1 : 0);
+            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(handlersCount);
             handlers.AddRange(additionalHandlers);
 
             if (settings.IsEnabled(ReportHandler.DebugLog))
@@ -32,13 +33,8 @@ namespace DCL.Diagnostics
             if (settings.IsEnabled(ReportHandler.Sentry))
                 handlers.Add((ReportHandler.Sentry, new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)));
 
-            // TODO: Put under some flag...
-            var jsOnlyMatrix = new CategorySeverityMatrix();
-            jsOnlyMatrix.entries = new List<CategorySeverityMatrix.Entry>();
-            jsOnlyMatrix.entries.Add(new CategorySeverityMatrix.Entry() { Category = "JAVASCRIPT", Severity = LogType.Error });
-            jsOnlyMatrix.entries.Add(new CategorySeverityMatrix.Entry() { Category = "JAVASCRIPT", Severity = LogType.Exception });
-            jsOnlyMatrix.entries.Add(new CategorySeverityMatrix.Entry() { Category = "JAVASCRIPT", Severity = LogType.Log });
-            handlers.Add((ReportHandler.DebugLog, new LocalSceneDevelopmentReportHandler(jsOnlyMatrix, false)));
+            if (enableLocalSceneReporting)
+                AddLocalSceneReportingHandler(handlers);
 
             var logger = new ReportHubLogger(handlers);
 
@@ -51,6 +47,17 @@ namespace DCL.Diagnostics
             ReportHub.Instance = logger;
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
+        }
+
+        private static void AddLocalSceneReportingHandler(List<(ReportHandler, IReportHandler)> handlers)
+        {
+            var jsOnlyMatrix = new CategorySeverityMatrix();
+            var entries = new List<CategorySeverityMatrix.Entry>();
+            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Error });
+            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Exception });
+            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
+            jsOnlyMatrix.entries = entries;
+            handlers.Add((ReportHandler.DebugLog, new LocalSceneDevelopmentReportHandler(jsOnlyMatrix, false)));
         }
     }
 }
