@@ -13,5 +13,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         void Track(string eventName, JsonObject? properties = null);
 
         void AddPlugin(Plugin plugin);
+
+        void Flush();
     }
 }
