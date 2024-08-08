@@ -21,6 +21,7 @@ build_healthy = True
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', help='Resume tracking a running build stored in build_info.json', action='store_true')
 parser.add_argument('--cancel', help='Cancel a running build stored in build_info.json', action='store_true')
+parser.add_argument('--delete', help='Delete build target after PR is closed or merged', action='store_true')
 
 def get_target(target):
     response = requests.get(f'{URL}/buildtargets/{target}', headers=HEADERS)
@@ -40,12 +41,13 @@ def get_target(target):
 # So we *always* create a new target, no matter what
 # by appending the commit's SHA
 def clone_current_target():
-    def generate_body(template_target, name, branch, options, cache):
+    def generate_body(template_target, name, branch, options, cache, remoteCacheStrategy):
         body = get_target(template_target)
 
         body['name'] = name
         body['settings']['scm']['branch'] = branch
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
+        body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
 
         # Copy cache check
         if cache:
@@ -66,7 +68,8 @@ def clone_current_target():
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
-        False)
+        os.getenv('USE_CACHE'),
+        os.getenv('CACHE_STRATEGY'))
 
     existing_target = get_target(new_target_name)
     
@@ -321,8 +324,11 @@ def delete_current_target():
 # Entrypoint here ->
 args = parser.parse_args()
 
+# MODE: Delete
+if args.delete:
+    delete_current_target()
 # MODE: Resume
-if args.resume or args.cancel:
+elif args.resume or args.cancel:
     build_info = utils.read_build_info()
     if build_info is None:
         sys.exit(1)
