@@ -303,7 +303,7 @@ MonoBehaviour:
   <ProfileWidget>k__BackingField: {fileID: 8183886167291671765}
   <profileMenu>k__BackingField: {fileID: 617051157247145518}
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
-  <FaceFrame>k__BackingField: {fileID: 1704021372997706672}
+  <FaceFrame>k__BackingField: {fileID: 713957529403070190}
   <PersistentEmoteWheelOpener>k__BackingField: {fileID: 5415830858801336587}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
@@ -1017,9 +1017,9 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 656839858989987251, guid: 2936d4da401930d4f8fef6fefb4010b1, type: 3}
   m_PrefabInstance: {fileID: 111926561021608861}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1704021372997706672 stripped
+--- !u!114 &713957529403070190 stripped
 MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1596599684408565805, guid: 2936d4da401930d4f8fef6fefb4010b1, type: 3}
+  m_CorrespondingSourceObject: {fileID: 605127262988588403, guid: 2936d4da401930d4f8fef6fefb4010b1, type: 3}
   m_PrefabInstance: {fileID: 111926561021608861}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
