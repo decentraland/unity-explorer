@@ -1,6 +1,3 @@
-using System;
-using Cysharp.Threading.Tasks;
-using System.Threading;
 using ECS;
 
 namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current
@@ -16,10 +13,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current
             this.currentRealmData = currentRealmData;
         }
 
-        public string AdapterUrlAsync()
-        {
-            return adapterAddresses.AdapterUrlAsync(currentRealmData.CommsAdapter);
-        }
-     
+        public string AdapterUrl() =>
+            adapterAddresses.AdapterUrlAsync(currentRealmData.CommsAdapter);
     }
 }

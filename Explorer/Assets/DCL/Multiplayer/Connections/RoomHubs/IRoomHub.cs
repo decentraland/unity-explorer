@@ -10,7 +10,7 @@ namespace DCL.Multiplayer.Connections.RoomHubs
 
         IRoom SceneRoom();
 
-        UniTask StartAsync();
+        UniTask<bool> StartAsync();
 
         UniTask StopIfNotAsync();
 
@@ -22,8 +22,8 @@ namespace DCL.Multiplayer.Connections.RoomHubs
             public IRoom SceneRoom() =>
                 NullRoom.INSTANCE;
 
-            public UniTask StartAsync() =>
-                UniTask.CompletedTask;
+            public UniTask<bool> StartAsync() =>
+                UniTask.FromResult(true);
 
             public UniTask StopIfNotAsync() =>
                 UniTask.CompletedTask;

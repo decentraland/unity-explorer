@@ -14,7 +14,10 @@ namespace DCL.LOD
             ILODCache lodCache,
                                                                 World world)
         {
-            lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
+            //Only try to release SceneLODInfo that has been initialized
+            if (!string.IsNullOrEmpty(sceneLODInfo.id))
+                lodCache.Release(sceneLODInfo.id, sceneLODInfo.metadata);
+            
             sceneLODInfo.Dispose(world);
             scenesCache.RemoveNonRealScene(parcels);
         }
