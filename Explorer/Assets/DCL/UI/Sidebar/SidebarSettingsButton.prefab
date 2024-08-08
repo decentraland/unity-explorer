@@ -732,7 +732,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1027324785593132713, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
-      value: 3
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 1908148230064730244, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.x
@@ -844,7 +844,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6975587278961672583, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_PixelsPerUnitMultiplier
-      value: 3
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 7225474628005434785, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_Name
