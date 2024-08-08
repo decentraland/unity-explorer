@@ -6,11 +6,18 @@ using UnityEngine;
 
 namespace CommandTerminal
 {
-    public struct LogItem
+    public readonly struct LogItem
     {
-        public LogType type;
-        public string message;
-        public string stackTrace;
+        public readonly LogType Type;
+        public readonly string Message;
+        public readonly string StackTrace;
+
+        public LogItem(LogType type, string message, string stackTrace)
+        {
+            Type = type;
+            Message = message;
+            StackTrace = stackTrace;
+        }
     }
 
     public class ConsoleBuffer
@@ -26,15 +33,7 @@ namespace CommandTerminal
 
         public void HandleLog(string message, string stackTrace, LogType logType)
         {
-            var log = new LogItem
-            {
-                message = message,
-                stackTrace = stackTrace,
-                type = logType,
-            };
-
-            Logs.Add(log);
-
+            Logs.Add(new LogItem(logType, message, stackTrace));
             if (Logs.Count > maxItems) { Logs.RemoveAt(0); }
         }
 

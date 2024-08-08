@@ -9,12 +9,18 @@ namespace DCL.Diagnostics
     /// </summary>
     public static class ReportHub
     {
-        public static ReportHubLogger Instance { get; set; } =
+        public static ReportHubLogger Instance { get; private set; } =
             new (new (ReportHandler, IReportHandler)[]
             {
                 (ReportHandler.DebugLog, new DefaultReportLogger()),
             });
-        public static bool LogVerboseEnabled = false;
+        private static bool logVerboseEnabled = false;
+
+        public static void Initialize(ReportHubLogger logger, bool logVerbose = false)
+        {
+            Instance = logger;
+            logVerboseEnabled = logVerbose;
+        }
 
         /// <summary>
         ///     Logs a message.
@@ -62,7 +68,7 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         public static void Log(ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            if (!LogVerboseEnabled) return;
+            if (!logVerboseEnabled) return;
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
         }
 

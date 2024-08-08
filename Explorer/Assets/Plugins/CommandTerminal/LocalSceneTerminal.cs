@@ -35,6 +35,7 @@ namespace CommandTerminal
 
         [SerializeField] private string toggleHotkey = "`";
         [SerializeField] private string toggleFullHotkey = "#`";
+        [SerializeField] private int logsMaxAmount = 512;
 
         [Header("Theme")]
         [SerializeField] private int fontSize = 20;
@@ -67,7 +68,7 @@ namespace CommandTerminal
 
         private void OnEnable()
         {
-            consoleBuffer = new ConsoleBuffer(512);
+            consoleBuffer = new ConsoleBuffer(logsMaxAmount);
         }
 
         private void OnGUI()
@@ -165,8 +166,8 @@ namespace CommandTerminal
         {
             foreach (LogItem log in consoleBuffer.Logs)
             {
-                labelStyle.normal.textColor = GetLogColor(log.type);
-                GUILayout.Label(log.message, labelStyle);
+                labelStyle.normal.textColor = GetLogColor(log.Type);
+                GUILayout.Label(log.Message, labelStyle);
             }
         }
 

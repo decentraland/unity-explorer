@@ -10,6 +10,8 @@ namespace DCL.Diagnostics
     /// </summary>
     public class DiagnosticsContainer : IDisposable
     {
+        private const int DEFAULT_REPORT_HANDLERS_COUNT = 2; // DebugLog + Sentry
+
         private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
 
@@ -23,7 +25,7 @@ namespace DCL.Diagnostics
         {
             settings.NotifyErrorDebugLogDisabled();
 
-            int handlersCount = additionalHandlers.Length + 2 + (enableLocalSceneReporting ? 1 : 0);
+            int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length + (enableLocalSceneReporting ? 1 : 0);
             List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(handlersCount);
             handlers.AddRange(additionalHandlers);
 
@@ -44,8 +46,7 @@ namespace DCL.Diagnostics
             Debug.unityLogger.logHandler = logger;
 
             // Enable Hub static accessors
-            ReportHub.Instance = logger;
-            ReportHub.LogVerboseEnabled = enableLocalSceneReporting;
+            ReportHub.Initialize(logger, enableLocalSceneReporting);
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
         }
