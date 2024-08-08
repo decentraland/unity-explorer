@@ -5,14 +5,12 @@ using System;
 
 namespace DCL.Multiplayer.Connections.Messaging
 {
-    public class ReceivedMessage<T> : IDisposable where T: class, IMessage, new()
+    public readonly struct ReceivedMessage<T> : IDisposable where T: class, IMessage, new()
     {
         public readonly T Payload;
         public readonly string FromWalletId;
         private readonly Packet packet;
         private readonly IMultiPool multiPool;
-
-        private bool disposed;
 
         public ReceivedMessage(T payload, Packet packet, string fromWalletId, IMultiPool multiPool)
         {
@@ -24,11 +22,6 @@ namespace DCL.Multiplayer.Connections.Messaging
 
         public void Dispose()
         {
-            if (disposed)
-                return;
-
-            disposed = true;
-
             packet.ClearMessage();
             multiPool.Release(packet);
             multiPool.Release(Payload);
