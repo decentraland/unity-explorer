@@ -934,7 +934,8 @@ PrefabInstance:
       propertyPath: <viewAnimationElement>k__BackingField
       value: 
       objectReference: {fileID: 5461922870076099836}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 404987761503160409, guid: 2936d4da401930d4f8fef6fefb4010b1, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

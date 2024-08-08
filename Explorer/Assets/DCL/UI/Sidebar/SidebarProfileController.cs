@@ -24,6 +24,7 @@ namespace DCL.UI.Sidebar
 
         public SidebarProfileController(
             [NotNull] ViewFactoryMethod viewFactory,
+            ProfileSectionElement profileSectionElement,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
@@ -37,14 +38,14 @@ namespace DCL.UI.Sidebar
             ChatEntryConfigurationSO chatEntryConfiguration
         ) : base(viewFactory)
         {
-            profileSectionController = new ProfileSectionController(viewInstance.ProfileMenu, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
+            profileSectionController = new ProfileSectionController(profileSectionElement, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
             systemSectionController = new SystemMenuController(() => viewInstance.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
-
+        
         protected override void OnViewShow()
         {
             base.OnViewShow();

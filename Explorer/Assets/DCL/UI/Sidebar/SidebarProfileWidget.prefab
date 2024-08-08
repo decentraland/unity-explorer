@@ -243,7 +243,6 @@ GameObject:
   - component: {fileID: 6656247408964749100}
   - component: {fileID: 7086447147883246302}
   - component: {fileID: 1906579829688868843}
-  - component: {fileID: 5526303982130552491}
   - component: {fileID: 1705550250461608253}
   - component: {fileID: 7741166473012986143}
   - component: {fileID: 7454825112888193268}
@@ -329,24 +328,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &5526303982130552491
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1676428487734425606}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6333f24857394fb7bc08abc34e065140, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <canvas>k__BackingField: {fileID: 874950745251077639}
-  <raycaster>k__BackingField: {fileID: 1417864235299858357}
-  <FaceSnapshotImage>k__BackingField: {fileID: 5853180061045949392}
-  <NameLabel>k__BackingField: {fileID: 0}
-  <AddressLabel>k__BackingField: {fileID: 0}
-  <OpenProfileButton>k__BackingField: {fileID: 1906579829688868843}
 --- !u!114 &1705550250461608253
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -414,7 +395,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a00df3cf0c6e496bb195837ad3ec8d5c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <FaceSnapshotImage>k__BackingField: {fileID: 0}
+  <FaceSnapshotImage>k__BackingField: {fileID: 5853180061045949392}
   <UserNameElement>k__BackingField: {fileID: 3511336122902181310}
   <UserWalletAddressElement>k__BackingField: {fileID: 4021329157380962250}
 --- !u!1 &2050763827713771171
@@ -1571,8 +1552,7 @@ MonoBehaviour:
   <canvas>k__BackingField: {fileID: 874950745251077639}
   <raycaster>k__BackingField: {fileID: 1417864235299858357}
   <viewAnimationElement>k__BackingField: {fileID: 247327978048526739}
-  <ProfileMenu>k__BackingField: {fileID: 0}
-  <ProfileMenuWidget>k__BackingField: {fileID: 5526303982130552491}
+  <ProfileMenu>k__BackingField: {fileID: 3380469708162111100}
   <SystemMenuView>k__BackingField: {fileID: 6083280960890443224}
 --- !u!114 &247327978048526739
 MonoBehaviour:
