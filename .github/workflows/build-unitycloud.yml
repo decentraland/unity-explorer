@@ -50,9 +50,15 @@ on:
       profile:
         required: true
         type: string
+        default: 'none'
       cache:
         required: true
+        default: true
         type: boolean
+      cache_strategy:
+        required: true
+        default: 'inherit'
+        type: string
       version:
         required: true
         type: string
