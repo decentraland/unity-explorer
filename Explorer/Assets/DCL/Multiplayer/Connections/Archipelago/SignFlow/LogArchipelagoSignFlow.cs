@@ -4,6 +4,7 @@ using DCL.Multiplayer.Connections.Typing;
 using System;
 using System.Threading;
 using UnityEngine;
+using Utility.Types;
 
 namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
 {
@@ -47,11 +48,12 @@ namespace DCL.Multiplayer.Connections.Archipelago.SignFlow
             return result;
         }
 
-        public async UniTask SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
+        public async UniTask<Result> SendHeartbeatAsync(Vector3 playerPosition, CancellationToken token)
         {
             log($"{PREFIX} SendHeartbeatAsync start for position {playerPosition}");
-            await origin.SendHeartbeatAsync(playerPosition, token);
-            log($"{PREFIX} SendHeartbeatAsync finish for position {playerPosition}");
+            var result = await origin.SendHeartbeatAsync(playerPosition, token);
+            log($"{PREFIX} SendHeartbeatAsync finish for position {playerPosition} with success: {result.Success}");
+            return result;
         }
 
         public UniTaskVoid StartListeningForConnectionStringAsync(Action<string> onNewConnectionString, CancellationToken token)

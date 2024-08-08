@@ -9,6 +9,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -42,7 +43,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly Animator splashScreenAnimator;
+        private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
@@ -65,7 +66,7 @@ namespace DCL.AuthenticationScreenFlow
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            Animator splashScreenAnimator,
+            ISplashScreen splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController)
             : base(viewFactory)
@@ -181,7 +182,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.SetTrigger(UIAnimationHashes.OUT);
+            splashScreenAnimator.HideSplash();
         }
 
         private void ShowRestrictedUserPopup()
