@@ -1,6 +1,9 @@
-﻿using DCL.Chat;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.Profiles;
 using System.Threading;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace DCL.UI.ProfileElements
 {
@@ -39,6 +42,15 @@ namespace DCL.UI.ProfileElements
             element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
             element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             element.VerifiedMark.SetActive(profile.HasClaimedName);
+            WaitEnd().Forget();
+        }
+
+        private async UniTaskVoid WaitEnd()
+        {
+            //await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
+            element.gameObject.SetActive(false);
+            await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
+            element.gameObject.SetActive(true);
         }
 
         public void Clear() { }

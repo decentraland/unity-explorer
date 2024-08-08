@@ -245,7 +245,6 @@ GameObject:
   - component: {fileID: 1906579829688868843}
   - component: {fileID: 1705550250461608253}
   - component: {fileID: 7741166473012986143}
-  - component: {fileID: 7454825112888193268}
   - component: {fileID: 3380469708162111100}
   m_Layer: 5
   m_Name: ProfileSection
@@ -271,10 +270,10 @@ RectTransform:
   - {fileID: 739628328650241994}
   m_Father: {fileID: 5949721609395333972}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 153, y: -91.25}
-  m_SizeDelta: {x: 250, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 250, y: 142.5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7086447147883246302
 CanvasRenderer:
@@ -369,20 +368,6 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
---- !u!114 &7454825112888193268
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1676428487734425606}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 1
 --- !u!114 &3380469708162111100
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3517,6 +3502,10 @@ PrefabInstance:
     - target: {fileID: 7488976440834982030, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
       propertyPath: m_Name
       value: UserNameContainer
+      objectReference: {fileID: 0}
+    - target: {fileID: 7488976440834982030, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8597531924450796385, guid: 271b68478eba3924b90b18ebc5ce6f6e, type: 3}
       propertyPath: m_AnchorMax.y

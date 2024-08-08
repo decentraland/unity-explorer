@@ -24,5 +24,12 @@ namespace DCL.UI.ProfileElements
         [field: SerializeField]
         public WarningNotificationView CopyNameWarningNotification { get; private set; }
 
+        [field: SerializeField]
+        public HorizontalLayoutGroup LayoutGroup;
+
+
+        [field: SerializeField]
+        public ContentSizeFitter SizeFitter { get; private set; }
+
     }
 }

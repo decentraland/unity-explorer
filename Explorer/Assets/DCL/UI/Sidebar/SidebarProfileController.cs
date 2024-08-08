@@ -45,7 +45,7 @@ namespace DCL.UI.Sidebar
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
-        
+
         protected override void OnViewShow()
         {
             base.OnViewShow();
