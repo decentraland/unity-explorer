@@ -121,6 +121,7 @@ namespace DCL.MapRenderer
             if (pinMarker == null)
             {
                 currentDestinationPin = internalPinMarker;
+                internalPinMarker.OnBecameInvisible();
                 internalPinMarker.OnBecameVisible();
                 internalPinMarker.SetPosition(mapPosition, parcel);
                 internalPinMarker.SetAsDestination(true);
@@ -138,7 +139,11 @@ namespace DCL.MapRenderer
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
         {
-            if (internalPinMarker.IsDestination) { internalPinMarker.OnBecameVisible(); }
+            if (internalPinMarker.IsDestination)
+            {
+                internalPinMarker.OnBecameInvisible();
+                internalPinMarker.OnBecameVisible();
+            }
         }
 
         public void OnMapObjectCulled(IPinMarker obj)
