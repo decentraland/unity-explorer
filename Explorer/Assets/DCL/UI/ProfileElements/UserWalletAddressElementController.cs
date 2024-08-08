@@ -1,5 +1,4 @@
-﻿using DCL.Passport.Modules;
-using DCL.Profiles;
+﻿using DCL.Profiles;
 using System.Threading;
 
 namespace DCL.UI.ProfileElements

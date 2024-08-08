@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.Backpack;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Notifications;
 using DCL.Notifications.NotificationsMenu;
@@ -37,6 +38,7 @@ namespace DCL.PluginSystem.Global
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IProfileCache profileCache;
         private readonly ISidebarBus sidebarBus;
+        private readonly ChatEntryConfigurationSO chatEntryConfigurationSo;
 
         public SidebarPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -51,7 +53,8 @@ namespace DCL.PluginSystem.Global
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            ISidebarBus sidebarBus)
+            ISidebarBus sidebarBus,
+            ChatEntryConfigurationSO chatEntryConfigurationSo)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -66,6 +69,7 @@ namespace DCL.PluginSystem.Global
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.profileCache = profileCache;
             this.sidebarBus = sidebarBus;
+            this.chatEntryConfigurationSo = chatEntryConfigurationSo;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -86,7 +90,7 @@ namespace DCL.PluginSystem.Global
                     notificationsBusController,
                     new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping),
                     new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SidebarProfileController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
+                    new SidebarProfileController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                     sidebarBus
                 ));
             };

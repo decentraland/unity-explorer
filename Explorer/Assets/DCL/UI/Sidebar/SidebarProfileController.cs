@@ -1,6 +1,7 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
+using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Profiles;
 using DCL.UserInAppInitializationFlow;
@@ -16,8 +17,8 @@ namespace DCL.UI.Sidebar
 {
     public class SidebarProfileController : ControllerBase<ProfileMenuView>
     {
-        private readonly ProfileWidgetController profileWidgetController;
-        private readonly SystemMenuController systemMenuController;
+        private readonly ProfileSectionController profileSectionController;
+        private readonly SystemMenuController systemSectionController;
 
         private CancellationTokenSource profileWidgetCts = new ();
 
@@ -32,11 +33,12 @@ namespace DCL.UI.Sidebar
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            IMVCManager mvcManager
+            IMVCManager mvcManager,
+            ChatEntryConfigurationSO chatEntryConfiguration
         ) : base(viewFactory)
         {
-            profileWidgetController = new ProfileWidgetController(() => viewInstance.ProfileMenuWidget, identityCache, profileRepository, webRequestController);
-            systemMenuController = new SystemMenuController(() => viewInstance.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
+            profileSectionController = new ProfileSectionController(viewInstance.ProfileMenu, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
+            systemSectionController = new SystemMenuController(() => viewInstance.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -50,10 +52,10 @@ namespace DCL.UI.Sidebar
             LaunchChildViewsAsync().Forget();
         }
 
-        private async UniTask LaunchChildViewsAsync()
+        private async UniTaskVoid LaunchChildViewsAsync()
         {
-            profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
-            await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
+            profileSectionController.LoadElements();
+            await systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
             await HideViewAsync(profileWidgetCts.Token);
         }
     }
