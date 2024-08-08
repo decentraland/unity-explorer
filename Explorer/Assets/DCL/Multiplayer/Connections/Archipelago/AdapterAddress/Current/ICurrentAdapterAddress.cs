@@ -4,7 +4,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current
 {
     public interface ICurrentAdapterAddress
     {
-        string AdapterUrlAsync();
+        string AdapterUrl();
 
         public static ICurrentAdapterAddress NewDefault(IRealmData realmData)
         {
