@@ -7,6 +7,7 @@ using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
+using LiveKit.Proto;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -64,7 +65,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
             WriteToProto(message, messageWrap.Payload);
-            messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
+            messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
         }
 
         private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
