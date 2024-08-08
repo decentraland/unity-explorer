@@ -169,10 +169,10 @@ jobs:
           POLL_TIME: 60 # In seconds (int)
           TARGET: t_${{ matrix.target }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          USE_CACHE: ${{ github.event.inputs.cache || inputs.cache }}
+          USE_CACHE: ${{ github.event.inputs.cache || inputs.cache || true}}
           COMMIT_SHA: ${{ needs.prebuild.outputs.commit_sha }}
           BUILD_OPTIONS: ${{ needs.prebuild.outputs.options }}
-          CACHE_STRATEGY: ${{ github.event.inputs.cache_strategy || inputs.cache_strategy }} #Possible values: { none, library, workspace, inherit }
+          CACHE_STRATEGY: ${{ github.event.inputs.cache_strategy || inputs.cache_strategy || 'inherit'}} #Possible values: { none, library, workspace, inherit }
           # Any ENV variables starting with "PARAM_" will be passed to Unity without the prefix
           # (The "PARAM_" prefix exists to allow any future values config-free)
           # e.g.: PARAM_ALLOW_DEBUG -> In Unity will be available as "ALLOW_DEBUG"
