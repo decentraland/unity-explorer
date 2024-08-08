@@ -37,6 +37,7 @@ namespace CommandTerminal
         [SerializeField] private string toggleFullHotkey = "#`";
 
         [Header("Theme")]
+        [SerializeField] private int fontSize = 20;
         [SerializeField] private Font consoleFont;
         [SerializeField] private Color backgroundColor = Color.black;
         [SerializeField] private Color foregroundColor = Color.white;
@@ -149,7 +150,7 @@ namespace CommandTerminal
             labelStyle.normal.textColor = foregroundColor;
             labelStyle.wordWrap = true;
             labelStyle.alignment = TextAnchor.LowerRight;
-            labelStyle.fontSize = 25;
+            labelStyle.fontSize = fontSize;
         }
 
         private void DrawConsole(int Window2D)
