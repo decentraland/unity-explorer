@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using DCL.Multiplayer.Connections.Messaging;
+﻿using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using Decentraland.Kernel.Comms.Rfc4;
@@ -16,7 +15,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
     /// </summary>
     public class CommunicationControllerHub : ICommunicationControllerHub
     {
-        private Action<ReceivedMessage<Scene>>? onSceneMessage;
+        private Action<ICommunicationControllerHub.SceneMessage>? onSceneMessage;
         private readonly IMessagePipe messagePipe;
 
         public CommunicationControllerHub(IMessagePipesHub messagePipesHub)
@@ -27,15 +26,16 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private void InvokeCurrentHandler(ReceivedMessage<Scene> message)
         {
-            onSceneMessage?.Invoke(message);
+            using (message)
+                onSceneMessage?.Invoke(ICommunicationControllerHub.SceneMessage.CopyFrom(in message));
         }
 
-        public void RemoveSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
+        public void RemoveSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
         {
             lock (this) { this.onSceneMessage -= onSceneMessage; }
         }
 
-        public void SetSceneMessageHandler(Action<ReceivedMessage<Scene>> onSceneMessage)
+        public void SetSceneMessageHandler(Action<ICommunicationControllerHub.SceneMessage> onSceneMessage)
         {
             lock (this) { this.onSceneMessage += onSceneMessage; }
         }
