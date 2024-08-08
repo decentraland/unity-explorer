@@ -1,6 +1,7 @@
 ﻿using Arch.SystemGroups;
 using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
+using DCL.Backpack;
 using DCL.Browser;
 using DCL.ExplorePanel;
 using DCL.Notifications;
@@ -72,6 +73,7 @@ namespace DCL.PluginSystem.Global
         protected override async UniTask<ContinueInitialization?> InitializeInternalAsync(SidebarSettings settings, CancellationToken ct)
         {
             NotificationIconTypes notificationIconTypes = (await assetsProvisioner.ProvideMainAssetAsync(settings.NotificationIconTypesSO, ct: ct)).Value;
+            NftTypeIconSO rarityBackgroundMapping = await assetsProvisioner.ProvideMainAssetValueAsync(settings.RarityColorMappings, ct);
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
             {
                 mvcManager.RegisterController(new SidebarController(() =>
@@ -82,7 +84,7 @@ namespace DCL.PluginSystem.Global
                     },
                     mvcManager,
                     notificationsBusController,
-                    new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus),
+                    new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping),
                     new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
                     new SidebarProfileController(() => mainUIView.SidebarView.ProfileMenuView, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager),
                     sidebarBus
@@ -94,6 +96,9 @@ namespace DCL.PluginSystem.Global
         {
             [field: SerializeField]
             public AssetReferenceT<NotificationIconTypes> NotificationIconTypesSO { get; private set;}
+
+            [field: SerializeField]
+            public AssetReferenceT<NftTypeIconSO> RarityColorMappings { get; private set; }
         }
     }
 }

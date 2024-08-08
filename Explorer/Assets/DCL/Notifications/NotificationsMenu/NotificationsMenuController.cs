@@ -1,5 +1,6 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
+using DCL.Backpack;
 using DCL.Notifications.NotificationEntry;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
@@ -24,6 +25,7 @@ namespace DCL.Notifications.NotificationsMenu
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationIconTypes notificationIconTypes;
         private readonly IWebRequestController webRequestController;
+        private readonly NftTypeIconSO rarityBackgroundMapping;
         private readonly ISidebarBus sidebarBus;
         private readonly Dictionary<string, Sprite> notificationThumbnailCache = new ();
         private readonly List<INotification> notifications = new ();
@@ -38,7 +40,8 @@ namespace DCL.Notifications.NotificationsMenu
             INotificationsBusController notificationsBusController,
             NotificationIconTypes notificationIconTypes,
             IWebRequestController webRequestController,
-            ISidebarBus sidebarBus)
+            ISidebarBus sidebarBus,
+            NftTypeIconSO rarityBackgroundMapping)
         {
             this.view = view;
             this.notificationsRequestController = notificationsRequestController;
@@ -46,6 +49,7 @@ namespace DCL.Notifications.NotificationsMenu
             this.notificationIconTypes = notificationIconTypes;
             this.webRequestController = webRequestController;
             this.sidebarBus = sidebarBus;
+            this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
 
@@ -121,8 +125,19 @@ namespace DCL.Notifications.NotificationsMenu
             notificationView.TimeText.text = TimestampUtilities.GetRelativeTime(notificationData.Timestamp);
             notificationView.NotificationTypeImage.sprite = notificationIconTypes.GetNotificationIcon(notificationData.Type);
             notificationsRequestController.SetNotificationAsReadAsync(notificationData.Id, lifeCycleCts.Token).Forget();
+            ProcessCustomMetadata(notificationData, notificationView);
             notificationData.Read = true;
             notificationView.NotificationClicked += ClickedNotification;
+        }
+
+        private void ProcessCustomMetadata(INotification notification, NotificationView notificationView)
+        {
+            switch (notification)
+            {
+                case RewardAssignedNotification rewardAssignedNotification:
+                    notificationView.NotificationImageBackground.sprite = rarityBackgroundMapping.GetTypeImage(rewardAssignedNotification.Metadata.Rarity);
+                    break;
+            }
         }
 
         private void ClickedNotification(NotificationType notificationType, string notificationId)
