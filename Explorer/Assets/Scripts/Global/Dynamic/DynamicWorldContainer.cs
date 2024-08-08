@@ -451,7 +451,8 @@ namespace Global.Dynamic
                     assetBundlesURL,
                     notificationsBusController,
                     characterPreviewEventBus,
-                    mapPathEventBus
+                    mapPathEventBus,
+                    chatEntryConfiguration
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),

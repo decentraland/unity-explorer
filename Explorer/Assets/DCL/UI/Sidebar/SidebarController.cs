@@ -6,6 +6,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Profiles;
 using DCL.SidebarBus;
+using DCL.UI.ProfileElements;
 using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
@@ -20,7 +21,7 @@ namespace DCL.UI.Sidebar
         private readonly ISidebarBus sidebarBus;
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
-        private readonly SidebarProfileController sidebarProfileController;
+        private readonly ProfileMenuController profileMenuController;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache identityCache;
@@ -36,7 +37,7 @@ namespace DCL.UI.Sidebar
             INotificationsBusController notificationsBusController,
             NotificationsMenuController notificationsMenuController,
             ProfileWidgetController profileIconWidgetController,
-            SidebarProfileController profileMenuWidgetController,
+            ProfileMenuController profileMenuMenuWidgetController,
             ISidebarBus sidebarBus,
             ChatEntryConfigurationSO chatEntryConfiguration,
             IWeb3IdentityCache identityCache,
@@ -45,7 +46,7 @@ namespace DCL.UI.Sidebar
         {
             this.mvcManager = mvcManager;
             this.profileIconWidgetController = profileIconWidgetController;
-            this.sidebarProfileController = profileMenuWidgetController;
+            this.profileMenuController = profileMenuMenuWidgetController;
             this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
@@ -89,7 +90,7 @@ namespace DCL.UI.Sidebar
         private void CloseAllWidgets()
         {
             systemMenuCts = systemMenuCts.SafeRestart();
-            if (sidebarProfileController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { sidebarProfileController.HideViewAsync(systemMenuCts.Token).Forget(); }
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { profileMenuController.HideViewAsync(systemMenuCts.Token).Forget(); }
             notificationsMenuController.ToggleNotificationsPanel(true);
             viewInstance.sidebarSettingsWidget.CloseElement();
             sidebarBus.UnblockSidebar();
@@ -159,13 +160,13 @@ namespace DCL.UI.Sidebar
         {
             systemMenuCts = systemMenuCts.SafeRestart();
 
-            if (sidebarProfileController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
             {
-                sidebarProfileController.HideViewAsync(systemMenuCts.Token).Forget();
+                profileMenuController.HideViewAsync(systemMenuCts.Token).Forget();
                 sidebarBus.UnblockSidebar();
             }
             else
-                sidebarProfileController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
+                profileMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Overlay, 0), new ControllerNoData(), systemMenuCts.Token).Forget();
         }
 
         private void OpenExplorePanelInSection(ExploreSections section, BackpackSections backpackSection = BackpackSections.Avatar)

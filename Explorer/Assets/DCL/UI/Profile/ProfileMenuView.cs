@@ -1,8 +1,8 @@
-﻿using DCL.ExplorePanel;
+﻿using DCL.UI.SystemMenu;
 using MVC;
 using UnityEngine;
 
-namespace DCL.UI.Sidebar
+namespace DCL.UI.ProfileElements
 {
     public class ProfileMenuView : ViewBaseWithAnimationElement, IView
     {

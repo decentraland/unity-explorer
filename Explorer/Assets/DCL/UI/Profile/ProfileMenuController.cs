@@ -2,8 +2,8 @@
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
 using DCL.Chat;
-using DCL.ExplorePanel;
 using DCL.Profiles;
+using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -13,16 +13,16 @@ using MVC;
 using System.Threading;
 using Utility;
 
-namespace DCL.UI.Sidebar
+namespace DCL.UI.ProfileElements
 {
-    public class SidebarProfileController : ControllerBase<ProfileMenuView>
+    public class ProfileMenuController : ControllerBase<ProfileMenuView>
     {
         private readonly ProfileSectionController profileSectionController;
         private readonly SystemMenuController systemSectionController;
 
         private CancellationTokenSource profileWidgetCts = new ();
 
-        public SidebarProfileController(
+        public ProfileMenuController(
             [NotNull] ViewFactoryMethod viewFactory,
             ProfileSectionElement profileSectionElement,
             IWeb3IdentityCache identityCache,
@@ -52,6 +52,7 @@ namespace DCL.UI.Sidebar
             profileWidgetCts = profileWidgetCts.SafeRestart();
             LaunchChildViewsAsync().Forget();
         }
+
 
         private async UniTaskVoid LaunchChildViewsAsync()
         {

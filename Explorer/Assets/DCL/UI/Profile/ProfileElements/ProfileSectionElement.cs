@@ -3,7 +3,7 @@ using DCL.UI.ProfileElements;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.ExplorePanel
+namespace DCL.UI.ProfileElements
 {
     public class ProfileSectionElement : MonoBehaviour
     {

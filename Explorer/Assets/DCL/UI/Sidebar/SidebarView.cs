@@ -1,6 +1,7 @@
 ﻿using DCL.EmotesWheel;
 using DCL.ExplorePanel;
 using DCL.Notifications.NotificationsMenu;
+using DCL.UI.ProfileElements;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;

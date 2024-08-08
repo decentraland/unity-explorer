@@ -1,14 +1,11 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Profiles;
-using DCL.UI;
-using DCL.UI.ProfileElements;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using System.Threading;
-using Utility;
 
-namespace DCL.ExplorePanel
+namespace DCL.UI.ProfileElements
 {
     public class ProfileSectionController
     {

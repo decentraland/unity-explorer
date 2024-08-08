@@ -7,7 +7,7 @@ using MVC;
 using System.Threading;
 using Utility;
 
-namespace DCL.ExplorePanel
+namespace DCL.UI.ProfileElements
 {
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {

@@ -11,6 +11,7 @@ using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Profiles;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
+using DCL.UI.ProfileElements;
 using DCL.UI.Sidebar;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
@@ -90,7 +91,7 @@ namespace DCL.PluginSystem.Global
                     notificationsBusController,
                     new NotificationsMenuController(mainUIView.SidebarView.NotificationsMenuView, notificationsRequestController, notificationsBusController, notificationIconTypes, webRequestController, sidebarBus, rarityBackgroundMapping),
                     new ProfileWidgetController(() => mainUIView.SidebarView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SidebarProfileController(() => mainUIView.SidebarView.ProfileMenuView, mainUIView.SidebarView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
+                    new ProfileMenuController(() => mainUIView.SidebarView.ProfileMenuView, mainUIView.SidebarView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfigurationSo),
                     sidebarBus,
                     chatEntryConfigurationSo,
                     web3IdentityCache,
