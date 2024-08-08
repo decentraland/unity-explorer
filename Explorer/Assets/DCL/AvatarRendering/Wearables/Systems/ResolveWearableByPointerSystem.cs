@@ -36,14 +36,14 @@ namespace DCL.AvatarRendering.Wearables.Systems
     {
         private readonly URLSubdirectory customStreamingSubdirectory;
         private readonly IRealmData realmData;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
 
         private SingleInstanceEntity defaultWearablesState;
 
-        public ResolveWearableByPointerSystem(World world, IWearableCatalog wearableCatalog, IRealmData realmData,
+        public ResolveWearableByPointerSystem(World world, IWearableCache wearableCache, IRealmData realmData,
             URLSubdirectory customStreamingSubdirectory) : base(world)
         {
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.realmData = realmData;
             this.customStreamingSubdirectory = customStreamingSubdirectory;
         }
@@ -106,9 +106,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 URN shortenedPointer = loadingIntentionPointer;
                 loadingIntentionPointer = shortenedPointer.Shorten();
 
-                if (!wearableCatalog.TryGetWearable(loadingIntentionPointer, out IWearable wearable))
+                if (!wearableCache.TryGetWearable(loadingIntentionPointer, out IWearable wearable))
                 {
-                    wearableCatalog.AddEmptyWearable(loadingIntentionPointer);
+                    wearableCache.AddEmptyWearable(loadingIntentionPointer);
                     missingPointers.Add(loadingIntentionPointer);
                     continue;
                 }
@@ -175,7 +175,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 foreach (string pointerID in promise.LoadingIntention.Pointers)
                 {
-                    wearableCatalog.TryGetWearable(pointerID, out IWearable component);
+                    wearableCache.TryGetWearable(pointerID, out IWearable component);
                     component.IsLoading = false;
                 }
 
@@ -199,7 +199,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
-                        bool isWearableInCatalog = wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component);
+                        bool isWearableInCatalog = wearableCache.TryGetWearable(assetEntity.metadata.id, out var component);
 
                         if (!isWearableInCatalog)
                         {
@@ -230,7 +230,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     //We have some missing pointers that were not completed. We have to consider them as failure
                     var e = new ArgumentNullException($"Wearable DTO is null for for {urn}");
                     ReportHub.LogError(new ReportData(GetReportCategory()), e);
-                    if (wearableCatalog.TryGetWearable(urn, out var component))
+                    if (wearableCache.TryGetWearable(urn, out var component))
                     {
                         //If its not in the catalog, we cannot determine which one has failed
                         component.ResolvedFailedDTO(new StreamableLoadingResult<WearableDTO>(e));
@@ -365,7 +365,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
             void CopyDefaultResults(BodyShape bs)
             {
-                IWearable defaultWearable = wearableCatalog.GetDefaultWearable(bs, wearable.GetCategory());
+                IWearable defaultWearable = wearableCache.GetDefaultWearable(bs, wearable.GetCategory());
                 var defaultWearableResults = defaultWearable.WearableAssetResults[bs];
 
                 // the destination array might be not created if DTO itself has failed to load

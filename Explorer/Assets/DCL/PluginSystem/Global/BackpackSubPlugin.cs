@@ -30,7 +30,7 @@ namespace DCL.PluginSystem.Global
     internal class BackpackSubPlugin : IDisposable
     {
         private readonly IAssetsProvisioner assetsProvisioner;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
@@ -41,6 +41,7 @@ namespace DCL.PluginSystem.Global
         private readonly BackpackCommandBus backpackCommandBus;
         private readonly IBackpackEventBus backpackEventBus;
         private readonly IThirdPartyNftProviderSource thirdPartyNftProviderSource;
+        private readonly IWearablesProvider wearablesProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
         private readonly BackpackEquipStatusController backpackEquipStatusController;
         private readonly URLDomain assetBundleURL;
@@ -57,7 +58,7 @@ namespace DCL.PluginSystem.Global
             IAssetsProvisioner assetsProvisioner,
             IWeb3IdentityCache web3Identity,
             ICharacterPreviewFactory characterPreviewFactory,
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             ISelfProfile selfProfile,
             IEquippedWearables equippedWearables,
             IEquippedEmotes equippedEmotes,
@@ -70,12 +71,13 @@ namespace DCL.PluginSystem.Global
             IWebRequestController webRequestController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IBackpackEventBus backpackEventBus,
-            IThirdPartyNftProviderSource thirdPartyNftProviderSource)
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource,
+            IWearablesProvider wearablesProvider)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.emoteCache = emoteCache;
@@ -89,6 +91,7 @@ namespace DCL.PluginSystem.Global
             backpackCommandBus = new BackpackCommandBus();
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
+            this.wearablesProvider = wearablesProvider;
 
             backpackEquipStatusController = new BackpackEquipStatusController(
                 backpackEventBus,
@@ -109,7 +112,7 @@ namespace DCL.PluginSystem.Global
             // Initialize assets that do not require World
             var sortController = new BackpackSortController(view.BackpackSortView);
 
-            busController = new BackpackBusController(wearableCatalog, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
+            busController = new BackpackBusController(wearableCache, backpackEventBus, backpackCommandBus, equippedWearables, equippedEmotes, emoteCache);
 
             (NFTColorsSO rarityColorMappings, NftTypeIconSO categoryIconsMapping, NftTypeIconSO rarityBackgroundsMapping, NftTypeIconSO rarityInfoPanelBackgroundsMapping) = await UniTask.WhenAll(
                 assetsProvisioner.ProvideMainAssetValueAsync(backpackSettings.RarityColorMappings, ct),
@@ -169,9 +172,10 @@ namespace DCL.PluginSystem.Global
 
                 var gridController = new BackpackGridController(
                     avatarView.backpackGridView, backpackCommandBus, backpackEventBus,
-                    web3Identity, rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
-                    equippedWearables, sortController, pageButtonView, gridPool, world,
-                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors
+                    rarityBackgroundsMapping, rarityColorMappings, categoryIconsMapping,
+                    equippedWearables, sortController, pageButtonView, gridPool,
+                    thumbnailProvider, colorToggle, hairColors, eyesColors, bodyshapeColors,
+                    wearablesProvider
                 );
 
                 var emoteGridController = new BackpackEmoteGridController(emoteView.GridView, backpackCommandBus, backpackEventBus,

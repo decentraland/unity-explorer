@@ -27,7 +27,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
         private readonly URLSubdirectory lambdaSubdirectory;
         private readonly IRealmData realmData;
         private readonly URLSubdirectory wearablesSubdirectory;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly IWebRequestController webRequestController;
         private readonly Func<bool> isRealmDataReady;
 
@@ -36,11 +36,11 @@ namespace DCL.AvatarRendering.Wearables.Systems
         public LoadWearablesByParamSystem(
             World world, IWebRequestController webRequestController, IStreamableCache<WearablesResponse, GetWearableByParamIntention> cache,
             IRealmData realmData, URLSubdirectory lambdaSubdirectory, URLSubdirectory wearablesSubdirectory,
-            IWearableCatalog wearableCatalog) : base(world, cache)
+            IWearableCache wearableCache) : base(world, cache)
         {
             this.realmData = realmData;
             this.lambdaSubdirectory = lambdaSubdirectory;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.webRequestController = webRequestController;
             this.wearablesSubdirectory = wearablesSubdirectory;
 
@@ -64,7 +64,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 WearableDTO wearableDto = element.entity;
 
-                IWearable wearable = wearableCatalog.GetOrAddWearableByDTO(wearableDto);
+                IWearable wearable = wearableCache.GetOrAddWearableByDTO(wearableDto);
 
                 foreach (WearableDTO.LambdaResponseIndividualDataDto individualData in element.individualData)
                 {
@@ -74,7 +74,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                     long.TryParse(individualData.transferredAt, out long transferredAt);
                     decimal.TryParse(individualData.price, out decimal price);
 
-                    wearableCatalog.SetOwnedNft(wearableDto.metadata.id,
+                    wearableCache.SetOwnedNft(wearableDto.metadata.id,
                         new NftBlockchainOperationEntry(individualData.id,
                             individualData.tokenId, DateTimeOffset.FromUnixTimeSeconds(transferredAt).DateTime,
                             price));
@@ -83,7 +83,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 intention.Results.Add(wearable);
             }
 
-            return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results.ToArray(), intention.TotalAmount));
+            return new StreamableLoadingResult<WearablesResponse>(new WearablesResponse(intention.Results, intention.TotalAmount));
         }
 
         private URLAddress BuildURL(string userID, IReadOnlyList<(string, string)> urlEncodedParams)

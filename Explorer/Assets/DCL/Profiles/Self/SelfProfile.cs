@@ -21,7 +21,7 @@ namespace DCL.Profiles.Self
         private readonly IProfileRepository profileRepository;
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IEquippedWearables equippedWearables;
-        private readonly IWearableCatalog wearableCatalog;
+        private readonly IWearableCache wearableCache;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyList<string> forceRender;
@@ -31,7 +31,7 @@ namespace DCL.Profiles.Self
             IProfileRepository profileRepository,
             IWeb3IdentityCache web3IdentityCache,
             IEquippedWearables equippedWearables,
-            IWearableCatalog wearableCatalog,
+            IWearableCache wearableCache,
             IEmoteCache emoteCache,
             IEquippedEmotes equippedEmotes,
             IReadOnlyList<string> forceRender
@@ -40,7 +40,7 @@ namespace DCL.Profiles.Self
             this.profileRepository = profileRepository;
             this.web3IdentityCache = web3IdentityCache;
             this.equippedWearables = equippedWearables;
-            this.wearableCatalog = wearableCatalog;
+            this.wearableCache = wearableCache;
             this.emoteCache = emoteCache;
             this.equippedEmotes = equippedEmotes;
             this.forceRender = forceRender;
@@ -133,7 +133,7 @@ namespace DCL.Profiles.Self
 
                 if (!uniqueUrn.IsExtended())
                 {
-                    if (wearableCatalog.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                    if (wearableCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
                         uniqueUrn = registry.First().Value.Urn;
                     else
                     {

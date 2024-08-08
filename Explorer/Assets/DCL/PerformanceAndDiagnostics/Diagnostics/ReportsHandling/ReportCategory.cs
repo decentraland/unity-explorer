@@ -254,6 +254,8 @@
 
         public const string SETTINGS_MENU = nameof(SETTINGS_MENU);
 
+        public const string BACKPACK = nameof(BACKPACK);
+
         /// <summary>
         ///     Whatever is coming from external pure C# plugins
         /// </summary>

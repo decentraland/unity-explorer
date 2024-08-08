@@ -86,6 +86,8 @@ namespace Global.Dynamic
     {
         private ECSReloadScene? reloadSceneController;
         private LocalSceneDevelopmentController? localSceneDevelopmentController;
+        private ECSWearablesProvider? wearablesProvider;
+
         public IMVCManager MvcManager { get; private set; } = null!;
 
         public DefaultTexturesContainer DefaultTexturesContainer { get; private set; } = null!;
@@ -207,7 +209,8 @@ namespace Global.Dynamic
             container.ParcelServiceContainer = parcelServiceContainer;
 
             var nftInfoAPIClient = new OpenSeaAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
-            var wearableCatalog = new WearableCatalog();
+            var wearableCatalog = new WearableCache();
+            container.wearablesProvider = new ECSWearablesProvider(identityCache);
             var characterPreviewFactory = new CharacterPreviewFactory(staticContainer.ComponentsContainer.ComponentPoolsRegistry);
             IWebBrowser webBrowser = bootstrapContainer.WebBrowser;
             ChatEntryConfigurationSO chatEntryConfiguration = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.ChatEntryConfiguration, ct)).Value;
@@ -464,7 +467,8 @@ namespace Global.Dynamic
                     characterPreviewEventBus,
                     mapPathEventBus,
                     backpackEventBus,
-                    thirdPartyNftProviderSource
+                    thirdPartyNftProviderSource,
+                    container.wearablesProvider
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
                 new WebRequestsPlugin(staticContainer.WebRequestsContainer.AnalyticsContainer, debugBuilder),
@@ -551,6 +555,7 @@ namespace Global.Dynamic
         public void InitializeWorldRelatedModules(World world, Entity playerEntity)
         {
             reloadSceneController!.Initialize(world, playerEntity);
+            wearablesProvider!.Initialize(world);
         }
     }
 }
