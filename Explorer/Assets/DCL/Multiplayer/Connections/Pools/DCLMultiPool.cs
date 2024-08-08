@@ -4,9 +4,9 @@ using System;
 using System.Collections.Concurrent;
 using UnityEngine.Pool;
 
-namespace DCL.Multiplayer.Connections
+namespace DCL.Multiplayer.Connections.Pools
 {
-    public class DebugMultiPool : IMultiPool
+    public class DCLMultiPool : IMultiPool
     {
         private readonly ConcurrentDictionary<Type, IObjectPool<object>> pools = new ();
 

@@ -28,6 +28,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
@@ -221,7 +222,7 @@ namespace Global.Dynamic
             var satelliteView = new SatelliteFloor();
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, container.MapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
 
-            var multiPool = new DebugMultiPool();
+            var multiPool = new DCLMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
             container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
