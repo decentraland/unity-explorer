@@ -31,6 +31,13 @@ namespace DCL.Multiplayer.Movement.Systems
             this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
         }
 
+        public void Dispose()
+        {
+            isDisposed = true;
+            cancellationTokenSource.Cancel();
+            cancellationTokenSource.Dispose();
+        }
+
         private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
         {
             if (isDisposed)
@@ -44,7 +51,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
-                var message = MovementMessage(receivedMessage.Payload);
+                NetworkMovementMessage message = MovementMessage(receivedMessage.Payload);
                 Inbox(message, receivedMessage.FromWalletId);
             }
         }
@@ -57,12 +64,12 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public void InjectWorld(World world)
         {
-            this.globalWorld = world;
+            globalWorld = world;
         }
 
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
         {
-            var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
+            MessageWrap<Decentraland.Kernel.Comms.Rfc4.Movement> messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
             WriteToProto(message, messageWrap.Payload);
             messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
@@ -92,7 +99,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private static NetworkMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto) =>
-            new()
+            new ()
             {
                 timestamp = proto.Timestamp,
                 position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
@@ -112,42 +119,34 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
         {
-            QueueFor(@for)?.Enqueue(fullMovementMessage, fullMovementMessage.timestamp);
+            Enqueue(@for, fullMovementMessage);
             ReportHub.Log(ReportCategory.MULTIPLAYER_MOVEMENT, $"Movement from {@for} - {fullMovementMessage}");
         }
 
-        private IPriorityQueue<NetworkMovementMessage, float>? QueueFor(string walletId)
+        private void Enqueue(string walletId, NetworkMovementMessage fullMovementMessage)
         {
             if (entityParticipantTable.Has(walletId) == false)
             {
                 ReportHub.LogWarning(ReportCategory.MULTIPLAYER_MOVEMENT, $"Entity for wallet {walletId} not found");
-                return null;
+                return;
             }
 
-            var entity = entityParticipantTable.Entity(walletId);
+            Entity entity = entityParticipantTable.Entity(walletId);
 
-            return globalWorld.Has<RemotePlayerMovementComponent>(entity)
-                ? globalWorld.Get<RemotePlayerMovementComponent>(entity).Queue
-                : null;
+            if (globalWorld.TryGet(entity, out RemotePlayerMovementComponent remotePlayerMovementComponent))
+                remotePlayerMovementComponent.Enqueue(fullMovementMessage);
         }
 
         public async UniTaskVoid SelfSendWithDelayAsync(NetworkMovementMessage message, float delay)
         {
             CompressedNetworkMovementMessage compressedMessage = message.Compress();
-            // await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
-            var decompressedMessage = compressedMessage.Decompress();
+            await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
+            NetworkMovementMessage decompressedMessage = compressedMessage.Decompress();
+
             decompressedMessage.enqueueTime = UnityEngine.Time.unscaledTime;
 
             Debug.Log($"VVV {message.timestamp} - {decompressedMessage.timestamp} - {compressedMessage.compressedData}");
             Inbox(decompressedMessage, @for: RemotePlayerMovementComponent.TEST_ID);
-        }
-
-
-        public void Dispose()
-        {
-            isDisposed = true;
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
         }
     }
 }

@@ -9,6 +9,7 @@ namespace DCL.Multiplayer.Movement
     public struct RemotePlayerMovementComponent : IDisposable
     {
         public const string TEST_ID = "SelfReplica";
+        private const short MAX_MESSAGES = 10;
 
         private readonly IObjectPool<IPriorityQueue<NetworkMovementMessage, float>> queuePool;
         private readonly IPriorityQueue<NetworkMovementMessage, float> queue;
@@ -33,6 +34,14 @@ namespace DCL.Multiplayer.Movement
             WasTeleported = false;
 
             WasPassedThisFrame = false;
+        }
+
+        public void Enqueue(NetworkMovementMessage message)
+        {
+            while (queue.Count > MAX_MESSAGES)
+                queue.Dequeue();
+
+            queue.Enqueue(message, message.timestamp);
         }
 
         public void AddPassed(NetworkMovementMessage message, bool wasTeleported = false)
