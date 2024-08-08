@@ -72,7 +72,7 @@ namespace DCL.Profiles.Self
             uniqueWearables = uniqueWearables.EnsureNotNull();
             ConvertEquippedWearablesIntoUniqueUrns(profile, uniqueWearables);
 
-            var uniqueEmotes = new URN[profile?.Avatar.Emotes.Count ?? 0];
+            var uniqueEmotes = new URN[profile.Avatar?.Emotes?.Count ?? 0];
             ConvertEquippedEmotesIntoUniqueUrns(profile, uniqueEmotes);
 
             var bodyShape = BodyShape.FromStringSafe(equippedWearables.Wearable(WearablesConstants.Categories.BODY_SHAPE)!.GetUrn());
@@ -89,13 +89,7 @@ namespace DCL.Profiles.Self
             newProfile.UserId = web3IdentityCache.Identity.Address;
 
             // Skip publishing the same profile
-            if (newProfile.Avatar.BodyShape.Equals(profile.Avatar.BodyShape)
-                && newProfile.Avatar.wearables.SetEquals(profile.Avatar.wearables)
-                && newProfile.Avatar.emotes.EqualsContentInOrder(profile.Avatar.emotes)
-                && newProfile.Avatar.forceRender.SetEquals(profile.Avatar.forceRender)
-                && newProfile.Avatar.HairColor.Equals(profile.Avatar.HairColor)
-                && newProfile.Avatar.EyesColor.Equals(profile.Avatar.EyesColor)
-                && newProfile.Avatar.SkinColor.Equals(profile.Avatar.SkinColor))
+            if (newProfile.Avatar.IsSameAvatar(profile.Avatar))
                 return profile;
 
             await profileRepository.SetAsync(newProfile, ct);

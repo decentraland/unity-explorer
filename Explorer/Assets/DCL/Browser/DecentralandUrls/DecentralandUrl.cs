@@ -4,6 +4,9 @@ namespace DCL.Multiplayer.Connections.DecentralandUrls
     {
         Host,
 
+        ArchipelagoStatus,
+        GatekeeperStatus,
+
         DiscordLink,
 
         PrivacyPolicy,

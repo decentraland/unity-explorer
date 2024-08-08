@@ -8,9 +8,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     /// </summary>
     public interface IAnalyticsService
     {
-        void Identify(string userId, JsonObject traits = null);
+        void Identify(string userId, JsonObject? traits = null);
 
-        void Track(string eventName, JsonObject properties = null);
+        void Track(string eventName, JsonObject? properties = null);
 
         void AddPlugin(Plugin plugin);
 
