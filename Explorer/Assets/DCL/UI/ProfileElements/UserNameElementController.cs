@@ -51,13 +51,10 @@ namespace DCL.UI.ProfileElements
             element.LayoutGroup.spacing = 0.01f;
         }
 
-        private void Clear() { }
-
         public void Dispose()
         {
             element.CopyUserNameButton.onClick.RemoveAllListeners();
             element.CopyNameWarningNotification.Hide(true);
-            Clear();
         }
 
     }

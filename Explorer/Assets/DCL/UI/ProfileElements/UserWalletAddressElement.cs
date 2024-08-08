@@ -7,16 +7,11 @@ namespace DCL.UI.ProfileElements
 {
     public class UserWalletAddressElement : MonoBehaviour
     {
-        [field: SerializeField]
-        public RectTransform WalletAddressContainer { get; private set; }
+        [field: SerializeField] public RectTransform WalletAddressContainer { get; private set; }
+        [field: SerializeField] public TMP_Text UserWalletAddressText { get; private set; }
+        [field: SerializeField] public Button CopyWalletAddressButton { get; private set; }
+        [field: SerializeField] public WarningNotificationView CopyWalletWarningNotification { get; private set; }
+        [field: SerializeField] public HorizontalLayoutGroup LayoutGroup { get; private set; }
 
-        [field: SerializeField]
-        public TMP_Text UserWalletAddressText { get; private set; }
-
-        [field: SerializeField]
-        public Button CopyWalletAddressButton { get; private set; }
-
-        [field: SerializeField]
-        public WarningNotificationView CopyWalletWarningNotification { get; private set; }
     }
 }

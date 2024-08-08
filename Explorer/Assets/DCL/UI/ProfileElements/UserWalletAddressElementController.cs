@@ -1,4 +1,5 @@
-﻿using DCL.Profiles;
+﻿using Cysharp.Threading.Tasks;
+using DCL.Profiles;
 using System.Threading;
 
 namespace DCL.UI.ProfileElements
@@ -28,15 +29,21 @@ namespace DCL.UI.ProfileElements
         {
             currentProfile = profile;
             element.UserWalletAddressText.text = $"{profile.UserId[..5]}...{profile.UserId[^5..]}";
+            WaitUntilToNextFrameAsync().Forget();
         }
 
-        public void Clear() { }
+
+        private async UniTaskVoid WaitUntilToNextFrameAsync()
+        {
+            element.LayoutGroup.CalculateLayoutInputHorizontal();
+            await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
+            element.LayoutGroup.spacing = 0.01f;
+        }
 
         public void Dispose()
         {
             element.CopyWalletAddressButton.onClick.RemoveAllListeners();
             element.CopyWalletWarningNotification.Hide(true);
-            Clear();
         }
     }
 }
