@@ -136,6 +136,7 @@ namespace DCL.Multiplayer.Movement.Systems
             CompressedNetworkMovementMessage compressedMessage = message.Compress();
             // await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
             var decompressedMessage = compressedMessage.Decompress();
+            decompressedMessage.enqueueTime = UnityEngine.Time.unscaledTime;
 
             Debug.Log($"VVV {message.timestamp} - {decompressedMessage.timestamp} - {compressedMessage.compressedData}");
             Inbox(decompressedMessage, @for: RemotePlayerMovementComponent.TEST_ID);

@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
-            var playerInbox = remotePlayerMovement.Queue;
+            IPriorityQueue<NetworkMovementMessage, float>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
@@ -70,8 +70,18 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             // Filter old messages that arrived too late
-            for (var i = 0; i < OLD_MESSAGES_BATCH && playerInbox.Count > 0 && playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp; i++)
-                playerInbox.Dequeue();
+
+            for (var i = 0; i < OLD_MESSAGES_BATCH && playerInbox.Count > 0; i++)
+            {
+                if(playerInbox.First.enqueueTime - remotePlayerMovement.PastMessage.enqueueTime > NetworkMessageCompressor.ROUND_BUFFER)
+                    break;
+
+                if (remotePlayerMovement.PastMessage.timestamp - playerInbox.First.timestamp > NetworkMessageCompressor.ROUND_BUFFER/2)
+                    break;
+
+                if (playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp)
+                    playerInbox.Dequeue();
+            }
 
             // When there is no messages, we extrapolate
             if (playerInbox.Count == 0 && settings.UseExtrapolation && remotePlayerMovement is { Initialized: true, WasTeleported: false })
@@ -176,6 +186,7 @@ namespace DCL.Multiplayer.Movement.Systems
             RemotePlayerInterpolationSettings? intSettings = settings.InterpolationSettings;
 
             InterpolationType spline = intSettings.UseBlend ? intSettings.BlendType :
+
                 // Interpolate linearly to/from zero velocities to avoid position overshooting
                 remote.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD || remotePlayerMovement.PastMessage.velocity.sqrMagnitude < ZERO_VELOCITY_THRESHOLD ? InterpolationType.Linear :
                 intSettings.InterpolationType;

@@ -12,18 +12,20 @@ namespace DCL.Multiplayer.Movement.Systems
 
     public static class NetworkMessageCompressor
     {
-        private const float ROUND_BUFFER_SECONDS = 10f;
-        private const int STEPS8_BIT = 256;
-        private const int STEPS9_BIT = 512;
-        private const float QUANTUM_SECONDS8_BIT = ROUND_BUFFER_SECONDS / STEPS8_BIT;
-        private const float QUANTUM_SECONDS9_BIT = ROUND_BUFFER_SECONDS / STEPS9_BIT;
+        // private const float ROUND_BUFFER_SECONDS = 51.2f;
+        public const int STEPS7_BIT = 128;
+        public const int STEPS8_BIT = 256;
+        public const int STEPS9_BIT = 512;
 
-        public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message, int steps = STEPS9_BIT)
+        public const float SENT_INTERVAL = 0.1f; // == QUANTUM in this case
+
+
+        public const float ROUND_BUFFER = STEPS7_BIT * SENT_INTERVAL;
+
+        public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message, int steps = STEPS7_BIT)
         {
-            // Compress timestamp
-            float quantumSeconds = ROUND_BUFFER_SECONDS / steps;  // 19.53 ms for 9Bit; 39.06 ms for 8Bit
-            float normalizedTimestamp = message.timestamp % ROUND_BUFFER_SECONDS; // Normalize timestamp within the round buffer
-            long compressedTimestamp = Mathf.RoundToInt(normalizedTimestamp / quantumSeconds) % steps;
+            float normalizedTimestamp = message.timestamp % ROUND_BUFFER; // Normalize timestamp within the round buffer
+            long compressedTimestamp = Mathf.RoundToInt(normalizedTimestamp / SENT_INTERVAL) % steps;
 
             return new CompressedNetworkMovementMessage
             {
@@ -32,15 +34,15 @@ namespace DCL.Multiplayer.Movement.Systems
             };
         }
 
-        public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage, int steps = STEPS9_BIT)
+        public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage, int steps = STEPS7_BIT)
         {
-            bool use9Bit = steps == STEPS9_BIT;
-            int mask = use9Bit ? 0x1FF : 0xFF;
-            float quantum = use9Bit ? QUANTUM_SECONDS9_BIT : QUANTUM_SECONDS8_BIT;
+            int mask = steps == STEPS9_BIT ? 0x1FF :
+                steps == STEPS8_BIT ? 0xFF : 0x7F;
 
             var compressedTimestamp = (int)(compressedMessage.compressedData & mask);
+
             // Debug.Assert(quantum == RoundBufferSeconds / steps, "VVV should be equal");
-            float timestamp = (compressedTimestamp * quantum) % ROUND_BUFFER_SECONDS;
+            float timestamp = compressedTimestamp * SENT_INTERVAL % ROUND_BUFFER;
 
             return new NetworkMovementMessage
             {
