@@ -28,7 +28,7 @@ namespace DCL.UI.MainUI
         private bool waitingToHideSidebar;
         private bool showingSidebar;
         private bool sidebarBlockStatus;
-        private bool autoHideSidebar = true;
+        private bool autoHideSidebar = false;
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
@@ -53,13 +53,6 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
             showingSidebar = true;
-            InitialHideAsync().Forget();
-        }
-
-        private async UniTaskVoid InitialHideAsync()
-        {
-            await UniTask.Delay(MS_WAIT_BEFORE_FIRST_HIDE, cancellationToken: showSidebarCancellationTokenSource.Token);
-            OnPointerExit();
         }
 
         private void OnSidebarAutohideStatusChanged(bool status)
