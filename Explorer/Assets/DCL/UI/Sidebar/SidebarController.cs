@@ -1,9 +1,12 @@
 using Cysharp.Threading.Tasks;
+using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Notifications.NotificationsMenu;
 using DCL.NotificationsBusController.NotificationsBus;
 using DCL.NotificationsBusController.NotificationTypes;
+using DCL.Profiles;
 using DCL.SidebarBus;
+using DCL.Web3.Identities;
 using MVC;
 using System.Threading;
 using Utility;
@@ -18,6 +21,9 @@ namespace DCL.UI.Sidebar
         private readonly INotificationsBusController notificationsBusController;
         private readonly NotificationsMenuController notificationsMenuController;
         private readonly SidebarProfileController sidebarProfileController;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
+        private readonly IProfileRepository profileRepository;
+        private readonly IWeb3IdentityCache identityCache;
 
         private CancellationTokenSource profileWidgetCts = new ();
         private CancellationTokenSource systemMenuCts = new ();
@@ -31,7 +37,10 @@ namespace DCL.UI.Sidebar
             NotificationsMenuController notificationsMenuController,
             ProfileWidgetController profileIconWidgetController,
             SidebarProfileController profileMenuWidgetController,
-            ISidebarBus sidebarBus)
+            ISidebarBus sidebarBus,
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            IWeb3IdentityCache identityCache,
+            IProfileRepository profileRepository)
             : base(viewFactory)
         {
             this.mvcManager = mvcManager;
@@ -40,6 +49,9 @@ namespace DCL.UI.Sidebar
             this.sidebarBus = sidebarBus;
             this.notificationsBusController = notificationsBusController;
             this.notificationsMenuController = notificationsMenuController;
+            this.chatEntryConfiguration = chatEntryConfiguration;
+            this.identityCache = identityCache;
+            this.profileRepository = profileRepository;
         }
 
         public override void Dispose()
@@ -112,6 +124,13 @@ namespace DCL.UI.Sidebar
             profileWidgetCts = profileWidgetCts.SafeRestart();
             //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
+            UpdateFrameColor().Forget();
+        }
+
+        private async UniTaskVoid UpdateFrameColor()
+        {
+            Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, profileWidgetCts.Token);
+            viewInstance.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
         }
 
         protected override void OnViewClose()

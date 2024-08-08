@@ -46,16 +46,16 @@ namespace DCL.UI.Sidebar
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
 
-        protected override void OnViewShow()
+        protected override void OnBeforeViewShow()
         {
-            base.OnViewShow();
+            base.OnBeforeViewShow();
             profileWidgetCts = profileWidgetCts.SafeRestart();
             LaunchChildViewsAsync().Forget();
         }
 
         private async UniTaskVoid LaunchChildViewsAsync()
         {
-            profileSectionController.LoadElements();
+            await profileSectionController.LoadElements(profileWidgetCts.Token);
             await systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
             await HideViewAsync(profileWidgetCts.Token);
         }

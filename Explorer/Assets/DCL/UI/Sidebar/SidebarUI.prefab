@@ -303,6 +303,7 @@ MonoBehaviour:
   <ProfileWidget>k__BackingField: {fileID: 8183886167291671765}
   <profileMenu>k__BackingField: {fileID: 617051157247145518}
   <ProfileMenuView>k__BackingField: {fileID: 9096970311108952280}
+  <FaceFrame>k__BackingField: {fileID: 1704021372997706672}
   <PersistentEmoteWheelOpener>k__BackingField: {fileID: 5415830858801336587}
   <mapButton>k__BackingField: {fileID: 8108662634941636583}
   <backpackButton>k__BackingField: {fileID: 7310006030576766240}
@@ -1016,6 +1017,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 656839858989987251, guid: 2936d4da401930d4f8fef6fefb4010b1, type: 3}
   m_PrefabInstance: {fileID: 111926561021608861}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1704021372997706672 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1596599684408565805, guid: 2936d4da401930d4f8fef6fefb4010b1, type: 3}
+  m_PrefabInstance: {fileID: 111926561021608861}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &5461922870076099836 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5350559431428411233, guid: 2936d4da401930d4f8fef6fefb4010b1, type: 3}

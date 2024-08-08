@@ -17,8 +17,8 @@ namespace DCL.ExplorePanel
         private readonly ImageController profileImageController;
         private readonly UserNameElementController nameElementController;
         private readonly UserWalletAddressElementController walletAddressElementController;
-
-        private CancellationTokenSource? loadProfileCts;
+        private readonly ProfileSectionElement element;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
 
         public ProfileSectionController(
             ProfileSectionElement element,
@@ -29,24 +29,26 @@ namespace DCL.ExplorePanel
         {
             this.identityCache = identityCache;
             this.profileRepository = profileRepository;
+            this.element = element;
+            this.chatEntryConfiguration = chatEntryConfiguration;
 
             nameElementController = new UserNameElementController(element.UserNameElement, chatEntryConfiguration);
             walletAddressElementController = new UserWalletAddressElementController(element.UserWalletAddressElement);
             profileImageController = new ImageController(element.FaceSnapshotImage, webRequestController);
         }
 
-        public void LoadElements()
+        public async UniTask LoadElements(CancellationToken ct)
         {
-            loadProfileCts = loadProfileCts.SafeRestart();
-            LoadAsync(loadProfileCts.Token).Forget();
+            await LoadAsync(ct);
         }
 
-        private async UniTaskVoid LoadAsync(CancellationToken ct)
+        private async UniTask LoadAsync(CancellationToken ct)
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, ct);
 
             nameElementController.Setup(profile);
             walletAddressElementController.Setup(profile);
+            element.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);
 
             profileImageController!.StopLoading();
             //temporarily disabled the profile image request untill we have the correct

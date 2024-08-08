@@ -381,6 +381,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <FaceSnapshotImage>k__BackingField: {fileID: 5853180061045949392}
+  <FaceFrame>k__BackingField: {fileID: 3064566796890884558}
   <UserNameElement>k__BackingField: {fileID: 3511336122902181310}
   <UserWalletAddressElement>k__BackingField: {fileID: 4021329157380962250}
 --- !u!1 &2050763827713771171
