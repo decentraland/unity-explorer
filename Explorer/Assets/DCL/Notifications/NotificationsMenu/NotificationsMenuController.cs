@@ -43,6 +43,8 @@ namespace DCL.Notifications.NotificationsMenu
             ISidebarBus sidebarBus,
             NftTypeIconSO rarityBackgroundMapping)
         {
+            notificationThumbnailCts = new CancellationTokenSource();
+
             this.view = view;
             this.notificationsRequestController = notificationsRequestController;
             this.notificationsBusController = notificationsBusController;
@@ -52,7 +54,6 @@ namespace DCL.Notifications.NotificationsMenu
             this.rarityBackgroundMapping = rarityBackgroundMapping;
             this.view.LoopList.InitListView(0, OnGetItemByIndex);
             this.view.CloseButton.onClick.AddListener(ClosePanel);
-
             InitialNotificationRequestAsync(lifeCycleCts.Token).Forget();
         }
 
@@ -106,7 +107,6 @@ namespace DCL.Notifications.NotificationsMenu
                 notificationView.NotificationImage.SetImage(thumbnailSprite);
             else
             {
-                notificationThumbnailCts = notificationThumbnailCts.SafeRestart();
                 LoadNotificationThumbnailAsync(notificationView, notificationData, notificationThumbnailCts.Token).Forget();
             }
 
