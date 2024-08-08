@@ -1,7 +1,6 @@
 ﻿#nullable enable
 using DCL.Web3.Identities;
 using ECS;
-using JetBrains.Annotations;
 using Segment.Serialization;
 using UnityEngine;
 using Utility;

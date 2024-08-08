@@ -19,9 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Cysharp.Threading.Tasks;
-using UnityEngine;
-using UnityEngine.Assertions;
 using Utility;
 using AssetBundleManifestPromise = ECS.StreamableLoading.Common.AssetPromise<SceneRunner.Scene.SceneAssetBundleManifest, DCL.AvatarRendering.Wearables.Components.GetWearableAssetBundleManifestIntention>;
 using AssetBundlePromise = ECS.StreamableLoading.Common.AssetPromise<ECS.StreamableLoading.AssetBundles.AssetBundleData, ECS.StreamableLoading.AssetBundles.GetAssetBundleIntention>;
@@ -188,7 +185,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
             {
                 if (!promiseResult.Succeeded)
                 {
-                    //No wearable representation is going to be possible 
+                    //No wearable representation is going to be possible
                     foreach (string pointerID in promise.LoadingIntention.Pointers)
                         ReportAndFinalizeWithError(pointerID);
                 }
@@ -196,7 +193,7 @@ namespace DCL.AvatarRendering.Wearables.Systems
                 {
                     var failedDTOList = WearableComponentsUtils.POINTERS_POOL.Get();
                     failedDTOList.AddRange(promise.LoadingIntention.Pointers);
-                    
+
                     foreach (WearableDTO assetEntity in promiseResult.Asset.Value)
                     {
                         bool isWearableInCatalog = wearableCatalog.TryGetWearable(assetEntity.metadata.id, out var component);

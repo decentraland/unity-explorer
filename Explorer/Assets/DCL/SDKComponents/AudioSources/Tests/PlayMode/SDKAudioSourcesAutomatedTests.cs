@@ -8,7 +8,6 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.PluginSystem;
-using DCL.PluginSystem.Global;
 using DCL.PluginSystem.World;
 using DCL.Profiles;
 using DCL.Web3;
@@ -135,6 +134,7 @@ namespace DCL.SDKComponents.AudioSources.Tests.PlayMode
                     globalSettingsContainer,
                     web3IdentityCache,
                     ethereumApi,
+                    false,
                     ct
                 );
 
