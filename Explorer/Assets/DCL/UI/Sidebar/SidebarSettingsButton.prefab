@@ -115,9 +115,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 168.5, y: -22.5}
+  m_AnchoredPosition: {x: 44, y: 0}
   m_SizeDelta: {x: 245, y: 45}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_Pivot: {x: 0, y: 1}
 --- !u!222 &321041792510861939
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -167,7 +167,7 @@ CanvasGroup:
   m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
-  m_IgnoreParentGroups: 0
+  m_IgnoreParentGroups: 1
 --- !u!1 &4260141329178713802
 GameObject:
   m_ObjectHideFlags: 0

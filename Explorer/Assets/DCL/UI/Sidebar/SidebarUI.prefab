@@ -1538,6 +1538,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SidebarSettingsButton
       objectReference: {fileID: 0}
+    - target: {fileID: 4694019954775888957, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_IgnoreParentGroups
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5818222327650142412, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1616,6 +1620,38 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5818222327650142412, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Pivot.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_Pivot.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 8668400090129615844, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8782030481539249862, guid: fca8d2ed46e6a3042ba8ff155890c2b8, type: 3}
