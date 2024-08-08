@@ -35,9 +35,9 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid WaitUntilToNextFrameAsync()
         {
-            element.LayoutGroup.CalculateLayoutInputHorizontal();
+            element.LayoutGroup.spacing =- 0.00001f;
             await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
-            element.LayoutGroup.spacing = 0.01f;
+            element.LayoutGroup.spacing =+ 0.00001f;
         }
 
         public void Dispose()
