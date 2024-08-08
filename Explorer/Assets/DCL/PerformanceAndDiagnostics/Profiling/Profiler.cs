@@ -136,7 +136,7 @@ namespace DCL.Profiling
                 new AnalyticsFrameTimeReport(
                     new FrameTimeStats(samplesArray[0], samplesArray[samplesCount - 1], hiccupCount),
                     result, sumTime, samplesCount,
-                    hiccupCount != 0 ? new HiccupsReport(hiccupTotalTime, hiccupMin, hiccupMax, hiccupTotalTime / hiccupCount) : new HiccupsReport(-1, -1, -1, 0)
+                    hiccupCount != 0 ? new HiccupsReport(hiccupTotalTime, hiccupMin, hiccupMax, hiccupTotalTime / hiccupCount) : new HiccupsReport(0, 0, 0, 0)
                 );
         }
     }
