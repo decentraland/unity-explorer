@@ -42,7 +42,7 @@ namespace DCL.Multiplayer.Connections.Demo
                 webRequests,
                 new LogMetaDataSource(new MetaDataSource(realmData, character, places)),
                 urlsSource
-            ).Start();
+            ).StartAsync();
         }
     }
 }
