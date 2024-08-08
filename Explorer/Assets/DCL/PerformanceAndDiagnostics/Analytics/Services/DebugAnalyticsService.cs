@@ -1,6 +1,7 @@
 ﻿using DCL.Diagnostics;
 using Segment.Analytics;
 using Segment.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -31,5 +32,10 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         }
 
         public void AddPlugin(Plugin plugin) { }
+
+        public void Flush()
+        {
+            ReportHub.Log(ReportCategory.ANALYTICS, "Manual flush");
+        }
     }
 }
