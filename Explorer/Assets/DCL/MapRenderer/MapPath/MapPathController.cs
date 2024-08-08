@@ -121,10 +121,10 @@ namespace DCL.MapRenderer
             if (pinMarker == null)
             {
                 currentDestinationPin = internalPinMarker;
+                internalPinMarker.SetAsDestination(true);
                 internalPinMarker.OnBecameInvisible();
                 internalPinMarker.OnBecameVisible();
                 internalPinMarker.SetPosition(mapPosition, parcel);
-                internalPinMarker.SetAsDestination(true);
             }
             else
             {

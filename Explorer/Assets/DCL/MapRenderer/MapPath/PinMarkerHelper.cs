@@ -11,7 +11,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     public static class PinMarkerHelper
     {
-        public static async UniTaskVoid PulseScaleAsync(Transform transform, float scaleFactor = 1.5f, float duration = 0.5f, float delay = 0.1f, CancellationToken ct = default)
+        public static async UniTaskVoid PulseScaleAsync(Transform transform, float scaleFactor = 1.3f, float duration = 0.5f, float delay = 0.1f, CancellationToken ct = default)
         {
             Vector3 originalScale = Vector3.one;
             Vector3 bigScale = originalScale * scaleFactor;

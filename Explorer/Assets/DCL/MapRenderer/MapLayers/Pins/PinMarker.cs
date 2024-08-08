@@ -139,7 +139,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         private void ResetPulseAnimation()
         {
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
-            if (IsDestination) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
+            if (!IsDestination) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
         }
     }
 }

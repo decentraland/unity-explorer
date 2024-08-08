@@ -11,6 +11,8 @@ namespace DCL.MapRenderer.MapLayers.Pins
         [field: SerializeField] internal SpriteRenderer mapPinIconOutline { get; private set; }
         [field: SerializeField] internal SpriteRenderer[] renderers { get; private set; }
         [field: SerializeField] internal GameObject destinationBackground { get; private set; }
+        [field: SerializeField] internal GameObject destinationAnimationElipse { get; private set; }
+
         [field: SerializeField] internal Transform selectionScalingParent { get; private set; }
         [field: SerializeField] internal Transform pulseScalingParent { get; private set; }
 
@@ -27,6 +29,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void SetAsDestination(bool isDestination)
         {
             destinationBackground.SetActive(isDestination);
+            destinationAnimationElipse.SetActive(isDestination);
         }
     }
 }
