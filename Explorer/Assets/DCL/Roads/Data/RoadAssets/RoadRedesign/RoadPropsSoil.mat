@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: RoadPropsSoil
-  m_Shader: {fileID: 4800000, guid: 933532a4fcc9baf4fa0491de14d08ed7, type: 3}
+  m_Shader: {fileID: 4800000, guid: 56a9743f8d94f684190dc11bb521fb78, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -30,8 +30,7 @@ Material:
   m_EnableInstancingVariants: 1
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap:
-    RenderType: Opaque
+  stringTagMap: {}
   disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
@@ -131,5 +130,7 @@ Material:
     - _BaseColor: {r: 0.34901962, g: 0.2722582, b: 0.24012549, a: 1}
     - _Color: {r: 0.3490196, g: 0.27225816, b: 0.24012545, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 0}
+    - _PlaneClipping: {r: -2.1474836e+9, g: 2.1474836e+9, b: -2.1474836e+9, a: 2.1474836e+9}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _VerticalClipping: {r: -2.1474836e+9, g: 2.1474836e+9, b: 0, a: 0}
   m_BuildTextureStacks: []
