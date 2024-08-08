@@ -83,7 +83,12 @@ namespace DCL.Backpack
             view.RarityBackgroundPanel.color = rarityColors.GetColor(wearable.GetRarity());
             view.RarityName.text = wearable.GetRarity();
 
-            if (wearable.IsThirdParty())
+            bool isThirdParty = wearable.IsThirdParty();
+            view.RarityBackgroundPanel.gameObject.SetActive(!isThirdParty);
+            view.ThirdPartyRarityBackgroundPanel.SetActive(isThirdParty);
+            view.ThirdPartyCollectionContainer.SetActive(isThirdParty);
+
+            if (isThirdParty)
                 TrySetThirdPartyProviderNameAsync(wearable, cts.Token).Forget();
 
             WaitForThumbnailAsync(wearable, cts.Token).Forget();
@@ -115,7 +120,7 @@ namespace DCL.Backpack
 
             foreach (ThirdPartyNftProviderDefinition tpw in tpws)
                 if (urn.ToString().StartsWith(tpw.id))
-                    view.RarityName.text = tpw.metadata.thirdParty.name;
+                    view.ThirdPartyCollectionName.text = $"Collection <b>{tpw.metadata.thirdParty.name}</b>";
         }
 
         [Flags]
