@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
 using SceneRunner.Debugging;
@@ -16,19 +17,33 @@ using UnityEngine.UIElements;
 
 namespace Global.Dynamic
 {
-    [Serializable]
-    public class DebugSettings
+    public interface IDebugSettings
     {
-        public bool showSplash;
-        public bool showAuthentication;
-        public bool showLoading;
-        public bool enableLandscape;
-        public bool enableLOD;
-        public bool enableEmulateNoLivekitConnection;
+        bool ShowSplash { get; }
+        bool ShowAuthentication { get; }
+        bool ShowLoading { get; }
+        bool EnableLandscape { get; }
+        bool EnableLOD { get; }
+        bool EnableEmulateNoLivekitConnection { get; }
+    }
 
-        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
-        public DebugSettings Get() =>
-            Debug.isDebugBuild ? this : Release();
+    [Serializable]
+    public class DebugSettings : IDebugSettings
+    {
+        private static readonly DebugSettings RELEASE_SETTINGS = Release();
+
+        [SerializeField]
+        private bool showSplash;
+        [SerializeField]
+        private bool showAuthentication;
+        [SerializeField]
+        private bool showLoading;
+        [SerializeField]
+        private bool enableLandscape;
+        [SerializeField]
+        private bool enableLOD;
+        [SerializeField]
+        private bool enableEmulateNoLivekitConnection;
 
         public static DebugSettings Release() =>
             new ()
@@ -40,6 +55,14 @@ namespace Global.Dynamic
                 enableLOD = true,
                 enableEmulateNoLivekitConnection = false,
             };
+
+        // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
+        public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
+        public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
+        public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
+        public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
+        public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
     }
 
     public class MainSceneLoader : MonoBehaviour
@@ -51,7 +74,7 @@ namespace Global.Dynamic
         [SerializeField] private DebugViewsCatalog debugViewsCatalog = new ();
 
         [Space]
-        [SerializeField] private DebugSettings debugSettings;
+        [SerializeField] private DebugSettings debugSettings = new ();
 
         [Header("References")]
         [SerializeField] private PluginSettingsContainer globalPluginSettingsContainer = null!;
@@ -111,7 +134,9 @@ namespace Global.Dynamic
 
             try
             {
-                bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashRoot, destroyCancellationToken);
+                var splashScreen = new SplashScreen(splashScreenAnimation, splashRoot, debugSettings.ShowSplash);
+
+                bootstrap.PreInitializeSetup(launchSettings, cursorRoot, debugUiRoot, splashScreen, destroyCancellationToken);
 
                 bool isLoaded;
                 (staticContainer, isLoaded) = await bootstrap.LoadStaticContainerAsync(bootstrapContainer, globalPluginSettingsContainer, debugViewsCatalog, ct);
@@ -123,7 +148,7 @@ namespace Global.Dynamic
                 }
 
                 (dynamicWorldContainer, isLoaded) = await bootstrap.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer!, scenePluginSettingsContainer, settings,
-                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreenAnimation, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
+                    dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool.EnsureNotNull(), destroyCancellationToken);
 
                 if (!isLoaded)
                 {
@@ -146,7 +171,7 @@ namespace Global.Dynamic
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
-                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreenAnimation, splashRoot, ct);
+                await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
             }
             catch (OperationCanceledException)
             {

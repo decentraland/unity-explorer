@@ -43,6 +43,7 @@ namespace Global.Dynamic
         public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
+        public IDebugSettings DebugSettings { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public bool LocalSceneDevelopment { get; private set; }
 
@@ -80,7 +81,8 @@ namespace Global.Dynamic
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
-                LocalSceneDevelopment = localSceneDevelopment
+                DebugSettings = debugSettings,
+                LocalSceneDevelopment = localSceneDevelopment,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
@@ -97,12 +99,12 @@ namespace Global.Dynamic
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
+        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings.Get())
+            var coreBootstrap = new Bootstrap(debugSettings)
             {
                 EnableAnalytics = container.enableAnalytics,
             };
@@ -244,7 +246,8 @@ namespace Global.Dynamic
             var uri = new Uri(deepLinkString);
             NameValueCollection uriQuery = HttpUtility.ParseQueryString(uri.Query);
 
-            foreach (string uriQueryKey in uriQuery.AllKeys) { appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey); }
+            foreach (string uriQueryKey in uriQuery.AllKeys)
+                appParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
         }
 
         private static void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)

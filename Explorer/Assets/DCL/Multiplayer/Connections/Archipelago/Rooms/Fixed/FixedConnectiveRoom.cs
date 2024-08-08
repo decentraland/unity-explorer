@@ -28,8 +28,8 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
             );
         }
 
-        public void Start() =>
-            connectiveRoom.Start();
+        public UniTask<bool> StartAsync() =>
+            connectiveRoom.StartAsync();
 
         public UniTask StopAsync() =>
             connectiveRoom.StopAsync();
@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.Connections.Archipelago.Rooms.Fixed
 
         private async UniTask<string> ConnectionStringAsync(CancellationToken token)
         {
-            string adapterUrl = currentAdapterAddress.AdapterUrlAsync();
+            string adapterUrl = currentAdapterAddress.AdapterUrl();
             string metadata = FixedMetadata.Default.ToJson();
             var result = webRequests.SignedFetchPostAsync(adapterUrl, metadata, token);
             AdapterResponse response = await result.CreateFromJson<AdapterResponse>(WRJsonParser.Unity);

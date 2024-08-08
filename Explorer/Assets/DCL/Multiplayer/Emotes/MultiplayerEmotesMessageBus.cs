@@ -1,8 +1,5 @@
-﻿using Arch.Core;
-using CommunicationData.URLHelpers;
+﻿using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
-using DCL.AvatarRendering.Emotes;
-using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;

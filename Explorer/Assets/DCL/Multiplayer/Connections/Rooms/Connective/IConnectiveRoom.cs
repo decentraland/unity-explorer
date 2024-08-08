@@ -13,7 +13,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             Stopping
         }
 
-        void Start();
+        UniTask<bool> StartAsync();
 
         UniTask StopAsync();
 
@@ -23,10 +23,8 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         class Fake : IConnectiveRoom
         {
-            public void Start()
-            {
-                //ignore
-            }
+            public UniTask<bool> StartAsync() =>
+                UniTask.FromResult(false);
 
             public UniTask StopAsync() =>
                 UniTask.CompletedTask;
@@ -41,11 +39,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
     public static class GateKeeperSceneRoomExtensions
     {
-        public static void StartIfNot(this IConnectiveRoom room)
-        {
-            if (room.CurrentState() is IConnectiveRoom.State.Stopped)
-                room.Start();
-        }
+        public static UniTask<bool> StartIfNotAsync(this IConnectiveRoom room) =>
+            room.CurrentState() is IConnectiveRoom.State.Stopped or IConnectiveRoom.State.Stopping
+                ? room.StartAsync()
+                : UniTask.FromResult(true);
 
         public static UniTask StopIfNotAsync(this IConnectiveRoom room) =>
             room.CurrentState() is IConnectiveRoom.State.Running
