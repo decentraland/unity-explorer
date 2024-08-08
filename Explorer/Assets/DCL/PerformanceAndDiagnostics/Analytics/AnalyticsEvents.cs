@@ -3,7 +3,6 @@
     public static class AnalyticsEvents
     {
         // TODO (Vit): Remains
-        // - Used emote
         // - Equip item
 
         public static class General
