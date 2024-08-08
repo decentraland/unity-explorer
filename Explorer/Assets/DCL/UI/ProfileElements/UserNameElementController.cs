@@ -42,18 +42,16 @@ namespace DCL.UI.ProfileElements
             element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
             element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             element.VerifiedMark.SetActive(profile.HasClaimedName);
-            WaitEnd().Forget();
+            WaitUntilToNextFrameAsync().Forget();
         }
 
-        private async UniTaskVoid WaitEnd()
+        private async UniTaskVoid WaitUntilToNextFrameAsync()
         {
-            //await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
-            element.gameObject.SetActive(false);
             await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
-            element.gameObject.SetActive(true);
+            element.LayoutGroup.spacing = 0.01f;
         }
 
-        public void Clear() { }
+        private void Clear() { }
 
         public void Dispose()
         {
