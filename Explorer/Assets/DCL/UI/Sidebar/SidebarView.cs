@@ -29,7 +29,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Sidebar Settings")]
         [field: SerializeField] internal Button sidebarSettingsButton { get; private set; }
-        [field: SerializeField] internal UIWidgetWithCloseArea sidebarSettingsWidget { get; private set; }
+        [field: SerializeField] internal ElementWithCloseArea sidebarSettingsWidget { get; private set; }
         [field: SerializeField] internal Toggle autoHideToggle { get; private set; }
     }
 }

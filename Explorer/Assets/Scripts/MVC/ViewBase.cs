@@ -1,4 +1,5 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,9 @@ namespace MVC
 {
     public abstract class ViewBase : MonoBehaviour
     {
+        public event Action? OnViewHidden;
+        public event Action? OnViewShown;
+
         [field: SerializeField]
         protected Canvas canvas { get; private set; }
 
@@ -25,6 +29,7 @@ namespace MVC
             if (raycaster) raycaster.enabled = false; // Enable raycasts while the animation is playing
             await PlayShowAnimationAsync(ct);
             if (raycaster) raycaster.enabled = true;
+            OnViewShown?.Invoke();
         }
 
         public virtual async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
@@ -35,6 +40,7 @@ namespace MVC
                 await PlayHideAnimationAsync(ct);
 
             gameObject.SetActive(false);
+            OnViewHidden?.Invoke();
         }
 
         protected virtual UniTask PlayShowAnimationAsync(CancellationToken ct) =>

@@ -86,13 +86,15 @@ GameObject:
   - component: {fileID: 8668400090129615844}
   - component: {fileID: 321041792510861939}
   - component: {fileID: 8782030481539249862}
+  - component: {fileID: 5285945422190251414}
+  - component: {fileID: 4694019954775888957}
   m_Layer: 5
   m_Name: SettingsToggleContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8668400090129615844
 RectTransform:
   m_ObjectHideFlags: 0
@@ -111,9 +113,9 @@ RectTransform:
   - {fileID: 3851204880759882478}
   m_Father: {fileID: 5818222327650142412}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 153, y: -14.2}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 168.5, y: -22.5}
   m_SizeDelta: {x: 245, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &321041792510861939
@@ -136,8 +138,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2484fd80a26d4165bc1109fe1a374b84, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <canvas>k__BackingField: {fileID: 0}
+  <raycaster>k__BackingField: {fileID: 0}
+  <viewAnimationElement>k__BackingField: {fileID: 5285945422190251414}
   <closeAreaButton>k__BackingField: {fileID: 6413295789050748537}
-  <autoDeactivate>k__BackingField: 1
+--- !u!114 &5285945422190251414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 290599697974945711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38b1c5e9144d4ef39861c60d5bc3c592, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <fadeTime>k__BackingField: 0.3
+  <canvasGroup>k__BackingField: {fileID: 4694019954775888957}
+--- !u!225 &4694019954775888957
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 290599697974945711}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &4260141329178713802
 GameObject:
   m_ObjectHideFlags: 0
@@ -286,7 +316,7 @@ MonoBehaviour:
     m_NormalColor: {r: 0, g: 0, b: 0, a: 0.69803923}
     m_HighlightedColor: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
     m_PressedColor: {r: 0, g: 0, b: 0, a: 1}
-    m_SelectedColor: {r: 0.2627451, g: 0.2509804, b: 0.2901961, a: 1}
+    m_SelectedColor: {r: 0, g: 0, b: 0, a: 0.69803923}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
@@ -498,7 +528,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 14, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 154.53, y: 16.95}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &8420718383224501396
 CanvasRenderer:
@@ -746,11 +776,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 30.84
+      value: 32
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 16.21
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 6521834947971461802, guid: 6a387e1548b1545319b57f5a417160aa, type: 3}
       propertyPath: m_LocalPosition.x

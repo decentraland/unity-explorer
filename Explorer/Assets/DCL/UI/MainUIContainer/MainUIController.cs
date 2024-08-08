@@ -121,6 +121,7 @@ namespace DCL.UI.MainUI
 
             if (ct.IsCancellationRequested) return;
             showingSidebar = false;
+            viewInstance.sidebarDetectionArea.SetActive(true);
         }
 
         private async UniTaskVoid WaitAndShowAsync(CancellationToken ct)
@@ -133,6 +134,7 @@ namespace DCL.UI.MainUI
 
             if (ct.IsCancellationRequested) return;
             showingSidebar = true;
+            viewInstance.sidebarDetectionArea.SetActive(false);
         }
 
         private async UniTask AnimateWidthAsync(float width, CancellationToken ct) =>

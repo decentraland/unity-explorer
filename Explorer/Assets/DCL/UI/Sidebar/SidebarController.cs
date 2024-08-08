@@ -66,7 +66,7 @@ namespace DCL.UI.Sidebar
             viewInstance.backpackNotificationIndicator.SetActive(false);
             notificationsBusController.SubscribeToNotificationTypeReceived(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationReceived);
             notificationsBusController.SubscribeToNotificationTypeClick(NotificationType.REWARD_ASSIGNMENT, OnRewardNotificationClicked);
-            viewInstance.sidebarSettingsWidget.OnWidgetClosed += OnSidebarSettingsClosed;
+            viewInstance.sidebarSettingsWidget.OnViewHidden += OnSidebarSettingsClosed;
         }
 
         private void OnAutoHideToggleChanged(bool value)
@@ -79,7 +79,7 @@ namespace DCL.UI.Sidebar
             systemMenuCts = systemMenuCts.SafeRestart();
             if (sidebarProfileController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred) { sidebarProfileController.HideViewAsync(systemMenuCts.Token).Forget(); }
             notificationsMenuController.ToggleNotificationsPanel(true);
-            viewInstance.sidebarSettingsWidget.CloseWidget();
+            viewInstance.sidebarSettingsWidget.CloseElement();
             sidebarBus.UnblockSidebar();
         }
 
@@ -87,7 +87,7 @@ namespace DCL.UI.Sidebar
         {
             CloseAllWidgets();
             sidebarBus.BlockSidebar();
-            viewInstance.sidebarSettingsWidget.gameObject.SetActive(true);
+            viewInstance.sidebarSettingsWidget.ShowAsync(CancellationToken.None).Forget();
             viewInstance.sidebarSettingsButton.OnSelect(null);
         }
 
