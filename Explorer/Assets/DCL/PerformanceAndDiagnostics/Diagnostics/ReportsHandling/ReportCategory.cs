@@ -1,4 +1,6 @@
-﻿namespace DCL.Diagnostics
+﻿using UnityEngine;
+
+namespace DCL.Diagnostics
 {
     /// <summary>
     ///     Contains names of report categories, IDs must be constant so they can be specified in the attribute
@@ -263,6 +265,11 @@
         ///     To show intended debug messages
         /// </summary>
         public const string DEBUG = nameof(DEBUG);
+
+        /// <summary>
+        ///     For startup operations flow
+        /// </summary>
+        public const string STARTUP = nameof(STARTUP);
 
         /// <summary>
         ///     Default category into which falls everything that is reported without info and by default Unity Debug.Log

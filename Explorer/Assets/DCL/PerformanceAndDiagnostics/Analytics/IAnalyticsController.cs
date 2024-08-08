@@ -1,5 +1,4 @@
-﻿#nullable enable
-
+using DCL.Multiplayer.HealthChecks;
 using DCL.Web3.Identities;
 using ECS;
 using Segment.Serialization;
@@ -16,14 +15,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         AnalyticsConfiguration Configuration { get; }
 
         void SetCommonParam(IRealmData realmData, IWeb3IdentityCache identityCache, ExposedTransform playerTransform);
-        void Track(string eventName, JsonObject properties = null);
+
+        void Track(string eventName, JsonObject? properties = null);
+
         void Identify(IWeb3Identity? identity);
 
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
         private sealed class NullAnalytics : IAnalyticsController
         {
-            private NullAnalytics() {}
+            private NullAnalytics() { }
 
             private static readonly Lazy<NullAnalytics> INSTANCE = new (() => new NullAnalytics());
 
@@ -32,8 +33,16 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public AnalyticsConfiguration Configuration => ScriptableObject.CreateInstance<AnalyticsConfiguration>();
 
             public void SetCommonParam(IRealmData _, IWeb3IdentityCache __, ExposedTransform ___) { }
-            public void Track(string _, JsonObject __ = null) { }
-            public void Identify(IWeb3Identity _) { }
+
+            public void Track(string _, JsonObject? __ = null) { }
+
+            public void Identify(IWeb3Identity? _) { }
         }
+    }
+
+    public static class AnalyticsExtensions
+    {
+        public static IHealthCheck WithFailAnalytics(this IHealthCheck origin, IAnalyticsController analyticsController) =>
+            new FailAnalyticsHealthCheckDecorator(origin, analyticsController);
     }
 }
