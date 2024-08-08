@@ -1,3 +1,8 @@
 {
-	"name": "UI.ConnectionStatusPanel"
+  "name": "UI.ConnectionStatusPanel",
+  "references": [
+    "GUID:45f6fff651a0a514f8edfdaf9cce45af",
+    "GUID:e169fa6683c924c7e99a85981a91d953",
+    "GUID:f51ebe6a0ceec4240a699833d6309b23"
+  ]
 }
