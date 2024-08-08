@@ -219,6 +219,9 @@ namespace DCL.ExplorePanel
             foreach (ISection exploreSectionsValue in exploreSections.Values)
                 exploreSectionsValue.Deactivate();
 
+            if (profileMenuController.State is ControllerState.ViewFocused or ControllerState.ViewBlurred)
+                profileMenuController.HideViewAsync(CancellationToken.None).Forget();
+
             profileWidgetCts.SafeCancelAndDispose();
             profileMenuCts.SafeCancelAndDispose();
 
