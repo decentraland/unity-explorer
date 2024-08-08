@@ -45,6 +45,7 @@ namespace DCL.Diagnostics
 
             // Enable Hub static accessors
             ReportHub.Instance = logger;
+            ReportHub.LogVerboseEnabled = enableLocalSceneReporting;
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
         }
