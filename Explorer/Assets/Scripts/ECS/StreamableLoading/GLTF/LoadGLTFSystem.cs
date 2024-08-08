@@ -19,7 +19,7 @@ namespace ECS.StreamableLoading.GLTF
     {
         private ISceneData sceneData;
         private GltFastDownloadProvider gltfDownloadProvider;
-        private GltfastEditorConsoleLogger gltfConsoleLogger = new GltfastEditorConsoleLogger(); // TODO: Remove ???
+        private GltFastReportHubLogger gltfConsoleLogger = new GltFastReportHubLogger(); // TODO: Remove ???
 
         internal LoadGLTFSystem(
             World world,
