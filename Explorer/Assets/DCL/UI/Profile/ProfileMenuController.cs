@@ -1,8 +1,9 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Browser;
-using DCL.ExplorePanel;
+using DCL.Chat;
 using DCL.Profiles;
+using DCL.UI.SystemMenu;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -12,17 +13,18 @@ using MVC;
 using System.Threading;
 using Utility;
 
-namespace DCL.UI.Sidebar
+namespace DCL.UI.ProfileElements
 {
-    public class SidebarProfileController : ControllerBase<SidebarProfileView>
+    public class ProfileMenuController : ControllerBase<ProfileMenuView>
     {
-        private readonly ProfileWidgetController profileWidgetController;
-        private readonly SystemMenuController systemMenuController;
+        private readonly ProfileSectionController profileSectionController;
+        private readonly SystemMenuController systemSectionController;
 
         private CancellationTokenSource profileWidgetCts = new ();
 
-        public SidebarProfileController(
+        public ProfileMenuController(
             [NotNull] ViewFactoryMethod viewFactory,
+            ProfileSectionElement profileSectionElement,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
             IWebRequestController webRequestController,
@@ -32,28 +34,30 @@ namespace DCL.UI.Sidebar
             IWeb3Authenticator web3Authenticator,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IProfileCache profileCache,
-            IMVCManager mvcManager
+            IMVCManager mvcManager,
+            ChatEntryConfigurationSO chatEntryConfiguration
         ) : base(viewFactory)
         {
-            profileWidgetController = new ProfileWidgetController(() => viewInstance.ProfileMenuWidget, identityCache, profileRepository, webRequestController);
-            systemMenuController = new SystemMenuController(() => viewInstance.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
+            profileSectionController = new ProfileSectionController(profileSectionElement, identityCache, profileRepository, webRequestController, chatEntryConfiguration);
+            systemSectionController = new SystemMenuController(() => viewInstance.SystemMenuView, world, playerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, identityCache, mvcManager);
         }
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) => UniTask.Never(ct);
 
-        protected override void OnViewShow()
+        protected override void OnBeforeViewShow()
         {
-            base.OnViewShow();
+            base.OnBeforeViewShow();
             profileWidgetCts = profileWidgetCts.SafeRestart();
             LaunchChildViewsAsync().Forget();
         }
 
-        private async UniTask LaunchChildViewsAsync()
+
+        private async UniTaskVoid LaunchChildViewsAsync()
         {
-            profileWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
-            await systemMenuController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
+            await profileSectionController.LoadElementsAsync(profileWidgetCts.Token);
+            await systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
             await HideViewAsync(profileWidgetCts.Token);
         }
     }

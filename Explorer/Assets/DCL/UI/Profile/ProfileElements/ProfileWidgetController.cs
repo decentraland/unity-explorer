@@ -7,7 +7,7 @@ using MVC;
 using System.Threading;
 using Utility;
 
-namespace DCL.ExplorePanel
+namespace DCL.UI.ProfileElements
 {
     public class ProfileWidgetController : ControllerBase<ProfileWidgetView>
     {
@@ -59,9 +59,7 @@ namespace DCL.ExplorePanel
 
             if (viewInstance.AddressLabel != null)
             {
-                viewInstance.AddressLabel.gameObject.SetActive(!profile!.HasClaimedName);
-
-                if (!profile.HasClaimedName)
+                if (profile is { HasClaimedName: false })
                     viewInstance.AddressLabel.text = $"#{profile.UserId[^4..]}";
             }
 
