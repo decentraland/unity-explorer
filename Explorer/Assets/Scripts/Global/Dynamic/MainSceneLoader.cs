@@ -1,4 +1,5 @@
 using Arch.Core;
+using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
@@ -19,6 +20,7 @@ namespace Global.Dynamic
 {
     public interface IDebugSettings
     {
+        string[]? PortableExperiencesEnsToLoad;
         bool ShowSplash { get; }
         bool ShowAuthentication { get; }
         bool ShowLoading { get; }
@@ -44,6 +46,7 @@ namespace Global.Dynamic
         private bool enableLOD;
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
+        [SerializeField] internal string[] portableExperiencesEnsToLoad;
 
         public static DebugSettings Release() =>
             new ()
@@ -53,6 +56,7 @@ namespace Global.Dynamic
                 showLoading = true,
                 enableLandscape = true,
                 enableLOD = true,
+                portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
             };
 
@@ -164,6 +168,7 @@ namespace Global.Dynamic
                     return;
                 }
 
+
                 Entity playerEntity;
                 (globalWorld, playerEntity) = bootstrap.CreateGlobalWorldAndPlayer(bootstrapContainer, staticContainer!, dynamicWorldContainer!, debugUiRoot);
 
@@ -171,7 +176,17 @@ namespace Global.Dynamic
                 staticContainer!.PlayerEntityProxy.SetObject(playerEntity);
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
+
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+
+                //TODO: Implement loading this (or more addresses) from Unleash
+                if (debugSettings.portableExperiencesEnsToLoad != null && staticContainer != null)
+                {
+                    foreach (string pxEns in debugSettings.portableExperiencesEnsToLoad)
+                    {
+                        await staticContainer.PortableExperiencesController.CreatePortableExperienceByEnsAsync(new ENS(pxEns), ct, true);
+                    }
+                }
             }
             catch (OperationCanceledException)
             {

@@ -97,7 +97,7 @@ namespace Global.Dynamic
 
             URLAddress url = realm.Append(new URLPath("/about"));
 
-            var genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
+            GenericDownloadHandlerUtils.Adapter<GenericGetRequest, GenericGetArguments> genericGetRequest = webRequestController.GetAsync(new CommonArguments(url), ct, ReportCategory.REALM);
             ServerAbout result = await genericGetRequest.OverwriteFromJsonAsync(serverAbout, WRJsonParser.Unity);
 
             string hostname = ResolveHostname(realm, result);
@@ -175,9 +175,13 @@ namespace Global.Dynamic
 
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
+
+            if (scenesCache.PortableExperiencesScenes.Count == 0)
             // release pooled entities
-            for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
-                globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+            {
+                for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
+                    globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
+            }
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);
@@ -213,13 +217,14 @@ namespace Global.Dynamic
             return false;
         }
 
-        private List<ISceneFacade> FindLoadedScenesAndClearSceneCache()
+        private List<ISceneFacade> FindLoadedScenesAndClearSceneCache(bool findPortableExperiences = false)
         {
             allScenes.Clear();
             allScenes.AddRange(scenesCache.Scenes);
+            if (findPortableExperiences) allScenes.AddRange(scenesCache.PortableExperiencesScenes);
 
             // Dispose all scenes
-            scenesCache.Clear();
+            scenesCache.ClearScenes(findPortableExperiences);
 
             return allScenes;
         }

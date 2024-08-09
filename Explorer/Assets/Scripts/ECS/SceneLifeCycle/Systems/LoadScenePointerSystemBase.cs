@@ -15,7 +15,7 @@ namespace ECS.SceneLifeCycle.Systems
         protected LoadScenePointerSystemBase(World world) : base(world) { }
 
         protected Entity CreateSceneEntity(SceneEntityDefinition definition, IpfsPath ipfsPath) =>
-            World.Create(new SceneDefinitionComponent(definition, ipfsPath));
+            World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
 
         /// <summary>
         ///     Creates a scene entity if none of scene parcels were processed yet
@@ -35,7 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
             if (shouldCreate)
             {
                 // Note: Span.ToArray is not LINQ
-                World.Create(new SceneDefinitionComponent(definition, ipfsPath));
+                World.Create(SceneDefinitionComponentFactory.CreateFromDefinition(definition, ipfsPath));
             }
         }
     }

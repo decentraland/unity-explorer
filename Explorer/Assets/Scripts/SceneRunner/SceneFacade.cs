@@ -22,7 +22,7 @@ namespace SceneRunner
         public SceneEcsExecutor EcsExecutor => deps.SyncDeps.EcsExecutor;
         public PersistentEntities PersistentEntities => deps.SyncDeps.ECSWorldFacade.PersistentEntities;
 
-        private ISceneRuntime runtimeInstance => deps.Runtime;
+        internal ISceneRuntime runtimeInstance => deps.Runtime;
         private ISceneExceptionsHandler sceneExceptionsHandler => deps.SyncDeps.ExceptionsHandler;
 
         public ISceneData SceneData { get; }

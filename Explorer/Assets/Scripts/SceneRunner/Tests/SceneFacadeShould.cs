@@ -12,7 +12,6 @@ using CrdtEcsBridge.ECSToCRDTWriter;
 using CrdtEcsBridge.JsModulesImplementation.Communications;
 using CrdtEcsBridge.OutgoingMessages;
 using CrdtEcsBridge.PoolsProviders;
-using CrdtEcsBridge.RestrictedActions;
 using CrdtEcsBridge.UpdateGate;
 using CrdtEcsBridge.WorldSynchronizer;
 using Cysharp.Threading.Tasks;
@@ -35,6 +34,7 @@ using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Scene.ExceptionsHandling;
@@ -44,6 +44,7 @@ using SceneRuntime.Apis.Modules;
 using SceneRuntime.Apis.Modules.CommunicationsControllerApi;
 using SceneRuntime.Apis.Modules.EngineApi;
 using SceneRuntime.Apis.Modules.FetchApi;
+using SceneRuntime.Apis.Modules.PortableExperiencesApi;
 using SceneRuntime.Apis.Modules.RestrictedActionsApi;
 using SceneRuntime.Apis.Modules.Runtime;
 using SceneRuntime.Apis.Modules.SceneApi;
@@ -103,7 +104,8 @@ namespace SceneRunner.Tests
                 IWebRequestController.DEFAULT,
                 new IRoomHub.Fake(),
                 Substitute.For<IRealmData>(),
-                Substitute.For<ICommunicationControllerHub>()
+                Substitute.For<ICommunicationControllerHub>(),
+                Substitute.For<IPortableExperiencesController>()
             );
         }
 
@@ -250,7 +252,7 @@ namespace SceneRunner.Tests
 
             var apis = new List<IJsApiWrapper>();
 
-            var runtime = sceneFacade.deps.Runtime;
+            ISceneRuntime runtime = sceneFacade.deps.Runtime;
 
             runtime.When(r => r.Register(Arg.Any<string>(), Arg.Any<IJsApiWrapper>()))
                    .Do(info => apis.Add(info.ArgAt<IJsApiWrapper>(1)));

@@ -9,7 +9,7 @@ namespace SceneRunner.Scene
 {
     public interface ISceneData
     {
-        public bool SceneLoadingConcluded { get; set; } 
+        public bool SceneLoadingConcluded { get; set; }
         SceneShortInfo SceneShortInfo { get; }
 
         IReadOnlyList<Vector2Int> Parcels { get; }
@@ -58,6 +58,8 @@ namespace SceneRunner.Scene
         bool IsUrlDomainAllowed(string url);
 
         bool IsSdk7();
+
+        bool IsPortableExperience();
 
         class Fake : ISceneData
         {
@@ -108,6 +110,9 @@ namespace SceneRunner.Scene
 
             public bool IsSdk7() =>
                 true;
+
+            public bool IsPortableExperience() =>
+                false;
         }
     }
 }

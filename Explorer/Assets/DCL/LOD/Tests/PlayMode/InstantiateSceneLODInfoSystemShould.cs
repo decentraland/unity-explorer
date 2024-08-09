@@ -41,18 +41,19 @@ namespace DCL.LOD.Tests
         [SetUp]
         public void Setup()
         {
-            var lodSettings = Substitute.For<ILODSettingsAsset>();
+            ILODSettingsAsset? lodSettings = Substitute.For<ILODSettingsAsset>();
+
             int[] bucketThresholds =
             {
-                2
+                2,
             };
+
             lodSettings.LodPartitionBucketThresholds.Returns(bucketThresholds);
 
-
-            var frameCapBudget = Substitute.For<IPerformanceBudget>();
+            IPerformanceBudget? frameCapBudget = Substitute.For<IPerformanceBudget>();
             frameCapBudget.TrySpendBudget().Returns(true);
 
-            var memoryBudget = Substitute.For<IPerformanceBudget>();
+            IPerformanceBudget? memoryBudget = Substitute.For<IPerformanceBudget>();
             memoryBudget.TrySpendBudget().Returns(true);
 
             scenesCache = Substitute.For<IScenesCache>();
@@ -69,7 +70,7 @@ namespace DCL.LOD.Tests
                 }
             };
 
-            sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
+            sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
             sceneLODInfo = SceneLODInfo.Create();
             sceneLODInfo.metadata = new LODCacheInfo(new GameObject().AddComponent<LODGroup>(), 2 );
@@ -103,7 +104,7 @@ namespace DCL.LOD.Tests
             Assert.AreEqual(SceneLODInfoUtils.HasLODResult(sceneLODInfoRetrieved.metadata.FailedLODs, 0), false);
             scenesCache.Received().AddNonRealScene(DecodedParcels);
         }
-        
+
         [Test]
         public void ResolveFailedPromise()
         {
@@ -144,14 +145,13 @@ namespace DCL.LOD.Tests
 
             var fakeAssetBundleData = new AssetBundleData(null, null, GameObject.CreatePrimitive(PrimitiveType.Cube),
                 new AssetBundleData[]
-                {
-                });
+                    { });
 
             world.Add(promise.Entity,
                 new StreamableLoadingResult<AssetBundleData>(fakeAssetBundleData));
+
             return (fakeAssetBundleData, promise);
         }
-         
+
     }
-   
 }

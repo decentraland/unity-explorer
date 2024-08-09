@@ -11,7 +11,6 @@ using DCL.FeatureFlags;
 using DCL.Gizmos.Plugin;
 using DCL.Input.UnityInputSystem.Blocks;
 using DCL.Interaction.Utility;
-using DCL.MapRenderer;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Optimization.PerformanceBudgeting;
@@ -35,8 +34,8 @@ using ECS.SceneLifeCycle;
 using ECS.SceneLifeCycle.Reporting;
 using System.Collections.Generic;
 using System.Threading;
-using DCL.LOD;
 using ECS.SceneLifeCycle.Components;
+using PortableExperiences.Controller;
 using SceneRunner.Mapping;
 using UnityEngine;
 using Utility;
@@ -90,6 +89,7 @@ namespace Global
         public ISceneReadinessReportQueue SceneReadinessReportQueue { get; private set; }
         public FeatureFlagsCache FeatureFlagsCache { get; private set; }
         public IFeatureFlagsProvider FeatureFlagsProvider { get; private set; }
+        public IPortableExperiencesController PortableExperiencesController { get; private set; }
         public IDebugContainerBuilder DebugContainerBuilder { get; private set; }
 
         public void Dispose()
@@ -143,7 +143,7 @@ namespace Global
             container.EthereumApi = ethereumApi;
             container.ScenesCache = new ScenesCache();
             container.SceneReadinessReportQueue = new SceneReadinessReportQueue(container.ScenesCache);
-            
+
             container.InputBlock = new InputBlock(container.InputProxy, container.GlobalWorldProxy, container.PlayerEntityProxy);
 
             container.assetsProvisioner = assetsProvisioner;
@@ -179,6 +179,7 @@ namespace Global
             container.ExposedGlobalDataContainer = exposedGlobalDataContainer;
             container.WebRequestsContainer = WebRequestsContainer.Create(web3IdentityProvider, container.DebugContainerBuilder);
             container.PhysicsTickProvider = new PhysicsTickProvider();
+            container.PortableExperiencesController = new PortableExperiencesController(container.GlobalWorldProxy, web3IdentityProvider, container.WebRequestsContainer.WebRequestController, container.ScenesCache);
 
             container.FeatureFlagsCache = new FeatureFlagsCache();
 

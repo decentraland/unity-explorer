@@ -76,8 +76,15 @@ namespace ECS.SceneLifeCycle.Systems
 
                 RunOnThreadPoolAsync().Forget();
 
-                // So we know the scene has started
-                scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
+                if (promise.LoadingIntention.DefinitionComponent.IsPortableExperience)
+                {
+                    scenesCache.AddPortableExperienceScene(scene, promise.LoadingIntention.DefinitionComponent.IpfsPath.EntityId);
+                }
+                else
+                {
+                    // So we know the scene has started
+                    scenesCache.Add(scene, promise.LoadingIntention.DefinitionComponent.Parcels);
+                }
                 World.Add(entity, scene);
             }
         }

@@ -33,7 +33,7 @@ namespace DCL.LOD.Tests
             cachedInfo = new LODCacheInfo(lodGroupPool.Get(), 2);
             cachedInfo.SuccessfullLODs = 1;
             lodCache = Substitute.For<ILODCache>();
-            
+
             lodCache.TryGet(fakeSceneIDCached, out Arg.Any<LODCacheInfo>()).Returns(call =>
             {
                 call[1] = cachedInfo;
@@ -53,7 +53,8 @@ namespace DCL.LOD.Tests
                     }
                 }
             };
-            sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
+
+            sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
             partitionComponent = new PartitionComponent();
             system = new InitializeSceneLODInfoSystem(world, lodCache, LOD_LEVELS, lodGroupPool, new GameObject().transform);
         }

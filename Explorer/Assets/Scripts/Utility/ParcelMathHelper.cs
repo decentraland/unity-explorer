@@ -14,7 +14,7 @@ namespace Utility
             Vector3.zero,
             new SceneCircumscribedPlanes(float.MinValue, float.MaxValue, float.MinValue, float.MaxValue));
 
-        public static readonly Vector3 RoadPivotDeviation  =  new (8, 0, 8);
+        public static readonly Vector3 RoadPivotDeviation = new (8, 0, 8);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int2 ToInt2(this Vector2Int vector2Int) =>
@@ -120,21 +120,17 @@ namespace Utility
             }
         }
 
-        public static Vector2Int WorldToGridPosition(Vector3 worldPosition)
-        {
-            return new Vector2Int(
+        public static Vector2Int WorldToGridPosition(Vector3 worldPosition) =>
+            new (
                 (int)Mathf.Floor(worldPosition.x / PARCEL_SIZE),
                 (int)Mathf.Floor(worldPosition.z / PARCEL_SIZE)
             );
-        }
 
-        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition)
-        {
-            return new Vector2(
+        public static Vector2 WorldToGridPositionUnclamped(Vector3 worldPosition) =>
+            new (
                 worldPosition.x / PARCEL_SIZE,
                 worldPosition.z / PARCEL_SIZE
             );
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Intersects(this in SceneCircumscribedPlanes boundingPlanes, Bounds bounds)

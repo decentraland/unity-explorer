@@ -158,7 +158,6 @@ namespace Global.Dynamic
             StaticContainer staticContainer = dynamicWorldDependencies.StaticContainer;
             IWeb3IdentityCache identityCache = dynamicWorldDependencies.Web3IdentityCache;
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
-
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));

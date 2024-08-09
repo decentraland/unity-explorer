@@ -55,5 +55,9 @@ namespace SceneRunner.EmptyScene
 
         public bool IsSdk7() =>
             true;
+
+        public bool IsPortableExperience() =>
+            false;
+
     }
 }

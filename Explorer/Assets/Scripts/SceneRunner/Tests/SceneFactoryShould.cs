@@ -18,6 +18,7 @@ using ECS.TestSuite;
 using MVC;
 using NSubstitute;
 using NUnit.Framework;
+using PortableExperiences.Controller;
 using SceneRunner.ECSWorld;
 using SceneRunner.Scene;
 using SceneRunner.Tests.TestUtils;
@@ -63,7 +64,8 @@ namespace SceneRunner.Tests
                 IWebRequestController.DEFAULT,
                 new IRoomHub.Fake(),
                 Substitute.For<IRealmData>(),
-                Substitute.For<ICommunicationControllerHub>()
+                Substitute.For<ICommunicationControllerHub>(),
+                Substitute.For<IPortableExperiencesController>()
             );
         }
 
@@ -94,7 +96,7 @@ namespace SceneRunner.Tests
 
             Assert.IsNotNull(sceneFacade);
 
-            var deps = sceneFacadeImpl.deps;
+            SceneInstanceDependencies.WithRuntimeAndJsAPIBase deps = sceneFacadeImpl.deps;
 
             Assert.IsNotNull(deps.Runtime);
             Assert.IsNotNull(deps.RuntimeImplementation);

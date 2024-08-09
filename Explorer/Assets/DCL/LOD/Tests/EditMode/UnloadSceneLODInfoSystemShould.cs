@@ -31,7 +31,7 @@ namespace DCL.LOD.Tests
         private const string CachedSceneID = "CachedSceneID";
 
         private const int LOD_PREWARM_VALUE = 5;
-        
+
         [SetUp]
         public void Setup()
         {
@@ -55,8 +55,7 @@ namespace DCL.LOD.Tests
                     }
                 }
             };
-            sceneDefinitionComponent = new SceneDefinitionComponent(sceneEntityDefinition, new IpfsPath());
-
+            sceneDefinitionComponent = SceneDefinitionComponentFactory.CreateFromDefinition(sceneEntityDefinition, new IpfsPath());
 
             system = new UnloadSceneLODSystem(world, scenesCache, lodCache);
         }
