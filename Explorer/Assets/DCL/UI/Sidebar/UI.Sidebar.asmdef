@@ -1,5 +1,5 @@
 {
-    "name": "Sidebar",
+    "name": "UI.Sidebar",
     "rootNamespace": "",
     "references": [
         "GUID:45f6fff651a0a514f8edfdaf9cce45af",
@@ -17,7 +17,11 @@
         "GUID:5ab29fa8ae5769b49ab29e390caca7a4",
         "GUID:4a12c0b1b77ec6b418a8d7bd5c925be3",
         "GUID:2f30d6e5229a74284acedda491abcc6e",
-        "GUID:029c1c1b674aaae47a6841a0b89ad80e"
+        "GUID:029c1c1b674aaae47a6841a0b89ad80e",
+        "GUID:a327cdd867b4c134c92b67c566c92ad7",
+        "GUID:766b242fb43af451aaa331f39872177d",
+        "GUID:52421c42d33594c47a6fbd48b45b1259",
+        "GUID:df934776371151c45b473e9aa39efd1b"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

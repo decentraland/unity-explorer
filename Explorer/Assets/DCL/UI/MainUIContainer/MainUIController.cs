@@ -4,7 +4,6 @@ using DCL.Minimap;
 using DCL.SidebarBus;
 using DCL.UI.Sidebar;
 using DG.Tweening;
-using JetBrains.Annotations;
 using MVC;
 using System;
 using System.Threading;
@@ -15,8 +14,9 @@ namespace DCL.UI.MainUI
 {
     public class MainUIController : ControllerBase<MainUIView>
     {
-        private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 80;
-        private const float HIDE_SIDEBAR_LAYOUT_WIDTH = 20;
+        private const int MS_WAIT_BEFORE_FIRST_HIDE = 3000;
+        private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 46;
+        private const float HIDE_SIDEBAR_LAYOUT_WIDTH = 0;
         private const float HIDE_SIDEBAR_WAIT_TIME = 0.3f;
         private const float SHOW_SIDEBAR_WAIT_TIME = 0.3f;
         private const float SIDEBAR_ANIMATION_TIME = 0.2f;
@@ -28,7 +28,7 @@ namespace DCL.UI.MainUI
         private bool waitingToHideSidebar;
         private bool showingSidebar;
         private bool sidebarBlockStatus;
-        private bool autoHideSidebar = true;
+        private bool autoHideSidebar = false;
         private CancellationTokenSource showSidebarCancellationTokenSource = new ();
         private CancellationTokenSource hideSidebarCancellationTokenSource = new ();
 
@@ -114,6 +114,7 @@ namespace DCL.UI.MainUI
 
             if (ct.IsCancellationRequested) return;
             showingSidebar = false;
+            viewInstance.sidebarDetectionArea.SetActive(true);
         }
 
         private async UniTaskVoid WaitAndShowAsync(CancellationToken ct)
@@ -126,6 +127,7 @@ namespace DCL.UI.MainUI
 
             if (ct.IsCancellationRequested) return;
             showingSidebar = true;
+            viewInstance.sidebarDetectionArea.SetActive(false);
         }
 
         private async UniTask AnimateWidthAsync(float width, CancellationToken ct) =>
