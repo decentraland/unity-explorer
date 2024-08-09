@@ -37,4 +37,5 @@ jobs:
       profile: none
       cache: false
       version: ${{ needs.get-info.outputs.full_version }}
+      sentry_enabled: true
     secrets: inherit

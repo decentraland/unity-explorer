@@ -47,6 +47,14 @@ MonoBehaviour:
       isEnabled: 1
     - eventName: passport_opened
       isEnabled: 1
+  - groupName: Wearables
+    events:
+    - eventName: used_emote
+      isEnabled: 1
+  - groupName: Livekit
+    events:
+    - eventName: livekit_health_check_failed
+      isEnabled: 1
   useLocalEnvVariableFallback: 0
   flushSize: 20
   flushInterval: 30
