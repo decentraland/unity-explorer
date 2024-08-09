@@ -128,8 +128,19 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                             return;
                         }
 
+                        var payload = Payload<T>(packet);
+
+                        if (payload == null)
+                        {
+                            ReportHub.LogError(
+                                ReportCategory.LIVEKIT,
+                                $"Received invalid message from {participant.Identity} with type {packet.MessageCase}"
+                            );
+                            return;
+                        }
+
                         var receivedMessage = new ReceivedMessage<T>(
-                            Payload<T>(packet),
+                            payload,
                             packet,
                             participant.Identity,
                             multiPool
@@ -148,7 +159,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             return list!;
         }
 
-        private static T Payload<T>(Packet packet) where T: class =>
+        private static T? Payload<T>(Packet packet) where T: class =>
             packet.MessageCase switch
             {
                 Packet.MessageOneofCase.Position => (packet.Position as T).EnsureNotNull(),
@@ -161,8 +172,8 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 Packet.MessageOneofCase.Movement => (packet.Movement as T).EnsureNotNull(),
                 Packet.MessageOneofCase.PlayerEmote => (packet.PlayerEmote as T).EnsureNotNull(),
                 Packet.MessageOneofCase.SceneEmote => (packet.SceneEmote as T).EnsureNotNull(),
-                Packet.MessageOneofCase.None => throw new ArgumentOutOfRangeException(),
-                _ => throw new ArgumentOutOfRangeException(),
+                Packet.MessageOneofCase.None => null,
+                _ => null,
             };
     }
 }
