@@ -354,6 +354,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <canvas>k__BackingField: {fileID: 5846655602745955872}
   <raycaster>k__BackingField: {fileID: 6829250095675019045}
+  scene: {fileID: 0}
+  sceneRoom: {fileID: 0}
+  globalRoom: {fileID: 0}
 --- !u!95 &5048152786859444568
 Animator:
   serializedVersion: 5
@@ -641,7 +644,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5420676234660012513, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: m_Name
-      value: StatusEntry
+      value: StatusEntry_Scene
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -851,9 +854,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3674828378924604944, guid: 537c962f37fd942398c6df318798c105, type: 3}
+      propertyPath: m_text
+      value: Scene Room
+      objectReference: {fileID: 0}
     - target: {fileID: 5420676234660012513, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: m_Name
-      value: StatusEntry (1)
+      value: StatusEntry_SceneRoom
+      objectReference: {fileID: 0}
+    - target: {fileID: 8964693357646325981, guid: 537c962f37fd942398c6df318798c105, type: 3}
+      propertyPath: m_text
+      value: Room connection to LiveKit
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -953,9 +964,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3674828378924604944, guid: 537c962f37fd942398c6df318798c105, type: 3}
+      propertyPath: m_text
+      value: Global Room
+      objectReference: {fileID: 0}
     - target: {fileID: 5420676234660012513, guid: 537c962f37fd942398c6df318798c105, type: 3}
       propertyPath: m_Name
-      value: StatusEntry (2)
+      value: StatusEntry_GlobalRoom
+      objectReference: {fileID: 0}
+    - target: {fileID: 8964693357646325981, guid: 537c962f37fd942398c6df318798c105, type: 3}
+      propertyPath: m_text
+      value: Global connection to LiveKit
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
