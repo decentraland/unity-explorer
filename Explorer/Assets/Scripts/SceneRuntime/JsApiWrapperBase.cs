@@ -19,5 +19,10 @@ namespace SceneRuntime
         }
 
         protected virtual void DisposeInternal() { }
+
+        public virtual void OnSceneIsCurrentChanged(bool isCurrent) { }
+        
+
+        
     }
 }
