@@ -52,7 +52,6 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.FeatureFlags => $"https://feature-flags.decentraland.{ENV}",
                 DecentralandUrl.Market => $"https://market.decentraland.org",
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.org",
-                DecentralandUrl.ThirdPartyNftProviders => $"https://third-party-providers-resolver.decentraland.{ENV}/providers",
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }

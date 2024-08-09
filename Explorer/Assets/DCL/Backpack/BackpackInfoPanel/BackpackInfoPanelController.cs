@@ -120,9 +120,9 @@ namespace DCL.Backpack
 
             foreach (ThirdPartyNftProviderDefinition tpw in tpws)
             {
-                if (!urn.ToString().StartsWith(tpw.id)) continue;
+                if (!urn.ToString().StartsWith(tpw.urn)) continue;
                 view.ThirdPartyCollectionContainer.SetActive(true);
-                view.ThirdPartyCollectionName.text = $"Collection <b>{tpw.metadata.thirdParty.name}</b>";
+                view.ThirdPartyCollectionName.text = $"Collection <b>{tpw.name}</b>";
                 break;
             }
         }
