@@ -8,6 +8,8 @@ namespace DCL.Utilities
         private T latestValue;
         private Action<T>? valueChanged;
 
+        public event Action<T>? OnUpdate;
+
         public T Value
         {
             get => latestValue;
@@ -18,6 +20,7 @@ namespace DCL.Utilities
                 {
                     latestValue = value;
                     valueChanged?.Invoke(latestValue);
+                    OnUpdate?.Invoke(latestValue);
                 }
             }
         }
@@ -45,6 +48,11 @@ namespace DCL.Utilities
 
         public static implicit operator T(ReactiveProperty<T> value) =>
             value.Value;
+
+        public void UpdateValue(T value)
+        {
+            Value = value;
+        }
 
         public override string ToString() =>
             latestValue!.ToString();

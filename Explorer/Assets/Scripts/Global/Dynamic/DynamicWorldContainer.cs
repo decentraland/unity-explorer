@@ -30,6 +30,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
@@ -265,6 +266,8 @@ namespace Global.Dynamic
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
+            RoomsStatus roomsStatus = new RoomsStatus(container.RoomHub);
+
             var entityParticipantTable = new EntityParticipantTable();
 
             var queuePoolFullMovementMessage = new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(
@@ -355,16 +358,17 @@ namespace Global.Dynamic
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
-                                             .WithSelfResend(identityCache, container.ProfileRepository)
-                                             .WithIgnoreSymbols()
-                                             .WithCommands(chatCommandsFactory)
-                                             .WithDebugPanel(debugBuilder);
+                                                 .WithSelfResend(identityCache, container.ProfileRepository)
+                                                 .WithIgnoreSymbols()
+                                                 .WithCommands(chatCommandsFactory)
+                                                 .WithDebugPanel(debugBuilder);
 
             container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
                 : coreChatMessageBus;
 
             var coreBackpackEventBus = new BackpackEventBus();
+
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
@@ -399,6 +403,7 @@ namespace Global.Dynamic
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
                     container.RoomHub,
+                    roomsStatus,
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
@@ -453,7 +458,7 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInAppInitializationFlow,
                     profileCache, sidebarBus, chatEntryConfiguration),
-                new ConnectionStatusPanelPlugin(container.MvcManager, mainUIView),
+                new ConnectionStatusPanelPlugin(container.MvcManager, mainUIView, roomsStatus, container.reloadSceneController),
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
                 new ExplorePanelPlugin(

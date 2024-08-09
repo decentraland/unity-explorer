@@ -1,7 +1,16 @@
-﻿namespace DCL.Utilities
+﻿using System;
+
+namespace DCL.Utilities
 {
-    public interface IReactiveProperty<T>
+    public interface IReactiveProperty<T> : IReadonlyReactiveProperty<T>
     {
-        new T Value { get; set; }
+        void UpdateValue(T value);
+    }
+
+    public interface IReadonlyReactiveProperty<out T>
+    {
+        event Action<T> OnUpdate;
+
+        T Value { get; }
     }
 }
