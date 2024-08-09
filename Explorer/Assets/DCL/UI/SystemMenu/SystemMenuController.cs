@@ -13,7 +13,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.ExplorePanel
+namespace DCL.UI.SystemMenu
 {
     public class SystemMenuController : ControllerBase<SystemMenuView>
     {

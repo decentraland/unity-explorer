@@ -1,22 +1,28 @@
 ﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace MVC
 {
+    //TODO: DAVIDE?! Maybe we can extract some basic logic from ViewBase into a more generic class (UIElementBase??) and only keep in ViewBase the view specific things,
+    //so we can create proper class hierarchies for View/Controller based UIs and just Elements (without controllers)?
     public abstract class ViewBase : MonoBehaviour
     {
-        [field: SerializeField]
-        protected Canvas canvas { get; private set; }
+        public event Action? OnViewHidden;
+        public event Action? OnViewShown;
 
-        [field: SerializeField]
-        protected GraphicRaycaster raycaster { get; private set; }
+        [field: SerializeField] protected Canvas? canvas { get; private set; }
+        [field: SerializeField] protected GraphicRaycaster? raycaster { get; private set; }
 
         public void SetDrawOrder(CanvasOrdering order)
         {
-            canvas.sortingLayerName = order.Layer.ToString();
-            canvas.sortingOrder = order.OrderInLayer;
+            if (canvas != null)
+            {
+                canvas.sortingLayerName = order.Layer.ToString();
+                canvas.sortingOrder = order.OrderInLayer;
+            }
         }
 
         public virtual async UniTask ShowAsync(CancellationToken ct)
@@ -25,6 +31,7 @@ namespace MVC
             if (raycaster) raycaster.enabled = false; // Enable raycasts while the animation is playing
             await PlayShowAnimationAsync(ct);
             if (raycaster) raycaster.enabled = true;
+            OnViewShown?.Invoke();
         }
 
         public virtual async UniTask HideAsync(CancellationToken ct, bool isInstant = false)
@@ -35,6 +42,7 @@ namespace MVC
                 await PlayHideAnimationAsync(ct);
 
             gameObject.SetActive(false);
+            OnViewHidden?.Invoke();
         }
 
         protected virtual UniTask PlayShowAnimationAsync(CancellationToken ct) =>
@@ -43,7 +51,9 @@ namespace MVC
         protected virtual UniTask PlayHideAnimationAsync(CancellationToken ct) =>
             UniTask.CompletedTask;
 
-        public virtual void SetCanvasActive(bool isActive) =>
-            canvas.enabled = isActive;
+        public virtual void SetCanvasActive(bool isActive)
+        {
+            if (canvas != null) { canvas.enabled = isActive; }
+        }
     }
 }

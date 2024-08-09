@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Backpack;
-using DCL.Notification.NotificationsBus;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
 using DCL.WebRequests;
 using DG.Tweening;
@@ -11,7 +12,7 @@ using System.Threading;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Notification.NewNotification
+namespace DCL.Notifications.NewNotification
 {
     public class NewNotificationController : ControllerBase<NewNotificationView>
     {

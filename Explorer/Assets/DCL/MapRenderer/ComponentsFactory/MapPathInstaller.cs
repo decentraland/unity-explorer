@@ -4,7 +4,7 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
-using DCL.Notification.NotificationsBus;
+using DCL.NotificationsBusController.NotificationsBus;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;

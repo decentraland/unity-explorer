@@ -5,7 +5,7 @@ using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.ExplorePanel
+namespace DCL.UI.SystemMenu
 {
     public class SystemMenuView : ViewBase, IView
     {
