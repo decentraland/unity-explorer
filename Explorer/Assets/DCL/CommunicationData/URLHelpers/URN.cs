@@ -149,17 +149,6 @@ namespace CommunicationData.URLHelpers
         public bool IsThirdPartyCollection() =>
             !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
 
-        public string ExtractThirdPartyCollectionName()
-        {
-            string[] parts = urn.Split(':');
-
-            for (var i = 0; i < parts.Length; i++)
-                if (parts[i] == THIRD_PARTY_PART_ID)
-                    return parts[i + 1];
-
-            return "";
-        }
-
         private int CountParts()
         {
             int count = 1;
