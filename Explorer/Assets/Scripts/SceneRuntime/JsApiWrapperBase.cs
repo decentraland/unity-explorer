@@ -22,7 +22,5 @@ namespace SceneRuntime
 
         public virtual void OnSceneIsCurrentChanged(bool isCurrent) { }
         
-
-        
     }
 }
