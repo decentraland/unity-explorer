@@ -90,6 +90,7 @@ namespace DCL.PluginSystem.Global
             if (lodEnabled)
             {
                 CalculateLODBiasSystem.InjectToWorld(ref builder);
+                RecalculateLODDistanceSystem.InjectToWorld(ref builder, partitionSettings);
                 InitializeSceneLODInfoSystem.InjectToWorld(ref builder, lodCache, lodLevels, lodGroupPool, lodCacheParent);
                 UpdateSceneLODInfoSystem.InjectToWorld(ref builder, lodSettingsAsset, scenesCache, sceneReadinessReportQueue, decentralandUrlsSource);
                 InstantiateSceneLODInfoSystem.InjectToWorld(ref builder, frameCapBudget, memoryBudget, scenesCache, sceneReadinessReportQueue, lodTextureArrayContainer, partitionSettings);

@@ -9,10 +9,8 @@ namespace DCL.Multiplayer.Connections.GateKeeper.Rooms
     {
         class Fake : IGateKeeperSceneRoom
         {
-            public void Start()
-            {
-                //ignore
-            }
+            public UniTask<bool> StartAsync() =>
+                UniTask.FromResult(false);
 
             public UniTask StopAsync() =>
                 UniTask.CompletedTask;

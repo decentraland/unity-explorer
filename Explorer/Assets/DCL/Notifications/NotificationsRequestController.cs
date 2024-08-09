@@ -1,8 +1,9 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Notification.NotificationsBus;
-using DCL.Notification.Serialization;
+using DCL.Notifications.Serialization;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
 using Newtonsoft.Json;
@@ -10,18 +11,15 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using UnityEngine;
-using Utility;
 using Utility.Times;
 
-namespace DCL.Notification
+namespace DCL.Notifications
 {
-    public class NotificationsRequestController : IDisposable
+    public class NotificationsRequestController
     {
         private static readonly JsonSerializerSettings SERIALIZER_SETTINGS = new () { Converters = new JsonConverter[] { new NotificationJsonDtoConverter() } };
         private static readonly TimeSpan NOTIFICATIONS_DELAY = TimeSpan.FromSeconds(5);
 
-        private readonly CancellationTokenSource cancellationToken;
         private readonly IWebRequestController webRequestController;
         private readonly INotificationsBusController notificationsBusController;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
@@ -35,7 +33,6 @@ namespace DCL.Notification
         private ulong unixTimestamp;
         private ulong lastPolledTimestamp;
 
-
         public NotificationsRequestController(
             IWebRequestController webRequestController,
             INotificationsBusController notificationsBusController,
@@ -48,7 +45,6 @@ namespace DCL.Notification
             this.decentralandUrlsSource = decentralandUrlsSource;
             this.web3IdentityCache = web3IdentityCache;
 
-            cancellationToken = new CancellationTokenSource();
             lastPolledTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
 
             commonArgumentsForSetRead = new CommonArguments(
@@ -60,27 +56,25 @@ namespace DCL.Notification
                     )
                    .Build()
             );
-
-            GetNewNotificationAsync().SuppressCancellationThrow().Forget();
         }
 
-        public async UniTask<List<INotification>> RequestNotificationsAsync()
+        public async UniTask<List<INotification>> GetMostRecentNotificationsAsync(CancellationToken ct)
         {
-            do
-            {
-                await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: cancellationToken.Token);
-            }
+            do await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
             while (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired);
 
             urlBuilder.Clear();
+
             urlBuilder.AppendDomain(URLDomain.FromString(decentralandUrlsSource.Url(DecentralandUrl.Notification)))
                       .AppendParameter(limitParameter);
+
             commonArguments = new CommonArguments(urlBuilder.Build());
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
+
             List<INotification> notifications =
                 await webRequestController.GetAsync(
                                                commonArguments,
-                                               cancellationToken.Token,
+                                               ct,
                                                signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
                                                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                           .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
@@ -88,13 +82,13 @@ namespace DCL.Notification
             return notifications;
         }
 
-        private async UniTask GetNewNotificationAsync()
+        public async UniTask StartGettingNewNotificationsOverTimeAsync(CancellationToken ct)
         {
             do
             {
-                await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: cancellationToken.Token);
+                await UniTask.Delay(NOTIFICATIONS_DELAY, DelayType.Realtime, cancellationToken: ct);
 
-                if(web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
+                if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired)
                     continue;
 
                 urlBuilder.Clear();
@@ -111,22 +105,24 @@ namespace DCL.Notification
                 List<INotification> notifications =
                     await webRequestController.GetAsync(
                                                    commonArguments,
-                                                   cancellationToken.Token,
+                                                   ct,
                                                    signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArguments.URL, unixTimestamp, "get"),
                                                    headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
                                               .CreateFromNewtonsoftJsonAsync<List<INotification>>(serializerSettings: SERIALIZER_SETTINGS);
 
-                foreach (INotification notification in notifications)
+                await UniTask.WhenAll(notifications.Select(notification =>
                 {
                     notificationsBusController.AddNotification(notification);
-                    SetNotificationAsRead(notification.Id);
-                }
+                    return SetNotificationAsReadAsync(notification.Id, ct);
+                }));
             }
-            while (cancellationToken.IsCancellationRequested == false);
+            while (ct.IsCancellationRequested == false);
         }
 
-        public void SetNotificationAsRead(string notificationId)
+        public async UniTask SetNotificationAsReadAsync(string notificationId, CancellationToken ct)
         {
+            if (web3IdentityCache.Identity == null || web3IdentityCache.Identity.IsExpired) return;
+
             bodyBuilder.Clear();
 
             bodyBuilder.Append("{\"notificationIds\":[\"")
@@ -134,22 +130,14 @@ namespace DCL.Notification
                        .Append("\"]}");
 
             unixTimestamp = DateTime.UtcNow.UnixTimeAsMilliseconds();
-            SetAsReadAsync().Forget();
-        }
 
-        private async UniTaskVoid SetAsReadAsync()
-        {
             await webRequestController.PutAsync(
-                commonArgumentsForSetRead,
-                WebRequests.GenericPutArguments.CreateJson(bodyBuilder.ToString()),
-                new CancellationToken(),
-                signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArgumentsForSetRead.URL, unixTimestamp, "put"),
-                headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp)).WithNoOpAsync();
-        }
-
-        public void Dispose()
-        {
-            cancellationToken.SafeCancelAndDispose();
+                                           commonArgumentsForSetRead,
+                                           WebRequests.GenericPutArguments.CreateJson(bodyBuilder.ToString()),
+                                           ct,
+                                           signInfo: WebRequestSignInfo.NewFromRaw(string.Empty, commonArgumentsForSetRead.URL, unixTimestamp, "put"),
+                                           headersInfo: new WebRequestHeadersInfo().WithSign(string.Empty, unixTimestamp))
+                                      .WithNoOpAsync();
         }
     }
 }
