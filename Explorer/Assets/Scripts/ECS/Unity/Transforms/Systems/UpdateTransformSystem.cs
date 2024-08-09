@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using System;
+using CrdtEcsBridge.Components.Special;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -36,6 +37,7 @@ namespace ECS.Unity.Transforms.Systems
         }
 
         [Query]
+        [None(typeof(SceneRootComponent))]
         private void UpdateTransform(ref SDKTransform sdkTransform, ref TransformComponent transformComponent)
         {
             if (sdkTransform.IsDirty)
