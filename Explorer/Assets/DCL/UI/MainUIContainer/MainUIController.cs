@@ -2,6 +2,7 @@
 using DCL.Chat;
 using DCL.Minimap;
 using DCL.SidebarBus;
+using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.Sidebar;
 using DG.Tweening;
 using MVC;
@@ -12,7 +13,7 @@ using Utility;
 
 namespace DCL.UI.MainUI
 {
-    public class MainUIController : ControllerBase<MainUIView>
+    public class MainUIController.cs : ControllerBase<MainUIView>
     {
         private const int MS_WAIT_BEFORE_FIRST_HIDE = 3000;
         private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 46;
@@ -52,6 +53,7 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
             showingSidebar = true;
         }
 

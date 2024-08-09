@@ -17,7 +17,17 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
         [SerializeField] private IStatusEntry.Status currentStatus;
 
         private Action? cachedAction;
-        private IReadOnlyDictionary<IStatusEntry.Status, (string title, float predefinedWidth, Color text, Color background)> cachedValues = null!;
+        private IReadOnlyDictionary<IStatusEntry.Status, (string title, float predefinedWidth, Color text, Color background)>? cache;
+
+        private IReadOnlyDictionary<IStatusEntry.Status, (string title, float predefinedWidth, Color text, Color background)> values
+        {
+            get
+            {
+                cache = statusValues
+                   .ToDictionary(e => e.status, e => (e.status.ToString()!, e.predefinedWidth, e.textColor, e.backgroundColor));
+                return cache;
+            }
+        }
 
         public void ShowReloadButton(Action onClick)
         {
@@ -30,14 +40,13 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
         {
             reloadButton.gameObject.SetActive(false);
             statusEntry.gameObject.SetActive(true);
-            (string title, float predefinedWidth, Color text, Color background) = cachedValues[status];
+            (string title, float predefinedWidth, Color text, Color background) = values[status];
             statusEntry.UpdateText(title, predefinedWidth);
             statusEntry.ApplyColor(text, background);
         }
 
         private void Awake()
         {
-            cachedValues = statusValues.ToDictionary(e => e.status, e => (e.status.ToString()!, e.predefinedWidth, e.textColor, e.backgroundColor));
             reloadButton.onClick!.AddListener(() => cachedAction?.Invoke());
             reloadButton.gameObject.SetActive(false);
             statusEntry.gameObject.SetActive(false);
@@ -46,7 +55,6 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
         [ContextMenu(nameof(UpdateStatus))]
         public void UpdateStatus()
         {
-            Awake();
             ShowStatus(currentStatus);
         }
 
