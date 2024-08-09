@@ -21,12 +21,8 @@ namespace DCL.PluginSystem
 
         public T GetSettings<T>() where T: IDCLPluginSettings
         {
-            var typeSettings = (T)settings.Find(x => x.GetType() == typeof(T)).EnsureNotNull($"Settings with type {typeof(T).Name} not found");
-
-            if (typeSettings == null)
-                throw new NullReferenceException("Settings not found for type " + typeof(T).Name);
-
-            return typeSettings;
+            try { return (T)settings.Find(x => x.GetType() == typeof(T)).EnsureNotNull(); }
+            catch (Exception e) { throw new NullReferenceException($"Settings not found for type {typeof(T).Name} at {this.GetType().FullName}", e); }
         }
 
         public async UniTask EnsureValidAsync()
