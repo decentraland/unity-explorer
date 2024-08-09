@@ -1,3 +1,5 @@
+#nullable enable
+
 using DCL.Multiplayer.HealthChecks;
 using DCL.Web3.Identities;
 using ECS;
@@ -20,6 +22,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 
         void Identify(IWeb3Identity? identity);
 
+        void Flush();
+
         public static IAnalyticsController Null => NullAnalytics.Instance;
 
         private sealed class NullAnalytics : IAnalyticsController
@@ -37,6 +41,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             public void Track(string _, JsonObject? __ = null) { }
 
             public void Identify(IWeb3Identity? _) { }
+
+            public void Flush() { }
         }
     }
 
