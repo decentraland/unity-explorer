@@ -48,8 +48,6 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
         private void Awake()
         {
             reloadButton.onClick!.AddListener(() => cachedAction?.Invoke());
-            reloadButton.gameObject.SetActive(false);
-            statusEntry.gameObject.SetActive(false);
         }
 
         [ContextMenu(nameof(UpdateStatus))]

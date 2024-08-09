@@ -11,11 +11,6 @@ namespace DCL.UI.ConnectionStatusPanel.Badge
         [SerializeField] private TMP_Text tmpText = null!;
         [SerializeField] private List<Image> backgroundPieces = new ();
 
-        private void Awake()
-        {
-            tmpText.autoSizeTextContainer = true;
-        }
-
         public void UpdateText(string text, float? width = null)
         {
             tmpText.SetText(text);
