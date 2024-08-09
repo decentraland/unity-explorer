@@ -145,7 +145,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
             decompressedMessage.enqueueTime = UnityEngine.Time.unscaledTime;
 
-            Debug.Log($"VVV {message.timestamp} - {decompressedMessage.timestamp} - {compressedMessage.compressedData}");
+            // Debug.Log($"VVV {message.animState.ToString()}");
+            // Debug.Log($"VVV {message.timestamp} - {decompressedMessage.timestamp} - {compressedMessage.compressedData}");
             Inbox(decompressedMessage, @for: RemotePlayerMovementComponent.TEST_ID);
         }
     }

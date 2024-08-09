@@ -8,6 +8,7 @@ namespace DCL.Multiplayer.Movement
     public struct NetworkMovementMessage
     {
         public float enqueueTime;
+
         public float timestamp;
         public Vector3 position;
         public Vector3 velocity;

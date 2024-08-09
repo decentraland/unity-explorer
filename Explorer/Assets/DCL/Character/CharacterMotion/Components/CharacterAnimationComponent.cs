@@ -51,7 +51,7 @@ namespace DCL.CharacterMotion.Components
 
         public override string ToString()
         {
-            return $"{IsGrounded} {MovementBlendValue} {SlideBlendValue} {IsJumping} {IsLongJump} {IsFalling} {IsLongFall}";
+            return $"{IsGrounded}: j:{IsJumping} lf:{IsLongJump} f:{IsFalling} lf:{IsLongFall} mb:{MovementBlendValue} sb:{SlideBlendValue}";
         }
 
         public static bool operator ==(AnimationStates left, AnimationStates right) =>

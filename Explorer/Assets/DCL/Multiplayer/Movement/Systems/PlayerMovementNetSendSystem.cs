@@ -7,6 +7,7 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
+using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -76,6 +77,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
+            // Debug.Log($"VVV {animation.States.ToString()}");
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
