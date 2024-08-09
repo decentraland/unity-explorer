@@ -1,11 +1,10 @@
-using MVC;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI.ConnectionStatusPanel.StatusEntry
 {
-    public class StatusEntryView : ViewBase, IView, IStatusEntry
+    public class StatusEntryView : MonoBehaviour, IStatusEntry
     {
         [SerializeField] private Button reloadButton = null!;
         [SerializeField] private GameObject statusEntry = null!;
