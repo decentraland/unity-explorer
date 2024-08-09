@@ -93,14 +93,17 @@ namespace DCL.Interaction.PlayerOriginated.Systems
             }
 
             if (intent.ValidInputActions != null)
-                foreach (var inputAction in intent.ValidInputActions)
+
+                // ReSharper disable once ForCanBeConvertedToForeach
+                for (var i = 0; i < intent.ValidInputActions.Count; i++)
                 {
+                    (InputAction inputAction, PointerEventType pointerEventType) inputAction = intent.ValidInputActions[i];
                     RaycastHit raycastHit = raycastHitPool.Get()!;
                     raycastHit.FillSDKRaycastHit(scenePosition, intent, sdkEntity);
-                    AppendMessage(sdkEntity, raycastHit, inputAction.Key, inputAction.Value);
+                    AppendMessage(sdkEntity, raycastHit, inputAction.inputAction, inputAction.pointerEventType);
 
-                    //We dont consider hover events to disable global input messages
-                    if (inputAction.Value != PointerEventType.PetHoverEnter && inputAction.Value != PointerEventType.PetHoverLeave)
+                    //We don't consider hover events to disable global input messages
+                    if (inputAction.pointerEventType != PointerEventType.PetHoverEnter && inputAction.pointerEventType != PointerEventType.PetHoverLeave)
                         messageSent = true;
                 }
 

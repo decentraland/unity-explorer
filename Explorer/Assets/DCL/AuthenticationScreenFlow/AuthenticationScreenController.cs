@@ -2,7 +2,6 @@ using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.Browser;
-using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterPreview;
 using DCL.Diagnostics;
 using DCL.FeatureFlags;
@@ -10,6 +9,7 @@ using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.UI;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -43,7 +43,7 @@ namespace DCL.AuthenticationScreenFlow
         private readonly IWebBrowser webBrowser;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly Animator splashScreenAnimator;
+        private readonly ISplashScreen splashScreenAnimator;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
@@ -66,7 +66,7 @@ namespace DCL.AuthenticationScreenFlow
             IWebBrowser webBrowser,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            Animator splashScreenAnimator,
+            ISplashScreen splashScreenAnimator,
             CharacterPreviewEventBus characterPreviewEventBus,
             AudioMixerVolumesController audioMixerVolumesController)
             : base(viewFactory)
@@ -152,7 +152,10 @@ namespace DCL.AuthenticationScreenFlow
         {
             IWeb3Identity? storedIdentity = storedIdentityProvider.Identity;
 
-            if (storedIdentity is { IsExpired: false })
+            if (storedIdentity is { IsExpired: false }
+                // Force to re-login if the identity will expire in 24hs or less, so we mitigate the chances on
+                // getting the identity expired while in-world, provoking signed-fetch requests to fail
+                && storedIdentity.Expiration - DateTime.UtcNow > TimeSpan.FromDays(1))
             {
                 CancelLoginProcess();
                 loginCancellationToken = new CancellationTokenSource();
@@ -179,7 +182,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.SetTrigger(UIAnimationHashes.OUT);
+            splashScreenAnimator.HideSplash();
         }
 
         private void ShowRestrictedUserPopup()

@@ -31,6 +31,13 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
     public delegate UniTask DisconnectCurrentRoomAsyncDelegate(CancellationToken token);
 
+    public enum AttemptToConnectState
+    {
+        None,
+        Success,
+        Error,
+    }
+
     public class ConnectiveRoom : IConnectiveRoom
     {
         private readonly PrewarmAsyncDelegate prewarmAsync;
@@ -39,6 +46,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         private readonly InteriorRoom room = new ();
         private readonly TimeSpan heartbeatsInterval = TimeSpan.FromSeconds(1);
+        private readonly Atomic<AttemptToConnectState> attemptToConnectState = new (AttemptToConnectState.None);
         private readonly Atomic<IConnectiveRoom.State> roomState = new (IConnectiveRoom.State.Stopped);
         private readonly IObjectPool<IRoom> roomPool = new ObjectPool<IRoom>(
             () => new LogRoom(
@@ -77,13 +85,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
             this.log = log;
         }
 
-        public void Start()
+        public async UniTask<bool> StartAsync()
         {
             if (CurrentState() is not IConnectiveRoom.State.Stopped)
                 throw new InvalidOperationException("Room is already running");
 
+            attemptToConnectState.Set(AttemptToConnectState.None);
             roomState.Set(IConnectiveRoom.State.Starting);
             RunAsync().Forget();
+            await UniTask.WaitWhile(() => attemptToConnectState.Value() is AttemptToConnectState.None);
+            return attemptToConnectState.Value() is AttemptToConnectState.Success;
         }
 
         public async UniTask StopAsync()
@@ -143,6 +154,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
             var credentials = new ConnectionStringCredentials(connectionString);
             bool connectResult = await newRoom.ConnectAsync(credentials, token);
+            attemptToConnectState.Set(connectResult ? AttemptToConnectState.Success : AttemptToConnectState.Error);
 
             if (connectResult == false)
             {

@@ -18,37 +18,417 @@ MonoBehaviour:
   m_GUID: 6afe569a142146542854ed2edc5deb37
   m_SerializeEntries:
   - m_GUID: 81289e85b8c13dc4b8ea68b7940e76a5
-    m_Address: Assets/DCL/Audio/AudioSettings/LandscapeAudioSystemSettings.asset
+    m_Address: LandscapeAudioSystemSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d9a7adc162dc338449107a4654a26d50
-    m_Address: Assets/DCL/Audio/Prefabs/WorldAudioContainer.prefab
+    m_Address: WorldAudioContainer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 86a5a8acd91f6994788c37e301d06c56
-    m_Address: Assets/DCL/Audio/Prefabs/CinemachineCameraAudioSettings.prefab
+    m_Address: CinemachineCameraAudioSettings
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e38b0fb061d7ffa47b54d89ecd483bd2
-    m_Address: Assets/DCL/Audio/Prefabs/GeneralAudioMixer.mixer
+    m_Address: GeneralAudioMixer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: df3decac75a242f4689cb445dc93eb06
-    m_Address: Assets/DCL/Audio/Prefabs/UIAudioContainer.prefab
+    m_Address: UIAudioContainer
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cbb820cf51b7a714e88a7c873eb5de9c
-    m_Address: Assets/DCL/Audio/AudioSettings/InteractionsAudioConfigs.asset
+    m_Address: InteractionsAudioConfigs
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c7939fa59480e654a8537b6fc2f007e3
-    m_Address: Assets/DCL/Audio/Prefabs/MediaPlayer.prefab
+    m_Address: MediaPlayer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9055205eadb2454585c619d3fc7a723
+    m_Address: EmoteWheel_Close
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59137f938439a5546aa4f9a63a582583
+    m_Address: EmoteWheel_Open
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c4f3190f92a015d41b580c7fcf8318f9
+    m_Address: Map_Zoom_In
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5cfead82aa5615d439b22e29bc282dd3
+    m_Address: Avatar_Jump_Jog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bbf6fdc100a3def44853fe48acbf4fd5
+    m_Address: 'Generic_Toggle_ON '
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59da234351971c0498a566fb811b0c36
+    m_Address: Generic_Button_Hover
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f99a500dc66b6d45a132c6199a9289d
+    m_Address: Avatar_Land_Walk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 724e4ead730577d478d3f78a275f5d5b
+    m_Address: Avatar_Step_Jog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: abc438e2962540549b414d54fbc89eed
+    m_Address: Chat_Open_Emoji_Panel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a4718ba595a60c546b9d385f08dfc9a4
+    m_Address: Camera_Zoom_Out
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c04c00e1916f2c547ad65c88cf468c23
+    m_Address: Avatar_AnimEvent_BlowKiss
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9f490381e8a63e6458909016310b000f
+    m_Address: Backpack_Hide_Dont_Override
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 14d6e8c4562170b4dbbfc985de1717c0
+    m_Address: Generic_Input_Submit
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 53978fe097a6732498ba14166eb25dbe
+    m_Address: Avatar_Fall_Short
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 642a1eb2b11abf64485d169c4e034dba
+    m_Address: Backpack_Slot_Select
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3681bccfe6c60cd4eb073576d98e8ce2
+    m_Address: Avatar_Step_Walk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1c179628ffe816f4c9be1ba12630f97f
+    m_Address: Chat_Receive_Message
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b6fe3a7507b38b4cb27bf406f7d6d23
+    m_Address: Map_Click_On_Map
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: efe341aa011f4c8428d3246fa65ef5b0
+    m_Address: Chat_Send_Message
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fc9540d32ffa2244991042a14412cd1b
+    m_Address: Avatar_Fall_Long
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b500009457dd11a40a03bb612643bfe5
+    m_Address: Avatar_AnimEvent_FootstepWalkLeft
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 34a2137250badd542944f35e2f80cad2
+    m_Address: Backpack_Wearable_Click
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 16df4e18c957e3e459b249626190c33b
+    m_Address: Backpack_Emote_Equip
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 12bff881d1a63194086781bde9223c0a
+    m_Address: Chat_Close
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 785fb410146c0d44e9f8c8ff97fdf58f
+    m_Address: CharacterPreview_ZoomIn
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 498fffad9951e8547aae4ffff0ebe0e4
+    m_Address: Backpack_Hide_Override
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e95bf9b95c2484148a081ec1b18e3aa6
+    m_Address: 'Generic_Toggle_OFF '
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 83d3818fd051e1745b563ba8eee1f2dd
+    m_Address: Avatar_Land_Run
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5cb261d1bea3aef49b924b30ccde2da8
+    m_Address: World_Interaction_Pointer
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9456c4fad945a3e459b608d1b548bc45
+    m_Address: Map_Zoom_Out
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4fd033c4e4fb85c40a39fa3ed62eeb32
+    m_Address: World_Interaction_Secondary
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 326fadd6b97b91c40b8135ebbba9bab6
+    m_Address: CharacterPreview_Rotate
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 40da7a723b547234ab2e0ad00d831cc9
+    m_Address: CharacterPreview_VerticalPan
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ff5908bed38935044ad02f6e776a475b
+    m_Address: Landscape_Ocean
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 420cd7dc2a2279a4d87e2867deea94d5
+    m_Address: Generic_Slider_Value_Change
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9e9656842cc977c428b43d0deec094de
+    m_Address: Backpack_Emote_Click
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9938a348807b3284bb0ce7bdf23d3cac
+    m_Address: Landscape_Woods_Night
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4dbb923c9eeae7b4aa889d022aedfa73
+    m_Address: World_Interaction_Primary
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3b4a57ef60f3c694ca48ecce5855265b
+    m_Address: Camera_Zoom_In
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4cd70dff1a2f8374faad51b696201090
+    m_Address: Menu_ExplorePanel_Close
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25ea0ce1fa067264bb10e4c5f80ffd5b
+    m_Address: Landscape_Woods_Day
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1ac389fba80f9484a91ea595f1c0ff4c
+    m_Address: Avatar_Land_Jog
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ab59a5b2a814f02419850961fc490805
+    m_Address: Chat_Add_Emoji
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d6b0660efe9c3954c937d083f8aa9c98
+    m_Address: 'Generic_Input_Text '
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: beb7f9dd3a46dab4a817d38c83832caa
+    m_Address: Generic_Input_Select
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 03db33273505e5d4ca2cfcdda86df7f4
+    m_Address: Avatar_AnimEvent_FootstepWalkRight
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8703731941d082441b7bc7c6e9720b34
+    m_Address: Chat_Input_Selected
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 042713ec48c36eb44b8e13c5e2f81bf0
+    m_Address: Avatar_Jump_Run
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 25d91c15922dd22429142fdc6407b539
+    m_Address: CharacterPreview_ZoomOut
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cbbd6a003fc75e24da47c13feacd92c7
+    m_Address: 'Generic_Button_Press '
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f01dab3192a1da45b9d70d248d773af
+    m_Address: Avatar_AnimEvent_ThrowMoney
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ef8137a9dffa4d246b25fe9acb15e54c
+    m_Address: Generic_Input_Text_Clear
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1667cfb9246eccd4e896cf95e870dc9b
+    m_Address: Menu_ExplorePanel_Background_Music
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8b8a0a6a2ec74774c8d3ccac3b54e0e8
+    m_Address: Backpack_Wearable_Hover
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 26e7ebc818785ad428e1de2791a42768
+    m_Address: Menu_LogIn_Background_Music
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4608dcfc1a0f5d941871b8b772d33d14
+    m_Address: Avatar_Jump_Walk
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9c57af4963cf9cf4194435271beb8b73
+    m_Address: Generic_Button_Close
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d1d7149ae3c90e449b657edfd7109eff
+    m_Address: Backpack_Wearable_Equip
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aef47826195123b4393a0b99323d0a3c
+    m_Address: Avatar_Land_Hard
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1f73c26d770f4214f8cbe56fd6930df9
+    m_Address: Generic_Dropdown
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cbceb225b364e714798f2144afa18513
+    m_Address: Backpack_Slot_Hover
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60845438e94f40140920775f272f9ca3
+    m_Address: Map_Hover_On_Map
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c62a5ce10e0e9734e81eb4b47aa81f83
+    m_Address: Avatar_AnimEvent_FootstepLight
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e15bfc30e2deba44d8b1e2024c26c980
+    m_Address: Generic_Loading_Started
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b78ff33cb1d284d4b8938bf362676581
+    m_Address: Backpack_Wearable_UnEquip
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f767192f6c485df418f562c10546e083
+    m_Address: Avatar_AnimEvent_Clap
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0df7b16e196525d40a3a98032e38abea
+    m_Address: 'Generic_Tab_Selected '
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86bba087b6ea4dc4db473c0fe6e8a144
+    m_Address: CharacterPreview_Hover
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4fe2e39f7bbd5d4409efe36a5ee8cef9
+    m_Address: Avatar_AnimEvent_ClothesRustleShort
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ed99255f331fdd34c92d271fbbaddfb2
+    m_Address: Menu_ExplorePanel_Open
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4867c9a3edd8d5f438baccbc70ef12da
+    m_Address: Backpack_Emote_UnEquip
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: abac94b331bd6ca4db03171aa8cd1f02
+    m_Address: Avatar_Step_Run
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3c26ccf99795a344b8096b9efae467b0
+    m_Address: Backpack_Emote_Hover
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d59e1dfedfbcc3942ba177285397b7ee
+    m_Address: Generic_Loading_Finished
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9a6c94967c30cbf409e4c8788abfa496
+    m_Address: Map_On_Floating_Panel_Show
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6578400f95c457644a7e77726c1305a2
+    m_Address: AvatarAudioSettings.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

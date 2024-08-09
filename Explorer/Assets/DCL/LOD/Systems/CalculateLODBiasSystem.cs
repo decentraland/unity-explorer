@@ -24,8 +24,8 @@ namespace DCL.LOD.Systems
 
         protected override void Update(float t)
         {
-            float newHeight = Mathf.Tan(((defaultFOV - camera.GetCameraFovComponent(World).AdditiveFov) * 0.5f) * Mathf.Deg2Rad);
-            QualitySettings.lodBias = defaultLodBias * (defaultHeight / newHeight);
+            float newHeight = Mathf.Tan(camera.GetCameraComponent(World).Camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            QualitySettings.lodBias = defaultLodBias * (newHeight / defaultHeight);
         }
 
         public override void Initialize()
@@ -33,7 +33,7 @@ namespace DCL.LOD.Systems
             camera = World.CacheCamera();
             defaultFOV = camera.GetCameraComponent(World).Camera.fieldOfView;
             defaultLodBias = QualitySettings.lodBias;
-            defaultHeight = Mathf.Tan((defaultFOV * 0.5f) * Mathf.Deg2Rad);
+            defaultHeight = Mathf.Tan(defaultFOV * 0.5f * Mathf.Deg2Rad);
         }
     }
 }

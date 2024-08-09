@@ -1,9 +1,7 @@
 using Arch.Core;
-using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;

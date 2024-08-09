@@ -7,6 +7,7 @@ using DCL.AvatarRendering.Emotes.Equipped;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack;
+using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
@@ -63,6 +64,8 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
+
         private readonly IMapPathEventBus mapPathEventBus;
         private readonly ICollection<string> forceRender;
         private ExplorePanelInputHandler? inputHandler;
@@ -101,7 +104,8 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
-            ChatEntryConfigurationSO chatEntryConfiguration)
+            ChatEntryConfigurationSO chatEntryConfiguration,
+            IBackpackEventBus backpackEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.mvcManager = mvcManager;
@@ -129,6 +133,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
             this.chatEntryConfiguration = chatEntryConfiguration;
+            this.backpackEventBus = backpackEventBus;
         }
 
         public override void Dispose()
@@ -156,7 +161,8 @@ namespace DCL.PluginSystem.Global
                 dclInput,
                 assetBundleURL,
                 webRequestController,
-                characterPreviewEventBus
+                characterPreviewEventBus,
+                backpackEventBus
             );
 
             ExplorePanelView panelViewAsset = (await assetsProvisioner.ProvideMainAssetValueAsync(settings.ExplorePanelPrefab, ct: ct)).GetComponent<ExplorePanelView>();
