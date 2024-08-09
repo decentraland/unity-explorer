@@ -119,11 +119,12 @@ namespace DCL.Backpack
             URN urn = nft.GetUrn();
 
             foreach (ThirdPartyNftProviderDefinition tpw in tpws)
-                if (urn.ToString().StartsWith(tpw.id))
-                {
-                    view.ThirdPartyCollectionContainer.SetActive(true);
-                    view.ThirdPartyCollectionName.text = $"Collection <b>{tpw.metadata.thirdParty.name}</b>";
-                }
+            {
+                if (!urn.ToString().StartsWith(tpw.id)) continue;
+                view.ThirdPartyCollectionContainer.SetActive(true);
+                view.ThirdPartyCollectionName.text = $"Collection <b>{tpw.metadata.thirdParty.name}</b>";
+                break;
+            }
         }
 
         [Flags]
