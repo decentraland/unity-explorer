@@ -49,14 +49,14 @@ namespace DCL.Passport.Modules
         public void Clear()
         {
             checkEditionAvailabilityCts.SafeCancelAndDispose();
-            view.CopyNameWarningNotification.Hide(true);
-            view.CopyWalletWarningNotification.Hide(true);
+            nameElementController.Element.CopyNameWarningNotification.Hide(true);
+            walletAddressElementController.Element.CopyWalletWarningNotification.Hide(true);
         }
 
         public void Dispose()
         {
-            view.CopyUserNameButton.onClick.RemoveAllListeners();
-            view.CopyWalletAddressButton.onClick.RemoveAllListeners();
+            nameElementController.Element.CopyUserNameButton.onClick.RemoveAllListeners();
+            walletAddressElementController.Element.CopyWalletAddressButton.onClick.RemoveAllListeners();
             Clear();
         }
 
