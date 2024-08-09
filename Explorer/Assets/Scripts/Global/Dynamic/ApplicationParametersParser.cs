@@ -80,7 +80,7 @@ namespace Global.Dynamic
         private void ProcessDeepLinkParameters(string deepLinkString)
         {
             // Update deep link so that Uri class allows the host name
-            deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.com/?");
+            deepLinkString = Regex.Replace(deepLinkString, @"^decentraland:/+", "https://decentraland.org/?");
 
             if (!Uri.TryCreate(deepLinkString, UriKind.Absolute, out Uri? res)) return;
 

@@ -23,8 +23,9 @@ namespace CommandTerminal
     public class ConsoleBuffer
     {
         private readonly int maxItems;
+        private List<LogItem> logs { get; } = new ();
 
-        public List<LogItem> Logs { get; } = new ();
+        public IReadOnlyList<LogItem> Logs => logs;
 
         public ConsoleBuffer(int maxItems)
         {
@@ -33,13 +34,16 @@ namespace CommandTerminal
 
         public void HandleLog(string message, string stackTrace, LogType logType)
         {
-            Logs.Add(new LogItem(logType, message, stackTrace));
-            if (Logs.Count > maxItems) { Logs.RemoveAt(0); }
+            logs.Add(new LogItem(logType, message, stackTrace));
+
+            // Logs will only be added from the local SDK Scene (no other scenes consuming performance)
+            // If we detect this check becomes a problem we may change it
+            if (logs.Count > maxItems) { logs.RemoveAt(0); }
         }
 
         public void Clear()
         {
-            Logs.Clear();
+            logs.Clear();
         }
     }
 }
