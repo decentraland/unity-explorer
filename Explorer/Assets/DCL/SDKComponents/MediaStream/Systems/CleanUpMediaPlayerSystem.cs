@@ -6,16 +6,18 @@ using DCL.ECSComponents;
 using DCL.Optimization.Pools;
 using ECS.Abstract;
 using ECS.Groups;
+using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Textures.Components;
 using RenderHeads.Media.AVProVideo;
+using System;
 using UnityEngine;
 
 namespace DCL.SDKComponents.MediaStream
 {
     [UpdateInGroup(typeof(CleanUpGroup))]
     [LogCategory(ReportCategory.MEDIA_STREAM)]
-    public partial class CleanUpMediaPlayerSystem : BaseUnityLoopSystem
+    public partial class CleanUpMediaPlayerSystem : BaseUnityLoopSystem, IFinalizeWorldSystem
     {
         private readonly IComponentPool<MediaPlayer> mediaPlayerPool;
         private readonly IExtendedObjectPool<Texture2D> videoTexturesPool;
@@ -95,5 +97,19 @@ namespace DCL.SDKComponents.MediaStream
             mediaPlayerPool.Release(mediaPlayerComponent.MediaPlayer);
             mediaPlayerComponent.Dispose();
         }
+
+        public void FinalizeComponents(in Query query)
+        {
+            FinalizeVideoTextureConsumerComponentQuery(World);
+            FinalizeMediaPlayerComponentQuery(World);
+        }
+
+        [Query]
+        private void FinalizeVideoTextureConsumerComponent(ref VideoTextureConsumer component) =>
+            CleanUpVideoTexture(ref component);
+
+        [Query]
+        private void FinalizeMediaPlayerComponent(ref MediaPlayerComponent component) =>
+            CleanUpMediaPlayer(ref component);
     }
 }

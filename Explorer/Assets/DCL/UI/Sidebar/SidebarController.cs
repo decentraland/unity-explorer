@@ -125,10 +125,10 @@ namespace DCL.UI.Sidebar
             profileWidgetCts = profileWidgetCts.SafeRestart();
             //We load the data into the profile widget
             profileIconWidgetController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token).Forget();
-            UpdateFrameColor().Forget();
+            UpdateFrameColorAsync().Forget();
         }
 
-        private async UniTaskVoid UpdateFrameColor()
+        private async UniTaskVoid UpdateFrameColorAsync()
         {
             Profile? profile = await profileRepository.GetAsync(identityCache.Identity!.Address, 0, profileWidgetCts.Token);
             viewInstance.FaceFrame.color = chatEntryConfiguration.GetNameColor(profile?.Name);

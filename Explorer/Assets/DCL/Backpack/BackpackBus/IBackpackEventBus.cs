@@ -21,9 +21,11 @@ namespace DCL.Backpack.BackpackBus
         public event Action<string> FilterCategoryEvent;
         public event Action<string> SearchEvent;
         public event Action<BackpackSections> ChangedBackpackSectionEvent;
-        public event Action<Color,string>? ChangeColorEvent;
+        public event Action<Color, string>? ChangeColorEvent;
         public event Action UnEquipAllEvent;
         event Action PublishProfileEvent;
+        event Action<AvatarWearableCategoryEnum>? FilterCategoryByEnumEvent;
+        event Action? DeactivateEvent;
 
         public void SendWearableSelect(IWearable equipWearable);
 
@@ -52,5 +54,7 @@ namespace DCL.Backpack.BackpackBus
         void SendEmoteSlotSelect(int slot);
 
         public void SendChangedBackpackSectionEvent(BackpackSections backpackSections);
+
+        public void SendBackpackDeactivateEvent();
     }
 }

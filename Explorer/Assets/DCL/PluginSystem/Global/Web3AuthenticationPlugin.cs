@@ -8,6 +8,7 @@ using DCL.CharacterPreview;
 using DCL.DebugUtilities;
 using DCL.FeatureFlags;
 using DCL.Profiles.Self;
+using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using ECS;
@@ -29,7 +30,7 @@ namespace DCL.PluginSystem.Global
         private readonly IRealmData realmData;
         private readonly IWeb3IdentityCache storedIdentityProvider;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly Animator splashScreenAnimator;
+        private readonly ISplashScreen splashScreen;
         private readonly FeatureFlagsCache featureFlagsCache;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
         private readonly AudioMixerVolumesController audioMixerVolumesController;
@@ -47,10 +48,11 @@ namespace DCL.PluginSystem.Global
             IRealmData realmData,
             IWeb3IdentityCache storedIdentityProvider,
             ICharacterPreviewFactory characterPreviewFactory,
-            Animator splashScreenAnimator,
+            ISplashScreen splashScreen,
             AudioMixerVolumesController audioMixerVolumesController,
             FeatureFlagsCache featureFlagsCache,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus
+        )
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Authenticator = web3Authenticator;
@@ -61,7 +63,7 @@ namespace DCL.PluginSystem.Global
             this.realmData = realmData;
             this.storedIdentityProvider = storedIdentityProvider;
             this.characterPreviewFactory = characterPreviewFactory;
-            this.splashScreenAnimator = splashScreenAnimator;
+            this.splashScreen = splashScreen;
             this.featureFlagsCache = featureFlagsCache;
             this.audioMixerVolumesController = audioMixerVolumesController;
             this.characterPreviewEventBus = characterPreviewEventBus;
@@ -75,7 +77,7 @@ namespace DCL.PluginSystem.Global
 
             ControllerBase<AuthenticationScreenView, ControllerNoData>.ViewFactoryMethod authScreenFactory = AuthenticationScreenController.CreateLazily(authScreenPrefab, null);
 
-            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreenAnimator, characterPreviewEventBus, audioMixerVolumesController);
+            authenticationScreenController = new AuthenticationScreenController(authScreenFactory, web3Authenticator, selfProfile, featureFlagsCache, webBrowser, storedIdentityProvider, characterPreviewFactory, splashScreen, characterPreviewEventBus, audioMixerVolumesController);
             mvcManager.RegisterController(authenticationScreenController);
         }
 
