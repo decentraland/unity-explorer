@@ -7,7 +7,7 @@ using DCL.Diagnostics;
 using DCL.EmotesWheel;
 using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
-using DCL.Notification.NewNotification;
+using DCL.Notifications.NewNotification;
 using DCL.PerformanceAndDiagnostics.DotNetLogging;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;

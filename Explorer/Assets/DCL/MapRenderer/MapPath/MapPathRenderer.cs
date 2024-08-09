@@ -6,7 +6,7 @@ namespace DCL.MapRenderer
     [RequireComponent(typeof(LineRenderer))]
     public class MapPathRenderer : MonoBehaviour
     {
-        private const float MIN_DOT_SIZE = 30;
+        private const float MIN_DOT_SIZE = 20;
         private const int NUM_CAP_VERTICES = 0;
 
         private float currentDotSize;
