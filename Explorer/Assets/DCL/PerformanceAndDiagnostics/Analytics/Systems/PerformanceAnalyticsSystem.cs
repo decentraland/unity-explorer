@@ -50,8 +50,8 @@ namespace DCL.Analytics.Systems
 
         private void ReportPerformanceMetrics()
         {
-            var mainThreadReport = profiler.GetMainThreadFramesNs(percentiles);
-            var gpuFrameTimeReport = profiler.GetGpuThreadFramesNs(percentiles);
+            AnalyticsFrameTimeReport? mainThreadReport = profiler.GetMainThreadFramesNs(percentiles);
+            AnalyticsFrameTimeReport? gpuFrameTimeReport = profiler.GetGpuThreadFramesNs(percentiles);
 
             if (!mainThreadReport.HasValue || !gpuFrameTimeReport.HasValue)
                 return;
@@ -61,19 +61,24 @@ namespace DCL.Analytics.Systems
                 // TODO (Vit): include more detailed quality information (renderFeatures, fog, etc). Probably from QualitySettingsAsset.cs
                 ["quality_level"] = QualitySettings.names[QualitySettings.GetQualityLevel()],
 
+                //["scenes_load_radius"] =
                 ["player_count"] = 0, // TODO (Vit): How many users where nearby the current user
                 ["used_jsheap_size"] = 0, // TODO (Vit): use V8ScriptEngine.GetRuntimeHeapInfo(). Get the ref from V8EngineFactory, but maybe expose it in upper level
 
                 // Memory
-                ["memory_usage"] = BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
                 ["total_used_memory"] = BytesFormatter.Convert((ulong)profiler.TotalUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
+                ["system_used_memory"] = BytesFormatter.Convert((ulong)profiler.SystemUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
                 ["gc_used_memory"] = BytesFormatter.Convert((ulong)profiler.GcUsedMemoryInBytes, BytesFormatter.DataSizeUnit.Byte, BytesFormatter.DataSizeUnit.Megabyte),
 
                 // MainThread
                 ["samples"] = mainThreadReport.Value.Samples,
-                ["total_time"] = mainThreadReport.Value.SumTime,
+                ["total_time"] = mainThreadReport.Value.SumTime * NS_TO_MS,
 
                 ["hiccups_in_thousand_frames"] = mainThreadReport.Value.Stats.HiccupCount,
+                ["hiccups_time"] = mainThreadReport.Value.HiccupsReport.HiccupsTime * NS_TO_MS,
+                ["hiccups_avg"] = mainThreadReport.Value.HiccupsReport.HiccupsAvg * NS_TO_MS,
+                ["hiccups_min"] = mainThreadReport.Value.HiccupsReport.HiccupsMin * NS_TO_MS,
+                ["hiccups_max"] = mainThreadReport.Value.HiccupsReport.HiccupsMax * NS_TO_MS,
 
                 ["min_frame_time"] = mainThreadReport.Value.Stats.MinFrameTime * NS_TO_MS,
                 ["max_frame_time"] = mainThreadReport.Value.Stats.MaxFrameTime * NS_TO_MS,
@@ -90,6 +95,10 @@ namespace DCL.Analytics.Systems
 
                 // GPU
                 ["gpu_hiccups_in_thousand_frames"] = gpuFrameTimeReport.Value.Stats.HiccupCount,
+                ["gpu_hiccups_time"] = gpuFrameTimeReport.Value.HiccupsReport.HiccupsTime * NS_TO_MS,
+                ["gpu_hiccups_avg"] = gpuFrameTimeReport.Value.HiccupsReport.HiccupsAvg * NS_TO_MS,
+                ["gpu_hiccups_min"] = gpuFrameTimeReport.Value.HiccupsReport.HiccupsMin * NS_TO_MS,
+                ["gpu_hiccups_max"] = gpuFrameTimeReport.Value.HiccupsReport.HiccupsMax * NS_TO_MS,
 
                 ["gpu_min_frame_time"] = gpuFrameTimeReport.Value.Stats.MinFrameTime * NS_TO_MS,
                 ["gpu_max_frame_time"] = gpuFrameTimeReport.Value.Stats.MaxFrameTime * NS_TO_MS,
