@@ -10,6 +10,8 @@ namespace DCL.Diagnostics
     /// </summary>
     public class DiagnosticsContainer : IDisposable
     {
+        private const int DEFAULT_REPORT_HANDLERS_COUNT = 2; // DebugLog + Sentry
+
         private ILogHandler defaultLogHandler;
         public ReportHubLogger ReportHubLogger { get; private set; }
 
@@ -19,11 +21,12 @@ namespace DCL.Diagnostics
             Debug.unityLogger.logHandler = defaultLogHandler;
         }
 
-        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, params (ReportHandler, IReportHandler)[] additionalHandlers)
+        public static DiagnosticsContainer Create(IReportsHandlingSettings settings, bool enableLocalSceneReporting = false, params (ReportHandler, IReportHandler)[] additionalHandlers)
         {
             settings.NotifyErrorDebugLogDisabled();
 
-            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(additionalHandlers.Length + 2);
+            int handlersCount = DEFAULT_REPORT_HANDLERS_COUNT + additionalHandlers.Length + (enableLocalSceneReporting ? 1 : 0);
+            List<(ReportHandler, IReportHandler)> handlers = new List<(ReportHandler, IReportHandler)>(handlersCount);
             handlers.AddRange(additionalHandlers);
 
             if (settings.IsEnabled(ReportHandler.DebugLog))
@@ -31,6 +34,9 @@ namespace DCL.Diagnostics
 
             if (settings.IsEnabled(ReportHandler.Sentry))
                 handlers.Add((ReportHandler.Sentry, new SentryReportHandler(settings.GetMatrix(ReportHandler.Sentry), settings.DebounceEnabled)));
+
+            if (enableLocalSceneReporting)
+                AddLocalSceneReportingHandler(handlers);
 
             var logger = new ReportHubLogger(handlers);
 
@@ -40,9 +46,20 @@ namespace DCL.Diagnostics
             Debug.unityLogger.logHandler = logger;
 
             // Enable Hub static accessors
-            ReportHub.Instance = logger;
+            ReportHub.Initialize(logger, enableLocalSceneReporting);
 
             return new DiagnosticsContainer { ReportHubLogger = logger, defaultLogHandler = defaultLogHandler };
+        }
+
+        private static void AddLocalSceneReportingHandler(List<(ReportHandler, IReportHandler)> handlers)
+        {
+            var jsOnlyMatrix = new CategorySeverityMatrix();
+            var entries = new List<CategorySeverityMatrix.Entry>();
+            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Error });
+            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Exception });
+            entries.Add(new CategorySeverityMatrix.Entry() { Category = ReportCategory.JAVASCRIPT, Severity = LogType.Log });
+            jsOnlyMatrix.entries = entries;
+            handlers.Add((ReportHandler.DebugLog, new LocalSceneDevelopmentReportHandler(jsOnlyMatrix, false)));
         }
     }
 }
