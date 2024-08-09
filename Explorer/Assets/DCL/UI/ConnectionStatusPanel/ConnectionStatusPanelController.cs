@@ -29,24 +29,28 @@ namespace DCL.UI.ConnectionStatusPanel
         {
             //TODO health status of scene? Display it
             viewInstance.Scene.ShowReloadButton(TryReloadScene);
+
             Bind(roomsStatus.ConnectionQualityScene, viewInstance.SceneRoom);
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
         }
 
         private static void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
         {
-            value.OnUpdate += newValue =>
+            value.OnUpdate += newValue => UpdateStatusEntry(statusEntry, newValue);
+            UpdateStatusEntry(statusEntry, value.Value);
+        }
+
+        private static void UpdateStatusEntry(IStatusEntry statusEntry, ConnectionQuality quality)
+        {
+            var status = StatusFrom(quality);
+
+            if (status == null)
             {
-                var status = StatusFrom(newValue);
+                statusEntry.ShowReloadButton(static () => { }); //TODO bind reload action
+                return;
+            }
 
-                if (status == null)
-                {
-                    statusEntry.ShowReloadButton(static () => { }); //TODO bind reload action
-                    return;
-                }
-
-                statusEntry.ShowStatus(status.Value);
-            };
+            statusEntry.ShowStatus(status.Value);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
