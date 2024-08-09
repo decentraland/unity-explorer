@@ -44,6 +44,7 @@ MonoBehaviour:
   - rid: 2872862648882692099
   - rid: 3601422141625466883
   - rid: 3601422469352914947
+  - rid: 2799748226177040387
   references:
     version: 2
     RefIds:
@@ -276,6 +277,9 @@ MonoBehaviour:
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
+    - rid: 2799748226177040387
+      type: {class: ConnectionStatusPanelPlugin/ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data: 
     - rid: 2872862648882692098
       type: {class: PassportPlugin/PassportSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
       data:
