@@ -31,7 +31,7 @@
       "url": "https://package.openupm.com"
     },
     "com.atteneder.gltfast": {
-      "version": "https://github.com/decentraland/unity-gltf.git#4554ce9bd676685ca48ec312facd5f6a659a92bf",
+      "version": "https://github.com/decentraland/unity-gltf.git#dalkia-patch-1",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -40,7 +40,7 @@
         "com.unity.mathematics": "1.2.6",
         "com.unity.burst": "1.6.6"
       },
-      "hash": "4554ce9bd676685ca48ec312facd5f6a659a92bf"
+      "hash": "f557997b1a4d767f0c34db3cee3888950e4d70f5"
     },
     "com.brunomikoski.animationsequencer": {
       "version": "0.5.4",

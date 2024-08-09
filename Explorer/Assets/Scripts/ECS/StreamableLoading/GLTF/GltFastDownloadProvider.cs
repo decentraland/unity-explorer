@@ -30,7 +30,7 @@ namespace ECS.StreamableLoading.GLTF
             this.partitionComponent = partitionComponent;
         }
 
-        public async Task<IDownload> Request(Uri uri)
+        public async Task<IDownload> RequestAsync(Uri uri)
         {
             // TODO: Replace for WebRequestController ???
             using (UnityWebRequest webRequest = new UnityWebRequest(uri))
@@ -52,7 +52,7 @@ namespace ECS.StreamableLoading.GLTF
             }
         }
 
-        public async Task<ITextureDownload> RequestTexture(Uri uri, bool nonReadable, bool forceLinear)
+        public async Task<ITextureDownload> RequestTextureAsync(Uri uri, bool nonReadable, bool forceLinear)
         {
             string textureFileName = uri.OriginalString.Substring(uri.OriginalString.LastIndexOf('/')+1);
             string textureOriginalPath = string.Concat(TargetGltfOriginalPath.Remove(TargetGltfOriginalPath.LastIndexOf('/') + 1), textureFileName);
