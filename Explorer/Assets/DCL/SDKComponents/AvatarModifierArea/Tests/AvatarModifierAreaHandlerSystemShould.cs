@@ -13,7 +13,9 @@ using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.TestSuite;
 using ECS.Unity.Transforms.Components;
+using NSubstitute;
 using NUnit.Framework;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 using Avatar = DCL.Profiles.Avatar;
@@ -33,6 +35,7 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
         private GameObject fakeAvatarBaseGO;
         private GameObject fakeTriggerAreaGO;
         private CharacterTriggerArea.CharacterTriggerArea characterTriggerArea;
+        private ISceneStateProvider sceneStateProvider;
 
         [SetUp]
         public void Setup()
@@ -40,7 +43,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Tests
             globalWorld = World.Create();
             var globalWorldProxy = new ObjectProxy<World>();
             globalWorldProxy.SetObject(globalWorld);
-            system = new AvatarModifierAreaHandlerSystem(world, globalWorldProxy);
+            sceneStateProvider = Substitute.For<ISceneStateProvider>();
+            sceneStateProvider.IsCurrent = true;
+            system = new AvatarModifierAreaHandlerSystem(world, globalWorldProxy, sceneStateProvider);
 
             fakeTriggerAreaGO = new GameObject("fake character area trigger");
             characterTriggerArea = fakeTriggerAreaGO.AddComponent<CharacterTriggerArea.CharacterTriggerArea>();

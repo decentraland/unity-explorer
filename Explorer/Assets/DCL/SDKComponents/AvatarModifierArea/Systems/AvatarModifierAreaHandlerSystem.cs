@@ -16,6 +16,7 @@ using ECS.Groups;
 using ECS.LifeCycle;
 using ECS.LifeCycle.Components;
 using ECS.Unity.Transforms.Components;
+using SceneRunner.Scene;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -28,10 +29,12 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
     {
         private static readonly QueryDescription AVATAR_BASE_QUERY = new QueryDescription().WithAll<AvatarBase>();
         private readonly World globalWorld;
+        private readonly ISceneStateProvider sceneStateProvider;
 
-        public AvatarModifierAreaHandlerSystem(World world, ObjectProxy<World> globalWorldProxy) : base(world)
+        public AvatarModifierAreaHandlerSystem(World world, ObjectProxy<World> globalWorldProxy, ISceneStateProvider sceneStateProvider) : base(world)
         {
             globalWorld = globalWorldProxy.Object;
+            this.sceneStateProvider = sceneStateProvider;
         }
 
         protected override void Update(float t)
@@ -57,6 +60,9 @@ namespace DCL.SDKComponents.AvatarModifierArea.Systems
         [All(typeof(TransformComponent))]
         private void UpdateAvatarModifierArea(ref PBAvatarModifierArea pbAvatarModifierArea, ref AvatarModifierAreaComponent modifierAreaComponent, ref CharacterTriggerAreaComponent triggerAreaComponent)
         {
+            if (!sceneStateProvider.IsCurrent)
+                return;
+
             if (pbAvatarModifierArea.IsDirty)
             {
                 pbAvatarModifierArea.IsDirty = false;
