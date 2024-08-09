@@ -56,7 +56,7 @@ namespace DCL.UI.ProfileElements
 
         private async UniTaskVoid LaunchChildViewsAsync()
         {
-            await profileSectionController.LoadElements(profileWidgetCts.Token);
+            await profileSectionController.LoadElementsAsync(profileWidgetCts.Token);
             await systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
             await HideViewAsync(profileWidgetCts.Token);
         }

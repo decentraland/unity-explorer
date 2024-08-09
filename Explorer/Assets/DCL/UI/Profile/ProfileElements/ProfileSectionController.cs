@@ -34,7 +34,7 @@ namespace DCL.UI.ProfileElements
             profileImageController = new ImageController(element.FaceSnapshotImage, webRequestController);
         }
 
-        public async UniTask LoadElements(CancellationToken ct)
+        public async UniTask LoadElementsAsync(CancellationToken ct)
         {
             await LoadAsync(ct);
         }
