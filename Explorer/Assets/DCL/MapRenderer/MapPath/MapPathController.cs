@@ -3,8 +3,8 @@ using DCL.MapRenderer.CoordsUtils;
 using DCL.MapRenderer.Culling;
 using DCL.MapRenderer.MapLayers;
 using DCL.MapRenderer.MapLayers.Pins;
-using DCL.Notification;
-using DCL.Notification.NotificationsBus;
+using DCL.NotificationsBusController.NotificationsBus;
+using DCL.NotificationsBusController.NotificationTypes;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -28,7 +28,7 @@ namespace DCL.MapRenderer
             { Type = NotificationType.INTERNAL_ARRIVED_TO_DESTINATION };
 
         private IPinMarker internalPinMarker;
-        private IPinMarker currentDestinationPin;
+        private IPinMarker? currentDestinationPin;
         private bool destinationSet;
         private Vector2 cachedPlayerMarkerPosition;
 
@@ -109,7 +109,7 @@ namespace DCL.MapRenderer
             mapPathRenderer.gameObject.SetActive(false);
         }
 
-        private void OnSetDestination(Vector2Int parcel, IPinMarker pinMarker)
+        private void OnSetDestination(Vector2Int parcel, IPinMarker? pinMarker)
         {
             destinationSet = true;
             Vector3 mapPosition = coordsUtils.CoordsToPositionWithOffset(parcel);
@@ -121,14 +121,15 @@ namespace DCL.MapRenderer
             if (pinMarker == null)
             {
                 currentDestinationPin = internalPinMarker;
+                internalPinMarker.OnBecameInvisible();
                 internalPinMarker.OnBecameVisible();
                 internalPinMarker.SetPosition(mapPosition, parcel);
                 internalPinMarker.SetAsDestination(true);
             }
             else
             {
+                if (currentDestinationPin != null) { currentDestinationPin.SetAsDestination(false); }
                 currentDestinationPin = pinMarker;
-                internalPinMarker.SetAsDestination(false);
                 pinMarker.SetAsDestination(true);
             }
 
@@ -138,7 +139,11 @@ namespace DCL.MapRenderer
 
         public void OnMapObjectBecameVisible(IPinMarker obj)
         {
-            if (internalPinMarker.IsDestination) { internalPinMarker.OnBecameVisible(); }
+            if (internalPinMarker.IsDestination)
+            {
+                internalPinMarker.OnBecameInvisible();
+                internalPinMarker.OnBecameVisible();
+            }
         }
 
         public void OnMapObjectCulled(IPinMarker obj)

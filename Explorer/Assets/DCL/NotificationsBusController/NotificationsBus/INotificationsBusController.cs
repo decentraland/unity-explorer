@@ -1,6 +1,6 @@
-using System;
+using DCL.NotificationsBusController.NotificationTypes;
 
-namespace DCL.Notification.NotificationsBus
+namespace DCL.NotificationsBusController.NotificationsBus
 {
     public interface INotificationsBusController
     {

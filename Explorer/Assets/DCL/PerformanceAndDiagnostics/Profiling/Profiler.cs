@@ -22,8 +22,8 @@ namespace DCL.Profiling
         private ProfilerRecorder mainThreadTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread", FRAME_BUFFER_SIZE);
         private ProfilerRecorder gpuFrameTimeRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "GPU Frame Time", FRAME_BUFFER_SIZE);
 
-        public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
         public long TotalUsedMemoryInBytes => totalUsedMemoryRecorder.CurrentValue;
+        public long SystemUsedMemoryInBytes => systemUsedMemoryRecorder.CurrentValue;
         public long GcUsedMemoryInBytes => gcUsedMemoryRecorder.CurrentValue;
 
         public ulong CurrentFrameTimeValueNs => (ulong)mainThreadTimeRecorder.CurrentValue;
@@ -90,6 +90,10 @@ namespace DCL.Profiling
 
             Array.Clear(samplesArray, 0, samplesArray.Length);
             long hiccupCount = 0;
+            long hiccupTotalTime = 0;
+            long hiccupMin = -1;
+            long hiccupMax = -1;
+
             long sumTime = 0;
 
             unsafe
@@ -105,7 +109,15 @@ namespace DCL.Profiling
                     sumTime += frameTime;
 
                     if (frameTime > HICCUP_THRESHOLD_IN_NS)
+                    {
                         hiccupCount++;
+                        hiccupTotalTime += frameTime;
+
+                        if (frameTime > hiccupMax) hiccupMax = frameTime;
+
+                        if (hiccupMin == -1) hiccupMin = frameTime;
+                        else if (frameTime < hiccupMin) hiccupMin = frameTime;
+                    }
                 }
             }
 
@@ -123,7 +135,9 @@ namespace DCL.Profiling
             return
                 new AnalyticsFrameTimeReport(
                     new FrameTimeStats(samplesArray[0], samplesArray[samplesCount - 1], hiccupCount),
-                    result, sumTime, samplesCount);
+                    result, sumTime, samplesCount,
+                    hiccupCount != 0 ? new HiccupsReport(hiccupTotalTime, hiccupMin, hiccupMax, hiccupTotalTime / hiccupCount) : new HiccupsReport(0, 0, 0, 0)
+                );
         }
     }
 }
