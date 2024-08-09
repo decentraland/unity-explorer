@@ -122,16 +122,14 @@ namespace DCL.Passport.Modules
 
         public void Clear()
         {
+            getEquippedItemsCts.SafeCancelAndDispose();
             ClearLoadingItems();
             ClearEquippedItems();
             ClearEmptyItems();
         }
 
-        public void Dispose()
-        {
-            getEquippedItemsCts.SafeCancelAndDispose();
+        public void Dispose() =>
             Clear();
-        }
 
         private EquippedItem_PassportFieldView InstantiateEquippedItemPrefab()
         {
@@ -267,7 +265,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
+                Sprite? sprite = await thumbnailProvider.GetAsync(itemWearable, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }
@@ -284,7 +282,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                Sprite sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
+                Sprite? sprite = await thumbnailProvider.GetAsync(itemEmote, ct);
                 itemView.EquippedItemThumbnail.sprite = sprite;
             }
             catch (OperationCanceledException) { }
@@ -323,7 +321,7 @@ namespace DCL.Passport.Modules
 
         private string GetMarketplaceLink(string id)
         {
-            string MARKETPLACE = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
+            var marketplace = $"{decentralandUrlsSource.Url(DecentralandUrl.Market)}/contracts/{{0}}/items/{{1}}";
             ReadOnlySpan<char> idSpan = id.AsSpan();
             int lastColonIndex = idSpan.LastIndexOf(':');
 
@@ -339,7 +337,7 @@ namespace DCL.Passport.Modules
             if (!contract.StartsWith("0x") || !int.TryParse(item, out int _))
                 return "";
 
-            return string.Format(MARKETPLACE, contract, item);
+            return string.Format(marketplace, contract, item);
         }
     }
 }

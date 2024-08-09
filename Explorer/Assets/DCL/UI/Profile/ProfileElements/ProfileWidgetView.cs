@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.ExplorePanel
+namespace DCL.UI.ProfileElements
 {
     public class ProfileWidgetView : ViewBase, IView
     {
