@@ -13,7 +13,7 @@ using Utility;
 
 namespace DCL.UI.MainUI
 {
-    public class MainUIController.cs : ControllerBase<MainUIView>
+    public class MainUIController : ControllerBase<MainUIView>
     {
         private const int MS_WAIT_BEFORE_FIRST_HIDE = 3000;
         private const float SHOW_SIDEBAR_LAYOUT_WIDTH = 46;
