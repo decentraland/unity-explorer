@@ -51,7 +51,7 @@ namespace DCL.Multiplayer.Connections.Rooms.Connective
 
         public static string ParticipantCountInfo(this IConnectiveRoom room) =>
             room.CurrentState() is IConnectiveRoom.State.Running
-                ? room.Room().Participants.RemoteParticipantSids().Count.ToString()
+                ? room.Room().Participants.RemoteParticipantIdentities().Count.ToString()
                 : "Not connected";
     }
 }

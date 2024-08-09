@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility;
 using Avatar = DCL.Profiles.Avatar;
 
@@ -54,16 +55,18 @@ namespace SceneRuntime.Apis.Modules.Players
         [Serializable]
         public struct PlayerListResponse
         {
+            [UsedImplicitly]
             public string playersJson;
 
             public PlayerListResponse(IParticipantsHub participantsHub)
             {
-                var sids = participantsHub.RemoteParticipantSids();
-                var players = new List<Player>();
+                IReadOnlyCollection<string> identities = participantsHub.RemoteParticipantIdentities();
 
-                foreach (string sid in sids)
+                using PooledObject<List<Player>> pooledObj = ListPool<Player>.Get(out List<Player>? players);
+
+                foreach (string identity in identities)
                 {
-                    var remote = participantsHub.RemoteParticipant(sid)!;
+                    Participant remote = participantsHub.RemoteParticipant(identity)!;
                     players.Add(new Player(remote));
                 }
 

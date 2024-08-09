@@ -61,7 +61,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "da64c14a820e151ed5291eef6869e1b3a1307498"
+      "hash": "14244125ab5c52629c688d8a52a0b4d89d7662b0"
     },
     "com.mackysoft.serializereference-extensions": {
       "version": "1.3.1",

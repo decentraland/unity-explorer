@@ -147,6 +147,12 @@ namespace DCL.Multiplayer.Connections.Rooms
             origin.UpdateLocalMetadata(metadata);
         }
 
+        public void SetLocalName(string name)
+        {
+            log($"{PREFIX} set local name: '{name}'");
+            origin.SetLocalName(name);
+        }
+
         public async Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe)
         {
             log($"{PREFIX} connect start {url} with token {authToken}");

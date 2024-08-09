@@ -23,8 +23,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         [UsedImplicitly]
         public override ScriptableSDKObservableEventArray? SendBatch()
         {
-            if (engineApi.SdkObservableEventSubscriptions.Count == 0
-                || engineApi.SdkObservableEvents.Count == 0)
+            // If there are no subscriptions at all there is nothing to handle
+            if (engineApi.SdkObservableEventSubscriptions.Count == 0)
             {
                 engineApi.SdkObservableEvents.Clear();
                 commsApi.SceneCommsMessages.Clear();
@@ -52,6 +52,8 @@ namespace SceneRuntime.Apis.Modules.EngineApi.SDKObservableEvents
         {
             if (!engineApi.SdkObservableEventSubscriptions.Contains(SDKObservableEventIds.Comms))
                 return;
+
+            if (commsApi.SceneCommsMessages.Count == 0) return;
 
             foreach (CommsPayload currentPayload in commsApi.SceneCommsMessages)
                 engineApi.SdkObservableEvents.Add(SDKObservableUtils.GenerateSDKObservableEvent(SDKObservableEventIds.Comms, currentPayload));

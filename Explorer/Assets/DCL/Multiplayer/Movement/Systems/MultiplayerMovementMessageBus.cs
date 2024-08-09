@@ -65,7 +65,7 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             var messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
             WriteToProto(message, messageWrap.Payload);
-            messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token, DataPacketKind.KindReliable).Forget();
+            messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 
         private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
