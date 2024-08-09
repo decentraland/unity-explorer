@@ -85,6 +85,8 @@ namespace CommandTerminal
                      || Event.current.Equals(Event.KeyboardEvent(toggleFullHotkey)))
                 SetState(TerminalState.Close);
 
+            if (isClosed) return;
+
             HandleOpenness();
             window = GUILayout.Window(88, window, DrawConsole, "", windowStyle);
         }
