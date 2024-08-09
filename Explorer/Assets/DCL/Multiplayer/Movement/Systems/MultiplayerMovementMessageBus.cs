@@ -142,6 +142,8 @@ namespace DCL.Multiplayer.Movement.Systems
             CompressedNetworkMovementMessage compressedMessage = message.Compress();
             await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
             NetworkMovementMessage decompressedMessage = compressedMessage.Decompress();
+            // Debug.Log($"VVV {message.position.x} | {decompressedMessage.position.x}");
+            // Debug.Log($"VVV {message.position.z} | {decompressedMessage.position.z}");
 
             decompressedMessage.enqueueTime = UnityEngine.Time.unscaledTime;
 

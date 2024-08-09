@@ -1,32 +1,39 @@
-﻿using DCL.CharacterMotion.Components;
-using System;
+﻿using System;
 using UnityEngine;
 using Utility;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    public enum NetworkAnimState
-    {
-        isNotMoving,
-
-        isGrounded,
-        isStunned, // isStunned enables isGrounded
-
-        isJumping,
-        isLongJump, // isLongJump enables isJumping
-
-        isFalling,
-        isLongFall, // isLongFall enables isFalling
-    }
-
     [Serializable]
     public struct CompressedNetworkMovementMessage
     {
-        public NetworkAnimState AnimState;
         public long compressedData;
         public Vector3 remainedPosition;
 
         public NetworkMovementMessage message;
+    }
+
+    public static class TimestampEncoder
+    {
+        public const int TIMESTAMP_BITS = 256; // 128, 512
+
+        public const float ROUND_BUFFER = TIMESTAMP_BITS * SENT_INTERVAL;
+        private const float SENT_INTERVAL = 0.1f; // == QUANTUM in this case
+
+        public static long Compress(float timestamp, int bits = 8)
+        {
+            int steps = TIMESTAMP_BITS; // (int)Math.Pow(2, bits);
+            float normalizedTimestamp = timestamp % ROUND_BUFFER; // Normalize timestamp within the round buffer
+            return Mathf.RoundToInt(normalizedTimestamp / SENT_INTERVAL) % steps;
+        }
+
+        public static float Decompress(long data, int steps = TIMESTAMP_BITS)
+        {
+            var bits = (int)Math.Log(steps, 2);
+            int mask = (1 << bits) - 1;
+            var compressedTimestamp = (int)(data & mask);
+            return compressedTimestamp * SENT_INTERVAL % ROUND_BUFFER;
+        }
     }
 
     public static class ParcelEncoder
@@ -38,153 +45,133 @@ namespace DCL.Multiplayer.Movement.Systems
         private const int MAX_X = 164;
 
         private const int MIN_Y = -152;
-        private const int MAX_Y = 160;
+
+        // private const int MAX_Y = 160;
 
         private const int WIDTH = MAX_X - MIN_X + 1;
 
         public static int EncodeParcel(Vector2Int parcel) =>
-            (parcel.x - MIN_X) + ((parcel.y - MIN_Y) * WIDTH);
+            parcel.x - MIN_X + ((parcel.y - MIN_Y) * WIDTH);
 
         public static Vector2Int DecodeParcel(int index) =>
             new ((index % WIDTH) + MIN_X, (index / WIDTH) + MIN_Y);
     }
 
+    public static class RelativePositionEncoder
+    {
+        public static int CompressScaledInteger(float value)
+        {
+            if (value < 0) value = 0;
+            if (value >= 16) value = 255; // Represent the upper bound as 255
+
+            var compressed = (int)(value / 16.0f * 255.0f); // Scale the value to the [0, 255] range
+            return compressed & 0xFF; // Ensure it's within 8 bits
+        }
+
+        public static float DecompressScaledInteger(int compressed)
+        {
+            float value = compressed / 255.0f * 16.0f; // Scale back to the [0, 16) range
+            return value;
+        }
+
+        // Not smooth
+        // public const int mantissaBits = 5;
+        // public const int exponentBits = 3;
+        // public const int bias = 3;
+        // public static int CompressFloatingPoint(float value)
+        // {
+        //     if (value <= 0) return 0;
+        //     if (value >= 16) return 255;  // Adjust to 16 instead of 15
+        //
+        //     int exponent = 0;
+        //
+        //     // Normalize the value to be within the range [1, 2)
+        //     while (value >= 2.0f && exponent < 7)
+        //     {
+        //         value /= 2.0f;
+        //         exponent++;
+        //     }
+        //
+        //     exponent = exponent + bias; // Apply bias
+        //
+        //     int mantissa = (int)((value - 1.0f) * (1 << mantissaBits) + 0.5f); // Rounding to reduce errors
+        //     int compressed = (exponent << mantissaBits) | mantissa;
+        //     return compressed & 0xFF; // Ensure it's within 8 bits
+        // }
+        //
+        // public static float DecompressFloatingPoint(int compressed)
+        // {
+        //     int exponent = ((compressed >> mantissaBits) & ((1 << exponentBits) - 1)) - bias;
+        //     int mantissa = compressed & ((1 << mantissaBits) - 1);
+        //
+        //     float value = 1.0f + ((float)mantissa / (1 << mantissaBits));
+        //     value *= (1 << exponent);
+        //     return value;
+        // }
+    }
+
     public static class NetworkMessageCompressor
     {
-        // private const float ROUND_BUFFER_SECONDS = 51.2f;
-        public const int STEPS7_BIT = 128;
-        public const int STEPS8_BIT = 256;
-        public const int STEPS9_BIT = 512;
-
-        public const float SENT_INTERVAL = 0.1f; // == QUANTUM in this case
-
-        public const float ROUND_BUFFER = STEPS8_BIT * SENT_INTERVAL;
-
-        public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message, int steps = STEPS8_BIT)
+        public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
         {
-            // Compress timestamp (8 bits)
-            float normalizedTimestamp = message.timestamp % ROUND_BUFFER; // Normalize timestamp within the round buffer
-            long compressedTimestamp = Mathf.RoundToInt(normalizedTimestamp / SENT_INTERVAL) % steps;
+            Vector2Int parcel = message.position.ToParcel();
 
-            // Encode parcel (17 bits)
-            var parcel = message.position.ToParcel();
-            int parcelIndex = ParcelEncoder.EncodeParcel(parcel);
+            long compressedTimestamp = TimestampEncoder.Compress(message.timestamp); // Encode timestamp (8 bits)
+            int parcelIndex = ParcelEncoder.EncodeParcel(parcel); // Encode parcel (17 bits)
 
-            // Combine timestamp and parcel index
-            long compressedData = compressedTimestamp | ((long)parcelIndex << 8);
-
-            Vector2 relativePosition = new Vector2(
+            // Compress relative X and Y (up to 16 bits each)
+            var relativePosition = new Vector2(
                 message.position.x - (parcel.x * ParcelEncoder.PARCEL_SIZE),
-                message.position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE)
+                message.position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE) // Y is Z in this case
             );
+
+            int compressedX = RelativePositionEncoder.CompressScaledInteger(relativePosition.x);
+            int compressedZ = RelativePositionEncoder.CompressScaledInteger(relativePosition.y);
+
+            var timestampShift = (int)Math.Log(TimestampEncoder.TIMESTAMP_BITS, 2);
 
             return new CompressedNetworkMovementMessage
             {
-                AnimState = message.ToProtoEnum(),
-                compressedData = compressedData,
+                compressedData = compressedTimestamp
+                                 | ((long)parcelIndex << timestampShift)
+                                 | ((long)compressedX << (timestampShift + 17))
+                                 | ((long)compressedZ << (timestampShift + 25)),
+
                 remainedPosition = new Vector3(relativePosition.x, message.position.y, relativePosition.y),
                 message = message,
             };
         }
 
-        private static NetworkAnimState ToProtoEnum(this NetworkMovementMessage message)
+        public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage)
         {
-            if (message.isStunned)
-                return NetworkAnimState.isStunned;
+            long data = compressedMessage.compressedData;
 
-            if (message.animState.IsGrounded)
-                return NetworkAnimState.isGrounded;
+            float timestamp = TimestampEncoder.Decompress(data);
+            Vector2Int parcel = ParcelEncoder.DecodeParcel((int)((data >> 8) & 0x1FFFF)); // Extract parcel index (17 bits)
 
-            if (message.animState.IsLongFall)
-                return NetworkAnimState.isLongFall;
+            // Decompressing values
+            int extractedX = (int)((data >> 25) & 0xFF);
+            int extractedZ = (int)((data >> 33) & 0xFF);
 
-            if (message.animState.IsFalling)
-                return NetworkAnimState.isFalling;
+            float decompressedX = RelativePositionEncoder.DecompressScaledInteger(extractedX);
+            float decompressedZ = RelativePositionEncoder.DecompressScaledInteger(extractedZ);
 
-            if (message.animState.IsLongJump)
-                return NetworkAnimState.isLongJump;
+            Debug.Log($"VVV {compressedMessage.remainedPosition.x} - {decompressedX} | {compressedMessage.remainedPosition.z} - {decompressedZ}");
 
-            if (message.animState.IsJumping)
-                return NetworkAnimState.isJumping;
-
-            return NetworkAnimState.isNotMoving;
-        }
-
-        public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage, int steps = STEPS8_BIT)
-        {
-            int mask = steps switch
-                       {
-                           STEPS9_BIT => 0x1FF,
-                           STEPS8_BIT => 0xFF,
-                           _ => 0x7F, // 7 BITS
-                       };
-
-            var compressedTimestamp = (int)(compressedMessage.compressedData & mask);
-            // Debug.Assert(quantum == RoundBufferSeconds / steps, "VVV should be equal");
-            float timestamp = compressedTimestamp * SENT_INTERVAL % ROUND_BUFFER;
-
-            // Extract parcel index (17 bits)
-            int parcelIndex = (int)((compressedMessage.compressedData >> 8) & 0x1FFFF);
-            var parcel = ParcelEncoder.DecodeParcel(parcelIndex);
-            Vector3 worldPosition = new Vector3(
-                                        (parcel.x * ParcelEncoder.PARCEL_SIZE) + compressedMessage.remainedPosition.x,
-                                        compressedMessage.remainedPosition.y,
-                                        (parcel.y * ParcelEncoder.PARCEL_SIZE) + compressedMessage.remainedPosition.z);
-
-            AnimationStates animState = compressedMessage.AnimState.ToAnimState();
-            {
-                animState.MovementBlendValue = compressedMessage.message.animState.MovementBlendValue;
-                animState.SlideBlendValue = compressedMessage.message.animState.SlideBlendValue;
-                animState.IsJumping = compressedMessage.message.animState.IsJumping;
-                animState.IsLongJump = compressedMessage.message.animState.IsLongJump;
-
-                animState = compressedMessage.message.animState;
-            }
+            var worldPosition = new Vector3(
+                (parcel.x * ParcelEncoder.PARCEL_SIZE) + decompressedX,
+                compressedMessage.remainedPosition.y,
+                (parcel.y * ParcelEncoder.PARCEL_SIZE) + decompressedZ
+            );
 
             return new NetworkMovementMessage
             {
                 timestamp = timestamp,
                 position = worldPosition,
                 velocity = compressedMessage.message.velocity,
-                animState = animState,
+                animState = compressedMessage.message.animState,
                 isStunned = compressedMessage.message.isStunned,
             };
-        }
-
-        private static AnimationStates ToAnimState(this NetworkAnimState protoAnimEnum)
-        {
-            var animStates = new AnimationStates();
-
-            switch (protoAnimEnum)
-            {
-                default:
-                case NetworkAnimState.isNotMoving:
-                case NetworkAnimState.isGrounded:
-                case NetworkAnimState.isStunned:
-                    animStates.IsGrounded = true;
-                    animStates.IsLongJump = animStates.IsJumping = animStates.IsLongFall = animStates.IsFalling = false;
-                    break;
-                case NetworkAnimState.isLongFall:
-                    animStates.IsLongFall = animStates.IsFalling = true;
-                    animStates.IsGrounded = animStates.IsJumping = animStates.IsLongJump = false;
-                    break;
-                case NetworkAnimState.isFalling:
-                    animStates.IsFalling = true;
-                    animStates.IsLongFall = false;
-                    animStates.IsGrounded = animStates.IsJumping = animStates.IsLongJump = false;
-                    break;
-                case NetworkAnimState.isLongJump:
-                    animStates.IsLongJump = animStates.IsJumping = true;
-                    animStates.IsGrounded = animStates.IsFalling = animStates.IsLongFall = false;
-                    break;
-                case NetworkAnimState.isJumping:
-                    animStates.IsJumping = true;
-                    animStates.IsLongJump = false;
-                    animStates.IsGrounded = animStates.IsFalling = animStates.IsLongFall = false;
-                    break;
-            }
-
-            return animStates;
         }
     }
 }
