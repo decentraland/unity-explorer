@@ -10,6 +10,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class CriticalLogsAnalyticsHandler : IReportHandler
     {
         private const int PAYLOAD_LIMIT = 30 * 1024; // Segment == 32 KB, leaving some room for headers
+        private const string LONG_MESSAGE_PLACEHOLDER = "error message is too long";
 
         private readonly IAnalyticsController analytics;
 
@@ -33,7 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "unhandled exception" },
                 { "category", IAnalyticsController.UNDEFINED },
                 { "scene_hash", IAnalyticsController.UNDEFINED },
-                { "message", IsPayloadSizeValid(e.Message) ? e.Message : "message is too long" },
+                { "message", IsPayloadSizeValid(e.Message) ? e.Message : LONG_MESSAGE_PLACEHOLDER },
             });
         }
 
@@ -48,7 +49,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", logType.ToString() },
                 { "category", reportData.Category },
                 { "scene_hash", reportData.SceneShortInfo.Name },
-                { "message", IsPayloadSizeValid(message) ? message : "message is too long" },
+                { "message", IsPayloadSizeValid(message) ? message : LONG_MESSAGE_PLACEHOLDER },
             });
         }
 
@@ -66,7 +67,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "exception" },
                 { "category", "ecs" },
                 { "scene_hash", IAnalyticsController.UNDEFINED },
-                { "message", IsPayloadSizeValid(ecsSystemException.Message) ? ecsSystemException.Message : "message is too long" },
+                { "message", IsPayloadSizeValid(ecsSystemException.Message) ? ecsSystemException.Message : LONG_MESSAGE_PLACEHOLDER },
             });
         }
 
@@ -77,7 +78,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "exception" },
                 { "category", reportData.Category },
                 { "scene_hash", reportData.SceneShortInfo.Name },
-                { "message", IsPayloadSizeValid(exception.Message) ? exception.Message : "message is too long" },
+                { "message", IsPayloadSizeValid(exception.Message) ? exception.Message : LONG_MESSAGE_PLACEHOLDER },
             });
         }
 
