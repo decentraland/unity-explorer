@@ -12,7 +12,6 @@ using DCL.Web3.Identities;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.UIElements;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 
@@ -60,13 +59,13 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer, PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
-            RealmLaunchSettings launchSettings, UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
+            UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic,
             WorldInfoTool worldInfoTool,
             CancellationToken ct)
         {
             (DynamicWorldContainer? container, bool) result =
                 await core.LoadDynamicWorldContainerAsync(bootstrapContainer, staticContainer, scenePluginSettingsContainer,
-                    settings, dynamicSettings, launchSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, ct);
+                    settings, dynamicSettings, uiToolkitRoot, cursorRoot, splashScreen, backgroundMusic, worldInfoTool, ct);
 
             analytics.Track(General.INITIAL_LOADING, new JsonObject
             {

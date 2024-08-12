@@ -34,7 +34,6 @@ namespace Global.Dynamic
         public IAnalyticsController? Analytics { get; private set; }
         public IDebugSettings DebugSettings { get; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
-        public bool LocalSceneDevelopment { get; }
         public ApplicationParametersParser ApplicationParametersParser { get; private set; }
 
         public override void Dispose()

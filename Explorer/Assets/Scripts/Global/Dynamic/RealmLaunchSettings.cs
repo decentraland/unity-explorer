@@ -54,8 +54,8 @@ namespace Global.Dynamic
             return new HybridSceneParams();
         }
 
-        public string GetLocalSceneDevelopmentRealm() =>
-            IsLocalSceneDevelopmentRealm ? GetStartingRealm() : string.Empty;
+        public string? GetLocalSceneDevelopmentRealm() =>
+            IsLocalSceneDevelopmentRealm ? GetStartingRealm() : null;
 
         public string GetStartingRealm()
         {

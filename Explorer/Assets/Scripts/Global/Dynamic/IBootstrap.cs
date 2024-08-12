@@ -9,7 +9,6 @@ using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Web3.Identities;
 using SceneRunner.Debugging;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Global.Dynamic
@@ -26,7 +25,6 @@ namespace Global.Dynamic
             PluginSettingsContainer scenePluginSettingsContainer,
             DynamicSceneLoaderSettings settings,
             DynamicSettings dynamicSettings,
-            RealmLaunchSettings launchSettings,
             UIDocument uiToolkitRoot,
             UIDocument cursorRoot,
             ISplashScreen splashScreen,

@@ -77,7 +77,7 @@ namespace Global.Dynamic
                 bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,
+            PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings,
             UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic, WorldInfoTool worldInfoTool,
             CancellationToken ct)
         {
@@ -101,13 +101,13 @@ namespace Global.Dynamic
                 dynamicWorldDependencies,
                 new DynamicWorldParams
                 {
-                    StaticLoadPositions = launchSettings.GetPredefinedParcels(),
+                    StaticLoadPositions = realmLaunchSettings.GetPredefinedParcels(),
                     Realms = settings.Realms,
                     StartParcel = startingParcel,
-                    EnableLandscape = debugSettings.EnableLandscape && !bootstrapContainer.LocalSceneDevelopment,
-                    EnableLOD = debugSettings.EnableLOD && !bootstrapContainer.LocalSceneDevelopment,
-                    EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
-                    LocalSceneDevelopmentRealm = launchSettings.GetLocalSceneDevelopmentRealm(),
+                    EnableLandscape = debugSettings.EnableLandscape && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableLOD = debugSettings.EnableLOD && !realmLaunchSettings.IsLocalSceneDevelopmentRealm,
+                    EnableAnalytics = EnableAnalytics, HybridSceneParams = realmLaunchSettings.CreateHybridSceneParams(startingParcel),
+                    LocalSceneDevelopmentRealm = realmLaunchSettings.GetLocalSceneDevelopmentRealm() ?? string.Empty,
                     AppParameters = applicationParametersParser.AppParameters,
                 },
                 backgroundMusic,
