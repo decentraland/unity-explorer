@@ -14,7 +14,7 @@ namespace DCL.Passport.Fields
         public TMP_Text BadgeNameText { get; private set; }
 
         [field: SerializeField]
-        private GameObject badgeNameToast;
+        private GameObject badgeNameTooltip;
 
         private void OnEnable() =>
             SetBadgeNameToastActive(false);
@@ -26,6 +26,6 @@ namespace DCL.Passport.Fields
             SetBadgeNameToastActive(false);
 
         private void SetBadgeNameToastActive(bool isActive) =>
-            badgeNameToast.SetActive(isActive);
+            badgeNameTooltip.SetActive(isActive);
     }
 }

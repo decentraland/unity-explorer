@@ -9,7 +9,7 @@ namespace DCL.Passport.Modules
         public BadgeOverviewItem_PassportFieldView BadgeOverviewItemPrefab { get; private set; }
 
         [field: SerializeField]
-        public RectTransform BadgesOverviewItemsContainer { get; private set; }
+        public RectTransform BadgeOverviewItemsContainer { get; private set; }
 
         [field: SerializeField]
         public GameObject NoBadgesLabel { get; private set; }

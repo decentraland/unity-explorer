@@ -338,7 +338,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <BadgeOverviewItemPrefab>k__BackingField: {fileID: 8440730541124889258, guid: 0d2247e10e8391743ada671b67366663, type: 3}
-  <BadgesOverviewItemsContainer>k__BackingField: {fileID: 5236224086316262787}
+  <BadgeOverviewItemsContainer>k__BackingField: {fileID: 5236224086316262787}
   <NoBadgesLabel>k__BackingField: {fileID: 560759891071270739}
 --- !u!1 &6672453353137940626
 GameObject:

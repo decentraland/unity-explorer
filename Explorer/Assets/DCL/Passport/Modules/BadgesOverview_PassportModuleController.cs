@@ -1,8 +1,9 @@
 using DCL.Passport.Fields;
 using DCL.Profiles;
 using System.Collections.Generic;
-using UnityEngine;
 using UnityEngine.Pool;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
 namespace DCL.Passport.Modules
 {
@@ -24,12 +25,12 @@ namespace DCL.Passport.Modules
             badgesOverviewItemsPool = new ObjectPool<BadgeOverviewItem_PassportFieldView>(
                 InstantiateBadgeOverviewItemPrefab,
                 defaultCapacity: BADGES_OVERVIEW_MAX_COUNT,
-                actionOnGet: equippedItemView =>
+                actionOnGet: badgeOverviewItemView =>
                 {
-                    equippedItemView.gameObject.SetActive(true);
-                    equippedItemView.gameObject.transform.SetAsLastSibling();
+                    badgeOverviewItemView.gameObject.SetActive(true);
+                    badgeOverviewItemView.gameObject.transform.SetAsLastSibling();
                 },
-                actionOnRelease: equippedItemView => equippedItemView.gameObject.SetActive(false));
+                actionOnRelease: badgeOverviewItemView => badgeOverviewItemView.gameObject.SetActive(false));
         }
 
         public void Setup(Profile profile)
@@ -46,7 +47,7 @@ namespace DCL.Passport.Modules
 
         private BadgeOverviewItem_PassportFieldView InstantiateBadgeOverviewItemPrefab()
         {
-            BadgeOverviewItem_PassportFieldView badgeOverviewItemView = Object.Instantiate(view.BadgeOverviewItemPrefab, view.BadgesOverviewItemsContainer);
+            BadgeOverviewItem_PassportFieldView badgeOverviewItemView = Object.Instantiate(view.BadgeOverviewItemPrefab, view.BadgeOverviewItemsContainer);
             return badgeOverviewItemView;
         }
 
@@ -64,7 +65,7 @@ namespace DCL.Passport.Modules
                 instantiatedBadgesOverviewItems.Add(badgeOverviewItem);
             }
 
-            view.BadgesOverviewItemsContainer.gameObject.SetActive(instantiatedBadgesOverviewItems.Count > 0);
+            view.BadgeOverviewItemsContainer.gameObject.SetActive(instantiatedBadgesOverviewItems.Count > 0);
             view.NoBadgesLabel.SetActive(instantiatedBadgesOverviewItems.Count == 0);
         }
 

@@ -100,6 +100,7 @@ namespace DCL.Passport
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView));
+            overviewPassportModules.Add(new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView));
 
             passportProfileInfoController.PublishError += OnPublishError;
             passportProfileInfoController.OnProfilePublished += OnProfilePublished;
@@ -211,6 +212,7 @@ namespace DCL.Passport
             viewInstance.BadgesSectionButton.SetSelected(false);
             viewInstance.OverviewSectionPanel.SetActive(true);
             viewInstance.BadgesSectionPanel.SetActive(false);
+            viewInstance.MainScroll.content = viewInstance.OverviewSectionPanel.transform as RectTransform;
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
@@ -223,6 +225,7 @@ namespace DCL.Passport
             viewInstance.BadgesSectionButton.SetSelected(true);
             viewInstance.OverviewSectionPanel.SetActive(false);
             viewInstance.BadgesSectionPanel.SetActive(true);
+            viewInstance.MainScroll.content = viewInstance.BadgesSectionPanel.transform as RectTransform;
             viewInstance.MainScroll.verticalNormalizedPosition = 1;
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
