@@ -7,14 +7,14 @@ using System.Threading;
 
 namespace DCL.AvatarRendering.Wearables.ThirdParty
 {
-    public class DecentralandHttpThirdPartyNftProviderSource : IThirdPartyNftProviderSource
+    public class RealmThirdPartyNftProviderSource : IThirdPartyNftProviderSource
     {
         private readonly IWebRequestController webRequestController;
         private readonly IRealmData realmData;
 
         private ThirdPartyNftProviderDefinition[]? providers;
 
-        public DecentralandHttpThirdPartyNftProviderSource(IWebRequestController webRequestController,
+        public RealmThirdPartyNftProviderSource(IWebRequestController webRequestController,
             IRealmData realmData)
         {
             this.webRequestController = webRequestController;

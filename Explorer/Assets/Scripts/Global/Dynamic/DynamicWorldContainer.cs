@@ -165,7 +165,7 @@ namespace Global.Dynamic
 
             // TODO: it might be useful to cache the third-party nft providers info at start so we avoid undesired delays in the UI.
             // However the chance of using this information is quite low, so its preferable to do it lazy avoiding extra http request & memory allocations
-            IThirdPartyNftProviderSource thirdPartyNftProviderSource = new DecentralandHttpThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
+            IThirdPartyNftProviderSource thirdPartyNftProviderSource = new RealmThirdPartyNftProviderSource(staticContainer.WebRequestsContainer.WebRequestController,
                 staticContainer.RealmData);
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
