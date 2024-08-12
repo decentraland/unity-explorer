@@ -21,12 +21,14 @@ using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
+using DCL.Multiplayer.Connections;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Multiplayer.Connections.GateKeeper.Meta;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
+using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
@@ -222,7 +224,7 @@ namespace Global.Dynamic
             var satelliteView = new SatelliteFloor();
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, container.MapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
 
-            var multiPool = new ThreadSafeMultiPool();
+            var multiPool = new DCLMultiPool();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
             container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
@@ -260,7 +262,12 @@ namespace Global.Dynamic
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
-            container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
+            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+            if (localSceneDevelopment)
+                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
+
+            container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
             var entityParticipantTable = new EntityParticipantTable();
@@ -340,7 +347,6 @@ namespace Global.Dynamic
             container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             var chatHistory = new ChatHistory();
-            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -366,9 +372,6 @@ namespace Global.Dynamic
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
-
-            if (!string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm))
-                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(

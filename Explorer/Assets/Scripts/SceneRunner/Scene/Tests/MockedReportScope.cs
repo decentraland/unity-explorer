@@ -16,14 +16,13 @@ namespace SceneRunner.Scene.Tests
         public MockedReportScope()
         {
             savedInstance = ReportHub.Instance;
-
-            ReportHub.Instance = new ReportHubLogger(
-                new List<(ReportHandler, IReportHandler)> { (ReportHandler.DebugLog, Mock = Substitute.For<IReportHandler>()) });
+            ReportHub.Initialize(new ReportHubLogger(
+                new List<(ReportHandler, IReportHandler)> { (ReportHandler.DebugLog, Mock = Substitute.For<IReportHandler>()) }));
         }
 
         public void Dispose()
         {
-            ReportHub.Instance = savedInstance;
+            ReportHub.Initialize(savedInstance);
         }
     }
 }
