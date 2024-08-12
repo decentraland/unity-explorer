@@ -1,5 +1,4 @@
-﻿using DCL.Character.CharacterMotion.Components;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace DCL.UI.Buttons

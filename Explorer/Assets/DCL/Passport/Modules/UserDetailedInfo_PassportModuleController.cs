@@ -60,6 +60,8 @@ namespace DCL.Passport.Modules
 
         public void Clear()
         {
+            checkEditionAvailabilityCts.SafeCancelAndDispose();
+            saveInfoCts.SafeCancelAndDispose();
             additionalFieldsController.ClearAllAdditionalInfoFields();
             linksController.ClearAllLinks();
         }
@@ -70,8 +72,6 @@ namespace DCL.Passport.Modules
             view.InfoEditionButton.onClick.RemoveAllListeners();
             view.CancelInfoButton.onClick.RemoveAllListeners();
             view.SaveInfoButton.onClick.RemoveAllListeners();
-            checkEditionAvailabilityCts.SafeCancelAndDispose();
-            saveInfoCts.SafeCancelAndDispose();
             linksController.Dispose();
         }
 
