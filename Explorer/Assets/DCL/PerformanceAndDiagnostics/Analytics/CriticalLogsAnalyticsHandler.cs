@@ -1,6 +1,7 @@
 ﻿using DCL.Diagnostics;
 using Segment.Serialization;
 using System;
+using System.Text;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -8,6 +9,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class CriticalLogsAnalyticsHandler : IReportHandler
     {
+        private const int PAYLOAD_LIMIT = 30 * 1024; // Segment == 32 KB, leaving some room for headers
+
         private readonly IAnalyticsController analytics;
 
         public CriticalLogsAnalyticsHandler(IAnalyticsController analytics)
@@ -30,38 +33,40 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "unhandled exception" },
                 { "category", IAnalyticsController.UNDEFINED },
                 { "scene_hash", IAnalyticsController.UNDEFINED },
-                { "message", e.Message },
+                { "message", IsPayloadSizeValid(e.Message) ? e.Message : "message is too long" },
             });
         }
 
-        public void Log(LogType logType, ReportData reportData, Object context, object message)
+        public void Log(LogType logType, ReportData reportData, Object context, object messageObj)
         {
-            if(logType != LogType.Error && logType != LogType.Exception) return;
+            if (logType != LogType.Error && logType != LogType.Exception) return;
+
+            var message = messageObj.ToString();
 
             analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", logType.ToString() },
                 { "category", reportData.Category },
                 { "scene_hash", reportData.SceneShortInfo.Name },
-                { "message", message.ToString() },
+                { "message", IsPayloadSizeValid(message) ? message : "message is too long" },
             });
         }
 
         public void LogFormat(LogType logType, ReportData reportData, Object context, object message, params object[] args)
         {
-            if(logType != LogType.Error && logType != LogType.Exception) return;
+            if (logType != LogType.Error && logType != LogType.Exception) return;
 
             Log(logType, reportData, context, string.Format(message.ToString(), args));
         }
 
-        public void LogException<T>(T ecsSystemException) where T : Exception, IDecentralandException
+        public void LogException<T>(T ecsSystemException) where T: Exception, IDecentralandException
         {
             analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", "exception" },
                 { "category", "ecs" },
                 { "scene_hash", IAnalyticsController.UNDEFINED },
-                { "message", ecsSystemException.Message },
+                { "message", IsPayloadSizeValid(ecsSystemException.Message) ? ecsSystemException.Message : "message is too long" },
             });
         }
 
@@ -72,8 +77,11 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "exception" },
                 { "category", reportData.Category },
                 { "scene_hash", reportData.SceneShortInfo.Name },
-                { "message", exception.Message },
+                { "message", IsPayloadSizeValid(exception.Message) ? exception.Message : "message is too long" },
             });
         }
+
+        private static bool IsPayloadSizeValid(string message) =>
+            Encoding.UTF8.GetByteCount(message) <= PAYLOAD_LIMIT;
     }
 }
