@@ -12,6 +12,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     internal class PinMarker : IPinMarker
     {
+        private const float MAP_MIN_PIN_SCALE = 22;
+        private const float MINIMAP_MIN_SIZE_FOR_PIN = 35;
+
         private readonly IMapCullingController cullingController;
 
         private MapMarkerPoolableBehavior<PinMarkerObject> poolableBehavior;
@@ -125,15 +128,15 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         public void SetZoom(float baseScale, float baseZoom, float zoom)
         {
-            currentBaseScale = baseScale;
-            currentNewScale = Math.Max(zoom / baseZoom * baseScale, baseScale);
+            currentBaseScale = Math.Max(baseScale, MAP_MIN_PIN_SCALE);
+            currentNewScale = Math.Max(zoom / baseZoom * currentBaseScale, currentBaseScale);
             poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
-        public void ResetScale(float scale)
+        public void ResetScale()
         {
-            currentNewScale = scale;
-            poolableBehavior.instance?.SetScale(scale);
+            currentNewScale = MINIMAP_MIN_SIZE_FOR_PIN;
+            poolableBehavior.instance?.SetScale(currentNewScale);
         }
 
         private void ResetPulseAnimation()
