@@ -35,6 +35,9 @@ namespace DCL.Passport
         public EquippedItems_PassportModuleView EquippedItemsModuleView { get; private set; }
 
         [field: SerializeField]
+        public BadgesOverview_PassportModuleView BadgesOverviewModuleView { get; private set; }
+
+        [field: SerializeField]
         public RectTransform MainContainer { get; private set; }
 
         [field: SerializeField]

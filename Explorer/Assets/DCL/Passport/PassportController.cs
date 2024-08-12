@@ -98,6 +98,7 @@ namespace DCL.Passport
             passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
             passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
+            passportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView));
 
             passportProfileInfoController.PublishError += OnPublishError;
             passportProfileInfoController.OnProfilePublished += SetupPassportModules;
