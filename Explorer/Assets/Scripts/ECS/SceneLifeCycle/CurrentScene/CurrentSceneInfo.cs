@@ -18,22 +18,10 @@ namespace ECS.SceneLifeCycle.CurrentScene
             status.UpdateValue(StatusFrom(sceneFacade));
         }
 
-        private ICurrentSceneInfo.Status? StatusFrom(ISceneFacade? sceneFacade)
+        private static ICurrentSceneInfo.Status? StatusFrom(ISceneFacade? sceneFacade)
         {
             if (sceneFacade == null)
                 return null;
-
-            switch (sceneFacade.SceneStateProvider.State)
-            {
-                case SceneState.NotStarted: break;
-                case SceneState.Running: break;
-                case SceneState.EngineError: break;
-                case SceneState.EcsError: break;
-                case SceneState.JavaScriptError: break;
-                case SceneState.Disposing: break;
-                case SceneState.Disposed: break;
-                default: throw new ArgumentOutOfRangeException();
-            }
 
             return sceneFacade.SceneStateProvider.IsNotRunningState()
                 ? ICurrentSceneInfo.Status.Crashed
