@@ -1,7 +1,8 @@
+using DCL.NotificationsBusController.NotificationTypes;
 using UnityEngine;
 using Utility;
 
-namespace DCL.Notification
+namespace DCL.Notifications
 {
     [CreateAssetMenu(fileName = "NotificationIcons", menuName = "SO/NotificationIcons")]
     public class NotificationIconTypes : ScriptableObject

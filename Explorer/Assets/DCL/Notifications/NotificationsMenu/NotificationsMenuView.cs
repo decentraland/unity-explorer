@@ -1,10 +1,11 @@
+using MVC;
 using SuperScrollView;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DCL.Notification.NotificationsMenu
+namespace DCL.Notifications.NotificationsMenu
 {
-    public class NotificationsMenuView : MonoBehaviour
+    public class NotificationsMenuView : ViewBaseWithAnimationElement
     {
         [field: SerializeField]
         public LoopListView2 LoopList { get; private set; }
