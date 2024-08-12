@@ -193,7 +193,7 @@ Transform:
   m_GameObject: {fileID: 3043011415193787519}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.6, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -728,4 +728,5 @@ MonoBehaviour:
     m_LineSpacing: 1
   m_Text: 'NOTE: We split the parents into 2 so we can manage scaling triggered by
     zooming, selection and setting as destination sepparately, without having their
-    tweens interfering with one another.'
+    tweens interfering with one another. Also, "y" position on PulseScalingParent
+    is set at 0.6 to align the base of the pin with the parcel.'
