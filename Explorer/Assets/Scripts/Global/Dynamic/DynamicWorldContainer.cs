@@ -54,6 +54,7 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
+using DCL.Quality;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
@@ -458,6 +459,7 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInAppInitializationFlow,
                     profileCache, sidebarBus, chatEntryConfiguration),
+                new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
                 new ConnectionStatusPanelPlugin(container.MvcManager, mainUIView, roomsStatus, container.reloadSceneController),
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
