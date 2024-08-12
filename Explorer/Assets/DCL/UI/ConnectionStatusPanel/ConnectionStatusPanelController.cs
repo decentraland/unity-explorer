@@ -58,6 +58,14 @@ namespace DCL.UI.ConnectionStatusPanel
 
         private void SceneStatusOnUpdate(ICurrentSceneInfo.Status? obj)
         {
+            const float DELAY = 5f;
+
+            async UniTaskVoid ShowButtonAsync()
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(DELAY));
+                viewInstance.Scene.ShowReloadButton(TryReloadScene);
+            }
+
             if (obj is not { } status)
             {
                 viewInstance.Scene.HideStatus();
@@ -65,9 +73,9 @@ namespace DCL.UI.ConnectionStatusPanel
             }
 
             viewInstance.Scene.ShowStatus(status);
-            //TODO show button on hover
-            //viewInstance.Scene.ShowReloadButton(TryReloadScene);
-            //throw new NotImplementedException();
+
+            if (status is ICurrentSceneInfo.Status.Crashed)
+                ShowButtonAsync().Forget();
         }
 
         private void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
