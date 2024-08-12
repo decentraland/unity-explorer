@@ -1,10 +1,10 @@
+using DCL.NotificationsBusController.NotificationTypes;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace DCL.Notification.Serialization
+namespace DCL.Notifications.Serialization
 {
     public class NotificationJsonDtoConverter : JsonConverter<List<INotification>>
     {

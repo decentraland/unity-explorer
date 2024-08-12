@@ -1,8 +1,8 @@
-using DCL.Notification.NotificationEntry;
+using DCL.Notifications.NotificationEntry;
 using MVC;
 using UnityEngine;
 
-namespace DCL.Notification.NewNotification
+namespace DCL.Notifications.NewNotification
 {
     public class NewNotificationView : ViewBase, IView
     {

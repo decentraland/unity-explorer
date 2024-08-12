@@ -12,17 +12,20 @@ using DCL.Backpack;
 using DCL.Backpack.BackpackBus;
 using DCL.Browser;
 using DCL.CharacterPreview;
+using DCL.Chat;
 using DCL.ExplorePanel;
 using DCL.Landscape.Settings;
 using DCL.MapRenderer;
 using DCL.Navmap;
-using DCL.Notification.NotificationsBus;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.PlacesAPIService;
 using DCL.Profiles;
 using DCL.Profiles.Self;
 using DCL.Quality;
 using DCL.Settings;
 using DCL.Settings.Configuration;
+using DCL.UI.ProfileElements;
+using DCL.UI.Sidebar;
 using DCL.UserInAppInitializationFlow;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
@@ -74,6 +77,7 @@ namespace DCL.PluginSystem.Global
         private readonly IProfileCache profileCache;
         private readonly URLDomain assetBundleURL;
         private readonly INotificationsBusController notificationsBusController;
+        private readonly ChatEntryConfigurationSO chatEntryConfiguration;
 
         private NavmapController? navmapController;
         private SettingsController? settingsController;
@@ -104,6 +108,7 @@ namespace DCL.PluginSystem.Global
             INotificationsBusController notificationsBusController,
             CharacterPreviewEventBus characterPreviewEventBus,
             IMapPathEventBus mapPathEventBus,
+            ChatEntryConfigurationSO chatEntryConfiguration,
             IBackpackEventBus backpackEventBus,
             IThirdPartyNftProviderSource thirdPartyNftProviderSource,
             IWearablesProvider wearablesProvider)
@@ -133,6 +138,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.characterPreviewEventBus = characterPreviewEventBus;
             this.mapPathEventBus = mapPathEventBus;
+            this.chatEntryConfiguration = chatEntryConfiguration;
             this.backpackEventBus = backpackEventBus;
             this.thirdPartyNftProviderSource = thirdPartyNftProviderSource;
             this.wearablesProvider = wearablesProvider;
@@ -190,9 +196,10 @@ namespace DCL.PluginSystem.Global
                 navmapController.InitialiseWorldDependencies(builder.World, arguments.PlayerEntity);
                 backpackInitialization.Invoke(ref builder, arguments);
 
-                mvcManager.RegisterController(new ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
+                mvcManager.RegisterController(new
+                    ExplorePanelController(viewFactoryMethod, navmapController, settingsController, backpackSubPlugin.backpackController!, arguments.PlayerEntity, builder.World,
                     new ProfileWidgetController(() => explorePanelView.ProfileWidget, web3IdentityCache, profileRepository, webRequestController),
-                    new SystemMenuController(() => explorePanelView.SystemMenu, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, web3IdentityCache, mvcManager),
+                    new ProfileMenuController(() => explorePanelView.ProfileMenuView, explorePanelView.ProfileMenuView.ProfileMenu, web3IdentityCache, profileRepository, webRequestController, builder.World, arguments.PlayerEntity, webBrowser, web3Authenticator, userInAppInitializationFlow, profileCache, mvcManager, chatEntryConfiguration),
                     dclInput, notificationsBusController, mvcManager));
 
                 inputHandler = new ExplorePanelInputHandler(dclInput, mvcManager);

@@ -76,19 +76,15 @@ namespace DCL.MapRenderer.ConsumerUtils
             //Process different click types if normal parcel or a map pin
             if (isActive && !dragging && TryGetParcelUnderPointer(eventData, out Vector2Int parcel, out _, out _, out IPinMarker pinMarker))
             {
-                if (pinMarker != null)
+                if (pinMarker != null && previousClickedMarker != pinMarker)
                 {
-                    if (previousClickedMarker != pinMarker)
-                        pinMarker.AnimateIn();
-
-                    if (previousClickedMarker != null && previousClickedMarker != pinMarker)
-                        previousClickedMarker.AnimateOut();
-
+                    previousClickedMarker?.AnimateDeselectionAsync().Forget();
+                    pinMarker.AnimateSelectionAsync().Forget();
                     previousClickedMarker = pinMarker;
                 }
                 else if (previousClickedMarker != null)
                 {
-                    previousClickedMarker.AnimateOut();
+                    previousClickedMarker.AnimateDeselectionAsync().Forget();
                     previousClickedMarker = null;
                 }
 

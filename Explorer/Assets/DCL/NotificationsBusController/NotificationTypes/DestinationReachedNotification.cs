@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DCL.Notification
+namespace DCL.NotificationsBusController.NotificationTypes
 {
     [Serializable]
     public class DestinationReachedNotification : NotificationBase
