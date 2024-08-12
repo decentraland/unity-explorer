@@ -98,18 +98,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   statusValues:
-  - status: 0
+  - statusText: Poor
     predefinedWidth: 50
     textColor: {r: 1, g: 0.72156864, b: 0, a: 1}
     backgroundColor: {r: 1, g: 0.72156864, b: 0, a: 0.14901961}
-  - status: 1
+  - statusText: Good
     predefinedWidth: 50
     textColor: {r: 0.0627451, g: 0.75686276, b: 0.003921569, a: 1}
     backgroundColor: {r: 0.0627451, g: 0.75686276, b: 0.003921569, a: 0.14901961}
-  - status: 2
+  - statusText: Excellent
     predefinedWidth: 82
     textColor: {r: 0.21960784, g: 0.67058825, b: 1, a: 1}
     backgroundColor: {r: 0.2627451, g: 0.56078434, b: 1, a: 0.14901961}
+  - statusText: Crashed
+    predefinedWidth: 76
+    textColor: {r: 1, g: 0.28124678, b: 0.21960783, a: 1}
+    backgroundColor: {r: 1, g: 0.26941553, b: 0.26274514, a: 0.14901961}
   reloadButton: {fileID: 2488621505419351983}
   statusEntry: {fileID: 8596454947768026367}
   currentStatus: 0

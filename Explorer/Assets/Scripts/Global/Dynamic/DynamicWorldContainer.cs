@@ -21,7 +21,6 @@ using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
-using DCL.Multiplayer.Connections;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -54,7 +53,6 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.Quality;
 using DCL.SceneLoadingScreens.LoadingScreen;
 using DCL.SidebarBus;
 using DCL.UI.MainUI;
@@ -65,10 +63,10 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.ChatCommands;
-using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
 using LiveKit.Proto;
 using MVC;
@@ -408,6 +406,8 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
+            var currentSceneInfo = new CurrentSceneInfo();
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -471,7 +471,7 @@ namespace Global.Dynamic
                     container.UserInAppInAppInitializationFlow,
                     profileCache, sidebarBus, chatEntryConfiguration),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
-                new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, container.reloadSceneController),
+                new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController),
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
@@ -571,7 +571,9 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
                 container.CharacterDataPropagationUtility,
-                container.LODContainer.LodCache);
+                currentSceneInfo,
+                container.LODContainer.LodCache
+            );
 
             container.GlobalPlugins = globalPlugins;
 

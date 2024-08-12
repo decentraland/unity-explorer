@@ -5,6 +5,7 @@ using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.MainUI;
 using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.CurrentScene;
 using MVC;
 using System.Threading;
 
@@ -16,6 +17,7 @@ namespace DCL.PluginSystem.Global
         private readonly IMVCManager mvcManager;
         private readonly MainUIView mainUIView;
         private readonly IRoomsStatus roomsStatus;
+        private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly ECSReloadScene ecsReloadScene;
 
         public ConnectionStatusPanelPlugin(
@@ -23,6 +25,7 @@ namespace DCL.PluginSystem.Global
             IMVCManager mvcManager,
             MainUIView mainUIView,
             IRoomsStatus roomsStatus,
+            ICurrentSceneInfo currentSceneInfo,
             ECSReloadScene ecsReloadScene
         )
         {
@@ -30,6 +33,7 @@ namespace DCL.PluginSystem.Global
             this.mvcManager = mvcManager;
             this.mainUIView = mainUIView;
             this.roomsStatus = roomsStatus;
+            this.currentSceneInfo = currentSceneInfo;
             this.ecsReloadScene = ecsReloadScene;
         }
 
@@ -46,6 +50,7 @@ namespace DCL.PluginSystem.Global
                             },
                             userInAppInitializationFlow,
                             mvcManager,
+                            currentSceneInfo,
                             ecsReloadScene,
                             roomsStatus,
                             builder.World!,

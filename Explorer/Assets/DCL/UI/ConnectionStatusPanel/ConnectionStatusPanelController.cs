@@ -6,6 +6,7 @@ using DCL.UI.ErrorPopup;
 using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.CurrentScene;
 using LiveKit.Proto;
 using MVC;
 using System;
@@ -17,6 +18,7 @@ namespace DCL.UI.ConnectionStatusPanel
     {
         private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IMVCManager mvcManager;
+        private readonly ICurrentSceneInfo currentSceneInfo;
         private readonly ECSReloadScene ecsReloadScene;
         private readonly IRoomsStatus roomsStatus;
         private readonly World world;
@@ -26,9 +28,11 @@ namespace DCL.UI.ConnectionStatusPanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        public ConnectionStatusPanelController(ViewFactoryMethod viewFactory,
+        public ConnectionStatusPanelController(
+            ViewFactoryMethod viewFactory,
             IUserInAppInitializationFlow userInAppInitializationFlow,
             IMVCManager mvcManager,
+            ICurrentSceneInfo currentSceneInfo,
             ECSReloadScene ecsReloadScene,
             IRoomsStatus roomsStatus,
             World world,
@@ -37,6 +41,7 @@ namespace DCL.UI.ConnectionStatusPanel
         {
             this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.mvcManager = mvcManager;
+            this.currentSceneInfo = currentSceneInfo;
             this.ecsReloadScene = ecsReloadScene;
             this.roomsStatus = roomsStatus;
             this.world = world;
@@ -45,11 +50,24 @@ namespace DCL.UI.ConnectionStatusPanel
 
         protected override void OnViewInstantiated()
         {
-            //TODO health status of scene? Display it
-            viewInstance.Scene.ShowReloadButton(TryReloadScene);
-
+            currentSceneInfo.SceneStatus.OnUpdate += SceneStatusOnUpdate;
+            SceneStatusOnUpdate(currentSceneInfo.SceneStatus.Value);
             Bind(roomsStatus.ConnectionQualityScene, viewInstance.SceneRoom);
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
+        }
+
+        private void SceneStatusOnUpdate(ICurrentSceneInfo.Status? obj)
+        {
+            if (obj is not { } status)
+            {
+                viewInstance.Scene.HideStatus();
+                return;
+            }
+
+            viewInstance.Scene.ShowStatus(status);
+            //TODO show button on hover
+            //viewInstance.Scene.ShowReloadButton(TryReloadScene);
+            //throw new NotImplementedException();
         }
 
         private void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
@@ -67,7 +85,6 @@ namespace DCL.UI.ConnectionStatusPanel
             }
 
             var status = StatusFrom(quality);
-
             statusEntry.ShowStatus(status);
         }
 
@@ -82,6 +99,7 @@ namespace DCL.UI.ConnectionStatusPanel
 
         public override void Dispose()
         {
+            currentSceneInfo.SceneStatus.OnUpdate -= SceneStatusOnUpdate;
             base.Dispose();
 
             try { cancellationTokenSource.Dispose(); }

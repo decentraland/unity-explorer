@@ -17,14 +17,15 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
         [SerializeField] private IStatusEntry.Status currentStatus;
 
         private Action? cachedAction;
-        private IReadOnlyDictionary<IStatusEntry.Status, (string title, float predefinedWidth, Color text, Color background)>? cache;
+        private IReadOnlyDictionary<string, (float predefinedWidth, Color text, Color background)>? cache;
 
-        private IReadOnlyDictionary<IStatusEntry.Status, (string title, float predefinedWidth, Color text, Color background)> values
+        private IReadOnlyDictionary<string, (float predefinedWidth, Color text, Color background)> values
         {
             get
             {
                 cache = statusValues
-                   .ToDictionary(e => e.status, e => (e.status.ToString()!, e.predefinedWidth, e.textColor, e.backgroundColor));
+                   .ToDictionary(e => e.statusText, e => (e.predefinedWidth, e.textColor, e.backgroundColor));
+
                 return cache;
             }
         }
@@ -36,13 +37,19 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
             cachedAction = onClick;
         }
 
-        public void ShowStatus(IStatusEntry.Status status)
+        public void ShowStatus(string status)
         {
             reloadButton.gameObject.SetActive(false);
             statusEntry.gameObject.SetActive(true);
-            (string title, float predefinedWidth, Color text, Color background) = values[status];
-            statusEntry.UpdateText(title, predefinedWidth);
+            (float predefinedWidth, Color text, Color background) = values[status];
+            statusEntry.UpdateText(status, predefinedWidth);
             statusEntry.ApplyColor(text, background);
+        }
+
+        public void HideStatus()
+        {
+            reloadButton.gameObject.SetActive(false);
+            statusEntry.gameObject.SetActive(false);
         }
 
         private void Awake()
@@ -53,13 +60,13 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
         [ContextMenu(nameof(UpdateStatus))]
         public void UpdateStatus()
         {
-            ShowStatus(currentStatus);
+            ShowStatus(currentStatus.ToString()!);
         }
 
         [Serializable]
         public class StatusValues
         {
-            public IStatusEntry.Status status;
+            public string statusText = string.Empty;
             public float predefinedWidth;
             public Color textColor;
             public Color backgroundColor;
