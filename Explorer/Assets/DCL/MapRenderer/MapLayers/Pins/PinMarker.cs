@@ -110,12 +110,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void OnBecameVisible()
         {
             poolableBehavior.OnBecameVisible();
-
-            if (poolableBehavior.instance == null) return;
-
-            if (Icon != null) { poolableBehavior.instance.SetTexture(Icon); }
-            poolableBehavior.instance.SetAsDestination(IsDestination);
-            poolableBehavior.instance.SetScale(currentNewScale);
+            if (Icon != null) { poolableBehavior.instance?.SetTexture(Icon); }
+            poolableBehavior.instance?.SetAsDestination(IsDestination);
+            poolableBehavior.instance?.SetScale(currentNewScale);
             ResetPulseAnimation();
         }
 
@@ -123,6 +120,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
+            if (poolableBehavior.instance == null || !IsVisible) return;
             poolableBehavior.OnBecameInvisible();
         }
 
