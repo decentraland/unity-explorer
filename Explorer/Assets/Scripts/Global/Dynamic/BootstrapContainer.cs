@@ -32,7 +32,7 @@ namespace Global.Dynamic
         public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
-        public IDebugSettings DebugSettings { get; }
+        public IDebugSettings DebugSettings { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
         public ApplicationParametersParser ApplicationParametersParser { get; private set; }
 
@@ -65,6 +65,7 @@ namespace Global.Dynamic
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 ApplicationParametersParser = appParametersParser,
+                DebugSettings = debugSettings,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
