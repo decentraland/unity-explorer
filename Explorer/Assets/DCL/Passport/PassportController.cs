@@ -48,7 +48,8 @@ namespace DCL.Passport
         private PassportErrorsController passportErrorsController;
         private PassportCharacterPreviewController characterPreviewController;
         private readonly PassportProfileInfoController passportProfileInfoController;
-        private readonly List<IPassportModuleController> passportModules = new ();
+        private readonly List<IPassportModuleController> overviewPassportModules = new ();
+        private readonly List<IPassportModuleController> badgesPassportModules = new ();
 
         public event Action<string> PassportOpened;
 
@@ -95,13 +96,16 @@ namespace DCL.Passport
             Assert.IsNotNull(world);
             passportErrorsController = new PassportErrorsController(viewInstance.ErrorNotification);
             characterPreviewController = new PassportCharacterPreviewController(viewInstance.CharacterPreviewView, characterPreviewFactory, world, characterPreviewEventBus);
-            passportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
-            passportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
-            passportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
-            passportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView));
+            overviewPassportModules.Add(new UserBasicInfo_PassportModuleController(viewInstance.UserBasicInfoModuleView, chatEntryConfiguration, selfProfile, passportErrorsController));
+            overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
+            overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
+            overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView));
 
             passportProfileInfoController.PublishError += OnPublishError;
-            passportProfileInfoController.OnProfilePublished += SetupPassportModules;
+            passportProfileInfoController.OnProfilePublished += OnProfilePublished;
+
+            viewInstance.OverviewSectionButton.Button.onClick.AddListener(OpenOverviewSection);
+            viewInstance.BadgesSectionButton.Button.onClick.AddListener(OpenBadgesSection);
         }
 
         private void OnPublishError()
@@ -113,9 +117,7 @@ namespace DCL.Passport
         {
             currentUserId = inputData.UserId;
             cursor.Unlock();
-            characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
-            LoadUserProfileAsync(currentUserId, characterPreviewLoadingCts.Token).Forget();
-            viewInstance.MainScroll.verticalNormalizedPosition = 1;
+            OpenOverviewSection();
             dclInput.Shortcuts.Disable();
             dclInput.Camera.Disable();
             dclInput.Player.Disable();
@@ -133,7 +135,10 @@ namespace DCL.Passport
             characterPreviewController.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
-            foreach (IPassportModuleController module in passportModules)
+            foreach (IPassportModuleController module in overviewPassportModules)
+                module.Clear();
+
+            foreach (IPassportModuleController module in badgesPassportModules)
                 module.Clear();
         }
 
@@ -148,14 +153,17 @@ namespace DCL.Passport
             characterPreviewLoadingCts.SafeCancelAndDispose();
             characterPreviewController.Dispose();
 
-            passportProfileInfoController.OnProfilePublished -= SetupPassportModules;
+            passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
 
-            foreach (IPassportModuleController module in passportModules)
+            foreach (IPassportModuleController module in overviewPassportModules)
+                module.Dispose();
+
+            foreach (IPassportModuleController module in badgesPassportModules)
                 module.Dispose();
         }
 
-        private async UniTaskVoid LoadUserProfileAsync(string userId, CancellationToken ct)
+        private async UniTaskVoid LoadPassportSectionAsync(string userId, PassportSection sectionToLoad, CancellationToken ct)
         {
             try
             {
@@ -167,12 +175,16 @@ namespace DCL.Passport
 
                 viewInstance.BackgroundImage.material.SetColor(BG_SHADER_COLOR_1, chatEntryConfiguration.GetNameColor(profile.Name));
 
-                // Load avatar preview
-                characterPreviewController.Initialize(profile.Avatar);
-                characterPreviewController.OnShow();
+                viewInstance.CharacterPreviewView.gameObject.SetActive(sectionToLoad == PassportSection.OVERVIEW);
+                if (sectionToLoad == PassportSection.OVERVIEW)
+                {
+                    // Load avatar preview
+                    characterPreviewController.Initialize(profile.Avatar);
+                    characterPreviewController.OnShow();
+                }
 
                 // Load passport modules
-                SetupPassportModules(profile);
+                SetupPassportModules(profile, sectionToLoad);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)
@@ -183,10 +195,38 @@ namespace DCL.Passport
             }
         }
 
-        private void SetupPassportModules(Profile profile)
+        private void SetupPassportModules(Profile profile, PassportSection passportSection)
         {
-            foreach (IPassportModuleController module in passportModules)
+            var passportModulesToSetup = passportSection == PassportSection.OVERVIEW ? overviewPassportModules : badgesPassportModules;
+            foreach (IPassportModuleController module in passportModulesToSetup)
                 module.Setup(profile);
+        }
+
+        private void OnProfilePublished(Profile profile) =>
+            SetupPassportModules(profile, PassportSection.OVERVIEW);
+
+        private void OpenOverviewSection()
+        {
+            viewInstance.OverviewSectionButton.SetSelected(true);
+            viewInstance.BadgesSectionButton.SetSelected(false);
+            viewInstance.OverviewSectionPanel.SetActive(true);
+            viewInstance.BadgesSectionPanel.SetActive(false);
+            viewInstance.MainScroll.verticalNormalizedPosition = 1;
+
+            characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
+            LoadPassportSectionAsync(currentUserId, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
+        }
+
+        private void OpenBadgesSection()
+        {
+            viewInstance.OverviewSectionButton.SetSelected(false);
+            viewInstance.BadgesSectionButton.SetSelected(true);
+            viewInstance.OverviewSectionPanel.SetActive(false);
+            viewInstance.BadgesSectionPanel.SetActive(true);
+            viewInstance.MainScroll.verticalNormalizedPosition = 1;
+
+            characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
+            LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token).Forget();
         }
     }
 }

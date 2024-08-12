@@ -45,5 +45,17 @@ namespace DCL.Passport
 
         [field: SerializeField]
         public WarningNotificationView ErrorNotification { get; private set; }
+
+        [field: SerializeField]
+        public ButtonWithSelectableStateView OverviewSectionButton { get; private set; }
+
+        [field: SerializeField]
+        public ButtonWithSelectableStateView BadgesSectionButton { get; private set; }
+
+        [field: SerializeField]
+        public GameObject OverviewSectionPanel { get; private set; }
+
+        [field: SerializeField]
+        public GameObject BadgesSectionPanel { get; private set; }
     }
 }
