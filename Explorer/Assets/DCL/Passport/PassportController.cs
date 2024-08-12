@@ -120,7 +120,7 @@ namespace DCL.Passport
             dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
 
-            PassportOpened?.Invoke(currentUserId);
+            PassportOpened.Invoke(currentUserId);
         }
 
         protected override void OnViewClose()
@@ -131,6 +131,7 @@ namespace DCL.Passport
             dclInput.Player.Enable();
             characterPreviewController.OnHide();
 
+            characterPreviewLoadingCts.SafeCancelAndDispose();
             foreach (IPassportModuleController module in passportModules)
                 module.Clear();
         }
@@ -142,9 +143,9 @@ namespace DCL.Passport
 
         public override void Dispose()
         {
-            passportErrorsController?.Hide(true);
-            characterPreviewLoadingCts?.SafeCancelAndDispose();
-            characterPreviewController?.Dispose();
+            passportErrorsController.Hide(true);
+            characterPreviewLoadingCts.SafeCancelAndDispose();
+            characterPreviewController.Dispose();
 
             passportProfileInfoController.OnProfilePublished -= SetupPassportModules;
             passportProfileInfoController.PublishError -= OnPublishError;

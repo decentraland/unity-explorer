@@ -1,11 +1,11 @@
-using DCL.UI;
+using DCL.NotificationsBusController.NotificationTypes;
 using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.Notification.NotificationEntry
+namespace DCL.Notifications.NotificationEntry
 {
     public class SystemNotificationView: MonoBehaviour, IPointerClickHandler
     {
