@@ -46,13 +46,17 @@ namespace DCL.Passport.Modules
             //CheckForEditionAvailabilityAsync(checkEditionAvailabilityCts.Token).Forget();
         }
 
-        public void Clear() { }
+        public void Clear()
+        {
+            checkEditionAvailabilityCts.SafeCancelAndDispose();
+            nameElementController.Element.CopyNameWarningNotification.Hide(true);
+            walletAddressElementController.Element.CopyWalletWarningNotification.Hide(true);
+        }
 
         public void Dispose()
         {
-            checkEditionAvailabilityCts.SafeCancelAndDispose();
-            nameElementController.Dispose();
-            walletAddressElementController.Dispose();
+            nameElementController.Element.CopyUserNameButton.onClick.RemoveAllListeners();
+            walletAddressElementController.Element.CopyWalletAddressButton.onClick.RemoveAllListeners();
             Clear();
         }
 

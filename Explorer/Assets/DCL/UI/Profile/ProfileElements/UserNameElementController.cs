@@ -9,7 +9,7 @@ namespace DCL.UI.ProfileElements
 {
     public class UserNameElementController
     {
-        private readonly UserNameElement element;
+        public readonly UserNameElement Element;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
 
         private Profile currentProfile;
@@ -18,7 +18,7 @@ namespace DCL.UI.ProfileElements
             UserNameElement element,
             ChatEntryConfigurationSO chatEntryConfiguration)
         {
-            this.element = element;
+            this.Element = element;
             this.chatEntryConfiguration = chatEntryConfiguration;
 
             element.CopyNameWarningNotification.Hide(true);
@@ -37,24 +37,24 @@ namespace DCL.UI.ProfileElements
         {
             currentProfile = profile;
 
-            element.UserNameText.text = profile.Name;
-            element.UserNameText.color = chatEntryConfiguration.GetNameColor(profile.Name);
-            element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
-            element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
-            element.VerifiedMark.SetActive(profile.HasClaimedName);
+            Element.UserNameText.text = profile.Name;
+            Element.UserNameText.color = chatEntryConfiguration.GetNameColor(profile.Name);
+            Element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
+            Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
+            Element.VerifiedMark.SetActive(profile.HasClaimedName);
             WaitUntilToNextFrameAsync().Forget();
         }
 
         private async UniTaskVoid WaitUntilToNextFrameAsync()
         {
             await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
-            element.LayoutGroup.spacing = 0.01f;
+            Element.LayoutGroup.spacing = 0.01f;
         }
 
         public void Dispose()
         {
-            element.CopyUserNameButton.onClick.RemoveAllListeners();
-            element.CopyNameWarningNotification.Hide(true);
+            Element.CopyUserNameButton.onClick.RemoveAllListeners();
+            Element.CopyNameWarningNotification.Hide(true);
         }
 
     }
