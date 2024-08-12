@@ -35,6 +35,7 @@ namespace DCL.PluginSystem.Global
                                 view!.gameObject.SetActive(true);
                                 return view;
                             },
+                            mvcManager,
                             ecsReloadScene,
                             roomsStatus
                         )

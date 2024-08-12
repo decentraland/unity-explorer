@@ -12,6 +12,7 @@ namespace DCL.UI.ConnectionStatusPanel
 {
     public partial class ConnectionStatusPanelController : ControllerBase<ConnectionStatusPanelView>
     {
+        private readonly IMVCManager mvcManager;
         private readonly ECSReloadScene ecsReloadScene;
         private readonly IRoomsStatus roomsStatus;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
@@ -19,8 +20,9 @@ namespace DCL.UI.ConnectionStatusPanel
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        public ConnectionStatusPanelController(ViewFactoryMethod viewFactory, ECSReloadScene ecsReloadScene, IRoomsStatus roomsStatus) : base(viewFactory)
+        public ConnectionStatusPanelController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, ECSReloadScene ecsReloadScene, IRoomsStatus roomsStatus) : base(viewFactory)
         {
+            this.mvcManager = mvcManager;
             this.ecsReloadScene = ecsReloadScene;
             this.roomsStatus = roomsStatus;
         }
@@ -34,19 +36,22 @@ namespace DCL.UI.ConnectionStatusPanel
             Bind(roomsStatus.ConnectionQualityIsland, viewInstance.GlobalRoom);
         }
 
-        private static void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
+        private void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
         {
             value.OnUpdate += newValue => UpdateStatusEntry(statusEntry, newValue);
             UpdateStatusEntry(statusEntry, value.Value);
         }
 
-        private static void UpdateStatusEntry(IStatusEntry statusEntry, ConnectionQuality quality)
+        private void UpdateStatusEntry(IStatusEntry statusEntry, ConnectionQuality quality)
         {
             var status = StatusFrom(quality);
 
             if (status == null)
             {
-                statusEntry.ShowReloadButton(static () => { }); //TODO bind reload action
+                statusEntry.ShowReloadButton(() =>
+                {
+                    //mvcManager.ShowAsync()//TODO show popup
+                }); //TODO bind reload action
                 return;
             }
 
