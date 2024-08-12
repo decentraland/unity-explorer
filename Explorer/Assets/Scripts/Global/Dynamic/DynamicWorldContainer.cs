@@ -70,6 +70,7 @@ using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.ChatCommands;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
@@ -82,6 +83,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using Utility.Ownership;
 using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
 
@@ -267,7 +269,16 @@ namespace Global.Dynamic
             container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
-            RoomsStatus roomsStatus = new RoomsStatus(container.RoomHub);
+            RoomsStatus roomsStatus = new RoomsStatus(
+                container.RoomHub,
+
+                //override allowed only in Editor
+                Application.isEditor
+                    ? new LinkedBox<(bool use, ConnectionQuality quality)>(
+                        () => (bootstrapContainer.DebugSettings.OverrideConnectionQuality, bootstrapContainer.DebugSettings.ConnectionQuality)
+                    )
+                    : new Box<(bool use, ConnectionQuality quality)>((false, ConnectionQuality.QualityExcellent))
+            );
 
             var entityParticipantTable = new EntityParticipantTable();
 
