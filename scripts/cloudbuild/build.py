@@ -52,9 +52,11 @@ def clone_current_target():
         # Copy cache check
         if cache:
             body['settings']['buildTargetCopyCache'] = template_target
+            print(f"Using cache build target: {template_target}")
         else:
             if 'buildTargetCopyCache' in body['settings']:
                 del body['settings']['buildTargetCopyCache']
+            print("No cache build target used")
 
         return body
 
