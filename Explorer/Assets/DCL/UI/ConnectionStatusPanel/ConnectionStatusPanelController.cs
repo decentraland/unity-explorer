@@ -1,7 +1,9 @@
+using Arch.Core;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel.StatusEntry;
 using DCL.UI.ErrorPopup;
+using DCL.UserInAppInitializationFlow;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using LiveKit.Proto;
@@ -13,19 +15,32 @@ namespace DCL.UI.ConnectionStatusPanel
 {
     public partial class ConnectionStatusPanelController : ControllerBase<ConnectionStatusPanelView>
     {
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IMVCManager mvcManager;
         private readonly ECSReloadScene ecsReloadScene;
         private readonly IRoomsStatus roomsStatus;
+        private readonly World world;
+        private readonly Entity playerEntity;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
         private bool isSceneReloading;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
 
-        public ConnectionStatusPanelController(ViewFactoryMethod viewFactory, IMVCManager mvcManager, ECSReloadScene ecsReloadScene, IRoomsStatus roomsStatus) : base(viewFactory)
+        public ConnectionStatusPanelController(ViewFactoryMethod viewFactory,
+            IUserInAppInitializationFlow userInAppInitializationFlow,
+            IMVCManager mvcManager,
+            ECSReloadScene ecsReloadScene,
+            IRoomsStatus roomsStatus,
+            World world,
+            Entity playerEntity
+        ) : base(viewFactory)
         {
+            this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.mvcManager = mvcManager;
             this.ecsReloadScene = ecsReloadScene;
             this.roomsStatus = roomsStatus;
+            this.world = world;
+            this.playerEntity = playerEntity;
         }
 
         protected override void OnViewInstantiated()
@@ -59,7 +74,7 @@ namespace DCL.UI.ConnectionStatusPanel
         private async UniTaskVoid ShowErrorAsync()
         {
             await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty));
-            //TODO go to the loading screen
+            await userInAppInitializationFlow.ExecuteAsync(true, true, true, world, playerEntity, cancellationTokenSource.Token);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

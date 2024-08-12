@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.MainUI;
+using DCL.UserInAppInitializationFlow;
 using ECS.SceneLifeCycle;
 using MVC;
 using System.Threading;
@@ -11,13 +12,21 @@ namespace DCL.PluginSystem.Global
 {
     public class ConnectionStatusPanelPlugin : DCLGlobalPluginBase<ConnectionStatusPanelPlugin.ConnectionStatusPanelSettings>
     {
+        private readonly IUserInAppInitializationFlow userInAppInitializationFlow;
         private readonly IMVCManager mvcManager;
         private readonly MainUIView mainUIView;
         private readonly IRoomsStatus roomsStatus;
         private readonly ECSReloadScene ecsReloadScene;
 
-        public ConnectionStatusPanelPlugin(IMVCManager mvcManager, MainUIView mainUIView, IRoomsStatus roomsStatus, ECSReloadScene ecsReloadScene)
+        public ConnectionStatusPanelPlugin(
+            IUserInAppInitializationFlow userInAppInitializationFlow,
+            IMVCManager mvcManager,
+            MainUIView mainUIView,
+            IRoomsStatus roomsStatus,
+            ECSReloadScene ecsReloadScene
+        )
         {
+            this.userInAppInitializationFlow = userInAppInitializationFlow;
             this.mvcManager = mvcManager;
             this.mainUIView = mainUIView;
             this.roomsStatus = roomsStatus;
@@ -26,7 +35,7 @@ namespace DCL.PluginSystem.Global
 
         protected override UniTask<ContinueInitialization?> InitializeInternalAsync(ConnectionStatusPanelSettings settings, CancellationToken ct) =>
             UniTask.FromResult<ContinueInitialization?>(
-                (ref ArchSystemsWorldBuilder<Arch.Core.World> _, in GlobalPluginArguments _) =>
+                (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) =>
                 {
                     mvcManager.RegisterController(
                         new ConnectionStatusPanelController(() =>
@@ -35,9 +44,12 @@ namespace DCL.PluginSystem.Global
                                 view!.gameObject.SetActive(true);
                                 return view;
                             },
+                            userInAppInitializationFlow,
                             mvcManager,
                             ecsReloadScene,
-                            roomsStatus
+                            roomsStatus,
+                            builder.World!,
+                            arguments.PlayerEntity
                         )
                     );
                 }

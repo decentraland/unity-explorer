@@ -460,7 +460,7 @@ namespace Global.Dynamic
                     container.UserInAppInAppInitializationFlow,
                     profileCache, sidebarBus, chatEntryConfiguration),
                 new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
-                new ConnectionStatusPanelPlugin(container.MvcManager, mainUIView, roomsStatus, container.reloadSceneController),
+                new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, container.reloadSceneController),
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
