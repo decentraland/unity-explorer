@@ -27,13 +27,13 @@ on:
           - deep
       cache:
         description: 'Enable to use workspace caching in cloud runners'
-        required: true
+        required: false
         default: true
         type: boolean
       cache_strategy:
         description: 'Select cache strategy'
         required: true
-        default: 'inherit'
+        default: 'workspace'
         type: choice
         options:
           - none
@@ -53,11 +53,11 @@ on:
         default: 'none'
       cache:
         required: true
-        default: true
+        default: false
         type: boolean
       cache_strategy:
         required: true
-        default: 'inherit'
+        default: 'workspace'
         type: string
       version:
         required: true
