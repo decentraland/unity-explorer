@@ -1,8 +1,7 @@
-using System;
+using DCL.NotificationsBusController.NotificationTypes;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace DCL.Notification.NotificationsBus
+namespace DCL.NotificationsBusController.NotificationsBus
 {
     public class NotificationsBusController : INotificationsBusController
     {

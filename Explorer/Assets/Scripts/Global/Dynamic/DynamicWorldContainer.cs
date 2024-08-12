@@ -43,8 +43,8 @@ using DCL.Multiplayer.Profiles.Tables;
 using DCL.Multiplayer.SDK.Systems.GlobalWorld;
 using DCL.Nametags;
 using DCL.NftInfoAPIService;
-using DCL.Notification;
-using DCL.Notification.NotificationsBus;
+using DCL.Notifications;
+using DCL.NotificationsBusController.NotificationsBus;
 using DCL.Optimization.Pools;
 using DCL.ParcelsService;
 using DCL.PerformanceAndDiagnostics.Analytics;
@@ -262,7 +262,12 @@ namespace Global.Dynamic
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
-            container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
+            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+            if (localSceneDevelopment)
+                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
+
+            container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
             var entityParticipantTable = new EntityParticipantTable();
@@ -342,7 +347,6 @@ namespace Global.Dynamic
             container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             var chatHistory = new ChatHistory();
-            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -369,9 +373,6 @@ namespace Global.Dynamic
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
 
-            if (!string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm))
-                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
-
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
                     new ProfileBroadcast(container.MessagePipesHub, selfProfile),
@@ -381,6 +382,7 @@ namespace Global.Dynamic
             );
 
             var notificationsRequestController = new NotificationsRequestController(staticContainer.WebRequestsContainer.WebRequestController, notificationsBusController, bootstrapContainer.DecentralandUrlsSource, identityCache);
+            notificationsRequestController.StartGettingNewNotificationsOverTimeAsync(ct).SuppressCancellationThrow().Forget();
 
             var multiplayerEmotesMessageBus = new MultiplayerEmotesMessageBus(container.MessagePipesHub);
 
@@ -451,8 +453,7 @@ namespace Global.Dynamic
                     webBrowser,
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInAppInitializationFlow,
-                    profileCache,
-                    sidebarBus),
+                    profileCache, sidebarBus, chatEntryConfiguration),
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
@@ -481,6 +482,7 @@ namespace Global.Dynamic
                     notificationsBusController,
                     characterPreviewEventBus,
                     mapPathEventBus,
+                    chatEntryConfiguration,
                     backpackEventBus
                 ),
                 new CharacterPreviewPlugin(staticContainer.ComponentsContainer.ComponentPoolsRegistry, assetsProvisioner, staticContainer.CacheCleaner),
@@ -507,10 +509,7 @@ namespace Global.Dynamic
                     assetsProvisioner,
                     container.MvcManager,
                     staticContainer.WebRequestsContainer.WebRequestController,
-                    bootstrapContainer.DecentralandUrlsSource,
-                    identityCache,
-                    notificationsBusController,
-                    notificationsRequestController),
+                    notificationsBusController),
                 new RewardPanelPlugin(container.MvcManager, assetsProvisioner, notificationsBusController, staticContainer.WebRequestsContainer.WebRequestController),
                 new PassportPlugin(
                     assetsProvisioner,

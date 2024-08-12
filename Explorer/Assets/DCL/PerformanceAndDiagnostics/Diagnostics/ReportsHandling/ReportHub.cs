@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -10,11 +9,18 @@ namespace DCL.Diagnostics
     /// </summary>
     public static class ReportHub
     {
-        public static ReportHubLogger Instance { get; set; } =
+        public static ReportHubLogger Instance { get; private set; } =
             new (new (ReportHandler, IReportHandler)[]
             {
                 (ReportHandler.DebugLog, new DefaultReportLogger()),
             });
+        private static bool logVerboseEnabled = false;
+
+        public static void Initialize(ReportHubLogger logger, bool logVerbose = false)
+        {
+            Instance = logger;
+            logVerboseEnabled = logVerbose;
+        }
 
         /// <summary>
         ///     Logs a message.
@@ -55,15 +61,14 @@ namespace DCL.Diagnostics
 
         /// <summary>
         ///     Logs verbose info.
-        ///     This call will be stripped from the build, and therefore leads to zero overhead, unless "VERBOSE_LOGS" is defined
         /// </summary>
         /// <param name="reportData">Report Data, try to provide as specific data as possible</param>
         /// <param name="message">Message</param>
         /// <param name="reportToHandlers">Handlers to report to, All by default</param>
         [HideInCallstack]
-        [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")]
         public static void Log(ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
+            if (!logVerboseEnabled) return;
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
         }
 
