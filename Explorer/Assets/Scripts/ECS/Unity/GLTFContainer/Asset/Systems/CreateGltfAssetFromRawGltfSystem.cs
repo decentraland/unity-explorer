@@ -41,6 +41,9 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             ref GetGltfContainerAssetIntention assetIntention,
             ref StreamableLoadingResult<GLTFData> gltfDataResult)
         {
+            if (!instantiationFrameTimeBudget.TrySpendBudget() || !memoryBudget.TrySpendBudget())
+                return;
+
             if (assetIntention.CancellationTokenSource.IsCancellationRequested || gltfDataResult.Asset == null)
                 return;
 
@@ -60,14 +63,14 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
             // }
 
             // Collect all Animations as they are used in Animation System (only for legacy support, as all of them will eventually be converted to Animators)
-            using PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope();
+            using (PoolExtensions.Scope<List<Animation>> animationScope = GltfContainerAsset.ANIMATIONS_POOL.AutoScope())
             {
                 gltfData.containerGameObject.GetComponentsInChildren(true, animationScope.Value);
                 result.Animations.AddRange(animationScope.Value);
             }
 
             // Collect all Animators as they are used in Animation System
-            using PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope();
+            using (PoolExtensions.Scope<List<Animator>> animatorScope = GltfContainerAsset.ANIMATORS_POOL.AutoScope())
             {
                 gltfData.containerGameObject.GetComponentsInChildren(true, animatorScope.Value);
                 result.Animators.AddRange(animatorScope.Value);
@@ -116,20 +119,28 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
 
         private static void ProcessGameObjects(GameObject root)
         {
-            var meshFilters = root.GetComponentsInChildren<MeshFilter>();
-
-            foreach (MeshFilter filter in meshFilters)
+            using (PoolExtensions.Scope<List<MeshFilter>> meshFilterScope = GltfContainerAsset.MESH_FILTERS_POOL.AutoScope())
             {
-                if (filter.name.Contains(COLLIDER_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                    ConfigureColliders(filter.transform, filter);
+                List<MeshFilter> list = meshFilterScope.Value;
+                root.GetComponentsInChildren(true, list);
+
+                foreach (MeshFilter filter in list)
+                {
+                    if (filter.name.Contains(COLLIDER_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                        ConfigureColliders(filter.transform, filter);
+                }
             }
 
-            var renderers = root.GetComponentsInChildren<Renderer>();
-
-            foreach (Renderer r in renderers)
+            using (PoolExtensions.Scope<List<Renderer>> instanceRenderers = GltfContainerAsset.RENDERERS_POOL.AutoScope())
             {
-                if (r.name.Contains(COLLIDER_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                    UnityObjectUtils.SafeDestroy(r);
+                List<Renderer> list = instanceRenderers.Value;
+                root.GetComponentsInChildren(true, list);
+
+                foreach (Renderer r in list)
+                {
+                    if (r.name.Contains(COLLIDER_SUFFIX, StringComparison.OrdinalIgnoreCase))
+                        UnityObjectUtils.SafeDestroy(r);
+                }
             }
         }
 

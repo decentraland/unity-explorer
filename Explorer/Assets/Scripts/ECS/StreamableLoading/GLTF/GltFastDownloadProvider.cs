@@ -22,6 +22,7 @@ namespace ECS.StreamableLoading.GLTF
         private ISceneData sceneData;
         private World world;
         private IPartitionComponent partitionComponent;
+        private const int ATTEMPTS_COUNT = 6;
 
         public GltFastDownloadProvider(World world, ISceneData sceneData, IPartitionComponent partitionComponent)
         {
@@ -61,7 +62,7 @@ namespace ECS.StreamableLoading.GLTF
 
             var texturePromise = Promise.Create(world, new GetTextureIntention
             {
-                CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: 6),
+                CommonArguments = new CommonLoadingArguments(tryGetContentUrlResult, attempts: ATTEMPTS_COUNT),
                 // WrapMode = textureComponentValue.WrapMode,
                 // FilterMode = textureComponentValue.FilterMode,
             }, partitionComponent);
