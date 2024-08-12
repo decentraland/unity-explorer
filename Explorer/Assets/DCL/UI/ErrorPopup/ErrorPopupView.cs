@@ -16,14 +16,14 @@ namespace DCL.UI.ErrorPopup
 
         public void Apply(ErrorPopupData data)
         {
-            if (data.icon != null)
-                icon.sprite = data.icon;
+            if (data.Icon != null)
+                icon.sprite = data.Icon;
 
-            if (data.title != null)
-                title.text = data.title;
+            if (data.Title != null)
+                title.text = data.Title;
 
-            if (data.description != null)
-                description.text = data.description;
+            if (data.Description != null)
+                description.text = data.Description;
         }
     }
 }

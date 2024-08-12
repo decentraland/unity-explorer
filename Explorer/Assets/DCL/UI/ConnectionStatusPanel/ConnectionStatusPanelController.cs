@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.UI.ConnectionStatusPanel.StatusEntry;
+using DCL.UI.ErrorPopup;
 using DCL.Utilities;
 using ECS.SceneLifeCycle;
 using LiveKit.Proto;
@@ -48,14 +49,17 @@ namespace DCL.UI.ConnectionStatusPanel
 
             if (status == null)
             {
-                statusEntry.ShowReloadButton(() =>
-                {
-                    //mvcManager.ShowAsync()//TODO show popup
-                }); //TODO bind reload action
+                ShowErrorAsync().Forget();
                 return;
             }
 
             statusEntry.ShowStatus(status.Value);
+        }
+
+        private async UniTaskVoid ShowErrorAsync()
+        {
+            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty));
+            //TODO go to the loading screen
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>

@@ -16,7 +16,10 @@ namespace DCL.UI.ErrorPopup
 
         public ErrorPopupController(ViewFactoryMethod viewFactory) : base(viewFactory) { }
 
-        protected override void OnViewInstantiated() { }
+        protected override void OnViewShow()
+        {
+            viewInstance.Apply(inputData);
+        }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
             viewInstance!.OkButton.OnClickAsync(ct);
