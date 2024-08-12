@@ -54,6 +54,9 @@ namespace Global.Dynamic
             return new HybridSceneParams();
         }
 
+        public string GetLocalSceneDevelopmentRealm() =>
+            IsLocalSceneDevelopmentRealm ? GetStartingRealm() : string.Empty;
+
         public string GetStartingRealm()
         {
             return initialRealm switch
@@ -72,7 +75,7 @@ namespace Global.Dynamic
 
         public void ApplyConfig(ApplicationParametersParser applicationParameters)
         {
-            Dictionary<string,string> appParameters = applicationParameters.Get();
+            Dictionary<string,string> appParameters = applicationParameters.AppParameters;
 
             if (appParameters.TryGetValue(APP_PARAMETER_REALM, out string? realm))
                 ParseRealmAppParameter(appParameters, realm);

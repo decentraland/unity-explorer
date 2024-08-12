@@ -16,7 +16,7 @@ namespace Global.Dynamic
 
         public void ApplyConfig(ApplicationParametersParser applicationParametersParser)
         {
-            Dictionary<string,string> applicationParams = applicationParametersParser.Get();
+            Dictionary<string, string> applicationParams = applicationParametersParser.AppParameters;
 
             if (applicationParams.TryGetValue(ENV_PARAM, out string environment))
                 ParseEnvironment(environment);

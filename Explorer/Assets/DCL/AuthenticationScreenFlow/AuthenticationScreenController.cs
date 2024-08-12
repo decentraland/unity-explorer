@@ -8,14 +8,12 @@ using DCL.FeatureFlags;
 using DCL.Multiplayer.Connections.DecentralandUrls;
 using DCL.Profiles;
 using DCL.Profiles.Self;
-using DCL.UI;
 using DCL.SceneLoadingScreens.SplashScreen;
-using DCL.Web3;
+using DCL.UI;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
 using MVC;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -182,7 +180,7 @@ namespace DCL.AuthenticationScreenFlow
             else
                 SwitchState(ViewState.Login);
 
-            splashScreenAnimator.HideSplash();
+            splashScreenAnimator.Hide();
         }
 
         private void ShowRestrictedUserPopup()

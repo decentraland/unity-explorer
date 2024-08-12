@@ -1,4 +1,3 @@
-using ECS.SceneLifeCycle.Realm;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -10,29 +9,15 @@ namespace Global.Dynamic
 {
     public class ApplicationParametersParser
     {
-        private const string APP_PARAMETER_REALM = "realm";
-        private const string APP_PARAMETER_LOCAL_SCENE = "local-scene";
-        private const string APP_PARAMETER_POSITION = "position";
+        public Dictionary<string, string> AppParameters { get; private set; } = new ();
 
-        public bool LocalSceneDevelopment;
-
-        public readonly Dictionary<string, string> AppParameters = new ();
-
-        public ApplicationParametersParser(RealmLaunchSettings launchSettings)
+        public ApplicationParametersParser(string[] args)
         {
-            AppParameters = ParseApplicationParameters();
-
-            if (AppParameters.ContainsKey(APP_PARAMETER_REALM))
-                ProcessRealmAppParameter(launchSettings);
-
-            if (AppParameters.TryGetValue(APP_PARAMETER_POSITION, out string param))
-                ProcessPositionAppParameter(param, launchSettings);
+            AppParameters = ParseApplicationParameters(args);
         }
 
-        private Dictionary<string, string> ParseApplicationParameters()
+        private Dictionary<string, string> ParseApplicationParameters(string[] cmdArgs)
         {
-            string[] cmdArgs = Environment.GetCommandLineArgs();
-
             var deepLinkFound = false;
             string lastKeyStored = string.Empty;
 
@@ -90,58 +75,5 @@ namespace Global.Dynamic
             foreach (string uriQueryKey in uriQuery.AllKeys)
                 AppParameters[uriQueryKey] = uriQuery.Get(uriQueryKey);
         }
-
-        private void ProcessRealmAppParameter(RealmLaunchSettings launchSettings)
-        {
-            string realmParamValue = AppParameters[APP_PARAMETER_REALM];
-
-            if (string.IsNullOrEmpty(realmParamValue)) return;
-
-            LocalSceneDevelopment = AppParameters.TryGetValue(APP_PARAMETER_LOCAL_SCENE, out string localSceneParamValue)
-                                    && ParseLocalSceneParameter(localSceneParamValue)
-                                    && IsRealmAValidUrl(realmParamValue);
-
-            if (LocalSceneDevelopment)
-                launchSettings.SetLocalSceneDevelopmentRealm(realmParamValue);
-            else if (IsRealmAWorld(realmParamValue))
-                launchSettings.SetWorldRealm(realmParamValue);
-        }
-
-        private void ProcessPositionAppParameter(string positionParameterValue, RealmLaunchSettings launchSettings)
-        {
-            if (string.IsNullOrEmpty(positionParameterValue)) return;
-
-            Vector2Int targetPosition = Vector2Int.zero;
-
-            MatchCollection matches = new Regex(@"-*\d+").Matches(positionParameterValue);
-
-            if (matches.Count > 1)
-            {
-                targetPosition.x = int.Parse(matches[0].Value);
-                targetPosition.y = int.Parse(matches[1].Value);
-            }
-
-            launchSettings.SetTargetScene(targetPosition);
-        }
-
-        private bool ParseLocalSceneParameter(string localSceneParameter)
-        {
-            if (string.IsNullOrEmpty(localSceneParameter)) return false;
-
-            var returnValue = false;
-            Match match = new Regex(@"true|false").Match(localSceneParameter);
-
-            if (match.Success)
-                bool.TryParse(match.Value, out returnValue);
-
-            return returnValue;
-        }
-
-        private bool IsRealmAWorld(string realmParam) =>
-            realmParam.IsEns();
-
-        private bool IsRealmAValidUrl(string realmParam) =>
-            Uri.TryCreate(realmParam, UriKind.Absolute, out Uri? uriResult)
-            && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
     }
 }

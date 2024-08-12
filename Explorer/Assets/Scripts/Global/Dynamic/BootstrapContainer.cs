@@ -9,7 +9,6 @@ using DCL.PluginSystem;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
-using ECS.SceneLifeCycle.Realm;
 using Segment.Analytics;
 using System;
 using System.Collections.Generic;
@@ -33,9 +32,10 @@ namespace Global.Dynamic
         public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
-        public IDebugSettings DebugSettings { get; private set; }
+        public IDebugSettings DebugSettings { get; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
-        public bool LocalSceneDevelopment { get; private set; }
+        public bool LocalSceneDevelopment { get; }
+        public ApplicationParametersParser ApplicationParametersParser { get; private set; }
 
         public override void Dispose()
         {
@@ -52,30 +52,30 @@ namespace Global.Dynamic
             DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IPluginSettingsContainer settingsContainer,
-            ApplicationParametersParser applicationParametersParser,
             RealmLaunchSettings realmLaunchSettings,
-            CancellationToken ct
-        )
+            ApplicationParametersParser applicationParametersParser,
+            CancellationToken ct)
         {
             var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment);
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
-            var appParametersParser = new ApplicationParametersParser(launchSettings);
+            var appParametersParser = applicationParametersParser;
 
             var bootstrapContainer = new BootstrapContainer
             {
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
+                ApplicationParametersParser = appParametersParser,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
             {
                 container.reportHandlingSettings = await ProvideReportHandlingSettingsAsync(container.AssetsProvisioner!, container.settings, ct);
-                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, applicationParametersParser, realmLaunchSettings, ct);
+                (container.Bootstrap, container.Analytics) = await CreateBootstrapperAsync(debugSettings, container, container.settings, appParametersParser, realmLaunchSettings, ct);
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container, decentralandUrlsSource);
 
                 container.diagnosticsContainer = container.enableAnalytics
-                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
+                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, realmLaunchSettings.IsLocalSceneDevelopmentRealm, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
                     : DiagnosticsContainer.Create(container.ReportHandlingSettings);
             });
 
