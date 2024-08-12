@@ -60,15 +60,15 @@ namespace DCL.UI.ConnectionStatusPanel
 
         private void UpdateStatusEntry(IStatusEntry statusEntry, ConnectionQuality quality)
         {
-            var status = StatusFrom(quality);
-
-            if (status == null)
+            if (quality is ConnectionQuality.QualityLost)
             {
                 ShowErrorAsync().Forget();
                 return;
             }
 
-            statusEntry.ShowStatus(status.Value);
+            var status = StatusFrom(quality);
+
+            statusEntry.ShowStatus(status);
         }
 
         private async UniTaskVoid ShowErrorAsync()
@@ -107,14 +107,14 @@ namespace DCL.UI.ConnectionStatusPanel
             TryReloadSceneAsync().Forget();
         }
 
-        private static IStatusEntry.Status? StatusFrom(ConnectionQuality quality) =>
+        private static IStatusEntry.Status StatusFrom(ConnectionQuality quality) =>
             quality switch
             {
                 ConnectionQuality.QualityPoor => IStatusEntry.Status.Poor,
                 ConnectionQuality.QualityGood => IStatusEntry.Status.Good,
                 ConnectionQuality.QualityExcellent => IStatusEntry.Status.Excellent,
-                ConnectionQuality.QualityLost => null,
-                _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, null)
+                ConnectionQuality.QualityLost => throw new ArgumentOutOfRangeException(nameof(quality), quality, null!),
+                _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, null!)
             };
     }
 }
