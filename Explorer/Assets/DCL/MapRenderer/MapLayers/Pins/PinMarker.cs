@@ -120,7 +120,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
-            if (poolableBehavior.instance == null || !IsVisible) return;
             poolableBehavior.OnBecameInvisible();
         }
 
