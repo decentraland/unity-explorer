@@ -197,6 +197,12 @@ namespace DCL.Navmap
         private void JumpIn(Vector2Int parcel)
         {
             OnJumpIn?.Invoke(parcel);
+
+            if (destination == parcel)
+            {
+                mapPathEventBus.RemoveDestination();
+            }
+            
             realmNavigator.TryInitializeTeleportToParcelAsync(parcel, cts.Token).Forget();
         }
 
