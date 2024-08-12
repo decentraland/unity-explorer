@@ -5,19 +5,23 @@ using static DCL.Multiplayer.Movement.Systems.CompressedNetworkMovementMessage;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-
     [Serializable]
     public struct CompressedNetworkMovementMessage
     {
-        public const int  TIMESTAMP_BITS = 8;
         public const int PARCEL_SIZE = 16;
-        public const int Y_MAX = 150;
+        public const int Y_MAX = 500;
+        public const int MAX_VELOCITY = 50;
 
-        public const int  PARCEL_BITS = 17;
-        public const int  XZ_BITS = 8;
-        public const int  Y_BITS = 11;
+        public const int TIMESTAMP_BITS = 8;
 
-        public long compressedData;
+        // 17 + 8 + 8 + 13 + 6 + 6 + 6 = 64
+        public const int PARCEL_BITS = 17;
+        public const int XZ_BITS = 8;
+        public const int Y_BITS = 13;
+        public const int VELOCITY_BITS = 6;
+
+        public int temporalData;
+        public long movementData;
 
         public NetworkMovementMessage message;
     }
@@ -25,11 +29,11 @@ namespace DCL.Multiplayer.Movement.Systems
     public static class TimestampEncoder
     {
         private const float SENT_INTERVAL = 0.1f; // == QUANTUM in this case
-
-        private static int steps =>  (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
         public static float Buffer => steps * SENT_INTERVAL;
 
-        public static long Compress(float timestamp)
+        private static int steps => (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
+
+        public static int Compress(float timestamp)
         {
             float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
             return Mathf.RoundToInt(normalizedTimestamp / SENT_INTERVAL) % steps;
@@ -78,16 +82,33 @@ namespace DCL.Multiplayer.Movement.Systems
         }
     }
 
+    public static class VelocityEncoder
+    {
+        public static int CompressVelocity(float value, float maxValue, int bits)
+        {
+            int maxStep = (1 << bits) - 1;
+            float normalizedValue = (value + maxValue) / (2 * maxValue); // Shift and scale to 0-1 range
+            return Mathf.RoundToInt(Mathf.Clamp01(normalizedValue) * maxStep);
+        }
+
+        public static float DecompressVelocity(int compressed, float maxValue, int bits)
+        {
+            float maxStep = (1 << bits) - 1f;
+            float normalizedValue = compressed / maxStep;
+            return (normalizedValue * 2 * maxValue) - maxValue; // Rescale and shift back to original range
+        }
+    }
+
     public static class NetworkMessageCompressor
     {
+
         public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
         {
             Vector2Int parcel = message.position.ToParcel();
 
-            long compressedTimestamp = TimestampEncoder.Compress(message.timestamp); // Encode timestamp (8 bits)
-            int parcelIndex = ParcelEncoder.EncodeParcel(parcel); // Encode parcel (17 bits)
+            int compressedTimestamp = TimestampEncoder.Compress(message.timestamp);
+            int parcelIndex = ParcelEncoder.EncodeParcel(parcel);
 
-            // Compress relative X and Y (up to 16 bits each)
             var relativePosition = new Vector2(
                 message.position.x - (parcel.x * ParcelEncoder.PARCEL_SIZE),
                 message.position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE) // Y is Z in this case
@@ -97,13 +118,21 @@ namespace DCL.Multiplayer.Movement.Systems
             int compressedZ = RelativePositionEncoder.CompressScaledInteger(relativePosition.y, PARCEL_SIZE, XZ_BITS);
             int compressedY = RelativePositionEncoder.CompressScaledInteger(message.position.y, Y_MAX, Y_BITS);
 
+            int compressedVelocityX = VelocityEncoder.CompressVelocity(message.velocity.x, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityY = VelocityEncoder.CompressVelocity(message.velocity.y, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityZ = VelocityEncoder.CompressVelocity(message.velocity.z, MAX_VELOCITY, VELOCITY_BITS);
+
             return new CompressedNetworkMovementMessage
             {
-                compressedData = compressedTimestamp
-                                 | ((long)parcelIndex << TIMESTAMP_BITS)
-                                 | ((long)compressedX << (TIMESTAMP_BITS + PARCEL_BITS))
-                                 | ((long)compressedZ << (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS))
-                                 | ((long)compressedY << (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS + XZ_BITS)),
+                temporalData = compressedTimestamp,
+
+                movementData = (long)parcelIndex
+                               | ((long)compressedX << (PARCEL_BITS))
+                               | ((long)compressedZ << (PARCEL_BITS + XZ_BITS))
+                               | ((long)compressedY << (PARCEL_BITS + XZ_BITS + XZ_BITS))
+                               | ((long)compressedVelocityX << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS))
+                               | ((long)compressedVelocityY << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS))
+                               | ((long)compressedVelocityZ << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)),
 
                 message = message,
             };
@@ -111,19 +140,21 @@ namespace DCL.Multiplayer.Movement.Systems
 
         public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage)
         {
-            long data = compressedMessage.compressedData;
+            float timestamp = TimestampEncoder.Decompress(compressedMessage.temporalData, TIMESTAMP_BITS);
+
+            long data = compressedMessage.movementData;
 
             const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
             const int XZ_MASK = (1 << XZ_BITS) - 1;
             const int Y_MASK = (1 << Y_BITS) - 1;
+            const int VELOCITY_MASK = (1 << VELOCITY_BITS) - 1;
 
-            float timestamp = TimestampEncoder.Decompress(data, TIMESTAMP_BITS);
-            Vector2Int parcel = ParcelEncoder.DecodeParcel((int)((data >> TIMESTAMP_BITS) & PARCEL_MASK)); // Extract parcel index (17 bits)
+            Vector2Int parcel = ParcelEncoder.DecodeParcel((int)(data & PARCEL_MASK));
 
             // Decompressing values
-            var extractedX = (int)((data >> (TIMESTAMP_BITS + PARCEL_BITS)) & XZ_MASK);
-            var extractedZ = (int)((data >> (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS)) & XZ_MASK);
-            var extractedY = (int)((data >> (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
+            var extractedX = (int)((data >> (PARCEL_BITS)) & XZ_MASK);
+            var extractedZ = (int)((data >> (PARCEL_BITS + XZ_BITS)) & XZ_MASK);
+            var extractedY = (int)((data >> (PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
 
             float decompressedX = RelativePositionEncoder.DecompressScaledInteger(extractedX, PARCEL_SIZE, XZ_BITS);
             float decompressedZ = RelativePositionEncoder.DecompressScaledInteger(extractedZ, PARCEL_SIZE, XZ_BITS);
@@ -131,17 +162,25 @@ namespace DCL.Multiplayer.Movement.Systems
 
             var worldPosition = new Vector3(
                 (parcel.x * ParcelEncoder.PARCEL_SIZE) + decompressedX,
-                compressedMessage.message.position.y, //decompressedY,
+                decompressedY,
                 (parcel.y * ParcelEncoder.PARCEL_SIZE) + decompressedZ
             );
 
-            Debug.Log($"VVV {compressedMessage.message.position.y} - {decompressedY}");
+            var extractedVelocityX = (int)((data >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS)) & VELOCITY_MASK);
+            var extractedVelocityY = (int)((data >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
+            var extractedVelocityZ = (int)((data >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
+
+            float decompressedVelocityX = VelocityEncoder.DecompressVelocity(extractedVelocityX, MAX_VELOCITY, VELOCITY_BITS);
+            float decompressedVelocityY = VelocityEncoder.DecompressVelocity(extractedVelocityY, MAX_VELOCITY, VELOCITY_BITS);
+            float decompressedVelocityZ = VelocityEncoder.DecompressVelocity(extractedVelocityZ, MAX_VELOCITY, VELOCITY_BITS);
+
+            var velocity = new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ);
 
             return new NetworkMovementMessage
             {
                 timestamp = timestamp,
                 position = worldPosition,
-                velocity = compressedMessage.message.velocity,
+                velocity = velocity,
                 animState = compressedMessage.message.animState,
                 isStunned = compressedMessage.message.isStunned,
             };

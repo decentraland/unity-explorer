@@ -10,7 +10,6 @@ using Decentraland.Kernel.Comms.Rfc4;
 using System;
 using System.Threading;
 using UnityEngine;
-using Utility.PriorityQueue;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -142,13 +141,9 @@ namespace DCL.Multiplayer.Movement.Systems
             CompressedNetworkMovementMessage compressedMessage = message.Compress();
             await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: cancellationTokenSource.Token);
             NetworkMovementMessage decompressedMessage = compressedMessage.Decompress();
-            // Debug.Log($"VVV {message.position.x} | {decompressedMessage.position.x}");
-            // Debug.Log($"VVV {message.position.z} | {decompressedMessage.position.z}");
 
             decompressedMessage.enqueueTime = UnityEngine.Time.unscaledTime;
 
-            // Debug.Log($"VVV {message.animState.ToString()}");
-            // Debug.Log($"VVV {message.timestamp} - {decompressedMessage.timestamp} - {compressedMessage.compressedData}");
             Inbox(decompressedMessage, @for: RemotePlayerMovementComponent.TEST_ID);
         }
     }

@@ -7,7 +7,6 @@ using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
-using UnityEngine;
 using Random = UnityEngine.Random;
 
 namespace DCL.Multiplayer.Movement.Systems
@@ -79,7 +78,6 @@ namespace DCL.Multiplayer.Movement.Systems
             playerMovement.MessagesSentInSec++;
             // Debug.Log($"VVV {animation.States.ToString()}");
 
-
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,
@@ -96,7 +94,9 @@ namespace DCL.Multiplayer.Movement.Systems
             messageBus.Send(playerMovement.LastSentMessage);
 
             // Debug purposes. Simulate package lost when Running
-            if (settings.SelfSending && movement.Kind != MovementKind.Run)
+            if (settings.SelfSending
+                // && movement.Kind != MovementKind.Run) // simulate package lost when Running
+            )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }
