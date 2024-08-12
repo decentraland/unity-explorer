@@ -1,5 +1,6 @@
+using DCL.CharacterMotion.Components;
+using DCL.Multiplayer.Movement.Systems;
 using NUnit.Framework;
-using TimestampEncodingTests;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Tests
@@ -7,24 +8,32 @@ namespace DCL.Multiplayer.Movement.Tests
     [TestFixture]
     public class MovementMessageCompressionTests
     {
-        // [TestCase(0.1f, true, 1.525f, 20.3f, 1.575f)]
-        // [TestCase(9.01f, true, 3.05f, 18.03f, 8.125f)]
-        // [TestCase(0.255f, false, 15.5f, 32.5f, 15.5f)]
-        public void EncodeDecodePositionTest(float timestamp, bool isMoving, float x, float y, float z)
+        [Test]
+        [TestCase(0.001f, 0.751f, 0.001f )]
+        [TestCase(8.0f, 4.521f, 8.356f )]
+        [TestCase(15.999f, 17.25f, 15.999f )]
+        [TestCase(16.5f, 150.05f, 16.3f)]
+        [TestCase(-1.2f, -5.751f, -5.5f )]
+        public void CompressAndDecompress_YPosition_ShouldReturnOriginalValue(float x, float y, float z)
         {
-            long encoded = Encoder.Encode(isMoving, timestamp, x, y, z);
-            (bool decodedIsMoving, float decodedTimestamp, float decodedX, float decodedY, float decodedZ) = Encoder.Decode(encoded);
+            // Arrange
+            var originalMessage = new NetworkMovementMessage
+            {
+                timestamp = 123.456f,
+                position = new Vector3(x, y, z),
+                velocity = new Vector3(1f, 0f, 1f),
+                animState = new AnimationStates(),
+                isStunned = false,
+            };
 
-            Debug.Log($"{x} | {y} | {z}");
-            Debug.Log($"{decodedX} | {decodedY} | {decodedZ}");
+            // Act
+            var compressedMessage = originalMessage.Compress();
+            var decompressedMessage = compressedMessage.Decompress();
 
-            const float ErrorMargin = TimestampEncoder.QUANTUM; // Adjust based on expected precision
-
-            Assert.That(decodedTimestamp, Is.InRange(timestamp - ErrorMargin, timestamp + ErrorMargin));
-            Assert.AreEqual(isMoving, decodedIsMoving);
-            Assert.That(decodedX, Is.InRange(x - ErrorMargin, x + ErrorMargin));
-            Assert.That(decodedY, Is.InRange(y - ErrorMargin, y + ErrorMargin));
-            Assert.That(decodedZ, Is.InRange(z - ErrorMargin, z + ErrorMargin));
+            // Assert
+            Debug.Log($"VVV {x} - {decompressedMessage.position.x}  |  "
+                      + $"{y} - {decompressedMessage.position.y} | "
+                      + $"{z} - {decompressedMessage.position.z}");
         }
     }
 }

@@ -79,6 +79,7 @@ namespace DCL.Multiplayer.Movement.Systems
             playerMovement.MessagesSentInSec++;
             // Debug.Log($"VVV {animation.States.ToString()}");
 
+
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
                 timestamp = UnityEngine.Time.unscaledTime,

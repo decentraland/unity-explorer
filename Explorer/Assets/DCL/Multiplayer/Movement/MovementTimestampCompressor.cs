@@ -1,38 +1,44 @@
 ﻿using System;
 using UnityEngine;
 using Utility;
+using static DCL.Multiplayer.Movement.Systems.CompressedNetworkMovementMessage;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
+
     [Serializable]
     public struct CompressedNetworkMovementMessage
     {
+        public const int  TIMESTAMP_BITS = 8;
+        public const int PARCEL_SIZE = 16;
+        public const int Y_MAX = 150;
+
+        public const int  PARCEL_BITS = 17;
+        public const int  XZ_BITS = 8;
+        public const int  Y_BITS = 11;
+
         public long compressedData;
-        public Vector3 remainedPosition;
 
         public NetworkMovementMessage message;
     }
 
     public static class TimestampEncoder
     {
-        public const int TIMESTAMP_BITS = 256; // 128, 512
-
-        public const float ROUND_BUFFER = TIMESTAMP_BITS * SENT_INTERVAL;
         private const float SENT_INTERVAL = 0.1f; // == QUANTUM in this case
 
-        public static long Compress(float timestamp, int bits = 8)
+        private static int steps =>  (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
+        public static float Buffer => steps * SENT_INTERVAL;
+
+        public static long Compress(float timestamp)
         {
-            int steps = TIMESTAMP_BITS; // (int)Math.Pow(2, bits);
-            float normalizedTimestamp = timestamp % ROUND_BUFFER; // Normalize timestamp within the round buffer
+            float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
             return Mathf.RoundToInt(normalizedTimestamp / SENT_INTERVAL) % steps;
         }
 
-        public static float Decompress(long data, int steps = TIMESTAMP_BITS)
+        public static float Decompress(long data, int bits)
         {
-            var bits = (int)Math.Log(steps, 2);
             int mask = (1 << bits) - 1;
-            var compressedTimestamp = (int)(data & mask);
-            return compressedTimestamp * SENT_INTERVAL % ROUND_BUFFER;
+            return (int)(data & mask) * SENT_INTERVAL % Buffer;
         }
     }
 
@@ -59,55 +65,17 @@ namespace DCL.Multiplayer.Movement.Systems
 
     public static class RelativePositionEncoder
     {
-        public static int CompressScaledInteger(float value)
+        public static int CompressScaledInteger(float value, int maxValue, int bits)
         {
-            if (value < 0) value = 0;
-            if (value >= 16) value = 255; // Represent the upper bound as 255
-
-            var compressed = (int)(value / 16.0f * 255.0f); // Scale the value to the [0, 255] range
-            return compressed & 0xFF; // Ensure it's within 8 bits
+            int maxStep = (1 << bits) - 1;
+            return Mathf.RoundToInt(Mathf.Clamp01(value / maxValue) * maxStep);
         }
 
-        public static float DecompressScaledInteger(int compressed)
+        public static float DecompressScaledInteger(int compressed, int maxValue, int bits)
         {
-            float value = compressed / 255.0f * 16.0f; // Scale back to the [0, 16) range
-            return value;
+            float maxStep = (1 << bits) - 1f;
+            return compressed / maxStep * maxValue;
         }
-
-        // Not smooth
-        // public const int mantissaBits = 5;
-        // public const int exponentBits = 3;
-        // public const int bias = 3;
-        // public static int CompressFloatingPoint(float value)
-        // {
-        //     if (value <= 0) return 0;
-        //     if (value >= 16) return 255;  // Adjust to 16 instead of 15
-        //
-        //     int exponent = 0;
-        //
-        //     // Normalize the value to be within the range [1, 2)
-        //     while (value >= 2.0f && exponent < 7)
-        //     {
-        //         value /= 2.0f;
-        //         exponent++;
-        //     }
-        //
-        //     exponent = exponent + bias; // Apply bias
-        //
-        //     int mantissa = (int)((value - 1.0f) * (1 << mantissaBits) + 0.5f); // Rounding to reduce errors
-        //     int compressed = (exponent << mantissaBits) | mantissa;
-        //     return compressed & 0xFF; // Ensure it's within 8 bits
-        // }
-        //
-        // public static float DecompressFloatingPoint(int compressed)
-        // {
-        //     int exponent = ((compressed >> mantissaBits) & ((1 << exponentBits) - 1)) - bias;
-        //     int mantissa = compressed & ((1 << mantissaBits) - 1);
-        //
-        //     float value = 1.0f + ((float)mantissa / (1 << mantissaBits));
-        //     value *= (1 << exponent);
-        //     return value;
-        // }
     }
 
     public static class NetworkMessageCompressor
@@ -125,19 +93,18 @@ namespace DCL.Multiplayer.Movement.Systems
                 message.position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE) // Y is Z in this case
             );
 
-            int compressedX = RelativePositionEncoder.CompressScaledInteger(relativePosition.x);
-            int compressedZ = RelativePositionEncoder.CompressScaledInteger(relativePosition.y);
-
-            var timestampShift = (int)Math.Log(TimestampEncoder.TIMESTAMP_BITS, 2);
+            int compressedX = RelativePositionEncoder.CompressScaledInteger(relativePosition.x, PARCEL_SIZE, XZ_BITS);
+            int compressedZ = RelativePositionEncoder.CompressScaledInteger(relativePosition.y, PARCEL_SIZE, XZ_BITS);
+            int compressedY = RelativePositionEncoder.CompressScaledInteger(message.position.y, Y_MAX, Y_BITS);
 
             return new CompressedNetworkMovementMessage
             {
                 compressedData = compressedTimestamp
-                                 | ((long)parcelIndex << timestampShift)
-                                 | ((long)compressedX << (timestampShift + 17))
-                                 | ((long)compressedZ << (timestampShift + 25)),
+                                 | ((long)parcelIndex << TIMESTAMP_BITS)
+                                 | ((long)compressedX << (TIMESTAMP_BITS + PARCEL_BITS))
+                                 | ((long)compressedZ << (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS))
+                                 | ((long)compressedY << (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS + XZ_BITS)),
 
-                remainedPosition = new Vector3(relativePosition.x, message.position.y, relativePosition.y),
                 message = message,
             };
         }
@@ -146,23 +113,29 @@ namespace DCL.Multiplayer.Movement.Systems
         {
             long data = compressedMessage.compressedData;
 
-            float timestamp = TimestampEncoder.Decompress(data);
-            Vector2Int parcel = ParcelEncoder.DecodeParcel((int)((data >> 8) & 0x1FFFF)); // Extract parcel index (17 bits)
+            const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
+            const int XZ_MASK = (1 << XZ_BITS) - 1;
+            const int Y_MASK = (1 << Y_BITS) - 1;
+
+            float timestamp = TimestampEncoder.Decompress(data, TIMESTAMP_BITS);
+            Vector2Int parcel = ParcelEncoder.DecodeParcel((int)((data >> TIMESTAMP_BITS) & PARCEL_MASK)); // Extract parcel index (17 bits)
 
             // Decompressing values
-            int extractedX = (int)((data >> 25) & 0xFF);
-            int extractedZ = (int)((data >> 33) & 0xFF);
+            var extractedX = (int)((data >> (TIMESTAMP_BITS + PARCEL_BITS)) & XZ_MASK);
+            var extractedZ = (int)((data >> (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS)) & XZ_MASK);
+            var extractedY = (int)((data >> (TIMESTAMP_BITS + PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
 
-            float decompressedX = RelativePositionEncoder.DecompressScaledInteger(extractedX);
-            float decompressedZ = RelativePositionEncoder.DecompressScaledInteger(extractedZ);
-
-            Debug.Log($"VVV {compressedMessage.remainedPosition.x} - {decompressedX} | {compressedMessage.remainedPosition.z} - {decompressedZ}");
+            float decompressedX = RelativePositionEncoder.DecompressScaledInteger(extractedX, PARCEL_SIZE, XZ_BITS);
+            float decompressedZ = RelativePositionEncoder.DecompressScaledInteger(extractedZ, PARCEL_SIZE, XZ_BITS);
+            float decompressedY = RelativePositionEncoder.DecompressScaledInteger(extractedY, Y_MAX, Y_BITS);
 
             var worldPosition = new Vector3(
                 (parcel.x * ParcelEncoder.PARCEL_SIZE) + decompressedX,
-                compressedMessage.remainedPosition.y,
+                compressedMessage.message.position.y, //decompressedY,
                 (parcel.y * ParcelEncoder.PARCEL_SIZE) + decompressedZ
             );
+
+            Debug.Log($"VVV {compressedMessage.message.position.y} - {decompressedY}");
 
             return new NetworkMovementMessage
             {
