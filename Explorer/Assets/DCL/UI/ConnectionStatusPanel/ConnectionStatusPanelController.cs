@@ -60,9 +60,9 @@ namespace DCL.UI.ConnectionStatusPanel
         {
             const float DELAY = 5f;
 
-            async UniTaskVoid ShowButtonAsync()
+            async UniTaskVoid ShowButtonAsync(CancellationToken ct)
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(DELAY));
+                await UniTask.Delay(TimeSpan.FromSeconds(DELAY), cancellationToken: ct);
                 viewInstance.Scene.ShowReloadButton(TryReloadScene);
             }
 
@@ -75,7 +75,7 @@ namespace DCL.UI.ConnectionStatusPanel
             viewInstance.Scene.ShowStatus(status);
 
             if (status is ICurrentSceneInfo.Status.Crashed)
-                ShowButtonAsync().Forget();
+                ShowButtonAsync(cancellationTokenSource.Token).Forget();
         }
 
         private void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
