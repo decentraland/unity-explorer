@@ -11,6 +11,7 @@ namespace DCL.Passport.Modules
     {
         private const int BADGES_FILTER_BUTTONS_POOL_DEFAULT_CAPACITY = 6;
         private const int BADGES_DETAIL_CARDS_POOL_DEFAULT_CAPACITY = 50;
+        private const int GRID_ITEMS_PER_ROW = 6;
         private const string ALL_FILTER = "All";
 
         private readonly BadgesDetails_PassportModuleView view;
@@ -20,6 +21,8 @@ namespace DCL.Passport.Modules
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
         private readonly IObjectPool<BadgeDetailCard_PassportFieldView> badgeDetailCardsPool;
         private readonly List<BadgeDetailCard_PassportFieldView> instantiatedBadgeDetailCards = new ();
+        private readonly IObjectPool<BadgeDetailCard_PassportFieldView> emptyItemsPool;
+        private readonly List<BadgeDetailCard_PassportFieldView> instantiatedEmptyItems = new ();
 
         private Profile? currentProfile;
         private string? currentFilter;
@@ -47,6 +50,17 @@ namespace DCL.Passport.Modules
                     badgeDetailCardView.gameObject.transform.SetAsFirstSibling();
                 },
                 actionOnRelease: badgeDetailCardView => badgeDetailCardView.gameObject.SetActive(false));
+
+            emptyItemsPool = new ObjectPool<BadgeDetailCard_PassportFieldView>(
+                InstantiateBadgeDetailCardPrefab,
+                defaultCapacity: GRID_ITEMS_PER_ROW - 1,
+                actionOnGet: emptyItemView =>
+                {
+                    emptyItemView.gameObject.SetActive(true);
+                    emptyItemView.SetInvisible(true);
+                    emptyItemView.gameObject.transform.SetAsFirstSibling();
+                },
+                actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
         }
 
         public void Setup(Profile profile)
@@ -121,6 +135,21 @@ namespace DCL.Passport.Modules
                 badgeDetailCard.BadgeImage.sprite = null;
                 instantiatedBadgeDetailCards.Add(badgeDetailCard);
             }
+
+            int missingEmptyItems = CalculateMissingEmptyItems(instantiatedBadgeDetailCards.Count);
+            for (var i = 0; i < missingEmptyItems; i++)
+            {
+                var emptyItem = emptyItemsPool.Get();
+                emptyItem.gameObject.name = "EmptyItem";
+                instantiatedEmptyItems.Add(emptyItem);
+            }
+        }
+
+        private int CalculateMissingEmptyItems(int totalItems)
+        {
+            int remainder = totalItems % GRID_ITEMS_PER_ROW;
+            int missingItems = remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
+            return missingItems;
         }
 
         private void ClearBadgesFilterButtons()
@@ -137,10 +166,20 @@ namespace DCL.Passport.Modules
 
         private void ClearBadgeDetailCards()
         {
+            ClearEmptyItems();
+
             foreach (BadgeDetailCard_PassportFieldView badgeOverviewItem in instantiatedBadgeDetailCards)
                 badgeDetailCardsPool.Release(badgeOverviewItem);
 
             instantiatedBadgeDetailCards.Clear();
+        }
+
+        private void ClearEmptyItems()
+        {
+            foreach (BadgeDetailCard_PassportFieldView emptyItem in instantiatedEmptyItems)
+                emptyItemsPool.Release(emptyItem);
+
+            instantiatedEmptyItems.Clear();
         }
     }
 }

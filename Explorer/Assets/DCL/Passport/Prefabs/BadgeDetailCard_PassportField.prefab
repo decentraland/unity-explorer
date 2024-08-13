@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8368688260297764256}
   - component: {fileID: 3127315530577815492}
-  - component: {fileID: 549092152412412804}
   - component: {fileID: 2629988230920715453}
   m_Layer: 5
   m_Name: BadgeDetailCard_PassportField
@@ -31,8 +30,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1102155340967602289}
-  - {fileID: 5629105677564579826}
+  - {fileID: 9184249326602769018}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -48,13 +46,75 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 201350337523535441}
   m_CullTransparentMesh: 1
---- !u!114 &549092152412412804
+--- !u!114 &2629988230920715453
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 201350337523535441}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51e7fd108cb944da84d2e0615f7c2fe5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <SubContainerTransform>k__BackingField: {fileID: 9184249326602769018}
+  <BadgeImage>k__BackingField: {fileID: 7669307147239545067}
+  <BadgeNameText>k__BackingField: {fileID: 5777092650220846656}
+--- !u!1 &6861037941152311066
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9184249326602769018}
+  - component: {fileID: 6158808489738580658}
+  - component: {fileID: 1816530278998034804}
+  m_Layer: 5
+  m_Name: SubContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &9184249326602769018
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6861037941152311066}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1102155340967602289}
+  - {fileID: 5629105677564579826}
+  m_Father: {fileID: 8368688260297764256}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &6158808489738580658
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6861037941152311066}
+  m_CullTransparentMesh: 1
+--- !u!114 &1816530278998034804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6861037941152311066}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
@@ -78,20 +138,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &2629988230920715453
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 201350337523535441}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e7fd108cb944da84d2e0615f7c2fe5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <BadgeImage>k__BackingField: {fileID: 7669307147239545067}
-  <BadgeNameText>k__BackingField: {fileID: 5777092650220846656}
 --- !u!1 &7651877767812643760
 GameObject:
   m_ObjectHideFlags: 0
@@ -103,7 +149,6 @@ GameObject:
   - component: {fileID: 1102155340967602289}
   - component: {fileID: 2018600729888201056}
   - component: {fileID: 7669307147239545067}
-  - component: {fileID: 8648348932042523249}
   m_Layer: 5
   m_Name: BadgeImage
   m_TagString: Untagged
@@ -118,12 +163,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7651877767812643760}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8368688260297764256}
+  m_Father: {fileID: 9184249326602769018}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -168,20 +213,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8648348932042523249
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7651877767812643760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51e7fd108cb944da84d2e0615f7c2fe5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <BadgeImage>k__BackingField: {fileID: 7669307147239545067}
-  <BadgeNameText>k__BackingField: {fileID: 0}
 --- !u!1 &8693587359689017563
 GameObject:
   m_ObjectHideFlags: 0
@@ -207,12 +238,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8693587359689017563}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8368688260297764256}
+  m_Father: {fileID: 9184249326602769018}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
