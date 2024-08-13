@@ -19,7 +19,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
     public class MessagePipe : IMessagePipe
     {
         private readonly IDataPipe dataPipe;
-        private readonly IMultiPool multiPool;
+        private readonly IMultiPool sendingMultiPool;
         private readonly IMemoryPool memoryPool;
         private readonly MessageParser<Packet> messageParser;
         private readonly uint supportedVersion;
@@ -29,23 +29,23 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         private bool isDisposed;
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool) : this(
+        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMultiPool receivingMultiPool, IMemoryPool memoryPool) : this(
             dataPipe,
-            multiPool,
+            sendingMultiPool,
             memoryPool,
             new MessageParser<Packet>(() =>
             {
-                var packet = multiPool.Get<Packet>();
+                var packet = receivingMultiPool.Get<Packet>();
                 packet.ClearMessage();
                 return packet;
             }),
             100
         ) { }
 
-        public MessagePipe(IDataPipe dataPipe, IMultiPool multiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion)
+        public MessagePipe(IDataPipe dataPipe, IMultiPool sendingMultiPool, IMemoryPool memoryPool, MessageParser<Packet> messageParser, uint supportedVersion)
         {
             this.dataPipe = dataPipe;
-            this.multiPool = multiPool;
+            this.sendingMultiPool = sendingMultiPool;
             this.memoryPool = memoryPool;
             this.messageParser = messageParser;
             this.supportedVersion = supportedVersion;
@@ -101,7 +101,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         }
 
         public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
-            new (dataPipe, multiPool, memoryPool, supportedVersion);
+            new (dataPipe, sendingMultiPool, memoryPool, supportedVersion);
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
@@ -119,12 +119,14 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                         Participant participant = tuple.Item2!;
 
                         uint version = packet.ProtocolVersion;
+
                         if (version != supportedVersion)
                         {
                             ReportHub.LogWarning(
                                 ReportCategory.LIVEKIT,
                                 $"Received message with unsupported version {version} from {participant.Identity} with type {packet.MessageCase}"
                             );
+
                             return;
                         }
 
@@ -136,6 +138,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                                 ReportCategory.LIVEKIT,
                                 $"Received invalid message from {participant.Identity} with type {packet.MessageCase}"
                             );
+
                             return;
                         }
 
@@ -143,7 +146,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                             payload,
                             packet,
                             participant.Identity,
-                            multiPool
+                            sendingMultiPool
                         );
 
                         onMessageReceived(receivedMessage);
