@@ -104,7 +104,12 @@ namespace DCL.MapRenderer
         private void OnRemovedDestination()
         {
             destinationSet = false;
-            if (internalPinMarker.IsVisible) { internalPinMarker.Hide(internalPinMarker.OnBecameInvisible); }
+
+            if (internalPinMarker.IsDestination)
+            {
+                internalPinMarker.SetAsDestination(false);
+                internalPinMarker.Hide(internalPinMarker.OnBecameInvisible);
+            }
             mapPathRenderer.gameObject.SetActive(false);
         }
 
