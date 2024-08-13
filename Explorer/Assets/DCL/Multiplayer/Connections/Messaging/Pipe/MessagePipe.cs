@@ -1,3 +1,4 @@
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Typing;
@@ -36,7 +37,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             new MessageParser<Packet>(() =>
             {
                 var packet = receivingMultiPool.Get<Packet>();
-                packet.ClearMessage();
+                packet.ClearProtobufComponent();
                 return packet;
             }),
             100
