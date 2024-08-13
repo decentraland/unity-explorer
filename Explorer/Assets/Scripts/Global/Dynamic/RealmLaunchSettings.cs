@@ -96,11 +96,19 @@ namespace Global.Dynamic
                 SetLocalSceneDevelopmentRealm(realmParamValue);
             else if (IsRealmAWorld(realmParamValue))
                 SetWorldRealm(realmParamValue);
+            else
+                SetCustomRealm(realmParamValue);
+        }
+
+        private void SetCustomRealm(string realm)
+        {
+            customRealm = realm;
+            initialRealm = InitialRealm.Custom;
         }
 
         private void SetWorldRealm(string world)
         {
-            this.targetWorld = world;
+            targetWorld = world;
             initialRealm = InitialRealm.World;
         }
 
