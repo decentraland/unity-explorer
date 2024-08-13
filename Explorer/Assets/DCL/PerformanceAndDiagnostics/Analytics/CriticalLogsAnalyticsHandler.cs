@@ -1,6 +1,7 @@
 ﻿using DCL.Diagnostics;
 using Segment.Serialization;
 using System;
+using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -10,7 +11,6 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
     public class CriticalLogsAnalyticsHandler : IReportHandler
     {
         private const int PAYLOAD_LIMIT = 30 * 1024; // Segment == 32 KB, leaving some room for headers
-        private const string LONG_MESSAGE_PLACEHOLDER = "error message is too long";
 
         private readonly IAnalyticsController analytics;
 
@@ -34,7 +34,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "unhandled exception" },
                 { "category", IAnalyticsController.UNDEFINED },
                 { "scene_hash", IAnalyticsController.UNDEFINED },
-                { "message", IsPayloadSizeValid(e.Message) ? e.Message : LONG_MESSAGE_PLACEHOLDER },
+                { "message", TrimToPayloadLimit(e.Message) },
             });
         }
 
@@ -42,14 +42,12 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
         {
             if (logType != LogType.Error && logType != LogType.Exception) return;
 
-            var message = messageObj.ToString();
-
             analytics.Track(AnalyticsEvents.General.ERROR, new JsonObject
             {
                 { "type", logType.ToString() },
                 { "category", reportData.Category },
                 { "scene_hash", reportData.SceneShortInfo.Name },
-                { "message", IsPayloadSizeValid(message) ? message : LONG_MESSAGE_PLACEHOLDER },
+                { "message", messageObj is string messageString ? TrimToPayloadLimit(messageString) : TrimToPayloadLimit(messageObj.ToString()) },
             });
         }
 
@@ -67,7 +65,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "exception" },
                 { "category", "ecs" },
                 { "scene_hash", IAnalyticsController.UNDEFINED },
-                { "message", IsPayloadSizeValid(ecsSystemException.Message) ? ecsSystemException.Message : LONG_MESSAGE_PLACEHOLDER },
+                { "message", TrimToPayloadLimit(ecsSystemException.Message) },
             });
         }
 
@@ -78,11 +76,40 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 { "type", "exception" },
                 { "category", reportData.Category },
                 { "scene_hash", reportData.SceneShortInfo.Name },
-                { "message", IsPayloadSizeValid(exception.Message) ? exception.Message : LONG_MESSAGE_PLACEHOLDER },
+                { "message", TrimToPayloadLimit(exception.Message) },
             });
         }
 
-        private static bool IsPayloadSizeValid(string message) =>
-            Encoding.UTF8.GetByteCount(message) <= PAYLOAD_LIMIT;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string TrimToPayloadLimit(string message)
+        {
+            if (string.IsNullOrEmpty(message))
+                return "Reported message was null or empty";
+
+            return Encoding.UTF8.GetByteCount(message) <= PAYLOAD_LIMIT
+                ? message
+                : TrimToPayloadLimitInternal(message);
+        }
+
+        private static string TrimToPayloadLimitInternal(string message)
+        {
+            var byteCount = 0;
+            var charCount = 0;
+
+            foreach (char c in message)
+            {
+                int charSize = c <= 0x7F ? 1 :
+                    c <= 0x7FF ? 2 :
+                    c <= 0xFFFF ? 3 : 4;
+
+                if (byteCount + charSize > PAYLOAD_LIMIT)
+                    break;
+
+                byteCount += charSize;
+                charCount++;
+            }
+
+            return message[..charCount];
+        }
     }
 }
