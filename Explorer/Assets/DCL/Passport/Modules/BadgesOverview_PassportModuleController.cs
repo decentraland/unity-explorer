@@ -61,7 +61,6 @@ namespace DCL.Passport.Modules
             {
                 var badgeOverviewItem = badgesOverviewItemsPool.Get();
                 badgeOverviewItem.BadgeNameText.text = $"Badge {currentProfile?.UserId?[..5]} {i + 1}";
-                badgeOverviewItem.BadgeImage.sprite = null;
                 instantiatedBadgesOverviewItems.Add(badgeOverviewItem);
             }
 

@@ -16,7 +16,7 @@ namespace DCL.Passport.Modules
 
         private readonly BadgesDetails_PassportModuleView view;
 
-        private readonly List<string> badgeTypes = new() { "Explorer", "Socializer", "Collector", "Creator", "Builder" };
+        private readonly List<string> badgeCategories = new() { "Explorer", "Socializer", "Collector", "Creator", "Builder" };
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
         private readonly IObjectPool<BadgeDetailCard_PassportFieldView> badgeDetailCardsPool;
@@ -48,6 +48,7 @@ namespace DCL.Passport.Modules
                 {
                     badgeDetailCardView.gameObject.SetActive(true);
                     badgeDetailCardView.gameObject.transform.SetAsFirstSibling();
+                    badgeDetailCardView.SetAsSelected(false);
                 },
                 actionOnRelease: badgeDetailCardView => badgeDetailCardView.gameObject.SetActive(false));
 
@@ -97,16 +98,16 @@ namespace DCL.Passport.Modules
             CreateFilterButton(ALL_FILTER);
             currentFilter = ALL_FILTER;
 
-            foreach (string badgeType in badgeTypes)
-                CreateFilterButton(badgeType);
+            foreach (string category in badgeCategories)
+                CreateFilterButton(category);
         }
 
-        private void CreateFilterButton(string badgeType)
+        private void CreateFilterButton(string badgeCategory)
         {
             var allBadgesFilterButton = badgesFilterButtonsPool.Get();
-            allBadgesFilterButton.SetSelected(badgeType == ALL_FILTER);
-            allBadgesFilterButton.Text.text = badgeType;
-            allBadgesFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked(badgeType));
+            allBadgesFilterButton.SetSelected(badgeCategory == ALL_FILTER);
+            allBadgesFilterButton.Text.text = badgeCategory;
+            allBadgesFilterButton.Button.onClick.AddListener(() => OnBadgesFilterButtonClicked(badgeCategory));
             instantiatedBadgesFilterButtons.Add(allBadgesFilterButton);
         }
 
@@ -122,7 +123,7 @@ namespace DCL.Passport.Modules
             currentFilter = filter;
         }
 
-        private void LoadBadgeDetailCards(string badgeType = "All")
+        private void LoadBadgeDetailCards(string badgeCategory = "All")
         {
             ClearBadgeDetailCards();
 
@@ -131,8 +132,25 @@ namespace DCL.Passport.Modules
             for (var i = 0; i < randomBadgesCount; i++)
             {
                 var badgeDetailCard = badgeDetailCardsPool.Get();
-                badgeDetailCard.BadgeNameText.text = $"Badge {badgeType} {i + 1}";
-                badgeDetailCard.BadgeImage.sprite = null;
+                badgeDetailCard.Setup(
+                    $"Badge {badgeCategory} {i + 1}",
+                    Random.Range(0, 2) == 0,
+                    badgeCategory,
+                    null,
+                    "Feb. 2024",
+                    Random.Range(0, 2) == 0,
+                    Random.Range(0, 2) == 0,
+                    Random.Range(0, 101));
+                badgeDetailCard.SetAsSelected(i == 0);
+
+                badgeDetailCard.Button.onClick.AddListener(() =>
+                {
+                    foreach (BadgeDetailCard_PassportFieldView badge in instantiatedBadgeDetailCards)
+                        badge.SetAsSelected(false);
+
+                    badgeDetailCard.SetAsSelected(true);
+                });
+
                 instantiatedBadgeDetailCards.Add(badgeDetailCard);
             }
 
@@ -145,7 +163,7 @@ namespace DCL.Passport.Modules
             }
         }
 
-        private int CalculateMissingEmptyItems(int totalItems)
+        private static int CalculateMissingEmptyItems(int totalItems)
         {
             int remainder = totalItems % GRID_ITEMS_PER_ROW;
             int missingItems = remainder == 0 ? 0 : GRID_ITEMS_PER_ROW - remainder;
@@ -168,8 +186,11 @@ namespace DCL.Passport.Modules
         {
             ClearEmptyItems();
 
-            foreach (BadgeDetailCard_PassportFieldView badgeOverviewItem in instantiatedBadgeDetailCards)
-                badgeDetailCardsPool.Release(badgeOverviewItem);
+            foreach (BadgeDetailCard_PassportFieldView badgeDetailCard in instantiatedBadgeDetailCards)
+            {
+                badgeDetailCard.Button.onClick.RemoveAllListeners();
+                badgeDetailCardsPool.Release(badgeDetailCard);
+            }
 
             instantiatedBadgeDetailCards.Clear();
         }

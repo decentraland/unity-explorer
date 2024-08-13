@@ -11,22 +11,82 @@ namespace DCL.Passport.Fields
         public RectTransform SubContainerTransform { get; private set; }
 
         [field: SerializeField]
+        public Image BackgroundImage { get; private set; }
+
+        [field: SerializeField]
+        public Button Button { get; private set; }
+
+        [field: SerializeField]
         public Image BadgeImage { get; private set; }
 
         [field: SerializeField]
         public TMP_Text BadgeNameText { get; private set; }
 
+        [field: SerializeField]
+        public GameObject SelectedOutline { get; private set; }
+
+        [field: SerializeField]
+        public GameObject TopTierMark { get; private set; }
+
+        [field: SerializeField]
+        public TMP_Text BadgeDateText { get; private set; }
+
+        [field: SerializeField]
+        public GameObject NextTierTitle { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform ProgressBar { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform ProgressBarFill { get; private set; }
+
+        [field: SerializeField]
+        public Color NormalBackgroundColor { get; private set; }
+
+        [field: SerializeField]
+        public Color HoverBackgroundColor { get; private set; }
+
+        [field: SerializeField]
+        public Color LockedBadgeImageColor { get; private set; }
+
+        [field: SerializeField]
+        public Color NonLockedBadgeImageColor { get; private set; }
+
+        public string BadgeCategory { get; private set; }
+
         public void SetInvisible(bool isInvisible) =>
             SubContainerTransform.gameObject.SetActive(!isInvisible);
 
-        public void OnPointerEnter(PointerEventData eventData)
-        {
+        public void SetAsSelected(bool isSelected) =>
+            SelectedOutline.SetActive(isSelected);
 
+        public void Setup(
+            string badgeName,
+            bool isLocked,
+            string badgeCategory,
+            Sprite? badgeImage,
+            string badgeDate,
+            bool isTier,
+            bool isTopTier,
+            int progressPercentage)
+        {
+            BadgeNameText.text = badgeName;
+            BadgeCategory = badgeCategory;
+            if (badgeImage != null)
+                BadgeImage.sprite = badgeImage;
+            BadgeImage.color = isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
+            BadgeDateText.text = !isLocked ? badgeDate : "--";
+            BadgeDateText.gameObject.SetActive(!isLocked && (!isTier || (isTier && isTopTier)));
+            TopTierMark.SetActive(isTier && isTopTier);
+            NextTierTitle.SetActive(!isLocked && isTier && !isTopTier);
+            ProgressBar.gameObject.SetActive(isTier && !isTopTier);
+            ProgressBarFill.sizeDelta = new Vector2((!isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
         }
 
-        public void OnPointerExit(PointerEventData eventData)
-        {
+        public void OnPointerEnter(PointerEventData eventData) =>
+            BackgroundImage.color = HoverBackgroundColor;
 
-        }
+        public void OnPointerExit(PointerEventData eventData) =>
+            BackgroundImage.color = NormalBackgroundColor;
     }
 }
