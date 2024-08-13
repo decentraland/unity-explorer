@@ -8,6 +8,7 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
     {
         enum Status
         {
+            Lost,
             Poor,
             Good,
             Excellent,
@@ -24,6 +25,7 @@ namespace DCL.UI.ConnectionStatusPanel.StatusEntry
     {
         private static readonly IReadOnlyDictionary<IStatusEntry.Status, string> CACHE_ROOM_STATUS = new Dictionary<IStatusEntry.Status, string>
         {
+            [IStatusEntry.Status.Lost] = "Lost",
             [IStatusEntry.Status.Poor] = "Poor",
             [IStatusEntry.Status.Good] = "Good",
             [IStatusEntry.Status.Excellent] = "Excellent",

@@ -81,26 +81,30 @@ namespace DCL.UI.ConnectionStatusPanel
 
         private void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
         {
-            value.OnUpdate += newValue => UpdateStatusEntry(statusEntry, newValue);
-            UpdateStatusEntry(statusEntry, value.Value);
+            value.OnUpdate += newValue => UpdateStatusEntry(statusEntry, value, newValue);
+            UpdateStatusEntry(statusEntry, value, value.Value);
         }
 
-        private void UpdateStatusEntry(IStatusEntry statusEntry, ConnectionQuality quality)
+        private void UpdateStatusEntry(IStatusEntry statusEntry, IReadonlyReactiveProperty<ConnectionQuality> value, ConnectionQuality quality)
         {
-            if (quality is ConnectionQuality.QualityLost)
-            {
-                ShowErrorAsync().Forget();
-                return;
-            }
-
             var status = StatusFrom(quality);
             statusEntry.ShowStatus(status);
+
+            if (status is IStatusEntry.Status.Lost)
+                TryShowErrorAsync(value, cancellationTokenSource.Token).Forget();
         }
 
-        private async UniTaskVoid ShowErrorAsync()
+        private async UniTaskVoid TryShowErrorAsync(IReadonlyReactiveProperty<ConnectionQuality> value, CancellationToken ct)
         {
-            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty));
-            await userInAppInitializationFlow.ExecuteAsync(true, true, true, world, playerEntity, cancellationTokenSource.Token);
+            const float DELAY_BEFORE_LOST_ACCEPT = 10;
+
+            await UniTask.Delay(TimeSpan.FromSeconds(DELAY_BEFORE_LOST_ACCEPT), cancellationToken: ct);
+
+            if (value.Value is not ConnectionQuality.QualityLost)
+                return;
+
+            await mvcManager.ShowAsync(new ShowCommand<ErrorPopupView, ErrorPopupData>(ErrorPopupData.Empty), ct);
+            await userInAppInitializationFlow.ExecuteAsync(true, true, true, world, playerEntity, ct);
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -136,7 +140,7 @@ namespace DCL.UI.ConnectionStatusPanel
                 ConnectionQuality.QualityPoor => IStatusEntry.Status.Poor,
                 ConnectionQuality.QualityGood => IStatusEntry.Status.Good,
                 ConnectionQuality.QualityExcellent => IStatusEntry.Status.Excellent,
-                ConnectionQuality.QualityLost => throw new ArgumentOutOfRangeException(nameof(quality), quality, null!),
+                ConnectionQuality.QualityLost => IStatusEntry.Status.Lost,
                 _ => throw new ArgumentOutOfRangeException(nameof(quality), quality, null!)
             };
     }
