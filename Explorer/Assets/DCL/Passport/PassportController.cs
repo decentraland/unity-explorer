@@ -42,14 +42,15 @@ namespace DCL.Passport
         private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly PassportProfileInfoController passportProfileInfoController;
+        private readonly List<IPassportModuleController> overviewPassportModules = new ();
+        private readonly List<IPassportModuleController> badgesPassportModules = new ();
 
         private string currentUserId;
         private CancellationTokenSource characterPreviewLoadingCts;
         private PassportErrorsController passportErrorsController;
         private PassportCharacterPreviewController characterPreviewController;
-        private readonly PassportProfileInfoController passportProfileInfoController;
-        private readonly List<IPassportModuleController> overviewPassportModules = new ();
-        private readonly List<IPassportModuleController> badgesPassportModules = new ();
+        private PassportSection? currentSection;
 
         public event Action<string> PassportOpened;
 
@@ -141,6 +142,8 @@ namespace DCL.Passport
 
             foreach (IPassportModuleController module in badgesPassportModules)
                 module.Clear();
+
+            currentSection = null;
         }
 
         protected override UniTask WaitForCloseIntentAsync(CancellationToken ct) =>
@@ -208,6 +211,9 @@ namespace DCL.Passport
 
         private void OpenOverviewSection()
         {
+            if (currentSection == PassportSection.OVERVIEW)
+                return;
+
             viewInstance.OverviewSectionButton.SetSelected(true);
             viewInstance.BadgesSectionButton.SetSelected(false);
             viewInstance.OverviewSectionPanel.SetActive(true);
@@ -217,10 +223,14 @@ namespace DCL.Passport
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
+            currentSection = PassportSection.OVERVIEW;
         }
 
         private void OpenBadgesSection()
         {
+            if (currentSection == PassportSection.BADGES)
+                return;
+
             viewInstance.OverviewSectionButton.SetSelected(false);
             viewInstance.BadgesSectionButton.SetSelected(true);
             viewInstance.OverviewSectionPanel.SetActive(false);
@@ -230,6 +240,7 @@ namespace DCL.Passport
 
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token).Forget();
+            currentSection = PassportSection.BADGES;
         }
     }
 }
