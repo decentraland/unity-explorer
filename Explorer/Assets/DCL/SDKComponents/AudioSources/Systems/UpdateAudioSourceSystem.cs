@@ -60,8 +60,10 @@ namespace DCL.SDKComponents.AudioSources
         private void CreateAudioSource(ref PBAudioSource sdkAudioSource, ref AudioSourceComponent audioSourceComponent, ref TransformComponent entityTransform)
         {
             if (audioSourceComponent.ClipPromise.IsConsumed
-                || !audioSourceComponent.ClipPromise.TryConsume(World!, out var promiseResult)
                 || NoBudget())
+                return;
+
+            if (!audioSourceComponent.ClipPromise.TryConsume(World!, out var promiseResult))
                 return;
 
             if (audioSourceComponent.AudioSourceAssigned == false)
