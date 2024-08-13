@@ -264,7 +264,12 @@ namespace Global.Dynamic
                 staticContainer.PartitionDataContainer,
                 staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
-            container.RoomHub = new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
+            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
+            bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+            if (localSceneDevelopment)
+                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
+
+            container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
 
             RoomsStatus roomsStatus = new RoomsStatus(
@@ -355,7 +360,6 @@ namespace Global.Dynamic
             container.CharacterDataPropagationUtility = new CharacterDataPropagationUtility(staticContainer.ComponentsContainer.ComponentPoolsRegistry.AddComponentPool<SDKProfile>());
 
             var chatHistory = new ChatHistory();
-            container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
 
             var chatCommandsFactory = new Dictionary<Regex, Func<IChatCommand>>
             {
@@ -382,9 +386,6 @@ namespace Global.Dynamic
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
-
-            if (!string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm))
-                container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.ProfileBroadcast = new DebounceProfileBroadcast(
                 new EnsureSelfPublishedProfileBroadcast(
