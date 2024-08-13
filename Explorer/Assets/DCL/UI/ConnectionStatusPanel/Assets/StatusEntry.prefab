@@ -115,7 +115,7 @@ MonoBehaviour:
     textColor: {r: 1, g: 0.28124678, b: 0.21960783, a: 1}
     backgroundColor: {r: 1, g: 0.26941553, b: 0.26274514, a: 0.14901961}
   - statusText: Lost
-    predefinedWidth: 76
+    predefinedWidth: 50
     textColor: {r: 1, g: 0.28124678, b: 0.21960783, a: 1}
     backgroundColor: {r: 1, g: 0.26941553, b: 0.26274514, a: 0.14901961}
   reloadButton: {fileID: 2488621505419351983}
