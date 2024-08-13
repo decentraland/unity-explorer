@@ -13,12 +13,7 @@ namespace CommunicationData.URLHelpers
 
         public URN(string urn)
         {
-            this.urn = urn;
-        }
-
-        public URN(int urn)
-        {
-            this.urn = urn.ToString();
+            this.urn = urn.ToLowerInvariant();
         }
 
         public bool IsNullOrEmpty() =>
@@ -27,18 +22,8 @@ namespace CommunicationData.URLHelpers
         public bool IsValid() =>
             !IsNullOrEmpty() && urn.StartsWith("urn");
 
-        public bool Equals(int other) => Equals(other.ToString());
-
         public bool Equals(URN other) =>
-            Equals(other.urn);
-
-        public bool Equals(string other) =>
-            // Ignore case of all urn since the server returns urns with lower case or upper case representing the same content on different endpoints
-            // For example a wearable in the profile (/lambdas/profiles/:address):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            // The same wearable in the content server (/content/entities/active):
-            // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            string.Equals(urn, other, StringComparison.OrdinalIgnoreCase);
+            string.Equals(urn, other);
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
