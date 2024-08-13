@@ -224,7 +224,9 @@ namespace Global.Dynamic
             var satelliteView = new SatelliteFloor();
             var landscapePlugin = new LandscapePlugin(satelliteView, genesisTerrain, worldsTerrain, assetsProvisioner, debugBuilder, container.MapRendererContainer.TextureContainer, staticContainer.WebRequestsContainer.WebRequestController, dynamicWorldParams.EnableLandscape);
 
-            var multiPool = new DCLMultiPool();
+            Func<IMultiPool> multiPoolFactory = () => new DCLMultiPool();
+
+            var multiPool = multiPoolFactory();
             var memoryPool = new ArrayMemoryPool(ArrayPool<byte>.Shared!);
             container.RealFlowLoadingStatus = new RealFlowLoadingStatus();
 
@@ -268,7 +270,7 @@ namespace Global.Dynamic
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
             container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
-            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPool, memoryPool);
+            container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPoolFactory()!, multiPoolFactory()!, memoryPool);
 
             var entityParticipantTable = new EntityParticipantTable();
 
