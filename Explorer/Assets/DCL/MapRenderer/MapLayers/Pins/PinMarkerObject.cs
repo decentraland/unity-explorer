@@ -1,3 +1,5 @@
+using DG.Tweening;
+using System;
 using UnityEngine;
 using Utility;
 
@@ -29,5 +31,28 @@ namespace DCL.MapRenderer.MapLayers.Pins
             destinationBackground.SetActive(isDestination);
             destinationAnimationElipse.SetActive(isDestination);
         }
+
+        public void SetVisibility(bool visible, Action? onFinish = null)
+        {
+            DOTween.Kill(this);
+            Sequence sequence = DOTween.Sequence(this);
+
+            float startAlpha = visible ? 0f : 1f;
+            float endAlpha = visible ? 1f : 0f;
+
+            foreach (var renderer in renderers)
+            {
+                var color = renderer.color;
+                color.a = startAlpha;
+                renderer.color = color;
+                sequence.Join(renderer.DOFade(endAlpha, 0.3f));
+            }
+
+            if (onFinish != null)
+            {
+                sequence.OnComplete(() => onFinish());
+            }
+        }
+
     }
 }

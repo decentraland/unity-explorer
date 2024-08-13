@@ -141,5 +141,15 @@ namespace DCL.MapRenderer.MapLayers.Pins
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             if (!IsDestination) PinMarkerHelper.PulseScaleAsync(poolableBehavior.instance.pulseScalingParent, ct: pulseCancellationTokenSource.Token).Forget();
         }
+
+        public void Show(Action? onFinish = null)
+        {
+            poolableBehavior.instance?.SetVisibility(true, onFinish);
+        }
+
+        public void Hide(Action? onFinish)
+        {
+            poolableBehavior.instance?.SetVisibility(false, onFinish);
+        }
     }
 }

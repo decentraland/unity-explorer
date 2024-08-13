@@ -104,7 +104,7 @@ namespace DCL.MapRenderer
         private void OnRemovedDestination()
         {
             destinationSet = false;
-            internalPinMarker.OnBecameInvisible();
+            if (internalPinMarker.IsVisible) { internalPinMarker.Hide(internalPinMarker.OnBecameInvisible); }
             mapPathRenderer.gameObject.SetActive(false);
         }
 
@@ -115,15 +115,15 @@ namespace DCL.MapRenderer
             mapPathRenderer.gameObject.SetActive(true);
             mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
             mapPathRenderer.SetDestination(mapPosition);
-            internalPinMarker.OnBecameInvisible();
+            if (internalPinMarker.IsVisible) { internalPinMarker.Hide(internalPinMarker.OnBecameInvisible); }
 
             if (pinMarker == null)
             {
                 currentDestinationPin = internalPinMarker;
                 internalPinMarker.SetAsDestination(true);
-                internalPinMarker.OnBecameInvisible();
                 internalPinMarker.OnBecameVisible();
                 internalPinMarker.SetPosition(mapPosition, parcel);
+                internalPinMarker.Show(null);
             }
             else
             {
