@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -14,12 +15,13 @@ namespace DCL.Diagnostics
             {
                 (ReportHandler.DebugLog, new DefaultReportLogger()),
             });
-        private static bool logVerboseEnabled = false;
+
+        private static bool enforceUnconditionalVerboseLogs;
 
         public static void Initialize(ReportHubLogger logger, bool logVerbose = false)
         {
             Instance = logger;
-            logVerboseEnabled = logVerbose;
+            enforceUnconditionalVerboseLogs = logVerbose;
         }
 
         /// <summary>
@@ -60,15 +62,27 @@ namespace DCL.Diagnostics
         }
 
         /// <summary>
-        ///     Logs verbose info.
+        ///     Logs verbose info. This method is conditional and will be stripped from the production builds
         /// </summary>
         /// <param name="reportData">Report Data, try to provide as specific data as possible</param>
         /// <param name="message">Message</param>
         /// <param name="reportToHandlers">Handlers to report to, All by default</param>
         [HideInCallstack]
+        [Conditional("UNITY_EDITOR")] [Conditional("VERBOSE_LOGS")] // don't remove conditionals, otherwise strings will be allocated in production builds
         public static void Log(ReportData reportData, object message, ReportHandler reportToHandlers = ReportHandler.All)
         {
-            if (!logVerboseEnabled) return;
+            Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
+        }
+
+        /// <summary>
+        ///     Enforces Verbose logs even in production build.
+        ///     This method is unconditional so string interpolation should be avoided
+        /// </summary>
+        public static void Verbose(ReportData reportData, string message, ReportHandler reportToHandlers = ReportHandler.All)
+        {
+#if !UNITY_EDITOR && !VERBOSE_LOGS
+            if (!enforceVerboseLogs) return;
+#endif
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
         }
 
