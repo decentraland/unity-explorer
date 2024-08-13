@@ -49,14 +49,9 @@ def clone_current_target():
         body['settings']['advanced']['unity']['playerExporter']['buildOptions'] = options
         body['settings']['remoteCacheStrategy'] = remoteCacheStrategy
 
-        # Copy cache check
-        if cache:
-            body['settings']['buildTargetCopyCache'] = template_target
-            print(f"Using cache build target: {template_target}")
-        else:
-            if 'buildTargetCopyCache' in body['settings']:
-                del body['settings']['buildTargetCopyCache']
-            print("No cache build target used")
+        # Remove cache for new targets
+        if 'buildTargetCopyCache' in body['settings']:
+            del body['settings']['buildTargetCopyCache']
 
         return body
 
@@ -76,10 +71,14 @@ def clone_current_target():
     existing_target = get_target(new_target_name)
     
     if 'error' in existing_target:
-        # Create new target
+        # Create new target without cache
         response = requests.post(f'{URL}/buildtargets', headers=HEADERS, json=body)
+        print("No cache build target used for new target")
     else:
-        # Target exists, update it
+        # Target exists, update it and use cache based on new_target_name
+        if cache:
+            body['settings']['buildTargetCopyCache'] = new_target_name
+            print(f"Using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
 
     if response.status_code == 200 or response.status_code == 201:
