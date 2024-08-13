@@ -99,8 +99,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -10}
-  m_SizeDelta: {x: 0, y: -20}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5942510748408582067
 CanvasRenderer:
@@ -139,7 +139,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 2
+  m_PixelsPerUnitMultiplier: 1.7
 --- !u!1 &2377873120334212406
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,7 +763,6 @@ GameObject:
   - component: {fileID: 8860986322729785221}
   - component: {fileID: 7632322575127369993}
   - component: {fileID: 1465423766432322205}
-  - component: {fileID: 2444466425614492846}
   m_Layer: 5
   m_Name: AnimatedLoading
   m_TagString: Untagged
@@ -828,18 +827,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 2
---- !u!114 &2444466425614492846
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5929026137792872176}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eddc1fbd4bd796345832996a9560b9bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &5972749663160943742
 GameObject:
   m_ObjectHideFlags: 0
@@ -928,7 +915,7 @@ GameObject:
   - component: {fileID: 3045635273910141502}
   - component: {fileID: 2812948725686597070}
   - component: {fileID: 4320244568645746582}
-  - component: {fileID: 5825910348588912977}
+  - component: {fileID: 5554735863578736859}
   m_Layer: 5
   m_Name: EmptyLoading
   m_TagString: Untagged
@@ -993,7 +980,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 2
+  m_PixelsPerUnitMultiplier: 1.7
 --- !u!114 &4320244568645746582
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1009,7 +996,7 @@ MonoBehaviour:
   <referenceParent>k__BackingField: {fileID: 2406962891052473406}
   <loadingBrightObject>k__BackingField: {fileID: 8860986322729785221}
   <LoadingFinishedAudio>k__BackingField: {fileID: 11400000, guid: d59e1dfedfbcc3942ba177285397b7ee, type: 2}
---- !u!114 &5825910348588912977
+--- !u!114 &5554735863578736859
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1018,25 +1005,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 6316513763649907924}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0bac33ade27cf4542bd53b1b13d90941, type: 3}
+  m_Script: {fileID: 11500000, guid: 31a19414c41e5ae4aae2af33fee712f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _source: 1
-  _separateMask: {fileID: 0}
-  _sprite: {fileID: 21300000, guid: 12dd1efc4e826764f9b02be515a9a033, type: 3}
-  _spriteBorderMode: 1
-  _spritePixelsPerUnitMultiplier: 2
-  _texture: {fileID: 0}
-  _textureUVRect:
-    serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
-  _channelWeights: {r: 0, g: 0, b: 0, a: 1}
-  _raycastThreshold: 0
-  _invertMask: 0
-  _invertOutsides: 0
+  m_ShowMaskGraphic: 1
 --- !u!1 &6927244881809892553
 GameObject:
   m_ObjectHideFlags: 0
