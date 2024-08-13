@@ -1,3 +1,4 @@
+using DCL.Passport.Fields;
 using UnityEngine;
 
 namespace DCL.Passport.Modules

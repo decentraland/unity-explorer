@@ -1,3 +1,4 @@
+using DCL.Passport.Fields;
 using DCL.Profiles;
 using System.Collections.Generic;
 using UnityEngine;

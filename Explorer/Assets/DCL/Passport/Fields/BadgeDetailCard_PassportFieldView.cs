@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.Passport.Modules
+namespace DCL.Passport.Fields
 {
     public class BadgeDetailCard_PassportFieldView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
