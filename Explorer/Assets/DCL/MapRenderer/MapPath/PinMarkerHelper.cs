@@ -11,7 +11,11 @@ namespace DCL.MapRenderer.MapLayers.Pins
 {
     public static class PinMarkerHelper
     {
-        public static async UniTaskVoid PulseScaleAsync(Transform transform, float scaleFactor = 1.3f, float duration = 0.5f, float delay = 0.1f, CancellationToken ct = default)
+        private const float DEFAULT_SCALE_FACTOR = 1.3f;
+        private const float DEFAULT_DURATION = 1.3f;
+        private const float DEFAULT_DELAY = 1.3f;
+
+        public static async UniTaskVoid PulseScaleAsync(Transform transform, float scaleFactor = DEFAULT_SCALE_FACTOR, float duration = DEFAULT_DURATION, float delay = DEFAULT_DELAY, CancellationToken ct = default)
         {
             Vector3 originalScale = Vector3.one;
             Vector3 bigScale = originalScale * scaleFactor;

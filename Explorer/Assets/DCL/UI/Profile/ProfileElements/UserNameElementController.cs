@@ -43,7 +43,6 @@ namespace DCL.UI.ProfileElements
             Element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
             Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
-            //Element.LayoutGroup.SetLayoutHorizontal();
         }
 
 

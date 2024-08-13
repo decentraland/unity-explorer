@@ -363,7 +363,7 @@ MonoBehaviour:
   m_Spacing: 6
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
+  m_ChildControlWidth: 1
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
@@ -384,7 +384,6 @@ MonoBehaviour:
   <FaceFrame>k__BackingField: {fileID: 3803885536491994256}
   <UserNameElement>k__BackingField: {fileID: 3511336122902181310}
   <UserWalletAddressElement>k__BackingField: {fileID: 4021329157380962250}
-  <RectTransform>k__BackingField: {fileID: 6656247408964749100}
 --- !u!1 &2050763827713771171
 GameObject:
   m_ObjectHideFlags: 0
@@ -2069,6 +2068,7 @@ GameObject:
   - component: {fileID: 3803885536491994256}
   - component: {fileID: 2234456038101858310}
   - component: {fileID: 5853180061045949392}
+  - component: {fileID: 9124595122953923462}
   m_Layer: 5
   m_Name: ProfilePictureContainer
   m_TagString: Untagged
@@ -2096,7 +2096,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 60, y: 60}
+  m_SizeDelta: {x: 0, y: 60}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &5093732097433498772
 CanvasRenderer:
@@ -2163,6 +2163,26 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <LoadingObject>k__BackingField: {fileID: 5051510548204245014}
   <Image>k__BackingField: {fileID: 9043803575283409882}
+--- !u!114 &9124595122953923462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6378365613524989300}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreLayout: 0
+  m_MinWidth: 60
+  m_MinHeight: -1
+  m_PreferredWidth: 60
+  m_PreferredHeight: -1
+  m_FlexibleWidth: -1
+  m_FlexibleHeight: -1
+  m_LayoutPriority: 1
 --- !u!1 &6639527099098383496
 GameObject:
   m_ObjectHideFlags: 0

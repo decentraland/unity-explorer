@@ -53,7 +53,6 @@ namespace DCL.UI.ProfileElements
             //temporarily disabled the profile image request untill we have the correct
             //picture deployment
             //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(element.RectTransform);
         }
 
         public void Dispose()
