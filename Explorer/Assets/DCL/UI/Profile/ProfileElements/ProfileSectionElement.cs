@@ -11,5 +11,6 @@ namespace DCL.UI.ProfileElements
         [field: SerializeField] public Image FaceFrame { get; private set; }
         [field: SerializeField] public UserNameElement UserNameElement { get; private set; }
         [field: SerializeField] public UserWalletAddressElement UserWalletAddressElement { get; private set; }
+        [field: SerializeField] public RectTransform RectTransform { get; private set; }
     }
 }

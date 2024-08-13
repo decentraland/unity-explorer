@@ -1,13 +1,14 @@
 ﻿using Cysharp.Threading.Tasks;
 using DCL.Chat;
 using DCL.Profiles;
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace DCL.UI.ProfileElements
 {
-    public class UserNameElementController
+    public class UserNameElementController : IDisposable
     {
         public readonly UserNameElement Element;
         private readonly ChatEntryConfigurationSO chatEntryConfiguration;
@@ -42,14 +43,9 @@ namespace DCL.UI.ProfileElements
             Element.UserNameHashtagText.text = $"#{profile.UserId[^4..]}";
             Element.UserNameHashtagText.gameObject.SetActive(!profile.HasClaimedName);
             Element.VerifiedMark.SetActive(profile.HasClaimedName);
-            WaitUntilToNextFrameAsync().Forget();
+            //Element.LayoutGroup.SetLayoutHorizontal();
         }
 
-        private async UniTaskVoid WaitUntilToNextFrameAsync()
-        {
-            await UniTask.NextFrame(PlayerLoopTiming.LastUpdate);
-            Element.LayoutGroup.spacing = 0.01f;
-        }
 
         public void Dispose()
         {
