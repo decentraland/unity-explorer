@@ -3,11 +3,12 @@ using DCL.Chat;
 using DCL.Profiles;
 using DCL.Web3.Identities;
 using DCL.WebRequests;
+using System;
 using System.Threading;
 
 namespace DCL.UI.ProfileElements
 {
-    public class ProfileSectionController
+    public class ProfileSectionController : IDisposable
     {
         private readonly IWeb3IdentityCache identityCache;
         private readonly IProfileRepository profileRepository;
@@ -51,6 +52,13 @@ namespace DCL.UI.ProfileElements
             //temporarily disabled the profile image request untill we have the correct
             //picture deployment
             //await profileImageController!.RequestImageAsync(profile.Avatar.FaceSnapshotUrl, ct);
+        }
+
+        public void Dispose()
+        {
+            profileImageController.StopLoading();
+            nameElementController.Dispose();
+            walletAddressElementController.Dispose();
         }
     }
 }
