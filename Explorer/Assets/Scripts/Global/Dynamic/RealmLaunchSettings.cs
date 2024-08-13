@@ -35,7 +35,10 @@ namespace Global.Dynamic
         public Vector2Int TargetScene => targetScene;
 
         private bool isLocalSceneDevelopmentRealm;
-        public bool IsLocalSceneDevelopmentRealm => initialRealm == InitialRealm.Localhost || isLocalSceneDevelopmentRealm;
+        public bool IsLocalSceneDevelopmentRealm => isLocalSceneDevelopmentRealm
+                                                    // This is for development purposes only,
+                                                    // so we can easily start local development from the editor without application args
+                                                    || initialRealm == InitialRealm.Localhost;
 
         public IReadOnlyList<int2> GetPredefinedParcels() => predefinedScenes.enabled
             ? predefinedScenes.parcels.Select(p => new int2(p.x, p.y)).ToList()

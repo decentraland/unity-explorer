@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Web;
-using UnityEngine;
 
-namespace Global.Dynamic
+namespace Global
 {
     public class ApplicationParametersParser
     {
@@ -35,7 +34,6 @@ namespace Global.Dynamic
                     else
                         lastKeyStored = string.Empty;
                 }
-#if !UNITY_EDITOR && UNITY_STANDALONE_WIN
                 else if (!deepLinkFound && arg.StartsWith("decentraland://"))
                 {
                     deepLinkFound = true;
@@ -45,7 +43,6 @@ namespace Global.Dynamic
                     // Example (Windows) -> start decentraland://"realm=http://127.0.0.1:8000&position=100,100&otherparam=blahblah"
                     ProcessDeepLinkParameters(arg);
                 }
-#endif
                 else if (!string.IsNullOrEmpty(lastKeyStored))
                     AppParameters[lastKeyStored] = arg;
             }
