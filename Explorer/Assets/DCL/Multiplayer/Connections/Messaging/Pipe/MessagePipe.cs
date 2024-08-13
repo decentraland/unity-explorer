@@ -25,7 +25,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         private readonly uint supportedVersion;
         private readonly CancellationTokenSource cts;
 
-        private readonly Dictionary<string, List<Action<(Packet, Participant)>>> subscribers = new ();
+        private readonly Dictionary<Packet.MessageOneofCase, List<Action<(Packet, Participant)>>> subscribers = new ();
 
         private bool isDisposed;
 
@@ -72,7 +72,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             try
             {
                 Packet packet = messageParser.ParseFrom(data).EnsureNotNull("Message is not parsed")!;
-                var name = packet.MessageCase.ToString()!;
+                var name = packet.MessageCase;
                 NotifySubscribersAsync(name, packet, participant, cts.Token).Forget();
             }
             catch (Exception e)
@@ -84,7 +84,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
             }
         }
 
-        private async UniTaskVoid NotifySubscribersAsync(string name, Packet packet, Participant participant, CancellationToken ctsToken)
+        private async UniTaskVoid NotifySubscribersAsync(Packet.MessageOneofCase name, Packet packet, Participant participant, CancellationToken ctsToken)
         {
             await UniTask.SwitchToMainThread();
 
@@ -105,12 +105,10 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
 
         public void Subscribe<T>(Packet.MessageOneofCase ofCase, Action<ReceivedMessage<T>> onMessageReceived) where T: class, IMessage, new()
         {
-            var currentType = ofCase.ToString()!;
-
-            var list = SubscribersList(currentType);
+            var list = SubscribersList(ofCase);
 
             if (list.Count > 0)
-                throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {currentType}");
+                throw new InvalidOperationException($"Only single subscriber per type is allowed. Type: {ofCase}");
 
             list
                .Add(tuple =>
@@ -154,7 +152,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
                 );
         }
 
-        private List<Action<(Packet, Participant)>> SubscribersList(string typeName)
+        private List<Action<(Packet, Participant)>> SubscribersList(Packet.MessageOneofCase typeName)
         {
             if (subscribers.TryGetValue(typeName, out List<Action<(Packet, Participant)>>? list) == false)
                 subscribers[typeName] = list = new List<Action<(Packet, Participant)>>();
