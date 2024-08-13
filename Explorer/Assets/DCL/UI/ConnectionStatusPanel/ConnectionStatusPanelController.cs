@@ -11,6 +11,7 @@ using LiveKit.Proto;
 using MVC;
 using System;
 using System.Threading;
+using Utility;
 
 namespace DCL.UI.ConnectionStatusPanel
 {
@@ -110,11 +111,7 @@ namespace DCL.UI.ConnectionStatusPanel
             currentSceneInfo.SceneStatus.OnUpdate -= SceneStatusOnUpdate;
             base.Dispose();
 
-            try { cancellationTokenSource.Dispose(); }
-            catch
-            {
-                //ignore
-            }
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         private void TryReloadScene()
