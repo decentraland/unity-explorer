@@ -7,7 +7,7 @@ namespace DCL.MapRenderer
     public class MapPathRenderer : MonoBehaviour
     {
         private const float MIN_DOT_SIZE_MINIMAP = 25;
-        private const float MIN_DOT_SIZE_NAVMAP = 20;
+        private const float MIN_DOT_SIZE_NAVMAP = 15;
         private const int NUM_CAP_VERTICES = 0;
 
         private float currentDotSize;
