@@ -10,6 +10,7 @@ using ECS.SceneLifeCycle.CurrentScene;
 using LiveKit.Proto;
 using MVC;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Utility;
 
@@ -25,6 +26,7 @@ namespace DCL.UI.ConnectionStatusPanel
         private readonly World world;
         private readonly Entity playerEntity;
         private readonly CancellationTokenSource cancellationTokenSource = new ();
+        private readonly List<IDisposable> subscriptions = new (2);
         private bool isSceneReloading;
 
         public override CanvasOrdering.SortingLayer Layer => CanvasOrdering.SortingLayer.Persistent;
@@ -81,8 +83,9 @@ namespace DCL.UI.ConnectionStatusPanel
 
         private void Bind(IReadonlyReactiveProperty<ConnectionQuality> value, IStatusEntry statusEntry)
         {
-            value.OnUpdate += newValue => UpdateStatusEntry(statusEntry, value, newValue);
+            var subscription = value.Subscribe(newValue => UpdateStatusEntry(statusEntry, value, newValue));
             UpdateStatusEntry(statusEntry, value, value.Value);
+            subscriptions.Add(subscription);
         }
 
         private void UpdateStatusEntry(IStatusEntry statusEntry, IReadonlyReactiveProperty<ConnectionQuality> value, ConnectionQuality quality)
@@ -112,6 +115,9 @@ namespace DCL.UI.ConnectionStatusPanel
 
         public override void Dispose()
         {
+            foreach (IDisposable subscription in subscriptions) subscription.Dispose();
+            subscriptions.Clear();
+
             currentSceneInfo.SceneStatus.OnUpdate -= SceneStatusOnUpdate;
             base.Dispose();
 
