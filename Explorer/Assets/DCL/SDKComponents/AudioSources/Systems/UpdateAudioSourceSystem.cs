@@ -7,6 +7,7 @@ using DCL.Optimization.PerformanceBudgeting;
 using DCL.Optimization.Pools;
 using DCL.Utilities.Extensions;
 using ECS.Abstract;
+using ECS.LifeCycle;
 using ECS.Prioritization.Components;
 using ECS.StreamableLoading.AudioClips;
 using ECS.StreamableLoading.Cache;
@@ -23,24 +24,22 @@ namespace DCL.SDKComponents.AudioSources
     [UpdateInGroup(typeof(SDKAudioSourceGroup))]
     [UpdateAfter(typeof(StartAudioSourceLoadingSystem))]
     [LogCategory(ReportCategory.SDK_AUDIO_SOURCES)]
-    public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem
+    public partial class UpdateAudioSourceSystem : BaseUnityLoopSystem, ISceneIsCurrentListener
     {
         private readonly IPerformanceBudget frameTimeBudgetProvider;
         private readonly IPerformanceBudget memoryBudgetProvider;
         private readonly IComponentPool<AudioSource> audioSourcesPool;
         private readonly World world;
         private readonly ISceneData sceneData;
-        private readonly ISceneStateProvider sceneStateProvider;
         private readonly IStreamableCache<AudioClip, GetAudioClipIntention> cache;
         private readonly AudioMixerGroup[] worldGroup;
 
-        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, ISceneStateProvider sceneStateProvider, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
+        internal UpdateAudioSourceSystem(World world, ISceneData sceneData, IStreamableCache<AudioClip, GetAudioClipIntention> cache, IComponentPoolsRegistry poolsRegistry,
             IPerformanceBudget frameTimeBudgetProvider,
             IPerformanceBudget memoryBudgetProvider, AudioMixer audioMixer) : base(world)
         {
             this.world = world;
             this.sceneData = sceneData;
-            this.sceneStateProvider = sceneStateProvider;
             this.frameTimeBudgetProvider = frameTimeBudgetProvider;
             this.memoryBudgetProvider = memoryBudgetProvider;
             this.cache = cache;
@@ -87,10 +86,20 @@ namespace DCL.SDKComponents.AudioSources
         [All(typeof(PBAudioSource), typeof(AudioSourceComponent))]
         private void UpdateAudioSource(ref PBAudioSource sdkComponent, ref AudioSourceComponent component, ref PartitionComponent partitionComponent)
         {
-            if (component.AudioSourceAssigned)
-                component.AudioSource!.volume = sceneStateProvider.IsCurrent ? sdkComponent.GetVolume() : 0;
-
             HandleSDKChanges(sdkComponent, ref component, partitionComponent);
+        }
+
+
+        public void OnSceneIsCurrentChanged(bool value)
+        {
+            UpdateCurrentSceneVolumeQuery(World, value);
+        }
+
+        [Query]
+        private void UpdateCurrentSceneVolume([Data] bool isCurrentScene, ref PBAudioSource sdkComponent, ref AudioSourceComponent component)
+        {
+            if (component.AudioSourceAssigned)
+                component.AudioSource!.volume = isCurrentScene ? sdkComponent.GetVolume() : 0;
         }
 
         private void HandleSDKChanges(PBAudioSource sdkComponent, ref AudioSourceComponent component, PartitionComponent partitionComponent)
