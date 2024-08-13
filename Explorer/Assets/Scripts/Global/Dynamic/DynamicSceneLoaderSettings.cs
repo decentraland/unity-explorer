@@ -24,7 +24,7 @@ namespace Global.Dynamic
 
         private void ParseEnvironment(string environment)
         {
-            if (Enum.TryParse(environment, out DecentralandEnvironment env))
+            if (Enum.TryParse(environment, true, out DecentralandEnvironment env))
                 DecentralandEnvironment = env;
         }
     }
