@@ -53,7 +53,6 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             pulseCancellationTokenSource = pulseCancellationTokenSource.SafeRestart();
             selectionCancellationTokenSource = selectionCancellationTokenSource.SafeRestart();
-            IsDestination = false;
             ParcelPosition = parcelPosition;
             poolableBehavior.SetCurrentPosition(position);
         }
@@ -99,6 +98,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         {
             Title = title;
             Description = description;
+            IsDestination = false;
         }
 
         public void SetTexture(Texture2D texture)
