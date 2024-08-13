@@ -41,7 +41,7 @@ def get_target(target):
 # So we *always* create a new target, no matter what
 # by appending the commit's SHA
 def clone_current_target():
-    def generate_body(template_target, name, branch, options, cache, remoteCacheStrategy):
+    def generate_body(template_target, name, branch, options, remoteCacheStrategy):
         body = get_target(template_target)
 
         body['name'] = name
@@ -65,7 +65,6 @@ def clone_current_target():
         new_target_name,
         os.getenv('BRANCH_NAME'),
         os.getenv('BUILD_OPTIONS').split(','),
-        os.getenv('USE_CACHE'),
         os.getenv('CACHE_STRATEGY'))
 
     existing_target = get_target(new_target_name)
@@ -76,7 +75,7 @@ def clone_current_target():
         print("No cache build target used for new target")
     else:
         # Target exists, update it and use cache based on new_target_name
-        if cache:
+        if os.getenv('USE_CACHE'):
             body['settings']['buildTargetCopyCache'] = new_target_name
             print(f"Using cache build target: {new_target_name}")
         response = requests.put(f'{URL}/buildtargets/{new_target_name}', headers=HEADERS, json=body)
