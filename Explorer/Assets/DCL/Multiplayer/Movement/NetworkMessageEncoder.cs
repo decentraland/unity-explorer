@@ -10,11 +10,18 @@ namespace DCL.Multiplayer.Movement.Systems
     public struct CompressedNetworkMovementMessage
     {
         public const int PARCEL_SIZE = 16;
-        public const int Y_MAX = 500;
-        public const int MAX_VELOCITY = 50;
+        public const int Y_MAX = 150;
+        public const int MAX_VELOCITY = 10;
 
-        public const int TIMESTAMP_BITS = 9;
-        public const int STUNNED_BIT = TIMESTAMP_BITS;
+        public const int TIMESTAMP_BITS = 22;
+
+        public const int MOVEMENT_KIND_BITS = 2;
+        public const int MOVEMENT_KIND_MASK = 0x3;
+
+        // 22 + 2 + 7 = 25
+        public const int MOVEMENT_KIND_START_BIT = TIMESTAMP_BITS;
+        public const int SLIDING_BIT = MOVEMENT_KIND_START_BIT  + MOVEMENT_KIND_BITS;
+        public const int STUNNED_BIT = SLIDING_BIT + 1;
         public const int GROUNDED_BIT = STUNNED_BIT + 1;
         public const int JUMPING_BIT = GROUNDED_BIT + 1;
         public const int LONG_JUMP_BIT = JUMPING_BIT + 1;
@@ -30,12 +37,12 @@ namespace DCL.Multiplayer.Movement.Systems
         public int temporalData;
         public long movementData;
 
-        public NetworkMovementMessage message;
+        // public NetworkMovementMessage message;
     }
 
     public static class TimestampEncoder
     {
-        private const float SENT_INTERVAL = 0.05f; // == QUANTUM in this case
+        private const float SENT_INTERVAL = 0.01f; // == QUANTUM in this case
         public static float Buffer => steps * SENT_INTERVAL;
 
         private static int steps => (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
@@ -108,6 +115,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
     public static class NetworkMessageEncoder
     {
+
         public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
         {
             Vector2Int parcel = message.position.ToParcel();
@@ -128,6 +136,8 @@ namespace DCL.Multiplayer.Movement.Systems
             int compressedVelocityY = VelocityEncoder.CompressVelocity(message.velocity.y, MAX_VELOCITY, VELOCITY_BITS);
             int compressedVelocityZ = VelocityEncoder.CompressVelocity(message.velocity.z, MAX_VELOCITY, VELOCITY_BITS);
 
+            compressedData |= ((int)message.movementKind & MOVEMENT_KIND_MASK) << MOVEMENT_KIND_START_BIT;
+            if (message.isSliding) compressedData |= 1 << SLIDING_BIT;
             if (message.isStunned) compressedData |= 1 << STUNNED_BIT;
             if (message.animState.IsGrounded) compressedData |= 1 << GROUNDED_BIT;
             if (message.animState.IsJumping) compressedData |= 1 << JUMPING_BIT;
@@ -139,7 +149,7 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 temporalData = compressedData,
 
-                movementData = parcelIndex
+                movementData = (uint)parcelIndex
                                | ((long)compressedX << PARCEL_BITS)
                                | ((long)compressedZ << (PARCEL_BITS + XZ_BITS))
                                | ((long)compressedY << (PARCEL_BITS + XZ_BITS + XZ_BITS))
@@ -147,7 +157,7 @@ namespace DCL.Multiplayer.Movement.Systems
                                | ((long)compressedVelocityY << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS))
                                | ((long)compressedVelocityZ << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)),
 
-                message = message,
+                // message = message,
             };
         }
 
@@ -195,12 +205,12 @@ namespace DCL.Multiplayer.Movement.Systems
                 timestamp = timestamp,
                 position = worldPosition,
                 velocity = velocity,
-                movementKind = compressedMessage.message.movementKind,
+                movementKind = (MovementKind)((compressedTemporalData >> MOVEMENT_KIND_START_BIT) & MOVEMENT_KIND_MASK),
 
                 animState = new AnimationStates
                 {
-                    MovementBlendValue = compressedMessage.message.animState.MovementBlendValue,
-                    SlideBlendValue = compressedMessage.message.animState.SlideBlendValue,
+                    MovementBlendValue = 0f,//compressedMessage.message.animState.MovementBlendValue,
+                    SlideBlendValue = 0f, //compressedMessage.message.animState.SlideBlendValue,
 
                     IsGrounded = (compressedTemporalData & (1 << GROUNDED_BIT)) != 0,
                     IsJumping = (compressedTemporalData & (1 << JUMPING_BIT)) != 0,
@@ -210,6 +220,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 },
 
                 isStunned = (compressedTemporalData & (1 << STUNNED_BIT)) != 0,
+                isSliding = (compressedTemporalData & (1 << SLIDING_BIT)) != 0,
             };
         }
     }
