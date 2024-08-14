@@ -85,6 +85,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocity = playerMovement.Character.velocity,
                 isStunned = playerStunComponent.IsStunned,
                 animState = animation.States,
+
+                movementKind = movement.Kind,
             };
 
             // We use AnimatorController value directly, because AnimationState is not always equal to actual Controller due to the blend shapes. Check ApplyAnimationMovementBlend.cs logic for more details.

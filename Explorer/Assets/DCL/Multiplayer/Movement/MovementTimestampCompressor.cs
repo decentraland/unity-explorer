@@ -199,6 +199,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 animState = new AnimationStates
                 {
+
                     MovementBlendValue = compressedMessage.message.animState.MovementBlendValue,
                     SlideBlendValue = compressedMessage.message.animState.SlideBlendValue,
 

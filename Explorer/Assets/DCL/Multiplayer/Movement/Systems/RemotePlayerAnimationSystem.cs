@@ -50,10 +50,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 UpdateAnimations(view, ref anim, remotePlayerMovement.PastMessage.animState, remotePlayerMovement.PastMessage.isStunned);
             }
 
-            if (intComp.Enabled)
-                InterpolateAnimations(view, ref anim, intComp);
-            else if (extComp.Enabled)
-                ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
+            // if (intComp.Enabled)
+            //     InterpolateAnimations(view, ref anim, intComp);
+            // else if (extComp.Enabled)
+            //     ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
 
         private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, in AnimationStates animState, bool isStunned)
@@ -61,7 +61,9 @@ namespace DCL.Multiplayer.Movement.Systems
             if (animationComponent.States.Equals(animState))
                 return;
 
-            UpdateAnimatorBlends(view, animState);
+            Debug.Log($"VVV {animState.MovementBlendValue} | {0}");
+
+            // UpdateAnimatorBlends(view, animState);
 
             if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
