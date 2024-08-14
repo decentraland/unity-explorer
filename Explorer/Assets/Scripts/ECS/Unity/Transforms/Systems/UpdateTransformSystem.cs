@@ -9,6 +9,7 @@ using ECS.Abstract;
 using ECS.Groups;
 using ECS.Unity.Transforms.Components;
 using System;
+using UnityEngine;
 
 namespace ECS.Unity.Transforms.Systems
 {
@@ -40,6 +41,7 @@ namespace ECS.Unity.Transforms.Systems
         {
             if (sdkTransform.IsDirty)
             {
+                Debug.Log("transformComponent " + transformComponent.Transform.name + " pos " + sdkTransform.Position);
                 transformComponent.SetTransform(sdkTransform.Position, sdkTransform.Rotation, sdkTransform.Scale);
                 sdkTransform.IsDirty = false;
             }
