@@ -1,3 +1,4 @@
+using DCL.BadgesAPIService;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -60,27 +61,18 @@ namespace DCL.Passport.Fields
         public void SetAsSelected(bool isSelected) =>
             SelectedOutline.SetActive(isSelected);
 
-        public void Setup(
-            string badgeName,
-            bool isLocked,
-            string badgeCategory,
-            Sprite? badgeImage,
-            string badgeDate,
-            bool isTier,
-            bool isTopTier,
-            int progressPercentage)
+        public void Setup(BadgeInfo badgeInfo)
         {
-            BadgeNameText.text = badgeName;
-            BadgeCategory = badgeCategory;
-            if (badgeImage != null)
-                BadgeImage.sprite = badgeImage;
-            BadgeImage.color = isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
-            BadgeDateText.text = !isLocked ? badgeDate : "--";
-            BadgeDateText.gameObject.SetActive(!isLocked && (!isTier || (isTier && isTopTier)));
-            TopTierMark.SetActive(isTier && isTopTier);
-            NextTierTitle.SetActive(!isLocked && isTier && !isTopTier);
-            ProgressBar.gameObject.SetActive(isTier && !isTopTier);
-            ProgressBarFill.sizeDelta = new Vector2((!isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
+            BadgeNameText.text = badgeInfo.name;
+            BadgeCategory = badgeInfo.category;
+            //BadgeImage.sprite = null;
+            BadgeImage.color = badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
+            BadgeDateText.text = !badgeInfo.isLocked ? badgeInfo.date : "--";
+            BadgeDateText.gameObject.SetActive(!badgeInfo.isLocked && (!badgeInfo.isTier || (badgeInfo.isTier && badgeInfo.isTopTier)));
+            TopTierMark.SetActive(badgeInfo.isTier && badgeInfo.isTopTier);
+            NextTierTitle.SetActive(!badgeInfo.isLocked && badgeInfo.isTier && !badgeInfo.isTopTier);
+            ProgressBar.gameObject.SetActive(badgeInfo.isTier && !badgeInfo.isTopTier);
+            ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? badgeInfo.progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

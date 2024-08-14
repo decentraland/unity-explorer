@@ -1,9 +1,15 @@
+using Cysharp.Threading.Tasks;
+using DCL.BadgesAPIService;
+using DCL.Diagnostics;
 using DCL.Passport.Fields;
 using DCL.Profiles;
 using DCL.UI;
+using System;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Threading;
 using UnityEngine.Pool;
+using Utility;
+using Object = UnityEngine.Object;
 
 namespace DCL.Passport.Modules
 {
@@ -15,8 +21,9 @@ namespace DCL.Passport.Modules
         private const string ALL_FILTER = "All";
 
         private readonly BadgesDetails_PassportModuleView view;
+        private readonly BadgesAPIClient badgesAPIClient;
+        private readonly PassportErrorsController passportErrorsController;
 
-        private readonly List<string> badgeCategories = new() { "Explorer", "Socializer", "Collector", "Creator", "Builder" };
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
         private readonly IObjectPool<BadgeDetailCard_PassportFieldView> badgeDetailCardsPool;
@@ -24,12 +31,19 @@ namespace DCL.Passport.Modules
         private readonly IObjectPool<BadgeDetailCard_PassportFieldView> emptyItemsPool;
         private readonly List<BadgeDetailCard_PassportFieldView> instantiatedEmptyItems = new ();
 
-        private Profile? currentProfile;
+        private Profile currentProfile;
         private string? currentFilter;
+        private CancellationTokenSource fetchBadgesCts;
+        private CancellationTokenSource fetchBadgeCategoriesCts;
 
-        public BadgesDetails_PassportModuleController(BadgesDetails_PassportModuleView view)
+        public BadgesDetails_PassportModuleController(
+            BadgesDetails_PassportModuleView view,
+            BadgesAPIClient badgesAPIClient,
+            PassportErrorsController passportErrorsController)
         {
             this.view = view;
+            this.badgesAPIClient = badgesAPIClient;
+            this.passportErrorsController = passportErrorsController;
 
             badgesFilterButtonsPool = new ObjectPool<ButtonWithSelectableStateView>(
                 InstantiateBadgesFilterButtonPrefab,
@@ -98,8 +112,25 @@ namespace DCL.Passport.Modules
             CreateFilterButton(ALL_FILTER);
             currentFilter = ALL_FILTER;
 
-            foreach (string category in badgeCategories)
-                CreateFilterButton(category);
+            fetchBadgeCategoriesCts = fetchBadgeCategoriesCts.SafeRestart();
+            LoadBadgeCategoriesAsync(fetchBadgeCategoriesCts.Token).Forget();
+        }
+
+        private async UniTaskVoid LoadBadgeCategoriesAsync(CancellationToken ct)
+        {
+            try
+            {
+                var badgeCategories = await BadgesAPIClient.FetchBadgeCategoriesAsync(ct);
+                foreach (string category in badgeCategories)
+                    CreateFilterButton(category);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private void CreateFilterButton(string badgeCategory)
@@ -111,55 +142,67 @@ namespace DCL.Passport.Modules
             instantiatedBadgesFilterButtons.Add(allBadgesFilterButton);
         }
 
-        private void OnBadgesFilterButtonClicked(string filter)
+        private void OnBadgesFilterButtonClicked(string categoryFilter)
         {
-            if (currentFilter == filter)
+            if (currentFilter == categoryFilter)
                 return;
 
             foreach (ButtonWithSelectableStateView filterButton in instantiatedBadgesFilterButtons)
-                filterButton.SetSelected(filterButton.Text.text == filter);
+                filterButton.SetSelected(filterButton.Text.text == categoryFilter);
 
-            LoadBadgeDetailCards(filter);
-            currentFilter = filter;
+            ShowBadgesInGridByCategory(categoryFilter);
         }
 
-        private void LoadBadgeDetailCards(string badgeCategory = "All")
+        private void LoadBadgeDetailCards()
         {
             ClearBadgeDetailCards();
 
-            // TODO (Santi): Request badges for the currentProfile
-            int randomBadgesCount = Random.Range(0, BADGES_DETAIL_CARDS_POOL_DEFAULT_CAPACITY + 1);
-            for (var i = 0; i < randomBadgesCount; i++)
-            {
-                var badgeDetailCard = badgeDetailCardsPool.Get();
-                badgeDetailCard.Setup(
-                    $"Badge {badgeCategory} {i + 1}",
-                    Random.Range(0, 2) == 0,
-                    badgeCategory,
-                    null,
-                    "Feb. 2024",
-                    Random.Range(0, 2) == 0,
-                    Random.Range(0, 2) == 0,
-                    Random.Range(0, 101));
-                badgeDetailCard.SetAsSelected(i == 0);
+            if (string.IsNullOrEmpty(currentProfile.UserId))
+                return;
 
-                badgeDetailCard.Button.onClick.AddListener(() =>
+            fetchBadgesCts = fetchBadgesCts.SafeRestart();
+            LoadBadgesOverviewAsync(currentProfile.UserId, fetchBadgesCts.Token).Forget();
+        }
+
+        private async UniTaskVoid LoadBadgesOverviewAsync(string walletId, CancellationToken ct)
+        {
+            try
+            {
+                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, true, ct);
+
+                for (var i = 0; i < badges.Count; i++)
                 {
-                    foreach (BadgeDetailCard_PassportFieldView badge in instantiatedBadgeDetailCards)
-                        badge.SetAsSelected(false);
+                    var badgeDetailCard = badgeDetailCardsPool.Get();
+                    badgeDetailCard.Setup(badges[i]);
+                    badgeDetailCard.SetAsSelected(i == 0);
 
-                    badgeDetailCard.SetAsSelected(true);
-                });
+                    badgeDetailCard.Button.onClick.AddListener(() =>
+                    {
+                        foreach (BadgeDetailCard_PassportFieldView badge in instantiatedBadgeDetailCards)
+                            badge.SetAsSelected(false);
 
-                instantiatedBadgeDetailCards.Add(badgeDetailCard);
+                        badgeDetailCard.SetAsSelected(true);
+                    });
+
+                    instantiatedBadgeDetailCards.Add(badgeDetailCard);
+                }
+
+                int missingEmptyItems = CalculateMissingEmptyItems(instantiatedBadgeDetailCards.Count);
+                for (var i = 0; i < missingEmptyItems; i++)
+                {
+                    var emptyItem = emptyItemsPool.Get();
+                    emptyItem.gameObject.name = "EmptyItem";
+                    instantiatedEmptyItems.Add(emptyItem);
+                }
+
+                ShowBadgesInGridByCategory(ALL_FILTER);
             }
-
-            int missingEmptyItems = CalculateMissingEmptyItems(instantiatedBadgeDetailCards.Count);
-            for (var i = 0; i < missingEmptyItems; i++)
+            catch (OperationCanceledException) { }
+            catch (Exception e)
             {
-                var emptyItem = emptyItemsPool.Get();
-                emptyItem.gameObject.name = "EmptyItem";
-                instantiatedEmptyItems.Add(emptyItem);
+                const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }
 
@@ -170,8 +213,15 @@ namespace DCL.Passport.Modules
             return missingItems;
         }
 
+        private void ShowBadgesInGridByCategory(string category)
+        {
+            currentFilter = category;
+        }
+
         private void ClearBadgesFilterButtons()
         {
+            fetchBadgeCategoriesCts.SafeCancelAndDispose();
+
             foreach (ButtonWithSelectableStateView badgesFilterButton in instantiatedBadgesFilterButtons)
             {
                 badgesFilterButton.Button.onClick.RemoveAllListeners();
@@ -184,6 +234,8 @@ namespace DCL.Passport.Modules
 
         private void ClearBadgeDetailCards()
         {
+            fetchBadgesCts.SafeCancelAndDispose();
+
             ClearEmptyItems();
 
             foreach (BadgeDetailCard_PassportFieldView badgeDetailCard in instantiatedBadgeDetailCards)

@@ -100,6 +100,11 @@ namespace DCL.Diagnostics
         public const string AUDIO_CLIP_WEB_REQUEST = nameof(AUDIO_CLIP_WEB_REQUEST);
 
         /// <summary>
+        ///     Badges related web request
+        /// </summary>
+        public const string BADGES_WEB_REQUEST = nameof(BADGES_WEB_REQUEST);
+
+        /// <summary>
         ///     Non-granular Streamable category
         /// </summary>
         public const string STREAMABLE_LOADING = nameof(STREAMABLE_LOADING);

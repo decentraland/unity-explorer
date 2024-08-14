@@ -1,9 +1,14 @@
+using Cysharp.Threading.Tasks;
+using DCL.BadgesAPIService;
+using DCL.Diagnostics;
 using DCL.Passport.Fields;
 using DCL.Profiles;
+using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine.Pool;
+using Utility;
 using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
 
 namespace DCL.Passport.Modules
 {
@@ -12,15 +17,23 @@ namespace DCL.Passport.Modules
         private const int BADGES_OVERVIEW_MAX_COUNT = 5;
 
         private readonly BadgesOverview_PassportModuleView view;
+        private readonly BadgesAPIClient badgesAPIClient;
+        private readonly PassportErrorsController passportErrorsController;
 
         private readonly IObjectPool<BadgeOverviewItem_PassportFieldView> badgesOverviewItemsPool;
         private readonly List<BadgeOverviewItem_PassportFieldView> instantiatedBadgesOverviewItems = new ();
 
-        private Profile? currentProfile;
+        private Profile currentProfile;
+        private CancellationTokenSource fetchBadgesCts;
 
-        public BadgesOverview_PassportModuleController(BadgesOverview_PassportModuleView view)
+        public BadgesOverview_PassportModuleController(
+            BadgesOverview_PassportModuleView view,
+            BadgesAPIClient badgesAPIClient,
+            PassportErrorsController passportErrorsController)
         {
             this.view = view;
+            this.badgesAPIClient = badgesAPIClient;
+            this.passportErrorsController = passportErrorsController;
 
             badgesOverviewItemsPool = new ObjectPool<BadgeOverviewItem_PassportFieldView>(
                 InstantiateBadgeOverviewItemPrefab,
@@ -53,23 +66,43 @@ namespace DCL.Passport.Modules
 
         private void LoadBadgesOverviewItems()
         {
-            Clear();
+            ClearBadgesOverviewItems();
 
-            // TODO (Santi): Request badges for the currentProfile
-            int randomBadgesCount = Random.Range(0, BADGES_OVERVIEW_MAX_COUNT + 1);
-            for (var i = 0; i < randomBadgesCount; i++)
+            if (string.IsNullOrEmpty(currentProfile.UserId))
+                return;
+
+            fetchBadgesCts = fetchBadgesCts.SafeRestart();
+            LoadBadgesOverviewAsync(currentProfile.UserId, fetchBadgesCts.Token).Forget();
+        }
+
+        private async UniTaskVoid LoadBadgesOverviewAsync(string walletId, CancellationToken ct)
+        {
+            try
             {
-                var badgeOverviewItem = badgesOverviewItemsPool.Get();
-                badgeOverviewItem.BadgeNameText.text = $"Badge {currentProfile?.UserId?[..5]} {i + 1}";
-                instantiatedBadgesOverviewItems.Add(badgeOverviewItem);
-            }
+                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, false, ct);
+                foreach (BadgeInfo badgeInfo in badges)
+                {
+                    var badgeOverviewItem = badgesOverviewItemsPool.Get();
+                    badgeOverviewItem.BadgeNameText.text = badgeInfo.name;
+                    instantiatedBadgesOverviewItems.Add(badgeOverviewItem);
+                }
 
-            view.BadgeOverviewItemsContainer.gameObject.SetActive(instantiatedBadgesOverviewItems.Count > 0);
-            view.NoBadgesLabel.SetActive(instantiatedBadgesOverviewItems.Count == 0);
+                view.BadgeOverviewItemsContainer.gameObject.SetActive(instantiatedBadgesOverviewItems.Count > 0);
+                view.NoBadgesLabel.SetActive(instantiatedBadgesOverviewItems.Count == 0);
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception e)
+            {
+                const string ERROR_MESSAGE = "There was an error loading badges. Please try again!";
+                passportErrorsController.Show(ERROR_MESSAGE);
+                ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
+            }
         }
 
         private void ClearBadgesOverviewItems()
         {
+            fetchBadgesCts.SafeCancelAndDispose();
+
             foreach (BadgeOverviewItem_PassportFieldView badgeOverviewItem in instantiatedBadgesOverviewItems)
                 badgesOverviewItemsPool.Release(badgeOverviewItem);
 

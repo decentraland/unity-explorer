@@ -9,6 +9,7 @@ using DCL.AvatarRendering.Wearables;
 using DCL.AvatarRendering.Wearables.Equipped;
 using DCL.AvatarRendering.Wearables.Helpers;
 using DCL.Backpack.BackpackBus;
+using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
@@ -395,6 +396,8 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
+            var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
+
             var globalPlugins = new List<IDCLGlobalPlugin>
             {
                 new MultiplayerPlugin(
@@ -527,7 +530,8 @@ namespace Global.Dynamic
                     selfProfile,
                     dclInput,
                     webBrowser,
-                    bootstrapContainer.DecentralandUrlsSource
+                    bootstrapContainer.DecentralandUrlsSource,
+                    badgesAPIClient
                 ),
             };
 

@@ -54,6 +54,7 @@ namespace DCL.Browser.DecentralandUrls
                 DecentralandUrl.AssetBundlesCDN => $"https://ab-cdn.decentraland.org",
                 DecentralandUrl.ArchipelagoStatus => $"https://archipelago-stats.decentraland.{ENV}/status",
                 DecentralandUrl.GatekeeperStatus => $"https://comms-gatekeeper.decentraland.{ENV}/status",
+                DecentralandUrl.Badges => $"https://badges.decentraland.zone/badges", //TODO (Santi) Replace it by $"https://badges.decentraland.{ENV}/badges"
                 _ => throw new ArgumentOutOfRangeException(nameof(decentralandUrl), decentralandUrl, null)
             };
     }

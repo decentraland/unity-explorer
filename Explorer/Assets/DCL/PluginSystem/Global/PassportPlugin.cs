@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DCL.AssetsProvision;
 using DCL.AvatarRendering.Wearables;
 using DCL.Backpack;
+using DCL.BadgesAPIService;
 using DCL.Browser;
 using DCL.CharacterPreview;
 using DCL.Chat;
@@ -38,6 +39,7 @@ namespace DCL.PluginSystem.Global
         private readonly DCLInput dclInput;
         private readonly IWebBrowser webBrowser;
         private readonly IDecentralandUrlsSource decentralandUrlsSource;
+        private readonly BadgesAPIClient badgesAPIClient;
 
         public PassportPlugin(
             IAssetsProvisioner assetsProvisioner,
@@ -53,7 +55,8 @@ namespace DCL.PluginSystem.Global
             ISelfProfile selfProfile,
             DCLInput dclInput,
             IWebBrowser webBrowser,
-            IDecentralandUrlsSource decentralandUrlsSource
+            IDecentralandUrlsSource decentralandUrlsSource,
+            BadgesAPIClient badgesAPIClient
         )
         {
             this.assetsProvisioner = assetsProvisioner;
@@ -70,6 +73,7 @@ namespace DCL.PluginSystem.Global
             this.dclInput = dclInput;
             this.webBrowser = webBrowser;
             this.decentralandUrlsSource = decentralandUrlsSource;
+            this.badgesAPIClient = badgesAPIClient;
         }
 
         protected override void InjectSystems(ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments arguments) { }
@@ -105,7 +109,8 @@ namespace DCL.PluginSystem.Global
                     thumbnailProvider,
                     dclInput,
                     webBrowser,
-                    decentralandUrlsSource
+                    decentralandUrlsSource,
+                    badgesAPIClient
                 );
 
                 mvcManager.RegisterController(passportController);
