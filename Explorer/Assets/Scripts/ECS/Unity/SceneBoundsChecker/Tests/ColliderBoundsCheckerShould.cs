@@ -52,6 +52,8 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             component.AssignCollider(new SDKCollider(collider), typeof(BoxCollider), PBMeshCollider.MeshOneofCase.Box);
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
@@ -72,6 +74,8 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
@@ -91,6 +95,8 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
