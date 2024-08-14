@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using DCL.CharacterMotion.Animation;
+using DCL.CharacterMotion.Settings;
 using System;
 using UnityEngine.Pool;
 using Utility.PriorityQueue;
@@ -44,8 +46,20 @@ namespace DCL.Multiplayer.Movement
             queue.Enqueue(message, message.timestamp);
         }
 
-        public void AddPassed(NetworkMovementMessage message, bool wasTeleported = false)
+        public void AddPassed(NetworkMovementMessage message, ICharacterControllerSettings settings, bool wasTeleported = false)
         {
+            if (!WasTeleported)
+            {
+                float totalDuration = message.timestamp - PastMessage.timestamp;
+
+                int movementBlendId = AnimationMovementBlendLogic.GetMovementBlendId(message.velocity.sqrMagnitude, message.movementKind);
+
+                message.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.MovementBlendValue,
+                    movementBlendId, message.movementKind, message.velocity.magnitude, settings);
+
+                message.animState.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(totalDuration, PastMessage.animState.SlideBlendValue, message.isSliding, settings);
+            }
+
             PastMessage = message;
             WasTeleported = wasTeleported;
 

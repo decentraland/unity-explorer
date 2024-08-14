@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
     }
 
-    public static class NetworkMessageCompressor
+    public static class NetworkMessageEncoder
     {
         public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
         {

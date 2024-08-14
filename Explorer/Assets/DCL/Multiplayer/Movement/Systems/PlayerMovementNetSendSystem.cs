@@ -82,9 +82,22 @@ namespace DCL.Multiplayer.Movement.Systems
                 timestamp = UnityEngine.Time.unscaledTime,
                 position = playerMovement.Character.transform.position,
                 velocity = playerMovement.Character.velocity,
+
                 isStunned = playerStunComponent.IsStunned,
-                animState = animation.States,
                 isSliding = animation.IsSliding,
+
+                animState = new AnimationStates
+                {
+                    IsGrounded = animation.States.IsGrounded,
+                    IsJumping = animation.States.IsJumping,
+                    IsLongJump = animation.States.IsLongJump,
+                    IsFalling = animation.States.IsFalling,
+                    IsLongFall = animation.States.IsLongFall,
+
+                    // We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
+                    SlideBlendValue = 0f, //animation.States.MovementBlendValue,
+                    MovementBlendValue = 0f,
+                },
 
                 movementKind = movement.Kind,
             };
