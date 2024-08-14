@@ -10,6 +10,7 @@ using ECS.StreamableLoading.Common.Components;
 using SceneRunner.Scene;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using UnityEngine;
 using Utility;
@@ -249,6 +250,20 @@ namespace DCL.AvatarRendering.Wearables.Helpers
             results.Results ??= new StreamableLoadingResult<WearableAssetBase>?[1];
 
             results.Results[MAIN_ASSET_INDEX] = new StreamableLoadingResult<WearableAssetBase>(wearableRegularAsset);
+        }
+
+        public static bool HasEssentialAssetsResolved(this IWearable wearable, BodyShape bodyShape)
+        {
+            StreamableLoadingResult<WearableAssetBase>?[] results = wearable.WearableAssetResults[bodyShape].Results;
+
+            if (wearable.Type == WearableType.FacialFeature)
+            {
+                // Exclude texture mask from required assets
+                StreamableLoadingResult<WearableAssetBase>? mainFileAsset = results[0];
+                return mainFileAsset is { Succeeded: true };
+            }
+
+            return results.All(static r => r is { Succeeded: true });
         }
     }
 }

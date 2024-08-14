@@ -145,17 +145,15 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
                     if (visibleWearable.IsLoading) continue;
                     if (CreateAssetBundlePromiseIfRequired(visibleWearable, wearablesByPointersIntention, partitionComponent)) continue;
+                    if (!visibleWearable.HasEssentialAssetsResolved(wearablesByPointersIntention.BodyShape)) continue;
 
-                    if (visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].Results.All(static r => r is { Succeeded: true }))
-                    {
-                        successfulResults++;
+                    successfulResults++;
 
-                        // Reference must be added only once when the wearable is resolved
-                        if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
+                    // Reference must be added only once when the wearable is resolved
+                    if (BitWiseUtils.TrySetBit(ref wearablesByPointersIntention.ResolvedWearablesIndices, i))
 
-                            // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
-                            visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
-                    }
+                        // We need to add a reference here, so it is not lost if the flow interrupts in between (i.e. before creating instances of CachedWearable)
+                        visibleWearable.WearableAssetResults[wearablesByPointersIntention.BodyShape].AddReference();
                 }
             }
 
@@ -299,6 +297,9 @@ namespace DCL.AvatarRendering.Wearables.Systems
 
         private bool CreateAssetBundlePromiseIfRequired(IWearable component, in GetWearablesByPointersIntention intention, IPartitionComponent partitionComponent)
         {
+            // Do not repeat the promise if already failed once. Otherwise it will end up in an endless loading:true state
+            if (component.ManifestResult is { Succeeded: false }) return false;
+
             // Manifest is required for Web loading only
             if (component.ManifestResult == null && EnumUtils.HasFlag(intention.PermittedSources, AssetSource.WEB))
                 return component.CreateAssetBundleManifestPromise(World, intention.BodyShape, intention.CancellationTokenSource, partitionComponent);
