@@ -56,6 +56,9 @@ namespace DCL.CharacterMotion.Systems
             inputToUpdate.Kind = sprintAction.IsPressed() ? MovementKind.Run :
                 walkAction.IsPressed() ? MovementKind.Walk : MovementKind.Jog;
 
+            if (inputToUpdate.Axes == Vector2.zero)
+                inputToUpdate.Kind = MovementKind.Idle;
+
             if (inputToUpdate.AutoWalk)
             {
                 inputToUpdate.Axes = new Vector2(0, 1);

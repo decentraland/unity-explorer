@@ -75,7 +75,7 @@ namespace DCL.CharacterMotion.Animation
                     MovementKind.Walk => walkIntervalSeconds,
                     MovementKind.Jog => jogIntervalSeconds,
                     MovementKind.Run => runIntervalSeconds,
-                    MovementKind.None => 0,
+                    MovementKind.Idle => 0,
                     _ => throw new ArgumentOutOfRangeException(),
                 };
         }
@@ -88,7 +88,7 @@ namespace DCL.CharacterMotion.Animation
 
             switch (GetMovementState())
             {
-                case MovementKind.None:
+                case MovementKind.Idle:
                 case MovementKind.Walk:
                     PlaySfxWithParticles(AvatarAudioClipType.JumpStartWalk, vfxAttach, eventType);
                     break;
@@ -202,11 +202,11 @@ namespace DCL.CharacterMotion.Animation
                            (int)MovementKind.Run => MovementKind.Run,
                            (int)MovementKind.Jog => MovementKind.Jog,
                            (int)MovementKind.Walk => MovementKind.Walk,
-                           _ => MovementKind.None,
+                           _ => MovementKind.Idle,
                        };
             }
 
-            return MovementKind.None;
+            return MovementKind.Idle;
         }
     }
 }

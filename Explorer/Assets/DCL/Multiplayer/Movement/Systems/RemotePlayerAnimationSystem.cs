@@ -53,10 +53,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 UpdateAnimations(t, view, ref anim, remotePlayerMovement.PastMessage);
             }
 
-            // if (intComp.Enabled)
-            //     InterpolateAnimations(view, ref anim, intComp);
-            // else if (extComp.Enabled)
-            //     ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
+            if (intComp.Enabled)
+                InterpolateAnimations(view, ref anim, intComp);
+            else if (extComp.Enabled)
+                ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
 
         private void UpdateAnimations(float t, IAvatarView view, ref CharacterAnimationComponent animationComponent, in NetworkMovementMessage message)
@@ -66,18 +66,7 @@ namespace DCL.Multiplayer.Movement.Systems
             if (animationComponent.States.Equals(animState))
                 return;
 
-            // (int blendId, float blendValue) = ApplyAnimationMovementBlend.UpdateBlendValues(t, message.velocity, message.movementKind, animationComponent.States.MovementBlendValue, characterControllerSettings);
-            // animationComponent.States.MovementBlendValue = blendValue;
-
             ApplyAnimationMovementBlend.Execute(t, ref animationComponent, characterControllerSettings, message.velocity, animState.IsGrounded, message.movementKind, view);
-            Debug.Log($"VVV {animState.MovementBlendValue} | {animationComponent.States.MovementBlendValue}");
-
-            // if (message.animState.IsGrounded)
-            // {
-            //     view.SetAnimatorInt(AnimationHashes.MOVEMENT_TYPE, blendId);
-            //     view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
-            // }
-            // UpdateAnimatorBlends(view, animState);
 
             if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
@@ -96,14 +85,14 @@ namespace DCL.Multiplayer.Movement.Systems
             animationComponent.States.IsLongFall = animState.IsLongFall;
         }
 
-        // private static void UpdateAnimatorBlends(IAvatarView view, in AnimationStates animStates)
-        // {
-        //     if (!animStates.IsGrounded)
-        //         return;
-        //
-        //     view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
-        //     view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
-        // }
+        private static void UpdateLocalBlends(IAvatarView view, in AnimationStates animStates)
+        {
+            if (!animStates.IsGrounded)
+                return;
+
+            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
+            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
+        }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
         {
@@ -124,7 +113,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.SlideBlendValue, endAnimStates.SlideBlendValue, intComp.Time / intComp.TotalDuration);
             }
 
-            // UpdateAnimatorBlends(view, anim.States);
+            UpdateLocalBlends(view, anim.States);
         }
 
         private static void AnimateFutureJump(IAvatarView view, ref CharacterAnimationComponent anim, in AnimationStates animState)
@@ -176,7 +165,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 anim.States.SlideBlendValue = Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration);
             }
 
-            // UpdateAnimatorBlends(view, anim.States);
+            UpdateLocalBlends(view, anim.States);
         }
     }
 }
