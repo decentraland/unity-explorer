@@ -258,6 +258,7 @@ namespace DCL.AvatarRendering.Wearables.Helpers
 
             if (wearable.Type == WearableType.FacialFeature)
             {
+                if (results.Length <= 0) return false;
                 // Exclude texture mask from required assets
                 StreamableLoadingResult<WearableAssetBase>? mainFileAsset = results[0];
                 return mainFileAsset is { Succeeded: true };
