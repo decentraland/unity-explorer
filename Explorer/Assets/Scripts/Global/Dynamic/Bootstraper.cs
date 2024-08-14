@@ -2,6 +2,7 @@
 using CommunicationData.URLHelpers;
 using Cysharp.Threading.Tasks;
 using DCL.Audio;
+using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.EmotesWheel;
@@ -69,19 +70,20 @@ namespace Global.Dynamic
             CancellationToken ct)
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
-            {
-                DebugContainerBuilder = staticContainer.DebugContainerBuilder,
-                AssetsProvisioner = bootstrapContainer.AssetsProvisioner,
-                StaticContainer = staticContainer,
-                SettingsContainer = scenePluginSettingsContainer,
-                DynamicSettings = dynamicSettings,
-                Web3Authenticator = bootstrapContainer.Web3Authenticator,
-                Web3IdentityCache = bootstrapContainer.IdentityCache,
-                RootUIDocument = uiToolkitRoot,
-                CursorUIDocument = cursorRoot,
-                SplashScreen = splashScreen,
-                WorldInfoTool = worldInfoTool,
-            };
+            (
+                staticContainer.DebugContainerBuilder,
+                new CommandLineArgs(),
+                bootstrapContainer.AssetsProvisioner,
+                staticContainer,
+                scenePluginSettingsContainer,
+                uiToolkitRoot,
+                cursorRoot,
+                dynamicSettings,
+                bootstrapContainer.Web3Authenticator,
+                bootstrapContainer.IdentityCache,
+                splashScreen,
+                worldInfoTool
+            );
 
             return await DynamicWorldContainer.CreateAsync(
                 bootstrapContainer,

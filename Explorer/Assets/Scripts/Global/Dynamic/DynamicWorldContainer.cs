@@ -15,6 +15,7 @@ using DCL.Chat;
 using DCL.Chat.Commands;
 using DCL.Chat.History;
 using DCL.Chat.MessageBus;
+using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Input;
@@ -160,6 +161,8 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
 
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
+            ICommandLineArgs commandLineArgs = dynamicWorldDependencies.CommandLineArgs;
+            bool isFullyDebug = commandLineArgs.HasDebugFlag();
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
             var mapPathEventBus = new MapPathEventBus();
