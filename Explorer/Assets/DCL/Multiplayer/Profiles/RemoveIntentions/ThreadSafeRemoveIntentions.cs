@@ -30,9 +30,10 @@ namespace DCL.Multiplayer.Profiles.RemoveIntentions
             if (connectionupdate is ConnectionUpdate.Disconnected)
             {
                 using MutexSync.Scope _ = mutex.GetScope();
-                foreach (string remoteParticipantSid in room.Participants.RemoteParticipantSids())
+
+                foreach (string identity in room.Participants.RemoteParticipantIdentities())
                 {
-                    var participant = room.Participants.RemoteParticipant(remoteParticipantSid).EnsureNotNull();
+                    Participant participant = room.Participants.RemoteParticipant(identity).EnsureNotNull();
                     list.Add(new RemoveIntention(participant.Identity));
                 }
 
