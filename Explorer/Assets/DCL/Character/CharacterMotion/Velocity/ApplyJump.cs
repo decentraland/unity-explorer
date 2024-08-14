@@ -66,9 +66,9 @@ namespace DCL.CharacterMotion
         {
             float maxJumpHeight = input.Kind switch
                                   {
-                                      MovementKind.Walk => settings.JogJumpHeight,
-                                      MovementKind.Jog => settings.JogJumpHeight,
-                                      MovementKind.Run => settings.RunJumpHeight,
+                                      MovementKind.WALK => settings.JogJumpHeight,
+                                      MovementKind.JOG => settings.JogJumpHeight,
+                                      MovementKind.RUN => settings.RunJumpHeight,
                                       _ => throw new ArgumentOutOfRangeException(),
                                   };
 

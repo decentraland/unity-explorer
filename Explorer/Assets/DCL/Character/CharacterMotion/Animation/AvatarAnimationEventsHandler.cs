@@ -72,10 +72,10 @@ namespace DCL.CharacterMotion.Animation
             float GetIntervalFor(MovementKind movement) =>
                 movement switch
                 {
-                    MovementKind.Walk => walkIntervalSeconds,
-                    MovementKind.Jog => jogIntervalSeconds,
-                    MovementKind.Run => runIntervalSeconds,
-                    MovementKind.Idle => 0,
+                    MovementKind.WALK => walkIntervalSeconds,
+                    MovementKind.JOG => jogIntervalSeconds,
+                    MovementKind.RUN => runIntervalSeconds,
+                    MovementKind.IDLE => 0,
                     _ => throw new ArgumentOutOfRangeException(),
                 };
         }
@@ -88,14 +88,14 @@ namespace DCL.CharacterMotion.Animation
 
             switch (GetMovementState())
             {
-                case MovementKind.Idle:
-                case MovementKind.Walk:
+                case MovementKind.IDLE:
+                case MovementKind.WALK:
                     PlaySfxWithParticles(AvatarAudioClipType.JumpStartWalk, vfxAttach, eventType);
                     break;
-                case MovementKind.Jog:
+                case MovementKind.JOG:
                     PlaySfxWithParticles(AvatarAudioClipType.JumpStartJog, vfxAttach, eventType);
                     break;
-                case MovementKind.Run:
+                case MovementKind.RUN:
                     PlaySfxWithParticles(AvatarAudioClipType.JumpStartRun, vfxAttach, eventType);
                     break;
                 default: throw new ArgumentOutOfRangeException();
@@ -199,14 +199,14 @@ namespace DCL.CharacterMotion.Animation
             {
                 return movementType switch
                        {
-                           (int)MovementKind.Run => MovementKind.Run,
-                           (int)MovementKind.Jog => MovementKind.Jog,
-                           (int)MovementKind.Walk => MovementKind.Walk,
-                           _ => MovementKind.Idle,
+                           (int)MovementKind.RUN => MovementKind.RUN,
+                           (int)MovementKind.JOG => MovementKind.JOG,
+                           (int)MovementKind.WALK => MovementKind.WALK,
+                           _ => MovementKind.IDLE,
                        };
             }
 
-            return MovementKind.Idle;
+            return MovementKind.IDLE;
         }
     }
 }

@@ -53,9 +53,9 @@ namespace DCL.CharacterMotion.Animation
 
             return speedState switch
                    {
-                       MovementKind.Walk => 1,
-                       MovementKind.Jog => 2,
-                       MovementKind.Run => 3,
+                       MovementKind.WALK => 1,
+                       MovementKind.JOG => 2,
+                       MovementKind.RUN => 3,
                        _ => 0,
                    };
         }
