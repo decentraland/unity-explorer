@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using DCL.CharacterMotion.Settings;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Settings
 {
     public class MultiplayerMovementSettings : ScriptableObject, IMultiplayerMovementSettings
     {
+        [field: SerializeField] public CharacterControllerSettings CharacterControllerSettings { get; set; }
         [field: SerializeField] public int InboxCount { get; set; }
 
         [field: Header("SENDING RULES")]

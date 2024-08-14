@@ -32,7 +32,7 @@ namespace DCL.CharacterMotion.Systems
         )
         {
             // Update the movement blend value, ranges from 0 to 3 (Idle = 0, Walk = 1, Jog = 2, Run = 3)
-            ApplyAnimationMovementBlend.Execute(dt, ref animationComponent, in settings, in rigidTransform, in movementInput, in view);
+            ApplyAnimationMovementBlend.Execute(dt, ref animationComponent, in settings, rigidTransform.MoveVelocity.Velocity, rigidTransform.IsGrounded, movementInput.Kind, in view);
 
             // Update slide blend value, ranges from 0 to 1
             ApplyAnimationSlideBlend.Execute(dt, ref animationComponent, in rigidTransform, in view, in settings);

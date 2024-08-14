@@ -108,7 +108,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
     public static class NetworkMessageCompressor
     {
-
         public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
         {
             Vector2Int parcel = message.position.ToParcel();
@@ -140,8 +139,8 @@ namespace DCL.Multiplayer.Movement.Systems
             {
                 temporalData = compressedData,
 
-                movementData = (long)parcelIndex
-                               | ((long)compressedX << (PARCEL_BITS))
+                movementData = parcelIndex
+                               | ((long)compressedX << PARCEL_BITS)
                                | ((long)compressedZ << (PARCEL_BITS + XZ_BITS))
                                | ((long)compressedY << (PARCEL_BITS + XZ_BITS + XZ_BITS))
                                | ((long)compressedVelocityX << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS))
@@ -167,7 +166,7 @@ namespace DCL.Multiplayer.Movement.Systems
             Vector2Int parcel = ParcelEncoder.DecodeParcel((int)(compressedMovement & PARCEL_MASK));
 
             // Decompressing values
-            var extractedX = (int)((compressedMovement >> (PARCEL_BITS)) & XZ_MASK);
+            var extractedX = (int)((compressedMovement >> PARCEL_BITS) & XZ_MASK);
             var extractedZ = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS)) & XZ_MASK);
             var extractedY = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
 
@@ -196,10 +195,10 @@ namespace DCL.Multiplayer.Movement.Systems
                 timestamp = timestamp,
                 position = worldPosition,
                 velocity = velocity,
+                movementKind = compressedMessage.message.movementKind,
 
                 animState = new AnimationStates
                 {
-
                     MovementBlendValue = compressedMessage.message.animState.MovementBlendValue,
                     SlideBlendValue = compressedMessage.message.animState.SlideBlendValue,
 

@@ -1,11 +1,12 @@
 ﻿using Arch.Core;
 using Arch.System;
 using Arch.SystemGroups;
-using Arch.SystemGroups.DefaultSystemGroups;
 using DCL.AvatarRendering.AvatarShape.UnityInterface;
 using DCL.Character.CharacterMotion.Components;
 using DCL.Character.Components;
+using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Components;
+using DCL.CharacterMotion.Settings;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
@@ -28,26 +29,28 @@ namespace DCL.Multiplayer.Movement.Systems
         private const float JOG_SPEED_THRESHOLD = 4f;
 
         private readonly RemotePlayerExtrapolationSettings settings;
+        private readonly ICharacterControllerSettings characterControllerSettings;
 
-        public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings settings) : base(world)
+        public RemotePlayerAnimationSystem(World world, RemotePlayerExtrapolationSettings settings, ICharacterControllerSettings characterControllerSettings) : base(world)
         {
             this.settings = settings;
+            this.characterControllerSettings = characterControllerSettings;
         }
 
         protected override void Update(float t)
         {
-            UpdatePlayersAnimationQuery(World);
+            UpdatePlayersAnimationQuery(World, t);
         }
 
         [Query]
         [None(typeof(PlayerComponent), typeof(DeleteEntityIntention))]
-        private void UpdatePlayersAnimation(in IAvatarView view, ref CharacterAnimationComponent anim,
+        private void UpdatePlayersAnimation([Data] float t, in IAvatarView view, ref CharacterAnimationComponent anim,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
             if (remotePlayerMovement.WasPassedThisFrame)
             {
                 remotePlayerMovement.WasPassedThisFrame = false;
-                UpdateAnimations(view, ref anim, remotePlayerMovement.PastMessage.animState, remotePlayerMovement.PastMessage.isStunned);
+                UpdateAnimations(t, view, ref anim, remotePlayerMovement.PastMessage);
             }
 
             // if (intComp.Enabled)
@@ -56,36 +59,51 @@ namespace DCL.Multiplayer.Movement.Systems
             //     ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
 
-        private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, in AnimationStates animState, bool isStunned)
+        private void UpdateAnimations(float t, IAvatarView view, ref CharacterAnimationComponent animationComponent, in NetworkMovementMessage message)
         {
+            var animState = message.animState;
+
             if (animationComponent.States.Equals(animState))
                 return;
 
-            Debug.Log($"VVV {animState.MovementBlendValue} | {0}");
+            // (int blendId, float blendValue) = ApplyAnimationMovementBlend.UpdateBlendValues(t, message.velocity, message.movementKind, animationComponent.States.MovementBlendValue, characterControllerSettings);
+            // animationComponent.States.MovementBlendValue = blendValue;
 
+            ApplyAnimationMovementBlend.Execute(t, ref animationComponent, characterControllerSettings, message.velocity, animState.IsGrounded, message.movementKind, view);
+            Debug.Log($"VVV {animState.MovementBlendValue} | {animationComponent.States.MovementBlendValue}");
+
+            // if (message.animState.IsGrounded)
+            // {
+            //     view.SetAnimatorInt(AnimationHashes.MOVEMENT_TYPE, blendId);
+            //     view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
+            // }
             // UpdateAnimatorBlends(view, animState);
 
             if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
-            view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
+            view.SetAnimatorBool(AnimationHashes.STUNNED, message.isStunned);
+
             view.SetAnimatorBool(AnimationHashes.GROUNDED, animState.IsGrounded);
+            animationComponent.States.IsGrounded = animState.IsGrounded;
             view.SetAnimatorBool(AnimationHashes.JUMPING, animState.IsJumping);
+            animationComponent.States.IsJumping = animState.IsJumping;
             view.SetAnimatorBool(AnimationHashes.FALLING, animState.IsFalling);
+            animationComponent.States.IsLongJump = animState.IsLongJump;
             view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animState.IsLongJump);
+            animationComponent.States.IsFalling = animState.IsFalling;
             view.SetAnimatorBool(AnimationHashes.LONG_FALL, animState.IsLongFall);
-
-            animationComponent.States = animState;
+            animationComponent.States.IsLongFall = animState.IsLongFall;
         }
 
-        private static void UpdateAnimatorBlends(IAvatarView view, in AnimationStates animStates)
-        {
-            if (!animStates.IsGrounded)
-                return;
-
-            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
-            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
-        }
+        // private static void UpdateAnimatorBlends(IAvatarView view, in AnimationStates animStates)
+        // {
+        //     if (!animStates.IsGrounded)
+        //         return;
+        //
+        //     view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
+        //     view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
+        // }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
         {
@@ -106,7 +124,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 anim.States.SlideBlendValue = Mathf.Lerp(startAnimStates.SlideBlendValue, endAnimStates.SlideBlendValue, intComp.Time / intComp.TotalDuration);
             }
 
-            UpdateAnimatorBlends(view, anim.States);
+            // UpdateAnimatorBlends(view, anim.States);
         }
 
         private static void AnimateFutureJump(IAvatarView view, ref CharacterAnimationComponent anim, in AnimationStates animState)
@@ -158,7 +176,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 anim.States.SlideBlendValue = Mathf.Lerp(anim.States.SlideBlendValue, 0f, dampTime / dampDuration);
             }
 
-            UpdateAnimatorBlends(view, anim.States);
+            // UpdateAnimatorBlends(view, anim.States);
         }
     }
 }
