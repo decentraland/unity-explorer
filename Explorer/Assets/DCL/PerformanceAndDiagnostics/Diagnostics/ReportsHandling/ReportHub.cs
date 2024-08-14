@@ -81,7 +81,7 @@ namespace DCL.Diagnostics
         public static void Verbose(ReportData reportData, string message, ReportHandler reportToHandlers = ReportHandler.All)
         {
 #if !UNITY_EDITOR && !VERBOSE_LOGS
-            if (!enforceVerboseLogs) return;
+            if (!enforceUnconditionalVerboseLogs) return;
 #endif
             Instance.Log(LogType.Log, reportData, message, null, reportToHandlers);
         }
