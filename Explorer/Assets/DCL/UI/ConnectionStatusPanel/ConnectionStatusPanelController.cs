@@ -66,14 +66,17 @@ namespace DCL.UI.ConnectionStatusPanel
             async UniTaskVoid ShowButtonAsync(CancellationToken ct)
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(DELAY), cancellationToken: ct);
+
                 viewInstance.Scene.ShowReloadButton(TryReloadScene);
             }
 
-            if (obj is not { } status)
+            if (obj == null)
             {
                 viewInstance.Scene.HideStatus();
                 return;
             }
+
+            var status = obj.Value;
 
             viewInstance.Scene.ShowStatus(status);
 

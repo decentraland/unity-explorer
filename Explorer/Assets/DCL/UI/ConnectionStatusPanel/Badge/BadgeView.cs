@@ -15,10 +15,10 @@ namespace DCL.UI.ConnectionStatusPanel.Badge
         {
             tmpText.SetText(text);
 
-            if (width is { } w && Mathf.Approximately(w, 0) == false)
+            if (width.HasValue && Mathf.Approximately(width.Value, 0) == false)
             {
                 var delta = self.sizeDelta;
-                delta.x = w;
+                delta.x = width.Value;
                 self.sizeDelta = delta;
             }
         }
