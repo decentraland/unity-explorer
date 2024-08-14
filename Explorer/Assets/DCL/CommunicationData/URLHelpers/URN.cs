@@ -9,7 +9,8 @@ namespace CommunicationData.URLHelpers
         private const int SHORTEN_URN_PARTS = 6;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
-        private readonly string urn;
+        private readonly string lowercaseUrn;
+        private readonly string originalUrn;
 
         public URN(string urn)
         {
@@ -18,27 +19,28 @@ namespace CommunicationData.URLHelpers
             // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bD77619a75C8EdA181e3587339E7011DA75bF0E:2a424e9c-c6fb-4783-99ed-63d260d90ed2
             // The same wearable in the content server (/content/entities/active):
             // urn:decentraland:matic:collections-thirdparty:dolcegabbana-disco-drip:0x4bd77619a75c8eda181e3587339e7011da75bf0e:2a424e9c-c6fb-4783-99ed-63d260d90ed2
-            this.urn = urn.ToLowerInvariant();
+            this.originalUrn = urn;
+            this.lowercaseUrn = urn.ToLowerInvariant();
         }
 
         public bool IsNullOrEmpty() =>
-            string.IsNullOrEmpty(urn);
+            string.IsNullOrEmpty(lowercaseUrn);
 
         public bool IsValid() =>
-            !IsNullOrEmpty() && urn.StartsWith("urn");
+            !IsNullOrEmpty() && lowercaseUrn.StartsWith("urn");
 
         public bool Equals(URN other) =>
-            string.Equals(urn, other);
+            string.Equals(lowercaseUrn, other.lowercaseUrn);
 
         public override bool Equals(object obj) =>
             obj is URN other && Equals(other);
 
         public override string ToString() =>
-            urn;
+            this.originalUrn;
 
         public URLAddress ToUrlOrEmpty(URLAddress baseUrl)
         {
-            string currentUrn = this.urn;
+            string currentUrn = this.originalUrn;
             ReadOnlySpan<char> CutBeforeColon(ref int endIndex, out bool success)
             {
                 int atBeginning = endIndex;
@@ -106,23 +108,23 @@ namespace CommunicationData.URLHelpers
         }
 
         public override int GetHashCode() =>
-            urn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(urn) : 0;
+            lowercaseUrn != null ? StringComparer.OrdinalIgnoreCase.GetHashCode(lowercaseUrn) : 0;
 
         public URN Shorten()
         {
-            if (string.IsNullOrEmpty(urn)) return urn;
+            if (string.IsNullOrEmpty(originalUrn)) return originalUrn;
             // Third party collections do not include the tokenId and have 7 parts, so we must keep all of them
-            if (IsThirdPartyCollection()) return urn;
+            if (IsThirdPartyCollection()) return originalUrn;
 
             int index = -1;
 
             for (var i = 0; i < SHORTEN_URN_PARTS; i++)
             {
-                index = urn.IndexOf(':', index + 1);
+                index = lowercaseUrn.IndexOf(':', index + 1);
                 if (index == -1) break;
             }
 
-            return index != -1 ? urn[..index] : urn;
+            return index != -1 ? originalUrn[..index] : originalUrn;
         }
 
         public bool IsExtended()
@@ -132,7 +134,7 @@ namespace CommunicationData.URLHelpers
 
             var count = 0;
 
-            foreach (char c in urn)
+            foreach (char c in originalUrn)
                 if (c == ':')
                     count++;
 
@@ -143,13 +145,13 @@ namespace CommunicationData.URLHelpers
             urn.ToString();
 
         public static implicit operator string(URN urn) =>
-            urn.urn;
+            urn.originalUrn;
 
         public static implicit operator URN(string urn) =>
             new (urn);
 
         private bool IsThirdPartyCollection() =>
-            !string.IsNullOrEmpty(urn) && urn.Contains(THIRD_PARTY_PART_ID);
+            !string.IsNullOrEmpty(lowercaseUrn) && lowercaseUrn.Contains(THIRD_PARTY_PART_ID);
     }
 
     public class URNIgnoreCaseEqualityComparer : IEqualityComparer<URN>
