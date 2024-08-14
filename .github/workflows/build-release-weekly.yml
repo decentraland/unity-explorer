@@ -2,8 +2,8 @@ name: Build Weekly Release
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '10 0 * * 3'
+  # schedule:
+  #  - cron: '10 0 * * 3'
   ## For testing only!
   # push:
   #   branches:
