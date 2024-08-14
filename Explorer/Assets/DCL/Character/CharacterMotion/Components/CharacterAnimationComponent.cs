@@ -4,6 +4,7 @@ namespace DCL.CharacterMotion.Components
 {
     public struct CharacterAnimationComponent
     {
+        public bool IsSliding;
         public AnimationStates States;
     }
 

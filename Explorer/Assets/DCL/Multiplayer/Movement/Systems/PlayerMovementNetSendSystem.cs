@@ -33,7 +33,6 @@ namespace DCL.Multiplayer.Movement.Systems
         private void SendPlayerNetMovement(
             [Data] float t,
             ref PlayerMovementNetworkComponent playerMovement,
-            in IAvatarView view,
             ref CharacterAnimationComponent anim,
             ref StunComponent stun,
             ref MovementInputComponent move,
@@ -46,7 +45,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement, view, in anim, in stun, in move);
+                SendMessage(ref playerMovement,in anim, in stun, in move);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -57,7 +56,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (timeDiff > sendRule.MinTimeDelta
                     && sendRule.IsSendConditionMet(timeDiff, in playerMovement.LastSentMessage, in anim, in stun, in move, in jump, playerMovement.Character, settings))
                 {
-                    SendMessage(ref playerMovement, view, in anim, in stun, in move);
+                    SendMessage(ref playerMovement, in anim, in stun, in move);
                     return;
                 }
         }
@@ -73,7 +72,7 @@ namespace DCL.Multiplayer.Movement.Systems
             }
         }
 
-        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in IAvatarView view, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
+        private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
             // Debug.Log($"VVV {animation.States.ToString()}");
@@ -85,6 +84,7 @@ namespace DCL.Multiplayer.Movement.Systems
                 velocity = playerMovement.Character.velocity,
                 isStunned = playerStunComponent.IsStunned,
                 animState = animation.States,
+                isSliding = animation.IsSliding,
 
                 movementKind = movement.Kind,
             };

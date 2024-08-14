@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace DCL.CharacterMotion.Animation
 {
-    public static class ApplyAnimationState
+    public static class AnimationStatesLogic
     {
         // General Animation Controller flags update
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -25,17 +25,24 @@ namespace DCL.CharacterMotion.Animation
             animationComponent.States.IsLongFall = !isGrounded && verticalVelocity < settings.AnimationLongFallSpeed;
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
 
-            if (rigidTransform.JustJumped && !animationComponent.States.IsJumping)
+            bool jumpStateChanged = rigidTransform.JustJumped != animationComponent.States.IsJumping;
+            Apply(view, ref animationComponent.States, rigidTransform.JustJumped, jumpStateChanged, stunComponent.IsStunned);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Apply(IAvatarView view, ref AnimationStates states, bool isJumping, bool jumpTriggered, bool isStunned)
+        {
+            if (jumpTriggered)
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
 
-            animationComponent.States.IsJumping = rigidTransform.JustJumped;
+            states.IsJumping = isJumping;
 
-            view.SetAnimatorBool(AnimationHashes.STUNNED, stunComponent.IsStunned);
-            view.SetAnimatorBool(AnimationHashes.GROUNDED, animationComponent.States.IsGrounded);
-            view.SetAnimatorBool(AnimationHashes.JUMPING, animationComponent.States.IsJumping);
-            view.SetAnimatorBool(AnimationHashes.FALLING, animationComponent.States.IsFalling);
-            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animationComponent.States.IsLongJump);
-            view.SetAnimatorBool(AnimationHashes.LONG_FALL, animationComponent.States.IsLongFall);
+            view.SetAnimatorBool(AnimationHashes.STUNNED, isStunned);
+            view.SetAnimatorBool(AnimationHashes.GROUNDED, states.IsGrounded);
+            view.SetAnimatorBool(AnimationHashes.JUMPING, states.IsJumping);
+            view.SetAnimatorBool(AnimationHashes.FALLING, states.IsFalling);
+            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, states.IsLongJump);
+            view.SetAnimatorBool(AnimationHashes.LONG_FALL, states.IsLongFall);
         }
     }
 }

@@ -3,12 +3,13 @@ using DCL.Character.CharacterMotion.Components;
 using DCL.CharacterMotion.Components;
 using DCL.CharacterMotion.Settings;
 using DCL.CharacterMotion.Utils;
+using DCL.Utilities.Extensions;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace DCL.CharacterMotion.Animation
 {
-    public static class ApplyAnimationMovementBlend
+    public static class AnimationMovementBlendLogic
     {
         public const float BLEND_EPSILON = 0.01f;
 
@@ -16,18 +17,17 @@ namespace DCL.CharacterMotion.Animation
         // state idle ----- walk ----- jog ----- run
         // blend  0  -----   1  -----  2  -----  3
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Execute(
+        public static void Apply(
             float dt,
             ref CharacterAnimationComponent animationComponent,
-            in ICharacterControllerSettings settings,
             Vector3 velocity,
             bool isGrounded,
             in MovementKind movementKind,
-            in IAvatarView view)
+            in IAvatarView view,
+            in ICharacterControllerSettings settings)
         {
-            int movementBlendId;
-            (movementBlendId, animationComponent.States.MovementBlendValue) =
-                UpdateBlendValues(dt, velocity, movementKind, animationComponent.States.MovementBlendValue, settings);
+            int movementBlendId = GetMovementBlendId(velocity.sqrMagnitude, movementKind);
+            animationComponent.States.MovementBlendValue = CalculateMovementBlend(dt, animationComponent.States.MovementBlendValue, movementBlendId, movementKind, velocity.magnitude, settings);
 
             // we avoid updating the animator value when not grounded to avoid changing the blend tree states based on our speed
             if (!isGrounded)
@@ -35,14 +35,6 @@ namespace DCL.CharacterMotion.Animation
 
             view.SetAnimatorInt(AnimationHashes.MOVEMENT_TYPE, movementBlendId);
             view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animationComponent.States.MovementBlendValue);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (int blendId, float blendValue) UpdateBlendValues(float dt, Vector3 velocity, MovementKind movementKind, float currentMovementBlend,
-            in ICharacterControllerSettings settings)
-        {
-            int movementBlendId = GetMovementBlendId(velocity.sqrMagnitude, movementKind);
-            return (movementBlendId, CalculateMovementBlend(dt, currentMovementBlend, movementBlendId, movementKind, velocity.magnitude, settings));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -72,7 +64,7 @@ namespace DCL.CharacterMotion.Animation
 
             float result = Mathf.MoveTowards(currentMovementBlend, targetBlend, dt * settings.MovAnimBlendSpeed);
 
-            return result > BLEND_EPSILON ? result : 0f;
+            return result.ClampSmallValuesToZero(BLEND_EPSILON);
         }
     }
 }

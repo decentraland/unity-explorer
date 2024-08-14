@@ -14,8 +14,16 @@ namespace DCL.Multiplayer.Movement
         public Vector3 velocity;
 
         public MovementKind movementKind;
-        public AnimationStates animState;
+        public bool isSliding;
         public bool isStunned;
+
+        // public bool isGrounded;
+        // public bool isJumping;
+        // public bool isLongJump;
+        // public bool isLongFall;
+        // public bool isFalling;
+        //
+        public AnimationStates animState;
 
         public override string ToString() =>
             JsonUtility.ToJson(this);

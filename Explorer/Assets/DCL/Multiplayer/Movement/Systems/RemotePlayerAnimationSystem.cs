@@ -12,6 +12,7 @@ using DCL.Multiplayer.Movement.Settings;
 using ECS.Abstract;
 using ECS.LifeCycle.Components;
 using UnityEngine;
+using static DCL.CharacterMotion.Animation.AnimationMovementBlendLogic;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -20,7 +21,6 @@ namespace DCL.Multiplayer.Movement.Systems
     [LogCategory(ReportCategory.MULTIPLAYER_MOVEMENT)]
     public partial class RemotePlayerAnimationSystem : BaseUnityLoopSystem
     {
-        private const float BLEND_EPSILON = 0.01f;
         private const float JUMP_EPSILON = 0.01f;
         private const float MOVEMENT_EPSILON = 0.01f;
 
@@ -66,32 +66,19 @@ namespace DCL.Multiplayer.Movement.Systems
             if (animationComponent.States.Equals(animState))
                 return;
 
-            ApplyAnimationMovementBlend.Execute(t, ref animationComponent, characterControllerSettings, message.velocity, animState.IsGrounded, message.movementKind, view);
+            AnimationMovementBlendLogic.Apply(t, ref animationComponent, message.velocity, animState.IsGrounded, message.movementKind, view, characterControllerSettings);
 
-            if ((animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping))
-                view.SetAnimatorTrigger(AnimationHashes.JUMP);
+            AnimationSlideBlendLogic.Apply(t, ref animationComponent, message.isSliding, view, characterControllerSettings);
+            animationComponent.IsSliding = message.isSliding;
 
-            view.SetAnimatorBool(AnimationHashes.STUNNED, message.isStunned);
+            bool jumpStateChanged = (animationComponent.States.IsGrounded && !animState.IsGrounded) || (!animationComponent.States.IsJumping && animState.IsJumping);
+            AnimationStatesLogic.Apply(view, ref animationComponent.States, animState.IsJumping, jumpStateChanged, message.isStunned);
 
-            view.SetAnimatorBool(AnimationHashes.GROUNDED, animState.IsGrounded);
             animationComponent.States.IsGrounded = animState.IsGrounded;
-            view.SetAnimatorBool(AnimationHashes.JUMPING, animState.IsJumping);
             animationComponent.States.IsJumping = animState.IsJumping;
-            view.SetAnimatorBool(AnimationHashes.FALLING, animState.IsFalling);
             animationComponent.States.IsLongJump = animState.IsLongJump;
-            view.SetAnimatorBool(AnimationHashes.LONG_JUMP, animState.IsLongJump);
             animationComponent.States.IsFalling = animState.IsFalling;
-            view.SetAnimatorBool(AnimationHashes.LONG_FALL, animState.IsLongFall);
             animationComponent.States.IsLongFall = animState.IsLongFall;
-        }
-
-        private static void UpdateLocalBlends(IAvatarView view, in AnimationStates animStates)
-        {
-            if (!animStates.IsGrounded)
-                return;
-
-            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
-            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
         }
 
         private static void InterpolateAnimations(IAvatarView view, ref CharacterAnimationComponent anim, in InterpolationComponent intComp)
@@ -166,6 +153,15 @@ namespace DCL.Multiplayer.Movement.Systems
             }
 
             UpdateLocalBlends(view, anim.States);
+        }
+
+        private static void UpdateLocalBlends(IAvatarView view, in AnimationStates animStates)
+        {
+            if (!animStates.IsGrounded)
+                return;
+
+            view.SetAnimatorFloat(AnimationHashes.MOVEMENT_BLEND, animStates.MovementBlendValue > BLEND_EPSILON ? animStates.MovementBlendValue : 0f);
+            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animStates.SlideBlendValue > BLEND_EPSILON ? animStates.SlideBlendValue : 0f);
         }
     }
 }
