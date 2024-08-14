@@ -12,10 +12,10 @@ namespace DCL.CharacterMotion.Animation
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Execute(
             ref CharacterAnimationComponent animationComponent,
-            in ICharacterControllerSettings settings,
-            in CharacterRigidTransform rigidTransform,
-            in IAvatarView view,
-            in StunComponent stunComponent)
+            IAvatarView view,
+            CharacterRigidTransform rigidTransform,
+            in StunComponent stunComponent,
+            ICharacterControllerSettings settings)
         {
             bool isGrounded = rigidTransform is { IsGrounded: true, IsOnASteepSlope: false } || rigidTransform.IsStuck;
             float verticalVelocity = rigidTransform.GravityVelocity.y + rigidTransform.MoveVelocity.Velocity.y;

@@ -17,18 +17,8 @@ namespace DCL.CharacterMotion.Animation
         // state idle ----- walk ----- jog ----- run
         // blend  0  -----   1  -----  2  -----  3
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Apply(
-            float dt,
-            ref CharacterAnimationComponent animationComponent,
-            Vector3 velocity,
-            bool isGrounded,
-            in MovementKind movementKind,
-            in IAvatarView view,
-            in ICharacterControllerSettings settings)
+        public static void SetAnimatorParameters(ref CharacterAnimationComponent animationComponent, IAvatarView view, bool isGrounded, int movementBlendId)
         {
-            int movementBlendId = GetMovementBlendId(velocity.sqrMagnitude, movementKind);
-            animationComponent.States.MovementBlendValue = CalculateMovementBlend(dt, animationComponent.States.MovementBlendValue, movementBlendId, movementKind, velocity.magnitude, settings);
-
             // we avoid updating the animator value when not grounded to avoid changing the blend tree states based on our speed
             if (!isGrounded)
                 return;
@@ -38,7 +28,7 @@ namespace DCL.CharacterMotion.Animation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int GetMovementBlendId(float velocitySqrMagnitude, MovementKind speedState)
+        public static int GetMovementBlendId(float velocitySqrMagnitude, MovementKind speedState)
         {
             if (velocitySqrMagnitude <= 0)
                 return 0;
@@ -53,8 +43,7 @@ namespace DCL.CharacterMotion.Animation
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float CalculateMovementBlend(float dt, float currentMovementBlend, int movementBlendId, MovementKind movementKind, float velocityMagnitude,
-            in ICharacterControllerSettings settings)
+        public static float CalculateBlendValue(float dt, float currentMovementBlend, int movementBlendId, MovementKind movementKind, float velocityMagnitude, ICharacterControllerSettings settings)
         {
             float maxVelocity = SpeedLimit.Get(settings, movementKind);
             var targetBlend = 0f;

@@ -24,19 +24,18 @@ namespace DCL.CharacterMotion.Animation
 
         // Going downwards can be also caused by sliding from steep slopes, so the downward animation blends the slide state with the fall blend state
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Apply(float dt,
-            ref CharacterAnimationComponent animationComponent,
-            bool isSliding,
-            in IAvatarView view,
-            in ICharacterControllerSettings settings)
+        public static void SetAnimatorParameters(ref CharacterAnimationComponent animationComponent, IAvatarView view)
+        {
+            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
+        }
+
+        public static float CalculateBlendValue(float dt, in float slideBlendValue, bool isSliding, ICharacterControllerSettings settings)
         {
             float targetSlideBlend = isSliding ? 1f : 0f;
 
-            animationComponent.States.SlideBlendValue =
-                Mathf.MoveTowards(animationComponent.States.SlideBlendValue, targetSlideBlend, settings.SlideAnimationBlendSpeed * dt)
+            return
+                Mathf.MoveTowards(slideBlendValue, targetSlideBlend, settings.SlideAnimationBlendSpeed * dt)
                      .ClampSmallValuesToZero(AnimationMovementBlendLogic.BLEND_EPSILON);
-
-            view.SetAnimatorFloat(AnimationHashes.SLIDE_BLEND, animationComponent.States.SlideBlendValue);
         }
     }
 }
