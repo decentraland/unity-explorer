@@ -14,8 +14,8 @@ namespace DCL.MapRenderer
     public class MapPathController : MapLayerControllerBase, IMapCullingListener<IPinMarker>, IMapLayerController, IZoomScalingLayer
     {
         internal delegate IPinMarker PinMarkerBuilder(IObjectPool<PinMarkerObject> objectsPool, IMapCullingController cullingController);
-        private const float ARRIVAL_TOLERANCE_SQRD = 50;
-        private const float MINIMAP_RADIUS = 130;
+        private const float ARRIVAL_TOLERANCE_SQUARED = 50;
+        private const float MINIMAP_RADIUS = 134;
         private const float MINIMAP_SQR_DISTANCE_TO_HIDE_PIN = 26000;
 
         private readonly PinMarkerBuilder builder;
@@ -82,12 +82,11 @@ namespace DCL.MapRenderer
         private static bool CheckIfArrivedToDestination(Vector2 newPosition, Vector2 destinationPosition)
         {
             Vector2 difference = newPosition - destinationPosition;
-            return difference.sqrMagnitude <= ARRIVAL_TOLERANCE_SQRD;
+            return difference.sqrMagnitude <= ARRIVAL_TOLERANCE_SQUARED;
         }
 
         private void UpdatePositionInMinimapEdge(Vector2 origin, Vector2 destination)
         {
-            float minimapRadius = MINIMAP_RADIUS;
             Vector2 direction = destination - origin;
             float distanceAB = direction.sqrMagnitude;
 
@@ -98,14 +97,19 @@ namespace DCL.MapRenderer
             }
 
             direction.Normalize();
-            Vector2 intersectionPoint = direction * minimapRadius;
+            Vector2 intersectionPoint = direction * MINIMAP_RADIUS;
             mapPathEventBus.UpdatePinPositionInMinimapEdge(intersectionPoint);
         }
 
         private void OnRemovedDestination()
         {
             destinationSet = false;
-            internalPinMarker.OnBecameInvisible();
+
+            if (internalPinMarker.IsDestination)
+            {
+                internalPinMarker.SetAsDestination(false);
+                internalPinMarker.Hide(internalPinMarker.OnBecameInvisible);
+            }
             mapPathRenderer.gameObject.SetActive(false);
         }
 
@@ -116,15 +120,15 @@ namespace DCL.MapRenderer
             mapPathRenderer.gameObject.SetActive(true);
             mapPathRenderer.UpdateOrigin(cachedPlayerMarkerPosition);
             mapPathRenderer.SetDestination(mapPosition);
-            internalPinMarker.OnBecameInvisible();
+            if (internalPinMarker.IsVisible) { internalPinMarker.Hide(internalPinMarker.OnBecameInvisible); }
 
             if (pinMarker == null)
             {
                 currentDestinationPin = internalPinMarker;
-                internalPinMarker.OnBecameInvisible();
+                internalPinMarker.SetAsDestination(true);
                 internalPinMarker.OnBecameVisible();
                 internalPinMarker.SetPosition(mapPosition, parcel);
-                internalPinMarker.SetAsDestination(true);
+                internalPinMarker.Show(null);
             }
             else
             {
@@ -176,7 +180,7 @@ namespace DCL.MapRenderer
 
         public void ResetToBaseScale()
         {
-            internalPinMarker.ResetScale(coordsUtils.ParcelSize);
+            internalPinMarker.ResetScale();
             mapPathRenderer.ResetScale();
         }
     }
