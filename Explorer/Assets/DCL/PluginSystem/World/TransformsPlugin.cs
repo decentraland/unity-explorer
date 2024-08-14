@@ -2,6 +2,7 @@
 using DCL.CharacterCamera;
 using DCL.Optimization.Pools;
 using DCL.PluginSystem.World.Dependencies;
+using Decentraland.Common;
 using ECS.ComponentsPooling.Systems;
 using ECS.LifeCycle;
 using ECS.Unity.Systems;
@@ -10,6 +11,8 @@ using ECS.Unity.Transforms.Systems;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility;
+using Quaternion = UnityEngine.Quaternion;
+using Vector3 = UnityEngine.Vector3;
 
 namespace DCL.PluginSystem.World
 {
@@ -56,24 +59,28 @@ namespace DCL.PluginSystem.World
         private void CreateReservedTransforms(ArchSystemsWorldBuilder<Arch.Core.World> builder,
             ECSWorldInstanceSharedDependencies sharedDependencies, PersistentEntities persistentEntities)
         {
-            Transform sceneRootTransform = GetNewTransform(sharedDependencies);
-            sceneRootTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}";
+            Transform sceneRootContainerTransform = GetNewTransform(position: sharedDependencies.SceneData.Geometry.BaseParcelPosition);
+            sceneRootContainerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_Container";
+            builder.World.Create(new TransformComponent(sceneRootContainerTransform));
+
+            Transform sceneRootTransform = GetNewTransform(sceneRootContainerTransform);
+            sceneRootTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel}_{sharedDependencies.SceneData.SceneShortInfo.Name}_SceneRoot";
             builder.World.Add(persistentEntities.SceneRoot, new TransformComponent(sceneRootTransform));
 
-            Transform playerTransform = GetNewTransform(sharedDependencies, sceneRootTransform);
+            Transform playerTransform = GetNewTransform(sceneRootTransform);
             playerTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel} PLAYER_ENTITY";
             builder.World.Add(persistentEntities.Player, new TransformComponent(playerTransform));
 
-            Transform cameraTransform = GetNewTransform(sharedDependencies, sceneRootTransform);
+            Transform cameraTransform = GetNewTransform(sceneRootTransform);
             cameraTransform.name = $"{sharedDependencies.SceneData.SceneShortInfo.BaseParcel} CAMERA_ENTITY";
             builder.World.Add(persistentEntities.Camera, new TransformComponent(cameraTransform));
         }
 
-        private Transform GetNewTransform(ECSWorldInstanceSharedDependencies sharedDependencies, Transform? transform = null)
+        private Transform GetNewTransform(Transform? transform = null, Vector3 position = default)
         {
             Transform sceneRootTransform = transformPool.Get();
             sceneRootTransform.SetParent(transform);
-            sceneRootTransform.position = sharedDependencies.SceneData.Geometry.BaseParcelPosition;
+            sceneRootTransform.localPosition = position;
             sceneRootTransform.rotation = Quaternion.identity;
             sceneRootTransform.localScale = Vector3.one;
             return sceneRootTransform;
