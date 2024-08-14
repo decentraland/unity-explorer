@@ -103,10 +103,10 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             bool ContainsInRoom(IRoom room)
             {
-                foreach (string? sid in room.Participants.RemoteParticipantSids())
+                foreach (string? identity in room.Participants.RemoteParticipantIdentities())
                 {
-                    if (sid != null
-                        && room.Participants.RemoteParticipant(sid) is { } participant
+                    if (identity != null
+                        && room.Participants.RemoteParticipant(identity) is { } participant
                         && participant.Identity == wallet
                        )
                         return true;
