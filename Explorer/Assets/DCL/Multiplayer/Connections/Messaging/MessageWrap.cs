@@ -1,3 +1,4 @@
+using CrdtEcsBridge.Components;
 using Cysharp.Threading.Tasks;
 using DCL.Multiplayer.Connections.Pools;
 using Decentraland.Kernel.Comms.Rfc4;
@@ -53,7 +54,7 @@ namespace DCL.Multiplayer.Connections.Messaging
                 return;
 
             using var packetWrap = multiPool.TempResource<Packet>();
-            packetWrap.value.ClearMessage();
+            packetWrap.value.ClearProtobufComponent();
             packetWrap.value.ProtocolVersion = supportedVersion;
             WritePayloadToPacket(packetWrap.value);
             using MemoryWrap memory = memoryPool.Memory(packetWrap.value);

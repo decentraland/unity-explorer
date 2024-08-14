@@ -5,23 +5,29 @@ using UnityEngine;
 namespace DCL.Diagnostics
 {
     [Serializable]
-    internal class CategorySeverityMatrix : ICategorySeverityMatrix
+    internal class CategorySeverityMatrix : ICategorySeverityMatrix, ISerializationCallbackReceiver
     {
-        // Remove an entry if category no longer exists
-        [SerializeField] internal List<Entry> entries;
+        [SerializeField] internal List<Entry>? entries;
+        private Dictionary<(string, LogType), bool>? lookupCache;
 
-        // TODO cache results and invalidate only when entries are changed
+        private void InitializeLookupCache()
+        {
+            lookupCache = new Dictionary<(string, LogType), bool>();
+            foreach (var entry in entries)
+            {
+                lookupCache[(entry.Category, entry.Severity)] = true;
+            }
+        }
+
         public bool IsEnabled(string category, LogType severity)
         {
-            for (var i = 0; i < entries.Count; i++)
-            {
-                Entry entry = entries[i];
+            if (lookupCache == null) InitializeLookupCache();
+            return lookupCache!.TryGetValue((category, severity), out bool result) && result;
+        }
 
-                if (entry.Category == category && entry.Severity == severity)
-                    return true;
-            }
-
-            return false;
+        private void OnValidate()
+        {
+            lookupCache = null; // Invalidate the cache
         }
 
         [Serializable]
@@ -30,5 +36,9 @@ namespace DCL.Diagnostics
             public string Category;
             public LogType Severity;
         }
+
+        public void OnBeforeSerialize() { this.OnValidate(); }
+
+        public void OnAfterDeserialize() { }
     }
 }
