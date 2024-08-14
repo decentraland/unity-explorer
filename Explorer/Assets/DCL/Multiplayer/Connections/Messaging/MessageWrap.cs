@@ -68,9 +68,9 @@ namespace DCL.Multiplayer.Connections.Messaging
         /// <summary>
         /// Adding special participant removes broadcasting to all participants
         /// </summary>
-        public void AddSpecialRecipient(string sid)
+        public void AddSpecialRecipient(string identity)
         {
-            recipients.Add(sid);
+            recipients.Add(identity);
         }
 
         private void WritePayloadToPacket(Packet packet)
@@ -99,8 +99,8 @@ namespace DCL.Multiplayer.Connections.Messaging
             [typeof(ProfileResponse)] = (packet, o) => packet.ProfileResponse = (ProfileResponse)o,
             [typeof(Scene)] = (packet, o) => packet.Scene = (Scene)o,
             [typeof(Voice)] = (packet, o) => packet.Voice = (Voice)o,
-            [typeof(Decentraland.Kernel.Comms.Rfc4.Chat)] = (packet, o) => packet.Chat = (Decentraland.Kernel.Comms.Rfc4.Chat)o,
-            [typeof(Decentraland.Kernel.Comms.Rfc4.Movement)] = (packet, o) => packet.Movement = (Decentraland.Kernel.Comms.Rfc4.Movement)o,
+            [typeof(Chat)] = (packet, o) => packet.Chat = (Chat)o,
+            [typeof(Movement)] = (packet, o) => packet.Movement = (Movement)o,
             [typeof(PlayerEmote)] = (packet, o) => packet.PlayerEmote = (PlayerEmote)o,
             [typeof(SceneEmote)] = (packet, o) => packet.SceneEmote = (SceneEmote)o
         };
