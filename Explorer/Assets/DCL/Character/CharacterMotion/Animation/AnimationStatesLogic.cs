@@ -26,11 +26,11 @@ namespace DCL.CharacterMotion.Animation
             animationComponent.States.IsLongJump = verticalVelocity > settings.RunJumpHeight * settings.RunJumpHeight * settings.JumpGravityFactor;
 
             bool jumpStateChanged = rigidTransform.JustJumped != animationComponent.States.IsJumping;
-            Apply(view, ref animationComponent.States, rigidTransform.JustJumped, jumpStateChanged, stunComponent.IsStunned);
+            SetAnimatorParameters(view, ref animationComponent.States, rigidTransform.JustJumped, jumpStateChanged, stunComponent.IsStunned);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void Apply(IAvatarView view, ref AnimationStates states, bool isJumping, bool jumpTriggered, bool isStunned)
+        public static void SetAnimatorParameters(IAvatarView view, ref AnimationStates states, bool isJumping, bool jumpTriggered, bool isStunned)
         {
             if (jumpTriggered)
                 view.SetAnimatorTrigger(AnimationHashes.JUMP);
