@@ -63,15 +63,6 @@ namespace Global.Dynamic
                     AppParameters[lastKeyStored] = arg;
             }
 
-            // in MacOS the deep link string doesn't come in the cmd args (unless forwarded by the Launcher)
-#if !UNITY_EDITOR && UNITY_STANDALONE_OSX
-            if (!deepLinkFound && !string.IsNullOrEmpty(Application.absoluteURL) && Application.absoluteURL.StartsWith("decentraland"))
-            {
-                // Regex patch for MacOS removing the ':' from the realm parameter protocol
-                ProcessDeepLinkParameters(Regex.Replace(Application.absoluteURL, @"(https?)//(.*?)$", @"$1://$2"));
-            }
-#endif
-
             return AppParameters;
         }
 
