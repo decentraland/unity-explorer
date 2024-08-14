@@ -42,7 +42,7 @@ namespace DCL.Interaction.Raycast.Tests
         public void SetUp()
         {
             ISceneData sceneData = Substitute.For<ISceneData>();
-            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(UnityEngine.Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes()));
+            sceneData.Geometry.Returns(new ParcelMathHelper.SceneGeometry(UnityEngine.Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(), 0.0f));
 
             budget = Substitute.For<IReleasablePerformanceBudget>();
             budget.TrySpendBudget().Returns(true);

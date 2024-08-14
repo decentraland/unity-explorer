@@ -27,7 +27,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
             system = new CheckColliderBoundsSystem(
                 world,
                 scenePartition,
-                new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f)),
+                new ParcelMathHelper.SceneGeometry(Vector3.zero, new ParcelMathHelper.SceneCircumscribedPlanes(-50f, 50f, -50f, 50f), float.MaxValue),
                 physicsTickProvider);
 
             collider = new GameObject(nameof(ColliderBoundsCheckerShould)).AddComponent<BoxCollider>();
