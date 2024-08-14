@@ -37,6 +37,9 @@ namespace DCL.Optimization.Pools
 
         public void Release(T element)
         {
+            // If Application is quitting game objects can be already destroyed
+            if (UnityObjectUtils.IsQuitting) return;
+
             if (element == null)
             {
                 ReportHub.LogError(ReportCategory.ENGINE, $"Trying to release `null` reference of type {typeof(T).Name} to the pool");

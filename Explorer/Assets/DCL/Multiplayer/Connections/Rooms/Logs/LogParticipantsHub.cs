@@ -40,16 +40,16 @@ namespace DCL.Multiplayer.Connections.Rooms.Logs
             return participant;
         }
 
-        public Participant? RemoteParticipant(string sid)
+        public Participant? RemoteParticipant(string identity)
         {
-            Participant? participant = origin.RemoteParticipant(sid);
-            log($"{PREFIX} with sid {sid} remote {participant?.ReadableString() ?? "NONE"}");
+            Participant? participant = origin.RemoteParticipant(identity);
+            log($"{PREFIX} with sid {identity} remote {participant?.ReadableString() ?? "NONE"}");
             return participant;
         }
 
-        public IReadOnlyCollection<string> RemoteParticipantSids()
+        public IReadOnlyCollection<string> RemoteParticipantIdentities()
         {
-            IReadOnlyCollection<string> sids = origin.RemoteParticipantSids();
+            IReadOnlyCollection<string> sids = origin.RemoteParticipantIdentities();
             log($"{PREFIX} remote sids {(sids.Count > 0 ? string.Join(", ", sids) : "empty")} ");
             return sids;
         }

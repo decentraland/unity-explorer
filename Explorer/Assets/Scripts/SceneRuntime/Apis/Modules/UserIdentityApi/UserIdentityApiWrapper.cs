@@ -7,6 +7,7 @@ using SceneRunner.Scene.ExceptionsHandling;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Utility;
 
 namespace SceneRuntime.Apis.Modules.UserIdentityApi
@@ -73,7 +74,7 @@ namespace SceneRuntime.Apis.Modules.UserIdentityApi
                 }
             }
 
-            return GetOwnUserDataAsync(lifeCycleCts.Token).ToDisconnectedPromise();
+            return GetOwnUserDataAsync(lifeCycleCts.Token).ContinueWith(JsonUtility.ToJson).ToDisconnectedPromise();
         }
     }
 }

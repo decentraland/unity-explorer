@@ -5,6 +5,7 @@ using LiveKit.Rooms.DataPipes;
 using LiveKit.Rooms.Info;
 using LiveKit.Rooms.Participants;
 using LiveKit.Rooms.Tracks.Hub;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,6 +37,8 @@ namespace DCL.Multiplayer.Connections.Rooms
         {
             //ignore
         }
+
+        public void SetLocalName(string name) { }
 
         public Task<bool> ConnectAsync(string url, string authToken, CancellationToken cancelToken, bool autoSubscribe) =>
             Task.FromResult(true);

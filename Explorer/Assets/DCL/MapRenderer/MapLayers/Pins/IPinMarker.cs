@@ -37,6 +37,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetZoom(float baseScale, float baseZoom, float zoom);
 
-        void ResetScale(float scale);
+        void ResetScale();
+
+        void Show(Action? onFinish);
+
+        void Hide(Action? onFinish);
     }
 }
