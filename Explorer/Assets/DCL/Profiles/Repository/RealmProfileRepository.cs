@@ -22,7 +22,7 @@ namespace DCL.Profiles
         private readonly IProfileCache profileCache;
         private readonly URLBuilder urlBuilder = new ();
         private readonly Dictionary<string, byte[]> files = new ();
-        private readonly byte[] whiteTexturePng = Texture2D.whiteTexture!.EncodeToPNG()!;
+        private readonly byte[] whiteTexturePng = new Texture2D(256, 256).EncodeToPNG();
 
         public RealmProfileRepository(IWebRequestController webRequestController,
             IRealmData realm,
