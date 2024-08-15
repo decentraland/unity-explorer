@@ -1,16 +1,13 @@
 ﻿using Arch.Core;
 using Cysharp.Threading.Tasks;
-using DCL.CharacterMotion.Components;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.Messaging;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Messaging.Pipe;
 using DCL.Multiplayer.Profiles.Tables;
 using Decentraland.Kernel.Comms.Rfc4;
-using LiveKit.Proto;
 using System;
 using System.Threading;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
@@ -27,8 +24,8 @@ namespace DCL.Multiplayer.Movement.Systems
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
 
-            this.messagePipesHub.IslandPipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<Decentraland.Kernel.Comms.Rfc4.Movement>(Packet.MessageOneofCase.Movement, OnMessageReceived);
+            this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.Movement, OnMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.Movement, OnMessageReceived);
         }
 
         public void Dispose()
@@ -38,7 +35,7 @@ namespace DCL.Multiplayer.Movement.Systems
             cancellationTokenSource.Dispose();
         }
 
-        private void OnMessageReceived(ReceivedMessage<Decentraland.Kernel.Comms.Rfc4.Movement> receivedMessage)
+        private void OnMessageReceived(ReceivedMessage<MovementCompressed> receivedMessage)
         {
             if (isDisposed)
             {
@@ -51,8 +48,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 if (cancellationTokenSource.Token.IsCancellationRequested)
                     return;
 
-                NetworkMovementMessage message = MovementMessage(receivedMessage.Payload);
-                Inbox(message, receivedMessage.FromWalletId);
+                CompressedNetworkMovementMessage message = MovementMessage(receivedMessage.Payload);
+                Inbox(message.Decompress(), receivedMessage.FromWalletId);
             }
         }
 
@@ -69,52 +66,22 @@ namespace DCL.Multiplayer.Movement.Systems
 
         private void WriteAndSend(NetworkMovementMessage message, IMessagePipe messagePipe)
         {
-            MessageWrap<Decentraland.Kernel.Comms.Rfc4.Movement> messageWrap = messagePipe.NewMessage<Decentraland.Kernel.Comms.Rfc4.Movement>();
-            WriteToProto(message, messageWrap.Payload);
+            MessageWrap<MovementCompressed> messageWrap = messagePipe.NewMessage<MovementCompressed>();
+            WriteToProto(message.Compress(), messageWrap.Payload);
             messageWrap.SendAndDisposeAsync(cancellationTokenSource.Token).Forget();
         }
 
-        private static void WriteToProto(NetworkMovementMessage message, Decentraland.Kernel.Comms.Rfc4.Movement movement)
+        private static void WriteToProto(CompressedNetworkMovementMessage message, MovementCompressed proto)
         {
-            movement.Timestamp = message.timestamp;
-
-            movement.PositionX = message.position.x;
-            movement.PositionY = message.position.y;
-            movement.PositionZ = message.position.z;
-
-            movement.VelocityX = message.velocity.x;
-            movement.VelocityY = message.velocity.y;
-            movement.VelocityZ = message.velocity.z;
-
-            movement.MovementBlendValue = message.animState.MovementBlendValue;
-            movement.SlideBlendValue = message.animState.SlideBlendValue;
-
-            movement.IsGrounded = message.animState.IsGrounded;
-            movement.IsJumping = message.animState.IsJumping;
-            movement.IsLongJump = message.animState.IsLongJump;
-            movement.IsFalling = message.animState.IsFalling;
-            movement.IsLongFall = message.animState.IsLongFall;
-
-            movement.IsStunned = message.isStunned;
+            proto.TemporalData = message.temporalData;
+            proto.MovementData = message.movementData;
         }
 
-        private static NetworkMovementMessage MovementMessage(Decentraland.Kernel.Comms.Rfc4.Movement proto) =>
+        private static CompressedNetworkMovementMessage MovementMessage(MovementCompressed proto) =>
             new ()
             {
-                timestamp = proto.Timestamp,
-                position = new Vector3(proto.PositionX, proto.PositionY, proto.PositionZ),
-                velocity = new Vector3(proto.VelocityX, proto.VelocityY, proto.VelocityZ),
-                animState = new AnimationStates
-                {
-                    MovementBlendValue = proto.MovementBlendValue,
-                    SlideBlendValue = proto.SlideBlendValue,
-                    IsGrounded = proto.IsGrounded,
-                    IsJumping = proto.IsJumping,
-                    IsLongJump = proto.IsLongJump,
-                    IsFalling = proto.IsFalling,
-                    IsLongFall = proto.IsLongFall,
-                },
-                isStunned = proto.IsStunned,
+                temporalData = proto.TemporalData,
+                movementData = proto.MovementData,
             };
 
         private void Inbox(NetworkMovementMessage fullMovementMessage, string @for)
