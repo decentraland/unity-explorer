@@ -7,47 +7,56 @@ namespace DCL.Multiplayer.Movement
 {
     public static class NetworkMessageEncoder
     {
-        public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
-        {
-            Vector2Int parcel = message.position.ToParcel();
+        public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message) =>
+            new()
+            {
+                temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned),
+                movementData = CompressMovementData(message.position, message.velocity),
+            };
 
-            int compressedData = TimestampEncoder.Compress(message.timestamp);
+        private static int CompressTemporalData(float timestamp, MovementKind movementKind, bool isSliding, AnimationStates animState, bool isStunned)
+        {
+            int temporalData = TimestampEncoder.Compress(timestamp);
+
+            // Animations
+            temporalData |= ((int)movementKind & MOVEMENT_KIND_MASK) << MOVEMENT_KIND_START_BIT;
+            if (isSliding) temporalData |= 1 << SLIDING_BIT;
+            if (isStunned) temporalData |= 1 << STUNNED_BIT;
+            if (animState.IsGrounded) temporalData |= 1 << GROUNDED_BIT;
+            if (animState.IsJumping) temporalData |= 1 << JUMPING_BIT;
+            if (animState.IsLongJump) temporalData |= 1 << LONG_JUMP_BIT;
+            if (animState.IsFalling) temporalData |= 1 << FALLING_BIT;
+            if (animState.IsLongFall) temporalData |= 1 << LONG_FALL_BIT;
+
+            return temporalData;
+        }
+
+        private static long CompressMovementData(Vector3 position, Vector3 velocity)
+        {
+            Vector2Int parcel = position.ToParcel();
+
             int parcelIndex = ParcelEncoder.EncodeParcel(parcel);
 
             var relativePosition = new Vector2(
-                message.position.x - (parcel.x * ParcelEncoder.PARCEL_SIZE),
-                message.position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE) // Y is Z in this case
+                position.x - (parcel.x * ParcelEncoder.PARCEL_SIZE),
+                position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE) // Y is Z in this case
             );
 
             int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, PARCEL_SIZE, XZ_BITS);
             int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, PARCEL_SIZE, XZ_BITS);
-            int compressedY = FloatQuantizer.Compress(message.position.y, 0, Y_MAX, Y_BITS);
+            int compressedY = FloatQuantizer.Compress(position.y, 0, Y_MAX, Y_BITS);
 
-            int compressedVelocityX = FloatQuantizer.Compress(message.velocity.x, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
-            int compressedVelocityY = FloatQuantizer.Compress(message.velocity.y, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
-            int compressedVelocityZ = FloatQuantizer.Compress(message.velocity.z, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityX = FloatQuantizer.Compress(velocity.x, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityY = FloatQuantizer.Compress(velocity.y, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityZ = FloatQuantizer.Compress(velocity.z, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
 
-            compressedData |= ((int)message.movementKind & MOVEMENT_KIND_MASK) << MOVEMENT_KIND_START_BIT;
-            if (message.isSliding) compressedData |= 1 << SLIDING_BIT;
-            if (message.isStunned) compressedData |= 1 << STUNNED_BIT;
-            if (message.animState.IsGrounded) compressedData |= 1 << GROUNDED_BIT;
-            if (message.animState.IsJumping) compressedData |= 1 << JUMPING_BIT;
-            if (message.animState.IsLongJump) compressedData |= 1 << LONG_JUMP_BIT;
-            if (message.animState.IsFalling) compressedData |= 1 << FALLING_BIT;
-            if (message.animState.IsLongFall) compressedData |= 1 << LONG_FALL_BIT;
-
-            return new CompressedNetworkMovementMessage
-            {
-                temporalData = compressedData,
-
-                movementData = (uint)parcelIndex
-                               | ((long)compressedX << PARCEL_BITS)
-                               | ((long)compressedZ << (PARCEL_BITS + XZ_BITS))
-                               | ((long)compressedY << (PARCEL_BITS + XZ_BITS + XZ_BITS))
-                               | ((long)compressedVelocityX << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS))
-                               | ((long)compressedVelocityY << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS))
-                               | ((long)compressedVelocityZ << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)),
-            };
+            return (uint)parcelIndex
+                   | ((long)compressedX << PARCEL_BITS)
+                   | ((long)compressedZ << (PARCEL_BITS + XZ_BITS))
+                   | ((long)compressedY << (PARCEL_BITS + XZ_BITS + XZ_BITS))
+                   | ((long)compressedVelocityX << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS))
+                   | ((long)compressedVelocityY << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS))
+                   | ((long)compressedVelocityZ << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS));
         }
 
         public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage)
