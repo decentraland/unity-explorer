@@ -87,6 +87,8 @@ namespace DCL.Multiplayer.Connections.Systems
                 ),
                 TimeSpan.FromSeconds(1)
             );
+
+            this.roomsStatus = roomsStatus;
         }
 
         protected override void Update(float t)
