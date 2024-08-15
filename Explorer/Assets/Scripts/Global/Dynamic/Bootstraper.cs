@@ -30,6 +30,7 @@ namespace Global.Dynamic
     public class Bootstrap : IBootstrap
     {
         private readonly IDebugSettings debugSettings;
+        private readonly ICommandLineArgs commandLineArgs;
 
         private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
         private Vector2Int startingParcel;
@@ -38,9 +39,10 @@ namespace Global.Dynamic
 
         public bool EnableAnalytics { private get; init; }
 
-        public Bootstrap(IDebugSettings debugSettings)
+        public Bootstrap(IDebugSettings debugSettings, ICommandLineArgs commandLineArgs)
         {
             this.debugSettings = debugSettings;
+            this.commandLineArgs = commandLineArgs;
         }
 
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
@@ -61,7 +63,7 @@ namespace Global.Dynamic
         }
 
         public async UniTask<(StaticContainer?, bool)> LoadStaticContainerAsync(BootstrapContainer bootstrapContainer, PluginSettingsContainer globalPluginSettingsContainer, DebugViewsCatalog debugViewsCatalog, CancellationToken ct) =>
-            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, debugViewsCatalog, globalPluginSettingsContainer,
+            await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, commandLineArgs, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, ct);
 
         public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
@@ -72,7 +74,6 @@ namespace Global.Dynamic
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
                 staticContainer.DebugContainerBuilder,
-                new CommandLineArgs(),
                 bootstrapContainer.AssetsProvisioner,
                 staticContainer,
                 scenePluginSettingsContainer,

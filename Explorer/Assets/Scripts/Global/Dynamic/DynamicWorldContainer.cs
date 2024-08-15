@@ -138,16 +138,16 @@ namespace Global.Dynamic
 
         private static void BuildTeleportWidget(IRealmNavigator realmNavigator, IDebugContainerBuilder debugContainerBuilder, List<string> realms)
         {
-            debugContainerBuilder.AddWidget("Realm")
-                                 .AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(string.Empty,
+            debugContainerBuilder.TryAddWidget("Realm")
+                                ?.AddControl(new DebugDropdownDef(realms, new ElementBinding<string>(string.Empty,
                                       evt => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(evt.newValue), CancellationToken.None).Forget(); }), string.Empty), null)
                                  .AddStringFieldWithConfirmation("https://peer.decentraland.org", "Change", realm => { realmNavigator.TryChangeRealmAsync(URLDomain.FromString(realm), CancellationToken.None).Forget(); });
         }
 
         private static void BuildReloadSceneWidget(IDebugContainerBuilder debugBuilder, IChatMessagesBus chatMessagesBus)
         {
-            debugBuilder.AddWidget("Scene Reload")
-                        .AddSingleButton("Reload Scene", () => chatMessagesBus.Send("/reload"));
+            debugBuilder.TryAddWidget("Scene Reload")
+                       ?.AddSingleButton("Reload Scene", () => chatMessagesBus.Send("/reload"));
         }
 
         public static async UniTask<(DynamicWorldContainer? container, bool success)> CreateAsync(
@@ -164,8 +164,6 @@ namespace Global.Dynamic
             IAssetsProvisioner assetsProvisioner = dynamicWorldDependencies.AssetsProvisioner;
 
             IDebugContainerBuilder debugBuilder = dynamicWorldDependencies.DebugContainerBuilder;
-            ICommandLineArgs commandLineArgs = dynamicWorldDependencies.CommandLineArgs;
-            bool isFullyDebug = commandLineArgs.HasDebugFlag();
 
             var placesAPIService = new PlacesAPIService(new PlacesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource));
             var mapPathEventBus = new MapPathEventBus();
@@ -272,6 +270,7 @@ namespace Global.Dynamic
 
             container.reloadSceneController = new ECSReloadScene(staticContainer.ScenesCache);
             bool localSceneDevelopment = !string.IsNullOrEmpty(dynamicWorldParams.LocalSceneDevelopmentRealm);
+
             if (localSceneDevelopment)
                 container.localSceneDevelopmentController = new LocalSceneDevelopmentController(container.reloadSceneController, dynamicWorldParams.LocalSceneDevelopmentRealm);
 
