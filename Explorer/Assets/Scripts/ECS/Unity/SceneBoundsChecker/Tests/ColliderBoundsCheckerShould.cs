@@ -104,7 +104,7 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             Assert.IsTrue(collider.enabled);
         }
-        
+
         [Test]
         public void DisableColliderOutOfVerticalBounds()
         {
@@ -116,6 +116,8 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
@@ -135,6 +137,8 @@ namespace ECS.Unity.SceneBoundsChecker.Tests
 
             component.SDKCollider.IsActiveByEntity = true;
             collider.enabled = true;
+            //Simulate movement
+            collider.transform.position += Vector3.one * 0.01f;
 
             world.Create(component);
 
