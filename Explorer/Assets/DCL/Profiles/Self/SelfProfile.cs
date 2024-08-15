@@ -125,16 +125,13 @@ namespace DCL.Profiles.Self
 
                 URN uniqueUrn = w.GetUrn();
 
-                if (!uniqueUrn.IsExtended())
+                if (wearableCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                    uniqueUrn = registry.First().Value.Urn;
+                else
                 {
-                    if (wearableCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
-                    else
-                    {
-                        foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
-                            if (profileWearable.Shorten() == uniqueUrn)
-                                uniqueUrn = profileWearable;
-                    }
+                    foreach (URN profileWearable in profile?.Avatar?.Wearables ?? Array.Empty<URN>())
+                        if (profileWearable.Shorten() == uniqueUrn)
+                            uniqueUrn = profileWearable;
                 }
 
                 uniqueWearables.Add(uniqueUrn);
@@ -151,16 +148,13 @@ namespace DCL.Profiles.Self
 
                 URN uniqueUrn = w.GetUrn();
 
-                if (!uniqueUrn.IsExtended())
+                if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
+                    uniqueUrn = registry.First().Value.Urn;
+                else
                 {
-                    if (emoteCache.TryGetOwnedNftRegistry(uniqueUrn, out IReadOnlyDictionary<URN, NftBlockchainOperationEntry>? registry))
-                        uniqueUrn = registry.First().Value.Urn;
-                    else
-                    {
-                        foreach (URN urn in profile?.Avatar.Emotes ?? Array.Empty<URN>())
-                            if (urn.Shorten() == uniqueUrn)
-                                uniqueUrn = urn;
-                    }
+                    foreach (URN urn in profile?.Avatar.Emotes ?? Array.Empty<URN>())
+                        if (urn.Shorten() == uniqueUrn)
+                            uniqueUrn = urn;
                 }
 
                 uniqueEmotes[i] = uniqueUrn;

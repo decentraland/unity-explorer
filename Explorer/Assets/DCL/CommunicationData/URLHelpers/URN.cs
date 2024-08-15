@@ -7,6 +7,7 @@ namespace CommunicationData.URLHelpers
     public readonly struct URN
     {
         private const int SHORTEN_URN_PARTS = 6;
+        private const int THIRD_PARTY_V2_SHORTEN_URN_PARTS = 7;
         private const string THIRD_PARTY_PART_ID = "collections-thirdparty";
 
         private readonly string urn;
@@ -121,20 +122,30 @@ namespace CommunicationData.URLHelpers
         public URN Shorten()
         {
             if (string.IsNullOrEmpty(urn)) return this;
-            if (!IsExtended()) return this;
+            if (CountParts() <= SHORTEN_URN_PARTS) return this;
 
-            // TokenId is always placed in the last part
-            int index = urn.LastIndexOf(':');
+            int index;
+
+            if (IsThirdPartyCollection())
+            {
+                index = -1;
+
+                // Third party v2 contains 10 parts, on which 3 are reserved for the tokenId
+                // "id": urn:decentraland:amoy:collections-thirdparty:back-to-the-future:amoy-eb54:tuxedo-6751:amoy:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:12
+                // "tokenId": amoy:0x1d9fb685c257e74f869ba302e260c0b68f5ebb37:12
+                for (var i = 0; i < THIRD_PARTY_V2_SHORTEN_URN_PARTS; i++)
+                {
+                    index = urn.IndexOf(':', index + 1);
+                    if (index == -1) break;
+                }
+
+                return index != -1 ? urn[..index] : urn;
+            }
+
+            // TokenId is always placed in the last part for regular nfts
+            index = urn.LastIndexOf(':');
 
             return index != -1 ? urn[..index] : this;
-        }
-
-        public bool IsExtended()
-        {
-            // Third party collections do not apply to shortened/extended rules
-            if (IsThirdPartyCollection()) return false;
-
-            return CountParts() > SHORTEN_URN_PARTS;
         }
 
         public static implicit operator URN(int urn) =>
