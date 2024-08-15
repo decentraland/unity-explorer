@@ -52,9 +52,6 @@ namespace DCL.Multiplayer.Movement
 
         public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage)
         {
-            int compressedTemporalData = compressedMessage.temporalData;
-            float timestamp = TimestampEncoder.Decompress(compressedTemporalData, TIMESTAMP_BITS);
-
             long compressedMovement = compressedMessage.movementData;
 
             const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
@@ -64,7 +61,6 @@ namespace DCL.Multiplayer.Movement
 
             Vector2Int parcel = ParcelEncoder.DecodeParcel((int)(compressedMovement & PARCEL_MASK));
 
-            // Decompressing values
             var extractedX = (int)((compressedMovement >> PARCEL_BITS) & XZ_MASK);
             var extractedZ = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS)) & XZ_MASK);
             var extractedY = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
@@ -89,9 +85,11 @@ namespace DCL.Multiplayer.Movement
 
             var velocity = new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ);
 
+            int compressedTemporalData = compressedMessage.temporalData;
+
             return new NetworkMovementMessage
             {
-                timestamp = timestamp,
+                timestamp = TimestampEncoder.Decompress(compressedTemporalData),
                 position = worldPosition,
                 velocity = velocity,
                 movementKind = (MovementKind)((compressedTemporalData >> MOVEMENT_KIND_START_BIT) & MOVEMENT_KIND_MASK),
@@ -135,20 +133,16 @@ namespace DCL.Multiplayer.Movement
 
     public static class TimestampEncoder
     {
-        public static float Buffer => steps * TIMESTAMP_QUANTUM;
-        public static int steps => 1 << TIMESTAMP_BITS; // 2^TIMESTAMP_BITS
+        public const float BUFFER = (1 << TIMESTAMP_BITS) * TIMESTAMP_QUANTUM; // maxSteps * quantum
 
         public static int Compress(float timestamp)
         {
-            float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
-            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM) % steps;
+            float normalizedTimestamp = timestamp % BUFFER; // Normalize timestamp within the circular buffer
+            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM);
         }
 
-        public static float Decompress(long data, int bits)
-        {
-            int mask = (1 << bits) - 1;
-            return (int)(data & mask) * TIMESTAMP_QUANTUM % Buffer;
-        }
+        public static float Decompress(long data) =>
+            data * TIMESTAMP_QUANTUM;
     }
 
     public static class FloatQuantizer

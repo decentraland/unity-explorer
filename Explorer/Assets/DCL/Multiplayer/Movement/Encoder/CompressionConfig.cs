@@ -2,7 +2,7 @@
 {
     public static class CompressionConfig
     {
-        // temporalData = 22 + 2 + 7 = 31
+        // temporalData = 18 + 2 + 7 = 27
         public const float TIMESTAMP_QUANTUM = 0.01f;
         public const int TIMESTAMP_BITS = 18;
 
