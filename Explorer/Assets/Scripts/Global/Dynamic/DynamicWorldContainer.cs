@@ -22,7 +22,6 @@ using DCL.Input;
 using DCL.Landscape;
 using DCL.LOD.Systems;
 using DCL.MapRenderer;
-using DCL.Multiplayer.Connections;
 using DCL.Multiplayer.Connections.Archipelago.AdapterAddress.Current;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -31,6 +30,7 @@ using DCL.Multiplayer.Connections.GateKeeper.Rooms;
 using DCL.Multiplayer.Connections.Messaging.Hubs;
 using DCL.Multiplayer.Connections.Pools;
 using DCL.Multiplayer.Connections.RoomHubs;
+using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Deduplication;
 using DCL.Multiplayer.Emotes;
 using DCL.Multiplayer.HealthChecks;
@@ -64,11 +64,13 @@ using DCL.Web3.Identities;
 using DCL.WebRequests.Analytics;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle;
+using ECS.SceneLifeCycle.CurrentScene;
 using ECS.SceneLifeCycle.LocalSceneDevelopment;
 using ECS.SceneLifeCycle.Realm;
 using Global.Dynamic.ChatCommands;
 using LiveKit.Internal.FFIClients.Pools;
 using LiveKit.Internal.FFIClients.Pools.Memory;
+using LiveKit.Proto;
 using MVC;
 using MVC.PopupsController.PopupCloser;
 using SceneRunner.Debugging.Hub;
@@ -81,6 +83,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.Pool;
+using Utility.Ownership;
 using Utility.PriorityQueue;
 using Object = UnityEngine.Object;
 
@@ -195,8 +198,8 @@ namespace Global.Dynamic
 
             ExposedGlobalDataContainer exposedGlobalDataContainer = staticContainer.ExposedGlobalDataContainer;
 
-            PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>());
-            MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, ct: CancellationToken.None)).Value.GetComponent<MainUIView>());
+            PopupCloserView popupCloserView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.PopupCloserView, ct: CancellationToken.None)).Value.GetComponent<PopupCloserView>()).EnsureNotNull();
+            MainUIView mainUIView = Object.Instantiate((await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.MainUIView, ct: CancellationToken.None)).Value.GetComponent<MainUIView>()).EnsureNotNull();
 
             var coreMvcManager = new MVCManager(new WindowStackManager(), new CancellationTokenSource(), popupCloserView);
 
@@ -272,6 +275,17 @@ namespace Global.Dynamic
 
             container.RoomHub = localSceneDevelopment ? NullRoomHub.INSTANCE : new RoomHub(archipelagoIslandRoom, gateKeeperSceneRoom);
             container.MessagePipesHub = new MessagePipesHub(container.RoomHub, multiPoolFactory()!, multiPoolFactory()!, memoryPool);
+
+            RoomsStatus roomsStatus = new RoomsStatus(
+                container.RoomHub,
+
+                //override allowed only in Editor
+                Application.isEditor
+                    ? new LinkedBox<(bool use, ConnectionQuality quality)>(
+                        () => (bootstrapContainer.DebugSettings.OverrideConnectionQuality, bootstrapContainer.DebugSettings.ConnectionQuality)
+                    )
+                    : new Box<(bool use, ConnectionQuality quality)>((false, ConnectionQuality.QualityExcellent))
+            );
 
             var entityParticipantTable = new EntityParticipantTable();
 
@@ -362,16 +376,17 @@ namespace Global.Dynamic
             };
 
             IChatMessagesBus coreChatMessageBus = new MultiplayerChatMessagesBus(container.MessagePipesHub, container.ProfileRepository, new MessageDeduplication<double>())
-                                             .WithSelfResend(identityCache, container.ProfileRepository)
-                                             .WithIgnoreSymbols()
-                                             .WithCommands(chatCommandsFactory)
-                                             .WithDebugPanel(debugBuilder);
+                                                 .WithSelfResend(identityCache, container.ProfileRepository)
+                                                 .WithIgnoreSymbols()
+                                                 .WithCommands(chatCommandsFactory)
+                                                 .WithDebugPanel(debugBuilder);
 
             container.ChatMessagesBus = dynamicWorldParams.EnableAnalytics
                 ? new ChatMessagesBusAnalyticsDecorator(coreChatMessageBus, bootstrapContainer.Analytics!)
                 : coreChatMessageBus;
 
             var coreBackpackEventBus = new BackpackEventBus();
+
             IBackpackEventBus backpackEventBus = dynamicWorldParams.EnableAnalytics
                 ? new BackpackEventBusAnalyticsDecorator(coreBackpackEventBus, bootstrapContainer.Analytics!)
                 : coreBackpackEventBus;
@@ -396,6 +411,8 @@ namespace Global.Dynamic
             AudioMixer generalAudioMixer = (await assetsProvisioner.ProvideMainAssetAsync(dynamicSettings.GeneralAudioMixer, ct)).Value;
             var audioMixerVolumesController = new AudioMixerVolumesController(generalAudioMixer);
 
+            var currentSceneInfo = new CurrentSceneInfo();
+
             var badgesAPIClient = new BadgesAPIClient(staticContainer.WebRequestsContainer.WebRequestController, bootstrapContainer.DecentralandUrlsSource);
 
             var globalPlugins = new List<IDCLGlobalPlugin>
@@ -405,6 +422,7 @@ namespace Global.Dynamic
                     archipelagoIslandRoom,
                     gateKeeperSceneRoom,
                     container.RoomHub,
+                    roomsStatus,
                     container.ProfileRepository,
                     container.ProfileBroadcast,
                     debugBuilder,
@@ -459,6 +477,8 @@ namespace Global.Dynamic
                     dynamicWorldDependencies.Web3Authenticator,
                     container.UserInAppInAppInitializationFlow,
                     profileCache, sidebarBus, chatEntryConfiguration),
+                new ErrorPopupPlugin(container.MvcManager, assetsProvisioner),
+                new ConnectionStatusPanelPlugin(container.UserInAppInAppInitializationFlow, container.MvcManager, mainUIView, roomsStatus, currentSceneInfo, container.reloadSceneController),
                 new MinimapPlugin(container.MvcManager, container.MapRendererContainer, placesAPIService, staticContainer.RealmData, container.ChatMessagesBus, realmNavigator, staticContainer.ScenesCache, mainUIView, mapPathEventBus),
                 new ChatPlugin(assetsProvisioner, container.MvcManager, container.ChatMessagesBus, chatHistory, entityParticipantTable, nametagsData, dclInput, unityEventSystem, mainUIView, staticContainer.InputBlock),
                 new ExplorePanelPlugin(
@@ -559,7 +579,9 @@ namespace Global.Dynamic
                 staticContainer.ScenesCache,
                 dynamicWorldParams.HybridSceneParams,
                 container.CharacterDataPropagationUtility,
-                container.LODContainer.LodCache);
+                currentSceneInfo,
+                container.LODContainer.LodCache
+            );
 
             container.GlobalPlugins = globalPlugins;
 
