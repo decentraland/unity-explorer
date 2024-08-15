@@ -2,127 +2,12 @@
 using System;
 using UnityEngine;
 using Utility;
-using static DCL.Multiplayer.Movement.Systems.CompressionConfig;
+using static DCL.Multiplayer.Movement.CompressionConfig;
 
-namespace DCL.Multiplayer.Movement.Systems
+namespace DCL.Multiplayer.Movement
 {
-    public static class CompressionConfig
-    {
-        public const int PARCEL_SIZE = 16;
-
-        public const int Y_MAX = 150;
-        public const int MAX_VELOCITY = 10;
-
-        public const float TIMESTAMP_QUANTUM = 0.01f;
-        public const int TIMESTAMP_BITS = 22;
-
-        public const int MOVEMENT_KIND_BITS = 2;
-        public const int MOVEMENT_KIND_MASK = 0x3;
-
-        // 22 + 2 + 7 = 25
-        public const int MOVEMENT_KIND_START_BIT = TIMESTAMP_BITS;
-        public const int SLIDING_BIT = MOVEMENT_KIND_START_BIT  + MOVEMENT_KIND_BITS;
-        public const int STUNNED_BIT = SLIDING_BIT + 1;
-        public const int GROUNDED_BIT = STUNNED_BIT + 1;
-        public const int JUMPING_BIT = GROUNDED_BIT + 1;
-        public const int LONG_JUMP_BIT = JUMPING_BIT + 1;
-        public const int FALLING_BIT = LONG_JUMP_BIT + 1;
-        public const int LONG_FALL_BIT = FALLING_BIT + 1;
-
-        // 17 + 8 + 8 + 13 + 6 + 6 + 6 = 64
-        public const int PARCEL_BITS = 17;
-        public const int XZ_BITS = 8;
-        public const int Y_BITS = 13;
-        public const int VELOCITY_BITS = 6;
-    }
-
-    [Serializable]
-    public struct CompressedNetworkMovementMessage
-    {
-
-
-        public int temporalData;
-        public long movementData;
-
-        // public NetworkMovementMessage message;
-    }
-
-    public static class TimestampEncoder
-    {
-        public static float Buffer => steps * TIMESTAMP_QUANTUM;
-
-        private static int steps => (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
-
-        public static int Compress(float timestamp)
-        {
-            float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
-            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM) % steps;
-        }
-
-        public static float Decompress(long data, int bits)
-        {
-            int mask = (1 << bits) - 1;
-            return (int)(data & mask) * TIMESTAMP_QUANTUM % Buffer;
-        }
-    }
-
-    public static class ParcelEncoder
-    {
-        public const int PARCEL_SIZE = 16;
-
-        // TODO (Vit): now hardcoded, but it should depend on the Landscape margins and Genesis Parcel data
-        private const int MIN_X = -152;
-        private const int MAX_X = 164;
-
-        private const int MIN_Y = -152;
-
-        // private const int MAX_Y = 160;
-
-        private const int WIDTH = MAX_X - MIN_X + 1;
-
-        public static int EncodeParcel(Vector2Int parcel) =>
-            parcel.x - MIN_X + ((parcel.y - MIN_Y) * WIDTH);
-
-        public static Vector2Int DecodeParcel(int index) =>
-            new ((index % WIDTH) + MIN_X, (index / WIDTH) + MIN_Y);
-    }
-
-    public static class RelativePositionEncoder
-    {
-        public static int CompressScaledInteger(float value, int maxValue, int bits)
-        {
-            int maxStep = (1 << bits) - 1;
-            return Mathf.RoundToInt(Mathf.Clamp01(value / maxValue) * maxStep);
-        }
-
-        public static float DecompressScaledInteger(int compressed, int maxValue, int bits)
-        {
-            float maxStep = (1 << bits) - 1f;
-            return compressed / maxStep * maxValue;
-        }
-    }
-
-    public static class VelocityEncoder
-    {
-        public static int CompressVelocity(float value, float maxValue, int bits)
-        {
-            int maxStep = (1 << bits) - 1;
-            float normalizedValue = (value + maxValue) / (2 * maxValue); // Shift and scale to 0-1 range
-            return Mathf.RoundToInt(Mathf.Clamp01(normalizedValue) * maxStep);
-        }
-
-        public static float DecompressVelocity(int compressed, float maxValue, int bits)
-        {
-            float maxStep = (1 << bits) - 1f;
-            float normalizedValue = compressed / maxStep;
-            return (normalizedValue * 2 * maxValue) - maxValue; // Rescale and shift back to original range
-        }
-    }
-
     public static class NetworkMessageEncoder
     {
-
-
         public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
         {
             Vector2Int parcel = message.position.ToParcel();
@@ -163,8 +48,6 @@ namespace DCL.Multiplayer.Movement.Systems
                                | ((long)compressedVelocityX << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS))
                                | ((long)compressedVelocityY << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS))
                                | ((long)compressedVelocityZ << (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)),
-
-                // message = message,
             };
         }
 
@@ -216,8 +99,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
                 animState = new AnimationStates
                 {
-                    MovementBlendValue = 0f,//compressedMessage.message.animState.MovementBlendValue,
-                    SlideBlendValue = 0f, //compressedMessage.message.animState.SlideBlendValue,
+                    MovementBlendValue = 0f,
+                    SlideBlendValue = 0f,
 
                     IsGrounded = (compressedTemporalData & (1 << GROUNDED_BIT)) != 0,
                     IsJumping = (compressedTemporalData & (1 << JUMPING_BIT)) != 0,
@@ -229,6 +112,75 @@ namespace DCL.Multiplayer.Movement.Systems
                 isStunned = (compressedTemporalData & (1 << STUNNED_BIT)) != 0,
                 isSliding = (compressedTemporalData & (1 << SLIDING_BIT)) != 0,
             };
+        }
+    }
+
+    public static class TimestampEncoder
+    {
+        public static float Buffer => steps * TIMESTAMP_QUANTUM;
+        private static int steps => (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
+
+        public static int Compress(float timestamp)
+        {
+            float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
+            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM) % steps;
+        }
+
+        public static float Decompress(long data, int bits)
+        {
+            int mask = (1 << bits) - 1;
+            return (int)(data & mask) * TIMESTAMP_QUANTUM % Buffer;
+        }
+    }
+
+    public static class ParcelEncoder
+    {
+        public const int PARCEL_SIZE = 16;
+
+        // TODO (Vit): now hardcoded, but it should depend on the Genesis Size + Landscape margins settings
+        public const int MIN_X = -152;
+        public const int MAX_X = 164;
+        public const int MIN_Y = -152;
+        public const int MAX_Y = 160;
+
+        private const int WIDTH = MAX_X - MIN_X + 1;
+
+        public static int EncodeParcel(Vector2Int parcel) =>
+            parcel.x - MIN_X + ((parcel.y - MIN_Y) * WIDTH);
+
+        public static Vector2Int DecodeParcel(int index) =>
+            new ((index % WIDTH) + MIN_X, (index / WIDTH) + MIN_Y);
+    }
+
+    public static class RelativePositionEncoder
+    {
+        public static int CompressScaledInteger(float value, int maxValue, int bits)
+        {
+            int maxStep = (1 << bits) - 1;
+            return Mathf.RoundToInt(Mathf.Clamp01(value / maxValue) * maxStep);
+        }
+
+        public static float DecompressScaledInteger(int compressed, int maxValue, int bits)
+        {
+            float maxStep = (1 << bits) - 1f;
+            return compressed / maxStep * maxValue;
+        }
+    }
+
+    public static class VelocityEncoder
+    {
+        public static int CompressVelocity(float value, float maxValue, int bits)
+        {
+            int maxStep = (1 << bits) - 1;
+            float normalizedValue = (value + maxValue) / (2 * maxValue); // Shift and scale to 0-1 range
+            return Mathf.RoundToInt(Mathf.Clamp01(normalizedValue) * maxStep);
+        }
+
+        public static float DecompressVelocity(int compressed, float maxValue, int bits)
+        {
+            float maxStep = (1 << bits) - 1f;
+            float normalizedValue = compressed / maxStep;
+            return (normalizedValue * 2 * maxValue) - maxValue; // Rescale and shift back to original range
         }
     }
 }
