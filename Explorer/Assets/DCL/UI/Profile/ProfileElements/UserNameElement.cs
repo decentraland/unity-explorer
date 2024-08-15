@@ -12,6 +12,5 @@ namespace DCL.UI.ProfileElements
         [field: SerializeField] public GameObject VerifiedMark { get; private set; }
         [field: SerializeField] public Button CopyUserNameButton { get; private set; }
         [field: SerializeField] public WarningNotificationView CopyNameWarningNotification { get; private set; }
-        [field: SerializeField] public HorizontalLayoutGroup LayoutGroup { get; private set; }
     }
 }

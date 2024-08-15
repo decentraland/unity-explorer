@@ -48,15 +48,15 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
 
-        private string currentUserId;
-        private CancellationTokenSource characterPreviewLoadingCts;
-        private PassportErrorsController passportErrorsController;
-        private PassportCharacterPreviewController characterPreviewController;
+        private string? currentUserId;
+        private CancellationTokenSource? characterPreviewLoadingCts;
+        private PassportErrorsController? passportErrorsController;
+        private PassportCharacterPreviewController? characterPreviewController;
         private PassportSection? currentSection;
         private bool overviewSectionAlreadyLoaded;
         private bool badgesSectionAlreadyLoaded;
 
-        public event Action<string> PassportOpened;
+        public event Action<string>? PassportOpened;
 
         public PassportController(
             ViewFactoryMethod viewFactory,
@@ -118,7 +118,7 @@ namespace DCL.Passport
 
         private void OnPublishError()
         {
-            passportErrorsController.Show();
+            passportErrorsController!.Show();
         }
 
         protected override void OnViewShow()
@@ -133,16 +133,16 @@ namespace DCL.Passport
             dclInput.Player.Disable();
             viewInstance.ErrorNotification.Hide(true);
 
-            PassportOpened.Invoke(currentUserId);
+            PassportOpened?.Invoke(currentUserId);
         }
 
         protected override void OnViewClose()
         {
-            passportErrorsController.Hide(true);
+            passportErrorsController!.Hide(true);
             dclInput.Shortcuts.Enable();
             dclInput.Camera.Enable();
             dclInput.Player.Enable();
-            characterPreviewController.OnHide();
+            characterPreviewController!.OnHide();
 
             characterPreviewLoadingCts.SafeCancelAndDispose();
             foreach (IPassportModuleController module in overviewPassportModules)
@@ -161,9 +161,9 @@ namespace DCL.Passport
 
         public override void Dispose()
         {
-            passportErrorsController.Hide(true);
+            passportErrorsController?.Hide(true);
             characterPreviewLoadingCts.SafeCancelAndDispose();
-            characterPreviewController.Dispose();
+            characterPreviewController?.Dispose();
 
             passportProfileInfoController.OnProfilePublished -= OnProfilePublished;
             passportProfileInfoController.PublishError -= OnPublishError;
@@ -197,7 +197,7 @@ namespace DCL.Passport
                 if (sectionToLoad == PassportSection.OVERVIEW)
                 {
                     // Load avatar preview
-                    characterPreviewController.Initialize(profile.Avatar);
+                    characterPreviewController!.Initialize(profile.Avatar);
                     characterPreviewController.OnShow();
                 }
 
@@ -213,7 +213,7 @@ namespace DCL.Passport
             catch (Exception e)
             {
                 const string ERROR_MESSAGE = "There was an error while trying to load the profile. Please try again!";
-                passportErrorsController.Show(ERROR_MESSAGE);
+                passportErrorsController!.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
         }

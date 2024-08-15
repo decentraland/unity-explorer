@@ -177,7 +177,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                 {
                     if (previousMarker != null)
                     {
-                        previousMarker.SetIconOutline(false);
+                        previousMarker.AnimateDeselectionAsync().Forget();
                         previousMarker = null;
                     }
 
@@ -187,7 +187,7 @@ namespace DCL.MapRenderer.ConsumerUtils
                     else
                     {
                         previousMarker = pinMarker;
-                        pinMarker.SetIconOutline(true);
+                        pinMarker.AnimateSelectionAsync().Forget();
                         interactivityController.RemoveHighlight();
                     }
 

@@ -50,7 +50,7 @@ namespace DCL.LOD
             foreach (var pair in FailedLODs)
             {
                 foreach (var t in pair.Value)
-                    Object.Destroy(t.gameObject);
+                    UnityObjectUtils.SafeDestroy(t.gameObject);
                 lods[pair.Key].renderers = Array.Empty<Renderer>();
             }
 

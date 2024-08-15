@@ -27,10 +27,10 @@ namespace DCL.Multiplayer.Connections.Rooms.Interior
         public Participant LocalParticipant() =>
             assigned.EnsureAssigned().LocalParticipant();
 
-        public Participant? RemoteParticipant(string sid) =>
-            assigned.EnsureAssigned().RemoteParticipant(sid);
+        public Participant? RemoteParticipant(string identity) =>
+            assigned.EnsureAssigned().RemoteParticipant(identity);
 
-        public IReadOnlyCollection<string> RemoteParticipantSids() =>
-            assigned.EnsureAssigned().RemoteParticipantSids();
+        public IReadOnlyCollection<string> RemoteParticipantIdentities() =>
+            assigned.EnsureAssigned().RemoteParticipantIdentities();
     }
 }
