@@ -66,14 +66,25 @@ namespace Global.Dynamic
             await StaticContainer.CreateAsync(bootstrapContainer.DecentralandUrlsSource, bootstrapContainer.AssetsProvisioner, bootstrapContainer.ReportHandlingSettings, commandLineArgs, debugViewsCatalog, globalPluginSettingsContainer,
                 bootstrapContainer.IdentityCache, bootstrapContainer.VerifiedEthereumApi, ct);
 
-        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(BootstrapContainer bootstrapContainer, StaticContainer staticContainer,
-            PluginSettingsContainer scenePluginSettingsContainer, DynamicSceneLoaderSettings settings, DynamicSettings dynamicSettings, RealmLaunchSettings launchSettings,
-            UIDocument uiToolkitRoot, UIDocument cursorRoot, ISplashScreen splashScreen, AudioClipConfig backgroundMusic, WorldInfoTool worldInfoTool,
-            CancellationToken ct)
+        public async UniTask<(DynamicWorldContainer?, bool)> LoadDynamicWorldContainerAsync(
+            BootstrapContainer bootstrapContainer,
+            StaticContainer staticContainer,
+            PluginSettingsContainer scenePluginSettingsContainer,
+            DynamicSceneLoaderSettings settings,
+            DynamicSettings dynamicSettings,
+            RealmLaunchSettings launchSettings,
+            UIDocument uiToolkitRoot,
+            UIDocument cursorRoot,
+            ISplashScreen splashScreen,
+            AudioClipConfig backgroundMusic,
+            WorldInfoTool worldInfoTool,
+            CancellationToken ct
+        )
         {
             dynamicWorldDependencies = new DynamicWorldDependencies
             (
                 staticContainer.DebugContainerBuilder,
+                commandLineArgs,
                 bootstrapContainer.AssetsProvisioner,
                 staticContainer,
                 scenePluginSettingsContainer,

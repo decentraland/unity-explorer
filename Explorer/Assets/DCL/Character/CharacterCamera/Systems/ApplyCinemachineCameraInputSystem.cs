@@ -18,8 +18,9 @@ namespace DCL.CharacterCamera.Systems
     public partial class ApplyCinemachineCameraInputSystem : BaseUnityLoopSystem
     {
         private readonly DCLInput input;
+        private bool isFreeCameraAllowed;
 
-        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input) : base(world)
+        internal ApplyCinemachineCameraInputSystem(World world, DCLInput input, bool isFreeCameraAllowed) : base(world)
         {
             this.input = input;
         }
@@ -61,7 +62,7 @@ namespace DCL.CharacterCamera.Systems
                     break;
             }
 
-            cameraInput.SetFreeFly = input.Camera.ToggleFreeFly.WasPressedThisFrame();
+            cameraInput.SetFreeFly = isFreeCameraAllowed && input.Camera.ToggleFreeFly.WasPressedThisFrame();
             cameraInput.SwitchState = input.Camera.SwitchState.WasPressedThisFrame();
             cameraInput.ChangeShoulder = input.Camera.ChangeShoulder.WasPressedThisFrame();
 
@@ -101,11 +102,9 @@ namespace DCL.CharacterCamera.Systems
             Transform cameraTransform = camera.Camera.transform;
 
             cinemachineTransform.localPosition += ((cameraTransform.forward * cameraInput.FreeMovement.y) +
-                                                    (cameraTransform.up * cameraInput.FreePanning.y) +
-                                                    (cameraTransform.right * cameraInput.FreeMovement.x))
-                                                    * cinemachinePreset.FreeCameraData.Speed * dt;
-
-
+                                                   (cameraTransform.up * cameraInput.FreePanning.y) +
+                                                   (cameraTransform.right * cameraInput.FreeMovement.x))
+                                                  * cinemachinePreset.FreeCameraData.Speed * dt;
         }
 
         private void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)

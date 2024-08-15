@@ -18,6 +18,7 @@ namespace Global.Dynamic
     public readonly struct DynamicWorldDependencies
     {
         public readonly IDebugContainerBuilder DebugContainerBuilder;
+        public readonly ICommandLineArgs CommandLineArgs;
         public readonly IAssetsProvisioner AssetsProvisioner;
         public readonly StaticContainer StaticContainer;
         public readonly IPluginSettingsContainer SettingsContainer;
@@ -31,6 +32,7 @@ namespace Global.Dynamic
 
         public DynamicWorldDependencies(
             IDebugContainerBuilder debugContainerBuilder,
+            ICommandLineArgs commandLineArgs,
             IAssetsProvisioner assetsProvisioner,
             StaticContainer staticContainer,
             IPluginSettingsContainer settingsContainer,
@@ -44,6 +46,7 @@ namespace Global.Dynamic
         )
         {
             DebugContainerBuilder = debugContainerBuilder;
+            CommandLineArgs = commandLineArgs;
             AssetsProvisioner = assetsProvisioner;
             StaticContainer = staticContainer;
             SettingsContainer = settingsContainer;
