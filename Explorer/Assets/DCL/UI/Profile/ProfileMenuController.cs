@@ -60,5 +60,12 @@ namespace DCL.UI.ProfileElements
             await systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
             await HideViewAsync(profileWidgetCts.Token);
         }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            profileSectionController.Dispose();
+            systemSectionController.Dispose();
+        }
     }
 }
