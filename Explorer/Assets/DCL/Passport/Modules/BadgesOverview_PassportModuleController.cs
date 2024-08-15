@@ -79,8 +79,8 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, false, ct);
-                foreach (BadgeInfo badgeInfo in badges)
+                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, false, 5, 0, ct);
+                foreach (BadgeInfo badgeInfo in badges.unlocked)
                 {
                     var badgeOverviewItem = badgesOverviewItemsPool.Get();
                     badgeOverviewItem.BadgeNameText.text = badgeInfo.name;

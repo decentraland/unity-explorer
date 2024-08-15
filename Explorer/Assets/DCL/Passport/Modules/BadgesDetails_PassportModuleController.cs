@@ -168,24 +168,16 @@ namespace DCL.Passport.Modules
         {
             try
             {
-                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, true, ct);
+                var badges = await badgesAPIClient.FetchBadgesAsync(walletId, true, 0, 0, ct);
 
-                for (var i = 0; i < badges.Count; i++)
-                {
-                    var badgeDetailCard = badgeDetailCardsPool.Get();
-                    badgeDetailCard.Setup(badges[i]);
-                    badgeDetailCard.SetAsSelected(i == 0);
+                foreach (var unlockedBadge in badges.unlocked)
+                    CreateBadgeDetailCard(unlockedBadge);
 
-                    badgeDetailCard.Button.onClick.AddListener(() =>
-                    {
-                        foreach (BadgeDetailCard_PassportFieldView badge in instantiatedBadgeDetailCards)
-                            badge.SetAsSelected(false);
+                foreach (var lockedBadge in badges.locked)
+                    CreateBadgeDetailCard(lockedBadge);
 
-                        badgeDetailCard.SetAsSelected(true);
-                    });
-
-                    instantiatedBadgeDetailCards.Add(badgeDetailCard);
-                }
+                if (instantiatedBadgeDetailCards.Count > 0)
+                    instantiatedBadgeDetailCards[0].SetAsSelected(true);
 
                 int missingEmptyItems = CalculateMissingEmptyItems(instantiatedBadgeDetailCards.Count);
                 for (var i = 0; i < missingEmptyItems; i++)
@@ -204,6 +196,22 @@ namespace DCL.Passport.Modules
                 passportErrorsController.Show(ERROR_MESSAGE);
                 ReportHub.LogError(ReportCategory.PROFILE, $"{ERROR_MESSAGE} ERROR: {e.Message}");
             }
+        }
+
+        private void CreateBadgeDetailCard(BadgeInfo badge)
+        {
+            var badgeDetailCard = badgeDetailCardsPool.Get();
+            badgeDetailCard.Setup(badge);
+
+            badgeDetailCard.Button.onClick.AddListener(() =>
+            {
+                foreach (BadgeDetailCard_PassportFieldView instantiatedBadge in instantiatedBadgeDetailCards)
+                    instantiatedBadge.SetAsSelected(false);
+
+                badgeDetailCard.SetAsSelected(true);
+            });
+
+            instantiatedBadgeDetailCards.Add(badgeDetailCard);
         }
 
         private static int CalculateMissingEmptyItems(int totalItems)
