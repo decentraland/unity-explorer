@@ -24,8 +24,8 @@ namespace DCL.Multiplayer.Movement.Systems
             this.messagePipesHub = messagePipesHub;
             this.entityParticipantTable = entityParticipantTable;
 
-            this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.Movement, OnMessageReceived);
-            this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.Movement, OnMessageReceived);
+            this.messagePipesHub.IslandPipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
+            this.messagePipesHub.ScenePipe().Subscribe<MovementCompressed>(Packet.MessageOneofCase.MovementCompressed, OnMessageReceived);
         }
 
         public void Dispose()

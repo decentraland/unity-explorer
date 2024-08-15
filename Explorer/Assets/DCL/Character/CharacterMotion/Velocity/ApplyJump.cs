@@ -68,6 +68,7 @@ namespace DCL.CharacterMotion
                                   {
                                       MovementKind.WALK => settings.JogJumpHeight,
                                       MovementKind.JOG => settings.JogJumpHeight,
+                                      MovementKind.IDLE => settings.JogJumpHeight,
                                       MovementKind.RUN => settings.RunJumpHeight,
                                       _ => throw new ArgumentOutOfRangeException(),
                                   };
