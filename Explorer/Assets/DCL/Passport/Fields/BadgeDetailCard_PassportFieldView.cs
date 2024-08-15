@@ -1,4 +1,5 @@
 using DCL.BadgesAPIService;
+using DCL.Passport.Utils;
 using System;
 using TMPro;
 using UnityEngine;
@@ -71,7 +72,7 @@ namespace DCL.Passport.Fields
             BadgeCategory = badgeInfo.category;
             //BadgeImage.sprite = null;
             BadgeImage.color = badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
-            BadgeDateText.text = !badgeInfo.isLocked ? FormatTimestampDate(badgeInfo.awarded_at) : "--";
+            BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awarded_at) : "--";
             BadgeDateText.gameObject.SetActive((!badgeInfo.isLocked && (!badgeInfo.isTier || (badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock))) || badgeInfo is { isLocked: true, isTier: false });
             TopTierMark.SetActive(badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock);
             NextTierTitle.SetActive(!badgeInfo.isLocked && badgeInfo.isTier && badgeInfo.completedSteps < badgeInfo.totalStepsToUnlock);
@@ -82,13 +83,6 @@ namespace DCL.Passport.Fields
                 int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.completedSteps * 100 / badgeInfo.totalStepsToUnlock;
                 ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
-        }
-
-        private static string FormatTimestampDate(string timestampString)
-        {
-            DateTime date = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timestampString)).DateTime;
-            var formattedDate = date.ToString("MMM. yyyy", System.Globalization.CultureInfo.InvariantCulture);
-            return formattedDate;
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

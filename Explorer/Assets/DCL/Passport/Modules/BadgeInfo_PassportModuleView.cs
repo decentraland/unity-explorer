@@ -1,4 +1,5 @@
 using DCL.BadgesAPIService;
+using DCL.Passport.Utils;
 using System;
 using TMPro;
 using UnityEngine;
@@ -30,7 +31,7 @@ namespace DCL.Passport.Modules
         {
             //Badge2DImage.sprite = null;
             BadgeNameText.text = badgeInfo.name;
-            BadgeDateText.text = !badgeInfo.isLocked ? FormatTimestampDate(badgeInfo.awarded_at) : "--";
+            BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awarded_at) : "--";
             BadgeDescriptionText.text = badgeInfo.description;
         }
 
@@ -38,13 +39,6 @@ namespace DCL.Passport.Modules
         {
             MainLoadingSpinner.SetActive(isLoading);
             MainContainer.SetActive(!isLoading);
-        }
-
-        private static string FormatTimestampDate(string timestampString)
-        {
-            DateTime date = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(timestampString)).DateTime;
-            var formattedDate = date.ToString("MMM. yyyy", System.Globalization.CultureInfo.InvariantCulture);
-            return formattedDate;
         }
     }
 }
