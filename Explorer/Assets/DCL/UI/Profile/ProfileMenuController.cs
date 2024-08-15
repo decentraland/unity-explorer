@@ -23,7 +23,7 @@ namespace DCL.UI.ProfileElements
         private CancellationTokenSource profileWidgetCts = new ();
 
         public ProfileMenuController(
-            [NotNull] ViewFactoryMethod viewFactory,
+            ViewFactoryMethod viewFactory,
             ProfileSectionElement profileSectionElement,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
