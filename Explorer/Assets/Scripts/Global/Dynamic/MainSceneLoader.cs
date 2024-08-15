@@ -9,6 +9,7 @@ using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.Utilities;
 using DCL.Utilities.Extensions;
+using LiveKit.Proto;
 using SceneRunner.Debugging;
 using System;
 using System.Linq;
@@ -27,6 +28,8 @@ namespace Global.Dynamic
         bool EnableLandscape { get; }
         bool EnableLOD { get; }
         bool EnableEmulateNoLivekitConnection { get; }
+        bool OverrideConnectionQuality { get; }
+        ConnectionQuality ConnectionQuality { get; }
     }
 
     [Serializable]
@@ -47,6 +50,11 @@ namespace Global.Dynamic
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
         [SerializeField] internal string[]? portableExperiencesEnsToLoad;
+        [Space]
+        [SerializeField]
+        private bool overrideConnectionQuality;
+        [SerializeField]
+        private ConnectionQuality connectionQuality;
 
         public static DebugSettings Release() =>
             new ()
@@ -58,6 +66,8 @@ namespace Global.Dynamic
                 enableLOD = true,
                 portableExperiencesEnsToLoad = null,
                 enableEmulateNoLivekitConnection = false,
+                overrideConnectionQuality = false,
+                connectionQuality = ConnectionQuality.QualityExcellent
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
@@ -68,6 +78,8 @@ namespace Global.Dynamic
         public bool EnableLandscape => Debug.isDebugBuild ? this.enableLandscape : RELEASE_SETTINGS.enableLandscape;
         public bool EnableLOD => Debug.isDebugBuild ? this.enableLOD : RELEASE_SETTINGS.enableLOD;
         public bool EnableEmulateNoLivekitConnection => Debug.isDebugBuild ? this.enableEmulateNoLivekitConnection : RELEASE_SETTINGS.enableEmulateNoLivekitConnection;
+        public bool OverrideConnectionQuality => Debug.isDebugBuild ? this.overrideConnectionQuality : RELEASE_SETTINGS.overrideConnectionQuality;
+        public ConnectionQuality ConnectionQuality => Debug.isDebugBuild ? this.connectionQuality : RELEASE_SETTINGS.connectionQuality;
     }
 
     public class MainSceneLoader : MonoBehaviour

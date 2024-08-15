@@ -8,11 +8,11 @@ using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
 using DCL.UserInAppInitializationFlow;
+using DCL.Utilities;
 using DCL.Web3.Identities;
 using SceneRunner.Debugging;
 using Segment.Serialization;
 using System.Threading;
-using UnityEngine;
 using UnityEngine.UIElements;
 using static DCL.PerformanceAndDiagnostics.Analytics.AnalyticsEvents;
 
