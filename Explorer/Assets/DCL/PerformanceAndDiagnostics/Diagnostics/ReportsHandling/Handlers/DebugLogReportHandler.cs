@@ -71,7 +71,9 @@ namespace DCL.Diagnostics
         [HideInCallstack]
         internal override void LogInternal(LogType logType, ReportData category, Object context, object message)
         {
-            unityLogHandler.LogFormat(logType, context, $"{GetReportDataPrefix(in category)}{message}");
+            //Required to log message that have curly braces (JSONs)
+            string escapedMessage = message.ToString().Replace("{", "{{").Replace("}", "}}");
+            unityLogHandler.LogFormat(logType, context, $"{GetReportDataPrefix(in category)}{escapedMessage}");
         }
 
         [HideInCallstack]
