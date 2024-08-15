@@ -76,14 +76,6 @@ namespace DCL.Multiplayer.Movement.Systems
             // Filter old messages that arrived too late
             for (var i = 0; i < OLD_MESSAGES_BATCH && playerInbox.Count > 0; i++)
             {
-                // If the message arrived with a big delay, we don't skip it
-                if (playerInbox.First.enqueueTime - remotePlayerMovement.PastMessage.enqueueTime > TimestampEncoder.Buffer)
-                    break;
-
-                // If the message is too old, it could be from a new round
-                if (remotePlayerMovement.PastMessage.timestamp - playerInbox.First.timestamp > TimestampEncoder.Buffer / 2)
-                    break;
-
                 if (playerInbox.First.timestamp <= remotePlayerMovement.PastMessage.timestamp)
                     playerInbox.Dequeue();
             }
