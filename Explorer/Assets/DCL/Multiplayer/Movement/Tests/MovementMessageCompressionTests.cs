@@ -166,5 +166,28 @@ namespace DCL.Multiplayer.Movement.Tests
 
             Debug.Log($" Velocity quantization error = {quantizationError} | original: {originalMessage.velocity} | decompressed: {decompressedMessage.velocity}");
         }
+
+        [TestCase(0f)]
+        [TestCase(0.0001f)]
+        [TestCase(2.711111f)]
+        [TestCase(5.002f)] // 5 sec
+        [TestCase(15.004f)] // 15 sec
+        [TestCase(30.005f)] // 30 sec
+        [TestCase(60.007f)] // 1 min
+        [TestCase(20f * 60.001f)] // 20 min
+        [TestCase(30f * 60.002f)] // 30 min
+        [TestCase(60f * 60.007f)] // 1 hour
+        public void ShouldCorrectlyEncodeAndDecodeTimestamp(float t)
+        {
+            // Arrange
+            var originalMessage = new NetworkMovementMessage { timestamp = t };
+
+            // Act
+            NetworkMovementMessage decompressedMessage = originalMessage.Compress().Decompress();
+
+            // Assert
+            Assert.AreEqual(t % TimestampEncoder.Buffer, decompressedMessage.timestamp, CompressionConfig.TIMESTAMP_QUANTUM);
+            Debug.Log($"Timestamp quantization = {CompressionConfig.TIMESTAMP_QUANTUM}, buffer size = {TimestampEncoder.Buffer / 60} min | original: {t} | decompressed: {decompressedMessage.timestamp}");
+        }
     }
 }

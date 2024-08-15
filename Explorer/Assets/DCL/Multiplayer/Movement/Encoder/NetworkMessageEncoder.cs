@@ -1,5 +1,4 @@
 ﻿using DCL.CharacterMotion.Components;
-using System;
 using UnityEngine;
 using Utility;
 using static DCL.Multiplayer.Movement.CompressionConfig;
@@ -20,13 +19,13 @@ namespace DCL.Multiplayer.Movement
                 message.position.z - (parcel.y * ParcelEncoder.PARCEL_SIZE) // Y is Z in this case
             );
 
-            int compressedX = RelativePositionEncoder.CompressScaledInteger(relativePosition.x, PARCEL_SIZE, XZ_BITS);
-            int compressedZ = RelativePositionEncoder.CompressScaledInteger(relativePosition.y, PARCEL_SIZE, XZ_BITS);
-            int compressedY = RelativePositionEncoder.CompressScaledInteger(message.position.y, Y_MAX, Y_BITS);
+            int compressedX = FloatQuantizer.Compress(relativePosition.x, 0, PARCEL_SIZE, XZ_BITS);
+            int compressedZ = FloatQuantizer.Compress(relativePosition.y, 0, PARCEL_SIZE, XZ_BITS);
+            int compressedY = FloatQuantizer.Compress(message.position.y, 0, Y_MAX, Y_BITS);
 
-            int compressedVelocityX = VelocityEncoder.CompressVelocity(message.velocity.x, MAX_VELOCITY, VELOCITY_BITS);
-            int compressedVelocityY = VelocityEncoder.CompressVelocity(message.velocity.y, MAX_VELOCITY, VELOCITY_BITS);
-            int compressedVelocityZ = VelocityEncoder.CompressVelocity(message.velocity.z, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityX = FloatQuantizer.Compress(message.velocity.x, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityY = FloatQuantizer.Compress(message.velocity.y, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            int compressedVelocityZ = FloatQuantizer.Compress(message.velocity.z, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
 
             compressedData |= ((int)message.movementKind & MOVEMENT_KIND_MASK) << MOVEMENT_KIND_START_BIT;
             if (message.isSliding) compressedData |= 1 << SLIDING_BIT;
@@ -70,9 +69,9 @@ namespace DCL.Multiplayer.Movement
             var extractedZ = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS)) & XZ_MASK);
             var extractedY = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
 
-            float decompressedX = RelativePositionEncoder.DecompressScaledInteger(extractedX, PARCEL_SIZE, XZ_BITS);
-            float decompressedZ = RelativePositionEncoder.DecompressScaledInteger(extractedZ, PARCEL_SIZE, XZ_BITS);
-            float decompressedY = RelativePositionEncoder.DecompressScaledInteger(extractedY, Y_MAX, Y_BITS);
+            float decompressedX = FloatQuantizer.Decompress(extractedX, 0, PARCEL_SIZE, XZ_BITS);
+            float decompressedZ = FloatQuantizer.Decompress(extractedZ, 0, PARCEL_SIZE, XZ_BITS);
+            float decompressedY = FloatQuantizer.Decompress(extractedY, 0, Y_MAX, Y_BITS);
 
             var worldPosition = new Vector3(
                 (parcel.x * ParcelEncoder.PARCEL_SIZE) + decompressedX,
@@ -84,9 +83,9 @@ namespace DCL.Multiplayer.Movement
             var extractedVelocityY = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
             var extractedVelocityZ = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
 
-            float decompressedVelocityX = VelocityEncoder.DecompressVelocity(extractedVelocityX, MAX_VELOCITY, VELOCITY_BITS);
-            float decompressedVelocityY = VelocityEncoder.DecompressVelocity(extractedVelocityY, MAX_VELOCITY, VELOCITY_BITS);
-            float decompressedVelocityZ = VelocityEncoder.DecompressVelocity(extractedVelocityZ, MAX_VELOCITY, VELOCITY_BITS);
+            float decompressedVelocityX = FloatQuantizer.Decompress(extractedVelocityX, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            float decompressedVelocityY = FloatQuantizer.Decompress(extractedVelocityY, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            float decompressedVelocityZ = FloatQuantizer.Decompress(extractedVelocityZ, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
 
             var velocity = new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ);
 
@@ -115,24 +114,6 @@ namespace DCL.Multiplayer.Movement
         }
     }
 
-    public static class TimestampEncoder
-    {
-        public static float Buffer => steps * TIMESTAMP_QUANTUM;
-        private static int steps => (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
-
-        public static int Compress(float timestamp)
-        {
-            float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
-            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM) % steps;
-        }
-
-        public static float Decompress(long data, int bits)
-        {
-            int mask = (1 << bits) - 1;
-            return (int)(data & mask) * TIMESTAMP_QUANTUM % Buffer;
-        }
-    }
-
     public static class ParcelEncoder
     {
         public const int PARCEL_SIZE = 16;
@@ -152,35 +133,38 @@ namespace DCL.Multiplayer.Movement
             new ((index % WIDTH) + MIN_X, (index / WIDTH) + MIN_Y);
     }
 
-    public static class RelativePositionEncoder
+    public static class TimestampEncoder
     {
-        public static int CompressScaledInteger(float value, int maxValue, int bits)
+        public static float Buffer => steps * TIMESTAMP_QUANTUM;
+        public static int steps => 1 << TIMESTAMP_BITS; // 2^TIMESTAMP_BITS
+
+        public static int Compress(float timestamp)
         {
-            int maxStep = (1 << bits) - 1;
-            return Mathf.RoundToInt(Mathf.Clamp01(value / maxValue) * maxStep);
+            float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
+            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM) % steps;
         }
 
-        public static float DecompressScaledInteger(int compressed, int maxValue, int bits)
+        public static float Decompress(long data, int bits)
         {
-            float maxStep = (1 << bits) - 1f;
-            return compressed / maxStep * maxValue;
+            int mask = (1 << bits) - 1;
+            return (int)(data & mask) * TIMESTAMP_QUANTUM % Buffer;
         }
     }
 
-    public static class VelocityEncoder
+    public static class FloatQuantizer
     {
-        public static int CompressVelocity(float value, float maxValue, int bits)
+        public static int Compress(float value, float minValue, float maxValue, int bits)
         {
             int maxStep = (1 << bits) - 1;
-            float normalizedValue = (value + maxValue) / (2 * maxValue); // Shift and scale to 0-1 range
+            float normalizedValue = (value - minValue) / (maxValue - minValue);
             return Mathf.RoundToInt(Mathf.Clamp01(normalizedValue) * maxStep);
         }
 
-        public static float DecompressVelocity(int compressed, float maxValue, int bits)
+        public static float Decompress(int compressed, float minValue, float maxValue, int bits)
         {
             float maxStep = (1 << bits) - 1f;
             float normalizedValue = compressed / maxStep;
-            return (normalizedValue * 2 * maxValue) - maxValue; // Rescale and shift back to original range
+            return (normalizedValue * (maxValue - minValue)) + minValue;
         }
     }
 }

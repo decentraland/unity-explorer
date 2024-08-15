@@ -4,7 +4,7 @@
     {
         // temporalData = 22 + 2 + 7 = 31
         public const float TIMESTAMP_QUANTUM = 0.01f;
-        public const int TIMESTAMP_BITS = 22;
+        public const int TIMESTAMP_BITS = 18;
 
         // Animations
         public const int MOVEMENT_KIND_BITS = 2;
