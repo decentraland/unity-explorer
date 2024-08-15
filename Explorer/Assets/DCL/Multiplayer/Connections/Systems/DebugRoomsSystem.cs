@@ -5,6 +5,7 @@ using DCL.DebugUtilities;
 using DCL.DebugUtilities.UIBindings;
 using DCL.Multiplayer.Connections.Archipelago.Rooms;
 using DCL.Multiplayer.Connections.GateKeeper.Rooms;
+using DCL.Multiplayer.Connections.Rooms.Status;
 using DCL.Multiplayer.Connections.Systems.Debug;
 using DCL.Multiplayer.Profiles.Poses;
 using DCL.Multiplayer.Profiles.Tables;
@@ -18,9 +19,11 @@ namespace DCL.Multiplayer.Connections.Systems
     public partial class DebugRoomsSystem : BaseUnityLoopSystem
     {
         private readonly IRoomDisplay roomDisplay;
+        private readonly RoomsStatus roomsStatus;
 
         public DebugRoomsSystem(
             World world,
+            RoomsStatus roomsStatus,
             IArchipelagoIslandRoom archipelagoIslandRoom,
             IGateKeeperSceneRoom gateKeeperSceneRoom,
             IReadOnlyEntityParticipantTable entityParticipantTable,
@@ -72,11 +75,14 @@ namespace DCL.Multiplayer.Connections.Systems
                 ),
                 TimeSpan.FromSeconds(1)
             );
+
+            this.roomsStatus = roomsStatus;
         }
 
         protected override void Update(float t)
         {
             roomDisplay.Update();
+            roomsStatus.Update();
         }
     }
 }

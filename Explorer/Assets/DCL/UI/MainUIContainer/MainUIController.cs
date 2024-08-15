@@ -2,6 +2,7 @@
 using DCL.Chat;
 using DCL.Minimap;
 using DCL.SidebarBus;
+using DCL.UI.ConnectionStatusPanel;
 using DCL.UI.Sidebar;
 using DG.Tweening;
 using MVC;
@@ -52,6 +53,7 @@ namespace DCL.UI.MainUI
             mvcManager.ShowAsync(SidebarController.IssueCommand()).Forget();
             mvcManager.ShowAsync(MinimapController.IssueCommand()).Forget();
             mvcManager.ShowAsync(ChatController.IssueCommand()).Forget();
+            mvcManager.ShowAsync(ConnectionStatusPanelController.IssueCommand()).Forget();
             showingSidebar = true;
         }
 

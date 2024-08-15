@@ -44,6 +44,8 @@ MonoBehaviour:
   - rid: 2872862648882692099
   - rid: 3601422141625466883
   - rid: 3601422469352914947
+  - rid: 2799748226177040387
+  - rid: 2799748311381442562
   references:
     version: 2
     RefIds:
@@ -273,6 +275,17 @@ MonoBehaviour:
           m_EditorAssetChanged: 0
         <ReportHandlingSettingsProduction>k__BackingField:
           m_AssetGUID: 6c1c35a66af59874a8373ebcd51572a4
+          m_SubObjectName: 
+          m_SubObjectType: 
+          m_EditorAssetChanged: 0
+    - rid: 2799748226177040387
+      type: {class: ConnectionStatusPanelPlugin/ConnectionStatusPanelSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data: 
+    - rid: 2799748311381442562
+      type: {class: ErrorPopupPlugin/ErrorPopupSettings, ns: DCL.PluginSystem.Global, asm: DCL.Plugins}
+      data:
+        <ErrorPopup>k__BackingField:
+          m_AssetGUID: 0fce4c1a785b1495bbf861787a9a3224
           m_SubObjectName: 
           m_SubObjectType: 
           m_EditorAssetChanged: 0
