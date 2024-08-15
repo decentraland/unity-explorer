@@ -48,7 +48,7 @@ namespace DCL.Passport
         private readonly List<IPassportModuleController> overviewPassportModules = new ();
         private readonly List<IPassportModuleController> badgesPassportModules = new ();
 
-        private string? currentUserId;
+        private string currentUserId;
         private CancellationTokenSource? characterPreviewLoadingCts;
         private PassportErrorsController? passportErrorsController;
         private PassportCharacterPreviewController? characterPreviewController;
