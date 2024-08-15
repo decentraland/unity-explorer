@@ -129,6 +129,7 @@ namespace ECS.Unity.GLTFContainer.Asset.Systems
                 foreach (SkinnedMeshRenderer skinnedMeshRenderer in instanceRenderers.Value)
                 {
                     GameObject go = skinnedMeshRenderer.gameObject;
+                    skinnedMeshRenderer.updateWhenOffscreen = false;
 
                     // Always considered as visible collider
                     AddVisibleMeshCollider(result, go, skinnedMeshRenderer.sharedMesh);
