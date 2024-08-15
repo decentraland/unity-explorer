@@ -231,6 +231,11 @@ namespace DCL.Diagnostics
         public const string SDK_LOCAL_SCENE_DEVELOPMENT = nameof(SDK_LOCAL_SCENE_DEVELOPMENT);
 
         /// <summary>
+        ///     CameraDirector and VirtualCamera SDK components
+        /// </summary>
+        public const string CAMERA_DIRECTOR = nameof(CAMERA_DIRECTOR);
+
+        /// <summary>
         ///     Roads related systems
         /// </summary>
         public const string ROADS = nameof(ROADS);
