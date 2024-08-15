@@ -165,10 +165,10 @@ namespace DCL.Passport.Modules
                 return;
 
             fetchBadgesCts = fetchBadgesCts.SafeRestart();
-            LoadBadgesOverviewAsync(currentProfile.UserId, fetchBadgesCts.Token).Forget();
+            LoadBadgeDetailCardsAsync(currentProfile.UserId, fetchBadgesCts.Token).Forget();
         }
 
-        private async UniTaskVoid LoadBadgesOverviewAsync(string walletId, CancellationToken ct)
+        private async UniTaskVoid LoadBadgeDetailCardsAsync(string walletId, CancellationToken ct)
         {
             try
             {
