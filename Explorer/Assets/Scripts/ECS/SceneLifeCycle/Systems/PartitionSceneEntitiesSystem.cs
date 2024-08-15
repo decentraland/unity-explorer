@@ -159,7 +159,7 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        [None(typeof(PortableExperienceSceneComponent))]
+        [None(typeof(PortableExperienceComponent))]
         private void PartitionExistingEntity(ref SceneDefinitionComponent definition, ref PartitionComponent partitionComponent)
         {
             if (definition.InternalJobIndex < 0) return;

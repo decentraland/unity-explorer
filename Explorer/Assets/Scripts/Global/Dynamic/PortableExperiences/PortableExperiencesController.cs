@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using DCL.Utilities.Extensions;
+using ECS.LifeCycle.Components;
 using SceneRunner.Scene;
 using System.Linq;
 using GetSceneDefinition = ECS.SceneLifeCycle.SceneDefinition.GetSceneDefinition;
@@ -24,16 +25,16 @@ namespace PortableExperiences.Controller
         private static readonly QueryDescription GET_SCENE_DEFINITION = new QueryDescription().WithAll<GetSceneDefinition>();
         private static readonly QueryDescription SCENE_DEFINITION_COMPONENT = new QueryDescription().WithAll<SceneDefinitionComponent>();
 
-        private readonly ServerAbout serverAbout = new ();
+
         private readonly IWeb3IdentityCache web3IdentityCache;
         private readonly IWebRequestController webRequestController;
         private readonly IScenesCache scenesCache;
-
         private readonly ObjectProxy<World> globalWorldProxy;
-        private List<Entity> entitiesToDestroy = new ();
+
+        private readonly List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
+        private readonly ServerAbout serverAbout = new ();
         public Dictionary<ENS, Entity> PortableExperienceEntities { get; } = new ();
         private World world => globalWorldProxy.Object;
-        private List<IPortableExperiencesController.SpawnResponse> spawnResponsesList = new ();
 
         public PortableExperiencesController(
             ObjectProxy<World> world,
@@ -53,7 +54,7 @@ namespace PortableExperiences.Controller
 
             if (ens.IsValid) { worldUrl = ENSUtils.ConvertEnsToWorldUrl(ens); }
 
-            if (!worldUrl.IsValidUrl()) throw new ArgumentException("Invalid Spawn params. Provide a URN or an ENS name");
+            if (!worldUrl.IsValidUrl()) throw new ArgumentException("Invalid Spawn params. Provide a valid ENS name");
 
             var portableExperiencePath = URLDomain.FromString(worldUrl);
             URLAddress url = portableExperiencePath.Append(new URLPath("/about"));
@@ -65,7 +66,7 @@ namespace PortableExperiences.Controller
             if (result.configurations.scenesUrn.Count == 0)
             {
                 //The loaded realm does not have any fixed scene, so it cannot be loaded as a Portable Experience
-                throw new Exception($"Scene not Available in provided Portable Experience with ens:{ens}");
+                throw new Exception($"Scene not Available in provided Portable Experience with ens: {ens}");
             }
             var realmData = new RealmData();
             realmData.Reconfigure(
@@ -79,12 +80,21 @@ namespace PortableExperiences.Controller
 
             ISceneFacade parentScene = scenesCache.Scenes.FirstOrDefault(s => s.SceneStateProvider.IsCurrent);
             string parentSceneName = parentScene != null ? parentScene.Info.Name : "main";
-            Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience));
+            Entity portableExperienceEntity = world.Create(new PortableExperienceRealmComponent(realmData, parentSceneName, isGlobalPortableExperience), new PortableExperienceComponent(ens));
             PortableExperienceEntities.Add(ens, portableExperienceEntity);
+
+            WaitToKill(ens).Forget();
 
             return new IPortableExperiencesController.SpawnResponse
                 { name = realmData.RealmName, ens = ens.ToString(), parent_cid = parentSceneName, pid = portableExperienceEntity.Id.ToString() };
         }
+
+        private async UniTaskVoid WaitToKill(ENS ens)
+        {
+            await UniTask.Delay(5000);
+            await UnloadPortableExperienceByEnsAsync(ens, CancellationToken.None);
+        }
+
 
         public bool CanKillPortableExperience(ENS ens)
         {
@@ -121,49 +131,20 @@ namespace PortableExperiences.Controller
             return spawnResponsesList;
         }
 
-        public async UniTask<IPortableExperiencesController.ExitResponse> UnloadPortableExperienceAsync(ENS ens, CancellationToken ct)
+        public async UniTask<IPortableExperiencesController.ExitResponse> UnloadPortableExperienceByEnsAsync(ENS ens, CancellationToken ct)
         {
             if (!ens.IsValid) throw new ArgumentException($"The provided ens {ens.ToString()} is invalid");
 
-            //We need to dispose the scene that the PX has created.
             if (PortableExperienceEntities.TryGetValue(ens, out Entity portableExperienceEntity))
             {
-                PortableExperienceRealmComponent portableExperienceRealmComponent = world.Get<PortableExperienceRealmComponent>(portableExperienceEntity);
+                world.Add<DeleteEntityIntention>(portableExperienceEntity);
 
-                //Portable Experiences only have one scene
-                string sceneUrn = portableExperienceRealmComponent.Ipfs.SceneUrns[0];
-                string sceneEntityId = IpfsHelper.ParseUrn(sceneUrn).EntityId;
-
-                if (scenesCache.TryGetPortableExperienceBySceneUrn(sceneEntityId, out ISceneFacade sceneFacade))
-                {
-                    await sceneFacade.DisposeAsync();
-                    scenesCache.RemovePortableExperienceFacade(sceneEntityId);
-                }
-
-                // Clear the world from everything connected to the current PX
-                //for this we will need to go over all these entities in the query
-                //and check if their IpfsPath.EntityId coincides with the scene's entityId and if so, delete them.
-                entitiesToDestroy.Clear();
-
-                await UniTask.SwitchToMainThread();
-
-                if (!string.IsNullOrEmpty(sceneEntityId))
-                {
-                    GetEntitiesToDestroy(sceneEntityId, GET_SCENE_DEFINITION, CheckGetSceneDefinitions, ref entitiesToDestroy);
-                    GetEntitiesToDestroy(sceneEntityId, SCENE_DEFINITION_COMPONENT, CheckSceneDefinitionComponents, ref entitiesToDestroy);
-
-                    foreach (Entity entity in entitiesToDestroy) { world.Destroy(entity); }
-                }
-
-                world.Destroy(portableExperienceEntity);
                 PortableExperienceEntities.Remove(ens);
 
-                return new IPortableExperiencesController.ExitResponse
-                    { status = true };
+                return new IPortableExperiencesController.ExitResponse { status = true };
             }
 
-            return new IPortableExperiencesController.ExitResponse
-                { status = false };
+            return new IPortableExperiencesController.ExitResponse { status = false };
         }
 
         private void GetEntitiesToDestroy(string url, QueryDescription queryDescription, Func<Chunk, string, Entity> iterationFunc, ref List<Entity> entities)

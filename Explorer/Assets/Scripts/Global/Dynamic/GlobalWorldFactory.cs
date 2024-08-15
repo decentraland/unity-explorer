@@ -162,6 +162,8 @@ namespace Global.Dynamic
 
             OwnAvatarLoaderFromDebugMenuSystem.InjectToWorld(ref builder, playerEntity, debugContainerBuilder, realmData);
 
+            UnloadPortableExperiencesSystem.InjectToWorld(ref builder);
+
             UpdateCurrentSceneSystem.InjectToWorld(ref builder, realmData, scenesCache, playerEntity, staticContainer.SingletonSharedDependencies.SceneAssetLock);
 
             IEmoteProvider emoteProvider = new EcsEmoteProvider(world, realmData);
@@ -170,7 +172,7 @@ namespace Global.Dynamic
 
             foreach (IDCLGlobalPlugin plugin in globalPlugins)
                 plugin.InjectToWorld(ref builder, pluginArgs);
-            
+
             var finalizeWorldSystems = new IFinalizeWorldSystem[]
             {
                 UnloadSceneSystem.InjectToWorld(ref builder, scenesCache, staticContainer.SingletonSharedDependencies.SceneAssetLock), UnloadSceneLODSystem.InjectToWorld(ref builder, scenesCache, lodCache),

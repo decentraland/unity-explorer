@@ -1,5 +1,4 @@
 ﻿using SceneRunner.Scene;
-using UnityEngine;
 
 namespace SceneRunner
 {
@@ -11,7 +10,5 @@ namespace SceneRunner
         {
             SetIsCurrent(true);
         }
-
-        public new bool Contains(Vector2Int parcel) => true;
     }
 }

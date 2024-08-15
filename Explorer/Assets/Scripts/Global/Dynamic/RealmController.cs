@@ -155,7 +155,7 @@ namespace Global.Dynamic
 
             if (globalWorld != null)
             {
-                loadedScenes = FindLoadedScenesAndClearSceneCache();
+                loadedScenes = FindLoadedScenesAndClearSceneCache(true);
                 // Destroy everything without awaiting as it's Application Quit
                 globalWorld.SafeDispose(ReportCategory.SCENE_LOADING);
             }
@@ -175,13 +175,10 @@ namespace Global.Dynamic
 
             List<ISceneFacade> loadedScenes = FindLoadedScenesAndClearSceneCache();
 
-
-            if (scenesCache.PortableExperiencesScenes.Count == 0)
             // release pooled entities
-            {
-                for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
+            for (var i = 0; i < globalWorld.FinalizeWorldSystems.Count; i++)
                     globalWorld.FinalizeWorldSystems[i].FinalizeComponents(world.Query(in CLEAR_QUERY));
-            }
+
 
             // Clear the world from everything connected to the current realm
             world.Destroy(in CLEAR_QUERY);

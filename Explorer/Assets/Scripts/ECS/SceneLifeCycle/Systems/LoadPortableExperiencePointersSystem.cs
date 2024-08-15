@@ -2,6 +2,7 @@
 using Arch.System;
 using Arch.SystemGroups;
 using DCL.Ipfs;
+using ECS.LifeCycle.Components;
 using ECS.Prioritization.Components;
 using ECS.SceneLifeCycle.Components;
 using ECS.SceneLifeCycle.SceneDefinition;
@@ -10,8 +11,6 @@ using ECS.StreamableLoading.Common.Components;
 
 namespace ECS.SceneLifeCycle.Systems
 {
-    /// <summary>
-    /// </summary>
     [UpdateInGroup(typeof(RealmGroup))]
     public partial class LoadPortableExperiencePointersSystem : LoadScenePointerSystemBase
     {
@@ -21,10 +20,11 @@ namespace ECS.SceneLifeCycle.Systems
         {
             ResolvePromisesQuery(World);
             InitiateDefinitionLoadingQuery(World);
+            HandleEntityDestructionQuery(World);
         }
 
         [Query]
-        [None(typeof(PortableExperienceScenePointers))]
+        [None(typeof(PortableExperienceScenePointers), typeof(DeleteEntityIntention))]
         private void InitiateDefinitionLoading(in Entity entity, ref PortableExperienceRealmComponent portableExperienceRealmComponent)
         {
             var promises = new AssetPromise<SceneEntityDefinition, GetSceneDefinition>[portableExperienceRealmComponent.Ipfs.SceneUrns.Count];
@@ -45,7 +45,8 @@ namespace ECS.SceneLifeCycle.Systems
         }
 
         [Query]
-        private void ResolvePromises(ref PortableExperienceScenePointers portableExperienceScenePointers)
+        [None(typeof(DeleteEntityIntention))]
+        private void ResolvePromises(ref PortableExperienceScenePointers portableExperienceScenePointers, PortableExperienceComponent portableExperienceComponent)
         {
             if (portableExperienceScenePointers.AllPromisesResolved) return;
 
@@ -60,7 +61,8 @@ namespace ECS.SceneLifeCycle.Systems
                 {
                     if (result is {Asset: not null, Succeeded: true })
                     {
-                        CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
+                        var entity = CreateSceneEntity(result.Asset, promise.LoadingIntention.IpfsPath);
+                        World.Add(entity, portableExperienceComponent);
                     }
                 }
                 else
@@ -70,5 +72,20 @@ namespace ECS.SceneLifeCycle.Systems
                 }
             }
         }
+
+        [Query]
+        [All(typeof(DeleteEntityIntention))]
+        private void HandleEntityDestruction(in Entity entity, ref PortableExperienceScenePointers portableExperienceScenePointers)
+        {
+            for (var i = 0; i < portableExperienceScenePointers.Promises.Length; i++)
+            {
+                ref AssetPromise<SceneEntityDefinition, GetSceneDefinition> promise = ref portableExperienceScenePointers.Promises[i];
+                promise.ForgetLoading(World);
+            }
+
+            World.Remove<PortableExperienceScenePointers>(entity);
+        }
+
+
     }
 }

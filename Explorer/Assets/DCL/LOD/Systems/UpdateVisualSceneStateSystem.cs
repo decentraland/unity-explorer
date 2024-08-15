@@ -35,7 +35,7 @@ namespace ECS.SceneLifeCycle.Systems
         private static readonly QueryDescription VISUAL_STATE_SCENE_QUERY = new QueryDescription()
                                                                            .WithAll<VisualSceneState, PartitionComponent, SceneDefinitionComponent>()
                                                                            .WithAny<SceneLODInfo, ISceneFacade, AssetPromise<ISceneFacade, GetSceneFacadeIntention>>()
-                                                                           .WithNone<DeleteEntityIntention, PortableExperienceSceneComponent>();
+                                                                           .WithNone<DeleteEntityIntention, PortableExperienceComponent>();
 
         private readonly ContinuationMethod<ISceneFacade> sceneFacadeToLODContinuation;
         private readonly ContinuationMethod<AssetPromise<ISceneFacade, GetSceneFacadeIntention>> scenePromiseToLODContinuation;

@@ -49,7 +49,11 @@ namespace ECS.SceneLifeCycle.SceneDefinition
         //This is considering a size of -150 to 150 parcels
         private const float PORTABLE_EXPERIENCE_MAX_VALUES = 2400f;
         private static readonly ParcelMathHelper.SceneGeometry PORTABLE_EXPERIENCES_SCENE_GEOMETRY = new ParcelMathHelper.SceneGeometry(Vector3.zero,
-            new ParcelMathHelper.SceneCircumscribedPlanes(-PORTABLE_EXPERIENCE_MAX_VALUES, PORTABLE_EXPERIENCE_MAX_VALUES, -PORTABLE_EXPERIENCE_MAX_VALUES, PORTABLE_EXPERIENCE_MAX_VALUES));
+            new ParcelMathHelper.SceneCircumscribedPlanes(
+                minX: -PORTABLE_EXPERIENCE_MAX_VALUES,
+                maxX: PORTABLE_EXPERIENCE_MAX_VALUES,
+                minZ: -PORTABLE_EXPERIENCE_MAX_VALUES,
+                maxZ: PORTABLE_EXPERIENCE_MAX_VALUES));
         //PX don't care about parcel corners as they work on all the map.
         private static readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> PORTABLE_EXPERIENCES_PARCEL_CORNERS = new List<ParcelMathHelper.ParcelCorners>();
 

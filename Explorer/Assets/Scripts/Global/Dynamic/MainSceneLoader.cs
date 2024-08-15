@@ -20,7 +20,7 @@ namespace Global.Dynamic
 {
     public interface IDebugSettings
     {
-        string[]? PortableExperiencesEnsToLoad;
+        string[]? PortableExperiencesEnsToLoad { get; }
         bool ShowSplash { get; }
         bool ShowAuthentication { get; }
         bool ShowLoading { get; }
@@ -46,7 +46,7 @@ namespace Global.Dynamic
         private bool enableLOD;
         [SerializeField]
         private bool enableEmulateNoLivekitConnection;
-        [SerializeField] internal string[] portableExperiencesEnsToLoad;
+        [SerializeField] internal string[]? portableExperiencesEnsToLoad;
 
         public static DebugSettings Release() =>
             new ()
@@ -61,6 +61,7 @@ namespace Global.Dynamic
             };
 
         // To avoid configuration issues, force full flow on build (Debug.isDebugBuild is always true in Editor)
+        public string[]? PortableExperiencesEnsToLoad => Debug.isDebugBuild ? this.portableExperiencesEnsToLoad : RELEASE_SETTINGS.portableExperiencesEnsToLoad;
         public bool ShowSplash => Debug.isDebugBuild ? this.showSplash : RELEASE_SETTINGS.showSplash;
         public bool ShowAuthentication => Debug.isDebugBuild ? this.showAuthentication : RELEASE_SETTINGS.showAuthentication;
         public bool ShowLoading => Debug.isDebugBuild ? this.showLoading : RELEASE_SETTINGS.showLoading;
