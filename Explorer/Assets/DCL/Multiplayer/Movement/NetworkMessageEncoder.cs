@@ -2,17 +2,18 @@
 using System;
 using UnityEngine;
 using Utility;
-using static DCL.Multiplayer.Movement.Systems.CompressedNetworkMovementMessage;
+using static DCL.Multiplayer.Movement.Systems.CompressionConfig;
 
 namespace DCL.Multiplayer.Movement.Systems
 {
-    [Serializable]
-    public struct CompressedNetworkMovementMessage
+    public static class CompressionConfig
     {
         public const int PARCEL_SIZE = 16;
+
         public const int Y_MAX = 150;
         public const int MAX_VELOCITY = 10;
 
+        public const float TIMESTAMP_QUANTUM = 0.01f;
         public const int TIMESTAMP_BITS = 22;
 
         public const int MOVEMENT_KIND_BITS = 2;
@@ -33,6 +34,12 @@ namespace DCL.Multiplayer.Movement.Systems
         public const int XZ_BITS = 8;
         public const int Y_BITS = 13;
         public const int VELOCITY_BITS = 6;
+    }
+
+    [Serializable]
+    public struct CompressedNetworkMovementMessage
+    {
+
 
         public int temporalData;
         public long movementData;
@@ -42,21 +49,20 @@ namespace DCL.Multiplayer.Movement.Systems
 
     public static class TimestampEncoder
     {
-        private const float SENT_INTERVAL = 0.01f; // == QUANTUM in this case
-        public static float Buffer => steps * SENT_INTERVAL;
+        public static float Buffer => steps * TIMESTAMP_QUANTUM;
 
         private static int steps => (int)Math.Pow(2, TIMESTAMP_BITS); // 128, 256, 512
 
         public static int Compress(float timestamp)
         {
             float normalizedTimestamp = timestamp % Buffer; // Normalize timestamp within the round buffer
-            return Mathf.RoundToInt(normalizedTimestamp / SENT_INTERVAL) % steps;
+            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM) % steps;
         }
 
         public static float Decompress(long data, int bits)
         {
             int mask = (1 << bits) - 1;
-            return (int)(data & mask) * SENT_INTERVAL % Buffer;
+            return (int)(data & mask) * TIMESTAMP_QUANTUM % Buffer;
         }
     }
 
@@ -115,6 +121,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
     public static class NetworkMessageEncoder
     {
+
 
         public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message)
         {
