@@ -10,6 +10,7 @@ namespace ECS.Unity.SceneBoundsChecker
     public struct SDKCollider
     {
         public readonly Collider? Collider;
+        private readonly Transform? Transform;
 
         private bool isActiveByEntity;
 
@@ -39,6 +40,16 @@ namespace ECS.Unity.SceneBoundsChecker
             isActiveByEntity = false;
             IsActiveBySceneBounds = false;
 
+            if (collider != null)
+            {
+                Transform = collider.transform;
+                Transform.hasChanged = false;
+            }
+            else
+            {
+                Transform = null;
+            }
+            
             ResolveColliderActivity();
         }
 
@@ -69,5 +80,17 @@ namespace ECS.Unity.SceneBoundsChecker
             if (Collider != null)
                 Collider.enabled = isActiveByEntity && IsActiveBySceneBounds;
         }
+
+        public bool HasMoved()
+        {
+            if (Transform != null && Transform.hasChanged)
+            {
+                Transform.hasChanged = false;
+                return true;
+            }
+
+            return false;
+        }
+       
     }
 }
