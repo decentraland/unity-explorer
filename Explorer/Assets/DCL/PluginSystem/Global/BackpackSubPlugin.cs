@@ -30,24 +30,24 @@ namespace DCL.PluginSystem.Global
     {
         private readonly IAssetsProvisioner assetsProvisioner;
         private readonly IWearableCatalog wearableCatalog;
+        private readonly ISelfProfile selfProfile;
         private readonly IEquippedWearables equippedWearables;
         private readonly IEquippedEmotes equippedEmotes;
         private readonly IEmoteCache emoteCache;
         private readonly IReadOnlyCollection<URN> embeddedEmotes;
+        private readonly ICollection<string> forceRender;
         private readonly IRealmData realmData;
         private readonly DCLInput dclInput;
         private readonly IWeb3IdentityCache web3Identity;
         private readonly BackpackCommandBus backpackCommandBus;
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly ICharacterPreviewFactory characterPreviewFactory;
-        private readonly BackpackEquipStatusController backpackEquipStatusController;
         private readonly URLDomain assetBundleURL;
         private readonly IWebRequestController webRequestController;
         private readonly CharacterPreviewEventBus characterPreviewEventBus;
 
         private BackpackBusController? busController;
-        private Arch.Core.World? world;
-        private Entity? playerEntity;
+        private BackpackEquipStatusController? backpackEquipStatusController;
 
         internal BackpackController? backpackController { get; private set; }
 
@@ -66,16 +66,19 @@ namespace DCL.PluginSystem.Global
             DCLInput dclInput,
             URLDomain assetBundleURL,
             IWebRequestController webRequestController,
-            CharacterPreviewEventBus characterPreviewEventBus)
+            CharacterPreviewEventBus characterPreviewEventBus,
+            IBackpackEventBus backpackEventBus)
         {
             this.assetsProvisioner = assetsProvisioner;
             this.web3Identity = web3Identity;
             this.characterPreviewFactory = characterPreviewFactory;
             this.wearableCatalog = wearableCatalog;
+            this.selfProfile = selfProfile;
             this.equippedWearables = equippedWearables;
             this.equippedEmotes = equippedEmotes;
             this.emoteCache = emoteCache;
             this.embeddedEmotes = embeddedEmotes;
+            this.forceRender = forceRender;
             this.realmData = realmData;
             this.dclInput = dclInput;
             this.assetBundleURL = assetBundleURL;
@@ -83,17 +86,7 @@ namespace DCL.PluginSystem.Global
             this.characterPreviewEventBus = characterPreviewEventBus;
 
             backpackCommandBus = new BackpackCommandBus();
-            backpackEventBus = new BackpackEventBus();
-
-            backpackEquipStatusController = new BackpackEquipStatusController(
-                backpackEventBus,
-                equippedEmotes,
-                equippedWearables,
-                selfProfile,
-                forceRender,
-                ProvideEcsContext,
-                web3Identity
-            );
+            this.backpackEventBus = backpackEventBus;
         }
 
         internal async UniTask<ContinueInitialization> InitializeAsync(
@@ -155,8 +148,8 @@ namespace DCL.PluginSystem.Global
 
             return (ref ArchSystemsWorldBuilder<Arch.Core.World> builder, in GlobalPluginArguments args) =>
             {
-                world = builder.World!;
-                playerEntity = args.PlayerEntity;
+                Arch.Core.World world = builder.World!;
+                Entity playerEntity = args.PlayerEntity;
 
                 var thumbnailProvider = new ECSThumbnailProvider(realmData, builder.World, assetBundleURL, webRequestController);
 
@@ -176,6 +169,17 @@ namespace DCL.PluginSystem.Global
 
                 var backpackCharacterPreviewController = new BackpackCharacterPreviewController(view.CharacterPreviewView,
                     characterPreviewFactory, backpackEventBus, world, equippedEmotes, characterPreviewEventBus);
+
+                backpackEquipStatusController = new BackpackEquipStatusController(
+                    backpackEventBus,
+                    equippedEmotes,
+                    equippedWearables,
+                    selfProfile,
+                    forceRender,
+                    web3Identity,
+                    world,
+                    playerEntity
+                );
 
                 backpackController = new BackpackController(
                     view,
@@ -204,8 +208,5 @@ namespace DCL.PluginSystem.Global
             backpackController?.Dispose();
             backpackEquipStatusController?.Dispose();
         }
-
-        private (Arch.Core.World, Entity) ProvideEcsContext() =>
-            (world!, playerEntity!.Value);
     }
 }

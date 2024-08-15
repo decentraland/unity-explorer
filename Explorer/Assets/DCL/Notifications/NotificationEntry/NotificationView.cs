@@ -1,3 +1,4 @@
+using DCL.NotificationsBusController.NotificationTypes;
 using DCL.UI;
 using System;
 using TMPro;
@@ -5,13 +6,22 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace DCL.Notification.NotificationEntry
+namespace DCL.Notifications.NotificationEntry
 {
-    public class NotificationView : MonoBehaviour, IPointerClickHandler
+    public class NotificationView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public event Action<NotificationType, string> NotificationClicked;
         public NotificationType NotificationType { get; set; }
         public string NotificationId { get; set; }
+
+        [field: SerializeField]
+        public Color NormalColor { get; private set; }
+
+        [field: SerializeField]
+        public Color HoveredColor { get; private set; }
+
+        [field: SerializeField]
+        public Image Background { get; private set; }
 
         [field: SerializeField]
         public GameObject UnreadImage { get; private set; }
@@ -37,9 +47,24 @@ namespace DCL.Notification.NotificationEntry
         [field: SerializeField]
         public Image NotificationTypeImage { get; private set; }
 
+        private void Start()
+        {
+            Background.color = NormalColor;
+        }
+
         public void OnPointerClick(PointerEventData eventData)
         {
             NotificationClicked?.Invoke(NotificationType, NotificationId);
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            Background.color = HoveredColor;
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            Background.color = NormalColor;
         }
     }
 }

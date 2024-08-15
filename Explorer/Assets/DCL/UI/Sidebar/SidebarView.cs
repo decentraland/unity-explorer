@@ -1,6 +1,7 @@
 ﻿using DCL.EmotesWheel;
 using DCL.ExplorePanel;
-using DCL.Notification.NotificationsMenu;
+using DCL.Notifications.NotificationsMenu;
+using DCL.UI.ProfileElements;
 using MVC;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,7 +19,9 @@ namespace DCL.UI.Sidebar
         [field: Header("Profile")]
         [field: SerializeField] public ProfileWidgetView ProfileWidget { get; private set; }
         [field: SerializeField] internal GameObject profileMenu { get; private set; }
-        [field: SerializeField] public SidebarProfileView SidebarProfileView { get; private set; }
+        [field: SerializeField] public ProfileMenuView ProfileMenuView { get; private set; }
+        [field: SerializeField] public Image FaceFrame { get; private set; }
+
 
         [field: Header("Explore Panel Shortcuts")]
         [field: SerializeField] public PersistentEmoteWheelOpenerView PersistentEmoteWheelOpener { get; private set; }
@@ -29,7 +32,7 @@ namespace DCL.UI.Sidebar
 
         [field: Header("Sidebar Settings")]
         [field: SerializeField] internal Button sidebarSettingsButton { get; private set; }
-        [field: SerializeField] internal UIWidgetWithCloseArea sidebarSettingsWidget { get; private set; }
+        [field: SerializeField] internal ElementWithCloseArea sidebarSettingsWidget { get; private set; }
         [field: SerializeField] internal Toggle autoHideToggle { get; private set; }
     }
 }

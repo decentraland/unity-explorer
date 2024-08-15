@@ -30,7 +30,7 @@ namespace SceneRuntime.Apis.Modules.CommunicationsControllerApi
             lastInput.Clear();
         }
 
-        public void OnSceneIsCurrentChanged(bool isCurrent)
+        public override void OnSceneIsCurrentChanged(bool isCurrent)
         {
             api.OnSceneIsCurrentChanged(isCurrent);
         }

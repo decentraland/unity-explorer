@@ -8,6 +8,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
+using Utility;
 
 namespace CrdtEcsBridge.JsModulesImplementation.Communications
 {
@@ -24,7 +25,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         protected readonly ISceneData sceneData;
         protected readonly ISceneStateProvider sceneStateProvider;
         protected readonly IJsOperations jsOperations;
-        protected readonly Action<ReceivedMessage<Scene>> onMessageReceivedCached;
+        protected readonly Action<ICommunicationControllerHub.SceneMessage> onMessageReceivedCached;
         protected readonly List<IMemoryOwner<byte>> eventsToProcess = new ();
         internal IReadOnlyList<IMemoryOwner<byte>> EventsToProcess => eventsToProcess;
 
@@ -46,8 +47,7 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
         {
             lock (eventsToProcess) { CleanUpReceivedMessages(); }
 
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
+            cancellationTokenSource.SafeCancelAndDispose();
         }
 
         public void OnSceneIsCurrentChanged(bool isCurrent)
@@ -100,10 +100,10 @@ namespace CrdtEcsBridge.JsModulesImplementation.Communications
 
         private void SendMessage(ReadOnlySpan<byte> message)
         {
-            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id, cancellationTokenSource.Token);
+            messagePipesHub.SendMessage(message, sceneData.SceneEntityDefinition.id!, cancellationTokenSource.Token);
         }
 
-        protected virtual void OnMessageReceived(ReceivedMessage<Scene> receivedMessage) { }
+        protected virtual void OnMessageReceived(ICommunicationControllerHub.SceneMessage receivedMessage) { }
 
         internal static MsgType DecodeMessage(ref ReadOnlySpan<byte> value)
         {

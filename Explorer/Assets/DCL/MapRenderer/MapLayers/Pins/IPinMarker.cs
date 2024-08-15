@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using DCL.MapRenderer.Culling;
 using System;
 using UnityEngine;
@@ -20,9 +21,9 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetData(string title, string description);
 
-        void AnimateIn();
+        UniTaskVoid AnimateSelectionAsync();
 
-        void AnimateOut();
+        UniTaskVoid AnimateDeselectionAsync();
 
         void SetAsDestination(bool isDestination);
 
@@ -36,6 +37,10 @@ namespace DCL.MapRenderer.MapLayers.Pins
 
         void SetZoom(float baseScale, float baseZoom, float zoom);
 
-        void ResetScale(float scale);
+        void ResetScale();
+
+        void Show(Action? onFinish);
+
+        void Hide(Action? onFinish);
     }
 }

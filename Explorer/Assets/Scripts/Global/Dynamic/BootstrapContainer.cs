@@ -9,6 +9,7 @@ using DCL.PluginSystem;
 using DCL.Web3;
 using DCL.Web3.Authenticators;
 using DCL.Web3.Identities;
+using ECS.SceneLifeCycle.Realm;
 using Segment.Analytics;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,6 @@ namespace Global.Dynamic
     {
         private ProvidedAsset<ReportsHandlingSettings> reportHandlingSettings;
         private DiagnosticsContainer? diagnosticsContainer;
-
         private bool enableAnalytics;
 
         public IDecentralandUrlsSource DecentralandUrlsSource { get; private set; }
@@ -33,7 +33,9 @@ namespace Global.Dynamic
         public IVerifiedEthereumApi? VerifiedEthereumApi { get; private set; }
         public IWeb3VerifiedAuthenticator? Web3Authenticator { get; private set; }
         public IAnalyticsController? Analytics { get; private set; }
+        public IDebugSettings DebugSettings { get; private set; }
         public IReportsHandlingSettings ReportHandlingSettings => reportHandlingSettings.Value;
+        public bool LocalSceneDevelopment { get; private set; }
 
         public override void Dispose()
         {
@@ -50,17 +52,21 @@ namespace Global.Dynamic
             DebugSettings debugSettings,
             DynamicSceneLoaderSettings sceneLoaderSettings,
             IPluginSettingsContainer settingsContainer,
+            RealmLaunchSettings launchSettings,
             CancellationToken ct
         )
         {
             var decentralandUrlsSource = new DecentralandUrlsSource(sceneLoaderSettings.DecentralandEnvironment);
             var browser = new UnityAppWebBrowser(decentralandUrlsSource);
+            var appParametersParser = new ApplicationParametersParser(launchSettings);
 
             var bootstrapContainer = new BootstrapContainer
             {
                 AssetsProvisioner = new AddressablesProvisioner(),
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
+                DebugSettings = debugSettings,
+                LocalSceneDevelopment = appParametersParser.LocalSceneDevelopment || launchSettings.GetStartingRealm() == IRealmNavigator.LOCALHOST,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
@@ -70,19 +76,19 @@ namespace Global.Dynamic
                 (container.IdentityCache, container.VerifiedEthereumApi, container.Web3Authenticator) = CreateWeb3Dependencies(sceneLoaderSettings, browser, container);
 
                 container.diagnosticsContainer = container.enableAnalytics
-                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
-                    : DiagnosticsContainer.Create(container.ReportHandlingSettings);
+                    ? DiagnosticsContainer.Create(container.ReportHandlingSettings, container.LocalSceneDevelopment, (ReportHandler.DebugLog, new CriticalLogsAnalyticsHandler(container.Analytics)))
+                    : DiagnosticsContainer.Create(container.ReportHandlingSettings, container.LocalSceneDevelopment);
             });
 
             return bootstrapContainer;
         }
 
-        private static async UniTask<(IBootstrap, IAnalyticsController?)> CreateBootstrapperAsync(DebugSettings debugSettings, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
+        private static async UniTask<(IBootstrap, IAnalyticsController)> CreateBootstrapperAsync(IDebugSettings debugSettings, BootstrapContainer container, BootstrapSettings bootstrapSettings, CancellationToken ct)
         {
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings.Get())
+            var coreBootstrap = new Bootstrap(debugSettings)
             {
                 EnableAnalytics = container.enableAnalytics,
             };

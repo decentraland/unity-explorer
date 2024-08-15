@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace DCL.UI.Buttons
@@ -11,11 +12,17 @@ namespace DCL.UI.Buttons
 
         private bool selected;
 
-        public new void OnEnable()
+        public new void Awake()
         {
-            base.OnEnable();
+            base.Awake();
             Button.onClick.AddListener(OnButtonPressed);
         }
+
+        private void OnDestroy()
+        {
+            Button.onClick.RemoveListener(OnButtonPressed);
+        }
+
 
         public void OnDeselect(BaseEventData eventData)
         {

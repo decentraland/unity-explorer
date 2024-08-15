@@ -1,9 +1,7 @@
 using Arch.Core;
-using CrdtEcsBridge.Physics;
 using DCL.AvatarRendering.Emotes;
 using DCL.Character.Components;
 using DCL.CharacterMotion.Components;
-using DCL.ECSComponents;
 using DCL.Interaction.Utility;
 using DCL.Multiplayer.Connections.RoomHubs;
 using DCL.Multiplayer.Movement;
@@ -105,10 +103,10 @@ namespace DCL.Multiplayer.Profiles.Entities
         {
             bool ContainsInRoom(IRoom room)
             {
-                foreach (string? sid in room.Participants.RemoteParticipantSids())
+                foreach (string? identity in room.Participants.RemoteParticipantIdentities())
                 {
-                    if (sid != null
-                        && room.Participants.RemoteParticipant(sid) is { } participant
+                    if (identity != null
+                        && room.Participants.RemoteParticipant(identity) is { } participant
                         && participant.Identity == wallet
                        )
                         return true;

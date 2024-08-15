@@ -1,7 +1,9 @@
-﻿using DCL.Web3.Identities;
+﻿#nullable enable
+using DCL.Web3.Identities;
 using ECS;
 using JetBrains.Annotations;
 using Segment.Serialization;
+using System;
 using UnityEngine;
 using Utility;
 using static DCL.PerformanceAndDiagnostics.Analytics.IAnalyticsController;
@@ -36,7 +38,7 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             });
         }
 
-        public void SetCommonParam(IRealmData realmData, [CanBeNull] IWeb3IdentityCache identityCache, ExposedTransform playerTransform)
+        public void SetCommonParam(IRealmData realmData, IWeb3IdentityCache? identityCache, ExposedTransform playerTransform)
         {
             analytics.AddPlugin(new DynamicCommonTraitsPlugin(realmData, identityCache, playerTransform));
 
@@ -44,13 +46,13 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                 Identify(identityCache.Identity);
         }
 
-        public void Track(string eventName, JsonObject properties = null)
+        public void Track(string eventName, JsonObject? properties = null)
         {
             if (Configuration.EventIsEnabled(eventName))
                 analytics.Track(eventName, properties);
         }
 
-        public void Identify(IWeb3Identity identity)
+        public void Identify(IWeb3Identity? identity)
         {
             if (identity != null)
                 analytics.Identify(identity.Address, new JsonObject
@@ -60,5 +62,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
                     }
                 );
         }
+
+        public void Flush() =>
+            analytics.Flush();
     }
 }

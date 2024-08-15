@@ -104,7 +104,7 @@ namespace DCL.CharacterPreview
 
         public void PlayEmote(string emoteId)
         {
-            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId });
+            globalWorld.Add(characterPreviewEntity, new CharacterEmoteIntent { EmoteId = emoteId, TriggerSource = TriggerSource.PREVIEW});
         }
 
         public void StopEmotes()

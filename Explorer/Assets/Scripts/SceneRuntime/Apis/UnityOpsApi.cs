@@ -24,7 +24,7 @@ namespace SceneRuntime.Apis
         [UsedImplicitly]
         public void Log(string message)
         {
-            ReportHub.Log(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
+            ReportHub.Verbose(new ReportData(ReportCategory.JAVASCRIPT, sceneShortInfo: sceneShortInfo), message);
         }
 
         [UsedImplicitly]

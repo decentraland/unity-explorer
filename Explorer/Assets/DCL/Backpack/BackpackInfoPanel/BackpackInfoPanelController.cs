@@ -17,7 +17,7 @@ namespace DCL.Backpack
         private const string EMOTE_CATEGORY = "emote";
 
         private readonly BackpackInfoPanelView view;
-        private readonly BackpackEventBus backpackEventBus;
+        private readonly IBackpackEventBus backpackEventBus;
         private readonly NftTypeIconSO categoryIcons;
         private readonly NftTypeIconSO rarityInfoPanelBackgrounds;
         private readonly NFTColorsSO rarityColors;
@@ -26,7 +26,7 @@ namespace DCL.Backpack
 
         public BackpackInfoPanelController(
             BackpackInfoPanelView view,
-            BackpackEventBus backpackEventBus,
+            IBackpackEventBus backpackEventBus,
             NftTypeIconSO categoryIcons,
             NftTypeIconSO rarityInfoPanelBackgrounds,
             NFTColorsSO rarityColors,

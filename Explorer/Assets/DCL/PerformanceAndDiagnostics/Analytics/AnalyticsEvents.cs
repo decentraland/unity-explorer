@@ -3,7 +3,6 @@
     public static class AnalyticsEvents
     {
         // TODO (Vit): Remains
-        // - Used emote
         // - Equip item
 
         public static class General
@@ -18,6 +17,11 @@
         {
             public const string MOVE_TO_PARCEL = "move_to_parcel";
             public const string TIME_SPENT_IN_WORLD = "time_spent_in_world";
+        }
+
+        public static class Wearables
+        {
+            public const string USED_EMOTE = "used_emote";
         }
 
         public static class UI
@@ -36,6 +40,11 @@
         {
             public const string WALKED_DISTANCE = "walked_distance";
             public const string HEIGHT_REACHED = "vertical_height_reached";
+        }
+
+        public static class Livekit
+        {
+            public const string LIVEKIT_HEALTH_CHECK_FAILED = "livekit_health_check_failed"; // 🔴 - needs testing
         }
     }
 }

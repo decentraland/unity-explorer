@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DCL.Multiplayer.Movement
 {
     [Serializable]
-    public struct NetworkMovementMessage
+    public struct NetworkMovementMessage : IEquatable<NetworkMovementMessage>
     {
         public float timestamp;
         public Vector3 position;
@@ -19,5 +19,14 @@ namespace DCL.Multiplayer.Movement
 
         public override string ToString() =>
             JsonUtility.ToJson(this);
+
+        public bool Equals(NetworkMovementMessage other) =>
+            timestamp.Equals(other.timestamp) && position.Equals(other.position) && velocity.Equals(other.velocity) && animState.Equals(other.animState) && isStunned == other.isStunned;
+
+        public override bool Equals(object obj) =>
+            obj is NetworkMovementMessage other && Equals(other);
+
+        public override int GetHashCode() =>
+            HashCode.Combine(timestamp, position, velocity, animState, isStunned);
     }
 }

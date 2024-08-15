@@ -167,16 +167,8 @@ MonoBehaviour:
     - rid: 6784895267130048515
       type: {class: MaterialsPlugin/Settings, ns: DCL.PluginSystem.World, asm: DCL.Plugins}
       data:
-        basicMaterial:
-          m_AssetGUID: 60d3d51407bdce5449781acd4ee86781
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
-        pbrMaterial:
-          m_AssetGUID: 0009549658aa1be40bbed401477fbd48
-          m_SubObjectName: 
-          m_SubObjectType: 
-          m_EditorAssetChanged: 0
+        basicMaterial: {fileID: 2100000, guid: 60d3d51407bdce5449781acd4ee86781, type: 2}
+        pbrMaterial: {fileID: 2100000, guid: 0009549658aa1be40bbed401477fbd48, type: 2}
         <LoadingAttemptsCount>k__BackingField: 6
         <PoolInitialCapacity>k__BackingField: 256
         <PoolMaxSize>k__BackingField: 2048
