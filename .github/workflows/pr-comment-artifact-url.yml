@@ -135,4 +135,4 @@ jobs:
             
             Build failed! Check the logs to see what went wrong
 
-            [badge]: https://img.shields.io/badge/Build-Pending!-ff0000?logo=github&style=for-the-badge
+            [badge]: https://img.shields.io/badge/Build-Failed!-ff0000?logo=github&style=for-the-badge

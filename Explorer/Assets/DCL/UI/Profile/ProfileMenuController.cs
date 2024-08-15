@@ -23,7 +23,7 @@ namespace DCL.UI.ProfileElements
         private CancellationTokenSource profileWidgetCts = new ();
 
         public ProfileMenuController(
-            [NotNull] ViewFactoryMethod viewFactory,
+            ViewFactoryMethod viewFactory,
             ProfileSectionElement profileSectionElement,
             IWeb3IdentityCache identityCache,
             IProfileRepository profileRepository,
@@ -59,6 +59,13 @@ namespace DCL.UI.ProfileElements
             await profileSectionController.LoadElementsAsync(profileWidgetCts.Token);
             await systemSectionController.LaunchViewLifeCycleAsync(new CanvasOrdering(CanvasOrdering.SortingLayer.Persistent, 0), new ControllerNoData(), profileWidgetCts.Token);
             await HideViewAsync(profileWidgetCts.Token);
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            profileSectionController.Dispose();
+            systemSectionController.Dispose();
         }
     }
 }

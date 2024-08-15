@@ -141,7 +141,7 @@ namespace DCL.MapRenderer.MapLayers.Pins
         public void ResetToBaseScale()
         {
             foreach (IPinMarker marker in markers.Values)
-                marker.ResetScale(coordsUtils.ParcelSize);
+                marker.ResetScale();
         }
 
         public UniTask Disable(CancellationToken cancellationToken)
