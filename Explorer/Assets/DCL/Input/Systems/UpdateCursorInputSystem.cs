@@ -9,6 +9,7 @@ using DCL.Diagnostics;
 using DCL.Input.Crosshair;
 using DCL.Input.Utils;
 using DCL.Interaction.PlayerOriginated.Components;
+using DCL.Utilities.Extensions;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -48,7 +49,7 @@ namespace DCL.Input.Systems
             cameraActions = dclInput.Camera;
             uiActions = dclInput.UI;
             shortcuts = dclInput.Shortcuts;
-            mouseDevice = InputSystem.GetDevice<Mouse>();
+            mouseDevice = InputSystem.GetDevice<Mouse>().EnsureNotNull("Mouse not found");
             interactionCache = new InteractionCache();
         }
 
@@ -90,8 +91,8 @@ namespace DCL.Input.Systems
                 cameraComponent.IsDirty = false;
             }
         }
-        
-       
+
+
 
         [Query]
         private void GetSDKInteractionState(in HoverStateComponent hoverStateComponent)
