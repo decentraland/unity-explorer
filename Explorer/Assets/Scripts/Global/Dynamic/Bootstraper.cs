@@ -155,6 +155,7 @@ namespace Global.Dynamic
             dynamicWorldContainer.RealmController.GlobalWorld = globalWorld;
 
             staticContainer.DebugContainerBuilder.BuildWithFlex(debugUiRoot);
+            staticContainer.DebugContainerBuilder.IsVisible = commandLineArgs.HasDebugFlag();
 
             return (globalWorld, playerEntity);
         }
