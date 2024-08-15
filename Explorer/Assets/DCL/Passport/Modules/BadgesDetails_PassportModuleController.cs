@@ -21,6 +21,7 @@ namespace DCL.Passport.Modules
         private const string ALL_FILTER = "All";
 
         private readonly BadgesDetails_PassportModuleView view;
+        private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
 
@@ -38,10 +39,12 @@ namespace DCL.Passport.Modules
 
         public BadgesDetails_PassportModuleController(
             BadgesDetails_PassportModuleView view,
+            BadgeInfo_PassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
             PassportErrorsController passportErrorsController)
         {
             this.view = view;
+            this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
 
@@ -156,6 +159,7 @@ namespace DCL.Passport.Modules
         private void LoadBadgeDetailCards()
         {
             ClearBadgeDetailCards();
+            badgeInfoModuleView.SetAsLoading(true);
 
             if (string.IsNullOrEmpty(currentProfile.UserId))
                 return;
@@ -177,7 +181,11 @@ namespace DCL.Passport.Modules
                     CreateBadgeDetailCard(lockedBadge);
 
                 if (instantiatedBadgeDetailCards.Count > 0)
+                {
                     instantiatedBadgeDetailCards[0].SetAsSelected(true);
+                    badgeInfoModuleView.Setup(instantiatedBadgeDetailCards[0].Model);
+                    badgeInfoModuleView.SetAsLoading(false);
+                }
 
                 int missingEmptyItems = CalculateMissingEmptyItems(instantiatedBadgeDetailCards.Count);
                 for (var i = 0; i < missingEmptyItems; i++)
@@ -209,6 +217,7 @@ namespace DCL.Passport.Modules
                     instantiatedBadge.SetAsSelected(false);
 
                 badgeDetailCard.SetAsSelected(true);
+                badgeInfoModuleView.Setup(badge);
             });
 
             instantiatedBadgeDetailCards.Add(badgeDetailCard);

@@ -56,6 +56,8 @@ namespace DCL.Passport.Fields
 
         public string BadgeCategory { get; private set; }
 
+        public BadgeInfo Model { get; private set; }
+
         public void SetInvisible(bool isInvisible) =>
             SubContainerTransform.gameObject.SetActive(!isInvisible);
 
@@ -64,6 +66,7 @@ namespace DCL.Passport.Fields
 
         public void Setup(BadgeInfo badgeInfo)
         {
+            Model = badgeInfo;
             BadgeNameText.text = badgeInfo.name;
             BadgeCategory = badgeInfo.category;
             //BadgeImage.sprite = null;

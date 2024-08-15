@@ -195,7 +195,7 @@ namespace DCL.BadgesAPIService
                     {
                         badge_id = "chat-user",
                         awarded_at = "1722005503466",
-                        name = "Chat user",
+                        name = "Chat User",
                         description = "Write something in the chat",
                         imageUrl = "",
                         isTier = false,

@@ -107,7 +107,7 @@ namespace DCL.Passport
             overviewPassportModules.Add(new UserDetailedInfo_PassportModuleController(viewInstance.UserDetailedInfoModuleView, mvcManager, selfProfile, viewInstance.AddLinkModal, passportErrorsController, passportProfileInfoController));
             overviewPassportModules.Add(new EquippedItems_PassportModuleController(viewInstance.EquippedItemsModuleView, world, rarityBackgrounds, rarityColors, categoryIcons, thumbnailProvider, webBrowser, decentralandUrlsSource, passportErrorsController));
             overviewPassportModules.Add(new BadgesOverview_PassportModuleController(viewInstance.BadgesOverviewModuleView, badgesAPIClient, passportErrorsController));
-            badgesPassportModules.Add(new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, badgesAPIClient, passportErrorsController));
+            badgesPassportModules.Add(new BadgesDetails_PassportModuleController(viewInstance.BadgesDetailsModuleView, viewInstance.BadgeInfoModuleView, badgesAPIClient, passportErrorsController));
 
             passportProfileInfoController.PublishError += OnPublishError;
             passportProfileInfoController.OnProfilePublished += OnProfilePublished;
@@ -244,6 +244,7 @@ namespace DCL.Passport
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.OVERVIEW, characterPreviewLoadingCts.Token).Forget();
             currentSection = PassportSection.OVERVIEW;
+            viewInstance.BadgeInfoModuleView.gameObject.SetActive(false);
         }
 
         private void OpenBadgesSection()
@@ -262,6 +263,7 @@ namespace DCL.Passport
             characterPreviewLoadingCts = characterPreviewLoadingCts.SafeRestart();
             LoadPassportSectionAsync(currentUserId, PassportSection.BADGES, characterPreviewLoadingCts.Token).Forget();
             currentSection = PassportSection.BADGES;
+            viewInstance.BadgeInfoModuleView.gameObject.SetActive(true);
         }
     }
 }
