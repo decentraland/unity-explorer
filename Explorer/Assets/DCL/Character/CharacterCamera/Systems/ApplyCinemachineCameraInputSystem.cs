@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cinemachine;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -58,6 +59,9 @@ namespace DCL.CharacterCamera.Systems
 
                     // Apply Field of View
                     ApplyFOV(dt, cinemachinePreset, in cameraInput);
+                    break;
+                default:
+                    ReportHub.LogError(GetReportCategory(), $"Camera mode is unknown {camera.Mode}");
                     break;
             }
 
