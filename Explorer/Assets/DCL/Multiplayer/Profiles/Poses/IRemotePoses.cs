@@ -36,7 +36,7 @@ namespace DCL.Multiplayer.Profiles.Poses
 
     public static class RemotePosesExtensions
     {
-        public static void BroadcastSelfPose(this IRemotePoses remotePoses, Vector2Int parcel) =>
-            remotePoses.BroadcastSelfPose(parcel);
+        public static void BroadcastSelfPose(this IRemotePoses remotePoses, ICharacterObject characterObject) =>
+            remotePoses.BroadcastSelfPose(characterObject.Position.ToParcel());
     }
 }

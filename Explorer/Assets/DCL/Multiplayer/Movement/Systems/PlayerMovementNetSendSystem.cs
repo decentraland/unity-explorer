@@ -95,7 +95,7 @@ namespace DCL.Multiplayer.Movement.Systems
                     IsLongFall = animation.States.IsLongFall,
 
                     // We don't send blend values explicitly. It is calculated from MovementKind and IsSliding fields
-                    SlideBlendValue = 0f, //animation.States.MovementBlendValue,
+                    SlideBlendValue = 0f,
                     MovementBlendValue = 0f,
                 },
 
@@ -106,7 +106,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending
-                // && movement.Kind != MovementKind.Run) // simulate package lost when Running
+                && movement.Kind != MovementKind.RUN // simulate package lost when Running
             )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }

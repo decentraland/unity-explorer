@@ -383,7 +383,7 @@ namespace DCL.AvatarRendering.DemoScripts.Systems
                 new CharacterAnimationComponent(),
                 new CharacterEmoteComponent(),
                 new RemotePlayerMovementComponent(
-                    new ObjectPool<IPriorityQueue<NetworkMovementMessage, float>>(() => new SimplePriorityQueue<NetworkMovementMessage>())
+                    new ObjectPool<SimplePriorityQueue<NetworkMovementMessage>>(() => new SimplePriorityQueue<NetworkMovementMessage>())
                 ),
                 new InterpolationComponent(),
                 new ExtrapolationComponent(),

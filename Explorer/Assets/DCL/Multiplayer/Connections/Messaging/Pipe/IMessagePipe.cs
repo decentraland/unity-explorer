@@ -14,8 +14,7 @@ namespace DCL.Multiplayer.Connections.Messaging.Pipe
         {
             private Null() {}
 
-            private static readonly Lazy<Null> INSTANCE = new (() => new Null());
-            public static IMessagePipe Instance => INSTANCE.Value;
+            public static readonly Null INSTANCE = new ();
 
             public MessageWrap<T> NewMessage<T>() where T: class, IMessage, new() =>
                 throw new Exception("Null implementation");

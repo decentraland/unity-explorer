@@ -75,7 +75,7 @@ namespace DCL.Multiplayer.Profiles.Systems
             remoteEntities.TryCreate(remoteProfiles, World!);
             remoteEntities.Remove(removeIntentions, World!);
             profileBroadcast.NotifyRemotes();
-            remotePoses.BroadcastSelfPose(characterObject.Position.ToParcel());
+            remotePoses.BroadcastSelfPose(characterObject);
         }
     }
 }

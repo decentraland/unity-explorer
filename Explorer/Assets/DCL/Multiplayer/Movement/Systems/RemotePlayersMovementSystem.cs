@@ -55,7 +55,7 @@ namespace DCL.Multiplayer.Movement.Systems
         private void UpdateRemotePlayersMovement([Data] float deltaTime, ref CharacterTransform transComp,
             ref RemotePlayerMovementComponent remotePlayerMovement, ref InterpolationComponent intComp, ref ExtrapolationComponent extComp)
         {
-            IPriorityQueue<NetworkMovementMessage, float>? playerInbox = remotePlayerMovement.Queue;
+            SimplePriorityQueue<NetworkMovementMessage>? playerInbox = remotePlayerMovement.Queue;
             if (playerInbox == null) return;
 
             settings.InboxCount = playerInbox.Count;
@@ -98,7 +98,7 @@ namespace DCL.Multiplayer.Movement.Systems
         }
 
         private void HandleNewMessage(float deltaTime, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, IPriorityQueue<NetworkMovementMessage, float> playerInbox)
+            ref InterpolationComponent intComp, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             NetworkMovementMessage remote = playerInbox.Dequeue();
             var isBlend = false;
@@ -124,8 +124,8 @@ namespace DCL.Multiplayer.Movement.Systems
             StartInterpolation(deltaTime, ref transComp, ref remotePlayerMovement, ref intComp, remote, isBlend);
         }
 
-        private static bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
-            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, IPriorityQueue<NetworkMovementMessage, float> playerInbox)
+        private bool TryStopExtrapolation(ref NetworkMovementMessage remote, ref CharacterTransform transComp,
+            ref RemotePlayerMovementComponent remotePlayerMovement, ref ExtrapolationComponent extComp, SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             float minExtTimestamp = extComp.Start.timestamp + Mathf.Min(extComp.Time, extComp.TotalMoveDuration);
 
@@ -151,14 +151,14 @@ namespace DCL.Multiplayer.Movement.Systems
                     isStunned = extComp.Start.isStunned,
                 };
 
-                remotePlayerMovement.AddPassed(local, null);
+                remotePlayerMovement.AddPassed(local, characterControllerSettings);
             }
 
             return true;
         }
 
         private void TeleportFiltered(ref NetworkMovementMessage remote, ref CharacterTransform transComp, ref RemotePlayerMovementComponent remotePlayerMovement,
-            IPriorityQueue<NetworkMovementMessage, float> playerInbox)
+            SimplePriorityQueue<NetworkMovementMessage> playerInbox)
         {
             // Filter messages with the same position
             if (settings.InterpolationSettings.UseSpeedUp)
