@@ -1,9 +1,9 @@
 using DCL.BadgesAPIService;
 using DCL.Passport.Utils;
-using System;
+using DCL.UI;
+using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace DCL.Passport.Modules
 {
@@ -16,7 +16,10 @@ namespace DCL.Passport.Modules
         public GameObject MainLoadingSpinner { get; private set; }
 
         [field: SerializeField]
-        public Image Badge2DImage { get; private set; }
+        public ImageView Badge2DImage { get; private set; }
+
+        [field: SerializeField]
+        public Sprite DefaultBadgeSprite { get; private set; }
 
         [field: SerializeField]
         public TMP_Text BadgeNameText { get; private set; }
@@ -27,12 +30,35 @@ namespace DCL.Passport.Modules
         [field: SerializeField]
         public TMP_Text BadgeDescriptionText { get; private set; }
 
+        [field: SerializeField]
+        public Color UnlockedImageColor { get; private set; }
+
+        [field: SerializeField]
+        public Color LockedImageColor { get; private set; }
+
+        private ImageController? imageController;
+
+        public void ConfigureImageController(IWebRequestController webRequestController)
+        {
+            if (imageController != null)
+                return;
+
+            imageController = new ImageController(Badge2DImage, webRequestController);
+        }
+
+        public void StopLoadingImage() =>
+            imageController?.StopLoading();
+
         public void Setup(BadgeInfo badgeInfo)
         {
-            //Badge2DImage.sprite = null;
             BadgeNameText.text = badgeInfo.name;
-            BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awarded_at) : "--";
+            BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awarded_at) : "Locked";
             BadgeDescriptionText.text = badgeInfo.description;
+            Badge2DImage.SetColor(badgeInfo.isLocked ? LockedImageColor : UnlockedImageColor);
+
+            imageController?.SetImage(DefaultBadgeSprite);
+            if (!string.IsNullOrEmpty(badgeInfo.imageUrl))
+                imageController?.RequestImage(badgeInfo.imageUrl, hideImageWhileLoading: true);
         }
 
         public void SetAsLoading(bool isLoading)

@@ -3,6 +3,7 @@ using DCL.BadgesAPIService;
 using DCL.Diagnostics;
 using DCL.Passport.Fields;
 using DCL.Profiles;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -29,7 +30,8 @@ namespace DCL.Passport.Modules
         public BadgesOverview_PassportModuleController(
             BadgesOverview_PassportModuleView view,
             BadgesAPIClient badgesAPIClient,
-            PassportErrorsController passportErrorsController)
+            PassportErrorsController passportErrorsController,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.badgesAPIClient = badgesAPIClient;
@@ -40,6 +42,7 @@ namespace DCL.Passport.Modules
                 defaultCapacity: BADGES_OVERVIEW_MAX_COUNT,
                 actionOnGet: badgeOverviewItemView =>
                 {
+                    badgeOverviewItemView.ConfigureImageController(webRequestController);
                     badgeOverviewItemView.gameObject.SetActive(true);
                     badgeOverviewItemView.gameObject.transform.SetAsLastSibling();
                 },
@@ -83,7 +86,7 @@ namespace DCL.Passport.Modules
                 foreach (BadgeInfo badgeInfo in badges.unlocked)
                 {
                     var badgeOverviewItem = badgesOverviewItemsPool.Get();
-                    badgeOverviewItem.BadgeNameText.text = badgeInfo.name;
+                    badgeOverviewItem.Setup(badgeInfo);
                     instantiatedBadgesOverviewItems.Add(badgeOverviewItem);
                 }
 
@@ -104,7 +107,10 @@ namespace DCL.Passport.Modules
             fetchBadgesCts.SafeCancelAndDispose();
 
             foreach (BadgeOverviewItem_PassportFieldView badgeOverviewItem in instantiatedBadgesOverviewItems)
+            {
+                badgeOverviewItem.StopLoadingImage();
                 badgesOverviewItemsPool.Release(badgeOverviewItem);
+            }
 
             instantiatedBadgesOverviewItems.Clear();
         }

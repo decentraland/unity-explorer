@@ -1,6 +1,7 @@
 using DCL.BadgesAPIService;
 using DCL.Passport.Utils;
-using System;
+using DCL.UI;
+using DCL.WebRequests;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,7 +21,10 @@ namespace DCL.Passport.Fields
         public Button Button { get; private set; }
 
         [field: SerializeField]
-        public Image BadgeImage { get; private set; }
+        public ImageView BadgeImage { get; private set; }
+
+        [field: SerializeField]
+        public Sprite DefaultBadgeSprite { get; private set; }
 
         [field: SerializeField]
         public TMP_Text BadgeNameText { get; private set; }
@@ -59,6 +63,19 @@ namespace DCL.Passport.Fields
 
         public BadgeInfo Model { get; private set; }
 
+        private ImageController? imageController;
+
+        public void ConfigureImageController(IWebRequestController webRequestController)
+        {
+            if (imageController != null)
+                return;
+
+            imageController = new ImageController(BadgeImage, webRequestController);
+        }
+
+        public void StopLoadingImage() =>
+            imageController?.StopLoading();
+
         public void SetInvisible(bool isInvisible) =>
             SubContainerTransform.gameObject.SetActive(!isInvisible);
 
@@ -70,8 +87,7 @@ namespace DCL.Passport.Fields
             Model = badgeInfo;
             BadgeNameText.text = badgeInfo.name;
             BadgeCategory = badgeInfo.category;
-            //BadgeImage.sprite = null;
-            BadgeImage.color = badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor;
+            BadgeImage.SetColor(badgeInfo.isLocked ? LockedBadgeImageColor : NonLockedBadgeImageColor);
             BadgeDateText.text = !badgeInfo.isLocked ? PassportUtils.FormatTimestampDate(badgeInfo.awarded_at) : "--";
             BadgeDateText.gameObject.SetActive((!badgeInfo.isLocked && (!badgeInfo.isTier || (badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock))) || badgeInfo is { isLocked: true, isTier: false });
             TopTierMark.SetActive(badgeInfo.isTier && badgeInfo.completedSteps == badgeInfo.totalStepsToUnlock);
@@ -83,6 +99,10 @@ namespace DCL.Passport.Fields
                 int progressPercentage = badgeInfo.isLocked ? 0 : badgeInfo.completedSteps * 100 / badgeInfo.totalStepsToUnlock;
                 ProgressBarFill.sizeDelta = new Vector2((!badgeInfo.isLocked ? progressPercentage : 0) * (ProgressBar.sizeDelta.x / 100), ProgressBarFill.sizeDelta.y);
             }
+
+            imageController?.SetImage(DefaultBadgeSprite);
+            if (!string.IsNullOrEmpty(badgeInfo.imageUrl))
+                imageController?.RequestImage(badgeInfo.imageUrl, hideImageWhileLoading: true);
         }
 
         public void OnPointerEnter(PointerEventData eventData) =>

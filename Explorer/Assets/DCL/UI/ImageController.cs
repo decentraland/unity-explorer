@@ -20,10 +20,13 @@ namespace DCL.UI
             this.webRequestController = webRequestController;
         }
 
-        public void RequestImage(string uri, bool removePrevious = false)
+        public void RequestImage(string uri, bool removePrevious = false, bool hideImageWhileLoading = false)
         {
             if(removePrevious)
                 view.Image.sprite = null;
+
+            if (hideImageWhileLoading)
+                view.Image.enabled = false;
 
             cts.SafeCancelAndDispose();
             cts = new CancellationTokenSource();
@@ -41,6 +44,7 @@ namespace DCL.UI
             Texture2D texture = await webRequestController.GetTextureAsync(new CommonArguments(URLAddress.FromString(uri)), new GetTextureArguments(false), GetTextureWebRequest.CreateTexture(TextureWrapMode.Clamp), ct);
             view.Image.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), VectorUtilities.OneHalf, PIXELS_PER_UNIT, 0, SpriteMeshType.FullRect, Vector4.one, false);
             view.LoadingObject.SetActive(false);
+            view.Image.enabled = true;
         }
 
         public void SetImage(Sprite sprite)

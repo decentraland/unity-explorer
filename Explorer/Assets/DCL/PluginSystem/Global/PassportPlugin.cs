@@ -110,7 +110,8 @@ namespace DCL.PluginSystem.Global
                     dclInput,
                     webBrowser,
                     decentralandUrlsSource,
-                    badgesAPIClient
+                    badgesAPIClient,
+                    webRequestController
                 );
 
                 mvcManager.RegisterController(passportController);

@@ -4,6 +4,7 @@ using DCL.Diagnostics;
 using DCL.Passport.Fields;
 using DCL.Profiles;
 using DCL.UI;
+using DCL.WebRequests;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -24,6 +25,7 @@ namespace DCL.Passport.Modules
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
+        private readonly IWebRequestController webRequestController;
 
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
@@ -46,12 +48,14 @@ namespace DCL.Passport.Modules
             BadgesDetails_PassportModuleView view,
             BadgeInfo_PassportModuleView badgeInfoModuleView,
             BadgesAPIClient badgesAPIClient,
-            PassportErrorsController passportErrorsController)
+            PassportErrorsController passportErrorsController,
+            IWebRequestController webRequestController)
         {
             this.view = view;
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
+            this.webRequestController = webRequestController;
 
             badgesFilterButtonsPool = new ObjectPool<ButtonWithSelectableStateView>(
                 InstantiateBadgesFilterButtonPrefab,
@@ -84,6 +88,7 @@ namespace DCL.Passport.Modules
                 defaultCapacity: BADGES_DETAIL_CARDS_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgeDetailCardView =>
                 {
+                    badgeDetailCardView.ConfigureImageController(webRequestController);
                     badgeDetailCardView.gameObject.SetActive(true);
                     badgeDetailCardView.SetAsSelected(false);
                 },
@@ -98,6 +103,8 @@ namespace DCL.Passport.Modules
                     emptyItemView.SetInvisible(true);
                 },
                 actionOnRelease: emptyItemView => emptyItemView.gameObject.SetActive(false));
+
+            badgeInfoModuleView.ConfigureImageController(webRequestController);
         }
 
         public void Setup(Profile profile)
@@ -113,6 +120,7 @@ namespace DCL.Passport.Modules
             ClearBadgeDetailCards();
             ClearBadgesCategorySeparators();
             ClearBadgesCategoryContainers();
+            badgeInfoModuleView.StopLoadingImage();
         }
 
         public void Dispose() =>
@@ -390,6 +398,7 @@ namespace DCL.Passport.Modules
             {
                 foreach (var badgeDetailCardByCategory in badgeDetailCards.Value)
                 {
+                    badgeDetailCardByCategory.StopLoadingImage();
                     badgeDetailCardByCategory.Button.onClick.RemoveAllListeners();
                     badgeDetailCardsPool.Release(badgeDetailCardByCategory);
                 }
