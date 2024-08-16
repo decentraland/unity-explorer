@@ -62,12 +62,14 @@ namespace DCL.Multiplayer.Movement.Systems
 
             float timeDiff = UnityEngine.Time.unscaledTime - playerMovement.LastSentMessage.timestamp;
 
-            if (IsMoving(playerMovement) && sendRate > MOVE_SEND_RATE)
+
+            bool isMoving = IsMoving(playerMovement);
+            if (isMoving && sendRate > MOVE_SEND_RATE)
                 sendRate = MOVE_SEND_RATE;
 
             if (timeDiff > sendRate)
             {
-                if (!IsMoving(playerMovement) && sendRate < STAND_SEND_RATE)
+                if (!isMoving && sendRate < STAND_SEND_RATE)
                     sendRate = Mathf.Min(2 * sendRate, STAND_SEND_RATE);
 
                 SendMessage(ref playerMovement, view, in anim, in stun, in move);
