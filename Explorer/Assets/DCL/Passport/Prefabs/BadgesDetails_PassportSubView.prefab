@@ -121,7 +121,6 @@ MonoBehaviour:
   <BadgesCategorySeparatorPrefab>k__BackingField: {fileID: 2914268505569279401, guid: d3be8f37a41935e4a90a1f6a3c32e44a, type: 3}
   <BadgesCategoryContainerPrefab>k__BackingField: {fileID: 6025775863293375988, guid: 10b094bb67f7dc6438b04c5ab7c49644, type: 3}
   <MainContainer>k__BackingField: {fileID: 7652398703509124738}
-  <MainBadgesCategoryContainer>k__BackingField: {fileID: 0}
   <BadgeDetailCardPrefab>k__BackingField: {fileID: 2629988230920715453, guid: 0e1dd120dcd088a41814a49e4de926e2, type: 3}
 --- !u!1 &8338339246391411166
 GameObject:
@@ -175,7 +174,7 @@ MonoBehaviour:
     m_Left: 0
     m_Right: 0
     m_Top: 0
-    m_Bottom: 0
+    m_Bottom: 24
   m_ChildAlignment: 0
   m_Spacing: 10
   m_ChildForceExpandWidth: 0
