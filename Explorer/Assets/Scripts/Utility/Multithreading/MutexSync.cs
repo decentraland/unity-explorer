@@ -72,7 +72,10 @@ namespace Utility.Multithreading
             Acquired = false;
             lock (_queueLock)
                 _queue.Clear();
-            Monitor.PulseAll(_threadLock);
+            lock (_threadLock)
+            {
+                Monitor.PulseAll(_threadLock); // Notify other waiting threads
+            }
         }
 
         public Scope GetScope()
