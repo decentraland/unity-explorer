@@ -170,6 +170,8 @@ namespace Global.Dynamic
 
                 await bootstrap.InitializeFeatureFlagsAsync(bootstrapContainer.IdentityCache!.Identity, bootstrapContainer.DecentralandUrlsSource, staticContainer!, ct);
 
+                DisableShortcuts();
+
                 if (await bootstrap.InitializePluginsAsync(staticContainer!, dynamicWorldContainer!, scenePluginSettingsContainer, globalPluginSettingsContainer, ct))
                 {
                     GameReports.PrintIsDead();
@@ -184,6 +186,8 @@ namespace Global.Dynamic
 
                 await bootstrap.LoadStartingRealmAsync(dynamicWorldContainer!, ct);
                 await bootstrap.UserInitializationAsync(dynamicWorldContainer!, globalWorld, playerEntity, splashScreen, ct);
+
+                RestoreShortcuts();
             }
             catch (OperationCanceledException)
             {
@@ -195,6 +199,16 @@ namespace Global.Dynamic
                 GameReports.PrintIsDead();
                 throw;
             }
+        }
+
+        private void DisableShortcuts()
+        {
+            staticContainer!.InputProxy.StrictObject.Shortcuts.Disable();
+        }
+
+        private void RestoreShortcuts()
+        {
+            staticContainer!.InputProxy.StrictObject.Shortcuts.Enable();
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
