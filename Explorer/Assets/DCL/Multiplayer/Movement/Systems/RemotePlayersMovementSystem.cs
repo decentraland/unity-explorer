@@ -147,6 +147,8 @@ namespace DCL.Multiplayer.Movement.Systems
                     position = transComp.Transform.position,
                     velocity = extComp.Start.velocity,
 
+                    movementKind = extComp.Start.movementKind,
+                    isSliding = extComp.Start.isSliding,
                     animState = extComp.Start.animState,
                     isStunned = extComp.Start.isStunned,
                 };

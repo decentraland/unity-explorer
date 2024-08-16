@@ -54,8 +54,8 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (intComp.Enabled)
                 InterpolateAnimations(view, ref anim, intComp);
-            // else if (extComp.Enabled)
-            //     ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
+            else if (extComp.Enabled)
+                ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
 
         private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, ref NetworkMovementMessage message)

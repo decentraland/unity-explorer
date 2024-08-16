@@ -1,6 +1,5 @@
 ﻿using DCL.CharacterMotion.Animation;
 using DCL.CharacterMotion.Settings;
-using UnityEngine;
 
 namespace DCL.Multiplayer.Movement
 {
