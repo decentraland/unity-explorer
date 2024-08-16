@@ -99,18 +99,9 @@ namespace ECS.Unity.Materials.Systems
         public static void SetUpTransparency(Material material, MaterialTransparencyMode transparencyMode,
             in TextureComponent? alphaTexture, Color albedoColor, float alphaTest)
         {
-            if (transparencyMode == MaterialTransparencyMode.Auto)
-            {
-                if (alphaTexture != null || albedoColor.a < 1f) //AlphaBlend
-                {
-                    transparencyMode = MaterialTransparencyMode.AlphaBlend;
-                }
-                else // Opaque
-                {
-                    transparencyMode = MaterialTransparencyMode.Opaque;
-                }
-            }
+            transparencyMode.ResolveAutoMode(alphaTexture, albedoColor);
 
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (transparencyMode)
             {
                 case MaterialTransparencyMode.Opaque:
