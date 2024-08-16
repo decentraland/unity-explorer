@@ -153,16 +153,20 @@ namespace DCL.Multiplayer.Movement
     /// </summary>
     public static class TimestampEncoder
     {
-        public const float BUFFER = (1 << TIMESTAMP_BITS) * TIMESTAMP_QUANTUM; // maxSteps * quantum
+        public const float BUFFER = STEPS * TIMESTAMP_QUANTUM;
+        private const int STEPS = 1 << TIMESTAMP_BITS; // 2^TIMESTAMP_BITS
 
         public static int Compress(float timestamp)
         {
-            float normalizedTimestamp = timestamp % BUFFER; // Normalize timestamp within the circular buffer
-            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM);
+            float normalizedTimestamp = timestamp % BUFFER; // Normalize timestamp within the round buffer
+            return Mathf.RoundToInt(normalizedTimestamp / TIMESTAMP_QUANTUM) % STEPS;
         }
 
-        public static float Decompress(long data) =>
-            data * TIMESTAMP_QUANTUM;
+        public static float Decompress(long data)
+        {
+            const int MASK = STEPS - 1;
+            return (int)(data & MASK) * TIMESTAMP_QUANTUM % BUFFER;
+        }
     }
 
     /// <summary>
