@@ -25,7 +25,6 @@ namespace DCL.Passport.Modules
         private readonly BadgeInfo_PassportModuleView badgeInfoModuleView;
         private readonly BadgesAPIClient badgesAPIClient;
         private readonly PassportErrorsController passportErrorsController;
-        private readonly IWebRequestController webRequestController;
 
         private readonly IObjectPool<ButtonWithSelectableStateView> badgesFilterButtonsPool;
         private readonly List<ButtonWithSelectableStateView> instantiatedBadgesFilterButtons = new ();
@@ -55,14 +54,13 @@ namespace DCL.Passport.Modules
             this.badgeInfoModuleView = badgeInfoModuleView;
             this.badgesAPIClient = badgesAPIClient;
             this.passportErrorsController = passportErrorsController;
-            this.webRequestController = webRequestController;
 
             badgesFilterButtonsPool = new ObjectPool<ButtonWithSelectableStateView>(
                 InstantiateBadgesFilterButtonPrefab,
                 defaultCapacity: BADGES_CATEGORIES_POOL_DEFAULT_CAPACITY,
                 actionOnGet: badgesFilterButton =>
                 {
-                    badgesFilterButton.gameObject.SetActive(true);
+                    badgesFilterButton.gameObject.SetActive(false);
                     badgesFilterButton.gameObject.transform.SetAsLastSibling();
                 },
                 actionOnRelease: badgesFilterButton => badgesFilterButton.gameObject.SetActive(false));
@@ -247,6 +245,7 @@ namespace DCL.Passport.Modules
         {
             try
             {
+                view.LoadingSpinner.SetActive(true);
                 var badges = await badgesAPIClient.FetchBadgesAsync(walletId, true, 0, 0, ct);
 
                 foreach (var unlockedBadge in badges.unlocked)
@@ -255,15 +254,31 @@ namespace DCL.Passport.Modules
                 foreach (var lockedBadge in badges.locked)
                     CreateBadgeDetailCard(lockedBadge);
 
+                instantiatedBadgesFilterButtons[0].gameObject.SetActive(true);
                 foreach (var badgesCategorySeparator in instantiatedBadgesCategorySeparators)
                 {
-                    if (instantiatedBadgeDetailCards.TryGetValue(badgesCategorySeparator.CategoryText.text.ToLower(), out List<BadgeDetailCard_PassportFieldView> badgeDetailCards))
-                        badgesCategorySeparator.gameObject.SetActive(badgeDetailCards.Count > 0);
+                    if (!instantiatedBadgeDetailCards.TryGetValue(badgesCategorySeparator.CategoryText.text.ToLower(), out List<BadgeDetailCard_PassportFieldView> badgeDetailCards))
+                        continue;
+
+                    badgesCategorySeparator.gameObject.SetActive(badgeDetailCards.Count > 0);
+
+                    if (badgeDetailCards.Count == 0)
+                        continue;
+
+                    foreach (var filterButton in instantiatedBadgesFilterButtons)
+                    {
+                        if (!string.Equals(filterButton.Text.text, badgesCategorySeparator.CategoryText.text, StringComparison.CurrentCultureIgnoreCase))
+                            continue;
+
+                        filterButton.gameObject.SetActive(true);
+                        break;
+                    }
                 }
 
                 CreateEmptyDetailCards();
                 ShowBadgesInGridByCategory(ALL_FILTER);
                 SelectFirstBadge();
+                view.LoadingSpinner.SetActive(false);
             }
             catch (OperationCanceledException) { }
             catch (Exception e)

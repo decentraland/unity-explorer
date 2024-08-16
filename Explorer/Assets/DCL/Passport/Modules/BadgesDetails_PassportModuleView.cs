@@ -23,5 +23,8 @@ namespace DCL.Passport.Modules
 
         [field: SerializeField]
         public BadgeDetailCard_PassportFieldView BadgeDetailCardPrefab { get; private set; }
+
+        [field: SerializeField]
+        public GameObject LoadingSpinner { get; private set; }
     }
 }
