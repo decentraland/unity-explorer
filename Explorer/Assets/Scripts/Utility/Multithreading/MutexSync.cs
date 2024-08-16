@@ -10,7 +10,6 @@ namespace Utility.Multithreading
     {
         private static readonly CustomSampler SAMPLER;
 
-        private readonly Mutex mutex = new ();
         private readonly object _queueLock = new();
         private readonly Queue<Thread> _queue = new();
         private readonly object _threadLock = new();
@@ -45,7 +44,6 @@ namespace Utility.Multithreading
                 }
             }
 
-            mutex.WaitOne(); // Acquire the Mutex
             Acquired = true;
             Debug.Log($"JUANI LOCK ACQUIRED! {Thread.CurrentThread.Name ?? "Unnamed Thread"}");
         }
@@ -53,7 +51,6 @@ namespace Utility.Multithreading
         public void Release()
         {
             Debug.Log("JUANI RELEASING LOCK!");
-            mutex.ReleaseMutex();
             Acquired = false;
 
             lock (_queueLock)
@@ -73,7 +70,9 @@ namespace Utility.Multithreading
         public void Dispose()
         {
             Acquired = false;
-            mutex.Dispose();
+            lock (_queueLock)
+                _queue.Clear();
+            Monitor.PulseAll(_threadLock);
         }
 
         public Scope GetScope()
