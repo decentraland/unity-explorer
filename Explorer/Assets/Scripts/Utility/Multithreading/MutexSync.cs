@@ -10,9 +10,8 @@ namespace Utility.Multithreading
     {
         private static readonly CustomSampler SAMPLER;
 
-        private readonly object _queueLock = new();
-        private readonly Queue<Thread> _queue = new();
-        private readonly object _threadLock = new();
+        private readonly object _lock = new();
+        private readonly Queue<ManualResetEventSlim> _queue = new();
 
         public bool Acquired { get; private set; }
 
@@ -23,58 +22,46 @@ namespace Utility.Multithreading
 
         public void Acquire()
         {
-            lock (_queueLock)
+            var waiter = new ManualResetEventSlim(false);
+
+            lock (_lock)
             {
-                _queue.Enqueue(Thread.CurrentThread);
+                _queue.Enqueue(waiter);
+                if (_queue.Count == 1) // If this is the only item in the queue
+                    waiter.Set(); // Set will ignore the Wait() method. So, if its the only one in the queue,
+                // it will be signaled and start executing immediately
             }
 
-            while (true)
-            {
-                lock (_queueLock)
-                {
-                    if (_queue.Peek() == Thread.CurrentThread)
-                    {
-                        break; // The current thread is at the front of the queue
-                    }
-                }
-
-                lock (_threadLock)
-                {
-                    Monitor.Wait(_threadLock); // Wait until notified
-                }
-            }
-
+            // Otherwise, wait for the signal
+            waiter.Wait();
             Acquired = true;
-            Debug.Log($"JUANI LOCK ACQUIRED! {Thread.CurrentThread.Name ?? "Unnamed Thread"}");
         }
 
         public void Release()
         {
-            Debug.Log("JUANI RELEASING LOCK!");
-            Acquired = false;
-
-            lock (_queueLock)
+            lock (_lock)
             {
-                _queue.Dequeue(); // Remove the current thread from the queue
-
+                // The one releasing should be the one at the top of the queue
+                // If the queue is empty, then our logic is wrong
+                var finishedWaiter = _queue.Dequeue();
+                finishedWaiter.Dispose(); // Clean up the finished waiter
+                Acquired = false;
+                
                 if (_queue.Count > 0)
                 {
-                    lock (_threadLock)
-                    {
-                        Monitor.PulseAll(_threadLock); // Notify other waiting threads
-                    }
+                    _queue.Peek().Set(); // Signal the next waiter in line
                 }
             }
         }
 
         public void Dispose()
         {
-            Acquired = false;
-            lock (_queueLock)
-                _queue.Clear();
-            lock (_threadLock)
+            lock (_lock)
             {
-                Monitor.PulseAll(_threadLock); // Notify other waiting threads
+                Acquired = false;
+                foreach (var manualResetEventSlim in _queue)
+                    manualResetEventSlim.Dispose(); // Clean up the finished waiter
+                _queue.Clear();
             }
         }
 
