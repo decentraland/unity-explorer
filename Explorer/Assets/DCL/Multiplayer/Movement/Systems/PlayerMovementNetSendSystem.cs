@@ -45,7 +45,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (playerMovement.IsFirstMessage)
             {
-                SendMessage(ref playerMovement,in anim, in stun, in move);
+                SendMessage(ref playerMovement, in anim, in stun, in move);
                 playerMovement.IsFirstMessage = false;
                 return;
             }
@@ -75,7 +75,6 @@ namespace DCL.Multiplayer.Movement.Systems
         private void SendMessage(ref PlayerMovementNetworkComponent playerMovement, in CharacterAnimationComponent animation, in StunComponent playerStunComponent, in MovementInputComponent movement)
         {
             playerMovement.MessagesSentInSec++;
-            // Debug.Log($"VVV {animation.States.ToString()}");
 
             playerMovement.LastSentMessage = new NetworkMovementMessage
             {
@@ -107,7 +106,7 @@ namespace DCL.Multiplayer.Movement.Systems
             // Debug purposes. Simulate package lost when Running
             if (settings.SelfSending
                 && movement.Kind != MovementKind.RUN // simulate package lost when Running
-            )
+               )
                 messageBus.SelfSendWithDelayAsync(playerMovement.LastSentMessage, settings.Latency + (settings.Latency * Random.Range(0, settings.LatencyJitter))).Forget();
         }
     }

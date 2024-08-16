@@ -26,6 +26,7 @@ namespace DCL.Multiplayer.Movement
             TotalDuration = End.timestamp - Start.timestamp;
 
             int movementBlendId = AnimationMovementBlendLogic.GetMovementBlendId(to.velocity.sqrMagnitude, to.movementKind);
+
             to.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(TotalDuration, from.animState.MovementBlendValue,
                 movementBlendId, to.movementKind, to.velocity.magnitude, settings);
 

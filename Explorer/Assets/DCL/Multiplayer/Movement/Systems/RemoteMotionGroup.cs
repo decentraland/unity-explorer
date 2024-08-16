@@ -6,7 +6,5 @@ namespace DCL.Multiplayer.Movement.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     [UpdateAfter(typeof(AvatarGroup))]
-    public partial class RemoteMotionGroup
-    {
-    }
+    public partial class RemoteMotionGroup { }
 }

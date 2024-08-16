@@ -17,7 +17,7 @@ namespace DCL.Multiplayer.Movement
             if (intComp.Time < intComp.TotalDuration)
             {
                 transComp.Transform.position = DoTransition(intComp.Start, intComp.End, intComp.Time, intComp.TotalDuration, intComp.SplineType);
-                var nextStep = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType);
+                Vector3 nextStep = DoTransition(intComp.Start, intComp.End, Mathf.Max(intComp.Time + lookAtTimeDelta, intComp.TotalDuration), intComp.TotalDuration, intComp.SplineType);
                 lookDirection = nextStep - transComp.Transform.position; // look into future step
             }
             else

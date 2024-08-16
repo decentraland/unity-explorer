@@ -11,7 +11,7 @@
         public const int MOVEMENT_KIND_MASK = 0x3;
 
         public const int MOVEMENT_KIND_START_BIT = TIMESTAMP_BITS;
-        public const int SLIDING_BIT = MOVEMENT_KIND_START_BIT  + MOVEMENT_KIND_BITS;
+        public const int SLIDING_BIT = MOVEMENT_KIND_START_BIT + MOVEMENT_KIND_BITS;
         public const int STUNNED_BIT = SLIDING_BIT + 1;
         public const int GROUNDED_BIT = STUNNED_BIT + 1;
         public const int JUMPING_BIT = GROUNDED_BIT + 1;

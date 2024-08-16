@@ -61,7 +61,7 @@ namespace DCL.Multiplayer.Movement
 
         public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage)
         {
-            var movementData = DecompressMovementData(compressedMessage.movementData);
+            (Vector3 position, Vector3 velocity) movementData = DecompressMovementData(compressedMessage.movementData);
             int compressedTemporalData = compressedMessage.temporalData;
 
             return new NetworkMovementMessage
@@ -127,7 +127,7 @@ namespace DCL.Multiplayer.Movement
     }
 
     /// <summary>
-    /// Flatten (x,y) parcel coordinates into 1-dimensional array
+    ///     Flatten (x,y) parcel coordinates into 1-dimensional array
     /// </summary>
     public static class ParcelEncoder
     {
