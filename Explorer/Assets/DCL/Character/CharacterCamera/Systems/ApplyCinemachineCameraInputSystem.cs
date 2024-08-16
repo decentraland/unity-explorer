@@ -4,6 +4,7 @@ using Arch.SystemGroups;
 using Cinemachine;
 using DCL.Character.CharacterCamera.Systems;
 using DCL.CharacterCamera.Components;
+using DCL.Diagnostics;
 using ECS.Abstract;
 using UnityEngine;
 
@@ -59,11 +60,14 @@ namespace DCL.CharacterCamera.Systems
                     // Apply Field of View
                     ApplyFOV(dt, cinemachinePreset, in cameraInput);
                     break;
+                default:
+                    ReportHub.LogError(GetReportCategory(), $"Camera mode is unknown {camera.Mode}");
+                    break;
             }
 
-            cameraInput.SetFreeFly = input.Camera.ToggleFreeFly.WasPressedThisFrame();
-            cameraInput.SwitchState = input.Camera.SwitchState.WasPressedThisFrame();
-            cameraInput.ChangeShoulder = input.Camera.ChangeShoulder.WasPressedThisFrame();
+            cameraInput.SetFreeFly = input.Camera.ToggleFreeFly!.WasPressedThisFrame();
+            cameraInput.SwitchState = input.Camera.SwitchState!.WasPressedThisFrame();
+            cameraInput.ChangeShoulder = input.Camera.ChangeShoulder!.WasPressedThisFrame();
 
             // Update the brain manually
             cinemachinePreset.Brain.ManualUpdate();
@@ -86,9 +90,12 @@ namespace DCL.CharacterCamera.Systems
                 case CameraMode.Free:
                     cinemachinePreset.ForceFreeCameraLookAt(lookAtIntent);
                     break;
+                default:
+                    ReportHub.LogError(GetReportCategory(), $"Camera mode is unknown {camera.Mode}");
+                    break;
             }
 
-            World.Remove<CameraLookAtIntent>(entity);
+            World!.Remove<CameraLookAtIntent>(entity);
         }
 
         private static void ApplyFreeCameraMovement(float dt, in CameraComponent camera, in CameraInput cameraInput,
@@ -108,7 +115,7 @@ namespace DCL.CharacterCamera.Systems
 
         }
 
-        private void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
+        private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
         {
             if (cinemachinePOV)
             {
@@ -117,7 +124,7 @@ namespace DCL.CharacterCamera.Systems
             }
         }
 
-        private void ApplyFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
+        private static void ApplyFOV(float dt, ICinemachinePreset cinemachinePreset, in CameraInput cameraInput)
         {
             CinemachineVirtualCamera tpc = cinemachinePreset.FreeCameraData.Camera;
             LensSettings tpcMLens = tpc.m_Lens;
