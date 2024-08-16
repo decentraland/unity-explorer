@@ -68,10 +68,7 @@ namespace ECS.Unity.Materials.Systems
                 TrySetTexture(materialComponent.Result, ref alphaResult, ShaderUtils.AlphaTexture, in materialComponent.Data.Textures.AlphaTexture);
                 TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, in materialComponent.Data.Textures.BumpTexture);
 
-                DestroyEntityReference(ref materialComponent.AlbedoTexPromise);
-                DestroyEntityReference(ref materialComponent.EmissiveTexPromise);
-                DestroyEntityReference(ref materialComponent.AlphaTexPromise);
-                DestroyEntityReference(ref materialComponent.BumpTexPromise);
+                DestroyEntityReferencesForPromises(ref materialComponent);
 
                 // TODO It is super expensive and allocates 500 KB every call, the changes must be made in the common library
                 // SRPBatchingHelper.OptimizeMaterial(materialComponent.Result);
