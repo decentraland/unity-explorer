@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using UnityEngine.Profiling;
 
 namespace Utility.Multithreading
@@ -9,6 +11,9 @@ namespace Utility.Multithreading
         private static readonly CustomSampler SAMPLER;
 
         private readonly Mutex mutex = new ();
+        private readonly object _queueLock = new();
+        private readonly Queue<Thread> _queue = new();
+        private readonly object _threadLock = new();
 
         public bool Acquired { get; private set; }
 
@@ -19,14 +24,50 @@ namespace Utility.Multithreading
 
         public void Acquire()
         {
-            mutex.WaitOne();
+            lock (_queueLock)
+            {
+                _queue.Enqueue(Thread.CurrentThread);
+            }
+
+            while (true)
+            {
+                lock (_queueLock)
+                {
+                    if (_queue.Peek() == Thread.CurrentThread)
+                    {
+                        break; // The current thread is at the front of the queue
+                    }
+                }
+
+                lock (_threadLock)
+                {
+                    Monitor.Wait(_threadLock); // Wait until notified
+                }
+            }
+
+            mutex.WaitOne(); // Acquire the Mutex
             Acquired = true;
+            Debug.Log($"JUANI LOCK ACQUIRED! {Thread.CurrentThread.Name ?? "Unnamed Thread"}");
         }
 
         public void Release()
         {
+            Debug.Log("JUANI RELEASING LOCK!");
             mutex.ReleaseMutex();
             Acquired = false;
+
+            lock (_queueLock)
+            {
+                _queue.Dequeue(); // Remove the current thread from the queue
+
+                if (_queue.Count > 0)
+                {
+                    lock (_threadLock)
+                    {
+                        Monitor.PulseAll(_threadLock); // Notify other waiting threads
+                    }
+                }
+            }
         }
 
         public void Dispose()
