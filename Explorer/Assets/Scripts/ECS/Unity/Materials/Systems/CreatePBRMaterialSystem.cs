@@ -32,7 +32,8 @@ namespace ECS.Unity.Materials.Systems
         }
 
         [Query]
-        private void Handle(ref MaterialComponent materialComponent)
+        [All(typeof(ShouldInstanceMaterialComponent))]
+        private void Handle(Entity entity, ref MaterialComponent materialComponent)
         {
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
@@ -42,10 +43,10 @@ namespace ECS.Unity.Materials.Systems
 
             // if there are no textures to load we can construct a material right away
             if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
-                ConstructMaterial(ref materialComponent);
+                ConstructMaterial(entity, ref materialComponent);
         }
 
-        private void ConstructMaterial(ref MaterialComponent materialComponent)
+        private void ConstructMaterial(Entity entity, ref MaterialComponent materialComponent)
         {
             // Check if all promises are finished
             // Promises are finished if: all of their entities are invalid, no promises at all, or the result component exists
@@ -69,6 +70,8 @@ namespace ECS.Unity.Materials.Systems
                 TrySetTexture(materialComponent.Result, ref bumpResult, ShaderUtils.BumpMap, in materialComponent.Data.Textures.BumpTexture);
 
                 DestroyEntityReferencesForPromises(ref materialComponent);
+
+                World!.Remove<ShouldInstanceMaterialComponent>(entity);
 
                 // TODO It is super expensive and allocates 500 KB every call, the changes must be made in the common library
                 // SRPBatchingHelper.OptimizeMaterial(materialComponent.Result);

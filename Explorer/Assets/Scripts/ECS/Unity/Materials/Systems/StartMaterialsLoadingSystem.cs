@@ -76,6 +76,7 @@ namespace ECS.Unity.Materials.Systems
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             World.Set(entity, StartNewMaterialLoad(entity, materialComponent, in prevTextureData, partitionComponent));
+            World.AddOrGet(entity, new ShouldInstanceMaterialComponent());
         }
 
         private void InvalidatePrbInequality(ref MaterialComponent materialComponent, ref MaterialData materialData)
@@ -108,6 +109,7 @@ namespace ECS.Unity.Materials.Systems
             materialComponent.Status = StreamableLoading.LifeCycle.LoadingInProgress;
 
             World.Add(entity, materialComponent);
+            World.Add(entity, new ShouldInstanceMaterialComponent());
         }
 
         private MaterialData CreateMaterialData(in PBMaterial material)
