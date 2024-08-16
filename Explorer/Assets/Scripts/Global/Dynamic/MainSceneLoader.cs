@@ -3,6 +3,8 @@ using Cysharp.Threading.Tasks;
 using DCL.Audio;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
+using DCL.Input;
+using DCL.Input.Component;
 using DCL.PluginSystem;
 using DCL.PluginSystem.Global;
 using DCL.SceneLoadingScreens.SplashScreen;
@@ -208,7 +210,7 @@ namespace Global.Dynamic
 
         private void RestoreShortcuts()
         {
-            staticContainer!.InputProxy.StrictObject.Shortcuts.Enable();
+            globalWorld!.EcsWorld.CacheInputMap().GetInputMapComponent(globalWorld.EcsWorld).Active |= InputMapComponent.Kind.Shortcuts;
         }
 
         [ContextMenu(nameof(ValidateSettingsAsync))]
