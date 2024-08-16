@@ -10,7 +10,8 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
 {
     public class CriticalLogsAnalyticsHandler : IReportHandler
     {
-        private const int PAYLOAD_LIMIT = 30 * 1024; // Segment == 32 KB, leaving some room for headers
+        private const int PAYLOAD_LIMIT = 28 * 1024; // Segment == 32 KB, leaving some room for headers
+        private const int SAFE_CHAR_LIMIT = PAYLOAD_LIMIT / 4; // 7,680 characters
 
         private readonly IAnalyticsController analytics;
 
@@ -86,30 +87,9 @@ namespace DCL.PerformanceAndDiagnostics.Analytics
             if (string.IsNullOrEmpty(message))
                 return "Reported message was null or empty";
 
-            return Encoding.UTF8.GetByteCount(message) <= PAYLOAD_LIMIT
+            return message.Length <= SAFE_CHAR_LIMIT
                 ? message
-                : TrimToPayloadLimitInternal(message);
-        }
-
-        private static string TrimToPayloadLimitInternal(string message)
-        {
-            var byteCount = 0;
-            var charCount = 0;
-
-            foreach (char c in message)
-            {
-                int charSize = c <= 0x7F ? 1 :
-                    c <= 0x7FF ? 2 :
-                    c <= 0xFFFF ? 3 : 4;
-
-                if (byteCount + charSize > PAYLOAD_LIMIT)
-                    break;
-
-                byteCount += charSize;
-                charCount++;
-            }
-
-            return message[..charCount];
+                : message[..SAFE_CHAR_LIMIT];
         }
     }
 }
