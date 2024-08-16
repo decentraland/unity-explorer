@@ -52,8 +52,8 @@ namespace DCL.Multiplayer.Movement.Systems
                 UpdateAnimations(view, ref anim, ref remotePlayerMovement.PastMessage);
             }
 
-            // if (intComp.Enabled)
-            //     InterpolateAnimations(view, ref anim, intComp);
+            if (intComp.Enabled)
+                InterpolateAnimations(view, ref anim, intComp);
             // else if (extComp.Enabled)
             //     ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
@@ -92,7 +92,7 @@ namespace DCL.Multiplayer.Movement.Systems
             AnimationStates endAnimStates = intComp.End.animState;
 
             bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
-                                                                                             && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON;
+                        && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON;
 
             if (bothPointBlendsAreZero && Vector3.SqrMagnitude(intComp.Start.position - intComp.End.position) > MOVEMENT_EPSILON)
                 BlendBetweenTwoZeroMovementPoints(ref anim, intComp);

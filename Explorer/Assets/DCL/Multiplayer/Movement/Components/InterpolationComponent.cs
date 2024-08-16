@@ -25,12 +25,12 @@ namespace DCL.Multiplayer.Movement
             Time = 0f;
             TotalDuration = End.timestamp - Start.timestamp;
 
-            int movementBlendId = AnimationMovementBlendLogic.GetMovementBlendId(to.velocity.sqrMagnitude, to.movementKind);
+            int movementBlendId = AnimationMovementBlendLogic.GetMovementBlendId(End.velocity.sqrMagnitude, End.movementKind);
 
-            to.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(TotalDuration, from.animState.MovementBlendValue,
-                movementBlendId, to.movementKind, to.velocity.magnitude, settings);
+            End.animState.MovementBlendValue = AnimationMovementBlendLogic.CalculateBlendValue(TotalDuration, Start.animState.MovementBlendValue,
+                movementBlendId, End.movementKind, End.velocity.magnitude, settings);
 
-            to.animState.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(TotalDuration, from.animState.SlideBlendValue, to.isSliding, settings);
+            End.animState.SlideBlendValue = AnimationSlideBlendLogic.CalculateBlendValue(TotalDuration, Start.animState.SlideBlendValue, End.isSliding, settings);
 
             Enabled = true;
         }
