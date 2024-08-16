@@ -5,10 +5,10 @@ using static DCL.Multiplayer.Movement.CompressionConfig;
 
 namespace DCL.Multiplayer.Movement
 {
-    public static class NetworkMessageEncoder
+    public static class NetworkMessageCompressor
     {
         public static CompressedNetworkMovementMessage Compress(this NetworkMovementMessage message) =>
-            new()
+            new ()
             {
                 temporalData = CompressTemporalData(message.timestamp, message.movementKind, message.isSliding, message.animState, message.isStunned),
                 movementData = CompressMovementData(message.position, message.velocity),
@@ -35,7 +35,7 @@ namespace DCL.Multiplayer.Movement
         {
             Vector2Int parcel = position.ToParcel();
 
-            int parcelIndex = ParcelEncoder.EncodeParcel(parcel);
+            int parcelIndex = ParcelEncoder.Encode(parcel);
 
             var relativePosition = new Vector2(
                 position.x - (parcel.x * ParcelEncoder.PARCEL_SIZE),
@@ -61,46 +61,17 @@ namespace DCL.Multiplayer.Movement
 
         public static NetworkMovementMessage Decompress(this CompressedNetworkMovementMessage compressedMessage)
         {
-            long compressedMovement = compressedMessage.movementData;
-
-            const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
-            const int XZ_MASK = (1 << XZ_BITS) - 1;
-            const int Y_MASK = (1 << Y_BITS) - 1;
-            const int VELOCITY_MASK = (1 << VELOCITY_BITS) - 1;
-
-            Vector2Int parcel = ParcelEncoder.DecodeParcel((int)(compressedMovement & PARCEL_MASK));
-
-            var extractedX = (int)((compressedMovement >> PARCEL_BITS) & XZ_MASK);
-            var extractedZ = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS)) & XZ_MASK);
-            var extractedY = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
-
-            float decompressedX = FloatQuantizer.Decompress(extractedX, 0, PARCEL_SIZE, XZ_BITS);
-            float decompressedZ = FloatQuantizer.Decompress(extractedZ, 0, PARCEL_SIZE, XZ_BITS);
-            float decompressedY = FloatQuantizer.Decompress(extractedY, 0, Y_MAX, Y_BITS);
-
-            var worldPosition = new Vector3(
-                (parcel.x * ParcelEncoder.PARCEL_SIZE) + decompressedX,
-                decompressedY,
-                (parcel.y * ParcelEncoder.PARCEL_SIZE) + decompressedZ
-            );
-
-            var extractedVelocityX = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS)) & VELOCITY_MASK);
-            var extractedVelocityY = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
-            var extractedVelocityZ = (int)((compressedMovement >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
-
-            float decompressedVelocityX = FloatQuantizer.Decompress(extractedVelocityX, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
-            float decompressedVelocityY = FloatQuantizer.Decompress(extractedVelocityY, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
-            float decompressedVelocityZ = FloatQuantizer.Decompress(extractedVelocityZ, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
-
-            var velocity = new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ);
-
+            var movementData = DecompressMovementData(compressedMessage.movementData);
             int compressedTemporalData = compressedMessage.temporalData;
 
             return new NetworkMovementMessage
             {
+                // Decompressed movement data
+                position = movementData.position,
+                velocity = movementData.velocity,
+
+                // Decompress temporal data
                 timestamp = TimestampEncoder.Decompress(compressedTemporalData),
-                position = worldPosition,
-                velocity = velocity,
                 movementKind = (MovementKind)((compressedTemporalData >> MOVEMENT_KIND_START_BIT) & MOVEMENT_KIND_MASK),
 
                 animState = new AnimationStates
@@ -119,8 +90,45 @@ namespace DCL.Multiplayer.Movement
                 isSliding = (compressedTemporalData & (1 << SLIDING_BIT)) != 0,
             };
         }
+
+        private static (Vector3 position, Vector3 velocity) DecompressMovementData(long movementData)
+        {
+            const int PARCEL_MASK = (1 << PARCEL_BITS) - 1;
+            const int XZ_MASK = (1 << XZ_BITS) - 1;
+            const int Y_MASK = (1 << Y_BITS) - 1;
+            const int VELOCITY_MASK = (1 << VELOCITY_BITS) - 1;
+
+            Vector2Int parcel = ParcelEncoder.Decode((int)(movementData & PARCEL_MASK));
+
+            var extractedX = (int)((movementData >> PARCEL_BITS) & XZ_MASK);
+            var extractedZ = (int)((movementData >> (PARCEL_BITS + XZ_BITS)) & XZ_MASK);
+            var extractedY = (int)((movementData >> (PARCEL_BITS + XZ_BITS + XZ_BITS)) & Y_MASK);
+
+            float decompressedX = FloatQuantizer.Decompress(extractedX, 0, PARCEL_SIZE, XZ_BITS);
+            float decompressedZ = FloatQuantizer.Decompress(extractedZ, 0, PARCEL_SIZE, XZ_BITS);
+            float decompressedY = FloatQuantizer.Decompress(extractedY, 0, Y_MAX, Y_BITS);
+
+            var worldPosition = new Vector3(
+                (parcel.x * ParcelEncoder.PARCEL_SIZE) + decompressedX,
+                decompressedY,
+                (parcel.y * ParcelEncoder.PARCEL_SIZE) + decompressedZ
+            );
+
+            var extractedVelocityX = (int)((movementData >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS)) & VELOCITY_MASK);
+            var extractedVelocityY = (int)((movementData >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
+            var extractedVelocityZ = (int)((movementData >> (PARCEL_BITS + XZ_BITS + XZ_BITS + Y_BITS + VELOCITY_BITS + VELOCITY_BITS)) & VELOCITY_MASK);
+
+            float decompressedVelocityX = FloatQuantizer.Decompress(extractedVelocityX, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            float decompressedVelocityY = FloatQuantizer.Decompress(extractedVelocityY, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+            float decompressedVelocityZ = FloatQuantizer.Decompress(extractedVelocityZ, -MAX_VELOCITY, MAX_VELOCITY, VELOCITY_BITS);
+
+            return (worldPosition, velocity: new Vector3(decompressedVelocityX, decompressedVelocityY, decompressedVelocityZ));
+        }
     }
 
+    /// <summary>
+    /// Flatten (x,y) parcel coordinates into 1-dimensional array
+    /// </summary>
     public static class ParcelEncoder
     {
         public const int PARCEL_SIZE = 16;
@@ -133,13 +141,16 @@ namespace DCL.Multiplayer.Movement
 
         private const int WIDTH = MAX_X - MIN_X + 1;
 
-        public static int EncodeParcel(Vector2Int parcel) =>
+        public static int Encode(Vector2Int parcel) =>
             parcel.x - MIN_X + ((parcel.y - MIN_Y) * WIDTH);
 
-        public static Vector2Int DecodeParcel(int index) =>
+        public static Vector2Int Decode(int index) =>
             new ((index % WIDTH) + MIN_X, (index / WIDTH) + MIN_Y);
     }
 
+    /// <summary>
+    ///     Encode timepsamp as a circular buffer
+    /// </summary>
     public static class TimestampEncoder
     {
         public const float BUFFER = (1 << TIMESTAMP_BITS) * TIMESTAMP_QUANTUM; // maxSteps * quantum
@@ -154,6 +165,9 @@ namespace DCL.Multiplayer.Movement
             data * TIMESTAMP_QUANTUM;
     }
 
+    /// <summary>
+    ///     Compress float via scaled integer approach (fixed-size quantization)
+    /// </summary>
     public static class FloatQuantizer
     {
         public static int Compress(float value, float minValue, float maxValue, int bits)
