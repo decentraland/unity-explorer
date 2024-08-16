@@ -66,7 +66,7 @@ namespace Global.Dynamic
                 DecentralandUrlsSource = decentralandUrlsSource,
                 WebBrowser = browser,
                 DebugSettings = debugSettings,
-                LocalSceneDevelopment = appParametersParser.LocalSceneDevelopment || launchSettings.GetStartingRealm() == IRealmNavigator.LOCALHOST,
+                LocalSceneDevelopment = appParametersParser.LocalSceneDevelopment || launchSettings.StartingRealmUrl(decentralandUrlsSource) == IRealmNavigator.LOCALHOST,
             };
 
             await bootstrapContainer.InitializeContainerAsync<BootstrapContainer, BootstrapSettings>(settingsContainer, ct, async container =>
@@ -88,7 +88,7 @@ namespace Global.Dynamic
             AnalyticsConfiguration analyticsConfig = (await container.AssetsProvisioner.ProvideMainAssetAsync(bootstrapSettings.AnalyticsConfigRef, ct)).Value;
             container.enableAnalytics = analyticsConfig.Mode != AnalyticsMode.DISABLED;
 
-            var coreBootstrap = new Bootstrap(debugSettings)
+            var coreBootstrap = new Bootstrap(debugSettings, container.DecentralandUrlsSource)
             {
                 EnableAnalytics = container.enableAnalytics,
             };

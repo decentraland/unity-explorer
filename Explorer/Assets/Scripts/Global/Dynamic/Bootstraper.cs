@@ -29,17 +29,19 @@ namespace Global.Dynamic
     public class Bootstrap : IBootstrap
     {
         private readonly IDebugSettings debugSettings;
+        private readonly IDecentralandUrlsSource decentralandUrlsSource;
 
-        private URLDomain startingRealm = URLDomain.FromString(IRealmNavigator.GENESIS_URL);
+        private URLDomain? startingRealm;
         private Vector2Int startingParcel;
         private DynamicWorldDependencies dynamicWorldDependencies;
-        private Dictionary<string, string> appParameters = new ();
+        private readonly Dictionary<string, string> appParameters = new ();
 
         public bool EnableAnalytics { private get; init; }
 
-        public Bootstrap(IDebugSettings debugSettings)
+        public Bootstrap(IDebugSettings debugSettings, IDecentralandUrlsSource decentralandUrlsSource)
         {
             this.debugSettings = debugSettings;
+            this.decentralandUrlsSource = decentralandUrlsSource;
         }
 
         public void PreInitializeSetup(RealmLaunchSettings launchSettings, UIDocument cursorRoot, UIDocument debugUiRoot,
@@ -48,7 +50,7 @@ namespace Global.Dynamic
             splashScreen.ShowSplash();
             cursorRoot.EnsureNotNull();
 
-            startingRealm = URLDomain.FromString(launchSettings.GetStartingRealm());
+            startingRealm = URLDomain.FromString(launchSettings.StartingRealmUrl(decentralandUrlsSource));
             startingParcel = launchSettings.TargetScene;
 
             // Hides the debug UI during the initial flow
@@ -94,7 +96,7 @@ namespace Global.Dynamic
                     EnableLandscape = debugSettings.EnableLandscape && !bootstrapContainer.LocalSceneDevelopment,
                     EnableLOD = debugSettings.EnableLOD && !bootstrapContainer.LocalSceneDevelopment,
                     EnableAnalytics = EnableAnalytics, HybridSceneParams = launchSettings.CreateHybridSceneParams(startingParcel),
-                    LocalSceneDevelopmentRealm = bootstrapContainer.LocalSceneDevelopment ? launchSettings.GetStartingRealm() : string.Empty,
+                    LocalSceneDevelopmentRealm = bootstrapContainer.LocalSceneDevelopment ? launchSettings.StartingRealmUrl(decentralandUrlsSource) : string.Empty,
                     AppParameters = appParameters,
                 },
                 backgroundMusic,
@@ -158,7 +160,10 @@ namespace Global.Dynamic
 
         public async UniTask LoadStartingRealmAsync(DynamicWorldContainer dynamicWorldContainer, CancellationToken ct)
         {
-            await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm, ct);
+            if (startingRealm.HasValue == false)
+                throw new InvalidOperationException("Starting realm is not set");
+
+            await dynamicWorldContainer.RealmController.SetRealmAsync(startingRealm.Value, ct);
         }
 
         public async UniTask UserInitializationAsync(DynamicWorldContainer dynamicWorldContainer,
