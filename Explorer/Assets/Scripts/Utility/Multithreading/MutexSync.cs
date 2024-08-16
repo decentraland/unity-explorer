@@ -27,12 +27,10 @@ namespace Utility.Multithreading
             lock (_lock)
             {
                 _queue.Enqueue(waiter);
-                if (_queue.Count == 1) // If this is the only item in the queue
-                    waiter.Set(); // Set will ignore the Wait() method. So, if its the only one in the queue,
-                // it will be signaled and start executing immediately
+                if (_queue.Count == 1)
+                    waiter.Set(); // If there is only one item in the queue, signal it right away so Wait() is ignored
             }
 
-            // Otherwise, wait for the signal
             waiter.Wait();
             Acquired = true;
         }
@@ -48,9 +46,7 @@ namespace Utility.Multithreading
                 Acquired = false;
                 
                 if (_queue.Count > 0)
-                {
                     _queue.Peek().Set(); // Signal the next waiter in line
-                }
             }
         }
 
@@ -60,7 +56,7 @@ namespace Utility.Multithreading
             {
                 Acquired = false;
                 foreach (var manualResetEventSlim in _queue)
-                    manualResetEventSlim.Dispose(); // Clean up the finished waiter
+                    manualResetEventSlim.Dispose(); // Clean up waiters. Nothing to do here
                 _queue.Clear();
             }
         }
