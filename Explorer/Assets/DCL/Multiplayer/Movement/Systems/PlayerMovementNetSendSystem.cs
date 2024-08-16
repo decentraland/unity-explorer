@@ -67,7 +67,7 @@ namespace DCL.Multiplayer.Movement.Systems
 
             if (timeDiff > sendRate)
             {
-                if (!IsMoving(playerMovement))
+                if (!IsMoving(playerMovement) && sendRate < STAND_SEND_RATE)
                     sendRate = Mathf.Min(2 * sendRate, STAND_SEND_RATE);
 
                 SendMessage(ref playerMovement, view, in anim, in stun, in move);
