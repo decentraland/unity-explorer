@@ -58,7 +58,7 @@ namespace DCL.Multiplayer.Movement.Systems
             //     ExtrapolateAnimations(view, ref anim, extComp.Time, extComp.TotalMoveDuration, settings.LinearTime);
         }
 
-        private void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, ref NetworkMovementMessage message)
+        private static void UpdateAnimations(IAvatarView view, ref CharacterAnimationComponent animationComponent, ref NetworkMovementMessage message)
         {
             if (animationComponent.States.Equals(message.animState))
                 return;
@@ -90,7 +90,6 @@ namespace DCL.Multiplayer.Movement.Systems
 
             AnimationStates startAnimStates = intComp.Start.animState;
             AnimationStates endAnimStates = intComp.End.animState;
-            Debug.Log($"VVV inter start-end {intComp.Start.animState.MovementBlendValue} { intComp.End.animState.MovementBlendValue}");
 
             bool bothPointBlendsAreZero = startAnimStates.MovementBlendValue < BLEND_EPSILON && endAnimStates.MovementBlendValue < BLEND_EPSILON
                                                                                              && startAnimStates.SlideBlendValue < BLEND_EPSILON && endAnimStates.SlideBlendValue < BLEND_EPSILON;
