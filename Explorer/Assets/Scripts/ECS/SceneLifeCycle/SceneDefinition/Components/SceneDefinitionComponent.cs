@@ -1,8 +1,5 @@
 ﻿using CommunicationData.URLHelpers;
 using DCL.Ipfs;
-using Ipfs;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Utility;
 
@@ -17,8 +14,8 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public readonly SceneEntityDefinition Definition;
 
-        public readonly IReadOnlyList<Vector2Int> Parcels;
-        public readonly IReadOnlyList<ParcelMathHelper.ParcelCorners> ParcelsCorners;
+        public readonly Vector2Int [] Parcels;
+        public readonly ParcelMathHelper.ParcelCorners [] ParcelsCorners;
         public readonly IpfsPath IpfsPath;
         public readonly bool IsEmpty;
         public readonly bool IsSDK7;
@@ -27,10 +24,17 @@ namespace ECS.SceneLifeCycle.SceneDefinition
 
         public SceneDefinitionComponent(SceneEntityDefinition definition, IpfsPath ipfsPath)
         {
+            var decodedParcels = definition.metadata.scene.DecodedParcels;
             Definition = definition;
-            ParcelsCorners = new List<ParcelMathHelper.ParcelCorners>(definition.metadata.scene.DecodedParcels.Select(ParcelMathHelper.CalculateCorners));
+            Parcels = new Vector2Int[decodedParcels.Count];
+            ParcelsCorners = new ParcelMathHelper.ParcelCorners[Parcels.Length];
+            for (int i = 0; i < Parcels.Length; i++)
+            {
+                Parcels[i] = decodedParcels[i];
+                ParcelsCorners[i] = ParcelMathHelper.CalculateCorners(Parcels[i]);
+            }
             IpfsPath = ipfsPath;
-            Parcels = definition.metadata.scene.DecodedParcels;
+
             IsEmpty = false;
             IsSDK7 = definition.metadata?.runtimeVersion == "7";
             SceneGeometry = ParcelMathHelper.CreateSceneGeometry(ParcelsCorners, Definition.metadata.scene.DecodedBase);
