@@ -13,9 +13,15 @@ namespace DCL.Passport.Modules
         public RectTransform BadgesFilterButtonsContainer { get; private set; }
 
         [field: SerializeField]
-        public BadgeDetailCard_PassportFieldView BadgeDetailCardPrefab { get; private set; }
+        public BadgesCategorySeparator_PassportFieldView BadgesCategorySeparatorPrefab { get; private set; }
 
         [field: SerializeField]
-        public RectTransform BadgeDetailCardsContainer { get; private set; }
+        public BadgesCategoryContainer_PassportFieldView BadgesCategoryContainerPrefab { get; private set; }
+
+        [field: SerializeField]
+        public RectTransform MainContainer { get; private set; }
+
+        [field: SerializeField]
+        public BadgeDetailCard_PassportFieldView BadgeDetailCardPrefab { get; private set; }
     }
 }

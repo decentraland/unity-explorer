@@ -1,65 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4270214737003413132
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 25079775981217947}
-  - component: {fileID: 5749437330277122081}
-  m_Layer: 5
-  m_Name: BadgesContainer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &25079775981217947
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4270214737003413132}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7652398703509124738}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &5749437330277122081
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4270214737003413132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 20
-  m_ChildAlignment: 0
-  m_StartCorner: 3
-  m_StartAxis: 0
-  m_CellSize: {x: 150, y: 214}
-  m_Spacing: {x: 24, y: 28}
-  m_Constraint: 0
-  m_ConstraintCount: 2
 --- !u!1 &6779997798835043434
 GameObject:
   m_ObjectHideFlags: 0
@@ -93,7 +33,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3344195657738558535}
-  - {fileID: 25079775981217947}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -179,8 +118,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <BadgesFilterButtonPrefab>k__BackingField: {fileID: 8521217865944743850, guid: 362f3e80b61348b41bdb4e1d0c9d2bc2, type: 3}
   <BadgesFilterButtonsContainer>k__BackingField: {fileID: 3344195657738558535}
+  <BadgesCategorySeparatorPrefab>k__BackingField: {fileID: 2914268505569279401, guid: d3be8f37a41935e4a90a1f6a3c32e44a, type: 3}
+  <BadgesCategoryContainerPrefab>k__BackingField: {fileID: 6025775863293375988, guid: 10b094bb67f7dc6438b04c5ab7c49644, type: 3}
+  <MainContainer>k__BackingField: {fileID: 7652398703509124738}
+  <MainBadgesCategoryContainer>k__BackingField: {fileID: 0}
   <BadgeDetailCardPrefab>k__BackingField: {fileID: 2629988230920715453, guid: 0e1dd120dcd088a41814a49e4de926e2, type: 3}
-  <BadgeDetailCardsContainer>k__BackingField: {fileID: 25079775981217947}
 --- !u!1 &8338339246391411166
 GameObject:
   m_ObjectHideFlags: 0
