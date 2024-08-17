@@ -44,8 +44,8 @@ namespace DCL.SkyBox
 
             currentDate = DateTime.Now;
 
-            debugBuilder.AddWidget(NAME)
-                        .AddControl(new DebugFloatFieldDef(sunLongitude = new ElementBinding<float>(0)), new DebugConstLabelDef("Sun Longitude"))
+            debugBuilder.TryAddWidget(NAME)
+                        ?.AddControl(new DebugFloatFieldDef(sunLongitude = new ElementBinding<float>(0)), new DebugConstLabelDef("Sun Longitude"))
                         .AddControl(new DebugFloatFieldDef(sunLatitude = new ElementBinding<float>(0)), new DebugConstLabelDef("Sun Latitude"))
                         .AddControl(new DebugIntSliderDef("Hour", hour = new ElementBinding<int>(currentDate.Hour), 0, 24), null)
                         .AddControl(new DebugIntSliderDef("Minutes", minutes = new ElementBinding<int>(currentDate.Minute), 0, 60), null)
