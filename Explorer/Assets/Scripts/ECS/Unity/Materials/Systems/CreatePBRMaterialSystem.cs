@@ -38,12 +38,14 @@ namespace ECS.Unity.Materials.Systems
             if (!materialComponent.Data.IsPbrMaterial)
                 return;
 
+            // if there are no textures to load we can construct a material right away
+            if (materialComponent.Status is not StreamableLoading.LifeCycle.LoadingInProgress)
+                return;
+
             if (!capFrameBudget.TrySpendBudget() || !memoryBudgetProvider.TrySpendBudget())
                 return;
 
-            // if there are no textures to load we can construct a material right away
-            if (materialComponent.Status == StreamableLoading.LifeCycle.LoadingInProgress)
-                ConstructMaterial(entity, ref materialComponent);
+            ConstructMaterial(entity, ref materialComponent);
         }
 
         private void ConstructMaterial(Entity entity, ref MaterialComponent materialComponent)
