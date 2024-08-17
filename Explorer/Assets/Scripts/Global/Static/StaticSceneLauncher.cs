@@ -2,6 +2,7 @@
 using DCL.AssetsProvision;
 using DCL.Browser;
 using DCL.Browser.DecentralandUrls;
+using DCL.CommandLine;
 using DCL.DebugUtilities;
 using DCL.Diagnostics;
 using DCL.Multiplayer.Connections.DecentralandUrls;
@@ -154,6 +155,7 @@ namespace Global.Static
                 decentralandUrlsSource,
                 assetsProvisioner,
                 reportHandlingSettings,
+                new CommandLineArgs(),
                 debugViewsCatalog,
                 globalSettingsContainer,
                 web3IdentityProvider,

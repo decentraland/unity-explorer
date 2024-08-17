@@ -12,7 +12,7 @@ namespace DCL.WebRequests.Analytics
     {
         IDictionary<Type, Func<IRequestMetric>> GetTrackedMetrics();
 
-        IReadOnlyList<IRequestMetric> GetMetric(Type requestType);
+        IReadOnlyList<IRequestMetric>? GetMetric(Type requestType);
 
         internal void OnRequestStarted<T>(T request) where T: ITypedWebRequest;
 
