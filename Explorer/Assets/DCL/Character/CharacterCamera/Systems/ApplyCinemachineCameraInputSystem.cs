@@ -112,7 +112,6 @@ namespace DCL.CharacterCamera.Systems
                                                    (cameraTransform.up * cameraInput.FreePanning.y) +
                                                    (cameraTransform.right * cameraInput.FreeMovement.x))
                                                   * cinemachinePreset.FreeCameraData.Speed * dt;
-                                                  * cinemachinePreset.FreeCameraData.Speed * dt;
         }
 
         private static void ApplyPOV(CinemachinePOV cinemachinePOV, in CameraInput cameraInput)
