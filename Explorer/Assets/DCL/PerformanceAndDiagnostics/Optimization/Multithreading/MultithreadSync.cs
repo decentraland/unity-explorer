@@ -11,7 +11,7 @@ namespace Utility.Multithreading
         private static readonly CustomSampler SAMPLER;
 
         private static readonly ThreadSafeObjectPool<ManualResetEventSlim> MANUAL_RESET_EVENT_SLIM_POOL =
-            new(() => new ManualResetEventSlim(false));
+            new(() => new ManualResetEventSlim(false), actionOnRelease: e => e.Reset());
 
         private readonly object queueLock = new();
         private readonly Queue<ManualResetEventSlim> queue = new();
@@ -45,7 +45,6 @@ namespace Utility.Multithreading
                 // The one releasing should be the one at the top of the queue
                 // If the queue is empty, then our logic is wrong
                 var finishedWaiter = queue.Dequeue();
-                finishedWaiter.Dispose(); // Clean up the finished waiter
                 MANUAL_RESET_EVENT_SLIM_POOL.Release(finishedWaiter);
                 Acquired = false;
 
@@ -60,11 +59,7 @@ namespace Utility.Multithreading
             {
                 Acquired = false;
                 foreach (var manualResetEventSlim in queue)
-                {
-                    manualResetEventSlim.Dispose(); // Clean up waiters. Nothing to do here
                     MANUAL_RESET_EVENT_SLIM_POOL.Release(manualResetEventSlim);
-                }
-
                 queue.Clear();
             }
         }
